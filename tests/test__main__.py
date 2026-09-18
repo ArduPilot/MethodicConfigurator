@@ -28,6 +28,7 @@ from ardupilot_methodic_configurator.__main__ import (
     connect_to_fc_and_set_vehicle_type,
     create_and_configure_component_editor,
     create_argument_parser,
+    create_vehicle_project_from_bin_log,
     display_first_use_documentation,
     get_preferred_vehicle_dir,
     initialize_filesystem,
@@ -44,6 +45,7 @@ from ardupilot_methodic_configurator.__main__ import (
 )
 from ardupilot_methodic_configurator.backend_flightcontroller import DEVICE_FC_PARAM_FROM_FILE
 from ardupilot_methodic_configurator.data_model_par_dict import ParamFileError
+from ardupilot_methodic_configurator.data_model_vehicle_project_creator import VehicleProjectCreationError
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import PopupWindow
 from ardupilot_methodic_configurator.plugins.plugin_constants import (
     PLUGIN_BATTERY_MONITOR,
@@ -74,6 +76,8 @@ def mock_args() -> MagicMock:
     args.skip_component_editor = False
     args.n = 0
     args.export_fc_params_missing_or_different = False
+    args.bin_log = ""
+    args.template_dir = ""
     return args
 
 
@@ -651,6 +655,372 @@ class TestArgumentParser:
         # Test with minimal arguments to ensure it works
         test_args = parser.parse_args(["--skip-check-for-updates"])
         assert test_args.skip_check_for_updates is True
+
+    def test_bin_log_project_creation_options_are_available(self) -> None:
+        """The CLI accepts a log file and an optional template-directory override."""
+        parser = create_argument_parser()
+
+        args = parser.parse_args(
+            [
+                "--bin-log",
+                "C:/logs/flight.bin",
+                "--template-dir",
+                "C:/templates/Holybro_X500",
+            ]
+        )
+
+        assert args.bin_log == "C:/logs/flight.bin"
+        assert args.template_dir == "C:/templates/Holybro_X500"
+
+    def test_bin_log_help_explains_pseudo_vehicle_types(self) -> None:
+        """The CLI explains that SITL and AP_Periph are not .bin-import vehicle types."""
+        parser = create_argument_parser()
+
+        assert "SITL and AP_Periph cannot be used" in parser.format_help()
+
+    def test_bin_log_documentation_describes_continuing_into_gui_editors(self) -> None:
+        """The user manual explains that CLI imports continue through the GUI editors."""
+        manual = (Path(__file__).resolve().parents[1] / "USERMANUAL.md").read_text(encoding="utf-8")
+
+        assert "After the project is created from the log, AMC continues through the normal GUI workflow" in manual
+        assert "the parameter editor and uploader" in manual
+
+    def test_bin_log_accepts_an_explicit_vehicle_directory_destination(self) -> None:
+        """The CLI remembers when --vehicle-dir explicitly selects an import destination."""
+        parser = create_argument_parser()
+
+        args = parser.parse_args(["--bin-log", "C:/logs/flight.bin", "--vehicle-dir", "C:/vehicles/renamed"])
+
+        assert args.vehicle_dir == "C:/vehicles/renamed"
+        assert args.vehicle_dir_explicit is True
+
+    def test_template_directory_requires_bin_log(self) -> None:
+        """A template override alone is rejected before startup begins."""
+        parser = create_argument_parser()
+        args = argparse.Namespace(bin_log="", template_dir="C:/templates/Holybro_X500")
+
+        with (
+            patch("ardupilot_methodic_configurator.__main__.create_argument_parser", return_value=parser),
+            patch.object(parser, "parse_args", return_value=args),
+            patch.object(parser, "error", side_effect=SystemExit) as parser_error,
+            patch.object(amc_main, "_", side_effect=lambda message: f"translated:{message}"),
+            pytest.raises(SystemExit),
+        ):
+            main()
+
+        parser_error.assert_called_once_with("translated:--template-dir can only be used together with --bin-log")
+
+    def test_device_requires_normal_connected_workflow(self) -> None:
+        """An explicit device option is rejected for offline log import."""
+        parser = create_argument_parser()
+        args = argparse.Namespace(bin_log="C:/logs/flight.bin", template_dir="", device="/dev/ttyACM0")
+
+        with (
+            patch("ardupilot_methodic_configurator.__main__.create_argument_parser", return_value=parser),
+            patch.object(parser, "parse_args", return_value=args),
+            patch.object(parser, "error", side_effect=SystemExit) as parser_error,
+            pytest.raises(SystemExit),
+        ):
+            main()
+
+        parser_error.assert_called_once_with("--device cannot be used together with --bin-log")
+
+
+class TestBinLogProjectCreation:
+    """Test the command-line .bin log project-creation workflow."""
+
+    def test_bin_log_initialization_does_not_touch_the_current_vehicle_directory(self) -> None:
+        """Offline import starts with an empty filesystem instead of the current project."""
+        args = argparse.Namespace(
+            bin_log="C:/logs/flight.bin",
+            vehicle_dir="C:/existing/project",
+            vehicle_type="",
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
+        )
+        state = ApplicationState(args)
+        state.flight_controller = MagicMock()
+        state.flight_controller.info.flight_sw_version = "4.6.3"
+
+        with (
+            patch("ardupilot_methodic_configurator.__main__.migrate_vehicle_project_if_needed") as migrate,
+            patch("ardupilot_methodic_configurator.__main__.LocalFilesystem") as filesystem_class,
+        ):
+            initialize_filesystem(state)
+
+        migrate.assert_not_called()
+        filesystem_class.assert_called_once()
+        assert filesystem_class.call_args.args == (None, "", "4.6.3", False, False)
+
+    def test_creates_project_with_optional_template_override(self) -> None:
+        """The CLI forwards the supplied template directory to the project manager."""
+        args = argparse.Namespace(bin_log="C:/logs/flight.bin", template_dir="C:/templates/Holybro_X500")
+        state = ApplicationState(args)
+        state.local_filesystem = MagicMock()
+        state.flight_controller = MagicMock()
+
+        with (
+            patch("ardupilot_methodic_configurator.__main__.VehicleProjectManager") as manager_class,
+            patch("ardupilot_methodic_configurator.__main__.logging_info") as log_info,
+        ):
+            manager_class.return_value.create_new_vehicle_from_bin_log.return_value = "C:/vehicles/flight"
+
+            result = create_vehicle_project_from_bin_log(state)
+
+        assert result == "C:/vehicles/flight"
+        manager_class.return_value.create_new_vehicle_from_bin_log.assert_called_once_with(
+            "C:/logs/flight.bin",
+            template_dir="C:/templates/Holybro_X500",
+            vehicle_dir=None,
+            expected_vehicle_type=None,
+        )
+        log_info.assert_called_once_with("Created vehicle project at %s", "C:/vehicles/flight")
+
+    def test_bin_log_creation_uses_one_stable_manager_call_shape(self) -> None:
+        """The CLI passes all optional import values through one manager call contract."""
+        args = argparse.Namespace(bin_log="C:/logs/flight.bin", template_dir="")
+        state = ApplicationState(args)
+        state.local_filesystem = MagicMock()
+        state.flight_controller = MagicMock()
+
+        with (
+            patch("ardupilot_methodic_configurator.__main__.VehicleProjectManager") as manager_class,
+            patch("ardupilot_methodic_configurator.__main__.logging_info"),
+        ):
+            manager_class.return_value.create_new_vehicle_from_bin_log.return_value = "C:/vehicles/flight"
+
+            create_vehicle_project_from_bin_log(state)
+
+        manager_class.return_value.create_new_vehicle_from_bin_log.assert_called_once_with(
+            "C:/logs/flight.bin",
+            template_dir=None,
+            vehicle_dir=None,
+            expected_vehicle_type=None,
+        )
+
+    def test_creates_project_in_explicit_vehicle_directory(self) -> None:
+        """The CLI forwards an explicit --vehicle-dir destination to the project manager."""
+        args = argparse.Namespace(
+            bin_log="C:/logs/flight.bin",
+            template_dir="",
+            vehicle_dir="C:/vehicles/renamed",
+            vehicle_dir_explicit=True,
+        )
+        state = ApplicationState(args)
+        state.local_filesystem = MagicMock()
+        state.flight_controller = MagicMock()
+
+        with (
+            patch("ardupilot_methodic_configurator.__main__.VehicleProjectManager") as manager_class,
+            patch("ardupilot_methodic_configurator.__main__.logging_info"),
+        ):
+            manager_class.return_value.create_new_vehicle_from_bin_log.return_value = "C:/vehicles/renamed"
+
+            result = create_vehicle_project_from_bin_log(state)
+
+        assert result == "C:/vehicles/renamed"
+        manager_class.return_value.create_new_vehicle_from_bin_log.assert_called_once_with(
+            "C:/logs/flight.bin",
+            template_dir=None,
+            vehicle_dir="C:/vehicles/renamed",
+            expected_vehicle_type=None,
+        )
+
+    def test_bin_log_vehicle_type_is_forwarded_for_validation(self) -> None:
+        """The CLI forwards an explicit vehicle type to offline import validation."""
+        args = argparse.Namespace(
+            bin_log="C:/logs/flight.bin",
+            template_dir="",
+            vehicle_dir="C:/vehicles/flight",
+            vehicle_dir_explicit=True,
+            vehicle_type="Rover",
+        )
+        state = ApplicationState(args)
+        state.local_filesystem = MagicMock()
+        state.flight_controller = MagicMock()
+
+        with (
+            patch("ardupilot_methodic_configurator.__main__.VehicleProjectManager") as manager_class,
+            patch("ardupilot_methodic_configurator.__main__.logging_info"),
+        ):
+            manager_class.return_value.create_new_vehicle_from_bin_log.return_value = "C:/vehicles/flight"
+
+            create_vehicle_project_from_bin_log(state)
+
+        manager_class.return_value.create_new_vehicle_from_bin_log.assert_called_once_with(
+            "C:/logs/flight.bin",
+            template_dir=None,
+            vehicle_dir="C:/vehicles/flight",
+            expected_vehicle_type="Rover",
+        )
+
+    def test_explicit_bin_log_vehicle_directory_expands_user_home(self) -> None:
+        """A quoted ``~`` in --vehicle-dir is expanded before project creation."""
+        args = argparse.Namespace(
+            bin_log="C:/logs/flight.bin",
+            template_dir="",
+            vehicle_dir="~/myproj",
+            vehicle_dir_explicit=True,
+        )
+        state = ApplicationState(args)
+        state.local_filesystem = MagicMock()
+        state.flight_controller = MagicMock()
+
+        with (
+            patch("ardupilot_methodic_configurator.__main__.VehicleProjectManager") as manager_class,
+            patch(
+                "ardupilot_methodic_configurator.__main__.os.path.expanduser", return_value="/home/user/myproj"
+            ) as expanduser,
+            patch("ardupilot_methodic_configurator.__main__.logging_info"),
+        ):
+            manager_class.return_value.create_new_vehicle_from_bin_log.return_value = "/home/user/myproj"
+
+            create_vehicle_project_from_bin_log(state)
+
+        expanduser.assert_called_once_with("~/myproj")
+        manager_class.return_value.create_new_vehicle_from_bin_log.assert_called_once_with(
+            "C:/logs/flight.bin",
+            template_dir=None,
+            vehicle_dir="/home/user/myproj",
+            expected_vehicle_type=None,
+        )
+
+    def test_implicit_bin_log_vehicle_directory_expands_user_home(self) -> None:
+        """Manually constructed CLI state gets the same home expansion without the explicit marker."""
+        args = argparse.Namespace(
+            bin_log="C:/logs/flight.bin",
+            template_dir="",
+            vehicle_dir="~/myproj",
+        )
+        state = ApplicationState(args)
+        state.local_filesystem = MagicMock()
+        state.flight_controller = MagicMock()
+
+        with (
+            patch("ardupilot_methodic_configurator.__main__.VehicleProjectManager") as manager_class,
+            patch(
+                "ardupilot_methodic_configurator.__main__.os.path.expanduser", return_value="/home/user/myproj"
+            ) as expanduser,
+            patch("ardupilot_methodic_configurator.__main__.logging_info"),
+        ):
+            manager_class.return_value.create_new_vehicle_from_bin_log.return_value = "/home/user/myproj"
+
+            create_vehicle_project_from_bin_log(state)
+
+        expanduser.assert_called_once_with("~/myproj")
+        manager_class.return_value.create_new_vehicle_from_bin_log.assert_called_once_with(
+            "C:/logs/flight.bin",
+            template_dir=None,
+            vehicle_dir="/home/user/myproj",
+            expected_vehicle_type=None,
+        )
+
+    def test_bin_log_initialization_does_not_connect_to_a_flight_controller(self) -> None:
+        """A CLI log import initializes the offline FC model without calling connect()."""
+        args = argparse.Namespace(bin_log="C:/logs/flight.bin", reboot_time=10, baudrate=115200)
+        state = ApplicationState(args)
+
+        with patch("ardupilot_methodic_configurator.__main__.FlightController") as flight_controller_class:
+            initialize_flight_controller(state)
+
+        flight_controller_class.assert_called_once_with(reboot_time=10, baudrate=115200)
+        flight_controller_class.return_value.connect.assert_not_called()
+
+    def test_bin_log_creation_logs_a_clean_error_and_exits_nonzero(self) -> None:
+        """Project-creation errors do not expose a traceback to command-line users."""
+        args = argparse.Namespace(bin_log="C:/logs/bad.bin", template_dir="")
+        state = ApplicationState(args)
+        state.local_filesystem = MagicMock()
+        state.flight_controller = MagicMock()
+
+        with (
+            patch("ardupilot_methodic_configurator.__main__.VehicleProjectManager") as manager_class,
+            patch("ardupilot_methodic_configurator.__main__.logging_error") as log_error,
+            patch("ardupilot_methodic_configurator.__main__.logging_debug") as log_debug,
+        ):
+            manager_class.return_value.create_new_vehicle_from_bin_log.side_effect = VehicleProjectCreationError(
+                ".bin log import",
+                "The log could not be read.",
+            )
+
+            with pytest.raises(SystemExit, match="1"):
+                create_vehicle_project_from_bin_log(state)
+
+        log_error.assert_called_once_with("%s: %s", ".bin log import", "The log could not be read.")
+        error = manager_class.return_value.create_new_vehicle_from_bin_log.side_effect
+        log_debug.assert_called_once_with("", exc_info=error)
+
+    def test_main_bin_log_import_bypasses_vehicle_directory_selection(self) -> None:
+        """The command-line log-import workflow bypasses the project-selection window."""
+        args = argparse.Namespace(
+            bin_log="C:/logs/flight.bin",
+            template_dir="C:/templates/Holybro_X500",
+            loglevel="INFO",
+            skip_check_for_updates=False,
+            vehicle_dir=None,
+            vehicle_type=None,
+            device=None,
+            reboot_time=5,
+            baudrate=115200,
+            n=0,
+            skip_component_editor=False,
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
+            export_fc_params_missing_or_different=False,
+        )
+        flight_controller = MagicMock()
+        flight_controller.fc_parameters = {}
+
+        def initialize_flight_controller_for_test(state: ApplicationState) -> None:
+            state.flight_controller = flight_controller
+
+        local_filesystem = MagicMock()
+        local_filesystem.configuration_steps = {}
+        local_filesystem.doc_dict = {}
+        local_filesystem.vehicle_dir = "C:/vehicles/flight"
+        local_filesystem.get_fc_fw_version_from_vehicle_components_json.return_value = "4.6.3"
+
+        with (
+            patch("ardupilot_methodic_configurator.__main__.create_argument_parser") as parser_class,
+            patch("ardupilot_methodic_configurator.__main__.register_plugins"),
+            patch("ardupilot_methodic_configurator.__main__.FreeDesktop.create_desktop_icon_if_needed"),
+            patch("ardupilot_methodic_configurator.__main__.setup_logging"),
+            patch("ardupilot_methodic_configurator.__main__.ProgramSettings.migrate_settings_to_latest_version"),
+            patch("ardupilot_methodic_configurator.__main__.check_updates", return_value=False),
+            patch("ardupilot_methodic_configurator.__main__.PopupWindow.should_display", return_value=False),
+            patch("ardupilot_methodic_configurator.__main__.ProgramSettings.get_setting", return_value=False),
+            patch(
+                "ardupilot_methodic_configurator.__main__.initialize_flight_controller",
+                side_effect=initialize_flight_controller_for_test,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.__main__.LocalFilesystem", return_value=local_filesystem
+            ) as filesystem_class,
+            patch("ardupilot_methodic_configurator.__main__.migrate_vehicle_project_if_needed") as migrate,
+            patch("ardupilot_methodic_configurator.__main__.create_vehicle_project_from_bin_log") as create_project,
+            patch("ardupilot_methodic_configurator.__main__.vehicle_directory_selection") as select_directory,
+            patch("ardupilot_methodic_configurator.__main__.plugin_factory.validate_configuration_steps"),
+            patch("ardupilot_methodic_configurator.__main__.component_editor"),
+            patch("ardupilot_methodic_configurator.__main__.process_component_editor_results"),
+            patch("ardupilot_methodic_configurator.__main__.backup_fc_parameters"),
+            patch("ardupilot_methodic_configurator.__main__.parameter_editor_and_uploader"),
+            patch("ardupilot_methodic_configurator.__main__.sys_exit"),
+        ):
+            parser_class.return_value.parse_args.return_value = args
+
+            main()
+
+        create_project.assert_called_once()
+        select_directory.assert_not_called()
+        migrate.assert_not_called()
+        filesystem_class.assert_called_once()
+        assert filesystem_class.call_args.args == (
+            None,
+            "",
+            flight_controller.info.flight_sw_version,
+            False,
+            False,
+        )
 
 
 class TestFlightControllerConnectionLogic:

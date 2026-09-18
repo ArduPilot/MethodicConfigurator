@@ -484,12 +484,21 @@ Here is a list of command line options:
 - **`--skip-check-for-updates`**: Skip check for software updates before starting the software. Default is False.
 - **`--baudrate BAUDRATE`**: MAVLink serial connection baudrate to the flight controller. Default is 115200
 - **`--device`**: The MAVLink connection string to the flight controller. It defaults to autoconnection to the first available flight controller.
-- **`--vehicle-dir`**: The directory containing intermediate parameter files. Defaults to the current working directory directory.
+- **`--vehicle-dir`**: The directory containing intermediate parameter files. Defaults to the current working directory.
+  When explicitly supplied with `--bin-log`, it is the complete destination directory for the new project.
+- **`--bin-log PATH`**: Create a new vehicle project from an ArduPilot `.bin` log file without
+  connecting to a flight controller. By default, the new project is created in the default vehicles directory.
+  An explicitly supplied `--vehicle-dir` instead selects the complete destination directory.
+- **`--template-dir PATH`**: Optional template directory to use with `--bin-log`. If omitted,
+  AMC uses the empty template matching the vehicle type and major/minor firmware version extracted
+  from the log.
 - **`--n`**: Start directly on the nth intermediate parameter file (skip previous files). The default is 0.
 - **`--skip-component-editor`**: Skip the component editor window. Only use this if all components have been configured. Default is False
 - **`--loglevel`**: The logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL). The default is INFO.
 - **`-t` or `--vehicle-type`**: The type of the vehicle.
   Choices are 'AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane', 'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'. Defaults to 'ArduCopter'.
+  With `--bin-log`, this value validates both the vehicle type reported by the log and the selected template.
+  SITL and AP_Periph are pseudo-types and cannot be used with `--bin-log`.
 - **`-r` or `--reboot-time`**: Flight controller reboot time. The default is 7.
 - **`-v` or `--version`**: Display version information and exit.
 
@@ -514,6 +523,19 @@ ardupilot_methodic_configurator --device="/dev/ttyUSB0" --vehicle-dir="/home/use
 # Network connection (SITL or network-connected FC)
 ardupilot_methodic_configurator --device="tcp:127.0.0.1:5760" --vehicle-dir="/path/to/params"
 ```
+
+#### Create a Project from a `.bin` Log
+
+```bash
+# Use the empty template inferred from the vehicle type and firmware in the log
+ardupilot_methodic_configurator --bin-log="C:\logs\flight.bin"
+
+# Use a specific template directory instead of the inferred empty template
+ardupilot_methodic_configurator --bin-log="C:\logs\flight.bin" --template-dir="C:\templates\Holybro_X500"
+```
+
+After the project is created from the log, AMC continues through the normal GUI workflow:
+the Vehicle Component Editor opens first, followed by the parameter editor and uploader.
 
 #### Skip Steps for Faster Workflow
 

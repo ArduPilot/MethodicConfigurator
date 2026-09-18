@@ -350,6 +350,15 @@ class TestTemplateSelection:
 
 ### Test Execution Commands
 
+On Linux systems where the normal display is unavailable, run pytest through
+the project virtual environment and Xvfb. This is required by GUI-dependent
+fixtures such as PyAutoGUI:
+
+```bash
+# Run non-SITL tests with the local virtual environment and a virtual display
+PATH="$PWD/.venv/bin:$PATH" xvfb-run -a python -m pytest tests/ -v -m "not sitl and not integration"
+```
+
 ```bash
 # Run all tests with verbose output
 pytest tests/ -v

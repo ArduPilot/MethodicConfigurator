@@ -9,6 +9,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import os
+import subprocess
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -123,6 +125,38 @@ class TestOpenLog:
             pytest.raises(OSError, match=r"Error opening logfile dummy\.bin"),
         ):
             open_log("dummy.bin")
+
+    def test_corrupt_binary_log_returns_an_exception_instead_of_exiting(self, tmp_path: Path) -> None:
+        """Corrupt DataFlash input remains catchable by the caller."""
+        source = Path(__file__).parent / "fixtures" / "backend_log_80k.bin"
+        corrupted = tmp_path / "corrupted.bin"
+        data = bytearray(source.read_bytes())
+        for offset in range(200):
+            index = (offset * 997) % len(data)
+            data[index] ^= 1 << (offset % 8)
+        corrupted.write_bytes(data)
+
+        result = subprocess.run(  # noqa: S603
+            [
+                sys.executable,
+                "-c",
+                (
+                    "import sys\n"
+                    "from ardupilot_methodic_configurator.backend_bin_log import extract_bin_log_data\n"
+                    "try:\n"
+                    "    extract_bin_log_data(sys.argv[1])\n"
+                    "except BaseException as exc:\n"
+                    "    print(type(exc).__name__)\n"
+                ),
+                str(corrupted),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.strip()
 
 
 class TestFirstPassCache:

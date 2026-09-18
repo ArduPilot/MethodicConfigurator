@@ -10,7 +10,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 # from sys import exit as sys_exit
-from argparse import ArgumentParser
+from argparse import Action, ArgumentParser, Namespace
+from collections.abc import Sequence
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import exception as logging_exception
@@ -33,7 +34,7 @@ from subprocess import SubprocessError, run
 from typing import Any
 from zipfile import ZipFile
 
-from argcomplete.completers import DirectoriesCompleter
+from argcomplete.completers import DirectoriesCompleter, FilesCompleter
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.annotate_params import (
@@ -54,6 +55,22 @@ from ardupilot_methodic_configurator.data_model_par_dict import MANUAL_OVERRIDE_
 
 PARAMETER_FILE_REGEXP = r"^\d{2}_.*\.param$"
 TOOLTIP_MAX_LENGTH = 105
+
+
+class _VehicleDirAction(Action):
+    """Store ``--vehicle-dir`` and remember whether it was explicitly supplied."""
+
+    def __call__(
+        self,
+        parser: ArgumentParser,
+        namespace: Namespace,
+        values: str | Sequence[Any] | None,
+        option_string: str | None = None,
+    ) -> None:
+        del parser
+        del option_string
+        setattr(namespace, self.dest, values)
+        setattr(namespace, f"{self.dest}_explicit", True)
 
 
 class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  # pylint: disable=too-many-public-methods
@@ -1122,14 +1139,42 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             "--vehicle-type",
             choices=VehicleComponents.supported_vehicles(),
             default="",
-            help=_("The type of the vehicle. Default is ArduCopter"),
+            help=_(
+                "The type of the vehicle. With --bin-log, validates the vehicle type reported by the log "
+                "and the selected template. SITL and AP_Periph cannot be used with --bin-log. "
+                "Default is ArduCopter"
+            ),
         )
         parser.add_argument(  # type: ignore[attr-defined]
             "--vehicle-dir",
             type=str,
             default=os_getcwd(),
+            action=_VehicleDirAction,
             help=_(
-                "Directory containing vehicle-specific intermediate parameter files. Default is the current working directory"
+                "Directory containing vehicle-specific intermediate parameter files. For --bin-log, "
+                "an explicitly supplied value is the complete destination project directory. "
+                "Default is the current working directory"
+            ),
+        ).completer = DirectoriesCompleter()  # pyright: ignore[reportAttributeAccessIssue]
+        parser.add_argument(  # type: ignore[attr-defined]
+            "--bin-log",
+            type=str,
+            default="",
+            metavar="PATH",
+            help=_(
+                "Create a vehicle project from an ArduPilot .bin log file. "
+                "By default, the project is created in the default vehicles directory; "
+                "an explicitly supplied --vehicle-dir is the complete destination project directory."
+            ),
+        ).completer = FilesCompleter(allowednames=(".bin", ".BIN"))  # pyright: ignore[reportAttributeAccessIssue]
+        parser.add_argument(  # type: ignore[attr-defined]
+            "--template-dir",
+            type=str,
+            default="",
+            metavar="PATH",
+            help=_(
+                "Optional template directory to use with --bin-log. "
+                "Defaults to the empty template matching the log firmware version."
             ),
         ).completer = DirectoriesCompleter()  # pyright: ignore[reportAttributeAccessIssue]
         parser.add_argument(

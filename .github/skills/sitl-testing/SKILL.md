@@ -54,6 +54,13 @@ SITL tests run automatically in GitHub Actions when SITL artifacts are available
 
 Use the provided script for local SITL testing. You can either download pre-built SITL or use a locally built version:
 
+On some Linux systems, run the commands through the project `.venv` and
+`xvfb-run` because the shared test fixtures import GUI libraries:
+
+```bash
+PATH="$PWD/.venv/bin:$PATH" xvfb-run -a ./scripts/run_sitl_tests.sh test
+```
+
 #### Using Downloaded SITL (Recommended)
 
 ```bash
@@ -61,7 +68,7 @@ Use the provided script for local SITL testing. You can either download pre-buil
 ./scripts/run_sitl_tests.sh download
 
 # Download and run tests in one command
-./scripts/run_sitl_tests.sh download-test
+PATH="$PWD/.venv/bin:$PATH" xvfb-run -a ./scripts/run_sitl_tests.sh download-test
 
 # Check if downloaded SITL is available
 ./scripts/run_sitl_tests.sh check
@@ -80,7 +87,7 @@ export ARDUPILOT_DIR="$HOME/ardupilot-sitl"
 ./scripts/run_sitl_tests.sh setup
 
 # Run SITL integration tests
-./scripts/run_sitl_tests.sh test
+PATH="$PWD/.venv/bin:$PATH" xvfb-run -a ./scripts/run_sitl_tests.sh test
 ```
 
 #### General Commands
@@ -99,14 +106,21 @@ Run specific SITL tests:
 
 ```bash
 # Run all SITL tests
-python -m pytest tests/test_backend_flightcontroller_sitl.py -v
+SITL_BINARY="$PWD/sitl/arducopter" PATH="$PWD/.venv/bin:$PATH" \
+  xvfb-run -a python -m pytest tests/test_backend_flightcontroller_sitl.py -v
 
 # Run only SITL tests (skip if SITL unavailable)
-python -m pytest -m sitl -v
+SITL_BINARY="$PWD/sitl/arducopter" PATH="$PWD/.venv/bin:$PATH" \
+  xvfb-run -a python -m pytest -m sitl -v
 
 # Run SITL tests or fallback to mocked tests
-python -m pytest -m "sitl or not sitl" -v
+SITL_BINARY="$PWD/sitl/arducopter" PATH="$PWD/.venv/bin:$PATH" \
+  xvfb-run -a python -m pytest -m "sitl or not sitl" -v
 ```
+
+The direct pytest commands require `SITL_BINARY` because the test fixture does
+not discover `sitl/arducopter` on its own. The `run_sitl_tests.sh` wrapper checks
+that path and exports the variable automatically.
 
 ## Test Coverage
 

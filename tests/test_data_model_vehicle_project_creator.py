@@ -13,6 +13,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import struct
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -367,6 +368,7 @@ class TestVehicleProjectCreationWorkflow:
 
             assert "New vehicle directory" in exc_info.value.title
             assert creation_error in exc_info.value.message
+            assert expected_vehicle_dir in exc_info.value.message
 
     def test_user_sees_error_when_template_file_copying_fails(
         self, project_creator, mock_local_filesystem, default_settings
@@ -400,6 +402,28 @@ class TestVehicleProjectCreationWorkflow:
 
             assert "Copying template files" in exc_info.value.title
             assert copying_error in exc_info.value.message
+
+    def test_malformed_template_file_is_reported_and_removed(
+        self, project_creator, mock_local_filesystem, default_settings
+    ) -> None:
+        """A malformed parameter file cannot leave a partial project behind."""
+        template_dir = "/valid/template/dir"
+        new_base_dir = "/valid/base/dir"
+        new_vehicle_name = "MyQuadcopter"
+        expected_vehicle_dir = "/valid/base/dir/MyQuadcopter"
+
+        mock_local_filesystem.copy_template_files_to_new_vehicle_dir.side_effect = ValueError("malformed parameter")
+
+        with (
+            patch.object(LocalFilesystem, "directory_exists", return_value=True),
+            patch.object(LocalFilesystem, "valid_directory_name", return_value=True),
+            patch.object(LocalFilesystem, "new_vehicle_dir", return_value=expected_vehicle_dir),
+            patch("ardupilot_methodic_configurator.data_model_vehicle_project_creator.shutil_rmtree") as remove_project,
+            pytest.raises(VehicleProjectCreationError, match="malformed parameter"),
+        ):
+            project_creator.create_new_vehicle_from_template(template_dir, new_base_dir, new_vehicle_name, default_settings)
+
+        remove_project.assert_called_once_with(expected_vehicle_dir, ignore_errors=True)
 
     def test_user_can_create_project_with_custom_settings(self, project_creator, mock_local_filesystem) -> None:
         """
@@ -1069,7 +1093,7 @@ class TestGetFCDependentErrorMessageGuardClause:
 class TestBinLogImportHelpers:
     """Test static helper methods on VehicleProjectCreator used for .bin log imports."""
 
-    @pytest.mark.parametrize("error", [OSError("unreadable"), ValueError("malformed")])
+    @pytest.mark.parametrize("error", [OSError("unreadable"), ValueError("malformed"), struct.error("truncated log")])
     def test_extract_bin_log_data_wraps_parser_errors(self, error: Exception) -> None:
         """Parser failures are exposed through the creator's domain error."""
         with (
@@ -1186,6 +1210,17 @@ class TestBinLogImportHelpers:
         # Assert
         assert result == "my flight log"
         assert ProgramSettings.valid_directory_name(VehicleProjectCreator.vehicle_name_from_bin_log(bin_file)) is True
+
+    def test_vehicle_type_from_template_reads_firmware_metadata(self, tmp_path) -> None:
+        """The creator reads a template vehicle type from vehicle_components.json."""
+        template_dir = tmp_path / "custom_template"
+        template_dir.mkdir()
+        (template_dir / "vehicle_components.json").write_text(
+            '{"Components": {"Flight Controller": {"Firmware": {"Type": "ArduPlane"}}}}',
+            encoding="utf-8",
+        )
+
+        assert VehicleProjectCreator.vehicle_type_from_template(str(template_dir)) == "ArduPlane"
 
     def test_next_import_filename_starts_at_one_when_no_param_files_exist(self, tmp_path) -> None:
         """
