@@ -1,0 +1,21 @@
+"""
+Shared helpers for Tkinter plugin views.
+
+This file is part of ArduPilot Methodic Configurator.
+https://github.com/ArduPilot/MethodicConfigurator
+
+SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas
+
+SPDX-License-Identifier: GPL-3.0-or-later
+"""
+
+
+def refresh_parameter_editor_table(base_window: object) -> None:
+    """Refresh the parameter table using the current window display settings."""
+    parameter_editor_table = getattr(base_window, "parameter_editor_table", None)
+    if parameter_editor_table is None:
+        return
+    show_only_differences_var = getattr(base_window, "show_only_differences", None)
+    show_only_differences = show_only_differences_var.get() if show_only_differences_var else False
+    gui_complexity = getattr(base_window, "gui_complexity", "simple")
+    parameter_editor_table.repopulate_table(show_only_differences=show_only_differences, gui_complexity=gui_complexity)

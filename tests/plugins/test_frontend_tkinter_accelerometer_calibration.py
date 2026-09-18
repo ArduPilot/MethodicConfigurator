@@ -56,8 +56,8 @@ def view_with_model(tk_root, mocker) -> Generator[SimpleNamespace, None, None]:
         parent.destroy()
 
 
-class TestSimpleAndLevelCalibrationButtons:
-    """Test the always-visible simple and level calibration buttons."""
+class TestSimpleCalibrationButton:
+    """Test the always-visible simple calibration button."""
 
     def test_simple_calibration_success_shows_result_dialog(self, view_with_model) -> None:
         """
@@ -91,38 +91,6 @@ class TestSimpleAndLevelCalibrationButtons:
         assert view_with_model.showerror.call_args.args[1] == "not connected"
         view_with_model.showinfo.assert_not_called()
 
-    def test_level_calibration_success_shows_result_dialog(self, view_with_model) -> None:
-        """
-        A successful level calibration informs the user with a result dialog.
-
-        GIVEN: The data model reports a successful level calibration
-        WHEN: The user clicks Level Calibration
-        THEN: An informational result dialog is shown and no error is raised
-        """
-        view_with_model.model.start_level_calibration.return_value = (True, "Level calibration successful")
-
-        view_with_model.view._on_level_calibration()
-
-        view_with_model.showinfo.assert_called_once()
-        assert view_with_model.showinfo.call_args.args[1] == "Level calibration successful"
-        view_with_model.showerror.assert_not_called()
-
-    def test_level_calibration_failure_shows_error_dialog(self, view_with_model) -> None:
-        """
-        A failed level calibration warns the user with an error dialog.
-
-        GIVEN: The data model reports a failed level calibration
-        WHEN: The user clicks Level Calibration
-        THEN: An error dialog is shown and no result dialog is raised
-        """
-        view_with_model.model.start_level_calibration.return_value = (False, "vehicle not level")
-
-        view_with_model.view._on_level_calibration()
-
-        view_with_model.showerror.assert_called_once()
-        assert view_with_model.showerror.call_args.args[1] == "vehicle not level"
-        view_with_model.showinfo.assert_not_called()
-
 
 class TestFullCalibrationStart:
     """Test entering and failing to enter the 6-position wizard."""
@@ -142,7 +110,6 @@ class TestFullCalibrationStart:
 
         assert view._wizard_frame.winfo_manager() == "pack"
         assert str(view._simple_btn.cget("state")) == "disabled"
-        assert str(view._level_btn.cget("state")) == "disabled"
         assert str(view._full_btn.cget("state")) == "disabled"
         assert view._poll_job == "after-id"
         view_with_model.showerror.assert_not_called()
@@ -333,7 +300,6 @@ class TestPluginLifecycle:
             assert view._poll_job == "after-id"
             assert view._wizard_frame.winfo_manager() == "pack"
             assert str(view._simple_btn.cget("state")) == "disabled"
-            assert str(view._level_btn.cget("state")) == "disabled"
             assert str(view._full_btn.cget("state")) == "disabled"
 
             view.on_deactivate()
@@ -343,7 +309,6 @@ class TestPluginLifecycle:
             assert view._imu_poll_job is None
             assert view._wizard_frame.winfo_manager() == ""
             assert str(view._simple_btn.cget("state")) == "normal"
-            assert str(view._level_btn.cget("state")) == "normal"
             assert str(view._full_btn.cget("state")) == "normal"
         finally:
             parent.destroy()
