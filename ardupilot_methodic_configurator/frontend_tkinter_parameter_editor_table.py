@@ -273,11 +273,15 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         hidden_parameter_names: set[str] = (
             configured_hidden_parameter_names if isinstance(configured_hidden_parameter_names, set) else set()
         )
-        parameters = self.parameters if self.parameters is not None else {
-            name: parameter
-            for name, parameter in self.parameter_editor.current_step_parameters.items()
-            if name not in hidden_parameter_names
-        }
+        parameters = (
+            self.parameters
+            if self.parameters is not None
+            else {
+                name: parameter
+                for name, parameter in self.parameter_editor.current_step_parameters.items()
+                if name not in hidden_parameter_names
+            }
+        )
         if show_only_differences:
             # Filter to show only different parameters
             different_params = (

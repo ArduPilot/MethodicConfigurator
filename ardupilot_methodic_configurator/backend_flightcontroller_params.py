@@ -411,11 +411,7 @@ class FlightControllerParams:
         message_length = header_length + payload_length + 2 + (13 if signed else 0)
         if len(raw_message) != message_length or payload_length < 21:
             return None
-        message_id = (
-            raw_message[5]
-            if header_length == 6
-            else raw_message[7] | (raw_message[8] << 8) | (raw_message[9] << 16)
-        )
+        message_id = raw_message[5] if header_length == 6 else raw_message[7] | (raw_message[8] << 8) | (raw_message[9] << 16)
         if message_id != cls.PARAM_ERROR_MESSAGE_ID:
             return None
 
