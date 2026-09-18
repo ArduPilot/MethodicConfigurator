@@ -378,9 +378,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 params_failed += 1
         return FcParameterCopyResult(params_copied, params_unchanged, params_failed)
 
-    def update_parameters_from_fc_values(
-        self, relevant_fc_params: dict[str, float] | None = None
-    ) -> FcParameterCopyResult:
+    def update_parameters_from_fc_values(self, relevant_fc_params: dict[str, float] | None = None) -> FcParameterCopyResult:
         """
         Copy flight-controller values into the active step's new values.
 
