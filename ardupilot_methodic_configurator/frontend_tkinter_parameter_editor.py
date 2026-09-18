@@ -99,7 +99,7 @@ class _PaneConfigurable(Protocol):  # pylint: disable=too-few-public-methods
 class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
     """Container for UI dependencies injected into the parameter editor window."""
 
-    def __init__(  # noqa: PLR0913, PLR0917 # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def __init__(  # noqa: PLR0913 # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         create_progress_window: Callable[..., ProgressWindow],
         ask_yesno: Callable[[str, str], bool],
@@ -264,7 +264,7 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
                 download_progress_window.destroy()
 
 
-class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes
+class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
     """
     Parameter editor and upload graphical user interface (GUI) window.
 
@@ -296,6 +296,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.file_upload_progress_window: ProgressWindow | None = None
         self._param_download_progress_window: ProgressWindow | None = None
         self._log_availability_report_window: LogAvailabilityReportWindow | None = None
+        self._download_bin_logs_window: DownloadBinLogsWindow | None = None
         self._log_report_return_pending: bool = False
         self.inline_component_editor: ComponentEditorWindow | None = None
         self._inline_component_name: str | None = None
@@ -1551,7 +1552,19 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def on_download_bin_logs_click(self) -> None:
         """Open the modal window for browsing and downloading FC log files."""
-        DownloadBinLogsWindow(self.root, self.parameter_editor, self.ui)
+        existing_window = getattr(self, "_download_bin_logs_window", None)
+        if existing_window is not None:
+            try:
+                if existing_window.root.winfo_exists():
+                    existing_window.root.lift()
+                    existing_window.root.focus_force()
+                    return
+            except tk.TclError:
+                self._download_bin_logs_window = None
+
+        download_window = DownloadBinLogsWindow(self.root, self.parameter_editor, self.ui)
+        self._download_bin_logs_window = download_window
+        download_window.set_closed_callback(lambda: setattr(self, "_download_bin_logs_window", None))
 
     def on_download_last_flight_log_click(self) -> None:
         """Handle the download last flight log button click."""

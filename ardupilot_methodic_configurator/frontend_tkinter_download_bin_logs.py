@@ -28,7 +28,10 @@ from typing import TYPE_CHECKING, Literal, Protocol, cast
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
-from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerLogFile
+from ardupilot_methodic_configurator.backend_flightcontroller_files import (
+    FlightControllerLogFile,
+    is_safe_local_entry_name,
+)
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.formatting import format_filesize
@@ -78,8 +81,21 @@ class RemoteDownloadPlan:
     failed: tuple[str, ...] = ()
 
 
+@dataclass(frozen=True)
+class LocalUploadPlan:
+    """Preflight plan for a recursive local upload."""
+
+    directories: tuple[str, ...]
+    files: tuple[tuple[Path, str, int], ...]
+    failed: tuple[str, ...] = ()
+
+
 class _TransferCancelledError(Exception):
     """Raised by a transfer progress callback when the user cancels."""
+
+
+class _RemoteTaskCancelledError(Exception):
+    """Raised internally when a remote listing or preflight task is cancelled."""
 
 
 class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, too-many-instance-attributes
@@ -88,9 +104,14 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
     """Browse remote and local files and transfer or manage selected entries."""
 
     DEFAULT_REMOTE_DIRECTORY = "/APM/LOGS/"
-    sort_column: str
+    MAX_SUMMARY_ENTRIES = 20
+    TREE_COLUMNS: tuple[tuple[str, str, Literal["w", "e"], int], ...] = (
+        ("name", _("Name"), "w", 170),
+        ("type", _("Type"), "w", 80),
+        ("size", _("Size"), "e", 80),
+        ("modified", _("Modified"), "w", 145),
+    )
     download_button: ttk.Button
-    empty_state_label: ttk.Label
 
     def __init__(
         self,
@@ -103,7 +124,6 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
         self.parameter_editor = parameter_editor
         self.ui = ui_services
         self.remote_entries: list[FlightControllerLogFile] = []
-        self.remote_files: list[FlightControllerLogFile] = []  # Compatibility with the original file-only tests/API.
         self.local_entries: list[LocalFileEntry] = []
         self.remote_sort_column = ""
         self.local_sort_column = ""
@@ -120,7 +140,10 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
         self._operation_active = False
         self._remote_task_queue: queue.Queue[tuple[object, Exception | None]] = queue.Queue()
         self._remote_task_thread: Thread | None = None
+        self._remote_task_cancel_event: Event | None = None
+        self._remote_task_all_controls = False
         self._remote_task_completion: Callable[[object, Exception | None], None] | None = None
+        self._closed_callback: Callable[[], None] | None = None
         self.remote_directory_var = tk.StringVar(master=self.root, value=self.DEFAULT_REMOTE_DIRECTORY)
         self.local_directory_var = tk.StringVar(
             master=self.root,
@@ -142,6 +165,10 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
 
         self._build_widgets()
         self.root.after_idle(self._refresh_initial_panels)
+
+    def set_closed_callback(self, callback: Callable[[], None] | None) -> None:
+        """Set a callback invoked after the browser window is closed."""
+        self._closed_callback = callback
 
     def _refresh_initial_panels(self) -> None:
         """Populate both panels after Tk has had a chance to render the window."""
@@ -246,8 +273,9 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
 
         self.remote_directory_label = ttk.Label(parent, text="")
         self.remote_directory_label.pack(side=tk.TOP, anchor=tk.W, pady=(0, 4))
+        self.remote_empty_state_label = ttk.Label(parent, text="")
+        self.remote_empty_state_label.pack(side=tk.TOP, anchor=tk.W, pady=(0, 4))
         self.remote_tree = self._create_tree(parent, remote=True)
-        self.tree = self.remote_tree  # Compatibility alias retained for existing callers/tests.
 
     def _build_local_panel(self, parent: ttk.Frame) -> None:
         """Create the local directory selector and local Treeview."""
@@ -280,6 +308,8 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
 
         self.local_directory_label = ttk.Label(parent, text="")
         self.local_directory_label.pack(side=tk.TOP, anchor=tk.W, pady=(0, 4))
+        self.local_empty_state_label = ttk.Label(parent, text="")
+        self.local_empty_state_label.pack(side=tk.TOP, anchor=tk.W, pady=(0, 4))
         self.local_tree = self._create_tree(parent, remote=False)
 
     def _create_tree(self, parent: ttk.Frame, *, remote: bool) -> ttk.Treeview:
@@ -291,23 +321,7 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
             selectmode="extended",
         )
         sort_prefix = "remote" if remote else "local"
-        columns: tuple[tuple[str, str, Literal["w", "e"], int], ...] = (
-            ("name", _("Name"), "w", 170),
-            ("type", _("Type"), "w", 80),
-            ("size", _("Size"), "e", 80),
-            ("modified", _("Modified"), "w", 145),
-        )
-        for column, title, anchor, width in columns:
-
-            def sort_heading(col: str = column, prefix: str = sort_prefix) -> None:
-                self._on_sort_heading(prefix, col)
-
-            tree.heading(
-                column,
-                text=title,
-                command=sort_heading,
-            )
-            tree.column(column, anchor=anchor, width=width, stretch=column == "name")
+        self._configure_tree_columns(tree, sort_prefix)
         tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         tree.bind("<Double-1>", self._on_remote_double_click if remote else self._on_local_double_click)
         tree.bind("<Control-a>", self._on_select_all_key)
@@ -341,6 +355,16 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
         tree.configure(yscrollcommand=scrollbar.set)
         return tree
 
+    def _configure_tree_columns(self, tree: ttk.Treeview, sort_prefix: str) -> None:
+        """Configure headings and column widths for one panel."""
+        for column, title, anchor, width in self.TREE_COLUMNS:
+
+            def sort_heading(col: str = column, prefix: str = sort_prefix) -> None:
+                self._on_sort_heading(prefix, col)
+
+            tree.heading(column, text=title, command=sort_heading)
+            tree.column(column, anchor=anchor, width=width, stretch=column == "name")
+
     def refresh_remote_panel(self, fallback_directories: tuple[str, ...] = ()) -> None:
         """Refresh the remote panel, including directory entries."""
         if getattr(self, "_operation_active", False) or getattr(self, "_remote_task_thread", None) is not None:
@@ -349,12 +373,20 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
         if not remote_directory.strip():
             self.ui.show_error(_("Remote directory error"), _("The remote destination must not be empty."))
             return
+        remote_empty_state_label = getattr(self, "remote_empty_state_label", None)
+        if remote_empty_state_label is not None:
+            remote_empty_state_label.configure(text="")
 
         def complete(result: object, error: Exception | None) -> None:
             if isinstance(error, FileNotFoundError) and fallback_directories:
                 fallback_directory, *remaining_directories = fallback_directories
                 self.remote_directory_var.set(fallback_directory)
                 self.refresh_remote_panel(tuple(remaining_directories))
+                return
+            self.remote_directory_label.configure(
+                text=_("Remote files in {remote_directory}").format(remote_directory=remote_directory)
+            )
+            if isinstance(error, _RemoteTaskCancelledError):
                 return
             if error is not None:
                 self.ui.show_error(_("Remote directory error"), str(error))
@@ -367,55 +399,19 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
             self._populate_remote_tree()
             self._select_pending_entry("remote")
             self._update_parent_navigation_buttons()
-            self.remote_directory_label.configure(
-                text=_("Remote files in {remote_directory}").format(remote_directory=remote_directory)
-            )
 
         self.remote_directory_label.configure(text=_("Loading remote directory…"))
         self._start_remote_task(
-            lambda: self.parameter_editor.get_remote_files(remote_directory),
-            complete,
-        )
-
-    def refresh_remote_files(self) -> None:
-        """Compatibility method that refreshes the original file-only listing."""
-        if getattr(self, "_operation_active", False) or getattr(self, "_remote_task_thread", None) is not None:
-            return
-        remote_directory = self.remote_directory_var.get()
-        if not remote_directory.strip():
-            self.ui.show_error(_("Remote directory error"), _("The remote destination must not be empty."))
-            return
-
-        def complete(result: object, error: Exception | None) -> None:
-            if error is not None:
-                self.remote_files = []
-                self.ui.show_error(_("Remote directory error"), str(error))
-                return
-            files = cast("list[FlightControllerLogFile] | None", result)
-            if files is None:
-                self.remote_files = []
-                self.ui.show_error(_("Remote directory error"), _("Could not list the remote directory."))
-                return
-            self.remote_files = files
-            self.remote_entries = list(self.remote_files)
-            if hasattr(self, "remote_tree"):
-                self._populate_remote_tree()
-            else:
-                self._populate_tree()
-            self._update_parent_navigation_buttons()
-            self.remote_directory_label.configure(
-                text=_("Files in {remote_directory}").format(remote_directory=remote_directory)
-            )
-
-        self.remote_directory_label.configure(text=_("Loading remote directory…"))
-        self._start_remote_task(
-            lambda: self.parameter_editor.get_bin_log_files(remote_directory),
+            lambda _cancel_event: self.parameter_editor.get_remote_files(remote_directory),
             complete,
         )
 
     def refresh_local_panel(self) -> None:
         """Refresh the local panel from the selected directory."""
         directory = Path(self.local_directory_var.get()).expanduser()
+        local_empty_state_label = getattr(self, "local_empty_state_label", None)
+        if local_empty_state_label is not None:
+            local_empty_state_label.configure(text="")
         if not directory.is_dir():
             self.ui.show_error(_("Local directory error"), _("The selected local directory does not exist."))
             return
@@ -500,7 +496,7 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
                     self._format_modified_time(entry.modified_at, unsupported_when_missing=True),
                 ),
             )
-        self._update_empty_state(self.remote_entries, self.remote_directory_label)
+        self._update_empty_state(self.remote_entries, self.remote_empty_state_label)
         self._update_transfer_buttons()
 
     def _populate_local_tree(self) -> None:
@@ -522,19 +518,8 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
                     self._format_modified_time(entry.modified_at),
                 ),
             )
-        self._update_empty_state(self.local_entries, self.local_directory_label)
+        self._update_empty_state(self.local_entries, self.local_empty_state_label)
         self._update_transfer_buttons()
-
-    def _populate_tree(self) -> None:
-        """Compatibility population method for the original file-only Treeview."""
-        if hasattr(self, "remote_tree"):
-            self._populate_remote_tree()
-            return
-        for item_id in self.tree.get_children():
-            self.tree.delete(item_id)
-        for index, remote_file in enumerate(self.remote_files):
-            self.tree.insert("", tk.END, iid=str(index), values=(remote_file.name, format_filesize(remote_file.size_bytes)))
-        self._on_tree_selection_change()
 
     def _select_entry_after_refresh(self, panel: str, entry_name: str) -> None:
         """Select an entry by name after the next successful panel refresh."""
@@ -574,8 +559,7 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
     @staticmethod
     def _update_empty_state(entries: Sequence[FlightControllerLogFile | LocalFileEntry], label: ttk.Label) -> None:
         """Show a simple empty state when a panel contains no rows."""
-        if not entries:
-            label.configure(text=_("No entries found in this directory."))
+        label.configure(text=_("No entries found in this directory.") if not entries else "")
 
     @staticmethod
     def _format_modified_time(timestamp: float | None, *, unsupported_when_missing: bool = False) -> str:
@@ -675,10 +659,7 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
 
     def _on_remote_directory_return(self, _event: tk.Event | None = None) -> str:
         """Refresh the remote listing when Enter is pressed in its entry."""
-        if hasattr(self, "remote_directory_var"):
-            self.refresh_remote_panel()
-        else:
-            self.refresh_remote_files()
+        self.refresh_remote_panel()
         return "break"
 
     def _on_local_directory_return(self, _event: tk.Event | None = None) -> str:
@@ -903,9 +884,6 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
 
     def _on_select_all_key(self, _event: tk.Event | None = None) -> str:
         """Select all entries in the focused panel, except parent navigation."""
-        if not hasattr(self, "remote_tree"):
-            self.select_all_files()
-            return "break"
         tree = getattr(_event, "widget", None)
         if tree not in {self.remote_tree, self.local_tree}:
             tree = self.remote_tree
@@ -924,23 +902,12 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
 
     def select_all_remote_entries(self) -> None:
         """Select all remote entries except the parent-navigation row."""
-        if hasattr(self, "remote_tree"):
-            self._select_all_tree_entries(self.remote_tree)
-            return
-        self.select_all_files()
+        self._select_all_tree_entries(self.remote_tree)
 
     def select_all_local_entries(self) -> None:
         """Select all local entries except the parent-navigation row."""
         if hasattr(self, "local_tree"):
             self._select_all_tree_entries(self.local_tree)
-
-    def select_all_files(self) -> None:
-        """Select all remote files for compatibility with the original window API."""
-        tree = self.tree
-        entries = self.remote_files
-        item_ids = [str(index) for index, entry in enumerate(entries) if entry.name != ".."]
-        tree.selection_set(item_ids)
-        self._on_tree_selection_change()
 
     def _on_remote_double_click(self, event: tk.Event) -> None:
         """Open a remote directory on double click."""
@@ -983,7 +950,10 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
         try:
             menu.tk_popup(event.x_root, event.y_root)
         finally:
-            menu.grab_release()
+            try:
+                menu.grab_release()
+            finally:
+                menu.destroy()
         return "break"
 
     @staticmethod
@@ -1018,7 +988,7 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
     @staticmethod
     def _safe_name(name: str) -> bool:
         """Return whether a user-provided rename is one safe path component."""
-        return bool(name) and name not in {".", ".."} and "/" not in name and "\\" not in name
+        return is_safe_local_entry_name(name)
 
     @staticmethod
     def _local_path_key(path: Path) -> str:
@@ -1031,6 +1001,15 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
         parent_key = cls._local_path_key(parent).rstrip("\\/")
         child_key = cls._local_path_key(child)
         return child_key.startswith((f"{parent_key}\\", f"{parent_key}/"))
+
+    @staticmethod
+    def _local_target_is_contained(local_directory: Path, target: Path) -> bool:
+        """Return whether a target remains below the chosen directory after symlink resolution."""
+        try:
+            target.resolve(strict=False).relative_to(local_directory.resolve(strict=False))
+        except (OSError, RuntimeError, ValueError):
+            return False
+        return True
 
     @staticmethod
     def _set_widget_state(widget: ttk.Widget, state: str) -> None:
@@ -1065,8 +1044,10 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
 
     def _start_remote_task(
         self,
-        task: Callable[[], object],
+        task: Callable[[Event], object],
         completion: Callable[[object, Exception | None], None],
+        *,
+        disable_all_controls: bool = False,
     ) -> bool:
         """Run blocking remote listing/planning work away from Tk's event loop."""
         if getattr(self, "_operation_active", False) or getattr(self, "_remote_task_thread", None) is not None:
@@ -1076,11 +1057,17 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
             remote_task_queue = queue.Queue()
             self._remote_task_queue = remote_task_queue
         self._remote_task_completion = completion
-        self._set_remote_controls_state("disabled")
+        self._remote_task_cancel_event = Event()
+        remote_cancel_event = self._remote_task_cancel_event
+        self._remote_task_all_controls = disable_all_controls
+        if disable_all_controls:
+            self._set_operation_controls_state("disabled")
+        else:
+            self._set_remote_controls_state("disabled")
 
         def run() -> None:
             try:
-                result = task()
+                result = task(remote_cancel_event)
                 error = None
             except Exception as exception:  # pylint: disable=broad-exception-caught
                 result = None
@@ -1092,7 +1079,12 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
             run()
             result, error = remote_task_queue.get()
             self._remote_task_completion = None
-            self._set_remote_controls_state("normal")
+            self._remote_task_cancel_event = None
+            if disable_all_controls:
+                self._set_operation_controls_state("normal")
+            else:
+                self._set_remote_controls_state("normal")
+            self._remote_task_all_controls = False
             completion(result, error)
             return True
 
@@ -1113,7 +1105,19 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
         self._remote_task_thread = None
         completion = self._remote_task_completion
         self._remote_task_completion = None
-        self._set_remote_controls_state("normal")
+        cancel_event = self._remote_task_cancel_event
+        self._remote_task_cancel_event = None
+        if self._remote_task_all_controls:
+            self._set_operation_controls_state("normal")
+        else:
+            self._set_remote_controls_state("normal")
+        # A user-initiated cancellation is the final outcome even if the
+        # blocking MAVFTP call subsequently reports a transport error.
+        if cancel_event is not None and cancel_event.is_set():
+            error = _RemoteTaskCancelledError()
+        self._remote_task_all_controls = False
+        if getattr(self, "cancel_button", None) is not None:
+            self.cancel_button.configure(text=_("Close"), state="normal")
         if completion is not None:
             completion(result, error)
 
@@ -1125,6 +1129,10 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
     def _on_cancel_or_close(self) -> None:
         """Cancel an active transfer, or close the browser when idle."""
         if getattr(self, "_remote_task_thread", None) is not None:
+            cancel_event = getattr(self, "_remote_task_cancel_event", None)
+            if cancel_event is not None:
+                cancel_event.set()
+            self.cancel_button.configure(text=_("Cancelling listing…"), state="disabled")
             return
         cancel_event = getattr(self, "_operation_cancel_event", None)
         if cancel_event is not None:
@@ -1132,6 +1140,8 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
             self.cancel_button.configure(text=_("Cancelling…"), state="disabled")
             return
         self.root.destroy()
+        if self._closed_callback is not None:
+            self._closed_callback()
 
     def run(self) -> None:
         """Start the standalone browser event loop."""
@@ -1217,6 +1227,10 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
         lines.extend(_("Failed: %s") % name for name in failed)
         if cancelled:
             lines.append(_("Cancelled by user."))
+        if len(lines) > self.MAX_SUMMARY_ENTRIES:
+            hidden_count = len(lines) - self.MAX_SUMMARY_ENTRIES
+            lines = lines[: self.MAX_SUMMARY_ENTRIES]
+            lines.append(_("… %s more entries omitted.") % hidden_count)
         (self.ui.show_error if failed else self.ui.show_info)(title, "\n".join(lines) or _("No entries processed."))
 
     @staticmethod
@@ -1233,13 +1247,17 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
 
         return callback
 
-    def _remote_download_plan(
+    # pylint: disable=too-many-branches,too-many-return-statements
+    def _remote_download_plan(  # noqa: PLR0911
         self,
         entry: FlightControllerLogFile,
         local_target: Path,
         failures: list[str] | None = None,
+        cancel_event: Event | None = None,
     ) -> tuple[list[Path], list[tuple[FlightControllerLogFile, Path]]]:
         """Recursively expand one remote entry into local directories and files."""
+        if cancel_event is not None and cancel_event.is_set():
+            return [], []
         if not entry.is_directory:
             if not self._safe_remote_entry_name(entry.name):
                 if failures is not None:
@@ -1259,13 +1277,20 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
                 failures.append(entry.remote_path)
             return [], []
         for child in children:
+            if cancel_event is not None and cancel_event.is_set():
+                return [], []
             if child.name == "..":
                 continue
             if not self._safe_remote_entry_name(child.name):
                 if failures is not None:
                     failures.append(child.remote_path)
                 continue
-            child_dirs, child_files = self._remote_download_plan(child, local_target / child.name, failures)
+            child_dirs, child_files = self._remote_download_plan(
+                child,
+                local_target / child.name,
+                failures,
+                cancel_event,
+            )
             directories.extend(child_dirs)
             files.extend(child_files)
         return directories, files
@@ -1274,16 +1299,24 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
         self,
         selected: Sequence[FlightControllerLogFile],
         local_directory: Path,
+        cancel_event: Event | None = None,
     ) -> RemoteDownloadPlan:
         """Build a recursive remote download plan without touching Tk widgets."""
         directories: list[Path] = []
         files: list[tuple[FlightControllerLogFile, Path]] = []
         failed: list[str] = []
         for entry in selected:
+            if cancel_event is not None and cancel_event.is_set():
+                break
             if not self._safe_remote_entry_name(entry.name):
                 failed.append(entry.remote_path)
                 continue
-            child_dirs, child_files = self._remote_download_plan(entry, local_directory / entry.name, failed)
+            child_dirs, child_files = self._remote_download_plan(
+                entry,
+                local_directory / entry.name,
+                failed,
+                cancel_event,
+            )
             directories.extend(child_dirs)
             files.extend(child_files)
         return RemoteDownloadPlan(tuple(directories), tuple(files), tuple(failed))
@@ -1319,9 +1352,11 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
                 existing_conflicts.append(target)
         return duplicate_targets, existing_conflicts
 
+    # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
     def _download_remote_plan_worker(
         self,
         plan: RemoteDownloadPlan,
+        local_directory: Path,
         total: int,
         report_progress: Callable[[int, int], None],
         cancel_event: Event,
@@ -1334,7 +1369,9 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
             if cancel_event.is_set():
                 return succeeded, failed, True
             try:
-                if directory.is_symlink() or (directory.exists() and not directory.is_dir()):
+                if not self._local_target_is_contained(local_directory, directory) or (
+                    directory.is_symlink() or (directory.exists() and not directory.is_dir())
+                ):
                     failed.append(str(directory))
                     continue
                 directory.mkdir(parents=True, exist_ok=True)
@@ -1345,7 +1382,9 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
             if cancel_event.is_set():
                 return succeeded, failed, True
             units = max(entry.size_bytes, 1)
-            if target.is_symlink() or (target.parent.exists() and not target.parent.is_dir()):
+            if not self._local_target_is_contained(local_directory, target) or (
+                target.is_symlink() or (target.parent.exists() and not target.parent.is_dir())
+            ):
                 failed.append(entry.remote_path)
                 completed += units
                 report_progress(completed, total)
@@ -1366,8 +1405,6 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
             )
             try:
                 success = self.parameter_editor.download_remote_file(entry.remote_path, str(target), callback)
-            except _TransferCancelledError:
-                return succeeded, failed, True
             except Exception:  # pylint: disable=broad-exception-caught
                 success = False
             if cancel_event.is_set():
@@ -1393,6 +1430,9 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
             return
 
         def complete_plan(result: object, error: Exception | None) -> None:
+            if isinstance(error, _RemoteTaskCancelledError):
+                self._show_summary(_("Download summary"), [], [], cancelled=True)
+                return
             if error is not None:
                 self.ui.show_error(_("Download error"), str(error))
                 return
@@ -1421,7 +1461,13 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
                 report_progress: Callable[[int, int], None],
                 cancel_event: Event,
             ) -> tuple[list[str], list[str], bool]:
-                return self._download_remote_plan_worker(result, total, report_progress, cancel_event)
+                return self._download_remote_plan_worker(
+                    result,
+                    local_directory,
+                    total,
+                    report_progress,
+                    cancel_event,
+                )
 
             def completion(succeeded: list[str], worker_failed: list[str], cancelled: bool) -> None:
                 self._show_summary(_("Download summary"), succeeded, worker_failed, cancelled)
@@ -1435,12 +1481,20 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
             )
 
         self._start_remote_task(
-            lambda: self._build_remote_download_plan(selected, local_directory),
+            lambda cancel_event: self._build_remote_download_plan(selected, local_directory, cancel_event),
             complete_plan,
         )
 
-    def _local_upload_plan(self, entry: LocalFileEntry, remote_target: str) -> tuple[list[str], list[tuple[Path, str, int]]]:
+    def _local_upload_plan(
+        self,
+        entry: LocalFileEntry,
+        remote_target: str,
+        failures: list[str] | None = None,
+        cancel_event: Event | None = None,
+    ) -> tuple[list[str], list[tuple[Path, str, int]]]:
         """Recursively expand one local entry into remote directories and files."""
+        if cancel_event is not None and cancel_event.is_set():
+            return [], []
         if not entry.is_directory:
             return [], [(entry.path, remote_target, entry.size_bytes)]
         directories = [remote_target]
@@ -1448,23 +1502,52 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
         try:
             children = sorted(entry.path.iterdir(), key=lambda path: path.name.casefold())
         except OSError:
-            return directories, files
+            if failures is not None:
+                failures.append(remote_target)
+            # Do not create an empty remote directory when the corresponding
+            # local directory could not be inspected.
+            return [], []
         for child in children:
+            if cancel_event is not None and cancel_event.is_set():
+                return directories, files
             if child.is_symlink():
                 continue
             try:
                 is_directory = child.is_dir()
                 size_bytes = 0 if is_directory else child.stat().st_size
             except OSError:
+                if failures is not None:
+                    failures.append(posixpath.join(remote_target.rstrip("/"), child.name))
                 continue
             child_entry = LocalFileEntry(child.name, child, size_bytes, is_directory)
             child_dirs, child_files = self._local_upload_plan(
                 child_entry,
                 posixpath.join(remote_target.rstrip("/"), child.name),
+                failures,
+                cancel_event,
             )
             directories.extend(child_dirs)
             files.extend(child_files)
         return directories, files
+
+    def _build_local_upload_plan(
+        self,
+        selected: Sequence[LocalFileEntry],
+        remote_directory: str,
+        cancel_event: Event | None = None,
+    ) -> LocalUploadPlan:
+        """Build a recursive local upload plan without touching Tk widgets."""
+        directories: list[str] = []
+        files: list[tuple[Path, str, int]] = []
+        failed: list[str] = []
+        for entry in selected:
+            if cancel_event is not None and cancel_event.is_set():
+                break
+            target = posixpath.join(remote_directory, entry.name)
+            child_dirs, child_files = self._local_upload_plan(entry, target, failed, cancel_event)
+            directories.extend(child_dirs)
+            files.extend(child_files)
+        return LocalUploadPlan(tuple(directories), tuple(files), tuple(failed))
 
     def upload_selected_local_entries(self) -> None:
         """Recursively upload selected local entries to the remote panel directory."""
@@ -1482,70 +1565,80 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
             _("Uploading may overwrite remote files. Continue?"),
         ):
             return
-        directories: list[str] = []
-        files: list[tuple[Path, str, int]] = []
-        for entry in selected:
-            target = posixpath.join(remote_directory, entry.name)
-            child_dirs, child_files = self._local_upload_plan(entry, target)
-            directories.extend(child_dirs)
-            files.extend(child_files)
-        total = max(sum(max(size, 1) for _path, _remote, size in files), 1)
+        def complete_plan(result: object, error: Exception | None) -> None:
+            if isinstance(error, _RemoteTaskCancelledError):
+                self._show_summary(_("Upload summary"), [], [], cancelled=True)
+                return
+            if error is not None:
+                self.ui.show_error(_("Upload error"), str(error))
+                return
+            if not isinstance(result, LocalUploadPlan):
+                self.ui.show_error(_("Upload error"), _("Could not prepare the selected local entries."))
+                return
+            if not result.directories and not result.files:
+                self._show_summary(_("Upload summary"), [], list(result.failed))
+                return
+            total = max(sum(max(size, 1) for _path, _remote, size in result.files), 1)
 
-        def worker(
-            report_progress: Callable[[int, int], None],
-            cancel_event: Event,
-        ) -> tuple[list[str], list[str], bool]:
-            completed = 0
-            succeeded: list[str] = []
-            failed: list[str] = []
-            for directory in directories:
-                if cancel_event.is_set():
-                    return succeeded, failed, True
-                if not self._call_remote_bool(self.parameter_editor.make_remote_directory, directory):
-                    failed.append(directory)
-            for local_path, remote_path, size in files:
-                if cancel_event.is_set():
-                    return succeeded, failed, True
-                units = max(size, 1)
+            def worker(
+                report_progress: Callable[[int, int], None],
+                cancel_event: Event,
+            ) -> tuple[list[str], list[str], bool]:
+                completed = 0
+                succeeded: list[str] = []
+                failed = list(result.failed)
+                for directory in result.directories:
+                    if cancel_event.is_set():
+                        return succeeded, failed, True
+                    if not self._call_remote_bool(self.parameter_editor.make_remote_directory, directory):
+                        failed.append(directory)
+                for local_path, remote_path, size in result.files:
+                    if cancel_event.is_set():
+                        return succeeded, failed, True
+                    units = max(size, 1)
 
-                def report_file_progress(
-                    current: int,
-                    maximum: int,
-                    offset: int = completed,
-                    file_size: int = units,
-                ) -> None:
-                    progress = min(total, int(offset + file_size * (current / maximum if maximum else 0.0)))
-                    report_progress(progress, total)
+                    def report_file_progress(
+                        current: int,
+                        maximum: int,
+                        offset: int = completed,
+                        file_size: int = units,
+                    ) -> None:
+                        progress = min(total, int(offset + file_size * (current / maximum if maximum else 0.0)))
+                        report_progress(progress, total)
 
-                callback = self._cancellable_progress(
-                    report_file_progress,
-                    cancel_event,
-                )
-                try:
-                    success = self.parameter_editor.upload_file_to_fc(str(local_path), remote_path, callback)
-                except _TransferCancelledError:
-                    return succeeded, failed, True
-                except Exception:  # pylint: disable=broad-exception-caught
-                    success = False
-                if cancel_event.is_set():
-                    return succeeded, failed, True
-                if success:
-                    succeeded.append(remote_path)
-                else:
-                    failed.append(remote_path)
-                completed += units
-                report_progress(completed, total)
-            return succeeded, failed, False
+                    callback = self._cancellable_progress(
+                        report_file_progress,
+                        cancel_event,
+                    )
+                    try:
+                        success = self.parameter_editor.upload_file_to_fc(str(local_path), remote_path, callback)
+                    except Exception:  # pylint: disable=broad-exception-caught
+                        success = False
+                    if cancel_event.is_set():
+                        return succeeded, failed, True
+                    if success:
+                        succeeded.append(remote_path)
+                    else:
+                        failed.append(remote_path)
+                    completed += units
+                    report_progress(completed, total)
+                return succeeded, failed, False
 
-        def completion(succeeded: list[str], failed: list[str], cancelled: bool) -> None:
-            self._show_summary(_("Upload summary"), succeeded, failed, cancelled)
-            self.refresh_remote_panel()
+            def completion(succeeded: list[str], failed: list[str], cancelled: bool) -> None:
+                self._show_summary(_("Upload summary"), succeeded, failed, cancelled)
+                self.refresh_remote_panel()
 
-        self._start_background_operation(
-            _("Uploading selected entries"),
-            _("Uploaded {} of {} bytes"),
-            worker,
-            completion,
+            self._start_background_operation(
+                _("Uploading selected entries"),
+                _("Uploaded {} of {} bytes"),
+                worker,
+                completion,
+            )
+
+        self._start_remote_task(
+            lambda cancel_event: self._build_local_upload_plan(selected, remote_directory, cancel_event),
+            complete_plan,
+            disable_all_controls=True,
         )
 
     def _delete_remote_entry(self, entry: FlightControllerLogFile, succeeded: list[str], failed: list[str]) -> None:
@@ -1725,48 +1818,6 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
         self.ui.show_info(_("Rename summary"), _("Renamed %(old)s to %(new)s.") % {"old": entry.name, "new": new_name})
         self.refresh_local_panel()
 
-    # Compatibility workflow retained for existing callers of the original single/multi download UI.
-    def download_selected_files(self) -> None:
-        """Download selected regular files using the original destination dialogs."""
-        selected_files = self._selected_files()
-        if not selected_files:
-            return
-        if len(selected_files) == 1:
-            destination = self.ui.asksaveasfilename(
-                title=_("Save flight-controller file as"),
-                initialfile=selected_files[0].name,
-                filetypes=[(_("All files"), "*.*"), (_("Binary log files"), "*.bin")],
-            )
-            destination_is_directory = False
-        else:
-            destination = self.ui.askdirectory(title=_("Select local destination directory"))
-            destination_is_directory = True
-        if not destination:
-            return
-        progress_window = self._progress_window(_("Downloading flight-controller file(s)"), _("Downloaded {} of {} bytes"))
-        try:
-            self.parameter_editor.download_selected_bin_logs_workflow(
-                selected_files=selected_files,
-                destination=destination,
-                destination_is_directory=destination_is_directory,
-                ask_overwrite=self.ui.ask_yesno,
-                show_error=self.ui.show_error,
-                show_info=self.ui.show_info,
-                progress_callback=progress_window.update_progress_bar,
-            )
-        finally:
-            progress_window.destroy()
-
-    def _selected_files(self) -> list[FlightControllerLogFile]:
-        """Return selected regular files for the compatibility workflow."""
-        tree = self.tree
-        selected: list[FlightControllerLogFile] = []
-        for item_id in tree.selection():
-            entry = self._entry_from_tree(self.remote_files, item_id)
-            if isinstance(entry, FlightControllerLogFile) and not entry.is_directory:
-                selected.append(entry)
-        return selected
-
     @staticmethod
     def _delete_local_entry(entry: LocalFileEntry) -> bool:
         """Delete one local entry and return whether it succeeded."""
@@ -1779,38 +1830,21 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
             return False
         return True
 
-    def _on_tree_selection_change(self, _event: tk.Event | None = None) -> None:
-        """Retained for compatibility with the original remote-only window."""
-        self._update_transfer_buttons()
-
     def _update_transfer_buttons(self) -> None:
         """Enable each transfer button only when its panel has selectable entries."""
         download_button = getattr(self, "download_button", None)
         if download_button is not None:
-            if hasattr(self, "remote_tree"):
-                selected_remote = [entry for entry in self._selected_remote_entries() if entry.name != ".."]
-            else:
-                selected_remote = self._selected_files() if hasattr(self, "tree") else []
+            selected_remote = [entry for entry in self._selected_remote_entries() if entry.name != ".."]
             download_button.configure(state="normal" if selected_remote else "disabled")
         upload_button = getattr(self, "upload_button", None)
         if upload_button is not None and hasattr(self, "local_tree"):
             selected_local = [entry for entry in self._selected_local_entries() if entry.name != ".."]
             upload_button.configure(state="normal" if selected_local else "disabled")
 
-    def _sort_by_column(self, column: str, reverse: bool) -> None:
-        """Retained compatibility wrapper for the original remote-only sorter."""
-        if hasattr(self, "remote_tree") and hasattr(self, "remote_entries"):
-            self._sort_panel_by_column("remote", column, reverse)
-            return
-        rows = [(self._panel_sort_key(self.remote_files, item_id, column), item_id) for item_id in self.tree.get_children("")]
-        rows.sort(key=lambda row: row[0], reverse=reverse)
-        for position, (_key, item_id) in enumerate(rows):
-            self.tree.move(item_id, "", position)
-
     @staticmethod
     def _safe_remote_entry_name(name: str) -> bool:
         """Return whether a remote listing name is safe as one path component."""
-        return bool(name) and name not in {".", ".."} and "/" not in name and "\\" not in name
+        return is_safe_local_entry_name(name)
 
     @staticmethod
     def _safe_remote_directory(directory: str) -> bool:
@@ -1850,8 +1884,6 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
             callback = self._cancellable_progress(report_progress, cancel_event)
             try:
                 success = self.parameter_editor.download_last_flight_log(filename, callback)
-            except _TransferCancelledError:
-                return [], [], True
             except Exception:  # pylint: disable=broad-exception-caught
                 success = False
             if cancel_event.is_set():
@@ -1926,7 +1958,10 @@ def main() -> None:  # pragma: no cover
         args.save_component_to_system_templates,
     )
     parameter_editor = ParameterEditor("", flight_controller, filesystem)
-    flight_controller.connect(args.device)
+    connection_error = flight_controller.connect(args.device)
+    if connection_error:
+        show_error_popup(_("Flight-controller connection error"), connection_error)
+        return
 
     window = DownloadBinLogsWindow(None, parameter_editor, _standalone_ui_services())
     window.run()

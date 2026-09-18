@@ -68,7 +68,6 @@ download_remote_file(remote_path, local_filename, progress_callback)
 make_remote_directory(remote_directory)
 delete_remote_path(remote_path, is_directory=False)
 rename_remote_path(remote_path, new_remote_path)
-download_selected_bin_logs_workflow(...)
 download_last_flight_log_workflow(...)
 ```
 
@@ -122,18 +121,23 @@ The frontend and backend enforce the following boundaries:
 - remote destinations are normalized absolute POSIX paths;
 - parent segments are rejected from remote paths;
 - names supplied for create and rename operations must be one path component;
-- malformed remote listing names are skipped;
+- malformed remote listing names are skipped, including names unsafe on a
+  supported local filesystem;
 - local symbolic links are excluded from recursive transfer planning; and
+- resolved local download targets must remain under the selected directory,
+  preventing symbolic-link ancestors from redirecting writes;
 - local and remote directory deletion is non-recursive.
 
 Paths are passed as MAVFTP values rather than through a shell command.
 
 ## Test coverage
 
-`tests/test_download_bin_logs.py` covers panel population, metadata display,
+`tests/test_download_bin_logs.py` and
+`tests/test_download_bin_logs_adversarial.py` cover real-Tk window
+construction, thread/queue polling, panel population, metadata display,
 sorting, navigation, selection, context-menu directory creation, recursive
 transfer planning/execution, deletion, rename, cancellation-related transfer
-behavior, and compatibility workflows.
+behavior, and path-boundary checks.
 
 `tests/test_backend_mavftp.py` and
 `tests/test_backend_flightcontroller_files.py` cover MAVFTP and backend
@@ -142,7 +146,7 @@ behavior, including listing and transfer details.
 Run the focused frontend tests with:
 
 ```text
-.venv\Scripts\python.exe -m pytest tests/test_download_bin_logs.py -q -p no:cacheprovider
+python -m pytest tests/test_download_bin_logs.py -q -p no:cacheprovider
 ```
 
 ## Deferred technical work

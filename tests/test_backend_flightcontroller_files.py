@@ -15,12 +15,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Callable
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerFiles
-from ardupilot_methodic_configurator.backend_mavftp import DirectoryEntry
+from ardupilot_methodic_configurator.backend_flightcontroller_files import (
+    FlightControllerFiles,
+    is_safe_local_entry_name,
+)
+from ardupilot_methodic_configurator.backend_mavftp import DirectoryEntry, FtpError
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
 
@@ -39,6 +43,11 @@ def _create_files_manager() -> FlightControllerFiles:
 
 class TestFlightControllerFilesInitialization:
     """Test file operations manager initialization."""
+
+    def test_cross_platform_local_entry_validation_rejects_windows_unsafe_names(self) -> None:
+        """Remote names that Windows cannot safely create are never local targets."""
+        for unsafe_name in ("C:evil.bin", "CON", "NUL.txt", "log.", "log ", "\x01log.bin"):
+            assert not is_safe_local_entry_name(unsafe_name)
 
     def test_user_can_create_files_manager(self) -> None:
         """
@@ -235,6 +244,7 @@ class TestFlightControllerFilesUpload:
         mkdir_ret = MagicMock(error_code=0)
         put_ret = MagicMock(error_code=0)
         mock_mavftp.cmd_mkdir.return_value = mkdir_ret
+        mock_mavftp.cmd_list.return_value = SimpleNamespace(error_code=0, directory_listing=[])
         mock_mavftp.cmd_put.return_value = put_ret
         mock_mavftp.process_ftp_reply.return_value = put_ret
 
@@ -262,6 +272,7 @@ class TestFlightControllerFilesUpload:
         mkdir_ret = MagicMock(error_code=8)
         put_ret = MagicMock(error_code=0)
         mock_mavftp.cmd_mkdir.return_value = mkdir_ret
+        mock_mavftp.cmd_list.return_value = SimpleNamespace(error_code=0, directory_listing=[])
         mock_mavftp.cmd_put.return_value = put_ret
         mock_mavftp.process_ftp_reply.return_value = put_ret
 
@@ -816,6 +827,51 @@ class TestFlightControllerFilesLogDiscovery:
             result = files_mgr._get_last_log_number(mock_mavftp)
 
         assert result is None
+
+
+class TestFlightControllerDirectoryCreation:
+    """Test safe handling of already-existing remote paths."""
+
+    def test_existing_regular_file_is_not_accepted_as_a_directory(self) -> None:
+        """A FileExists reply must be verified before upload planning proceeds."""
+        files_mgr = _create_files_manager()
+        mavftp = MagicMock()
+        mavftp.cmd_mkdir.return_value = SimpleNamespace(error_code=FtpError.FileExists)
+        mavftp.cmd_list.return_value = SimpleNamespace(error_code=FtpError.FileNotFound, directory_listing=None)
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+            return_value=mavftp,
+        ):
+            assert not files_mgr.make_remote_directory("/APM/LOGS/already-a-file")
+
+        mavftp.cmd_list.assert_called_once_with(["/APM/LOGS/already-a-file/"])
+
+    def test_existing_empty_directory_is_accepted_after_verification(self) -> None:
+        """An empty directory yields a successful empty MAVFTP listing."""
+        files_mgr = _create_files_manager()
+        mavftp = MagicMock()
+        mavftp.cmd_mkdir.return_value = SimpleNamespace(error_code=FtpError.FileExists)
+        mavftp.cmd_list.return_value = SimpleNamespace(error_code=FtpError.Success, directory_listing=[])
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+            return_value=mavftp,
+        ):
+            assert files_mgr.make_remote_directory("/APM/LOGS/existing")
+
+        mavftp.cmd_list.assert_called_once_with(["/APM/LOGS/existing/"])
+
+    def test_upload_parent_creation_rejects_a_file_occupying_the_parent_name(self) -> None:
+        """Recursive uploads stop before trying to put a child below a regular file."""
+        files_mgr = _create_files_manager()
+        mavftp = MagicMock()
+        mavftp.cmd_mkdir.return_value = MagicMock(error_code=FtpError.FileExists)
+        mavftp.cmd_list.return_value = SimpleNamespace(error_code=FtpError.FileNotFound, directory_listing=None)
+
+        assert not files_mgr._ensure_remote_directory_exists(mavftp, "/APM/LOGS/file.bin")
+
+        mavftp.cmd_list.assert_called_once_with(["/APM"])
 
 
 class TestFlightControllerFilesDownloadHelpers:

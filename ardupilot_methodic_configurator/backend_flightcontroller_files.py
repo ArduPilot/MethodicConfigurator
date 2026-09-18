@@ -32,6 +32,18 @@ if TYPE_CHECKING:
     from ardupilot_methodic_configurator.backend_mavftp import MAVFTP, DirectoryEntry
 
 
+WINDOWS_RESERVED_ENTRY_NAMES = frozenset(
+    {
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        *(f"COM{index}" for index in range(1, 10)),
+        *(f"LPT{index}" for index in range(1, 10)),
+    }
+)
+
+
 @dataclass(frozen=True)
 class FlightControllerLogFile:
     """A regular file exposed by a flight-controller directory listing."""
@@ -41,6 +53,21 @@ class FlightControllerLogFile:
     size_bytes: int
     is_directory: bool = False
     modified_at: int | None = None
+
+
+def is_safe_local_entry_name(name: str) -> bool:
+    """Return whether a remote basename is safe on every supported local OS."""
+    windows_stem = name.split(".", maxsplit=1)[0].rstrip(" ").upper()
+    return (
+        bool(name)
+        and name not in {".", ".."}
+        and name == name.rstrip(" .")
+        and "/" not in name
+        and "\\" not in name
+        and not any(ord(character) < 32 for character in name)
+        and not any(character in name for character in '<>:"|?*')
+        and windows_stem not in WINDOWS_RESERVED_ENTRY_NAMES
+    )
 
 
 class FlightControllerFiles:
@@ -175,11 +202,24 @@ class FlightControllerFiles:
 
         for current_dir in parent_directories:
             ret = mavftp_instance.cmd_mkdir([current_dir])
-            if ret.error_code not in {FtpError.Success, FtpError.FileExists}:
+            if ret.error_code == FtpError.Success:
+                continue
+            if ret.error_code == FtpError.FileExists and self._remote_path_is_directory(mavftp_instance, current_dir):
+                continue
+            if ret.error_code != FtpError.Success:
                 ret.display_message()
                 logging_error(_("Failed to create remote directory %(directory)s"), {"directory": current_dir})
                 return False
         return True
+
+    @staticmethod
+    def _remote_path_is_directory(mavftp_instance: "MAVFTP", remote_path: str) -> bool:
+        """Verify that an existing MAVFTP path is a directory."""
+        listing = mavftp_instance.cmd_list([remote_path])
+        return listing.error_code == FtpError.Success and isinstance(
+            getattr(listing, "directory_listing", None),
+            list,
+        )
 
     @staticmethod
     def _remote_parent_directories(remote_filename: str) -> list[str]:
@@ -280,17 +320,23 @@ class FlightControllerFiles:
     @classmethod
     def _remote_child_path(cls, remote_directory: str, filename: str) -> str:
         """Build a safe remote path for a direct child of a remote directory."""
-        if (
-            not filename
-            or filename in {".", ".."}
-            or "/" in filename
-            or "\\" in filename
-            or posixpath.basename(filename) != filename
-        ):
+        if not cls._safe_remote_child_name(filename):
             msg = _("Remote directory entries must be regular file names")
             raise ValueError(msg)
         directory = cls._normalize_remote_path(remote_directory, directory=True)
         return posixpath.join(directory, filename)
+
+    @staticmethod
+    def _safe_remote_child_name(filename: str) -> bool:
+        """Return whether a listing name is safe as one remote path component."""
+        return (
+            bool(filename)
+            and filename not in {".", ".."}
+            and "/" not in filename
+            and "\\" not in filename
+            and ":" not in filename
+            and posixpath.basename(filename) == filename
+        )
 
     def list_remote_files(self, remote_directory: str = DEFAULT_LOG_DIRECTORY) -> list[FlightControllerLogFile] | None:
         """Serialize and list files and directories in a remote directory."""
@@ -374,7 +420,7 @@ class FlightControllerFiles:
         with self._mavftp_lock:
             return self._make_remote_directory(remote_directory)
 
-    def _make_remote_directory(self, remote_directory: str) -> bool:
+    def _make_remote_directory(self, remote_directory: str) -> bool:  # noqa: PLR0911
         """Create a remote directory, treating an existing directory as success."""
         if self.master is None or not self.info.is_mavftp_supported:
             return False
@@ -391,7 +437,15 @@ class FlightControllerFiles:
             return False
         try:
             result = mavftp_instance.cmd_mkdir([normalized_directory.rstrip("/")])
-            return result.error_code in {FtpError.Success, FtpError.FileExists}
+            if result.error_code == FtpError.Success:
+                return True
+            if result.error_code != FtpError.FileExists:
+                return False
+
+            # MAVFTP uses FileExists for both an existing directory and a
+            # regular file occupying the requested path. Verify the type
+            # before treating the result as success.
+            return self._remote_path_is_directory(mavftp_instance, normalized_directory)
         except Exception as error:  # pylint: disable=broad-exception-caught
             logging_error(_("Failed to create remote directory: %(error)s"), {"error": str(error)})
             return False

@@ -8,7 +8,7 @@ a flight controller or modify files outside its temporary directory and the
 two output images.
 
 Usage:
-    .\.venv_3.13.11\Scripts\python.exe .\scripts\regenerate_mavftp_screenshots.py
+    python -m scripts.regenerate_mavftp_screenshots
 
 SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
@@ -41,7 +41,7 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_DIRECTORY = ROOT_DIR / "images"
 
 
-class _BitmapInfoHeader(ctypes.Structure):
+class _BitmapInfoHeader(ctypes.Structure):  # pylint: disable=too-few-public-methods
     """Windows BITMAPINFOHEADER structure used by GetDIBits."""
 
     _fields_ = [
@@ -59,7 +59,7 @@ class _BitmapInfoHeader(ctypes.Structure):
     ]
 
 
-class _BitmapInfo(ctypes.Structure):
+class _BitmapInfo(ctypes.Structure):  # pylint: disable=too-few-public-methods
     """Windows BITMAPINFO structure without a colour table for 32-bit pixels."""
 
     _fields_ = [("bmiHeader", _BitmapInfoHeader)]
