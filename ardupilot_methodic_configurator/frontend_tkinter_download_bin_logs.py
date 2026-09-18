@@ -1565,6 +1565,7 @@ class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, 
             _("Uploading may overwrite remote files. Continue?"),
         ):
             return
+
         def complete_plan(result: object, error: Exception | None) -> None:
             if isinstance(error, _RemoteTaskCancelledError):
                 self._show_summary(_("Upload summary"), [], [], cancelled=True)

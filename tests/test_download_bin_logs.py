@@ -301,6 +301,7 @@ class TestDownloadBinLogsWindow:
 
     def test_remote_listing_uses_worker_thread_and_tk_polling(self) -> None:
         """Remote listing results are applied by the Tk polling seam."""
+
         class FakeMisc:  # pylint: disable=too-few-public-methods
             """Minimal Tk root substitute for the worker-thread test."""
 
@@ -336,6 +337,7 @@ class TestDownloadBinLogsWindow:
 
     def test_background_operation_uses_worker_thread_and_tk_polling(self) -> None:
         """Transfer results and progress are applied by the Tk polling seam."""
+
         class FakeMisc:  # pylint: disable=too-few-public-methods
             """Minimal Tk root substitute for the worker-thread test."""
 
@@ -366,6 +368,7 @@ class TestDownloadBinLogsWindow:
             window._poll_background_operation()  # pylint: disable=protected-access
 
         completion.assert_called_once_with(["done"], [], False)  # noqa: FBT003
+
     def test_transfer_buttons_are_enabled_only_for_selected_entries(self) -> None:
         """
         Download and upload controls follow the selections in their respective panels.
@@ -402,8 +405,6 @@ class TestDownloadBinLogsWindow:
         window._update_transfer_buttons()  # pylint: disable=protected-access
         window.download_button.configure.assert_called_once_with(state="disabled")
         window.upload_button.configure.assert_called_once_with(state="normal")
-
-
 
     def test_backspace_navigates_to_parent_of_last_selected_remote_panel(self) -> None:
         """Backspace opens the remote parent directory when the remote panel was last selected."""
@@ -473,7 +474,6 @@ class TestDownloadBinLogsWindow:
 
         window.local_directory_var.set.assert_called_once_with(str(Path("C:/logs/nested").expanduser().parent))
         window.refresh_local_panel.assert_called_once_with()
-
 
     def test_remote_download_plan_expands_directories_recursively(self) -> None:
         """
@@ -922,7 +922,6 @@ class TestDownloadBinLogsWindow:
         old_path.rename.assert_called_once_with(target_path)
         window.refresh_local_panel.assert_called_once_with()
 
-
     def test_user_can_toggle_remote_filename_sort_direction(self) -> None:
         """Clicking the filename heading repeatedly alternates ascending and descending."""
         window = DownloadBinLogsWindow.__new__(DownloadBinLogsWindow)
@@ -964,10 +963,6 @@ class TestDownloadBinLogsWindow:
             call("0", "", 0),
             call("1", "", 1),
         ]
-
-
-
-
 
     def test_parameter_editor_button_opens_the_log_download_modal(self) -> None:
         """
