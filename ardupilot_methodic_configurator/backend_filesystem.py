@@ -1139,7 +1139,11 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             "--vehicle-type",
             choices=VehicleComponents.supported_vehicles(),
             default="",
-            help=_("The type of the vehicle. Default is ArduCopter"),
+            help=_(
+                "The type of the vehicle. With --bin-log, validates the vehicle type reported by the log "
+                "and the selected template. SITL and AP_Periph cannot be used with --bin-log. "
+                "Default is ArduCopter"
+            ),
         )
         parser.add_argument(  # type: ignore[attr-defined]
             "--vehicle-dir",

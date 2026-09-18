@@ -448,24 +448,24 @@ def create_vehicle_project_from_bin_log(state: ApplicationState) -> str:
     """Create and open a vehicle project directly from the command-line .bin log."""
     state.vehicle_project_manager = VehicleProjectManager(state.local_filesystem, state.flight_controller)
     template_dir = getattr(state.args, "template_dir", "") or None
+    expected_vehicle_type = getattr(state.args, "vehicle_type", "") or None
     vehicle_dir = None
     if getattr(state.args, "vehicle_dir_explicit", False):
-        vehicle_dir = state.args.vehicle_dir
+        vehicle_dir = os.path.expanduser(state.args.vehicle_dir)
     elif getattr(state.args, "vehicle_dir", None) and Path(state.args.vehicle_dir) != Path.cwd():
         # Keep manually constructed Namespaces and callers compatible with the
         # parser's historical current-working-directory default.
-        vehicle_dir = state.args.vehicle_dir
+        vehicle_dir = os.path.expanduser(state.args.vehicle_dir)
     try:
-        if vehicle_dir is None:
-            new_vehicle_dir = state.vehicle_project_manager.create_new_vehicle_from_bin_log(
-                state.args.bin_log, template_dir=template_dir
-            )
-        else:
-            new_vehicle_dir = state.vehicle_project_manager.create_new_vehicle_from_bin_log(
-                state.args.bin_log, template_dir=template_dir, vehicle_dir=vehicle_dir
-            )
+        new_vehicle_dir = state.vehicle_project_manager.create_new_vehicle_from_bin_log(
+            state.args.bin_log,
+            template_dir=template_dir,
+            vehicle_dir=vehicle_dir,
+            expected_vehicle_type=expected_vehicle_type,
+        )
     except VehicleProjectCreationError as exc:
         logging_error("%s: %s", exc.title, exc.message)
+        logging_debug("", exc_info=exc)
         raise SystemExit(1) from exc
     logging_info(_("Created vehicle project at %s"), new_vehicle_dir)
     return new_vehicle_dir

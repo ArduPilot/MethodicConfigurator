@@ -497,6 +497,8 @@ Here is a list of command line options:
 - **`--loglevel`**: The logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL). The default is INFO.
 - **`-t` or `--vehicle-type`**: The type of the vehicle.
   Choices are 'AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane', 'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'. Defaults to 'ArduCopter'.
+  With `--bin-log`, this value validates both the vehicle type reported by the log and the selected template.
+  SITL and AP_Periph are pseudo-types and cannot be used with `--bin-log`.
 - **`-r` or `--reboot-time`**: Flight controller reboot time. The default is 7.
 - **`-v` or `--version`**: Display version information and exit.
 
@@ -531,6 +533,9 @@ ardupilot_methodic_configurator --bin-log="C:\logs\flight.bin"
 # Use a specific template directory instead of the inferred empty template
 ardupilot_methodic_configurator --bin-log="C:\logs\flight.bin" --template-dir="C:\templates\Holybro_X500"
 ```
+
+After the project is created from the log, AMC continues through the normal GUI workflow:
+the Vehicle Component Editor opens first, followed by the parameter editor and uploader.
 
 #### Skip Steps for Faster Workflow
 
