@@ -34,10 +34,12 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
         width: int = 300,
         height: int = 80,
         only_show_when_update_progress_called: bool = False,
+        auto_close_on_complete: bool = True,
     ) -> None:
         self.parent = master
         self.message = message
         self.only_show_when_update_progress_called = only_show_when_update_progress_called
+        self.auto_close_on_complete = auto_close_on_complete
         self._shown = False
         self.progress_window = tk.Toplevel(self.parent)
         # Withdraw immediately to prevent flicker while setting up
@@ -151,11 +153,16 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
                     self.progress_window.update()
 
                 # Close the progress window when the process is complete
-                if current_value == max_value:
+                if current_value == max_value and self.auto_close_on_complete:
                     self.progress_window.destroy()
         except tk.TclError as _e:
             msg = _("Updating progress widgets: {_e}")
             logging_error(msg.format(**locals()))
+
+    def update_progress_bar_with_message(self, current_value: int, max_value: int, message: str) -> None:
+        """Update the progress bar while replacing its displayed message."""
+        self.message = message
+        self.update_progress_bar(current_value, max_value)
 
     def destroy(self) -> None:
         try:
@@ -163,3 +170,23 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
                 self.progress_window.destroy()
         except tk.TclError:
             pass
+
+
+def update_flight_controller_restart_progress(progress_window: ProgressWindow, current: int, total: int) -> None:
+    """Render reset, reboot countdown, and reconnect progress in one window."""
+    if current == 10 and total == 100:
+        message = _("Reset command sent")
+    elif 10 < current < 30 and total == 100:
+        message = _("Waiting for flight controller restart")
+    elif 30 <= current < 90 and total == 100:
+        # The callback supplies only normalized progress; it does not carry
+        # the configured retry count. Avoid presenting a stale hard-coded
+        # attempt total when callers choose a value other than three retries.
+        message = _("Reconnecting to flight controller")
+    elif current == 90 and total == 100:
+        message = _("Retrieving flight controller information")
+    elif current == 100 and total == 100:
+        message = _("Flight Controller connected")
+    else:
+        message = _("Restarting Flight Controller")
+    progress_window.update_progress_bar_with_message(current, total, message)
