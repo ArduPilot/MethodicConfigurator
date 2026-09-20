@@ -35,6 +35,7 @@ from ardupilot_methodic_configurator.backend_mavftp import (
     OP_Nack,
     OP_ReadFile,
     OP_ResetSessions,
+    OP_TerminateSession,
     create_argument_parser,
 )
 
@@ -98,6 +99,143 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):  # pylint: disable=too-many-
 
         with patch("builtins.open", side_effect=AssertionError("callback data must not be published as a file")):
             assert self.mav_ftp._MAVFTP__check_read_finished()  # pylint: disable=protected-access
+
+    def test_foreign_malformed_reply_is_not_reported_as_local_invalid_data(self) -> None:
+        """Malformed foreign traffic is ignored so a following local reply succeeds."""
+        foreign_packet = Mock()
+        foreign_packet.get_type.return_value = "FILE_TRANSFER_PROTOCOL"
+        foreign_packet.target_system = 2
+        foreign_packet.target_component = 1
+        foreign_packet.payload = b"malformed"
+        local_packet = Mock()
+        local_packet.get_type.return_value = "FILE_TRANSFER_PROTOCOL"
+        local_packet.target_system = 1
+        local_packet.target_component = 1
+        self.mav_ftp.master.source_system = 1
+        self.mav_ftp.master.source_component = 1
+        self.mav_ftp.last_op = FTP_OP(
+            seq=0,
+            session=self.mav_ftp.session,
+            opcode=OP_ResetSessions,
+            size=0,
+            req_opcode=0,
+            burst_complete=0,
+            offset=0,
+            payload=None,
+        )
+        # pylint: disable=duplicate-code
+        local_reply = FTP_OP(
+            seq=1,
+            session=self.mav_ftp.session,
+            opcode=OP_Ack,
+            size=0,
+            req_opcode=OP_ResetSessions,
+            burst_complete=0,
+            offset=0,
+            payload=None,
+        )
+        # pylint: enable=duplicate-code
+
+        def parse_packet(packet: Mock) -> FTP_OP:
+            if packet is foreign_packet:
+                error = "malformed foreign packet"
+                raise struct.error(error)
+            return local_reply
+
+        def receive_packet(packet: Mock) -> MAVFTPReturn:
+            if packet is local_packet:
+                self.mav_ftp.read_complete = True
+            return MAVFTPReturn("mavlink_packet", FtpError.Success)
+
+        with (
+            patch.object(self.mav_ftp.master, "recv_match", side_effect=[foreign_packet, local_packet]),
+            patch.object(self.mav_ftp, "_MAVFTP__op_parse", side_effect=parse_packet),
+            patch.object(self.mav_ftp, "_MAVFTP__receive_packet", side_effect=receive_packet),
+            patch.object(self.mav_ftp, "_MAVFTP__idle_task", return_value=False),
+        ):
+            result = self.mav_ftp.process_ftp_reply("get", timeout=1)
+
+        assert result.error_code == FtpError.Success
+
+    def test_read_renews_deadline_when_idle_flush_accepts_delayed_reply(self) -> None:
+        """A delayed reply accepted by idle_task must extend read's deadline."""
+        idle_calls = 0
+
+        def idle_task() -> None:
+            nonlocal idle_calls
+            idle_calls += 1
+            if idle_calls == 1:
+                self.mav_ftp.accepted_reply_generation += 1
+            elif idle_calls == 3:
+                self.mav_ftp.done = True
+
+        with (
+            patch.object(self.mav_ftp, "_MAVFTP__send"),
+            patch.object(self.mav_ftp.master, "recv_match", return_value=None) as recv_match,
+            patch.object(self.mav_ftp, "idle_task", side_effect=idle_task) as idle,
+            patch("ardupilot_methodic_configurator.backend_mavftp.logging.info"),
+            patch(
+                "ardupilot_methodic_configurator.backend_mavftp.time.time",
+                side_effect=[0.0, 0.0, 1.0, 2.0, 6.0, 6.5],
+            ),
+        ):
+            self.mav_ftp.read("remote.bin", 1)
+
+        assert idle.call_count == 3
+        assert recv_match.call_count == 3
+
+    def test_callback_can_close_download_buffer(self) -> None:
+        """A download callback may close its buffer before completion cleanup."""
+        self.mav_ftp.fh = BytesIO(b"data")
+        self.mav_ftp.filename = "param.pck?withdefaults=1"
+        self.mav_ftp.op_start = 1.0
+        self.mav_ftp.read_gaps = []
+        self.mav_ftp.reached_eof = True
+        self.mav_ftp.read_total = 4
+        self.mav_ftp.requested_offset = 0
+        self.mav_ftp.requested_size = 4
+
+        def consume_and_close(file_handle: BytesIO) -> MAVFTPReturn:
+            file_handle.close()
+            return MAVFTPReturn("GetParams", FtpError.Success)
+
+        self.mav_ftp.callback = consume_and_close
+
+        with patch.object(self.mav_ftp, "_MAVFTP__terminate_session") as terminate:
+            assert self.mav_ftp._MAVFTP__check_read_finished()  # pylint: disable=protected-access
+
+        terminate.assert_called_once()
+        assert self.mav_ftp.read_complete
+
+    def test_delayed_foreign_terminate_reply_does_not_count_as_accepted(self) -> None:
+        """A delayed terminate reply for another client must not suppress idle expiry."""
+        foreign_packet = Mock()
+        foreign_packet.get_type.return_value = "FILE_TRANSFER_PROTOCOL"
+        foreign_packet.target_system = 2
+        foreign_packet.target_component = 1
+        foreign_packet.payload = FTP_OP(
+            seq=1,
+            session=1,
+            opcode=OP_Ack,
+            size=0,
+            req_opcode=OP_TerminateSession,
+            burst_complete=0,
+            offset=0,
+            payload=None,
+        ).pack()
+        self.mav_ftp.master.source_system = 1
+        self.mav_ftp.master.source_component = 1
+        self.mav_ftp.pending_terminate_seq = 1
+        self.mav_ftp.rx_delay_queue = [(0.0, 1, foreign_packet)]
+
+        with (
+            patch.object(self.mav_ftp.master, "recv_match", return_value=None),
+            patch.object(self.mav_ftp, "_MAVFTP__idle_task", return_value=True) as idle,
+        ):
+            result = self.mav_ftp.process_ftp_reply("TerminateSession", timeout=1)
+
+        idle.assert_called_once()
+        assert result.error_code == FtpError.Fail
 
     def test_completed_file_download_publishes_staging_file_without_buffering_result(self) -> None:
         """A normal download atomically publishes its staging file without a second RAM copy."""

@@ -2109,7 +2109,7 @@ class TestFlightControllerConnectionRetry:
                 reconnect_progress_callback=Mock(),
             )
 
-        assert result == selection_error or version_error
+        assert result == (selection_error or version_error)
         factory.assert_called_once()
         mock_sleep.assert_not_called()
 
