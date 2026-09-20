@@ -14,7 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import time
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from pymavlink import mavutil
@@ -1334,6 +1334,67 @@ class TestFlightControllerCommandsBatteryEdgeCases:
         # Then
         assert success is False
         assert "failed to send command" in error.lower()
+
+    def test_send_command_and_wait_ack_with_log_error_false_logs_debug_not_error(self) -> None:
+        """send_command_and_wait_ack logs at debug level when log_error is False."""
+        mock_master = MagicMock()
+        mock_master.mav.command_long_send.side_effect = Exception("Serial port error")
+
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_params_mgr = Mock()
+
+        commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.logging_error") as mock_err,
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.logging_debug") as mock_dbg,
+        ):
+            success, error = commands_mgr.send_command_and_wait_ack(command=999, timeout=0.5, log_error=False)
+
+            assert success is False
+            mock_err.assert_not_called()
+            mock_dbg.assert_called_once()
+            assert "failed to send command" in error.lower()
+
+    def test_request_periodic_battery_status_breaks_on_device_disconnection(self) -> None:
+        """request_periodic_battery_status aborts retries when device is disconnected."""
+        mock_master = MagicMock()
+        mock_master.mav.command_long_send.side_effect = OSError(6, "Device not configured")
+
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_params_mgr = Mock()
+
+        commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.request_periodic_battery_status()
+
+        assert success is False
+        assert "device not configured" in error.lower()
+        # Should only attempt once, not all 3 attempts
+        assert mock_master.mav.command_long_send.call_count == 1
+
+    def test_request_periodic_battery_status_breaks_on_success(self) -> None:
+        """request_periodic_battery_status stops after first successful confirmation."""
+        mock_master = MagicMock()
+        mock_ack = MagicMock()
+        mock_ack.command = mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL
+        mock_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
+        mock_master.recv_match.return_value = mock_ack
+
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_params_mgr = Mock()
+
+        commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.request_periodic_battery_status()
+
+        assert success is True
+        assert error == ""
+        # Should stop after first successful confirmation, not continue for 3 attempts
+        assert mock_master.mav.command_long_send.call_count == 1
 
 
 class TestFlightControllerCommandsAccelCalibrationCancel:

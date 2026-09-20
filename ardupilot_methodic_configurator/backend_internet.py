@@ -285,7 +285,7 @@ def get_release_info(name: str, should_be_pre_release: bool, timeout: int = 30) 
         return release_info  # type: ignore[no-any-return]
 
     except requests_HTTPError as e:
-        if e.response.status_code == 403:
+        if e.response is not None and e.response.status_code == 403:
             logging_error(_("Failed to fetch release info: {}").format(e))
             # Get the rate limit reset time
             reset_time = int(e.response.headers.get("X-RateLimit-Reset", 0))

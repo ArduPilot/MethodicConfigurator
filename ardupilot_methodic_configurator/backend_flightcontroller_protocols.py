@@ -225,17 +225,18 @@ class FlightControllerCommandsProtocol(Protocol):  # pylint: disable=too-many-pu
     BATTERY_STATUS_CACHE_TIME: float
     BATTERY_STATUS_TIMEOUT: float
 
-    def send_command_and_wait_ack(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def send_command_and_wait_ack(  # noqa: PLR0913, PLR0917 # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         command: int,
-        param1: float,
-        param2: float,
-        param3: float,
-        param4: float,
-        param5: float,
-        param6: float,
-        param7: float,
-        timeout: float,
+        param1: float = 0,
+        param2: float = 0,
+        param3: float = 0,
+        param4: float = 0,
+        param5: float = 0,
+        param6: float = 0,
+        param7: float = 0,
+        timeout: float = 5.0,
+        log_error: bool = True,
     ) -> tuple[bool, str]: ...
 
     def reboot_to_bootloader(self) -> tuple[bool, str]: ...

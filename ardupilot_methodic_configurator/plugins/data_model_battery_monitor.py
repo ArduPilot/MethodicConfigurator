@@ -22,6 +22,9 @@ if TYPE_CHECKING:
 # Battery update interval in milliseconds (used for periodic status requests)
 BATTERY_UPDATE_INTERVAL_MS = 500
 
+# Sentinel object to differentiate default parameter from explicit None
+_SENTINEL = object()
+
 
 class BatteryMonitorDataModel:
     """
@@ -120,9 +123,11 @@ class BatteryMonitorDataModel:
 
         battery_status, message = self.flight_controller.get_battery_status()
         if message:
-            logging_warning(message)
-            # Reset flag to trigger re-request on next call (automatic recovery)
-            self._got_battery_status = False
+            if self._got_battery_status:
+                logging_warning(message)
+                self._got_battery_status = False
+            else:
+                logging_debug(message)
         elif battery_status is not None:
             # Only mark stream as established when we receive actual data
             self._got_battery_status = True
@@ -143,9 +148,12 @@ class BatteryMonitorDataModel:
 
         return self.flight_controller.get_voltage_thresholds()
 
-    def get_voltage_status(self) -> str:
+    def get_voltage_status(self, battery_status: tuple[float, float] | object | None = _SENTINEL) -> str:
         """
         Get the battery voltage status as a string.
+
+        Args:
+            battery_status: Optional pre-fetched battery status tuple (voltage, current)
 
         Returns:
             str: "safe", "critical", "disabled", or "unavailable"
@@ -154,8 +162,9 @@ class BatteryMonitorDataModel:
         if not self.is_battery_monitoring_enabled():
             return _("disabled")
 
-        battery_status = self.get_battery_status()
-        if battery_status is None:
+        if battery_status is _SENTINEL:
+            battery_status = self.get_battery_status()
+        if not isinstance(battery_status, tuple):
             return _("unavailable")
 
         voltage, _current = battery_status
@@ -167,15 +176,18 @@ class BatteryMonitorDataModel:
             return _("safe")
         return _("critical")
 
-    def get_battery_status_color(self) -> str:
+    def get_battery_status_color(self, battery_status: tuple[float, float] | object | None = _SENTINEL) -> str:
         """
         Get the color code for battery status display.
+
+        Args:
+            battery_status: Optional pre-fetched battery status tuple (voltage, current)
 
         Returns:
             str: Color name ("green", "red", or "gray")
 
         """
-        status = self.get_voltage_status()
+        status = self.get_voltage_status(battery_status)
         if status == _("safe"):
             return "green"
         if status == _("critical"):

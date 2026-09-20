@@ -36,6 +36,7 @@ from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.plugins.data_model_battery_monitor import (
+    _SENTINEL,
     BATTERY_UPDATE_INTERVAL_MS,
     BatteryMonitorDataModel,
 )
@@ -153,22 +154,26 @@ class BatteryMonitorView(Frame):
 
     def _update_battery_status(self) -> None:
         """Update battery voltage and current labels."""
-        voltage_text, current_text = self._get_battery_display_text()
+        status = self.model.get_battery_status()
+        voltage_text, current_text = self._get_battery_display_text(status)
 
         self.voltage_value_label.config(text=voltage_text)
         self.current_value_label.config(text=current_text)
 
         # Update color based on voltage status
-        color = self.model.get_battery_status_color()
+        color = self.model.get_battery_status_color(status)
         self.voltage_value_label.config(foreground=color)
 
         logging_debug(
             _("Battery status updated: %(voltage)s, %(current)s"), {"voltage": voltage_text, "current": current_text}
         )
 
-    def _get_battery_display_text(self) -> tuple[str, str]:
+    def _get_battery_display_text(self, status: tuple[float, float] | object | None = _SENTINEL) -> tuple[str, str]:
         """
         Get formatted battery status text for display.
+
+        Args:
+            status: Optional pre-fetched battery status tuple (voltage, current)
 
         Returns:
             tuple[str, str]: (voltage_text, current_text)
@@ -177,8 +182,9 @@ class BatteryMonitorView(Frame):
         if not self.model.is_battery_monitoring_enabled():
             return _("Disabled"), _("Disabled")
 
-        status = self.model.get_battery_status()
-        if status:
+        if status is _SENTINEL:
+            status = self.model.get_battery_status()
+        if isinstance(status, tuple):
             voltage, current = status
             voltage_text = f"{voltage:.2f} V"
             current_text = f"{current:.2f} A"
