@@ -116,6 +116,7 @@ class ComponentDataModelImport(ComponentDataModelBase):
             or (code_protocol == "MAVLink" and doc_protocol == "MAV")
             or (code_protocol == "Septentrio-DualAntenna(SBF)" and doc_protocol == "SBF-DualAntenna")
             or (code_protocol == "Gimbal" and doc_protocol == "SToRM32 Gimbal Serial")
+            or (code_protocol == "INA2XX" and doc_protocol == "INA2XX (INA226 INA228 INA238 INA231 INA260)")
         )
 
     def _verify_dict_is_uptodate(
