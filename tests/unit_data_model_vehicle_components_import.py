@@ -179,6 +179,17 @@ class TestComponentDataModelImportInternals:
             result = realistic_model._verify_dict_is_uptodate(sample_doc_dict, dict_mismatch, "SERIAL1_PROTOCOL", "values")
             assert result is False
 
+    def test_verify_dict_accepts_arduplane_47_ina2xx_label(self, realistic_model) -> None:
+        """Accept the expanded INA2XX label introduced in ArduPilot 4.7.x metadata."""
+        doc = {
+            "BATT_MONITOR": {
+                "values": {"21": "INA2XX (INA226 INA228 INA238 INA231 INA260)"},
+            }
+        }
+        dict_to_check = {"21": {"protocol": "INA2XX"}}
+
+        assert realistic_model._verify_dict_is_uptodate(doc, dict_to_check, "BATT_MONITOR", "values") is True
+
     def test_verify_dict_handles_empty_documentation(self, realistic_model) -> None:
         """
         Internal dictionary verification handles empty documentation.

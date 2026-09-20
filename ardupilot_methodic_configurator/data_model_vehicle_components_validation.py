@@ -147,6 +147,8 @@ SERIAL_PROTOCOLS_DICT: dict[str, dict[str, Any]] = {
     "46": {"type": SERIAL_PORTS, "protocol": "IMUDATA", "component": None},
     "48": {"type": SERIAL_PORTS, "protocol": "PPP", "component": "Telemetry"},
     "49": {"type": SERIAL_PORTS, "protocol": "i-BUS Telemetry", "component": None},
+    # ArduPilot 4.7.x
+    "50": {"type": SERIAL_PORTS, "protocol": "IOMCU", "component": None},
 }
 
 # Serial telemetry-only protocols
@@ -189,6 +191,10 @@ BATT_MONITOR_CONNECTION: dict[str, dict[str, tuple[str, ...] | str]] = {
     "27": {"type": I2C_PORTS, "protocol": "EFI"},
     "28": {"type": I2C_PORTS, "protocol": "AD7091R5"},
     "29": {"type": OTHER_PORTS, "protocol": "Scripting"},
+    # ArduPilot 4.7.x
+    "30": {"type": I2C_PORTS, "protocol": "INA3221"},
+    "31": {"type": ANALOG_PORTS, "protocol": "Analog Current Only"},
+    "32": {"type": I2C_PORTS, "protocol": "TIBQ76952-I2C (Periph only)"},
 }
 
 GNSS_RECEIVER_CONNECTION: dict[str, dict[str, tuple[str, ...] | str]] = {
@@ -328,6 +334,7 @@ RC_PROTOCOLS_DICT: dict[str, dict[str, tuple[str, ...] | str]] = {
     "16384": {"type": CAN_PORTS, "protocol": "DroneCAN"},  # Bit 14
     "32768": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "Ghost"},  # Bit 15
     "65536": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "MAVRadio"},  # Bit 16
+    "262144": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "SITL UDP"},  # Bit 18, ArduPilot 4.7.x
 }
 
 # When adding new entries here, make sure to also update the self._verify_dict_is_uptodate() calls

@@ -143,6 +143,7 @@ class TestValidationConstants:
             "2": "MAVLink2",
             "5": "GPS",
             "23": "RCIN",
+            "50": "IOMCU",
         }
 
         for key, protocol in expected_protocols.items():
@@ -209,6 +210,9 @@ class TestValidationConstants:
         expected_monitors = {
             "0": "Disabled",
             "4": "Analog Voltage and Current",
+            "30": "INA3221",
+            "31": "Analog Current Only",
+            "32": "TIBQ76952-I2C (Periph only)",
         }
 
         for key, protocol in expected_monitors.items():
@@ -354,6 +358,7 @@ class TestValidationConstants:
         expected_rc_protocols = {
             "512": "CRSF",  # Bit 9 -> 2^9 = 512
             "2048": "FPORT",  # Bit 11 -> 2^11 = 2048
+            "262144": "SITL UDP",  # Bit 18 -> 2^18 = 262144
         }
 
         for key, protocol in expected_rc_protocols.items():
@@ -428,10 +433,10 @@ class TestValidationConstants:
                 pwm_num = int(key)
                 assert -1 <= pwm_num <= 200, f"ESC connection key {pwm_num} is out of expected range"
 
-        # RC protocol numbers should be reasonable bit positions (typically 0-15)
+        # RC protocol keys are bitmask values, including newer values such as 2^18.
         for key in RC_PROTOCOLS_DICT:
             rc_num = int(key)
-            assert 1 <= rc_num <= 65536, f"RC protocol number {rc_num} is out of expected range (bitmask values)"
+            assert 1 <= rc_num <= 2**31, f"RC protocol number {rc_num} is out of expected range (bitmask values)"
 
     def test_protocol_names_not_empty(self) -> None:
         """Test that all protocol names are non-empty strings."""
