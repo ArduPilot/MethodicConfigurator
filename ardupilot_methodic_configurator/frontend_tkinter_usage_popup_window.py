@@ -97,7 +97,10 @@ class PopupWindow:
         # Resize window height to ensure all widgets are fully visible
         # as some Linux Window managers like KDE, like to change font sizes and padding.
         # So we need to dynamically accommodate for that after placing the widgets
-        popup_window.root.update_idletasks()
+        # Tcl/Tk 9 can segfault on macOS when idle callbacks are forced during the
+        # component-editor transition; the regular event loop will perform this work.
+        if not _is_macos():
+            popup_window.root.update_idletasks()
         req_height = popup_window.root.winfo_reqheight()
         req_width = popup_window.root.winfo_reqwidth()
 

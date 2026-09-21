@@ -181,7 +181,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         widget = self.entry_widgets.get(telem_protocol_path)
         if isinstance(widget, PairTupleCombobox):
             self.set_combobox_entries_preserving_width(widget, [(new_protocol, new_protocol)], new_protocol)
-            widget.update_idletasks()
+            if sys.platform != "darwin":
+                widget.update_idletasks()
         self._set_esc_telemetry_combobox_mirror_state()
 
     def _on_esc_fc_protocol_invalid_type(self, valid_telem_types: tuple[str, ...]) -> None:
@@ -194,13 +195,15 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         if isinstance(telem_type_widget, PairTupleCombobox):
             type_tuples = get_connection_type_tuples_with_labels(valid_telem_types)
             self.set_combobox_entries_preserving_width(telem_type_widget, type_tuples, "None")
-            telem_type_widget.update_idletasks()
+            if sys.platform != "darwin":
+                telem_type_widget.update_idletasks()
         telem_protocol_widget = self.entry_widgets.get(telem_protocol_path)
         if isinstance(telem_protocol_widget, PairTupleCombobox):
             valid_telem_protocols = self.data_model.get_combobox_values_for_path(telem_protocol_path)
             protocol_tuples = [(p, p) for p in valid_telem_protocols]
             self.set_combobox_entries_preserving_width(telem_protocol_widget, protocol_tuples, "None")
-            telem_protocol_widget.update_idletasks()
+            if sys.platform != "darwin":
+                telem_protocol_widget.update_idletasks()
 
     def _on_esc_fc_protocol_recompute(self, current_telem_type: str) -> None:
         """Recompute telemetry type AND protocol choices and validate current selection."""
@@ -214,7 +217,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         if isinstance(telem_type_widget, PairTupleCombobox):
             type_tuples = get_connection_type_tuples_with_labels(valid_telem_types)
             self.set_combobox_entries_preserving_width(telem_type_widget, type_tuples, current_telem_type)
-            telem_type_widget.update_idletasks()
+            if sys.platform != "darwin":
+                telem_type_widget.update_idletasks()
         self.data_model.set_component_value(telem_type_path, current_telem_type)
         new_choices = self.data_model.get_combobox_values_for_path(telem_protocol_path)
         widget = self.entry_widgets.get(telem_protocol_path)
@@ -243,7 +247,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 current_selection = new_choices[0]
                 self.data_model.set_component_value(telem_protocol_path, current_selection)
             self.set_combobox_entries_preserving_width(widget, protocol_tuples, current_selection)
-        widget.update_idletasks()
+        if sys.platform != "darwin":
+            widget.update_idletasks()
 
     def _on_esc_fc_protocol_changed(self, new_protocol: str) -> None:
         """

@@ -193,7 +193,8 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
                 # Highlight the text to show selection
                 self.selection_range(0, tk.END)
                 # Force the combobox to update visually
-                self.update_idletasks()
+                if platform_system() != "Darwin":
+                    self.update_idletasks()
                 # Generate a virtual ComboboxSelected event to trigger callbacks
                 self.event_generate("<<ComboboxSelected>>")
 
@@ -201,7 +202,8 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
             # Current selection not found or invalid, select first item
             if self.list_keys:
                 self.current(0)
-                self.update_idletasks()
+                if platform_system() != "Darwin":
+                    self.update_idletasks()
                 self.event_generate("<<ComboboxSelected>>")
 
         # Prevent the default behavior
@@ -221,7 +223,8 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
                 # Highlight the text to show selection
                 self.selection_range(0, tk.END)
                 # Force the combobox to update visually
-                self.update_idletasks()
+                if platform_system() != "Darwin":
+                    self.update_idletasks()
                 # Generate a virtual ComboboxSelected event to trigger callbacks
                 self.event_generate("<<ComboboxSelected>>")
 
@@ -231,7 +234,8 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
                 self.current(0)
                 # Highlight the text to show selection
                 self.selection_range(0, tk.END)
-                self.update_idletasks()
+                if platform_system() != "Darwin":
+                    self.update_idletasks()
                 self.event_generate("<<ComboboxSelected>>")
 
         # Prevent the default behavior

@@ -311,6 +311,30 @@ class TestDirectoryAndPathOperations:
 class TestVehicleProjectCreation:
     """Test vehicle project creation operations."""
 
+    def test_imported_component_values_are_persisted_before_gui_start(self) -> None:
+        """Configured-FC imports save inferred component values before opening Tk."""
+        mock_filesystem = MagicMock(spec=LocalFilesystem)
+        mock_filesystem.vehicle_components_fs.data = {"Components": {}}
+        mock_filesystem.load_schema.return_value = {"properties": {}}
+        mock_filesystem.doc_dict = {}
+        mock_filesystem.file_parameters = {}
+        manager = VehicleProjectManager(mock_filesystem)
+        settings = NewVehicleProjectSettings(infer_comp_specs_and_conn_from_fc_params=True)
+        imported_params = ParDict({"BATT_MONITOR": Par(4.0)})
+        mock_component_model = MagicMock()
+        mock_component_model.save_to_filesystem.return_value = (False, "")
+
+        with patch(
+            "ardupilot_methodic_configurator.data_model_vehicle_project.ComponentDataModel",
+            return_value=mock_component_model,
+        ) as mock_model_class:
+            manager._persist_imported_component_data(imported_params, settings)
+
+        mock_model_class.assert_called_once()
+        mock_component_model.post_init.assert_called_once_with({}, {"BATT_MONITOR": 4.0}, {})
+        mock_component_model.process_fc_parameters.assert_called_once_with({"BATT_MONITOR": 4.0}, {})
+        mock_component_model.save_to_filesystem.assert_called_once_with(mock_filesystem)
+
     def test_user_is_told_when_creating_from_flight_controller_without_connection(self) -> None:
         """
         User receives a clear error when no flight controller is connected.

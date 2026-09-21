@@ -19,6 +19,8 @@ from typing import TYPE_CHECKING, Optional
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_par_dict import ParamFileError, ParDict, is_within_tolerance
+from ardupilot_methodic_configurator.data_model_vehicle_components import ComponentDataModel
+from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
     NewVehicleProjectSettings,
     VehicleProjectCreationError,
@@ -54,6 +56,32 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
         self._opener = VehicleProjectOpener(local_filesystem)
         self._settings: NewVehicleProjectSettings | None = None  # It will be set if a new project is created successfully
         self.configuration_template: str = ""  # It will be set if a new project is created successfully
+
+    def _persist_imported_component_data(self, current_params: ParDict, settings: NewVehicleProjectSettings) -> None:
+        """Persist component values inferred from an imported FC or log before opening the GUI."""
+        if not settings.infer_comp_specs_and_conn_from_fc_params:
+            return
+
+        raw_data = self._local_filesystem.vehicle_components_fs.data
+        schema_data = self._local_filesystem.load_schema()
+        # Keep mocked/lightweight project managers usable in tests and avoid trying
+        # to construct a component model from an incomplete filesystem state.
+        if not isinstance(raw_data, dict) or not isinstance(schema_data, dict):
+            return
+
+        fc_parameters = {name: parameter.value for name, parameter in current_params.items()}
+        schema = VehicleComponentsJsonSchema(schema_data)
+        component_model = ComponentDataModel(raw_data, schema.get_all_value_datatypes(), schema)
+        component_model.post_init(
+            self._local_filesystem.doc_dict,
+            fc_parameters,
+            self._local_filesystem.file_parameters,
+        )
+        component_model.process_fc_parameters(fc_parameters, self._local_filesystem.doc_dict)
+
+        save_error, error_message = component_model.save_to_filesystem(self._local_filesystem)
+        if save_error:
+            raise OSError(error_message)
 
     # Directory and path operations
     def get_fc_default_template_dir(self) -> str:
@@ -345,6 +373,13 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
                 annotate_doc=False,
             )
             self._local_filesystem.re_init(new_path, vehicle_type)
+
+        # Component inference used to happen only in the first GUI instance. If
+        # that instance crashed during Tk rendering, reopening the project loaded
+        # the untouched template values instead of the connected FC values. Save
+        # the inferred component model as part of project creation so the project
+        # is self-consistent before the editor is shown.
+        self._persist_imported_component_data(current_params, settings)
 
         self.open_vehicle_directory(new_path)
         self._settings = settings
