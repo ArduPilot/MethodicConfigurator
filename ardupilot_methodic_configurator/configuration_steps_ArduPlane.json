@@ -395,9 +395,9 @@
                 "ATC_RAT_RLL_FLTE": { "New Value": "0", "Change Reason": "Initial value, will be improved at a later step" },
                 "ATC_RAT_YAW_FLTD": { "New Value": "0", "Change Reason": "Initial value, will be improved at a later step" },
                 "ATC_RAT_YAW_FLTE": { "New Value": "2", "Change Reason": "Initial value, will be improved at a later step" },
-                "ATC_THR_MIX_MAN":  { "New Value": "0.1", "Change Reason": "Value for the first couple of flights will be changed later once MOT_THST_HOVER is learned" },
+                "ATC_THR_MIX_MAN":  { "New Value": "0.1", "Change Reason": "Value for the first couple of flights will be changed later once Q_M_THST_HOVER is learned" },
                 "INS_ACCEL_FILTER": { "New Value": "10", "Change Reason": "The default is 20Hz but that is too high in most situations" },
-                "MOT_THST_HOVER":   { "New Value": "0.2", "Change Reason": "Hover learn will improve this initial guess" }
+                "Q_M_THST_HOVER":   { "New Value": "0.2", "Change Reason": "Hover learn will improve this initial guess" }
             },
             "derived_parameters": {
                 "ATC_ANG_YAW_P":    { "New Value": "round(0.5*max(8000, round(-900*vehicle_components['Propellers']['Specifications']['Diameter_inches']+36000, -2))/3000, 1)", "Change Reason": "Derived from vehicle component editor propeller size" },
@@ -612,7 +612,7 @@
             "forced_parameters": {
                 "LOG_BITMASK": { "New Value": 145374, "Change Reason": "Log relevant data for dynamic notch filter tuning. Later on we'll change this to other subsystems" },
                 "LOG_FILE_DSRMROT": { "New Value": 1, "Change Reason": "One .bin log file per flight, not per battery/reboot" },
-                "MOT_HOVER_LEARN": { "if": "fc_parameters['MOT_THST_HOVER'] > 0.125", "New Value": 2, "Change Reason": "So that it can tune the throttle controller on 24_throttle_controller.param file" }
+                "Q_M_HOVER_LEARN": { "if": "fc_parameters['Q_M_THST_HOVER'] > 0.125", "New Value": 2, "Change Reason": "So that it can tune the throttle controller on 24_throttle_controller.param file" }
             },
             "derived_parameters": {
                 "INS_LOG_BAT_MASK": { "New Value": "1 << int(fc_parameters['EK3_PRIMARY']) if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 0", "Change Reason": "'Use EKF primary acc and gyro batch logging on F4 processors or big props' if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 'EKF primary gyro raw logging'" },
@@ -640,8 +640,8 @@
         },
         "24_throttle_controller.param": {
             "why": "The throttle controller is crucial for maintaining altitude and controlling the vehicle's vertical movement.",
-            "why_now": "After the first flight because it depends on the MOT_THST_HOVER parameter, before the second flight so that it can safely use the altitude controller",
-            "blog_text": "Use MOT_THST_HOVER value calculated during the first flight to set throttle controller PIDs",
+            "why_now": "After the first flight because it depends on the Q_M_THST_HOVER parameter, before the second flight so that it can safely use the altitude controller",
+            "blog_text": "Use Q_M_THST_HOVER value calculated during the first flight to set throttle controller PIDs",
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduPlane#82-configure-the-throttle-controller",
             "wiki_text": "Test AltHold",
             "wiki_url": "https://ardupilot.org/copter/docs/initial-tuning-flight.html#test-althold",
@@ -650,11 +650,11 @@
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
             "derived_parameters": {
-                "ATC_THR_MIX_MAN": { "New Value": "0.5", "Change Reason": "Because ALTHOLD flight mode was used for more than 30 seconds to correctly learn the MOT_THST_HOVER value" },
-                "PSC_ACCZ_I": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7')", "New Value": "2*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" },
-                "PSC_D_ACC_I": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.7')", "New Value": "0.2*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use 0.2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" },
-                "PSC_ACCZ_P": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7')", "New Value": "1*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" },
-                "PSC_D_ACC_P": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.7')", "New Value": "0.1*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use 0.1 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" }
+                "ATC_THR_MIX_MAN": { "New Value": "0.5", "Change Reason": "Because ALTHOLD flight mode was used for more than 30 seconds to correctly learn the Q_M_THST_HOVER value" },
+                "PSC_ACCZ_I": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7')", "New Value": "2*fc_parameters['Q_M_THST_HOVER']", "Change Reason": "Use 2 * Q_M_THST_HOVER assuming Q_M_THST_HOVER has been correctly learned" },
+                "PSC_D_ACC_I": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.7')", "New Value": "0.2*fc_parameters['Q_M_THST_HOVER']", "Change Reason": "Use 0.2 * Q_M_THST_HOVER assuming Q_M_THST_HOVER has been correctly learned" },
+                "PSC_ACCZ_P": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7')", "New Value": "1*fc_parameters['Q_M_THST_HOVER']", "Change Reason": "Use Q_M_THST_HOVER assuming Q_M_THST_HOVER has been correctly learned" },
+                "PSC_D_ACC_P": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.7')", "New Value": "0.1*fc_parameters['Q_M_THST_HOVER']", "Change Reason": "Use 0.1 * Q_M_THST_HOVER assuming Q_M_THST_HOVER has been correctly learned" }
             },
             "old_filenames": ["19_throttle_controller.param", "20_throttle_controller.param"]
         },
@@ -912,7 +912,7 @@
                 "LOG_BITMASK": { "New Value": 145118, "Change Reason": "Disable fast harmonic notch logging" }
             },
             "add_parameters": {
-                "MOT_HOVER_LEARN": { "if": "vehicle_components['Frame']['Specifications']['TOW max Kg'] - vehicle_components['Frame']['Specifications']['TOW min Kg'] < 0.01*vehicle_components['Frame']['Specifications']['TOW max Kg']", "New Value": "1", "Change Reason": "The vehicle TOW weight does not change, so no need to save it" }
+                "Q_M_HOVER_LEARN": { "if": "vehicle_components['Frame']['Specifications']['TOW max Kg'] - vehicle_components['Frame']['Specifications']['TOW min Kg'] < 0.01*vehicle_components['Frame']['Specifications']['TOW max Kg']", "New Value": "1", "Change Reason": "The vehicle TOW weight does not change, so no need to save it" }
             },
             "old_filenames": ["26_evaluate_the_aircraft_tune_ff_disable.param", "28_evaluate_the_aircraft_tune_ff_disable.param"]
         },
