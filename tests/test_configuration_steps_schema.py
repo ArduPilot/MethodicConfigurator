@@ -192,6 +192,27 @@ def test_arduplane_configuration_steps_do_not_write_copter_only_parameters() -> 
     assert not copter_only_parameter_names
 
 
+def test_arduplane_configuration_steps_use_plane_parameter_names() -> None:
+    """Plane configuration steps use the names exposed by ArduPlane firmware."""
+    configuration_steps_file = (
+        Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "configuration_steps_ArduPlane.json"
+    )
+    with open(configuration_steps_file, encoding="utf-8") as file:
+        config = json.load(file)
+
+    steps = config["steps"]
+    rc_step = steps["06_remote_controller_receiver.param"]
+    attitude_step = steps["13_initial_atc.param"]
+    throttle_step = steps["20_esc.param"]
+
+    assert "THR_FS_VALUE" in rc_step["autoimport_nondefault_regexp"]
+    assert "FS_THR_VALUE" not in rc_step["autoimport_nondefault_regexp"]
+    assert "FRAME_CLASS" not in steps["05_board_orientation.param"]["derived_parameters"]
+    assert {"Q_A_ACC_P_MAX", "Q_A_ACC_R_MAX", "Q_A_ACC_Y_MAX"} <= set(attitude_step["derived_parameters"])
+    assert "TKOFF_RPM_MIN" not in throttle_step["add_parameters"]
+    assert "Q_TKOFF_RPM_MIN" in throttle_step["add_parameters"]
+
+
 @pytest.mark.parametrize(
     ("firmware_version", "expected_parameter_names"),
     [
