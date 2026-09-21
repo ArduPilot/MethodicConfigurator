@@ -192,12 +192,17 @@ class ComponentDataModelImport(ComponentDataModelBase):
         frame_class_doc_key = "Q_FRAME_CLASS" if fw_type == "ArduPlane" else "FRAME_CLASS"
         self._verify_dict_is_uptodate(doc, frame_class_dict, frame_class_doc_key, "values")
 
-        # Process frame information if FRAME_CLASS or Q_FRAME_CLASS is present in FC parameters
+        # Process frame information if FRAME_CLASS or Q_FRAME_CLASS is present in FC parameters.
+        # A regular ArduPlane does not have a multirotor frame class; when the log
+        # contains no frame-class parameter, do not retain a Quad value from the
+        # generic empty template.
         if "FRAME_CLASS" in fc_parameters or "Q_FRAME_CLASS" in fc_parameters:
             frame_class, _ = get_frame_info(fc_parameters, fw_type)
             frame_class_entry = frame_class_dict.get(str(frame_class))
             frame_class_label = frame_class_entry.get("protocol") if isinstance(frame_class_entry, dict) else "Undefined"
             self.set_component_value(("Frame", "Specifications", "Frame class"), frame_class_label)
+        elif fw_type == "ArduPlane":
+            self.set_component_value(("Frame", "Specifications", "Frame class"), "Undefined")
 
         # Process parameters in sequence
         self._set_gnss_type_from_fc_parameters(fc_parameters)
