@@ -195,6 +195,15 @@
             "autoimport_nondefault_regexp": ["BRD_ALT_CONFIG", "FS_THR_VALUE", "RC_.*", "RSSI_TYPE"],
             "derived_parameters": {
                 "RC_PROTOCOLS": { "New Value": "vehicle_components['RC Receiver']['FC Connection']['Protocol']", "Change Reason": "Selected in the component editor" },
+                "SERIAL1_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL1'", "New Value": "23", "Change Reason": "RC receiver on SERIAL1 requires RCIN" },
+                "SERIAL2_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL2'", "New Value": "23", "Change Reason": "RC receiver on SERIAL2 requires RCIN" },
+                "SERIAL3_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL3'", "New Value": "23", "Change Reason": "RC receiver on SERIAL3 requires RCIN" },
+                "SERIAL4_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL4'", "New Value": "23", "Change Reason": "RC receiver on SERIAL4 requires RCIN" },
+                "SERIAL5_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL5'", "New Value": "23", "Change Reason": "RC receiver on SERIAL5 requires RCIN" },
+                "SERIAL6_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL6'", "New Value": "23", "Change Reason": "RC receiver on SERIAL6 requires RCIN" },
+                "SERIAL7_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL7'", "New Value": "23", "Change Reason": "RC receiver on SERIAL7 requires RCIN" },
+                "SERIAL8_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL8'", "New Value": "23", "Change Reason": "RC receiver on SERIAL8 requires RCIN" },
+                "SERIAL9_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL9'", "New Value": "23", "Change Reason": "RC receiver on SERIAL9 requires RCIN" },
                 "FLTMODE_CH": { "if": "vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'ExpressLRS'", "New Value": "6", "Change Reason": "ExpressLRS requires FLTMODE_CH != 5" }
             },
             "rename_connection": "vehicle_components['RC Receiver']['FC Connection']['Type']",
@@ -230,6 +239,17 @@
             "mandatory_text": "100% mandatory (0% optional)",
             "component": "Telemetry",
             "auto_changed_by": "",
+            "derived_parameters": {
+                "SERIAL1_PROTOCOL": { "if": "vehicle_components['Telemetry']['FC Connection']['Type'] == 'SERIAL1'", "New Value": "vehicle_components['Telemetry']['FC Connection']['Protocol']", "Change Reason": "Telemetry on SERIAL1 protocol defined in component editor" },
+                "SERIAL2_PROTOCOL": { "if": "vehicle_components['Telemetry']['FC Connection']['Type'] == 'SERIAL2'", "New Value": "vehicle_components['Telemetry']['FC Connection']['Protocol']", "Change Reason": "Telemetry on SERIAL2 protocol defined in component editor" },
+                "SERIAL3_PROTOCOL": { "if": "vehicle_components['Telemetry']['FC Connection']['Type'] == 'SERIAL3'", "New Value": "vehicle_components['Telemetry']['FC Connection']['Protocol']", "Change Reason": "Telemetry on SERIAL3 protocol defined in component editor" },
+                "SERIAL4_PROTOCOL": { "if": "vehicle_components['Telemetry']['FC Connection']['Type'] == 'SERIAL4'", "New Value": "vehicle_components['Telemetry']['FC Connection']['Protocol']", "Change Reason": "Telemetry on SERIAL4 protocol defined in component editor" },
+                "SERIAL5_PROTOCOL": { "if": "vehicle_components['Telemetry']['FC Connection']['Type'] == 'SERIAL5'", "New Value": "vehicle_components['Telemetry']['FC Connection']['Protocol']", "Change Reason": "Telemetry on SERIAL5 protocol defined in component editor" },
+                "SERIAL6_PROTOCOL": { "if": "vehicle_components['Telemetry']['FC Connection']['Type'] == 'SERIAL6'", "New Value": "vehicle_components['Telemetry']['FC Connection']['Protocol']", "Change Reason": "Telemetry on SERIAL6 protocol defined in component editor" },
+                "SERIAL7_PROTOCOL": { "if": "vehicle_components['Telemetry']['FC Connection']['Type'] == 'SERIAL7'", "New Value": "vehicle_components['Telemetry']['FC Connection']['Protocol']", "Change Reason": "Telemetry on SERIAL7 protocol defined in component editor" },
+                "SERIAL8_PROTOCOL": { "if": "vehicle_components['Telemetry']['FC Connection']['Type'] == 'SERIAL8'", "New Value": "vehicle_components['Telemetry']['FC Connection']['Protocol']", "Change Reason": "Telemetry on SERIAL8 protocol defined in component editor" },
+                "SERIAL9_PROTOCOL": { "if": "vehicle_components['Telemetry']['FC Connection']['Type'] == 'SERIAL9'", "New Value": "vehicle_components['Telemetry']['FC Connection']['Protocol']", "Change Reason": "Telemetry on SERIAL9 protocol defined in component editor" }
+            },
             "rename_connection": "vehicle_components['Telemetry']['FC Connection']['Type']",
             "old_filenames": ["06_telemetry.param"]
         },
