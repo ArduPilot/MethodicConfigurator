@@ -173,7 +173,7 @@ def create_test_filesystem(vehicle_dir: Path, vehicle_type: str):
     local_fs = LocalFilesystem(
         vehicle_dir=str(vehicle_dir),
         vehicle_type=vehicle_type,
-        fw_version="4.6.3",
+        fw_version="",
         allow_editing_template_files=True,
         save_component_to_system_templates=False,
     )
@@ -367,7 +367,7 @@ def compounded_params_files(tmp_test_dir):
             local_fs = LocalFilesystem(
                 vehicle_dir=str(template_dir),
                 vehicle_type=vehicle_type,
-                fw_version="4.6.3",
+                fw_version="",
                 allow_editing_template_files=False,
                 save_component_to_system_templates=False,
             )
@@ -555,7 +555,7 @@ class TestTemplateImportWithComponentInference:
             local_filesystem = LocalFilesystem(
                 vehicle_dir=str(empty_template_dir),
                 vehicle_type=vehicle_type,
-                fw_version="4.6.3",
+                fw_version="",
                 allow_editing_template_files=False,
                 save_component_to_system_templates=False,
             )
@@ -671,7 +671,7 @@ class TestTemplateImportWithComponentInference:
                 local_filesystem = LocalFilesystem(
                     vehicle_dir=str(empty_template_dir),
                     vehicle_type=vehicle_type,
-                    fw_version="4.6.3",
+                    fw_version="",
                     allow_editing_template_files=True,
                     save_component_to_system_templates=False,
                 )

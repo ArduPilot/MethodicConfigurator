@@ -92,6 +92,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         self.doc_dict: dict[str, Any] = {}
         self._parameter_metadata_cache: dict[tuple[str, str], dict[str, Any]] = {}
         if vehicle_dir is not None:
+            self.remove_cached_parameter_metadata_for_mismatched_firmware(vehicle_dir)
             self.re_init(vehicle_dir, vehicle_type)
 
     def re_init(self, vehicle_dir: str, vehicle_type: str, blank_component_data: bool = False) -> None:
@@ -147,6 +148,46 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 self.doc_dict.update(doc_dict)
 
         self.__extend_and_reformat_parameter_documentation_metadata()
+
+    def remove_cached_parameter_metadata_for_mismatched_firmware(self, vehicle_dir: str) -> bool:
+        """
+        Remove cached parameter metadata when a project was made for another FC firmware.
+
+        ``fw_version`` is explicit only when it came from a connected flight controller.
+        In that case, a project's cached ``apm.pdef.xml`` may belong to the firmware
+        recorded in its vehicle_components.json instead.  Remove both the on-disk and
+        in-memory copies so the following reinitialization downloads matching metadata.
+        """
+        if not self._fw_version_is_explicit:
+            return False
+
+        fc_fw_version = re_compile(r"[ _-]").split(self.fw_version, 1)[0]
+        if not fc_fw_version or not self.load_vehicle_components_json_data(vehicle_dir):
+            return False
+
+        project_fw_version = self.get_fc_fw_version_from_vehicle_components_json()
+        if not project_fw_version or project_fw_version == fc_fw_version:
+            return False
+
+        project_vehicle_type = self.get_fc_fw_type_from_vehicle_components_json()
+        cache_key = (project_vehicle_type, fc_fw_version)
+        removed_from_memory = self._parameter_metadata_cache.pop(cache_key, None) is not None
+
+        metadata_file = os_path.join(vehicle_dir, PARAM_DEFINITION_XML_FILE)
+        try:
+            os_remove(metadata_file)
+        except FileNotFoundError:
+            return removed_from_memory
+        except OSError as error:
+            logging_warning(_("Could not remove cached parameter metadata %s: %s"), metadata_file, error)
+            return removed_from_memory
+
+        logging_info(
+            _("Removed cached parameter metadata because project firmware %s differs from connected FC firmware %s."),
+            project_fw_version,
+            fc_fw_version,
+        )
+        return True
 
     def vehicle_configuration_files_exist(self, vehicle_dir: str) -> bool:
         vehicle_path = Path(vehicle_dir)
