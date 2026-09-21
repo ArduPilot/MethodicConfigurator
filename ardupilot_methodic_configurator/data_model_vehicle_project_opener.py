@@ -75,9 +75,11 @@ class VehicleProjectOpener:
         # locations when rename_parameter_files() runs inside re_init().
         migrate_vehicle_project_if_needed(last_vehicle_dir)
 
-        # Initialize the filesystem with the directory
+        # Let the selected project's vehicle_components.json determine its vehicle
+        # type. Reusing the previous project's type would load the wrong metadata
+        # and configuration steps (for example, Copter choices for an ArduPlane).
         try:
-            self.local_filesystem.re_init(last_vehicle_dir, self.local_filesystem.vehicle_type)
+            self.local_filesystem.re_init(last_vehicle_dir, "")
         except ParamFileError as exp:
             raise VehicleProjectOpenError(
                 _("Fatal error reading parameter files"), _("Fatal error reading parameter files: {exp}").format(exp=exp)
@@ -143,9 +145,10 @@ class VehicleProjectOpener:
         # locations when rename_parameter_files() runs inside re_init().
         migrate_vehicle_project_if_needed(vehicle_dir)
 
-        # Initialize the filesystem with the directory
+        # Let the selected project's vehicle_components.json determine its vehicle
+        # type instead of carrying over the type of the previously opened project.
         try:
-            self.local_filesystem.re_init(vehicle_dir, self.local_filesystem.vehicle_type)
+            self.local_filesystem.re_init(vehicle_dir, "")
         except ParamFileError as exp:
             raise VehicleProjectOpenError(
                 _("Fatal error reading parameter files"), _("Fatal error reading parameter files: {exp}").format(exp=exp)
