@@ -93,6 +93,28 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             assert filesystem.vehicle_dir == mock_vehicle_dir
             assert filesystem.vehicle_type == "ArduCopter"
 
+    def test_re_init_refreshes_auto_detected_firmware_version_for_each_project(self) -> None:
+        """Opening another project refreshes a firmware version that was auto-detected."""
+        filesystem = LocalFilesystem(
+            None,
+            "",
+            "",
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
+        )
+
+        with (
+            patch.object(filesystem, "load_vehicle_components_json_data", return_value=True),
+            patch.object(filesystem, "get_fc_fw_version_from_vehicle_components_json", side_effect=["4.7.0", "4.6.3"]),
+            patch.object(filesystem, "get_fc_fw_type_from_vehicle_components_json", return_value="ArduCopter"),
+            patch.object(filesystem, "rename_parameter_files"),
+            patch.object(filesystem, "read_params_from_files", return_value={}),
+        ):
+            filesystem.re_init("/projects/4.7", "")
+            filesystem.re_init("/projects/4.6", "")
+
+        assert filesystem.fw_version == "4.6.3"
+
     def test_vehicle_configuration_files_exist(self) -> None:
         """Test checking if vehicle configuration files exist."""
         mock_vehicle_dir = "/mock/dir"

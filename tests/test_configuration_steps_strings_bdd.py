@@ -10,9 +10,12 @@ SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from pathlib import Path
+
 from gettext_capture_helper import capture_gettext_calls
 
 from ardupilot_methodic_configurator import configuration_steps_strings as config_strings
+from update_configuration_steps_translation import gather_all_translatable_strings
 
 
 class TestConfigurationStepsStringsModule:
@@ -49,3 +52,14 @@ class TestConfigurationStepsStringsModule:
         )
         assert captured_values
         assert all(isinstance(value, str) and value for value in captured_values)
+
+    def test_configuration_steps_strings_include_every_change_reason(self, monkeypatch) -> None:
+        """Every Change Reason in the JSON resources is registered for translation."""
+        captured_values = capture_gettext_calls(
+            monkeypatch,
+            config_strings,
+            config_strings.configuration_steps_strings,
+        )
+        extracted_strings = gather_all_translatable_strings(str(Path(config_strings.__file__).parent))
+
+        assert set(extracted_strings["change_reasons"]) <= set(captured_values)
