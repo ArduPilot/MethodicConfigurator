@@ -332,9 +332,7 @@
                 "BATT_ARM_VOLT": { "New Value": "vehicle_components['Battery']['Specifications']['Volt per cell arm']*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Only arm above this voltage, to avoid taking off with insufficient battery capacity" },
                 "BATT_CAPACITY": { "New Value": "vehicle_components['Battery']['Specifications']['Capacity mAh']", "Change Reason": "Total battery capacity specified in the component editor" },
                 "BATT_CRT_VOLT": { "New Value": "vehicle_components['Battery']['Specifications']['Volt per cell crit']*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Critical failsafe voltage x nr. of cells" },
-                "BATT_LOW_VOLT": { "New Value": "vehicle_components['Battery']['Specifications']['Volt per cell low']*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Low failsafe voltage x nr. of cells" },
-                "MOT_BAT_VOLT_MAX": { "New Value": "vehicle_components['Battery']['Specifications']['Volt per cell max']*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Scale the PIDs up when battery voltage is below this threshold" },
-                "MOT_BAT_VOLT_MIN": { "New Value": "vehicle_components['Battery']['Specifications']['Volt per cell min']*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Scale the PIDs up when battery voltage is above this threshold" }
+                "BATT_LOW_VOLT": { "New Value": "vehicle_components['Battery']['Specifications']['Volt per cell low']*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Low failsafe voltage x nr. of cells" }
             },
             "delete_parameters": {
                 "BATT_AMP_OFFSET": {},
@@ -657,9 +655,6 @@
                 "PSC_D_ACC_I": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.7')", "New Value": "0.2*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use 0.2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" },
                 "PSC_ACCZ_P": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7')", "New Value": "1*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" },
                 "PSC_D_ACC_P": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.7')", "New Value": "0.1*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use 0.1 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" }
-            },
-            "add_parameters": {
-                "MOT_BAT_VOLT_MAX": { "New Value": "fc_parameters['MOT_BAT_VOLT_MAX']", "Change Reason": "To correctly scale the PID gains. Voltage of a healthy, fully charged battery immediately after takeoff. Read from a flight log" }
             },
             "old_filenames": ["19_throttle_controller.param", "20_throttle_controller.param"]
         },
