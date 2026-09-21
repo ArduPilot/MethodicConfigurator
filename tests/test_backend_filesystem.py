@@ -115,6 +115,39 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
 
         assert filesystem.fw_version == "4.6.3"
 
+    def test_re_init_reuses_metadata_for_the_same_vehicle_firmware(self) -> None:
+        """Reinitializing a new project does not download identical metadata again."""
+        filesystem = LocalFilesystem(
+            None,
+            "ArduCopter",
+            "4.6.3",
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
+        )
+        metadata = {
+            "TEST_PARAM": {
+                "humanName": "Test parameter",
+                "documentation": [],
+                "fields": {},
+                "values": {},
+            }
+        }
+
+        with (
+            patch.object(filesystem, "load_vehicle_components_json_data", return_value=True),
+            patch.object(filesystem, "rename_parameter_files"),
+            patch.object(filesystem, "read_params_from_files", return_value={"01_setup.param": ParDict()}),
+            patch("ardupilot_methodic_configurator.backend_filesystem.load_default_param_file", return_value=ParDict()),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem.parse_parameter_metadata",
+                return_value=metadata,
+            ) as parse_metadata,
+        ):
+            filesystem.re_init("/projects/source", "ArduCopter")
+            filesystem.re_init("/projects/new-project", "ArduCopter")
+
+        parse_metadata.assert_called_once()
+
     def test_vehicle_configuration_files_exist(self) -> None:
         """Test checking if vehicle configuration files exist."""
         mock_vehicle_dir = "/mock/dir"
