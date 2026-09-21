@@ -210,6 +210,7 @@ class TestVehicleDirectoryOpening:
         # Assert: Directory opened successfully and filesystem initialized
         assert result == vehicle_dir
         assert mock_local_filesystem.vehicle_dir == vehicle_dir
+        mock_local_filesystem.remove_cached_parameter_metadata_for_mismatched_firmware.assert_called_once_with(vehicle_dir)
         mock_local_filesystem.re_init.assert_called_once_with(vehicle_dir, "")
 
     def test_user_cannot_open_directory_without_required_files(self, project_opener, mock_local_filesystem) -> None:
