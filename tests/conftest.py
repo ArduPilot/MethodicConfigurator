@@ -22,6 +22,7 @@ import time
 import tkinter as tk
 from collections.abc import Callable, Generator
 from pathlib import Path
+from threading import RLock
 from typing import Any, NamedTuple, Protocol
 from unittest.mock import MagicMock, Mock, patch
 
@@ -53,6 +54,7 @@ def mock_connected_master() -> tuple[MagicMock, Mock]:
     mock_master.target_component = 1
     mock_conn_mgr = Mock()
     mock_conn_mgr.master = mock_master
+    mock_conn_mgr.mavlink_transaction = RLock()
     return mock_master, mock_conn_mgr
 
 

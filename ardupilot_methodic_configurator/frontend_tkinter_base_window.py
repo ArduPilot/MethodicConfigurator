@@ -141,8 +141,68 @@ class BaseWindow:
         self._setup_theme_and_styling()
 
         # Create main container frame
+        self._fc_operation_widget_states: dict[tk.Misc, tuple[str, ...] | str] | None = None
         self.main_frame = ttk.Frame(self.root)
         self.main_frame.pack(expand=True, fill=tk.BOTH)
+
+    def set_fc_operation_busy(self, busy: bool) -> None:
+        """Disable interactive controls while an operation owns the flight-controller link."""
+        if busy:
+            if self._fc_operation_widget_states is not None:
+                return
+            widget_states: dict[tk.Misc, tuple[str, ...] | str] = {}
+            for widget in self._iter_descendant_widgets(self.root):
+                self._disable_widget_for_fc_operation(widget, widget_states)
+            self._fc_operation_widget_states = widget_states
+            return
+
+        stored_widget_states = self._fc_operation_widget_states
+        if stored_widget_states is None:
+            return
+        self._fc_operation_widget_states = None
+        for widget, previous_state in stored_widget_states.items():
+            self._restore_widget_after_fc_operation(widget, previous_state)
+
+    @staticmethod
+    def _disable_widget_for_fc_operation(widget: tk.Misc, widget_states: dict[tk.Misc, tuple[str, ...] | str]) -> None:  # pylint: disable=useless-return
+        """Disable one widget and remember its state when it supports state changes."""
+        try:
+            if isinstance(widget, ttk.Widget):
+                previous_ttk_state = tuple(widget.state())
+                if "disabled" not in previous_ttk_state:
+                    widget.state(["disabled"])
+                    widget_states[widget] = previous_ttk_state
+            else:
+                previous_tk_state = str(widget.cget("state"))
+                if previous_tk_state != "disabled":
+                    widget.configure({"state": "disabled"})
+                    widget_states[widget] = previous_tk_state
+        except (AttributeError, tk.TclError):
+            return
+
+    @staticmethod
+    def _restore_widget_after_fc_operation(widget: tk.Misc, previous_state: tuple[str, ...] | str) -> None:
+        """Restore one widget's state after a flight-controller operation."""
+        try:
+            if isinstance(previous_state, tuple):
+                if not isinstance(widget, ttk.Widget):
+                    return
+                widget.state(["!disabled"])
+                for state in previous_state:
+                    widget.state([state])
+            else:
+                widget.configure({"state": previous_state})
+        except (AttributeError, tk.TclError):
+            return
+
+    @staticmethod
+    def _iter_descendant_widgets(widget: tk.Misc) -> list[tk.Misc]:
+        """Return all widgets below a Tk container, including nested descendants."""
+        descendants: list[tk.Misc] = []
+        for child in widget.winfo_children():
+            descendants.append(child)
+            descendants.extend(BaseWindow._iter_descendant_widgets(child))
+        return descendants
 
     def _setup_application_icon(self) -> None:
         """

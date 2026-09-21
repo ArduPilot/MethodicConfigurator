@@ -14,6 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import time
+from threading import Event, RLock, Thread
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -34,7 +35,7 @@ def test_reboot_to_bootloader_holds_bootloader_without_force_flags() -> None:
     acknowledgement.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
     master.recv_match.return_value = acknowledgement
 
-    connection = Mock()
+    connection = MagicMock()
     connection.master = master
     commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
 
@@ -58,7 +59,7 @@ class TestFlightControllerCommandsInitialization:
         """
         # Given: Mock dependencies
         mock_params_mgr = Mock()
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
 
         # When: Create commands manager
@@ -130,7 +131,7 @@ class TestFlightControllerCommandsMotorTest:
         AND: No exceptions should be raised
         """
         # Given: No connection
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
         mock_params_mgr = Mock()
 
@@ -142,6 +143,36 @@ class TestFlightControllerCommandsMotorTest:
         # Then: Clear failure
         assert success is False
         assert "connection" in error.lower()
+
+    def test_command_wait_uses_the_shared_mavlink_transaction(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
+        """
+        Command acknowledgements must wait for an existing shared MAVLink transaction.
+
+        GIVEN: Another operation owns the connection transaction
+        WHEN: A command acknowledgement is requested
+        THEN: The command waits until the transaction is released
+        """
+        mock_master, mock_conn_mgr = mock_connected_master
+        transaction = RLock()
+        mock_conn_mgr.mavlink_transaction = transaction
+        acknowledgement = MagicMock()
+        acknowledgement.command = 999
+        acknowledgement.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
+        mock_master.recv_match.return_value = acknowledgement
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+        completed = Event()
+
+        def run_command() -> None:
+            commands_mgr.send_command_and_wait_ack_with_result(command=999, timeout=1.0)
+            completed.set()
+
+        with transaction:
+            command_thread = Thread(target=run_command)
+            command_thread.start()
+            assert not completed.wait(timeout=0.1)
+
+        command_thread.join(timeout=1.0)
+        assert completed.is_set()
 
 
 class TestFlightControllerCommandsBatteryStatus:
@@ -482,7 +513,7 @@ class TestFlightControllerCommandsAllMotors:
         AND: Error message should indicate no connection
         """
         # Given: No connection
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
         mock_params_mgr = Mock()
 
@@ -538,7 +569,7 @@ class TestFlightControllerCommandsSequencedMotors:
         AND: Error message should indicate no connection
         """
         # Given: No connection
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
         mock_params_mgr = Mock()
 
@@ -604,7 +635,7 @@ class TestFlightControllerCommandsWrapperMethods:
             "MOT_BAT_VOLT_MAX": 12.6,
         }
 
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = MagicMock()
 
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
@@ -631,7 +662,7 @@ class TestFlightControllerCommandsWrapperMethods:
         mock_params_mgr = Mock()
         mock_params_mgr.fc_parameters = {"BATT_MONITOR": 4}
 
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = MagicMock()
 
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
@@ -654,7 +685,7 @@ class TestFlightControllerCommandsWrapperMethods:
         mock_params_mgr = Mock()
         mock_params_mgr.fc_parameters = {"BATT_MONITOR": 0}
 
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = MagicMock()
 
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
@@ -680,7 +711,7 @@ class TestFlightControllerCommandsWrapperMethods:
             "FRAME_TYPE": 1,  # X
         }
 
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = MagicMock()
 
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
@@ -731,7 +762,7 @@ class TestFlightControllerCommandsAccelerometerCalibration:  # pylint: disable=t
         WHEN: User starts simple accelerometer calibration
         THEN: The method should return a clear connection error
         """
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
@@ -769,7 +800,7 @@ class TestFlightControllerCommandsAccelerometerCalibration:  # pylint: disable=t
         WHEN: User starts the full accelerometer calibration
         THEN: The method should return a clear connection error
         """
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
@@ -812,7 +843,7 @@ class TestFlightControllerCommandsAccelerometerCalibration:  # pylint: disable=t
         WHEN: poll_accel_cal_vehicle_pos is called
         THEN: The method should return None
         """
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
@@ -939,6 +970,35 @@ class TestFlightControllerCommandsAccelerometerCalibration:  # pylint: disable=t
         assert success is False
         assert result == mavutil.mavlink.MAV_RESULT_TEMPORARILY_REJECTED
 
+    def test_failed_calibration_ack_includes_the_disarm_hint_from_status_text(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """
+        An armed vehicle failure tells the user how to recover.
+
+        GIVEN: The flight controller reports that calibration requires disarming
+        WHEN: A level calibration command fails
+        THEN: The error tells the user to disarm before retrying
+        """
+        mock_master, mock_conn_mgr = mock_connected_master
+        status_text = MagicMock()
+        status_text.get_type.return_value = "STATUSTEXT"
+        status_text.text = "Disarm to allow calibration"
+        acknowledgement = MagicMock()
+        acknowledgement.get_type.return_value = "COMMAND_ACK"
+        acknowledgement.command = mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
+        acknowledgement.result = mavutil.mavlink.MAV_RESULT_FAILED
+        mock_master.recv_match.side_effect = [status_text, acknowledgement]
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        success, error, _result = commands_mgr.send_command_and_wait_ack_with_result(
+            command=mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            timeout=1.0,
+        )
+
+        assert success is False
+        assert "disarm" in error.lower()
+
     def test_level_accelerometer_calibration_fails_without_connection(self) -> None:
         """
         Level calibration fails cleanly without a connection.
@@ -947,7 +1007,7 @@ class TestFlightControllerCommandsAccelerometerCalibration:  # pylint: disable=t
         WHEN: User starts level calibration
         THEN: The method returns a clear connection error
         """
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
@@ -1140,7 +1200,7 @@ class TestFlightControllerCommandsAccelerometerCalibration:  # pylint: disable=t
         WHEN: confirm_accel_vehicle_pos is called
         THEN: The method returns a clear connection error
         """
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
@@ -1187,7 +1247,7 @@ class TestFlightControllerCommandsResultCodes:
 
         mock_master.recv_match.return_value = mock_ack
 
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = mock_master
         mock_params_mgr = Mock()
 
@@ -1217,7 +1277,7 @@ class TestFlightControllerCommandsResultCodes:
 
         mock_master.recv_match.return_value = mock_ack
 
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = mock_master
         mock_params_mgr = Mock()
 
@@ -1247,7 +1307,7 @@ class TestFlightControllerCommandsResultCodes:
 
         mock_master.recv_match.return_value = mock_ack
 
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = mock_master
         mock_params_mgr = Mock()
 
@@ -1279,7 +1339,7 @@ class TestFlightControllerCommandsBatteryEdgeCases:
 
         mock_master = MagicMock()
 
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = mock_master
         mock_params_mgr.fc_parameters = {"BATT_MONITOR": 0}
 
@@ -1305,7 +1365,7 @@ class TestFlightControllerCommandsBatteryEdgeCases:
         mock_params_mgr = Mock()
         mock_params_mgr.fc_parameters = None
 
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
 
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
@@ -1333,7 +1393,7 @@ class TestFlightControllerCommandsBatteryEdgeCases:
         mock_params_mgr = Mock()
         mock_params_mgr.fc_parameters = {"BATT_MONITOR": 4}
 
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = mock_master
 
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
@@ -1364,7 +1424,7 @@ class TestFlightControllerCommandsBatteryEdgeCases:
         mock_params_mgr = Mock()
         mock_params_mgr.fc_parameters = {"BATT_MONITOR": 4}
 
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = mock_master
 
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
@@ -1397,7 +1457,7 @@ class TestFlightControllerCommandsBatteryEdgeCases:
         mock_master = MagicMock()
         mock_master.mav.command_long_send.side_effect = Exception("Serial port error")
 
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = mock_master
         mock_params_mgr = Mock()
 
@@ -1470,7 +1530,7 @@ class TestFlightControllerCommandsAccelCalibrationCancel:
         AND: No command is attempted
         """
         # Given: No connection
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
@@ -1597,7 +1657,7 @@ class TestFlightControllerCommandsPollScaledImu:
         THEN: None is returned
         """
         # Given: No connection
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
@@ -1682,7 +1742,7 @@ class TestFlightControllerCommandsRequestScaledImu:
         THEN: The call reports failure with a descriptive message
         """
         # Given: No connection
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 

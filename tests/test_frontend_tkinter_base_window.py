@@ -45,6 +45,32 @@ from ardupilot_methodic_configurator.frontend_tkinter_show import MonitorBounds
 # ==================== ADDITIONAL TEST FIXTURES ====================
 
 
+def test_flight_controller_busy_state_disables_and_restores_interactive_controls(tk_root) -> None:
+    """
+    The application busy state blocks interactive controls without losing their prior states.
+
+    GIVEN: A parameter-editor window with normal and readonly controls
+    WHEN: A flight-controller operation marks the application busy and then finishes
+    THEN: Controls are disabled during the operation and restored afterward
+    """
+    window = BaseWindow(tk_root)
+    button = ttk.Button(window.main_frame)
+    button.pack()
+    combobox = ttk.Combobox(window.main_frame, state="readonly")
+    combobox.pack()
+
+    window.set_fc_operation_busy(busy=True)
+
+    assert "disabled" in button.state()
+    assert "disabled" in combobox.state()
+
+    window.set_fc_operation_busy(busy=False)
+
+    assert "disabled" not in button.state()
+    assert combobox.state() == ("readonly",)
+    window.root.destroy()
+
+
 @pytest.fixture
 def dpi_test_window(mock_tkinter_context) -> Callable[[float, float], tuple[BaseWindow, contextlib.ExitStack]]:
     """Specialized fixture for DPI testing that doesn't mock DPI detection."""

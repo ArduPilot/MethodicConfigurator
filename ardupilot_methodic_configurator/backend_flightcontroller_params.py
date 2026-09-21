@@ -9,7 +9,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from collections.abc import Callable
-from contextlib import AbstractContextManager, nullcontext
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
@@ -18,7 +17,7 @@ from math import nan
 from pathlib import Path
 from time import sleep as time_sleep
 from time import time as time_time
-from typing import TYPE_CHECKING, Any, Optional, cast
+from typing import TYPE_CHECKING, Any, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import DEVICE_FC_PARAM_FROM_FILE
@@ -114,15 +113,8 @@ class FlightControllerParams:
         parameter_defaults_filename: Path | None = None,
     ) -> tuple[dict[str, float], ParDict]:
         """Request all parameters while exclusively owning the MAVLink receive queue."""
-        with self._mavlink_transaction():
+        with self._connection_manager.mavlink_transaction:
             return self._download_params_unlocked(progress_callback, parameter_values_filename, parameter_defaults_filename)
-
-    def _mavlink_transaction(self) -> AbstractContextManager[object]:
-        """Return the shared MAVLink transaction lock when the connection provides one."""
-        transaction = getattr(self._connection_manager, "mavlink_transaction", None)
-        if hasattr(transaction, "__enter__") and hasattr(transaction, "__exit__"):
-            return cast("AbstractContextManager[object]", transaction)
-        return nullcontext()
 
     def _download_params_unlocked(
         self,

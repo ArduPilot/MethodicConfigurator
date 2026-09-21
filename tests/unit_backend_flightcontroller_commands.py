@@ -15,12 +15,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from collections.abc import Callable
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from pymavlink import mavutil
 
 from ardupilot_methodic_configurator.backend_flightcontroller_commands import FlightControllerCommands
+
+Mock = MagicMock
 
 
 class TestSendCommandAndWaitAckBranches:

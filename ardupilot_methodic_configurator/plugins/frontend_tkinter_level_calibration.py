@@ -81,7 +81,6 @@ class LevelCalibrationView(Frame):  # pylint: disable=too-many-instance-attribut
         self._calibration_error = None
         self._calibration_readback_error = None
         self._calibration_cancelled.clear()
-        self._show_calibration_progress()
 
         def run_calibration() -> None:
             try:
@@ -93,9 +92,16 @@ class LevelCalibrationView(Frame):  # pylint: disable=too-many-instance-attribut
             if self._calibration_result[0] and not self._calibration_cancelled.is_set():
                 self._read_back_calibrated_parameters()
 
-        self._calibration_thread = Thread(target=run_calibration, daemon=True)
-        self._calibration_thread.start()
-        self._calibration_poll_job = self.after(_CALIBRATION_POLL_INTERVAL_MS, self._poll_level_calibration)
+        try:
+            self.base_window.set_fc_operation_busy(busy=True)
+            self._show_calibration_progress()
+            self._calibration_thread = Thread(target=run_calibration, daemon=True)
+            self._calibration_thread.start()
+            self._calibration_poll_job = self.after(_CALIBRATION_POLL_INTERVAL_MS, self._poll_level_calibration)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            self._close_calibration_progress()
+            self._level_btn.configure(state="normal")
+            showerror(_("Calibration Failed"), str(exc) or repr(exc))
 
     def _show_calibration_progress(self) -> None:
         """Show a modal progress indicator while the shared MAVLink link is in use."""
@@ -106,6 +112,7 @@ class LevelCalibrationView(Frame):  # pylint: disable=too-many-instance-attribut
         )
         self._calibration_progress_window.progress_bar.configure(mode="indeterminate")
         self._calibration_progress_window.progress_bar.start(10)
+        self._calibration_progress_window.progress_window.protocol("WM_DELETE_WINDOW", lambda: None)
         if sys_platform != "darwin":
             self._calibration_progress_window.progress_window.grab_set()
 
@@ -113,13 +120,13 @@ class LevelCalibrationView(Frame):  # pylint: disable=too-many-instance-attribut
         """Release the modal UI lock and remove the calibration progress indicator."""
         progress_window = self._calibration_progress_window
         self._calibration_progress_window = None
-        if progress_window is None:
-            return
-        with suppress(tk.TclError):
-            progress_window.progress_bar.stop()
-            if sys_platform != "darwin":
-                progress_window.progress_window.grab_release()
-        progress_window.destroy()
+        if progress_window is not None:
+            with suppress(tk.TclError):
+                progress_window.progress_bar.stop()
+                if sys_platform != "darwin":
+                    progress_window.progress_window.grab_release()
+            progress_window.destroy()
+        self.base_window.set_fc_operation_busy(busy=False)
 
     def _read_back_calibrated_parameters(self) -> None:
         """Read the calibration output without mutating Tk-owned state from the worker."""

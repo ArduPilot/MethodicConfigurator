@@ -34,6 +34,7 @@ def level_calibration_view(tk_root, mocker) -> Generator[SimpleNamespace, None, 
     model = MagicMock(spec=LevelCalibrationDataModel)
     base_window = SimpleNamespace(
         root=tk_root,
+        set_fc_operation_busy=MagicMock(),
         download_flight_controller_parameters=MagicMock(),
         parameter_editor=SimpleNamespace(
             fc_parameters={"AHRS_TRIM_X": 0.01, "AHRS_TRIM_Y": 0.02},
@@ -297,6 +298,91 @@ class TestLevelCalibrationView:
         level_calibration_view.progress_window.progress_bar.stop.assert_called_once_with()
         level_calibration_view.progress_window.progress_window.grab_release.assert_called_once_with()
         level_calibration_view.progress_window.destroy.assert_called_once_with()
+
+    def test_progress_window_cannot_be_closed_while_calibration_is_running(self, level_calibration_view) -> None:
+        """
+        Closing the progress window must not release the calibration UI lock.
+
+        GIVEN: Level calibration is running in the background
+        WHEN: The progress window is configured
+        THEN: Its window-manager close action is ignored
+        """
+        level_calibration_view.model.start_level_calibration.return_value = (True, "Level calibration successful")
+
+        level_calibration_view.view._on_level_calibration()
+
+        level_calibration_view.progress_window.progress_window.protocol.assert_called_once()
+        protocol_name, protocol_handler = level_calibration_view.progress_window.progress_window.protocol.call_args.args
+        assert protocol_name == "WM_DELETE_WINDOW"
+        protocol_handler()
+        level_calibration_view.progress_window.destroy.assert_not_called()
+
+        level_calibration_view.view._calibration_thread.join(timeout=1.0)
+        level_calibration_view.view._poll_level_calibration()
+
+    def test_macos_calibration_marks_the_application_busy_until_completion(self, level_calibration_view, mocker) -> None:
+        """
+        MacOS must disable other flight-controller controls while calibration owns the link.
+
+        GIVEN: The application is running on macOS
+        WHEN: Level calibration starts and completes
+        THEN: The shared application busy state is enabled and released
+        """
+        mocker.patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_level_calibration.sys_platform", "darwin")
+        level_calibration_view.model.start_level_calibration.return_value = (True, "Level calibration successful")
+
+        level_calibration_view.view._on_level_calibration()
+
+        level_calibration_view.base_window.set_fc_operation_busy.assert_called_once_with(busy=True)
+
+        level_calibration_view.view._calibration_thread.join(timeout=1.0)
+        level_calibration_view.view._poll_level_calibration()
+
+        level_calibration_view.base_window.set_fc_operation_busy.assert_has_calls(
+            [mocker.call(busy=True), mocker.call(busy=False)]
+        )
+
+    def test_progress_setup_failure_restores_the_calibration_button(self, level_calibration_view, mocker) -> None:
+        """
+        A progress-window setup failure must leave the plugin usable.
+
+        GIVEN: Creating the progress window raises an exception
+        WHEN: The user starts level calibration
+        THEN: The button is restored and no orphaned polling job remains
+        """
+        mocker.patch(
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_level_calibration.ProgressWindow",
+            side_effect=RuntimeError("progress setup failed"),
+        )
+
+        level_calibration_view.view._on_level_calibration()
+
+        assert str(level_calibration_view.view._level_btn.cget("state")) == "normal"
+        assert level_calibration_view.view._calibration_thread is None
+        assert level_calibration_view.view._calibration_poll_job is None
+        level_calibration_view.after.assert_not_called()
+        level_calibration_view.showerror.assert_called_once_with("Calibration Failed", "progress setup failed")
+
+    def test_progress_grab_failure_restores_the_calibration_button(self, level_calibration_view, mocker) -> None:
+        """
+        A modal-grab failure must leave the plugin usable.
+
+        GIVEN: The progress window cannot acquire the Tk grab
+        WHEN: The user starts level calibration
+        THEN: The button and application busy state are restored
+        """
+        mocker.patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_level_calibration.sys_platform", "win32")
+        level_calibration_view.progress_window.progress_window.grab_set.side_effect = RuntimeError("grab failed")
+
+        level_calibration_view.view._on_level_calibration()
+
+        assert str(level_calibration_view.view._level_btn.cget("state")) == "normal"
+        assert level_calibration_view.view._calibration_thread is None
+        assert level_calibration_view.view._calibration_poll_job is None
+        level_calibration_view.base_window.set_fc_operation_busy.assert_has_calls(
+            [mocker.call(busy=True), mocker.call(busy=False)]
+        )
+        level_calibration_view.showerror.assert_called_once_with("Calibration Failed", "grab failed")
 
     def test_destroy_prevents_a_worker_that_finishes_late_from_starting_a_parameter_readback(
         self, level_calibration_view

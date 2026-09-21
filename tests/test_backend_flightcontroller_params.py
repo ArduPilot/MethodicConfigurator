@@ -14,6 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from pathlib import Path
+from threading import Event, RLock, Thread
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -39,7 +40,7 @@ class TestFlightControllerParamsInitialization:
         AND: Connection manager reference should be stored
         """
         # Given: Mock connection manager
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
         mock_conn_mgr.info = FlightControllerInfo()
         mock_conn_mgr.comport_device = ""
@@ -75,7 +76,7 @@ class TestFlightControllerParamsInitialization:
         AND: Dictionary should be shared (not copied)
         """
         # Given: Pre-existing parameters
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
         existing_params = {"PARAM1": 1.0, "PARAM2": 2.0}
 
@@ -101,7 +102,7 @@ class TestFlightControllerParamsSetParameter:
         """
         # Given: Connected FC
         mock_master = MagicMock()
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = mock_master
         mock_conn_mgr.info = FlightControllerInfo()
 
@@ -126,7 +127,7 @@ class TestFlightControllerParamsSetParameter:
         AND: No exceptions should be raised
         """
         # Given: No connection
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
 
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
@@ -150,7 +151,7 @@ class TestFlightControllerParamsSetParameter:
         """
         # Given: Connected FC
         mock_master = MagicMock()
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = mock_master
         mock_conn_mgr.info = FlightControllerInfo()
 
@@ -175,7 +176,7 @@ class TestFlightControllerParamsSetParameter:
         """
         # Given: Connected FC
         mock_master = MagicMock()
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = mock_master
         mock_conn_mgr.info = FlightControllerInfo()
 
@@ -199,7 +200,7 @@ class TestFlightControllerParamsSetParameter:
         """
         # Given: Connected FC
         mock_master = MagicMock()
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = mock_master
         mock_conn_mgr.info = FlightControllerInfo()
 
@@ -223,7 +224,7 @@ class TestFlightControllerParamsSetParameter:
         """
         # Given: Connected FC
         mock_master = MagicMock()
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = mock_master
         mock_conn_mgr.info = FlightControllerInfo()
 
@@ -256,7 +257,7 @@ class TestFlightControllerParamsFetchParameter:
         mock_param_msg.param_id = "BATT_MONITOR"
         mock_master.recv_match.return_value = mock_param_msg
 
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = mock_master
         mock_conn_mgr.info = FlightControllerInfo()
 
@@ -282,7 +283,7 @@ class TestFlightControllerParamsFetchParameter:
         mock_master = MagicMock()
         mock_master.recv_match.return_value = None
 
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = mock_master
         mock_conn_mgr.info = FlightControllerInfo()
 
@@ -308,7 +309,7 @@ class TestFlightControllerParamsGetParameter:
         AND: No FC communication should occur
         """
         # Given: Cached parameters
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
         params_mgr.fc_parameters["CACHED_PARAM"] = 42.0
@@ -329,7 +330,7 @@ class TestFlightControllerParamsGetParameter:
         AND: Cache should remain unchanged
         """
         # Given: Empty cache
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
 
         # When: Get missing parameter with default
@@ -353,7 +354,7 @@ class TestFlightControllerParamsClearParameters:  # pylint: disable=too-few-publ
         AND: Cache should be empty
         """
         # Given: Cached parameters
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
         params_mgr.fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0, "PARAM3": 3.0}
 
@@ -409,7 +410,7 @@ class TestFlightControllerParamsPropertyDelegation:
         """
         # Given: Connection manager with master
         mock_master = MagicMock()
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = mock_master
 
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
@@ -431,7 +432,7 @@ class TestFlightControllerParamsPropertyDelegation:
         """
         # Given: Connection manager with info
         mock_info = FlightControllerInfo()
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.info = mock_info
 
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
@@ -451,7 +452,7 @@ class TestFlightControllerParamsPropertyDelegation:
         THEN: Connection manager's comport_device should be returned
         """
         # Given: Connection manager with comport device
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.comport_device = "/dev/ttyACM0"
 
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
@@ -479,7 +480,7 @@ class TestFlightControllerParamsDownload:
         AND: Parameters should be retrieved successfully
         """
         # Given: FC without MAVFTP
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = MagicMock()
         mock_info = FlightControllerInfo()
         mock_info.is_mavftp_supported = False
@@ -497,6 +498,43 @@ class TestFlightControllerParamsDownload:
         mock_download.assert_called_once()
         assert params == test_params
 
+    def test_download_params_uses_the_shared_mavlink_transaction(self) -> None:
+        """
+        Parameter downloads must wait for an existing shared MAVLink transaction.
+
+        GIVEN: Another operation owns the connection transaction
+        WHEN: A parameter download is requested
+        THEN: The download waits until the transaction is released
+        """
+        mock_conn_mgr = MagicMock()
+        mock_conn_mgr.master = MagicMock()
+        mock_conn_mgr.info = FlightControllerInfo()
+        transaction = RLock()
+        mock_conn_mgr.mavlink_transaction = transaction
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+        entered = Event()
+        completed = Event()
+
+        def download(*_args) -> tuple[dict[str, float], bool]:
+            entered.set()
+            return {}, True
+
+        with patch.object(params_mgr, "_download_params_unlocked", side_effect=download):
+
+            def run_download() -> None:
+                params_mgr.download_params()
+                completed.set()
+
+            with transaction:
+                download_thread = Thread(target=run_download)
+                download_thread.start()
+                assert not entered.wait(timeout=0.1)
+
+            assert entered.wait(timeout=1.0)
+            download_thread.join(timeout=1.0)
+
+        assert completed.is_set()
+
     def test_download_params_requires_connection(self) -> None:
         """
         Parameter download requires active connection.
@@ -507,7 +545,7 @@ class TestFlightControllerParamsDownload:
         AND: Error should be logged
         """
         # Given: No connection
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
         mock_conn_mgr.info = FlightControllerInfo()
 
@@ -529,7 +567,7 @@ class TestFlightControllerParamsDownload:
         THEN: Parameters should be loaded from params.param
         AND: Local cache should contain the loaded values
         """
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
         mock_conn_mgr.comport_device = DEVICE_FC_PARAM_FROM_FILE
         mock_conn_mgr.info = FlightControllerInfo()
@@ -557,7 +595,7 @@ class TestFlightControllerParamsDownload:
         THEN: MAVFTP should fetch both parameter and default files
         AND: Local cache plus return values should include converted floats
         """
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_master = MagicMock()
         mock_conn_mgr.master = mock_master
         mock_info = FlightControllerInfo()
@@ -614,7 +652,7 @@ class TestFlightControllerParamsDownload:
         THEN: Users should be notified of the error
         AND: Empty dictionaries should be returned
         """
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = MagicMock()
         mock_conn_mgr.info = FlightControllerInfo()
 
@@ -640,7 +678,7 @@ class TestFlightControllerParamsDownload:
 
     def test_mavftp_download_converts_transfer_exception_to_empty_result(self) -> None:
         """A malformed MAVFTP parameter transfer should trigger the normal fallback."""
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = MagicMock()
         mock_conn_mgr.info = FlightControllerInfo()
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
@@ -674,7 +712,7 @@ class TestFlightControllerParamsDownload:
         second_mavlink_message.to_dict.return_value = {"param_id": "ATC_RATE_RLL_FF", "param_value": 0.12}
         mock_master.recv_match.side_effect = [mavlink_message, second_mavlink_message]
 
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = mock_master
         mock_conn_mgr.comport_device = "tcp:127.0.0.1:5760"
         mock_conn_mgr.info = FlightControllerInfo()
@@ -702,7 +740,7 @@ class TestFlightControllerParamsDownload:
         THEN: MAVLink retrieves the parameters and the local cache is updated
         """
         # Arrange (Given): A controller whose MAVFTP factory fails
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = MagicMock()
         mock_conn_mgr.comport_device = "tcp:127.0.0.1:5760"
         mock_info = FlightControllerInfo()
@@ -751,7 +789,7 @@ class TestFlightControllerParamsDownload:
 
         mock_master.recv_match.side_effect = [first_msg, second_msg, None]
 
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = mock_master
         mock_conn_mgr.info = FlightControllerInfo()
 
@@ -781,7 +819,7 @@ class TestFlightControllerParamsDownload:
         mock_master.target_component = 1
         mock_master.mav = MagicMock()
 
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = mock_master
         mock_conn_mgr.info = FlightControllerInfo()
         mock_conn_mgr.info.is_mavftp_supported = True
@@ -809,7 +847,7 @@ class TestFlightControllerParamsDownload:
         WHEN: MAVLink times out after receiving only some parameters
         THEN: The partial data is neither cached nor exported
         """
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = MagicMock()
         mock_info = FlightControllerInfo()
         mock_info.is_mavftp_supported = False
@@ -842,7 +880,7 @@ class TestFlightControllerParamsFileOperations:  # pylint: disable=too-few-publi
         AND: File should contain parameter values
         """
         # Given: Connected FC with parameters
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = MagicMock()
         mock_info = FlightControllerInfo()
         mock_info.is_mavftp_supported = False
@@ -874,7 +912,7 @@ class TestParameterEdgeCases:
         AND: Should not corrupt internal state
         """
         # Given: Connected parameter manager
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = MagicMock()
         mock_conn_mgr.info = FlightControllerInfo()
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
@@ -902,7 +940,7 @@ class TestParameterEdgeCases:
 
         mock_master.recv_match.side_effect = [mock_msg]
 
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = mock_master
         mock_conn_mgr.info = FlightControllerInfo()
 
@@ -928,7 +966,7 @@ class TestParameterEdgeCases:
         AND: No MAVLink request should be sent
         """
         # Given: Connected parameter manager
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = MagicMock()
         mock_conn_mgr.info = FlightControllerInfo()
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
@@ -946,7 +984,7 @@ class TestParameterEdgeCases:
         THEN: The method should return None immediately
         AND: No MAVLink requests should be issued
         """
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
         mock_conn_mgr.info = FlightControllerInfo()
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
@@ -965,7 +1003,7 @@ class TestParameterEdgeCases:
         AND: Should not perform any MAVLink requests
         """
         # Given: Connected parameter manager
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = MagicMock()
         mock_conn_mgr.info = FlightControllerInfo()
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
@@ -984,7 +1022,7 @@ class TestParameterEdgeCases:
         AND: Error message should indicate invalid name
         """
         # Given: Connected parameter manager
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = MagicMock()
         mock_conn_mgr.info = FlightControllerInfo()
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
@@ -1008,7 +1046,7 @@ class TestParameterEdgeCases:
         AND: Should not treat zero as error condition
         """
         # Given: Connected parameter manager
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = MagicMock()
         mock_conn_mgr.info = FlightControllerInfo()
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
@@ -1033,7 +1071,7 @@ class TestParameterEdgeCases:
         AND: Should not reject based on sign alone
         """
         # Given: Connected parameter manager
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = MagicMock()
         mock_conn_mgr.info = FlightControllerInfo()
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
@@ -1058,7 +1096,7 @@ class TestParameterEdgeCases:
         AND: Should not overflow or crash
         """
         # Given: Connected parameter manager
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = MagicMock()
         mock_conn_mgr.info = FlightControllerInfo()
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
@@ -1083,7 +1121,7 @@ class TestParameterEdgeCases:
         AND: Value should be retrievable
         """
         # Given: Connected parameter manager
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = MagicMock()
         mock_conn_mgr.info = FlightControllerInfo()
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
@@ -1108,7 +1146,7 @@ class TestParameterEdgeCases:
         AND: Should be mutable for adding parameters
         """
         # Given: New parameter manager
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
         mock_conn_mgr.info = FlightControllerInfo()
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
@@ -1127,7 +1165,7 @@ class TestParameterEdgeCases:
         AND: Should persist across accesses
         """
         # Given: New parameter manager
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None
         mock_conn_mgr.info = FlightControllerInfo()
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
@@ -1150,7 +1188,7 @@ class TestParameterEdgeCases:
         AND: State should remain consistent
         """
         # Given: Connected parameter manager
-        mock_conn_mgr = Mock()
+        mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = MagicMock()
         mock_conn_mgr.info = FlightControllerInfo()
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)

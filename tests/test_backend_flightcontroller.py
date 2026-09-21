@@ -311,7 +311,7 @@ class TestFlightControllerMotorTestingWorkflow:
 
             def recv_match_side_effect(*_args: tuple, **kwargs: dict) -> MagicMock | None:
                 type_arg = kwargs.get("type")
-                if isinstance(type_arg, str) and type_arg == "COMMAND_ACK":
+                if type_arg == "COMMAND_ACK" or (isinstance(type_arg, list) and "COMMAND_ACK" in type_arg):
                     return mock_ack
                 return None
 

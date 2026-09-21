@@ -9,13 +9,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import re
-from contextlib import AbstractContextManager, nullcontext
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
 from time import sleep as time_sleep
 from time import time as time_time
-from typing import ClassVar, Literal, TypedDict, cast
+from typing import ClassVar, Literal, TypedDict
 
 from pymavlink import mavutil
 
@@ -131,13 +130,6 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         )
         return success, error_msg
 
-    def _mavlink_transaction(self) -> AbstractContextManager[object]:
-        """Return the shared MAVLink transaction lock when the connection provides one."""
-        transaction = getattr(self._connection_manager, "mavlink_transaction", None)
-        if hasattr(transaction, "__enter__") and hasattr(transaction, "__exit__"):
-            return cast("AbstractContextManager[object]", transaction)
-        return nullcontext()
-
     def send_command_and_wait_ack_with_result(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         command: int,
@@ -151,7 +143,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         timeout: float = 5.0,
     ) -> tuple[bool, str, int | None]:
         """Send a command while exclusively owning the MAVLink receive queue."""
-        with self._mavlink_transaction():
+        with self._connection_manager.mavlink_transaction:
             return self._send_command_and_wait_ack_with_result_unlocked(
                 command, param1, param2, param3, param4, param5, param6, param7, timeout
             )
@@ -210,10 +202,14 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
 
             # Wait for acknowledgment
             start_time = time_time()
+            calibration_status_text = ""
             while time_time() - start_time < timeout:
                 msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                    type="COMMAND_ACK", blocking=False
+                    type=["COMMAND_ACK", "STATUSTEXT"], blocking=False
                 )
+                if msg and getattr(msg, "get_type", lambda: "")() == "STATUSTEXT":
+                    calibration_status_text = str(getattr(msg, "text", ""))
+                    continue
                 if msg and msg.command == command:
                     # Map result codes to error messages
                     result_messages = {
@@ -226,6 +222,12 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
 
                     if msg.result in result_messages:
                         error_msg, success = result_messages[msg.result]
+                        if (
+                            msg.result == mavutil.mavlink.MAV_RESULT_FAILED
+                            and command == mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
+                            and "disarm to allow calibration" in calibration_status_text.casefold()
+                        ):
+                            error_msg = _("Command failed: Disarm the vehicle before calibration")
                         if not success:
                             logging_error(error_msg)
                         return success, error_msg, msg.result
