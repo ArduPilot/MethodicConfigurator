@@ -1745,6 +1745,25 @@ class TestComponentDataModelValidationUncoveredBranches:
         assert "Quad" in frame_choices
         assert "Undefined" not in frame_choices
 
+    def test_init_possible_choices_uses_q_frame_class_metadata_for_plane(self, realistic_model) -> None:
+        """Plane frame-class choices come from Q_FRAME_CLASS metadata, not Copter defaults."""
+        model = realistic_model
+        model.init_possible_choices(
+            {
+                "Q_FRAME_CLASS": {
+                    "values": {
+                        "0": "Undefined",
+                        "1": "Quad",
+                        "10": "Single/Dual",
+                    }
+                }
+            }
+        )
+
+        frame_choices = model.get_combobox_values_for_path(("Frame", "Specifications", "Frame class"))
+        assert frame_choices == ("Undefined", "Quad", "Single/Dual")
+        assert "SingleCopter" not in frame_choices
+
     def test_system_sets_esc_protocol_to_dronecan_for_can_connection(self, basic_model) -> None:
         """
         _update_possible_choices_for_path sets ESC protocol to ('DroneCAN',) for a CAN port.

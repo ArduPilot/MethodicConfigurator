@@ -579,6 +579,16 @@ class ComponentDataModelValidation(ComponentDataModelBase):
         if "Q_M_PWM_TYPE" in doc_dict:
             self._mot_pwm_types = get_combobox_values("Q_M_PWM_TYPE")
 
+        # FRAME_CLASS is vehicle-specific metadata.  ArduPlane uses Q_FRAME_CLASS,
+        # whose values differ from Copter's FRAME_CLASS values.  Prefer the loaded
+        # firmware metadata so a project created from a connected FC reflects the
+        # parameters supported by that FC; retain the static mapping as an offline
+        # fallback when parameter metadata is unavailable.
+        frame_class_parameter = "Q_FRAME_CLASS" if "Q_FRAME_CLASS" in doc_dict else "FRAME_CLASS"
+        frame_class_choices = get_combobox_values(frame_class_parameter) if frame_class_parameter in doc_dict else ()
+        if not frame_class_choices:
+            frame_class_choices = get_frame_class_valid_tuple(fw_type)
+
         self._possible_choices = {
             ("Flight Controller", "Firmware", "Type"): VehicleComponents.supported_vehicles(),
             ("RC Receiver", "FC Connection", "Type"): get_connection_types(RC_PROTOCOLS_DICT),
@@ -604,7 +614,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             ("GNSS Receiver", "FC Connection", "Type"): ("None", *SERIAL_PORTS, *CAN_PORTS),
             ("GNSS Receiver", "FC Connection", "Protocol"): get_all_protocols(GNSS_RECEIVER_CONNECTION),
             ("Battery", "Specifications", "Chemistry"): BatteryCell.chemistries(),
-            ("Frame", "Specifications", "Frame class"): get_frame_class_valid_tuple(fw_type),
+            ("Frame", "Specifications", "Frame class"): frame_class_choices,
         }
         for component in ["RC Receiver", "Telemetry", "Battery Monitor", "ESC", "GNSS Receiver"]:
             if component not in self._data.get("Components", {}):

@@ -353,6 +353,17 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         frame_class = realistic_model.get_component_value(("Frame", "Specifications", "Frame class"))
         assert frame_class == "Octa"
 
+    def test_arduplane_without_frame_class_is_set_to_undefined(self, realistic_model) -> None:
+        """A normal Plane log without frame-class parameters must not inherit Quad from a template."""
+        realistic_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduPlane")
+        realistic_model.set_component_value(("Frame", "Specifications", "Frame class"), "Quad")
+
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+            realistic_model.process_fc_parameters({"Q_ENABLE": 0}, {})
+
+        frame_class = realistic_model.get_component_value(("Frame", "Specifications", "Frame class"))
+        assert frame_class == "Undefined"
+
     def test_frame_class_set_to_undefined_when_code_not_in_dict(self, realistic_model) -> None:
         """
         Frame class is set to 'Undefined' when the numeric code is not in the vehicle's dict.
