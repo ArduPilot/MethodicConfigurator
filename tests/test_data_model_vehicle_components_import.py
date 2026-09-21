@@ -936,6 +936,16 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         cell_count = realistic_model.get_component_value(("Battery", "Specifications", "Number of cells"))
         assert cell_count == initial_cells  # Should not change
 
+    def test_sparse_battery_import_preserves_template_cells_only_for_arduplane(self, realistic_model) -> None:
+        """Sparse Plane imports preserve a validated template cell count, unlike Copter imports."""
+        realistic_model.set_component_value(("Battery", "Specifications", "Number of cells"), 4)
+        realistic_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduPlane")
+
+        assert realistic_model._estimate_battery_cell_count({"BATT_LOW_VOLT": 0}) == 4
+
+        realistic_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduCopter")
+        assert realistic_model._estimate_battery_cell_count({"BATT_LOW_VOLT": 0}) == 0
+
     def test_system_handles_invalid_voltage_type_for_cell_estimation(self, realistic_model) -> None:
         """
         System handles invalid voltage parameter types gracefully.

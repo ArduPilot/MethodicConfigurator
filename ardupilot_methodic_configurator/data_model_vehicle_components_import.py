@@ -714,16 +714,17 @@ class ComponentDataModelImport(ComponentDataModelBase):
         # those values are already present in the selected vehicle template. Preserve the
         # template's validated cell count instead of destroying its battery specifications.
         if estimated_cells is None:
-            cell_path = ("Battery", "Specifications", "Number of cells")
-            try:
-                existing_cells = int(float(str(self.get_component_value(cell_path))))
-            except (ValueError, TypeError):
-                existing_cells = 0
+            if self.get_component_value(("Flight Controller", "Firmware", "Type")) == "ArduPlane":
+                cell_path = ("Battery", "Specifications", "Number of cells")
+                try:
+                    existing_cells = int(float(str(self.get_component_value(cell_path))))
+                except (ValueError, TypeError):
+                    existing_cells = 0
 
-            if cell_path in ComponentDataModelValidation.VALIDATION_RULES:
-                _type, (min_cells, max_cells), _doc = ComponentDataModelValidation.VALIDATION_RULES[cell_path]
-                if min_cells <= existing_cells <= max_cells:
-                    return existing_cells
+                if cell_path in ComponentDataModelValidation.VALIDATION_RULES:
+                    _type, (min_cells, max_cells), _doc = ComponentDataModelValidation.VALIDATION_RULES[cell_path]
+                    if min_cells <= existing_cells <= max_cells:
+                        return existing_cells
 
             logging_error(_("All volt per cell values are zero or invalid; cannot estimate battery cell count"))
             return 0

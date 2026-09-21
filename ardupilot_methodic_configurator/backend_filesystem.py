@@ -90,7 +90,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         self.param_default_dict: ParDict = ParDict()
         self.vehicle_dir = vehicle_dir
         self.doc_dict: dict[str, Any] = {}
-        self._parameter_metadata_cache: dict[tuple[str, str], dict[str, Any]] = {}
+        self._parameter_metadata_cache: dict[tuple[str, str, str], dict[str, Any]] = {}
         if vehicle_dir is not None:
             self.remove_cached_parameter_metadata_for_mismatched_firmware(vehicle_dir)
             self.re_init(vehicle_dir, vehicle_type)
@@ -130,7 +130,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         fw_version = re_compile(r"[ _-]").split(self.fw_version, 1)[0]
         # Read ArduPilot parameter documentation
         xml_dir = get_xml_dir(vehicle_dir)
-        metadata_cache_key = (vehicle_type, fw_version)
+        metadata_cache_key = (vehicle_type, fw_version, xml_dir)
         if metadata_cache_key not in self._parameter_metadata_cache:
             xml_url = get_xml_url(vehicle_type, fw_version)
             fallback_xml_url = get_fallback_xml_url(vehicle_type, fw_version)
@@ -170,7 +170,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             return False
 
         project_vehicle_type = self.get_fc_fw_type_from_vehicle_components_json()
-        cache_key = (project_vehicle_type, fc_fw_version)
+        cache_key = (project_vehicle_type, fc_fw_version, get_xml_dir(vehicle_dir))
         removed_from_memory = self._parameter_metadata_cache.pop(cache_key, None) is not None
 
         metadata_file = os_path.join(vehicle_dir, PARAM_DEFINITION_XML_FILE)
