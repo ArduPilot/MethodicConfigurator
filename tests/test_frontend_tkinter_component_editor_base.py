@@ -854,6 +854,19 @@ class TestWidgetCreationWorkflows:
         expected_yields = num_components // 5
         assert editor_with_realistic_data.scroll_frame.view_port.update_idletasks.call_count == expected_yields
 
+    def test_populate_frames_skips_idle_updates_on_macos(self, editor_with_realistic_data: ComponentEditorWindowBase) -> None:
+        """populate_frames avoids the Tcl/Tk idle-rendering crash path on macOS."""
+        components = {f"Component_{i}": {"value": i} for i in range(5)}
+        editor_with_realistic_data.data_model.get_all_components.return_value = components
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.platform_system",
+            return_value="Darwin",
+        ):
+            editor_with_realistic_data.populate_frames()
+
+        editor_with_realistic_data.scroll_frame.view_port.update_idletasks.assert_not_called()
+
 
 class TestComplexityComboboxWorkflows:
     """Test user workflows for GUI complexity management."""
