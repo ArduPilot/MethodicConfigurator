@@ -44,7 +44,6 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
         self.progress_window = tk.Toplevel(self.parent)
         # Withdraw immediately to prevent flicker while setting up
         self.progress_window.withdraw()
-        self._is_aqua = self.progress_window.tk.call("tk", "windowingsystem") == "aqua"
         self.progress_window.title(title)
         try:
             dpi = self.progress_window.winfo_fpixels("1i")
@@ -72,9 +71,8 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
         if not self.only_show_when_update_progress_called:
             self.progress_window.deiconify()  # needs to be done before centering, but it does flicker :(
 
-        self._center_progress_window()
-
         if not self.only_show_when_update_progress_called:
+            self._center_progress_window()
             # Show the window now that it's properly positioned
             self.progress_window.lift()
             self._shown = True
@@ -124,8 +122,6 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
                 self.progress_window.deiconify()
                 self._center_progress_window()
                 self.progress_window.lift()
-                if getattr(self, "_is_aqua", False):
-                    self.progress_window.update()  # macOS needs this to paint pixels NOW
                 self._shown = True
             elif not self.only_show_when_update_progress_called:
                 self.progress_window.lift()
@@ -148,9 +144,6 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
                 # user events (clicks, keypresses) which can fire callbacks on
                 # other windows while a blocking upload/download is in flight.
                 self.progress_bar.update_idletasks()
-
-                if getattr(self, "_is_aqua", False):
-                    self.progress_window.update()
 
                 # Close the progress window when the process is complete
                 if current_value == max_value and self.auto_close_on_complete:

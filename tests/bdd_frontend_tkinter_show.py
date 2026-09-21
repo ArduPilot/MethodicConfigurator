@@ -26,6 +26,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_show import (
     MonitorBounds,
     Tooltip,
     _make_dialog_root,
+    _monitor_bounds_tk,
     calculate_tooltip_position,
     get_last_known_monitor_bounds,
     get_monitor_bounds,
@@ -427,6 +428,21 @@ class TestTooltipPositionCalculation:
 
 class TestMonitorBoundsDetection:
     """Test system behavior for detecting monitor boundaries across different platforms."""
+
+    def test_macos_tk_fallback_does_not_force_idle_callbacks(self) -> None:
+        """The macOS monitor fallback reads bounds without pumping Tk idle work."""
+        widget = MagicMock()
+        toplevel = widget.winfo_toplevel.return_value
+        toplevel.winfo_vrootx.return_value = 0
+        toplevel.winfo_vrooty.return_value = 0
+        toplevel.winfo_vrootwidth.return_value = 1920
+        toplevel.winfo_vrootheight.return_value = 1080
+
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"):
+            bounds = _monitor_bounds_tk(widget)
+
+        assert bounds == MonitorBounds(0, 0, 1920, 1080)
+        toplevel.update_idletasks.assert_not_called()
 
     @pytest.fixture
     def mock_widget(self) -> MagicMock:
@@ -1185,6 +1201,32 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             mock_label.assert_called_once()
             mock_toplevel.withdraw.assert_called_once()
             mock_toplevel.deiconify.assert_called_once()
+
+    def test_aqua_tooltip_positions_after_idle_without_forcing_tk(
+        self, mock_widget: MagicMock, mock_toplevel: MagicMock
+    ) -> None:
+        """An Aqua tooltip waits for layout and never calls update_idletasks."""
+        with (
+            patch("tkinter.Toplevel", return_value=mock_toplevel),
+            patch("tkinter.ttk.Label"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_show.get_monitor_bounds",
+                return_value=MonitorBounds(0, 0, 1920, 1080),
+            ),
+        ):
+            mock_widget.tk.call.return_value = "aqua"
+            mock_widget.winfo_containing.return_value = mock_widget
+            tooltip = Tooltip(mock_widget, "Test text")
+            tooltip.create_show()
+
+            mock_toplevel.update_idletasks.assert_not_called()
+            mock_toplevel.geometry.assert_not_called()
+            mock_widget.after_idle.assert_called_once()
+            mock_widget.after_idle.call_args.args[0]()
+
+            mock_toplevel.geometry.assert_called_once()
+            mock_toplevel.update_idletasks.assert_not_called()
+            tooltip.force_hide()
 
     def test_tooltip_position_tooltip(self, mock_widget, mock_toplevel) -> None:
         """
