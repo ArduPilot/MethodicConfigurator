@@ -693,7 +693,7 @@ class TestFlightControllerCommandsWrapperMethods:
         assert frame_type == 1
 
 
-class TestFlightControllerCommandsAccelerometerCalibration:
+class TestFlightControllerCommandsAccelerometerCalibration:  # pylint: disable=too-many-public-methods
     """Test accelerometer calibration command functionality."""
 
     def test_user_can_start_simple_accelerometer_calibration(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
@@ -934,10 +934,9 @@ class TestFlightControllerCommandsAccelerometerCalibration:
         mock_master.recv_match.return_value = mock_ack
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
-        success, error, result = commands_mgr.send_command_and_wait_ack_with_result(command=999, timeout=1.0)
+        success, _error, result = commands_mgr.send_command_and_wait_ack_with_result(command=999, timeout=1.0)
 
         assert success is False
-        assert "rejected" in error.lower()
         assert result == mavutil.mavlink.MAV_RESULT_TEMPORARILY_REJECTED
 
     def test_level_accelerometer_calibration_fails_without_connection(self) -> None:

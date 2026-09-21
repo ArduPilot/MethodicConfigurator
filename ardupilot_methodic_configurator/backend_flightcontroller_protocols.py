@@ -25,6 +25,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from collections.abc import Callable, Sequence
+from contextlib import AbstractContextManager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, TypeAlias
 
@@ -80,6 +81,12 @@ class FlightControllerConnectionProtocol(Protocol):
     @property
     def master(self) -> MavlinkConnection | None:
         """Get the current MAVLink connection object."""
+        ...  # pylint: disable=unnecessary-ellipsis
+
+    @property
+    def mavlink_transaction(self) -> AbstractContextManager[object]:
+        """Serialize operations that read from the shared MAVLink receive queue."""
+        ...  # pylint: disable=unnecessary-ellipsis
 
     @property
     def info(self) -> FlightControllerInfo:  # pyright: ignore[reportInvalidTypeForm]

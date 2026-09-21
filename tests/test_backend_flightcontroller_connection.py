@@ -15,6 +15,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
 
+from threading import Event, Thread
 from time import time as real_time
 from typing import TYPE_CHECKING, NoReturn, Optional
 from unittest.mock import Mock, patch
@@ -2707,6 +2708,44 @@ class TestFlightControllerConnectionRetrieveAutopilotVersion:  # pylint: disable
         mock_req_msg.assert_called_once()
         mock_process.assert_called_once()
         assert result == ""
+
+
+class TestFlightControllerMavlinkTransaction:  # pylint: disable=too-few-public-methods
+    """Test serialization of operations using a shared MAVLink connection."""
+
+    def test_operations_cannot_enter_the_shared_mavlink_transaction_concurrently(self) -> None:
+        """
+        A worker and the UI must not read from the MAVLink connection simultaneously.
+
+        GIVEN: One operation already owns the flight-controller transaction
+        WHEN: A second operation tries to use the same connection
+        THEN: It waits until the first operation releases the transaction
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        first_entered = Event()
+        release_first = Event()
+        second_entered = Event()
+
+        def first_operation() -> None:
+            with connection.mavlink_transaction:
+                first_entered.set()
+                release_first.wait(timeout=1.0)
+
+        def second_operation() -> None:
+            with connection.mavlink_transaction:
+                second_entered.set()
+
+        first_thread = Thread(target=first_operation)
+        second_thread = Thread(target=second_operation)
+        first_thread.start()
+        assert first_entered.wait(timeout=0.2)
+        second_thread.start()
+        assert not second_entered.wait(timeout=0.1)
+
+        release_first.set()
+        second_thread.join(timeout=1.0)
+        first_thread.join(timeout=1.0)
+        assert second_entered.is_set()
 
 
 if __name__ == "__main__":

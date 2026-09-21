@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import contextlib
 from collections.abc import Callable, Sequence
+from contextlib import AbstractContextManager
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
@@ -18,6 +19,7 @@ from os import name as os_name
 from os import path as os_path
 from os import readlink as os_readlink
 from sys import platform as sys_platform
+from threading import RLock
 from time import sleep as time_sleep
 from time import time as time_time
 from typing import TYPE_CHECKING, Any, ClassVar, NoReturn, Optional, Union, no_type_check
@@ -152,6 +154,10 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             mavlink_connection_factory or SystemMavlinkConnectionFactory()
         )
         self._banner_text_buffer: list[str] = []
+        # A MAVLink connection has a single receive queue.  Operations that
+        # wait for replies must own this lock so concurrent readers cannot
+        # consume each other's messages.
+        self.mavlink_transaction: AbstractContextManager[object] = RLock()
 
     @property
     def banner_text_buffer(self) -> list[str]:

@@ -44,8 +44,18 @@ def level_calibration_view(tk_root, mocker) -> Generator[SimpleNamespace, None, 
         repopulate_parameter_table=MagicMock(),
     )
     # pylint: enable=duplicate-code
+    base_window.parameter_editor.download_flight_controller_parameters.return_value = (
+        {"AHRS_TRIM_X": 0.01, "AHRS_TRIM_Y": 0.02},
+        {},
+    )
     showinfo = mocker.patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_level_calibration.showinfo")
     showerror = mocker.patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_level_calibration.showerror")
+    showwarning = mocker.patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_level_calibration.showwarning")
+    progress_window = mocker.MagicMock()
+    mocker.patch(
+        "ardupilot_methodic_configurator.plugins.frontend_tkinter_level_calibration.ProgressWindow",
+        return_value=progress_window,
+    )
     parent = ttk.Frame(tk_root)
     after = mocker.patch.object(LevelCalibrationView, "after", return_value="after-id")
     mocker.patch.object(LevelCalibrationView, "after_cancel")
@@ -56,6 +66,8 @@ def level_calibration_view(tk_root, mocker) -> Generator[SimpleNamespace, None, 
             base_window=base_window,
             showinfo=showinfo,
             showerror=showerror,
+            showwarning=showwarning,
+            progress_window=progress_window,
             after=after,
         )
     finally:
@@ -111,9 +123,10 @@ class TestLevelCalibrationView:
         started = Event()
         release = Event()
 
-        def blocked_download(**_kwargs) -> None:
+        def blocked_download(**_kwargs) -> tuple[dict[str, float], dict]:
             started.set()
             release.wait(timeout=1.0)
+            return {"AHRS_TRIM_X": 0.01, "AHRS_TRIM_Y": 0.02}, {}
 
         level_calibration_view.model.start_level_calibration.return_value = (True, "Level calibration successful")
         level_calibration_view.base_window.parameter_editor.download_flight_controller_parameters.side_effect = (
@@ -174,6 +187,7 @@ class TestLevelCalibrationView:
         # Assert (Then)
         level_calibration_view.showinfo.assert_called_once_with("Calibration Result", "Level calibration successful")
         level_calibration_view.showerror.assert_not_called()
+        level_calibration_view.showwarning.assert_not_called()
         level_calibration_view.base_window.download_flight_controller_parameters.assert_not_called()
         level_calibration_view.base_window.parameter_editor.download_flight_controller_parameters.assert_called_once_with(
             update_current_step_fc_values=False
@@ -203,3 +217,111 @@ class TestLevelCalibrationView:
         # Assert (Then)
         level_calibration_view.showerror.assert_called_once_with("Calibration Failed", "Vehicle is moving")
         level_calibration_view.showinfo.assert_not_called()
+
+    def test_user_is_warned_and_stale_trim_values_are_not_staged_when_readback_returns_no_parameters(
+        self, level_calibration_view
+    ) -> None:
+        """
+        A failed readback must not turn cached, pre-calibration trim values into a success.
+
+        GIVEN: The flight controller accepts level calibration but parameter readback returns no parameters
+        WHEN: The background operation completes
+        THEN: Calibration success is shown, the readback problem is warned about, and no values are staged
+        """
+        level_calibration_view.model.start_level_calibration.return_value = (True, "Level calibration successful")
+        level_calibration_view.base_window.parameter_editor.download_flight_controller_parameters.return_value = ({}, {})
+
+        level_calibration_view.view._on_level_calibration()
+        level_calibration_view.view._calibration_thread.join(timeout=1.0)
+        level_calibration_view.view._poll_level_calibration()
+
+        level_calibration_view.showinfo.assert_called_once_with("Calibration Result", "Level calibration successful")
+        level_calibration_view.showwarning.assert_called_once_with(
+            "Calibration Readback Failed",
+            "Could not read calibrated parameters from the flight controller.",
+        )
+        level_calibration_view.base_window.parameter_editor.refresh_current_step_fc_values.assert_not_called()
+        level_calibration_view.base_window.parameter_editor.update_parameters_from_fc_values.assert_not_called()
+
+    def test_user_sees_calibration_success_and_a_useful_warning_when_readback_raises(self, level_calibration_view) -> None:
+        """
+        A readback exception after a successful trim is not a calibration failure.
+
+        GIVEN: The controller accepts level calibration and readback raises an exception without text
+        WHEN: The background operation completes
+        THEN: Success is retained and the warning includes a non-empty exception representation
+        """
+        level_calibration_view.model.start_level_calibration.return_value = (True, "Level calibration successful")
+        download_parameters = level_calibration_view.base_window.parameter_editor.download_flight_controller_parameters
+        download_parameters.side_effect = ConnectionError()
+
+        level_calibration_view.view._on_level_calibration()
+        level_calibration_view.view._calibration_thread.join(timeout=1.0)
+        level_calibration_view.view._poll_level_calibration()
+
+        level_calibration_view.showinfo.assert_called_once_with("Calibration Result", "Level calibration successful")
+        level_calibration_view.showwarning.assert_called_once_with("Calibration Readback Failed", "ConnectionError()")
+        level_calibration_view.showerror.assert_not_called()
+
+    def test_modal_progress_locks_other_flight_controller_controls_until_background_operation_finishes(
+        self, level_calibration_view, mocker
+    ) -> None:
+        """
+        A background calibration keeps the shared MAVLink connection exclusive to that operation.
+
+        GIVEN: A level calibration is waiting for the controller
+        WHEN: The user starts it
+        THEN: A modal progress window blocks other controls until the worker finishes
+        """
+        started = Event()
+        release = Event()
+        mocker.patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_level_calibration.sys_platform", "win32")
+
+        def blocked_calibration() -> tuple[bool, str]:
+            started.set()
+            release.wait(timeout=1.0)
+            return True, "Level calibration successful"
+
+        level_calibration_view.model.start_level_calibration.side_effect = blocked_calibration
+        level_calibration_view.view._on_level_calibration()
+
+        assert started.wait(timeout=0.2)
+        level_calibration_view.progress_window.progress_bar.configure.assert_called_once_with(mode="indeterminate")
+        level_calibration_view.progress_window.progress_bar.start.assert_called_once_with(10)
+        level_calibration_view.progress_window.progress_window.grab_set.assert_called_once_with()
+
+        release.set()
+        level_calibration_view.view._calibration_thread.join(timeout=1.0)
+        level_calibration_view.view._poll_level_calibration()
+
+        level_calibration_view.progress_window.progress_bar.stop.assert_called_once_with()
+        level_calibration_view.progress_window.progress_window.grab_release.assert_called_once_with()
+        level_calibration_view.progress_window.destroy.assert_called_once_with()
+
+    def test_destroy_prevents_a_worker_that_finishes_late_from_starting_a_parameter_readback(
+        self, level_calibration_view
+    ) -> None:
+        """
+        Leaving the plugin while calibration waits must not leave a new FC read operation behind.
+
+        GIVEN: Level calibration is still waiting for its controller acknowledgement
+        WHEN: The plugin is destroyed before that acknowledgement arrives
+        THEN: The worker exits after calibration without beginning a parameter readback
+        """
+        started = Event()
+        release = Event()
+
+        def blocked_calibration() -> tuple[bool, str]:
+            started.set()
+            release.wait(timeout=1.0)
+            return True, "Level calibration successful"
+
+        level_calibration_view.model.start_level_calibration.side_effect = blocked_calibration
+        level_calibration_view.view._on_level_calibration()
+        assert started.wait(timeout=0.2)
+
+        level_calibration_view.view.destroy()
+        release.set()
+        level_calibration_view.view._calibration_thread.join(timeout=1.0)
+
+        level_calibration_view.base_window.parameter_editor.download_flight_controller_parameters.assert_not_called()
