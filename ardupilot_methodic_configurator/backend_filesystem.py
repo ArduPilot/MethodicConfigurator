@@ -56,7 +56,7 @@ PARAMETER_FILE_REGEXP = r"^\d{2}_.*\.param$"
 TOOLTIP_MAX_LENGTH = 105
 
 
-class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  # pylint: disable=too-many-public-methods
+class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  # pylint: disable=too-many-public-methods, too-many-instance-attributes
     """
     A class to manage local filesystem operations for the ArduPilot methodic configurator.
 
@@ -84,6 +84,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         ProgramSettings.__init__(self)
         self.vehicle_type = vehicle_type
         self.fw_version = fw_version
+        self._fw_version_is_explicit = bool(fw_version)
         self.allow_editing_template_files = allow_editing_template_files
         self.param_default_dict: ParDict = ParDict()
         self.vehicle_dir = vehicle_dir
@@ -103,7 +104,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             if self.vehicle_components_fs.data and "Components" in self.vehicle_components_fs.data:
                 self.save_vehicle_components_json_data(self.vehicle_components_fs.data, self.vehicle_dir)
 
-        if not self.fw_version:
+        if not self._fw_version_is_explicit:
             self.fw_version = self.get_fc_fw_version_from_vehicle_components_json()
 
         if vehicle_type == "":
