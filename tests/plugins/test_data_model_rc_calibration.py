@@ -20,23 +20,12 @@ from ardupilot_methodic_configurator.plugins.data_model_rc_calibration import (
     RCCalibrationDataModel,
 )
 
-# pylint: disable=protected-access,redefined-outer-name
+# pylint: disable=protected-access,redefined-outer-name,duplicate-code
 
 
-def _make_rc_channels_msg(raw: list[int], chancount: int | None = None) -> MagicMock:
-    """
-    Build a mock MAVLink RC_CHANNELS message.
-
-    ``raw`` holds the desired chan1_raw..chanN_raw values; the list is padded
-    with the invalid-PWM sentinel up to 18 channels so every ``chanN_raw``
-    attribute the data model reads is present.
-    """
-    padded = list(raw) + [_RC_INVALID_PWM] * (18 - len(raw))
-    msg = MagicMock()
-    for i in range(18):
-        setattr(msg, f"chan{i + 1}_raw", padded[i])
-    msg.chancount = chancount if chancount is not None else len(raw)
-    return msg
+def _set_rc_reading(flight_controller: MagicMock, raw: list[int] | None, flight_mode: int | None = None) -> None:
+    """Configure the lock-aware controller telemetry result for one poll."""
+    flight_controller.poll_rc_channels_and_flight_mode.return_value = (raw, flight_mode)
 
 
 @pytest.fixture
@@ -44,7 +33,7 @@ def connected_flight_controller() -> MagicMock:
     """Fixture providing a mock flight controller that reports a live MAVLink link."""
     flight_controller = MagicMock()
     flight_controller.master = MagicMock()
-    flight_controller.master.recv_match.return_value = None
+    flight_controller.poll_rc_channels_and_flight_mode.return_value = (None, None)
     return flight_controller
 
 
@@ -271,14 +260,29 @@ class TestRCCalibrationDataModelTelemetry:
         """
         Telemetry is empty when no RC_CHANNELS message has arrived yet.
 
-        GIVEN: A connected FC whose recv_match returns None
+        GIVEN: A connected FC whose backend telemetry API has no RC reading
         WHEN: get_rc_telemetry is called
         THEN: An empty dict is returned
         """
         model = RCCalibrationDataModel(connected_flight_controller)
-        connected_flight_controller.master.recv_match.return_value = None
-
         assert not model.get_rc_telemetry()
+
+    def test_telemetry_reads_only_the_lock_aware_backend_api(self, connected_flight_controller) -> None:
+        """
+        The plugin never competes for the MAVLink receive queue directly.
+
+        GIVEN: A connected FC with an RC reading exposed by its backend API
+        WHEN: get_rc_telemetry is called
+        THEN: It delegates to the backend API and does not call master.recv_match
+        """
+        model = RCCalibrationDataModel(connected_flight_controller)
+        _set_rc_reading(connected_flight_controller, [1500], flight_mode=3)
+
+        telemetry = model.get_rc_telemetry()
+
+        assert telemetry["flight_mode"] == "3"
+        connected_flight_controller.poll_rc_channels_and_flight_mode.assert_called_once_with()
+        connected_flight_controller.master.recv_match.assert_not_called()
 
     def test_telemetry_maps_first_four_channels_to_axes(self, connected_flight_controller) -> None:
         """
@@ -289,8 +293,7 @@ class TestRCCalibrationDataModelTelemetry:
         THEN: roll=-1000, pitch=0, throttle=+1000, yaw=0
         """
         model = RCCalibrationDataModel(connected_flight_controller)
-        msg = _make_rc_channels_msg([1000, 1500, 2000, 1500])
-        connected_flight_controller.master.recv_match.side_effect = [msg, None]
+        _set_rc_reading(connected_flight_controller, [1000, 1500, 2000, 1500])
 
         telemetry = model.get_rc_telemetry()
 
@@ -308,8 +311,7 @@ class TestRCCalibrationDataModelTelemetry:
         THEN: The channels list omits CH2 but keeps CH1 and CH3
         """
         model = RCCalibrationDataModel(connected_flight_controller)
-        msg = _make_rc_channels_msg([1500, _RC_INVALID_PWM, 1600], chancount=3)
-        connected_flight_controller.master.recv_match.side_effect = [msg, None]
+        _set_rc_reading(connected_flight_controller, [1500, _RC_INVALID_PWM, 1600])
 
         telemetry = model.get_rc_telemetry()
 
@@ -325,8 +327,7 @@ class TestRCCalibrationDataModelTelemetry:
         THEN: Only CH1 and CH2 appear in the channels list
         """
         model = RCCalibrationDataModel(connected_flight_controller)
-        msg = _make_rc_channels_msg([1500, 1500, 1500, 1500], chancount=2)
-        connected_flight_controller.master.recv_match.side_effect = [msg, None]
+        _set_rc_reading(connected_flight_controller, [1500, 1500])
 
         telemetry = model.get_rc_telemetry()
 
@@ -342,23 +343,22 @@ class TestRCCalibrationDataModelTelemetry:
         THEN: roll is reported as 0.0 rather than a garbage value
         """
         model = RCCalibrationDataModel(connected_flight_controller)
-        msg = _make_rc_channels_msg([_RC_INVALID_PWM, 1500, 1500, 1500], chancount=4)
-        connected_flight_controller.master.recv_match.side_effect = [msg, None]
+        _set_rc_reading(connected_flight_controller, [_RC_INVALID_PWM, 1500, 1500, 1500])
 
         telemetry = model.get_rc_telemetry()
 
         assert telemetry["roll"] == 0.0
 
-    def test_recv_match_exception_is_swallowed(self, connected_flight_controller) -> None:
+    def test_controller_telemetry_exception_is_swallowed(self, connected_flight_controller) -> None:
         """
-        A telemetry read error never propagates to the GUI.
+        A lock-aware controller telemetry error never propagates to the GUI.
 
-        GIVEN: recv_match raises an exception on the RC_CHANNELS read
+        GIVEN: The controller telemetry API raises an exception
         WHEN: get_rc_telemetry is called
         THEN: An empty dict is returned instead of raising
         """
         model = RCCalibrationDataModel(connected_flight_controller)
-        connected_flight_controller.master.recv_match.side_effect = RuntimeError("link lost")
+        connected_flight_controller.poll_rc_channels_and_flight_mode.side_effect = RuntimeError("link lost")
 
         assert not model.get_rc_telemetry()
 
@@ -371,10 +371,7 @@ class TestRCCalibrationDataModelTelemetry:
         THEN: The telemetry carries flight_mode="3"
         """
         model = RCCalibrationDataModel(connected_flight_controller)
-        rc_msg = _make_rc_channels_msg([1500], chancount=1)
-        hb = MagicMock()
-        hb.custom_mode = 3
-        connected_flight_controller.master.recv_match.side_effect = [rc_msg, hb]
+        _set_rc_reading(connected_flight_controller, [1500], flight_mode=3)
 
         telemetry = model.get_rc_telemetry()
 
@@ -395,8 +392,7 @@ class TestRCCalibrationDataModelMinMaxTracking:
         model = RCCalibrationDataModel(connected_flight_controller)
         model.start_calibration()
         for value in (1500, 1200, 1800):
-            msg = _make_rc_channels_msg([value], chancount=1)
-            connected_flight_controller.master.recv_match.side_effect = [msg, None]
+            _set_rc_reading(connected_flight_controller, [value])
             model.get_rc_telemetry()
 
         assert model._channel_min[0] == 1200
@@ -411,8 +407,7 @@ class TestRCCalibrationDataModelMinMaxTracking:
         THEN: No channel extremes are recorded
         """
         model = RCCalibrationDataModel(connected_flight_controller)
-        msg = _make_rc_channels_msg([1200], chancount=1)
-        connected_flight_controller.master.recv_match.side_effect = [msg, None]
+        _set_rc_reading(connected_flight_controller, [1200])
 
         model.get_rc_telemetry()
 
@@ -444,9 +439,7 @@ class TestRCCalibrationDataModelFlightMode:
         THEN: The string "5" is returned
         """
         model = RCCalibrationDataModel(connected_flight_controller)
-        hb = MagicMock()
-        hb.custom_mode = 5
-        connected_flight_controller.master.recv_match.return_value = hb
+        _set_rc_reading(connected_flight_controller, None, flight_mode=5)
 
         assert model.get_flight_mode() == "5"
 
@@ -454,24 +447,22 @@ class TestRCCalibrationDataModelFlightMode:
         """
         Absence of a HEARTBEAT yields a no-data marker rather than an error.
 
-        GIVEN: A connected FC whose recv_match returns None
+        GIVEN: A connected FC whose backend telemetry API has no heartbeat
         WHEN: get_flight_mode is called
         THEN: A non-empty no-data string is returned
         """
         model = RCCalibrationDataModel(connected_flight_controller)
-        connected_flight_controller.master.recv_match.return_value = None
-
         assert model.get_flight_mode() != ""
 
-    def test_flight_mode_swallows_recv_match_exception(self, connected_flight_controller) -> None:
+    def test_flight_mode_swallows_controller_telemetry_exception(self, connected_flight_controller) -> None:
         """
         A HEARTBEAT read error never propagates out of get_flight_mode.
 
-        GIVEN: recv_match raises an exception
+        GIVEN: The controller telemetry API raises an exception
         WHEN: get_flight_mode is called
         THEN: A non-empty fallback string is returned instead of raising
         """
         model = RCCalibrationDataModel(connected_flight_controller)
-        connected_flight_controller.master.recv_match.side_effect = RuntimeError("link lost")
+        connected_flight_controller.poll_rc_channels_and_flight_mode.side_effect = RuntimeError("link lost")
 
         assert model.get_flight_mode() != ""

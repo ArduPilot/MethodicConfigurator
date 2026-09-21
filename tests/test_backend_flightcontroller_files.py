@@ -33,7 +33,7 @@ def _create_files_manager() -> FlightControllerFiles:
     return FlightControllerFiles(connection_manager=mock_conn_mgr)
 
 
-# pylint: disable=protected-access, too-few-public-methods, too-many-lines
+# pylint: disable=protected-access, too-few-public-methods, too-many-lines, duplicate-code
 
 
 class TestFlightControllerFilesInitialization:
@@ -99,6 +99,36 @@ class TestFlightControllerFilesUpload:
 
         # Then: Operation fails
         assert success is False
+
+    def test_file_upload_uses_the_shared_mavlink_transaction(self) -> None:
+        """
+        A MAVFTP upload owns the receive queue until its protocol reply arrives.
+
+        GIVEN: A connected controller with a transaction lock
+        WHEN: A file is uploaded through MAVFTP
+        THEN: The complete upload operation runs inside that lock
+        """
+        mock_ret = MagicMock(error_code=0)
+        mock_mavftp = MagicMock()
+        mock_mavftp.cmd_put.return_value = mock_ret
+        mock_mavftp.process_ftp_reply.return_value = mock_ret
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = MagicMock()
+        mock_conn_mgr.info = FlightControllerInfo()
+        mock_conn_mgr.mavlink_transaction = MagicMock()
+        files_mgr = FlightControllerFiles(connection_manager=mock_conn_mgr)
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+                return_value=mock_mavftp,
+            ),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.isfile", return_value=True),
+        ):
+            assert files_mgr.upload_file("/tmp/test.param", "@SYS/test.param") is True  # noqa: S108
+
+        mock_conn_mgr.mavlink_transaction.__enter__.assert_called_once_with()
+        mock_conn_mgr.mavlink_transaction.__exit__.assert_called_once()
 
     def test_file_upload_fails_without_mavftp(self) -> None:
         """
@@ -350,6 +380,28 @@ class TestFlightControllerFilesUpload:
 
 class TestFlightControllerFilesDownload:
     """Test log file download functionality via MAVFTP."""
+
+    def test_log_download_uses_the_shared_mavlink_transaction(self) -> None:
+        """A complete MAVFTP log download exclusively owns the receive queue."""
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = MagicMock()
+        mock_conn_mgr.info = FlightControllerInfo()
+        mock_conn_mgr.info.is_mavftp_supported = True
+        mock_conn_mgr.mavlink_transaction = MagicMock()
+        files_mgr = FlightControllerFiles(connection_manager=mock_conn_mgr)
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+                return_value=MagicMock(),
+            ),
+            patch.object(files_mgr, "_get_last_log_number", return_value=42),
+            patch.object(files_mgr, "_download_log_file", return_value=True),
+        ):
+            assert files_mgr.download_last_flight_log("/tmp/00000042.BIN") is True  # noqa: S108
+
+        mock_conn_mgr.mavlink_transaction.__enter__.assert_called_once_with()
+        mock_conn_mgr.mavlink_transaction.__exit__.assert_called_once()
 
     def test_log_download_fails_without_connection(self) -> None:
         """

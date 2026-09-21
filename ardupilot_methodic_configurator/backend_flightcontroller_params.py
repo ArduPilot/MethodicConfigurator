@@ -345,6 +345,11 @@ class FlightControllerParams:
         return self.fc_parameters.get(param_name, default)
 
     def fetch_param(self, param_name: str, timeout: int = 5) -> float | None:
+        """Fetch one parameter while exclusively owning the MAVLink receive queue."""
+        with self._mavlink_transaction():
+            return self._fetch_param_unlocked(param_name, timeout)
+
+    def _fetch_param_unlocked(self, param_name: str, timeout: int = 5) -> float | None:
         """
         Fetch a parameter from the flight controller using MAVLink PARAM_REQUEST_READ message.
 

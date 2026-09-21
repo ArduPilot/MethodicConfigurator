@@ -23,7 +23,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_params import Flig
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 
-# pylint: disable=too-many-lines
+# pylint: disable=too-many-lines, duplicate-code
 
 
 class TestFlightControllerParamsInitialization:
@@ -163,6 +163,34 @@ class TestFlightControllerParamsSetParameter:
         assert success is False
         assert "Invalid" in error or "type" in error.lower()
         assert "PARAM1" not in params_mgr.fc_parameters
+
+
+class TestFlightControllerParamsMavlinkTransactions:
+    """Test that individual parameter reads own the shared MAVLink receive queue."""
+
+    def test_fetch_param_uses_the_shared_mavlink_transaction(self) -> None:
+        """
+        A targeted parameter read must not race another MAVLink receiver.
+
+        GIVEN: A connected controller with a transaction lock
+        WHEN: A parameter is fetched
+        THEN: The request and matching PARAM_VALUE read run inside that lock
+        """
+        mock_master = MagicMock()
+        param_msg = MagicMock()
+        param_msg.param_id = "TEST_PARAM"
+        param_msg.param_value = 3.5
+        mock_master.recv_match.return_value = param_msg
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_conn_mgr.info = FlightControllerInfo()
+        mock_conn_mgr.mavlink_transaction = MagicMock()
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        assert params_mgr.fetch_param("TEST_PARAM") == 3.5
+
+        mock_conn_mgr.mavlink_transaction.__enter__.assert_called_once_with()
+        mock_conn_mgr.mavlink_transaction.__exit__.assert_called_once()
 
     def test_set_parameter_with_none_value_fails(self) -> None:
         """

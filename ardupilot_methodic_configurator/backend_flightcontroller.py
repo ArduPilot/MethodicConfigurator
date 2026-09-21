@@ -773,6 +773,10 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         """Get current battery voltage and current - delegates to commands manager."""
         return self._commands_manager.get_battery_status()
 
+    def poll_rc_channels_and_flight_mode(self) -> tuple[list[int] | None, int | None]:
+        """Read RC channel PWM values and flight mode - delegates to commands manager."""
+        return self._commands_manager.poll_rc_channels_and_flight_mode()
+
     def get_voltage_thresholds(self) -> tuple[float, float]:
         """Get battery voltage thresholds - delegates to commands manager."""
         return self._commands_manager.get_voltage_thresholds()

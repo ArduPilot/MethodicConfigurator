@@ -11,11 +11,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import os
 import posixpath
 from collections.abc import Callable
+from contextlib import AbstractContextManager, nullcontext
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
 from logging import warning as logging_warning
-from typing import TYPE_CHECKING, ClassVar, Optional
+from typing import TYPE_CHECKING, ClassVar, Optional, cast
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp import create_mavftp_safe
@@ -81,7 +82,21 @@ class FlightControllerFiles:
         """Get flight controller info."""
         return self._connection_manager.info
 
-    def upload_file(  # noqa: PLR0911 # pylint: disable=too-many-return-statements
+    def upload_file(
+        self, local_filename: str, remote_filename: str, progress_callback: Callable[[int, int], None] | None = None
+    ) -> bool:
+        """Upload a file while exclusively owning the MAVLink receive queue."""
+        with self._mavlink_transaction():
+            return self._upload_file_unlocked(local_filename, remote_filename, progress_callback)
+
+    def _mavlink_transaction(self) -> AbstractContextManager[object]:
+        """Return the shared MAVLink transaction lock when the connection provides one."""
+        transaction = getattr(self._connection_manager, "mavlink_transaction", None)
+        if hasattr(transaction, "__enter__") and hasattr(transaction, "__exit__"):
+            return cast("AbstractContextManager[object]", transaction)
+        return nullcontext()
+
+    def _upload_file_unlocked(  # noqa: PLR0911 # pylint: disable=too-many-return-statements
         self, local_filename: str, remote_filename: str, progress_callback: Callable[[int, int], None] | None = None
     ) -> bool:
         """
@@ -172,6 +187,13 @@ class FlightControllerFiles:
         return parent_directories
 
     def download_last_flight_log(
+        self, local_filename: str, progress_callback: Callable[[int, int], None] | None = None
+    ) -> bool:
+        """Download a log while exclusively owning the MAVLink receive queue."""
+        with self._mavlink_transaction():
+            return self._download_last_flight_log_unlocked(local_filename, progress_callback)
+
+    def _download_last_flight_log_unlocked(
         self, local_filename: str, progress_callback: Callable[[int, int], None] | None = None
     ) -> bool:
         """

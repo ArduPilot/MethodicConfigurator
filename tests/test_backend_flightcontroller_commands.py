@@ -14,7 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import time
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock, call, patch
 
 import pytest
 from pymavlink import mavutil
@@ -22,6 +22,42 @@ from pymavlink import mavutil
 from ardupilot_methodic_configurator.backend_flightcontroller_commands import FlightControllerCommands
 
 # pylint: disable=too-many-lines
+
+
+class _QueuedMavlinkMessage:  # pylint: disable=too-few-public-methods
+    """Minimal MAVLink message double with pymavlink's type interface."""
+
+    def __init__(self, message_type: str, **fields: int) -> None:
+        self._message_type = message_type
+        for name, value in fields.items():
+            setattr(self, name, value)
+
+    def get_type(self) -> str:
+        """Return the MAVLink message type."""
+        return self._message_type
+
+
+class _PymavlinkLikeQueuedMaster:  # pylint: disable=too-few-public-methods
+    """Emulate pymavlink recv_match consuming non-matching queue entries."""
+
+    def __init__(self, messages: list[_QueuedMavlinkMessage]) -> None:
+        self._messages = messages
+
+    def recv_match(
+        self,
+        condition: object = None,
+        type: str | list[str] | None = None,  # noqa: A002  # pylint: disable=redefined-builtin
+        blocking: bool = False,
+        timeout: float | None = None,
+    ) -> _QueuedMavlinkMessage | None:
+        """Return the first matching message, discarding non-matches like pymavlink."""
+        del condition, blocking, timeout
+        message_types = [type] if isinstance(type, str) else type
+        while self._messages:
+            message = self._messages.pop(0)
+            if message_types is None or message.get_type() in message_types:
+                return message
+        return None
 
 
 def test_reboot_to_bootloader_holds_bootloader_without_force_flags() -> None:
@@ -206,6 +242,22 @@ class TestFlightControllerCommandsBatteryStatus:
         voltage, current = battery_data
         assert voltage > 0
         assert current >= 0
+
+    def test_get_battery_status_uses_the_shared_mavlink_transaction(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """A battery telemetry read is exclusive with other MAVLink receivers."""
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_conn_mgr.mavlink_transaction = MagicMock()
+        mock_master.recv_match.return_value = None
+        mock_params_mgr = Mock()
+        mock_params_mgr.fc_parameters = {"BATT_MONITOR": 4.0}
+        commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
+
+        assert commands_mgr.get_battery_status()[0] is None
+
+        mock_conn_mgr.mavlink_transaction.__enter__.assert_called_once_with()
+        mock_conn_mgr.mavlink_transaction.__exit__.assert_called_once()
 
 
 class TestFlightControllerCommandsParameterReset:  # pylint: disable=too-few-public-methods
@@ -803,6 +855,20 @@ class TestFlightControllerCommandsAccelerometerCalibration:  # pylint: disable=t
         assert position == mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEFT
         assert mock_master.recv_match.call_count == 2
         mock_master.recv_match.assert_called_with(type="COMMAND_LONG", blocking=False)
+
+    def test_poll_accel_cal_vehicle_pos_uses_the_shared_mavlink_transaction(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """The non-blocking calibration-message drain is exclusive with other receivers."""
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_conn_mgr.mavlink_transaction = MagicMock()
+        mock_master.recv_match.return_value = None
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        assert commands_mgr.poll_accel_cal_vehicle_pos() is None
+
+        mock_conn_mgr.mavlink_transaction.__enter__.assert_called_once_with()
+        mock_conn_mgr.mavlink_transaction.__exit__.assert_called_once()
 
     def test_poll_accel_cal_vehicle_pos_returns_none_without_connection(self) -> None:
         """
@@ -1547,8 +1613,23 @@ class TestFlightControllerCommandsPollScaledImu:
 
         # Then: Triple of floats returned, correct MAVLink message type requested
         assert result == (10.0, -20.0, 1000.0)
+        assert result is not None
         assert all(isinstance(v, float) for v in result)
         mock_master.recv_match.assert_called_with(type="SCALED_IMU", blocking=False)
+
+    def test_poll_scaled_imu_uses_the_shared_mavlink_transaction(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """A non-blocking IMU buffer drain is still exclusive with other receivers."""
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_conn_mgr.mavlink_transaction = MagicMock()
+        mock_master.recv_match.return_value = None
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        assert commands_mgr.poll_scaled_imu() is None
+
+        mock_conn_mgr.mavlink_transaction.__enter__.assert_called_once_with()
+        mock_conn_mgr.mavlink_transaction.__exit__.assert_called_once()
 
     def test_poll_scaled_imu_returns_none_when_no_message(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
@@ -1619,6 +1700,50 @@ class TestFlightControllerCommandsPollScaledImu:
 
         # When/Then: Swallowed, None returned
         assert commands_mgr.poll_scaled_imu() is None
+
+
+class TestFlightControllerCommandsPollRcChannels:
+    """Test combined RC-channel and flight-mode polling."""
+
+    def test_poll_rc_channels_and_flight_mode_keeps_a_heartbeat_queued_before_rc_channels(self) -> None:
+        """
+        Both telemetry types are retained regardless of their receive order.
+
+        GIVEN: A HEARTBEAT that arrived immediately before RC_CHANNELS
+        WHEN: The combined telemetry poll runs
+        THEN: It returns both the RC values and the heartbeat custom mode
+        """
+        heartbeat = _QueuedMavlinkMessage("HEARTBEAT", custom_mode=5)
+        rc_channels = _QueuedMavlinkMessage("RC_CHANNELS", chancount=1, chan1_raw=1500)
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = _PymavlinkLikeQueuedMaster([heartbeat, rc_channels])
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        assert commands_mgr.poll_rc_channels_and_flight_mode() == ([1500], 5)
+
+    def test_poll_rc_channels_and_flight_mode_uses_the_shared_mavlink_transaction(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """RC and heartbeat reads share one exclusive receive-queue transaction."""
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_conn_mgr.mavlink_transaction = MagicMock()
+        rc_channels = MagicMock()
+        rc_channels.chancount = 3
+        rc_channels.chan1_raw = 1000
+        rc_channels.chan2_raw = 1500
+        rc_channels.chan3_raw = 2000
+        rc_channels.get_type.return_value = "RC_CHANNELS"
+        heartbeat = MagicMock()
+        heartbeat.custom_mode = 7
+        heartbeat.get_type.return_value = "HEARTBEAT"
+        mock_master.recv_match.side_effect = [rc_channels, heartbeat, None]
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        assert commands_mgr.poll_rc_channels_and_flight_mode() == ([1000, 1500, 2000], 7)
+
+        mock_master.recv_match.assert_has_calls([call(type=["RC_CHANNELS", "HEARTBEAT"], blocking=False)] * 3)
+        mock_conn_mgr.mavlink_transaction.__enter__.assert_called_once_with()
+        mock_conn_mgr.mavlink_transaction.__exit__.assert_called_once()
 
 
 class TestFlightControllerCommandsRequestScaledImu:

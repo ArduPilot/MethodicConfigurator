@@ -89,6 +89,7 @@ def _build_flight_controller_with_mocks(
     mock_commands_mgr.stop_all_motors.return_value = (True, "")
     mock_commands_mgr.request_periodic_battery_status.return_value = (True, "")
     mock_commands_mgr.get_battery_status.return_value = ((12.0, 5.0), "")
+    mock_commands_mgr.poll_rc_channels_and_flight_mode.return_value = ([1500], 3)
     mock_commands_mgr.get_voltage_thresholds.return_value = (10.5, 21.0)
     mock_commands_mgr.is_battery_monitoring_enabled.return_value = True
     mock_commands_mgr.get_frame_info.return_value = (1, 2)
@@ -845,6 +846,15 @@ class TestFlightControllerResetAndDelegation:
 
         mock_files_mgr.upload_file.assert_called_once_with("local.txt", "@SYS/local.txt", None)
         mock_files_mgr.download_last_flight_log.assert_called_once_with(destination, None)
+
+    def test_user_can_read_rc_channels_and_flight_mode_through_facade(self) -> None:
+        """The RC calibration plugin reaches the lock-aware command API through the facade."""
+        fc, _conn_mgr, _params_mgr, mock_commands_mgr, _files_mgr, _master = _build_flight_controller_with_mocks()
+        mock_commands_mgr.poll_rc_channels_and_flight_mode.return_value = ([1000, 1500], 3)
+
+        assert fc.poll_rc_channels_and_flight_mode() == ([1000, 1500], 3)
+
+        mock_commands_mgr.poll_rc_channels_and_flight_mode.assert_called_once_with()
 
     def test_cli_argument_helper_exposes_expected_flags(self) -> None:
         """

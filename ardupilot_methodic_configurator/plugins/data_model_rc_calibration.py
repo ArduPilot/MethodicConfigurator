@@ -89,8 +89,8 @@ class RCCalibrationDataModel:
         """
         Return live RC telemetry from the flight controller.
 
-        Reads the MAVLink RC_CHANNELS message (non-blocking) and the most
-        recent HEARTBEAT (non-blocking) to build the telemetry dict.
+        Uses the backend's lock-aware non-blocking RC_CHANNELS and HEARTBEAT
+        poll to build the telemetry dict.
 
         Returns an empty dict when not connected or when no message is
         available yet, which signals the GUI to keep waiting.
@@ -103,39 +103,13 @@ class RCCalibrationDataModel:
         if self.flight_controller.master is None:
             return {}
 
-        master = self.flight_controller.master
         telemetry: dict[str, Any] = {}
 
         try:
-            latest_rc_msg = master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                type="RC_CHANNELS", blocking=False
-            )
-            latest_hb = master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                type="HEARTBEAT", blocking=False
-            )
+            raw, flight_mode = self.flight_controller.poll_rc_channels_and_flight_mode()
 
-            if latest_rc_msg:
-                n_channels = min(latest_rc_msg.chancount, _RC_MAX_CHANNELS)
-                raw: list[int] = [
-                    latest_rc_msg.chan1_raw,
-                    latest_rc_msg.chan2_raw,
-                    latest_rc_msg.chan3_raw,
-                    latest_rc_msg.chan4_raw,
-                    latest_rc_msg.chan5_raw,
-                    latest_rc_msg.chan6_raw,
-                    latest_rc_msg.chan7_raw,
-                    latest_rc_msg.chan8_raw,
-                    latest_rc_msg.chan9_raw,
-                    latest_rc_msg.chan10_raw,
-                    latest_rc_msg.chan11_raw,
-                    latest_rc_msg.chan12_raw,
-                    latest_rc_msg.chan13_raw,
-                    latest_rc_msg.chan14_raw,
-                    latest_rc_msg.chan15_raw,
-                    latest_rc_msg.chan16_raw,
-                    latest_rc_msg.chan17_raw,
-                    latest_rc_msg.chan18_raw,
-                ]
+            if raw is not None:
+                n_channels = min(len(raw), _RC_MAX_CHANNELS)
                 telemetry["channels"] = [
                     {"name": f"CH{i + 1}", "value": raw[i]} for i in range(n_channels) if raw[i] != _RC_INVALID_PWM
                 ]
@@ -154,8 +128,8 @@ class RCCalibrationDataModel:
                             self._channel_min[i] = min(self._channel_min.get(i, raw[i]), raw[i])
                             self._channel_max[i] = max(self._channel_max.get(i, raw[i]), raw[i])
 
-            if latest_hb:
-                telemetry["flight_mode"] = str(latest_hb.custom_mode)
+            if flight_mode is not None:
+                telemetry["flight_mode"] = str(flight_mode)
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logging_debug(_("Error reading MAVLink telemetry: %(error)s"), {"error": str(exc)})
 
@@ -166,11 +140,9 @@ class RCCalibrationDataModel:
         if self.flight_controller.master is None:
             return _("Not connected")
         try:
-            hb = self.flight_controller.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                type="HEARTBEAT", blocking=False
-            )
-            if hb:
-                return str(hb.custom_mode)
+            _raw, flight_mode = self.flight_controller.poll_rc_channels_and_flight_mode()
+            if flight_mode is not None:
+                return str(flight_mode)
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logging_debug(_("Error reading HEARTBEAT: %(error)s"), {"error": str(exc)})
         return _("No Data")

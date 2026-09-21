@@ -613,16 +613,17 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             return None
 
         try:
-            # Drain all pending ACCELCAL_VEHICLE_POS messages and keep only the latest
-            latest_pos: int | None = None
-            while True:
-                msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                    type="COMMAND_LONG", blocking=False
-                )
-                if msg is None:
-                    break
-                if msg.command == mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS:
-                    latest_pos = int(msg.param1)
+            with self._mavlink_transaction():
+                # Drain all pending ACCELCAL_VEHICLE_POS messages and keep only the latest
+                latest_pos: int | None = None
+                while True:
+                    msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                        type="COMMAND_LONG", blocking=False
+                    )
+                    if msg is None:
+                        break
+                    if msg.command == mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS:
+                        latest_pos = int(msg.param1)
 
             if latest_pos is None:
                 return None
@@ -733,15 +734,16 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         if self.master is None:
             return None
         try:
-            # Drain the receive buffer and keep only the most recent message.
-            latest = None
-            while True:
-                msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                    type="SCALED_IMU", blocking=False
-                )
-                if msg is None:
-                    break
-                latest = msg
+            with self._mavlink_transaction():
+                # Drain the receive buffer and keep only the most recent message.
+                latest = None
+                while True:
+                    msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                        type="SCALED_IMU", blocking=False
+                    )
+                    if msg is None:
+                        break
+                    latest = msg
             if latest is None:
                 return None
             return float(latest.xacc), float(latest.yacc), float(latest.zacc)
@@ -862,9 +864,10 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
 
         try:
             # Try to get real telemetry data
-            battery_status = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                type="BATTERY_STATUS", blocking=False, timeout=self.BATTERY_STATUS_TIMEOUT
-            )
+            with self._mavlink_transaction():
+                battery_status = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                    type="BATTERY_STATUS", blocking=False, timeout=self.BATTERY_STATUS_TIMEOUT
+                )
             if battery_status:
                 # Convert from millivolts to volts, and centiamps to amps using pure business logic
                 voltage, current = convert_battery_telemetry_units(
@@ -886,6 +889,43 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         self._last_battery_status = None
         error_msg = _("Battery status not available from telemetry")
         return None, error_msg
+
+    def poll_rc_channels_and_flight_mode(self) -> tuple[list[int] | None, int | None]:
+        """
+        Read the latest RC channels and flight mode from one short MAVLink transaction.
+
+        Returns:
+            tuple[list[int] | None, int | None]: Raw channel PWM values and the
+                heartbeat custom mode, with ``None`` for unavailable data.
+
+        """
+        if self.master is None:
+            return None, None
+        try:
+            with self._mavlink_transaction():
+                rc_channels = None
+                heartbeat = None
+                while True:
+                    message = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                        type=["RC_CHANNELS", "HEARTBEAT"], blocking=False
+                    )
+                    if message is None:
+                        break
+                    if message.get_type() == "RC_CHANNELS":
+                        rc_channels = message
+                    else:
+                        heartbeat = message
+
+            if rc_channels is None:
+                return None, int(heartbeat.custom_mode) if heartbeat is not None else None
+
+            channel_count = min(int(rc_channels.chancount), 18)
+            raw_channels = [getattr(rc_channels, f"chan{index}_raw") for index in range(1, channel_count + 1)]
+            flight_mode = int(heartbeat.custom_mode) if heartbeat is not None else None
+            return raw_channels, flight_mode
+        except Exception as error:  # pylint: disable=broad-exception-caught
+            logging_debug(_("Exception while polling RC_CHANNELS: %(error)s"), {"error": str(error)})
+            return None, None
 
     def get_voltage_thresholds(self) -> tuple[float, float]:
         """
