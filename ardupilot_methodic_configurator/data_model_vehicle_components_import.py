@@ -499,9 +499,6 @@ class ComponentDataModelImport(ComponentDataModelBase):
                     logging_warning(_("BATT_CAPACITY is zero or negative: %s"), batt_capacity)
             except (ValueError, TypeError) as e:
                 logging_error(_("Error processing BATT_CAPACITY parameter: %s"), str(e))
-        else:
-            logging_warning(_("BATT_CAPACITY parameter not found in fc_parameters"))
-
         if specs.estimated_cell_count > 0:
             self.import_bat_voltage(specs, "MOT_BAT_VOLT_MAX", "Volt per cell max")
             self.import_bat_voltage(specs, "BATT_ARM_VOLT", "Volt per cell arm")
@@ -680,8 +677,21 @@ class ComponentDataModelImport(ComponentDataModelBase):
                 "MOT_BAT_VOLT_MIN", fc_parameters["MOT_BAT_VOLT_MIN"], "Volt per cell min", chemistry
             )
 
-        # If no estimation succeeded, all volt per cell values must be invalid
+        # Sparse imported parameter files may not contain any battery voltage values because
+        # those values are already present in the selected vehicle template. Preserve the
+        # template's validated cell count instead of destroying its battery specifications.
         if estimated_cells is None:
+            cell_path = ("Battery", "Specifications", "Number of cells")
+            try:
+                existing_cells = int(float(str(self.get_component_value(cell_path))))
+            except (ValueError, TypeError):
+                existing_cells = 0
+
+            if cell_path in ComponentDataModelValidation.VALIDATION_RULES:
+                _type, (min_cells, max_cells), _doc = ComponentDataModelValidation.VALIDATION_RULES[cell_path]
+                if min_cells <= existing_cells <= max_cells:
+                    return existing_cells
+
             logging_error(_("All volt per cell values are zero or invalid; cannot estimate battery cell count"))
             return 0
 

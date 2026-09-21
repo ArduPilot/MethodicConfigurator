@@ -434,6 +434,42 @@ class TestComponentDataModelImportInternals:
         with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
             realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
 
+    def test_plane_battery_import_preserves_template_values_when_import_file_is_sparse(self, realistic_model) -> None:
+        """
+        Sparse Plane imports preserve battery values already supplied by the template.
+
+        ArduPlane does not define Copter's MOT_BAT_VOLT_MAX parameter, and an imported
+        difference file may omit BATT_CAPACITY and all voltage thresholds when they match
+        the template. The component editor must not clear the existing battery data.
+        """
+        battery_specs = realistic_model.get_component_data()["Components"]["Battery"]["Specifications"]
+        initial_specs = battery_specs.copy()
+
+        realistic_model._set_battery_type_from_fc_parameters({"BATT_MONITOR": 0})
+
+        assert realistic_model.get_component_data()["Components"]["Battery"]["Specifications"] == initial_specs
+
+    def test_plane_battery_import_uses_batt_thresholds_without_copter_motor_voltage_parameters(self, realistic_model) -> None:
+        """ArduPlane battery thresholds import correctly without MOT_BAT_VOLT_MAX/MIN."""
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+
+        realistic_model._set_battery_type_from_fc_parameters(
+            {
+                "BATT_MONITOR": 0,
+                "BATT_CAPACITY": 3300,
+                "BATT_ARM_VOLT": 23.2998,
+                "BATT_LOW_VOLT": 22.8,
+                "BATT_CRT_VOLT": 21.0,
+            }
+        )
+
+        battery_specs = realistic_model.get_component_data()["Components"]["Battery"]["Specifications"]
+        assert battery_specs["Number of cells"] == 6
+        assert battery_specs["Capacity mAh"] == 3300
+        assert battery_specs["Volt per cell arm"] == pytest.approx(3.8833)
+        assert battery_specs["Volt per cell low"] == pytest.approx(3.8)
+        assert battery_specs["Volt per cell crit"] == pytest.approx(3.5)
+
     def test_estimate_cell_count_from_mot_bat_volt_max(self, realistic_model) -> None:
         """
         Cell count is estimated from MOT_BAT_VOLT_MAX parameter.
