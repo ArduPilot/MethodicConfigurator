@@ -10,12 +10,24 @@ SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
+from types import ModuleType
 
 from gettext_capture_helper import capture_gettext_calls
 
 from ardupilot_methodic_configurator import configuration_steps_strings as config_strings
-from update_configuration_steps_translation import gather_all_translatable_strings
+
+
+def _load_translation_update_script() -> ModuleType:
+    """Load the root-level translation updater without relying on the current working directory."""
+    script_path = Path(__file__).parent.parent / "update_configuration_steps_translation.py"
+    module_spec = spec_from_file_location("update_configuration_steps_translation", script_path)
+    assert module_spec
+    assert module_spec.loader
+    module = module_from_spec(module_spec)
+    module_spec.loader.exec_module(module)
+    return module
 
 
 class TestConfigurationStepsStringsModule:
@@ -60,6 +72,13 @@ class TestConfigurationStepsStringsModule:
             config_strings,
             config_strings.configuration_steps_strings,
         )
-        extracted_strings = gather_all_translatable_strings(str(Path(config_strings.__file__).parent))
+        translation_updater = _load_translation_update_script()
+        extracted_strings = translation_updater.gather_all_translatable_strings(str(Path(config_strings.__file__).parent))
 
         assert set(extracted_strings["change_reasons"]) <= set(captured_values)
+
+    def test_translation_update_script_loads_when_tests_are_run_outside_repository_root(self) -> None:
+        """The translation updater can be loaded by this test without repository-root imports."""
+        translation_updater = _load_translation_update_script()
+
+        assert callable(translation_updater.gather_all_translatable_strings)
