@@ -584,8 +584,10 @@ class ComponentDataModelValidation(ComponentDataModelBase):
         # firmware metadata so a project created from a connected FC reflects the
         # parameters supported by that FC; retain the static mapping as an offline
         # fallback when parameter metadata is unavailable.
-        frame_class_parameter = "Q_FRAME_CLASS" if "Q_FRAME_CLASS" in doc_dict else "FRAME_CLASS"
+        frame_class_parameter = "Q_FRAME_CLASS" if fw_type == "ArduPlane" else "FRAME_CLASS"
         frame_class_choices = get_combobox_values(frame_class_parameter) if frame_class_parameter in doc_dict else ()
+        if fw_type != "ArduPlane":
+            frame_class_choices = tuple(frame_class for frame_class in frame_class_choices if frame_class != "Undefined")
         if not frame_class_choices:
             frame_class_choices = get_frame_class_valid_tuple(fw_type)
 

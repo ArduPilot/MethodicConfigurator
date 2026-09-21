@@ -1748,6 +1748,7 @@ class TestComponentDataModelValidationUncoveredBranches:
     def test_init_possible_choices_uses_q_frame_class_metadata_for_plane(self, realistic_model) -> None:
         """Plane frame-class choices come from Q_FRAME_CLASS metadata, not Copter defaults."""
         model = realistic_model
+        model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduPlane")
         model.init_possible_choices(
             {
                 "Q_FRAME_CLASS": {
@@ -1763,6 +1764,25 @@ class TestComponentDataModelValidationUncoveredBranches:
         frame_choices = model.get_combobox_values_for_path(("Frame", "Specifications", "Frame class"))
         assert frame_choices == ("Undefined", "Quad", "Single/Dual")
         assert "SingleCopter" not in frame_choices
+
+    def test_init_possible_choices_excludes_undefined_copter_frame_class_from_metadata(self, realistic_model) -> None:
+        """Copter FRAME_CLASS metadata must not make Undefined a selectable frame class."""
+        model = realistic_model
+        model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduCopter")
+        model.init_possible_choices(
+            {
+                "FRAME_CLASS": {
+                    "values": {
+                        "0": "Undefined",
+                        "1": "Quad",
+                        "2": "Hexa",
+                    }
+                }
+            }
+        )
+
+        frame_choices = model.get_combobox_values_for_path(("Frame", "Specifications", "Frame class"))
+        assert frame_choices == ("Quad", "Hexa")
 
     def test_system_sets_esc_protocol_to_dronecan_for_can_connection(self, basic_model) -> None:
         """

@@ -364,6 +364,36 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         frame_class = realistic_model.get_component_value(("Frame", "Specifications", "Frame class"))
         assert frame_class == "Undefined"
 
+    def test_sparse_quadplane_import_preserves_existing_frame_class(self, realistic_model) -> None:
+        """A non-default QuadPlane dump omits Q_FRAME_CLASS without turning Quad into Undefined."""
+        realistic_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduPlane")
+        realistic_model.set_component_value(("Frame", "Specifications", "Frame class"), "Quad")
+
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+            realistic_model.process_fc_parameters({"Q_ENABLE": 1}, {})
+
+        frame_class = realistic_model.get_component_value(("Frame", "Specifications", "Frame class"))
+        assert frame_class == "Quad"
+
+    def test_arduplane_imports_quadplane_motor_battery_voltages(self, realistic_model) -> None:
+        """QuadPlane Q_M_BAT_VOLT_MAX/MIN values populate the matching battery specifications."""
+        realistic_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduPlane")
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+        realistic_model.set_component_value(("Battery", "Specifications", "Number of cells"), 4)
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell max"), 3.7)
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell min"), 3.0)
+
+        realistic_model._set_battery_type_from_fc_parameters(
+            {
+                "Q_M_BAT_VOLT_MAX": 16.8,
+                "Q_M_BAT_VOLT_MIN": 12.8,
+            }
+        )
+
+        assert realistic_model.get_component_value(("Battery", "Specifications", "Number of cells")) == 4
+        assert realistic_model.get_component_value(("Battery", "Specifications", "Volt per cell max")) == 4.2
+        assert realistic_model.get_component_value(("Battery", "Specifications", "Volt per cell min")) == 3.2
+
     def test_frame_class_set_to_undefined_when_code_not_in_dict(self, realistic_model) -> None:
         """
         Frame class is set to 'Undefined' when the numeric code is not in the vehicle's dict.

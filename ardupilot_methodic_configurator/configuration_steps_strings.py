@@ -43,6 +43,7 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     _config_steps_strings = _("Precision landing ensures accurate and safe landing and has many parameters")
     _config_steps_strings = _("Propeller size has a big influence on the vehicle dynamics, this adapts the attitude controller response to it")
     _config_steps_strings = _("Proper ESC configuration is crucial for accurate motor control, affecting vehicle performance and safety. It ensures motors respond correctly to control signals and fail safely in various flight conditions.")
+    _config_steps_strings = _("Q_A_THR_MIX_MAX should be increased after autotune to maximize attitude control authority at high throttle")
     _config_steps_strings = _("Remote controller is mandatory in the initial configuration and tuning phases. Later might be required for operation and/or safety")
     _config_steps_strings = _("Safety parameters protect the vehicle and its surroundings by enabling arming checks, geofencing and failsafe actions. ESC slew rate limits protect the ESCs from desync events.")
     _config_steps_strings = _("Sensors need to be calibrated once, before they can be used")
@@ -131,6 +132,7 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     # blog_text
     _config_steps_strings = _("Adjust the Proportional-Integral-Derivative (PID) controllers based on the vehicle size before the first flight")
     _config_steps_strings = _("Calculate angle rate derivative feed-forward gains (ATC_RAT_*_D_FF and PSC_ACCZ_D_FF) to improve aggressive maneuver tracking")
+    _config_steps_strings = _("Calculate angle rate derivative feed-forward gains (Q_A_RAT_*_D_FF and Q_P_ACCZ_D_FF) to improve aggressive maneuver tracking")
     _config_steps_strings = _("Configure Extended Kalman Filter (EKF) noise weights")
     _config_steps_strings = _("Configure PID notch filters logging")
     _config_steps_strings = _("Configure RC controller options including the arming method and RC channel option assignments")
