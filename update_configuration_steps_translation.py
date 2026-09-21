@@ -78,8 +78,8 @@ def process_configuration_steps(text_fields: list[str], extracted_strings: dict[
                 if isinstance(jump_message, str) and jump_message.strip():
                     extracted_strings["jump_messages"].add(jump_message)
 
-        # Extract change reasons from forced_parameters and derived_parameters
-        for param_type in ["forced_parameters", "derived_parameters"]:
+        # Extract change reasons from all parameter sections
+        for param_type in ["forced_parameters", "derived_parameters", "add_parameters"]:
             if param_type in step_data:
                 for param_data in step_data[param_type].values():
                     if "Change Reason" in param_data and isinstance(param_data["Change Reason"], str):

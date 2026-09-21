@@ -82,3 +82,19 @@ class TestConfigurationStepsStringsModule:
         translation_updater = _load_translation_update_script()
 
         assert callable(translation_updater.gather_all_translatable_strings)
+
+    def test_translation_extractor_includes_add_parameter_change_reasons(self) -> None:
+        """Change reasons on add-from-FC parameters are registered for translation."""
+        translation_updater = _load_translation_update_script()
+        strings = {"change_reasons": set()}
+        translation_updater.process_configuration_steps(
+            [],
+            strings,
+            {
+                "steps": {
+                    "01_test.param": {"add_parameters": {"PARAM1": {"Change Reason": "Added from the flight controller"}}}
+                }
+            },
+        )
+
+        assert "Added from the flight controller" in strings["change_reasons"]
