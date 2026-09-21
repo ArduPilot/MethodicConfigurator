@@ -9,12 +9,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import re
+from contextlib import AbstractContextManager, nullcontext
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
 from time import sleep as time_sleep
 from time import time as time_time
-from typing import ClassVar, Literal, TypedDict
+from typing import ClassVar, Literal, TypedDict, cast
 
 from pymavlink import mavutil
 
@@ -130,7 +131,32 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         )
         return success, error_msg
 
-    def send_command_and_wait_ack_with_result(  # pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
+    def _mavlink_transaction(self) -> AbstractContextManager[object]:
+        """Return the shared MAVLink transaction lock when the connection provides one."""
+        transaction = getattr(self._connection_manager, "mavlink_transaction", None)
+        if hasattr(transaction, "__enter__") and hasattr(transaction, "__exit__"):
+            return cast("AbstractContextManager[object]", transaction)
+        return nullcontext()
+
+    def send_command_and_wait_ack_with_result(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+        self,
+        command: int,
+        param1: float = 0,
+        param2: float = 0,
+        param3: float = 0,
+        param4: float = 0,
+        param5: float = 0,
+        param6: float = 0,
+        param7: float = 0,
+        timeout: float = 5.0,
+    ) -> tuple[bool, str, int | None]:
+        """Send a command while exclusively owning the MAVLink receive queue."""
+        with self._mavlink_transaction():
+            return self._send_command_and_wait_ack_with_result_unlocked(
+                command, param1, param2, param3, param4, param5, param6, param7, timeout
+            )
+
+    def _send_command_and_wait_ack_with_result_unlocked(  # pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
         self,
         command: int,
         param1: float = 0,

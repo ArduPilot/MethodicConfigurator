@@ -10,21 +10,24 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
-from threading import Thread
+from contextlib import suppress
+from sys import platform as sys_platform
+from threading import Event, Thread
 from tkinter import Frame, ttk
-from tkinter.messagebox import showerror, showinfo
+from tkinter.messagebox import showerror, showinfo, showwarning
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 from ardupilot_methodic_configurator.plugins.data_model_level_calibration import LevelCalibrationDataModel
-from ardupilot_methodic_configurator.plugins.frontend_tkinter_helpers import refresh_parameter_editor_after_calibration
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_helpers import apply_calibration_readback
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_LEVEL_CALIBRATION
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
 
 _CALIBRATION_POLL_INTERVAL_MS = 50
 
 
-class LevelCalibrationView(Frame):
+class LevelCalibrationView(Frame):  # pylint: disable=too-many-instance-attributes
     """Allow the user to level-trim a calibrated vehicle."""
 
     def __init__(self, parent: tk.Frame | ttk.Frame, model: LevelCalibrationDataModel, base_window: BaseWindow) -> None:
@@ -35,6 +38,9 @@ class LevelCalibrationView(Frame):
         self._calibration_poll_job: str | None = None
         self._calibration_result: tuple[bool, str] | None = None
         self._calibration_error: Exception | None = None
+        self._calibration_readback_error: str | None = None
+        self._calibration_progress_window: ProgressWindow | None = None
+        self._calibration_cancelled = Event()
         main_frame = ttk.Frame(self)
         main_frame.pack(fill="both", expand=True)
 
@@ -73,23 +79,63 @@ class LevelCalibrationView(Frame):
         self._level_btn.configure(state="disabled")
         self._calibration_result = None
         self._calibration_error = None
+        self._calibration_readback_error = None
+        self._calibration_cancelled.clear()
+        self._show_calibration_progress()
 
         def run_calibration() -> None:
             try:
                 self._calibration_result = self.model.start_level_calibration()
-                if self._calibration_result[0]:
-                    parameter_editor = getattr(self.base_window, "parameter_editor", None)
-                    download_parameters = getattr(parameter_editor, "download_flight_controller_parameters", None)
-                    if callable(download_parameters):
-                        # Do not touch the active step from this worker: the user may
-                        # navigate while the FC parameter readback is in progress.
-                        download_parameters(update_current_step_fc_values=False)
             except Exception as exc:  # pylint: disable=broad-exception-caught
                 self._calibration_error = exc
+                return
+
+            if self._calibration_result[0] and not self._calibration_cancelled.is_set():
+                self._read_back_calibrated_parameters()
 
         self._calibration_thread = Thread(target=run_calibration, daemon=True)
         self._calibration_thread.start()
         self._calibration_poll_job = self.after(_CALIBRATION_POLL_INTERVAL_MS, self._poll_level_calibration)
+
+    def _show_calibration_progress(self) -> None:
+        """Show a modal progress indicator while the shared MAVLink link is in use."""
+        self._calibration_progress_window = ProgressWindow(
+            self.base_window.root,
+            _("Level Calibration"),
+            _("Calibrating the vehicle and reading back parameters..."),
+        )
+        self._calibration_progress_window.progress_bar.configure(mode="indeterminate")
+        self._calibration_progress_window.progress_bar.start(10)
+        if sys_platform != "darwin":
+            self._calibration_progress_window.progress_window.grab_set()
+
+    def _close_calibration_progress(self) -> None:
+        """Release the modal UI lock and remove the calibration progress indicator."""
+        progress_window = self._calibration_progress_window
+        self._calibration_progress_window = None
+        if progress_window is None:
+            return
+        with suppress(tk.TclError):
+            progress_window.progress_bar.stop()
+            if sys_platform != "darwin":
+                progress_window.progress_window.grab_release()
+        progress_window.destroy()
+
+    def _read_back_calibrated_parameters(self) -> None:
+        """Read the calibration output without mutating Tk-owned state from the worker."""
+        parameter_editor = getattr(self.base_window, "parameter_editor", None)
+        download_parameters = getattr(parameter_editor, "download_flight_controller_parameters", None)
+        if not callable(download_parameters):
+            self._calibration_readback_error = _("Could not read calibrated parameters from the flight controller.")
+            return
+        try:
+            # The active step is a Tk-owned object.  Refresh it only after the
+            # worker is complete and the UI thread has verified this readback.
+            fc_parameters, _defaults = download_parameters(update_current_step_fc_values=False)
+            if not fc_parameters:
+                self._calibration_readback_error = _("Could not read calibrated parameters from the flight controller.")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            self._calibration_readback_error = str(exc) or repr(exc)
 
     def _poll_level_calibration(self) -> None:
         """Finish the background calibration on the Tk main thread."""
@@ -99,8 +145,9 @@ class LevelCalibrationView(Frame):
             return
 
         self._level_btn.configure(state="normal")
+        self._close_calibration_progress()
         if self._calibration_error is not None:
-            showerror(_("Calibration Failed"), str(self._calibration_error))
+            showerror(_("Calibration Failed"), str(self._calibration_error) or repr(self._calibration_error))
             return
 
         result = self._calibration_result
@@ -111,12 +158,14 @@ class LevelCalibrationView(Frame):
         success, message = result
         # pylint: disable=duplicate-code
         if success:
-            refresh_parameter_editor_after_calibration(
-                self.base_window,
-                parameter_names_to_copy={"AHRS_TRIM_X", "AHRS_TRIM_Y"},
-                download=False,
-            )
+            if self._calibration_readback_error is None:
+                apply_calibration_readback(
+                    self.base_window,
+                    parameter_names_to_copy={"AHRS_TRIM_X", "AHRS_TRIM_Y"},
+                )
             showinfo(_("Calibration Result"), message)
+            if self._calibration_readback_error is not None:
+                showwarning(_("Calibration Readback Failed"), self._calibration_readback_error)
         else:
             showerror(_("Calibration Failed"), message)
         # pylint: enable=duplicate-code
@@ -126,6 +175,8 @@ class LevelCalibrationView(Frame):
         if self._calibration_poll_job is not None:
             self.after_cancel(self._calibration_poll_job)
             self._calibration_poll_job = None
+        self._calibration_cancelled.set()
+        self._close_calibration_progress()
         super().destroy()
 
 

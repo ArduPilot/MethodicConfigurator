@@ -26,25 +26,30 @@ def refresh_parameter_editor_table(base_window: object) -> None:
 def refresh_parameter_editor_after_calibration(
     base_window: object,
     parameter_names_to_copy: Collection[str] | None = None,
-    download: bool = True,
 ) -> None:
     """
-    Read back calibration results and refresh the active parameter table.
+    Download calibration results and refresh the active parameter table.
 
     ``download_flight_controller_parameters`` updates each parameter's FC column.
     Copying those values into staged ``new_value`` fields is therefore opt-in and
     limited to the parameters the calibration is known to have changed.
     """
-    if download:
-        download_parameters = getattr(base_window, "download_flight_controller_parameters", None)
-        if callable(download_parameters):
-            download_parameters(redownload=True)
+    download_parameters = getattr(base_window, "download_flight_controller_parameters", None)
+    if callable(download_parameters):
+        download_parameters(redownload=True)
 
+    apply_calibration_readback(base_window, parameter_names_to_copy)
+
+
+def apply_calibration_readback(
+    base_window: object,
+    parameter_names_to_copy: Collection[str] | None = None,
+) -> None:
+    """Apply an already-downloaded calibration readback on the UI thread."""
     parameter_editor = getattr(base_window, "parameter_editor", None)
-    if not download:
-        refresh_fc_values = getattr(parameter_editor, "refresh_current_step_fc_values", None)
-        if callable(refresh_fc_values):
-            refresh_fc_values()
+    refresh_fc_values = getattr(parameter_editor, "refresh_current_step_fc_values", None)
+    if callable(refresh_fc_values):
+        refresh_fc_values()
 
     update_parameters = getattr(parameter_editor, "update_parameters_from_fc_values", None)
     if callable(update_parameters) and parameter_names_to_copy:
