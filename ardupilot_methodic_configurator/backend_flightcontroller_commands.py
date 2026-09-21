@@ -104,7 +104,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         """Get master connection - delegates to connection manager."""
         return self._connection_manager.master
 
-    def send_command_and_wait_ack(  # pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
+    def send_command_and_wait_ack(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         command: int,
         param1: float = 0,
@@ -116,6 +116,32 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         param7: float = 0,
         timeout: float = 5.0,
     ) -> tuple[bool, str]:
+        """Send a command and return its localized success or failure message."""
+        success, error_msg, _result = self.send_command_and_wait_ack_with_result(
+            command,
+            param1=param1,
+            param2=param2,
+            param3=param3,
+            param4=param4,
+            param5=param5,
+            param6=param6,
+            param7=param7,
+            timeout=timeout,
+        )
+        return success, error_msg
+
+    def send_command_and_wait_ack_with_result(  # pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
+        self,
+        command: int,
+        param1: float = 0,
+        param2: float = 0,
+        param3: float = 0,
+        param4: float = 0,
+        param5: float = 0,
+        param6: float = 0,
+        param7: float = 0,
+        timeout: float = 5.0,
+    ) -> tuple[bool, str, int | None]:
         """
         Send a MAVLink command and wait for acknowledgment.
 
@@ -131,14 +157,14 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             timeout: Timeout in seconds to wait for acknowledgment
 
         Returns:
-            tuple[bool, str]: (success, error_message) - success is True if command was acknowledged successfully,
-                             error_message is empty string on success or contains error description on failure
+            tuple[bool, str, int | None]: (success, error_message, result) where ``result`` is the raw
+                ``MAV_RESULT`` value from the acknowledgement, or ``None`` when no acknowledgement was received.
 
         """
         if self.master is None:
             error_msg = _("No flight controller connection available for command")
             logging_error(error_msg)
-            return False, error_msg
+            return False, error_msg, None
 
         try:
             # Send the command
@@ -176,7 +202,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
                         error_msg, success = result_messages[msg.result]
                         if not success:
                             logging_error(error_msg)
-                        return success, error_msg
+                        return success, error_msg, msg.result
 
                     if msg.result == mavutil.mavlink.MAV_RESULT_IN_PROGRESS:
                         # Command is still in progress, continue waiting
@@ -187,19 +213,19 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
                     # Unknown result code
                     error_msg = _("Command acknowledgment with unknown result: %(result)d") % {"result": msg.result}
                     logging_error(error_msg)
-                    return False, error_msg
+                    return False, error_msg, msg.result
 
                 time_sleep(0.1)  # Sleep briefly to reduce CPU usage
 
             # Timeout occurred
             error_msg = _("Command acknowledgment timeout after %(timeout).1f seconds") % {"timeout": timeout}
             logging_error(error_msg)
-            return False, error_msg
+            return False, error_msg, None
 
         except Exception as e:  # pylint: disable=broad-exception-caught
             error_msg = _("Failed to send command: %(error)s") % {"error": str(e)}
             logging_error(error_msg)
-            return False, error_msg
+            return False, error_msg, None
 
     def reboot_to_bootloader(self) -> tuple[bool, str]:
         """Request reboot into the bootloader and wait for its command acknowledgment."""
@@ -480,15 +506,15 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             logging_error(error_msg)
             return False, error_msg
 
-        success, error_msg = self.send_command_and_wait_ack(
+        success, error_msg, result = self.send_command_and_wait_ack_with_result(
             mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
             param5=2.0,  # level trim / AHRS trim
             timeout=15.0,
         )
-        if not success and error_msg == _("Command temporarily rejected"):
+        if not success and result == mavutil.mavlink.MAV_RESULT_TEMPORARILY_REJECTED:
             logging_info(_("Level calibration was temporarily rejected; retrying after the calibration cooldown."))
             time_sleep(self.ACCEL_CALIBRATION_RETRY_DELAY)
-            success, error_msg = self.send_command_and_wait_ack(
+            success, error_msg, _result = self.send_command_and_wait_ack_with_result(
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
                 param5=2.0,  # level trim / AHRS trim
                 timeout=15.0,
