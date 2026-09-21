@@ -85,7 +85,7 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name,
     def test_invalid_master_is_reported_before_centering(self) -> None:
         """Progress windows warn when their parent is not a Tk window."""
         fake_window = MagicMock()
-        fake_window.tk.call.side_effect = ["x11", "1.0"]
+        fake_window.tk.call.return_value = "1.0"
         fake_window.winfo_fpixels.return_value = 96
         fake_frame = MagicMock()
         fake_progress_bar = MagicMock()
@@ -369,6 +369,26 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name,
         progress_window.progress_bar.update.assert_not_called()
         progress_window.progress_bar.update_idletasks.assert_called_once()
 
+    def test_lazy_progress_updates_never_run_nested_tk_event_loop(self) -> None:
+        """Showing and updating a progress window must not dispatch other Tk events."""
+        window = ProgressWindow.__new__(ProgressWindow)
+        window.progress_window = MagicMock()
+        window.progress_window.winfo_exists.return_value = True
+        window.progress_bar = MagicMock()
+        window.progress_label = MagicMock()
+        window.message = "Progress: {}/{}"
+        window.only_show_when_update_progress_called = True
+        window.auto_close_on_complete = False
+        window._shown = False  # pylint: disable=protected-access
+        window._center_progress_window = MagicMock()  # pylint: disable=protected-access
+
+        window.update_progress_bar(25, 100)
+        window.update_progress_bar(50, 100)
+
+        window.progress_window.update.assert_not_called()
+        window.progress_bar.update_idletasks.assert_called()
+        window.progress_window.deiconify.assert_called_once()
+
     def test_user_sees_progress_window_handle_lazy_window_relift(self, progress_window) -> None:
         """
         User sees progress window handle relifting for already shown windows.
@@ -422,10 +442,6 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name,
                 message="Init: {}/{}",
                 only_show_when_update_progress_called=True,
             )
-
-            # Ignore any centering that may have happened during __init__
-            mock_center_screen.reset_mock()
-            mock_center_parent.reset_mock()
 
             # First time the window is actually shown via update_progress_bar
             window.update_progress_bar(10, 100)
