@@ -81,7 +81,7 @@ class TestSimpleCalibrationButton:
         assert view_with_model.showinfo.call_args.args[1] == "Calibration successful"
         view_with_model.showerror.assert_not_called()
         view_with_model.base_window.download_flight_controller_parameters.assert_called_once_with(redownload=True)
-        view_with_model.base_window.parameter_editor.update_parameters_from_fc_values.assert_called_once_with()
+        view_with_model.base_window.parameter_editor.update_parameters_from_fc_values.assert_not_called()
         view_with_model.base_window.repopulate_parameter_table.assert_called_once_with()
 
     def test_simple_calibration_failure_shows_error_dialog(self, view_with_model) -> None:
@@ -198,7 +198,7 @@ class TestFullCalibrationPolling:
         assert view._wizard_frame.winfo_manager() == ""
         view_with_model.showinfo.assert_called_once()
         view_with_model.base_window.download_flight_controller_parameters.assert_called_once_with(redownload=True)
-        view_with_model.base_window.parameter_editor.update_parameters_from_fc_values.assert_called_once_with()
+        view_with_model.base_window.parameter_editor.update_parameters_from_fc_values.assert_not_called()
         view_with_model.base_window.repopulate_parameter_table.assert_called_once_with()
 
     def test_poll_tick_ends_calibration_with_failure_on_failure_sentinel(self, view_with_model) -> None:

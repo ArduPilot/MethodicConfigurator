@@ -895,6 +895,51 @@ class TestFlightControllerCommandsAccelerometerCalibration:
         assert mock_master.mav.command_long_send.call_count == 2
         mock_sleep.assert_any_call(5.0)
 
+    def test_level_calibration_retry_uses_the_raw_ack_result(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
+        """
+        Retry detection must use the protocol result code, not a translated message.
+
+        GIVEN: The command layer reports a localized temporary rejection and its raw MAV_RESULT
+        WHEN: Level calibration handles the first response
+        THEN: It retries based on MAV_RESULT_TEMPORARILY_REJECTED
+        """
+        _mock_master, mock_conn_mgr = mock_connected_master
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        with (
+            patch.object(
+                commands_mgr,
+                "send_command_and_wait_ack_with_result",
+                side_effect=[
+                    (False, "rechazo temporal", mavutil.mavlink.MAV_RESULT_TEMPORARILY_REJECTED),
+                    (True, "", mavutil.mavlink.MAV_RESULT_ACCEPTED),
+                ],
+            ),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_sleep") as mock_sleep,
+        ):
+            success, error = commands_mgr.start_accel_calibration_level()
+
+        assert success is True
+        assert error == ""
+        mock_sleep.assert_called_once_with(5.0)
+
+    def test_command_ack_result_is_available_without_parsing_localized_text(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """The command result API exposes the raw MAV_RESULT alongside the localized message."""
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_ack = MagicMock()
+        mock_ack.command = 999
+        mock_ack.result = mavutil.mavlink.MAV_RESULT_TEMPORARILY_REJECTED
+        mock_master.recv_match.return_value = mock_ack
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        success, error, result = commands_mgr.send_command_and_wait_ack_with_result(command=999, timeout=1.0)
+
+        assert success is False
+        assert "rejected" in error.lower()
+        assert result == mavutil.mavlink.MAV_RESULT_TEMPORARILY_REJECTED
+
     def test_level_accelerometer_calibration_fails_without_connection(self) -> None:
         """
         Level calibration fails cleanly without a connection.

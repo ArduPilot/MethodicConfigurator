@@ -30,6 +30,7 @@ from ardupilot_methodic_configurator.data_model_parameter_editor import (
     ParameterValueUpdateStatus,
 )
 from ardupilot_methodic_configurator.data_model_safe_evaluator import ConfigurationStepEvalError
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_helpers import refresh_parameter_editor_after_calibration
 from ardupilot_methodic_configurator.plugins.plugin_constants import (
     PLUGIN_AHRS_ORIENTATION,
     PLUGIN_BATTERY_MONITOR,
@@ -1338,6 +1339,33 @@ class TestFlightControllerDownloadWorkflows:
         assert param2._fc_value == 0.18
         # YAW_P not in current_step_parameters, so not updated anywhere
 
+    def test_background_download_defers_current_step_updates_to_the_ui_thread(self, parameter_editor) -> None:
+        """
+        A worker-thread download does not mutate the active step.
+
+        GIVEN: An active step whose FC values are displayed in the parameter editor
+        WHEN: A download is marked for background execution
+        THEN: The active step changes only when the UI explicitly refreshes its FC values
+        """
+        param = ArduPilotParameter("ROLL_P", Par(0.1))
+        param._fc_value = 0.1
+        parameter_editor.current_step_parameters = {"ROLL_P": param}
+        new_fc_params = {"ROLL_P": 0.12}
+
+        def download_params(*_args) -> tuple[dict[str, float], None]:
+            parameter_editor._flight_controller.fc_parameters = new_fc_params
+            return new_fc_params, None
+
+        parameter_editor._flight_controller.download_params.side_effect = download_params
+
+        parameter_editor.download_flight_controller_parameters(update_current_step_fc_values=False)
+
+        assert param._fc_value == 0.1
+
+        parameter_editor.refresh_current_step_fc_values()
+
+        assert param._fc_value == 0.12
+
     def test_download_skips_updating_parameters_not_in_current_step(self, parameter_editor) -> None:
         """
         Downloaded parameters not in current step don't cause errors.
@@ -1634,6 +1662,54 @@ class TestFileCopyWorkflows:
 
         assert result == FcParameterCopyResult(copied=1)
         assert param.get_new_value() == pytest.approx(3.5)
+
+    def test_calibration_refresh_preserves_unrelated_staged_values(self, parameter_editor) -> None:
+        """
+        A calibration readback must not overwrite unrelated edits in the open step.
+
+        GIVEN: A staged edit and a calibration parameter are both present in the active step
+        WHEN: Calibration refresh downloads the new FC values
+        THEN: Only the calibration result is eligible for synchronization and the staged edit remains intact
+        """
+        staged_param = ArduPilotParameter(
+            name="INS_GYRO_FILTER",
+            par_obj=Par(20.0, ""),
+            metadata={},
+            default_par=Par(20.0, ""),
+            fc_value=10.0,
+        )
+        trim_param = ArduPilotParameter(
+            name="AHRS_TRIM_X",
+            par_obj=Par(0.0, ""),
+            metadata={},
+            default_par=Par(0.0, ""),
+            fc_value=0.0,
+        )
+        staged_param.set_new_value("42.0")
+        parameter_editor.current_step_parameters = {
+            "INS_GYRO_FILTER": staged_param,
+            "AHRS_TRIM_X": trim_param,
+        }
+        parameter_editor._flight_controller.fc_parameters = {
+            "INS_GYRO_FILTER": 10.0,
+            "AHRS_TRIM_X": 0.0123,
+        }
+
+        def download_and_refresh_fc_values(*_args, **_kwargs) -> tuple[dict[str, float], ParDict]:
+            parameter_editor._flight_controller.fc_parameters.update({"AHRS_TRIM_X": 0.0123})
+            return parameter_editor._flight_controller.fc_parameters, ParDict()
+
+        parameter_editor._flight_controller.download_params.side_effect = download_and_refresh_fc_values
+        base_window = MagicMock()
+        base_window.download_flight_controller_parameters.side_effect = lambda **_kwargs: (
+            parameter_editor.download_flight_controller_parameters()
+        )
+        base_window.parameter_editor = parameter_editor
+
+        refresh_parameter_editor_after_calibration(base_window, parameter_names_to_copy={"AHRS_TRIM_X"})
+
+        assert staged_param.get_new_value() == pytest.approx(42.0)
+        assert trim_param.get_new_value() == pytest.approx(0.0123)
 
     def test_user_sees_ui_updated_when_copying_fc_values_to_current_file(self, parameter_editor) -> None:
         """

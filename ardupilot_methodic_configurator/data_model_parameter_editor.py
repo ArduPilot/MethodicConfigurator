@@ -741,6 +741,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self,
         get_progress_callback: Callable[[], Callable | None] | None = None,
         persist_project_state: bool = True,
+        update_current_step_fc_values: bool = True,
     ) -> tuple[dict, dict]:
         """
         Download parameters from the flight controller.
@@ -748,6 +749,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         Args:
             get_progress_callback: Optional factory function that creates and returns a progress callback.
             persist_project_state: Whether to update AMC-managed default-value data after the download.
+            update_current_step_fc_values: Whether to update the active step's FC-value column. Set this to
+                ``False`` when downloading on a worker thread, then call
+                :meth:`refresh_current_step_fc_values` on the UI thread.
 
         Returns:
             tuple: (fc_parameters, param_default_values) downloaded from the flight controller.
@@ -766,22 +770,26 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         # Note: fc_parameters are already updated internally in the flight controller
         # via params_manager.download_params()
 
-        if fc_parameters:
-            # Update FC values in all current step ArduPilotParameter objects
-            # Thread-safety: This assumes single-threaded execution during parameter upload.
-            # The parameter editor UI is not designed for concurrent uploads, and the upload
-            # workflow blocks the UI thread. If multi-threading is added in the future,
-            # this loop would need synchronization (e.g., threading.Lock) to prevent
-            # race conditions when modifying current_step_parameters during iteration.
-            for param_name, param_obj in self.current_step_parameters.items():
-                if param_name in fc_parameters:
-                    param_obj.set_fc_value(fc_parameters[param_name])
+        if fc_parameters and update_current_step_fc_values:
+            self.refresh_current_step_fc_values(fc_parameters)
 
         # Write default values to file if available
         if persist_project_state and param_default_values:
             self._local_filesystem.write_param_default_values_to_file(param_default_values)
 
         return fc_parameters, param_default_values
+
+    def refresh_current_step_fc_values(self, fc_parameters: dict[str, float] | None = None) -> None:
+        """
+        Update the active step's FC-value column from the latest downloaded values.
+
+        This must run on the UI thread because the active step can be rebuilt while
+        the user navigates between configuration files.
+        """
+        values = self.fc_parameters if fc_parameters is None else fc_parameters
+        for param_name, param_obj in self.current_step_parameters.items():
+            if param_name in values:
+                param_obj.set_fc_value(values[param_name])
 
     def upload_parameters_that_require_reset_workflow(  # pylint: disable=too-many-locals, too-many-arguments, too-many-positional-arguments
         self,
