@@ -75,6 +75,11 @@ class VehicleProjectOpener:
         # locations when rename_parameter_files() runs inside re_init().
         migrate_vehicle_project_if_needed(last_vehicle_dir)
 
+        # An explicitly configured firmware version comes from the connected FC.
+        # Discard a project cache made for another firmware before re_init() can
+        # load it, so matching metadata is fetched instead.
+        self.local_filesystem.remove_cached_parameter_metadata_for_mismatched_firmware(last_vehicle_dir)
+
         # Let the selected project's vehicle_components.json determine its vehicle
         # type. Reusing the previous project's type would load the wrong metadata
         # and configuration steps (for example, Copter choices for an ArduPlane).
@@ -144,6 +149,11 @@ class VehicleProjectOpener:
         # This must run before re_init() so that parameter files are in their new
         # locations when rename_parameter_files() runs inside re_init().
         migrate_vehicle_project_if_needed(vehicle_dir)
+
+        # An explicitly configured firmware version comes from the connected FC.
+        # Discard a project cache made for another firmware before re_init() can
+        # load it, so matching metadata is fetched instead.
+        self.local_filesystem.remove_cached_parameter_metadata_for_mismatched_firmware(vehicle_dir)
 
         # Let the selected project's vehicle_components.json determine its vehicle
         # type instead of carrying over the type of the previously opened project.
