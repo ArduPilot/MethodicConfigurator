@@ -553,13 +553,13 @@ class TestWindowManagementBehavior:
 
         child.destroy()
 
-    def test_center_window_calls_update_idletasks_on_macos(self) -> None:
+    def test_center_window_defers_positioning_on_macos(self) -> None:
         """
-        center_window calls update_idletasks (not update) on macOS for correct rendering.
+        center_window schedules positioning without forcing Tk event processing.
 
         GIVEN: Application is running on macOS (Darwin)
         WHEN: center_window() positions a child window relative to a parent
-        THEN: update_idletasks() is used instead of update() to avoid macOS-specific issues
+        THEN: the idle callback positions the window after geometry settles
         """
         mock_window = MagicMock()
         mock_parent = MagicMock()
@@ -578,10 +578,11 @@ class TestWindowManagementBehavior:
         ):
             BaseWindow.center_window(mock_window, mock_parent)
 
-        # On Darwin: update_idletasks() is called (twice: once unconditionally, once in Darwin branch)
-        # The key invariant is that update() is never called on macOS
-        assert mock_window.update_idletasks.call_count == 2
+        mock_window.update_idletasks.assert_not_called()
         mock_window.update.assert_not_called()
+        mock_window.after_idle.assert_called_once()
+        mock_window.after_idle.call_args.args[0]()
+        mock_window.geometry.assert_called_once_with("+300+250")
 
     def test_user_can_safely_close_windows_without_memory_leaks(self, tk_root) -> None:
         """
@@ -2176,6 +2177,27 @@ class TestCenterWindowOnScreenBehavior:
             #                                         y = (1080 - 350) / 2 = 365
             mock_window.geometry.assert_called_once_with("+735+365")
             mock_window.update.assert_called_once()
+
+    def test_macos_screen_centering_waits_for_idle_geometry(self) -> None:
+        """Window centering on macOS uses settled dimensions without a nested Tk update."""
+        mock_window = MagicMock()
+        mock_window.winfo_width.return_value = 300
+        mock_window.winfo_height.return_value = 200
+        mock_window.winfo_pointerx.return_value = 960
+        mock_window.winfo_pointery.return_value = 540
+        monitor = MagicMock(x=0, y=0, width=1920, height=1080)
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.platform_system", return_value="Darwin"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.get_monitors", return_value=[monitor]),
+        ):
+            BaseWindow.center_window_on_screen(mock_window)
+            mock_window.update_idletasks.assert_not_called()
+            mock_window.update.assert_not_called()
+            mock_window.geometry.assert_not_called()
+            mock_window.after_idle.call_args.args[0]()
+
+        mock_window.geometry.assert_called_once_with("+810+440")
 
 
 if __name__ == "__main__":
