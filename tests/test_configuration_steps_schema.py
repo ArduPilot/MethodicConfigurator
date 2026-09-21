@@ -22,6 +22,8 @@ from pathlib import Path
 import pytest
 from jsonschema import ValidationError, exceptions, validate, validators
 
+from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
+
 # Path to the schema file
 SCHEMA_FILE_PATH = os.path.join("ardupilot_methodic_configurator", "configuration_steps_schema.json")
 
@@ -131,6 +133,37 @@ def test_arducopter_configuration_steps_bin_messages_each_have_a_required_messag
         messages = step["related_bin_messages"]
         has_required = any(msg_info.get("required", False) for msg_info in messages.values())
         assert has_required, f"Step '{step_name}' has no required message in related_bin_messages"
+
+
+def test_arducopter_serial_rc_receiver_derives_rcin_protocol() -> None:
+    """Selecting a serial RC Receiver connection assigns RCIN to the selected serial port."""
+    arducopter_file = Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "configuration_steps_ArduCopter.json"
+    with open(arducopter_file, encoding="utf-8") as file:
+        config = json.load(file)
+
+    step_file = "06_remote_controller_receiver.param"
+    step_info = config["steps"][step_file]
+    config_steps = ConfigurationSteps("vehicle_dir", "ArduCopter")
+
+    for serial_port in range(1, 10):
+        serial_name = f"SERIAL{serial_port}"
+        variables = {
+            "vehicle_components": {"RC Receiver": {"FC Connection": {"Type": serial_name, "Protocol": "CRSF"}}},
+            "doc_dict": {"RC_PROTOCOLS": {"values": {}, "Bitmask": {9: "CRSF"}}},
+        }
+
+        error = config_steps.compute_parameters(step_file, step_info, "derived", variables)
+
+        assert error == ""
+        assert config_steps.derived_parameters[step_file][f"{serial_name}_PROTOCOL"].value == 23.0
+
+    variables["vehicle_components"]["RC Receiver"]["FC Connection"]["Type"] = "RCin/SBUS"
+    error = config_steps.compute_parameters(step_file, step_info, "derived", variables)
+
+    assert error == ""
+    assert not any(
+        name.startswith("SERIAL") and name.endswith("_PROTOCOL") for name in config_steps.derived_parameters[step_file]
+    )
 
 
 def find_json_files(directory) -> list[str]:
