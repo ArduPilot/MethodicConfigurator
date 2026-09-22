@@ -3,4 +3,4 @@ RC_OPTIONS,288  # Crossfire telem, 429k baud, throttle check for arming
 RC_PROTOCOLS,512  # Selected in the component editor
 RC2_REVERSED,1  # "1" To reverse (and standardize) the Pitch Axis.
 RSSI_TYPE,0  # radio without RSSI
-SERIAL6_PROTOCOL,23  # Added Serial6 RCIN (23)
+SERIAL6_PROTOCOL,23  # RC receiver on SERIAL6 requires RCIN

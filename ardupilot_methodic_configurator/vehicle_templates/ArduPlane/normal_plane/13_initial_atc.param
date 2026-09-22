@@ -1,2 +1,15 @@
 INS_ACCEL_FILTER,10  # The default is 20Hz but that is too high in most situations
 INS_GYRO_FILTER,46  # Derived from vehicle component editor propeller size
+Q_A_ANG_YAW_P,4.7  # Derived from vehicle component editor propeller size
+Q_A_RAT_PIT_FLTD,23  # INS_GYRO_FILTER / 2
+Q_A_RAT_PIT_FLTE,0  # Initial value, will be improved at a later step
+Q_A_RAT_PIT_FLTT,23  # INS_GYRO_FILTER / 2
+Q_A_RAT_RLL_FLTD,23  # INS_GYRO_FILTER / 2
+Q_A_RAT_RLL_FLTE,0  # Initial value, will be improved at a later step
+Q_A_RAT_RLL_FLTT,23  # INS_GYRO_FILTER / 2
+Q_A_RAT_YAW_FLTD,0  # Initial value, will be improved at a later step
+Q_A_RAT_YAW_FLTE,2  # Initial value, will be improved at a later step
+Q_A_RAT_YAW_FLTT,23  # INS_GYRO_FILTER / 2
+Q_A_THR_MIX_MAN,0.1  # Value for the first couple of flights will be changed later once Q_M_THST_HOVER is learned
+Q_M_THST_EXPO,0.58  # Derived from vehicle component editor propeller size
+Q_M_THST_HOVER,0.2  # Hover learn will improve this initial guess

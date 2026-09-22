@@ -1,3 +1,4 @@
 RC_OPTIONS,800  # Throttle at zero.  Passthrough telemetry for Yaapu.  Suppress the mode messages.
 RC_PROTOCOLS,1  # Selected in the component editor
 RSSI_TYPE,3
+SERIAL1_PROTOCOL,23  # RC receiver on SERIAL1 requires RCIN

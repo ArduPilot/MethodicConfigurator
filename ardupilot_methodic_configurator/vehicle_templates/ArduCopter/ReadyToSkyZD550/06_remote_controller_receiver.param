@@ -1,4 +1,4 @@
 RC_OPTIONS,8992  # ExpressLRS
 RC_PROTOCOLS,512  # Selected in the component editor
 RSSI_TYPE,3  # ExpressLRS RSSI
-SERIAL4_PROTOCOL,23  # Serial4 RC input
+SERIAL4_PROTOCOL,23  # RC receiver on SERIAL4 requires RCIN

@@ -1,1 +1,2 @@
 SERIAL4_BAUD,115  # The MAVLink telemetry
+SERIAL4_PROTOCOL,2  # Telemetry on SERIAL4 protocol defined in component editor

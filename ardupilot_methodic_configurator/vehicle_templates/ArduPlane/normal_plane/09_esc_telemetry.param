@@ -1,3 +1,4 @@
+Q_M_PWM_TYPE,0  # Specified in component editor window
 SERIAL5_BAUD,115
 SERIAL5_PROTOCOL,42
 SERVO_BLH_TRATE,10

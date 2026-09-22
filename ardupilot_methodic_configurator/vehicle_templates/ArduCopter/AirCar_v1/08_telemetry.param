@@ -1,2 +1,3 @@
 BRD_SER1_RTSCTS,2
 SERIAL1_BAUD,57
+SERIAL1_PROTOCOL,2  # Telemetry on SERIAL1 protocol defined in component editor
