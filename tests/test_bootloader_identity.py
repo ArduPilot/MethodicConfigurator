@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Regression tests for bootloader device identity resolution.
 
@@ -8,8 +10,7 @@ SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-# ruff: noqa: INP001
-
+import sys
 from pathlib import Path
 
 import pytest
@@ -158,7 +159,12 @@ def test_capture_serial_identity_follows_a_symlinked_device_path(tmp_path: Path,
     device = tmp_path / "ttyACM0"
     device.touch()
     device_link = tmp_path / "usb-ArduPilot"
-    device_link.symlink_to(device)
+    try:
+        device_link.symlink_to(device)
+    except OSError as error:
+        if sys.platform == "win32" and getattr(error, "winerror", None) == 1314:
+            pytest.skip("Windows symlink privilege is unavailable")
+        raise
     port = ListPortInfo(str(device))
     port.location = "1-2.3"
     port.serial_number = "FC-123"
