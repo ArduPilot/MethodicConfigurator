@@ -71,6 +71,26 @@ def test_flight_controller_busy_state_disables_and_restores_interactive_controls
     window.root.destroy()
 
 
+def test_nested_flight_controller_busy_state_requires_matching_releases(tk_root) -> None:
+    """An inner operation must not re-enable controls owned by an outer operation."""
+    window = BaseWindow(tk_root)
+    button = ttk.Button(window.main_frame)
+    button.pack()
+
+    window.set_fc_operation_busy(busy=True)
+    window.set_fc_operation_busy(busy=True)
+    window.set_fc_operation_busy(busy=False)
+
+    assert "disabled" in button.state()
+    assert window.is_fc_operation_busy is True
+
+    window.set_fc_operation_busy(busy=False)
+
+    assert "disabled" not in button.state()
+    assert window.is_fc_operation_busy is False
+    window.root.destroy()
+
+
 @pytest.fixture
 def dpi_test_window(mock_tkinter_context) -> Callable[[float, float], tuple[BaseWindow, contextlib.ExitStack]]:
     """Specialized fixture for DPI testing that doesn't mock DPI detection."""

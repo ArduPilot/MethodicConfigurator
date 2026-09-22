@@ -63,6 +63,22 @@ def lazy_progress_window(tk_root) -> Generator[ProgressWindow, None, None]:
 class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name
     """Test ProgressWindow from the user's perspective - focusing on progress indication behavior."""
 
+    def test_user_can_cancel_a_cancellable_progress_window(self, progress_window) -> None:
+        """An optional cancellation callback is exposed on the modal progress window."""
+        callback = MagicMock()
+        cancellable = ProgressWindow(
+            progress_window.parent,
+            title="Cancellable Progress",
+            message="Progress: {}/{}",
+            cancel_callback=callback,
+        )
+        try:
+            assert cancellable.cancel_button is not None
+            cancellable.cancel_button.invoke()
+            callback.assert_called_once_with()
+        finally:
+            cancellable.destroy()
+
     def test_user_sees_progress_window_with_initial_state(self, progress_window) -> None:
         """
         User sees a progress window that displays initial progress state.

@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 # https://wiki.tcl-lang.org/page/Changing+Widget+Colors
 
 import tkinter as tk
+from collections.abc import Callable
 from logging import error as logging_error
 from tkinter import ttk
 
@@ -34,11 +35,13 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
         width: int = 300,
         height: int = 80,
         only_show_when_update_progress_called: bool = False,
+        cancel_callback: Callable[[], None] | None = None,
     ) -> None:
         self.parent = master
         self.message = message
         self.only_show_when_update_progress_called = only_show_when_update_progress_called
         self._shown = False
+        self.cancel_button: ttk.Button | None = None
         self.progress_window = tk.Toplevel(self.parent)
         # Withdraw immediately to prevent flicker while setting up
         self.progress_window.withdraw()
@@ -63,6 +66,10 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
         # Create a label to display the progress message
         self.progress_label = ttk.Label(main_frame, text=message.format(0, 0))
         self.progress_label.pack(side=tk.TOP, fill=tk.X, expand=False, pady=(10, 10))
+
+        if cancel_callback is not None:
+            self.cancel_button = ttk.Button(main_frame, text=_("Cancel"), command=cancel_callback)
+            self.cancel_button.pack(side=tk.TOP, pady=(0, 10))
 
         if not isinstance(master, tk.Tk):
             logging_error("ProgressWindow: master is not a tk.Tk instance, window centering will fail")

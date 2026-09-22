@@ -39,8 +39,22 @@ Flight controller
 ### View
 
 `LevelCalibrationView` presents the level-trim button and explains that the
-vehicle must be calibrated, stationary, and level. On success it refreshes the
-parameter editor; on failure it shows an error dialog.
+vehicle must be calibrated, stationary, and level. The calibration and
+parameter readback run in a worker so the Tk event loop remains responsive. A
+Cancel button in the modal progress dialog sends the flight-controller abort
+command and prevents parameter readback. On success it refreshes the parameter
+editor; on failure it shows an error dialog.
+
+## Concurrency
+
+The view marks the shared `BaseWindow` flight-controller operation lock busy
+before starting the worker and releases it only after the worker has finished.
+The backend uses the connection manager's re-entrant `mavlink_transaction` for
+command acknowledgements, telemetry readers, parameter reads, and MAVFTP
+response processing because all of them consume the same MAVLink receive queue.
+If the view is destroyed while a worker is still waiting, the modal window is
+closed but the busy state remains until a Tk callback observes that the worker
+has ended.
 
 ## Safety and behavior
 

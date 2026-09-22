@@ -23,6 +23,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import io
 import os
 import tkinter as tk
+from contextlib import suppress
 from logging import debug as logging_debug
 from logging import error as logging_error
 from platform import system as platform_system
@@ -142,13 +143,20 @@ class BaseWindow:
 
         # Create main container frame
         self._fc_operation_widget_states: dict[tk.Misc, tuple[str, ...] | str] | None = None
+        self._fc_operation_busy_count = 0
         self.main_frame = ttk.Frame(self.root)
         self.main_frame.pack(expand=True, fill=tk.BOTH)
+
+    @property
+    def is_fc_operation_busy(self) -> bool:
+        """Return whether one or more flight-controller operations own the UI lock."""
+        return self._fc_operation_busy_count > 0
 
     def set_fc_operation_busy(self, busy: bool) -> None:
         """Disable interactive controls while an operation owns the flight-controller link."""
         if busy:
-            if self._fc_operation_widget_states is not None:
+            self._fc_operation_busy_count += 1
+            if self._fc_operation_busy_count > 1:
                 return
             widget_states: dict[tk.Misc, tuple[str, ...] | str] = {}
             for widget in self._iter_descendant_widgets(self.root):
@@ -156,6 +164,11 @@ class BaseWindow:
             self._fc_operation_widget_states = widget_states
             return
 
+        if self._fc_operation_busy_count == 0:
+            return
+        self._fc_operation_busy_count -= 1
+        if self._fc_operation_busy_count > 0:
+            return
         stored_widget_states = self._fc_operation_widget_states
         if stored_widget_states is None:
             return
@@ -164,9 +177,9 @@ class BaseWindow:
             self._restore_widget_after_fc_operation(widget, previous_state)
 
     @staticmethod
-    def _disable_widget_for_fc_operation(widget: tk.Misc, widget_states: dict[tk.Misc, tuple[str, ...] | str]) -> None:  # pylint: disable=useless-return
+    def _disable_widget_for_fc_operation(widget: tk.Misc, widget_states: dict[tk.Misc, tuple[str, ...] | str]) -> None:
         """Disable one widget and remember its state when it supports state changes."""
-        try:
+        with suppress(AttributeError, tk.TclError):
             if isinstance(widget, ttk.Widget):
                 previous_ttk_state = tuple(widget.state())
                 if "disabled" not in previous_ttk_state:
@@ -177,8 +190,6 @@ class BaseWindow:
                 if previous_tk_state != "disabled":
                     widget.configure({"state": "disabled"})
                     widget_states[widget] = previous_tk_state
-        except (AttributeError, tk.TclError):
-            return
 
     @staticmethod
     def _restore_widget_after_fc_operation(widget: tk.Misc, previous_state: tuple[str, ...] | str) -> None:

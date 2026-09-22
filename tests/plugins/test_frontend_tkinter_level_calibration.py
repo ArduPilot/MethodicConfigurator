@@ -89,7 +89,7 @@ class TestLevelCalibrationView:
         started = Event()
         release = Event()
 
-        def blocked_calibration() -> tuple[bool, str]:
+        def blocked_calibration(**_kwargs: object) -> tuple[bool, str]:
             started.set()
             release.wait(timeout=1.0)
             return True, "Level calibration successful"
@@ -265,7 +265,7 @@ class TestLevelCalibrationView:
         level_calibration_view.showerror.assert_not_called()
 
     def test_modal_progress_locks_other_flight_controller_controls_until_background_operation_finishes(
-        self, level_calibration_view, mocker
+        self, level_calibration_view
     ) -> None:
         """
         A background calibration keeps the shared MAVLink connection exclusive to that operation.
@@ -276,9 +276,7 @@ class TestLevelCalibrationView:
         """
         started = Event()
         release = Event()
-        mocker.patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_level_calibration.sys_platform", "win32")
-
-        def blocked_calibration() -> tuple[bool, str]:
+        def blocked_calibration(**_kwargs: object) -> tuple[bool, str]:
             started.set()
             release.wait(timeout=1.0)
             return True, "Level calibration successful"
@@ -320,7 +318,71 @@ class TestLevelCalibrationView:
         level_calibration_view.view._calibration_thread.join(timeout=1.0)
         level_calibration_view.view._poll_level_calibration()
 
-    def test_macos_calibration_marks_the_application_busy_until_completion(self, level_calibration_view, mocker) -> None:
+    def test_user_can_request_cancellation_of_level_calibration(self, level_calibration_view) -> None:
+        """The modal progress state exposes a cancellation action."""
+        release = Event()
+
+        def blocked_calibration(**_kwargs: object) -> tuple[bool, str]:
+            release.wait(timeout=1.0)
+            return True, "Level calibration successful"
+
+        level_calibration_view.model.start_level_calibration.side_effect = blocked_calibration
+
+        level_calibration_view.view._on_level_calibration()
+        level_calibration_view.view._cancel_calibration()
+
+        assert level_calibration_view.view._calibration_cancelled.is_set()
+        release.set()
+        level_calibration_view.view._calibration_thread.join(timeout=1.0)
+
+    def test_abort_failure_is_not_overwritten_by_generic_cancellation(self, level_calibration_view) -> None:
+        """A failed FC abort must remain visible to the user."""
+        started = Event()
+        release = Event()
+
+        def blocked_calibration(**_kwargs: object) -> tuple[bool, str]:
+            started.set()
+            release.wait(timeout=1.0)
+            return False, "Failed to cancel calibration: link down"
+
+        level_calibration_view.model.start_level_calibration.side_effect = blocked_calibration
+        level_calibration_view.view._on_level_calibration()
+        assert started.wait(timeout=0.2)
+
+        level_calibration_view.view._cancel_calibration()
+        release.set()
+        level_calibration_view.view._calibration_thread.join(timeout=1.0)
+        level_calibration_view.view._poll_level_calibration()
+
+        level_calibration_view.showerror.assert_called_once_with(
+            "Calibration Failed", "Failed to cancel calibration: link down"
+        )
+
+    def test_destroy_keeps_fc_busy_until_a_running_worker_finishes(self, level_calibration_view, mocker) -> None:
+        """Destroying the view must not release the shared link while its worker is alive."""
+        started = Event()
+        release = Event()
+
+        def blocked_calibration(**_kwargs: object) -> tuple[bool, str]:
+            started.set()
+            release.wait(timeout=1.0)
+            return False, "Cancelled"
+
+        level_calibration_view.model.start_level_calibration.side_effect = blocked_calibration
+        level_calibration_view.view._on_level_calibration()
+        assert started.wait(timeout=0.2)
+
+        level_calibration_view.view.destroy()
+
+        level_calibration_view.base_window.set_fc_operation_busy.assert_called_once_with(busy=True)
+        release.set()
+        level_calibration_view.view._calibration_thread.join(timeout=1.0)
+        level_calibration_view.view._wait_for_worker_before_releasing_busy()
+        level_calibration_view.base_window.set_fc_operation_busy.assert_has_calls(
+            [mocker.call(busy=True), mocker.call(busy=False)]
+        )
+
+    def test_calibration_marks_the_application_busy_until_completion(self, level_calibration_view, mocker) -> None:
         """
         MacOS must disable other flight-controller controls while calibration owns the link.
 
@@ -328,7 +390,6 @@ class TestLevelCalibrationView:
         WHEN: Level calibration starts and completes
         THEN: The shared application busy state is enabled and released
         """
-        mocker.patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_level_calibration.sys_platform", "darwin")
         level_calibration_view.model.start_level_calibration.return_value = (True, "Level calibration successful")
 
         level_calibration_view.view._on_level_calibration()
@@ -371,7 +432,6 @@ class TestLevelCalibrationView:
         WHEN: The user starts level calibration
         THEN: The button and application busy state are restored
         """
-        mocker.patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_level_calibration.sys_platform", "win32")
         level_calibration_view.progress_window.progress_window.grab_set.side_effect = RuntimeError("grab failed")
 
         level_calibration_view.view._on_level_calibration()
@@ -397,7 +457,7 @@ class TestLevelCalibrationView:
         started = Event()
         release = Event()
 
-        def blocked_calibration() -> tuple[bool, str]:
+        def blocked_calibration(**_kwargs: object) -> tuple[bool, str]:
             started.set()
             release.wait(timeout=1.0)
             return True, "Level calibration successful"

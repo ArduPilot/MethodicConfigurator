@@ -93,3 +93,17 @@ class TestLevelCalibrationWorkflow:
         # Assert (Then)
         assert success is False
         assert message == "Level calibration failed"
+
+    def test_level_calibration_passes_the_cancellation_callback(self, connected_flight_controller) -> None:
+        """The backend receives the callback used to stop a pending acknowledgement wait."""
+        connected_flight_controller.start_accel_calibration_level.return_value = (True, "")
+        model = LevelCalibrationDataModel(connected_flight_controller)
+
+        def cancel_requested() -> bool:
+            return False
+        success, _message = model.start_level_calibration(cancel_requested=cancel_requested)
+
+        assert success is True
+        connected_flight_controller.start_accel_calibration_level.assert_called_once_with(
+            cancel_requested=cancel_requested
+        )
