@@ -409,6 +409,7 @@
             "mandatory_text": "100% mandatory (0% optional)",
             "component": "Propellers",
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["Q_A_ACC(EL)?_[PRY]_MAX$", "Q_A_ANG_YAW_P$", "Q_A_RAT_(PIT|RLL|YAW)_FLT[DET]$", "INS_ACCEL_FILTER$", "Q_M_THST_(EXPO|HOVER)$"],
             "forced_parameters": {
                 "Q_A_RAT_PIT_FLTE": { "New Value": "0", "Change Reason": "Initial value, will be improved at a later step" },
                 "Q_A_RAT_RLL_FLTE": { "New Value": "0", "Change Reason": "Initial value, will be improved at a later step" },
@@ -420,6 +421,9 @@
             },
             "derived_parameters": {
                 "Q_A_ANG_YAW_P":    { "New Value": "round(0.5*max(8000, round(-900*vehicle_components['Propellers']['Specifications']['Diameter_inches']+36000, -2))/3000, 1)", "Change Reason": "Derived from vehicle component editor propeller size" },
+                "Q_A_ACCEL_P_MAX":  { "if": "'Q_A_ACCEL_P_MAX' in fc_parameters", "New Value": "max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))", "Change Reason": "Derived from vehicle component editor propeller size" },
+                "Q_A_ACCEL_R_MAX":  { "if": "'Q_A_ACCEL_R_MAX' in fc_parameters", "New Value": "max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))", "Change Reason": "Derived from vehicle component editor propeller size" },
+                "Q_A_ACCEL_Y_MAX":  { "if": "'Q_A_ACCEL_Y_MAX' in fc_parameters", "New Value": "max(8000, round(-900*vehicle_components['Propellers']['Specifications']['Diameter_inches']+36000, -2))", "Change Reason": "Derived from vehicle component editor propeller size" },
                 "Q_A_ACC_P_MAX":    { "if": "'Q_A_ACC_P_MAX' in fc_parameters", "New Value": "max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))/100", "Change Reason": "Derived from vehicle component editor propeller size" },
                 "Q_A_ACC_R_MAX":    { "if": "'Q_A_ACC_R_MAX' in fc_parameters", "New Value": "max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))/100", "Change Reason": "Derived from vehicle component editor propeller size" },
                 "Q_A_ACC_Y_MAX":    { "if": "'Q_A_ACC_Y_MAX' in fc_parameters", "New Value": "max(8000, round(-900*vehicle_components['Propellers']['Specifications']['Diameter_inches']+36000, -2))/100", "Change Reason": "Derived from vehicle component editor propeller size" },

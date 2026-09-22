@@ -442,6 +442,22 @@ class TestComponentDataModelImportInternals:
         difference file may omit BATT_CAPACITY and all voltage thresholds when they match
         the template. The component editor must not clear the existing battery data.
         """
+        realistic_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduPlane")
+        battery_specs = realistic_model.get_component_data()["Components"]["Battery"]["Specifications"]
+        initial_specs = battery_specs.copy()
+
+        realistic_model._set_battery_type_from_fc_parameters({"BATT_MONITOR": 0})
+
+        assert realistic_model.get_component_data()["Components"]["Battery"]["Specifications"] == initial_specs
+
+    def test_copter_battery_import_preserves_template_values_when_import_file_is_sparse(self, realistic_model) -> None:
+        """
+        Sparse Copter imports preserve battery values already supplied by the template.
+
+        GIVEN: A Copter template with a validated battery specification
+        WHEN: An imported difference file omits all battery voltage thresholds
+        THEN: The existing battery specification remains unchanged
+        """
         battery_specs = realistic_model.get_component_data()["Components"]["Battery"]["Specifications"]
         initial_specs = battery_specs.copy()
 
