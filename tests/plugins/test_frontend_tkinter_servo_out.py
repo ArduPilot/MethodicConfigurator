@@ -88,6 +88,18 @@ class TestServoOutputView:
         )
         assert "SERVO1_FUNCTION=33" in servo_out_view.view._summary.get()
 
+    def test_activation_refreshes_summary_after_parameter_edits(self, servo_out_view) -> None:
+        """Returning to the step must show recommendations based on current parameters."""
+        servo_out_view.model.get_recommendations.return_value = (
+            {"SERVO2_FUNCTION": 34},
+            "Recommended 1 motor output assignment.",
+            ServoOutRecommendationStatus.RECOMMENDATIONS_AVAILABLE,
+        )
+
+        servo_out_view.view.on_activate()
+
+        assert "SERVO2_FUNCTION=34" in servo_out_view.view._summary.get()
+
     def test_user_sees_reason_when_no_recommendation_can_be_applied(self, servo_out_view) -> None:
         """
         An unapplied recommendation provides an actionable error.

@@ -85,7 +85,8 @@ class ServoOutDataModel:
             )
 
         existing = self._existing_function_values()
-        recommendations = self._recommend_assignments(output_numbers, motor_numbers, existing)
+        recommendation_outputs = self._recommendation_outputs(frame_class, output_numbers)
+        recommendations = self._recommend_assignments(recommendation_outputs, motor_numbers, existing)
         assigned_functions = {self._function_number(value) for value in existing.values()} | set(recommendations.values())
 
         unassigned_motor_numbers = [
@@ -93,7 +94,9 @@ class ServoOutDataModel:
         ]
         unassigned_message = self._unassigned_motors_message(unassigned_motor_numbers) if unassigned_motor_numbers else ""
         if recommendations:
-            message = self._recommended_message(len(recommendations))
+            message = self._recommended_message(
+                len(recommendations), tricopter_yaw_servo=frame_class == 7 and 39 in recommendations.values()
+            )
             if unassigned_message:
                 message += f" {unassigned_message}"
             status = ServoOutRecommendationStatus.RECOMMENDATIONS_AVAILABLE
@@ -131,7 +134,9 @@ class ServoOutDataModel:
         if not recommendations:
             return [], recommendation_message, recommendation_status
 
-        recommendation_prefix = self._recommended_message(len(recommendations))
+        recommendation_prefix = self._recommended_message(
+            len(recommendations), tricopter_yaw_servo=self._get_frame_class() == 7 and 39 in recommendations.values()
+        )
         unassigned_message = recommendation_message.removeprefix(recommendation_prefix).strip()
 
         applied: list[str] = []
@@ -230,6 +235,13 @@ class ServoOutDataModel:
         return None
 
     @staticmethod
+    def _recommendation_outputs(frame_class: int, output_numbers: tuple[int, ...]) -> tuple[int, ...]:
+        """Return output order, keeping a tricopter's yaw servo outside the ESC bank."""
+        if frame_class != 7 or 7 not in output_numbers:
+            return output_numbers
+        return (*output_numbers[:3], 7)
+
+    @staticmethod
     def _motor_function(motor_number: int) -> int:
         """Translate an ArduPilot motor number to its SERVOx_FUNCTION value."""
         if motor_number <= 8:
@@ -247,9 +259,12 @@ class ServoOutDataModel:
         return _("%(motors)s are not assigned to any output.") % {"motors": names}
 
     @staticmethod
-    def _recommended_message(count: int) -> str:
+    def _recommended_message(count: int, tricopter_yaw_servo: bool = False) -> str:
         """Build the localized message prefix used for proposed assignments."""
-        return _("Recommended %(count)d motor output assignment(s).") % {"count": count}
+        message = _("Recommended %(count)d motor output assignment(s).") % {"count": count}
+        if tricopter_yaw_servo:
+            message += " " + _("SERVO7 is the tricopter yaw servo; connect it to a servo, not an ESC.")
+        return message
 
     @staticmethod
     def _function_number(value: object) -> int | None:

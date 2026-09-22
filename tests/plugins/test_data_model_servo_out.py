@@ -111,17 +111,31 @@ class TestServoOutputRecommendations:
         assert recommendations["SERVO9_FUNCTION"] == 82
         assert recommendations["SERVO12_FUNCTION"] == 85
 
-    def test_main_out_tricopter_uses_layout_motor_numbers(self, servo_model_factory) -> None:
-        """A tricopter's non-contiguous motor numbers must be retained."""
+    def test_main_out_tricopter_keeps_the_yaw_servo_outside_the_esc_outputs(self, servo_model_factory) -> None:
+        """A tricopter's yaw servo must not be recommended in the ESC output block."""
         model = servo_model_factory("Main Out", 7)
 
-        recommendations, _message, _status = model.get_recommendations()
+        recommendations, message, _status = model.get_recommendations()
 
         assert recommendations == {
             "SERVO1_FUNCTION": 33,
             "SERVO2_FUNCTION": 34,
             "SERVO3_FUNCTION": 36,
-            "SERVO4_FUNCTION": 39,
+            "SERVO7_FUNCTION": 39,
+        }
+        assert "servo" in message.lower()
+
+    def test_aio_tricopter_keeps_the_yaw_servo_on_servo7(self, servo_model_factory) -> None:
+        """AIO connection ordering must not move the tricopter yaw servo into the ESC bank."""
+        model = servo_model_factory("AIO", 7)
+
+        recommendations, _message, _status = model.get_recommendations()
+
+        assert recommendations == {
+            "SERVO9_FUNCTION": 33,
+            "SERVO10_FUNCTION": 34,
+            "SERVO11_FUNCTION": 36,
+            "SERVO7_FUNCTION": 39,
         }
 
     def test_aio_octa_continues_in_main_out_bank_after_six_motors(self, servo_model_factory) -> None:
@@ -142,6 +156,14 @@ class TestServoOutputRecommendations:
         assert recommendations["SERVO14_FUNCTION"] == 38
         assert recommendations["SERVO1_FUNCTION"] == 39
         assert recommendations["SERVO2_FUNCTION"] == 40
+
+    def test_octa_does_not_describe_motor7_as_a_tricopter_servo(self, servo_model_factory) -> None:
+        """Motor function 39 on an octa is still an ESC output, not a tricopter warning."""
+        model = servo_model_factory("Main Out", 3)
+
+        _recommendations, message, _status = model.get_recommendations()
+
+        assert "tricopter" not in message.lower()
 
     def test_existing_nonzero_assignment_is_preserved(self, servo_model_factory) -> None:
         """

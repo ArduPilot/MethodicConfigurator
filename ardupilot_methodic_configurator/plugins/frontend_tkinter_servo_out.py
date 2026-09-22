@@ -54,6 +54,10 @@ class ServoOutView(Frame):
         else:
             self._summary.set(message)
 
+    def on_activate(self) -> None:
+        """Refresh the recommendation when the user returns after editing parameters."""
+        self._refresh_summary()
+
     def _on_apply(self) -> None:
         applied, message, status = self.model.apply_recommendations()
         if applied:

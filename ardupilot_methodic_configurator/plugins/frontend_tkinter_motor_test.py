@@ -24,6 +24,7 @@ import time
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
 from collections.abc import Callable
+from contextlib import suppress
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
@@ -124,6 +125,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         self._content_frame: ttk.Frame | None = None  # Store reference to content frame for widget searches
         self._motor_grid_frame: ttk.Frame | None = None  # Direct handle for motor grid frame
         self._timer_id: str | None = None  # Track scheduled update timer for cleanup
+        self._keyboard_bindings: list[tuple[str, str]] = []
 
         self._create_widgets()
 
@@ -739,18 +741,36 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
     def _setup_keyboard_shortcuts(self) -> None:
         """Setup keyboard shortcuts for critical motor test functions."""
-        # Emergency stop (Escape key)
-        self.root_window.bind("<Escape>", lambda _: self._stop_all_motors())
-        self.root_window.bind("<Control-s>", lambda _: self._stop_all_motors())
-
-        # Test all motors (Ctrl+A)
-        self.root_window.bind("<Control-a>", lambda _: self._test_all_motors())
-
-        # Test in sequence (Ctrl+Q)
-        self.root_window.bind("<Control-q>", lambda _: self._test_motors_in_sequence())
+        shortcuts = {
+            "<Escape>": (self._stop_all_motors, True),
+            "<Control-s>": (self._stop_all_motors, True),
+            "<Control-a>": (self._test_all_motors, False),
+            "<Control-q>": (self._test_motors_in_sequence, False),
+        }
+        for sequence, (action, allow_when_busy) in shortcuts.items():
+            callback = cast(
+                "Callable[[Event], str]",
+                lambda _event, shortcut=action, emergency=allow_when_busy: self._handle_keyboard_shortcut(
+                    shortcut, allow_when_busy=emergency
+                ),
+            )
+            binding_id = self.root_window.bind(
+                sequence,
+                callback,
+                add="+",
+            )
+            if isinstance(binding_id, str):
+                self._keyboard_bindings.append((sequence, binding_id))
 
         # Focus root window to ensure it can capture key events
         self.root_window.focus_set()
+
+    def _handle_keyboard_shortcut(self, action: Callable[[], None], *, allow_when_busy: bool = False) -> str:
+        """Run a shortcut unless it is a non-emergency action during another FC operation."""
+        if getattr(self.base_window, "is_fc_operation_busy", False) and not allow_when_busy:
+            return "break"
+        action()
+        return "break"
 
     def on_activate(self) -> None:
         """
@@ -804,6 +824,10 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         if self._timer_id:
             self.after_cancel(self._timer_id)
             self._timer_id = None
+        for sequence, binding_id in self._keyboard_bindings:
+            with suppress(tk.TclError):
+                self.root_window.unbind(sequence, binding_id)
+        self._keyboard_bindings.clear()
         super().destroy()
 
 

@@ -676,6 +676,34 @@ class TestMotorTestView:
         assert bind_spy.call_count == 4
         focus_spy.assert_called_once()
 
+    def test_destroy_unbinds_keyboard_shortcuts(self, motor_view: MotorTestView, mocker) -> None:
+        """Destroying the view must remove its app-wide actuator shortcuts."""
+        unbind_spy = mocker.patch.object(motor_view.root_window, "unbind")
+
+        motor_view.destroy()
+
+        assert unbind_spy.call_count == 4
+
+    def test_busy_application_ignores_motor_shortcuts(self, motor_view: MotorTestView, fake_model: FakeMotorTestModel) -> None:
+        """A disabled application must not let a global shortcut reach the FC."""
+        motor_view.base_window.is_fc_operation_busy = True
+
+        result = motor_view._handle_keyboard_shortcut(motor_view._test_all_motors)
+
+        assert result == "break"
+        assert fake_model.all_motor_runs == 0
+
+    def test_busy_application_still_allows_emergency_stop_shortcut(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel
+    ) -> None:
+        """The emergency-stop shortcut remains available while other controls are disabled."""
+        motor_view.base_window.is_fc_operation_busy = True
+
+        result = motor_view._handle_keyboard_shortcut(motor_view._stop_all_motors, allow_when_busy=True)
+
+        assert result == "break"
+        assert fake_model.emergency_runs == 1
+
     def test_on_activate_and_on_deactivate_paths(
         self,
         motor_view: MotorTestView,
