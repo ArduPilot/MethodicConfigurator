@@ -202,6 +202,14 @@ def perform_component_inference(
         tuple: (success: bool, error_message: str)
 
     """
+    # New projects intentionally omit the cached parameter definition XML so normal project
+    # creation can refresh it.  This acceptance test runs offline, so seed the generated project
+    # from the already-loaded empty template metadata before reinitializing it.
+    metadata_source = Path(local_filesystem.vehicle_dir) / "apm.pdef.xml"
+    metadata_target = Path(new_vehicle_dir) / "apm.pdef.xml"
+    if metadata_source.is_file() and not metadata_target.exists():
+        shutil.copy2(metadata_source, metadata_target)
+
     # Reload the local_filesystem to get the new vehicle directory's data
     local_filesystem.re_init(new_vehicle_dir, vehicle_type, blank_component_data)
 

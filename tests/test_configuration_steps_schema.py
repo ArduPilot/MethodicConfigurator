@@ -239,8 +239,8 @@ def test_arduplane_4_7_throttle_controller_uses_scaled_quadplane_acceleration_ga
         for name, value in [line.split(",", maxsplit=1)]
     }
 
-    assert values["Q_P_D_ACC_I"] == pytest.approx(0.0400526)
-    assert values["Q_P_D_ACC_P"] == pytest.approx(0.0200263)
+    assert values["Q_P_D_ACC_I"] == pytest.approx(0.040053)
+    assert values["Q_P_D_ACC_P"] == pytest.approx(0.020026)
 
 
 @pytest.mark.parametrize(
