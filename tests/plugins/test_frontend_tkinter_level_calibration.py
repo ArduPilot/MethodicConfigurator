@@ -276,6 +276,7 @@ class TestLevelCalibrationView:
         """
         started = Event()
         release = Event()
+
         def blocked_calibration(**_kwargs: object) -> tuple[bool, str]:
             started.set()
             release.wait(timeout=1.0)

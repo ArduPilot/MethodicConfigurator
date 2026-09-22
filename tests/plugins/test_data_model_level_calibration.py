@@ -101,9 +101,8 @@ class TestLevelCalibrationWorkflow:
 
         def cancel_requested() -> bool:
             return False
+
         success, _message = model.start_level_calibration(cancel_requested=cancel_requested)
 
         assert success is True
-        connected_flight_controller.start_accel_calibration_level.assert_called_once_with(
-            cancel_requested=cancel_requested
-        )
+        connected_flight_controller.start_accel_calibration_level.assert_called_once_with(cancel_requested=cancel_requested)

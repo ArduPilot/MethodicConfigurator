@@ -29,9 +29,7 @@ class LevelCalibrationDataModel:  # pylint: disable=too-few-public-methods
         if cancel_requested is None:
             success, error_msg = self.flight_controller.start_accel_calibration_level()
         else:
-            success, error_msg = self.flight_controller.start_accel_calibration_level(
-                cancel_requested=cancel_requested
-            )
+            success, error_msg = self.flight_controller.start_accel_calibration_level(cancel_requested=cancel_requested)
         if success:
             logging_info(_("Level calibration completed"))
             return True, _("Level calibration successful")
