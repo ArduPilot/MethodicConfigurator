@@ -279,13 +279,13 @@ msgstr "機体タイプを検出できませんでした。デフォルトの%s�
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:182
 msgid "Could not remove cached parameter metadata %s: %s"
-msgstr ""
+msgstr "キャッシュされたパラメータメタデータ %s を削除できませんでした: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:186
 msgid ""
 "Removed cached parameter metadata because project firmware %s differs from "
 "connected FC firmware %s."
-msgstr ""
+msgstr "プロジェクトのファームウェア %s が接続中の FC ファームウェア %s と異なるため、キャッシュされたパラメータメタデータを削除しました。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:219
 msgid "File %s already exists. Will not rename file %s to %s."
@@ -2276,7 +2276,7 @@ msgstr ""
 msgid ""
 "Q_A_THR_MIX_MAX should be increased after autotune to maximize attitude "
 "control authority at high throttle"
-msgstr ""
+msgstr "高スロットル時の姿勢制御権限を最大化するため、オートチューン後に Q_A_THR_MIX_MAX を増やす必要があります"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:47
 msgid ""
@@ -2504,7 +2504,7 @@ msgstr ""
 msgid ""
 "After the first flight because it depends on the Q_M_THST_HOVER parameter, "
 "before the second flight so that it can safely use the altitude controller"
-msgstr ""
+msgstr "Q_M_THST_HOVER パラメータに依存するため初回飛行後に、また高度コントローラを安全に使用できるように 2 回目の飛行前に"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:86
 msgid ""
@@ -2827,7 +2827,7 @@ msgstr ""
 msgid ""
 "Calculate angle rate derivative feed-forward gains (Q_A_RAT_*_D_FF and "
 "Q_P_ACCZ_D_FF) to improve aggressive maneuver tracking"
-msgstr ""
+msgstr "急激な機動の追従性を改善するため、角速度微分フィードフォワードゲイン（Q_A_RAT_*_D_FF および Q_P_ACCZ_D_FF）を計算"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:136
 msgid "Configure Extended Kalman Filter (EKF) noise weights"
@@ -3181,7 +3181,7 @@ msgstr ""
 msgid ""
 "Use Q_M_THST_HOVER value calculated during the first flight to set throttle "
 "controller PIDs"
-msgstr ""
+msgstr "初回飛行中に計算された Q_M_THST_HOVER の値を使用して、スロットルコントローラの PID を設定"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:197
 msgid "Use optical flow sensor instead of GNSS sensor for positioning"
@@ -3496,7 +3496,7 @@ msgstr "ナビゲーションロギングを追加"
 msgid ""
 "After a successful IMU temperature calibration, the FC will automatically "
 "set this to 1"
-msgstr ""
+msgstr "IMU 温度キャリブレーションが正常に完了すると、FC はこれを自動的に 1 に設定します"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:282
 msgid "Autotune pitch axis"
@@ -3530,7 +3530,7 @@ msgstr ""
 msgid ""
 "Because ALTHOLD flight mode was used for more than 30 seconds to correctly "
 "learn the Q_M_THST_HOVER value"
-msgstr ""
+msgstr "Q_M_THST_HOVER の値を正しく学習するために、ALTHOLD 飛行モードが 30 秒を超えて使用されたため"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:289
 msgid "Critical failsafe voltage x nr. of cells"
@@ -3580,7 +3580,7 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:300
 msgid ""
 "For safety reasons, only start takeoff if all motors spin above this RPM"
-msgstr ""
+msgstr "安全上の理由から、すべてのモーターがこの RPM を超えて回転している場合のみ離陸を開始してください"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:301
 msgid ""
@@ -3677,7 +3677,7 @@ msgstr "セル数×低フェイルセーフ電圧"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:319
 msgid "MOT_SPIN_ARM plus at least 0.03"
-msgstr ""
+msgstr "MOT_SPIN_ARM に少なくとも 0.03 を加えた値"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:320
 msgid "Maximize attitude control authority at high throttle"
@@ -3697,7 +3697,7 @@ msgstr "日常使用のための通常状態"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:324
 msgid "Now that IMU temperature is calibrated, arm ASAP"
-msgstr ""
+msgstr "IMU 温度のキャリブレーションが完了したので、できるだけ早くアームしてください"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:325
 msgid "One .bin log file per flight, not per battery/reboot"
@@ -3739,7 +3739,7 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:332
 msgid "Q_M_SPIN_ARM plus at least 0.03"
-msgstr ""
+msgstr "Q_M_SPIN_ARM に少なくとも 0.03 を加えた値"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:333
 msgid ""
@@ -3751,39 +3751,39 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:334
 msgid "RC receiver on SERIAL1 requires RCIN"
-msgstr ""
+msgstr "SERIAL1 上の RC 受信機には RCIN が必要です"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:335
 msgid "RC receiver on SERIAL2 requires RCIN"
-msgstr ""
+msgstr "SERIAL2 上の RC 受信機には RCIN が必要です"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:336
 msgid "RC receiver on SERIAL3 requires RCIN"
-msgstr ""
+msgstr "SERIAL3 上の RC 受信機には RCIN が必要です"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:337
 msgid "RC receiver on SERIAL4 requires RCIN"
-msgstr ""
+msgstr "SERIAL4 上の RC 受信機には RCIN が必要です"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:338
 msgid "RC receiver on SERIAL5 requires RCIN"
-msgstr ""
+msgstr "SERIAL5 上の RC 受信機には RCIN が必要です"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:339
 msgid "RC receiver on SERIAL6 requires RCIN"
-msgstr ""
+msgstr "SERIAL6 上の RC 受信機には RCIN が必要です"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:340
 msgid "RC receiver on SERIAL7 requires RCIN"
-msgstr ""
+msgstr "SERIAL7 上の RC 受信機には RCIN が必要です"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:341
 msgid "RC receiver on SERIAL8 requires RCIN"
-msgstr ""
+msgstr "SERIAL8 上の RC 受信機には RCIN が必要です"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:342
 msgid "RC receiver on SERIAL9 requires RCIN"
-msgstr ""
+msgstr "SERIAL9 上の RC 受信機には RCIN が必要です"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:343
 msgid "Reasonable for most places on this planet"
@@ -3831,39 +3831,39 @@ msgstr "コンポーネントエディターウィンドウで指定"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:353
 msgid "Telemetry on SERIAL1 protocol defined in component editor"
-msgstr ""
+msgstr "SERIAL1 上のテレメトリのプロトコルはコンポーネントエディタで定義"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:354
 msgid "Telemetry on SERIAL2 protocol defined in component editor"
-msgstr ""
+msgstr "SERIAL2 上のテレメトリのプロトコルはコンポーネントエディタで定義"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:355
 msgid "Telemetry on SERIAL3 protocol defined in component editor"
-msgstr ""
+msgstr "SERIAL3 上のテレメトリのプロトコルはコンポーネントエディタで定義"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:356
 msgid "Telemetry on SERIAL4 protocol defined in component editor"
-msgstr ""
+msgstr "SERIAL4 上のテレメトリのプロトコルはコンポーネントエディタで定義"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:357
 msgid "Telemetry on SERIAL5 protocol defined in component editor"
-msgstr ""
+msgstr "コンポーネントエディターで定義された SERIAL5 プロトコルのテレメトリ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:358
 msgid "Telemetry on SERIAL6 protocol defined in component editor"
-msgstr ""
+msgstr "コンポーネントエディターで定義された SERIAL6 プロトコルのテレメトリ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:359
 msgid "Telemetry on SERIAL7 protocol defined in component editor"
-msgstr ""
+msgstr "コンポーネントエディターで定義された SERIAL7 プロトコルのテレメトリ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:360
 msgid "Telemetry on SERIAL8 protocol defined in component editor"
-msgstr ""
+msgstr "コンポーネントエディターで定義された SERIAL8 プロトコルのテレメトリ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:361
 msgid "Telemetry on SERIAL9 protocol defined in component editor"
-msgstr ""
+msgstr "コンポーネントエディターで定義された SERIAL9 プロトコルのテレメトリ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:362
 msgid "The default is 20Hz but that is too high in most situations"
@@ -3871,25 +3871,25 @@ msgstr "デフォルトは20Hzですが、ほとんどの状況では高すぎ�
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:363
 msgid "The maximum value at which the motors spin"
-msgstr ""
+msgstr "モーターが回転する最大値"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:364
 msgid "The minimum value at which the motors start spinning reliably"
-msgstr ""
+msgstr "モーターが確実に回転し始める最小値"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:365
 msgid "The vehicle TOW weight does not change, so no need to save it"
-msgstr ""
+msgstr "機体の TOW 重量は変化しないため、保存する必要はありません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:366
 msgid "Throttle exponential curve from datasheet or from motor thrust stand"
-msgstr ""
+msgstr "データシートまたはモーター推力試験台によるスロットル指数カーブ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:367
 msgid ""
 "To correctly scale the PID gains. Voltage of a healthy, fully charged "
 "battery immediately after takeoff. Read from a flight log"
-msgstr ""
+msgstr "PID ゲインを正しくスケーリングするため。離陸直後の健全で満充電のバッテリー電圧。フライトログから読み取ります"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:368
 msgid "Total battery capacity specified in the component editor"
@@ -3897,7 +3897,7 @@ msgstr "コンポーネントエディターで指定された総バッテリー
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:369
 msgid "Tuned by quiktune"
-msgstr ""
+msgstr "quiktune により調整済み"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:370
 msgid ""
@@ -3909,7 +3909,7 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:371
 msgid ""
 "Use 0.1 * Q_M_THST_HOVER assuming Q_M_THST_HOVER has been correctly learned"
-msgstr ""
+msgstr "Q_M_THST_HOVER が正しく学習されていることを前提に、0.1 * Q_M_THST_HOVER を使用"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:372
 msgid ""
@@ -3921,7 +3921,7 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:373
 msgid ""
 "Use 0.2 * Q_M_THST_HOVER assuming Q_M_THST_HOVER has been correctly learned"
-msgstr ""
+msgstr "Q_M_THST_HOVER が正しく学習されていることを前提に、0.2 * Q_M_THST_HOVER を使用"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:374
 msgid "Use 1.4 * INS_GYRO_FILTER as a first guess"
@@ -3935,7 +3935,7 @@ msgstr "MOT_THST_HOVERが正しく学習されていると仮定して2 * MOT_TH
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:376
 msgid ""
 "Use 2 * Q_M_THST_HOVER assuming Q_M_THST_HOVER has been correctly learned"
-msgstr ""
+msgstr "Q_M_THST_HOVER が正しく学習されていることを前提に、2 * Q_M_THST_HOVER を使用"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:377
 msgid ""
@@ -3958,7 +3958,7 @@ msgstr "MOT_THST_HOVERが正しく学習されていると仮定してMOT_THST_H
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:381
 msgid "Use Q_M_THST_HOVER assuming Q_M_THST_HOVER has been correctly learned"
-msgstr ""
+msgstr "Q_M_THST_HOVER が正しく学習されていることを前提に、Q_M_THST_HOVER を使用"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:382
 msgid "Use VTOL-Quicktune lua script to estimate a good PID starting values"
@@ -4010,7 +4010,7 @@ msgstr "最初の数回のフライトの値はMOT_THST_HOVERが学習された�
 msgid ""
 "Value for the first couple of flights will be changed later once "
 "Q_M_THST_HOVER is learned"
-msgstr ""
+msgstr "最初の数回のフライト用の値であり、Q_M_THST_HOVER が学習されると後で変更されます"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:391
 msgid "allow post flight tuning with Replay"
