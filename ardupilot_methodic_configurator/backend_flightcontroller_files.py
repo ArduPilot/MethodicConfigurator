@@ -100,7 +100,7 @@ class FlightControllerFiles:
             logging_error(_("No flight controller connection available for file upload"))
             return False
 
-        mavftp_instance = create_mavftp_safe(self.master)
+        mavftp_instance = create_mavftp_safe(self.master, self._connection_manager.mavlink_transaction)
         if mavftp_instance is None:
             logging_error(_("MAVFTP is not available for file upload"))
             return False
@@ -194,7 +194,7 @@ class FlightControllerFiles:
             logging_error(error_msg)
             return False
 
-        mavftp_instance = create_mavftp_safe(self.master)
+        mavftp_instance = create_mavftp_safe(self.master, self._connection_manager.mavlink_transaction)
         if mavftp_instance is None:
             logging_error(_("MAVFTP is not available for file download"))
             return False

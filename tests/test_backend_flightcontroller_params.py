@@ -270,6 +270,24 @@ class TestFlightControllerParamsFetchParameter:
         assert value == 4.0
         assert params_mgr.fc_parameters["BATT_MONITOR"] == 4.0
 
+    def test_fetch_parameter_holds_the_shared_mavlink_transaction(self) -> None:
+        """A single-parameter read cannot consume a response from another operation."""
+        transaction = RLock()
+        mock_master = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+        response = MagicMock(param_value=4.0, param_id="BATT_MONITOR")
+
+        def recv_match(*_args: object, **_kwargs: object) -> MagicMock:
+            assert transaction._is_owned()  # pylint: disable=protected-access
+            return response
+
+        mock_master.recv_match.side_effect = recv_match
+        mock_conn_mgr = MagicMock(master=mock_master, mavlink_transaction=transaction)
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        assert params_mgr.fetch_param("BATT_MONITOR", timeout=1) == 4.0
+
     def test_fetch_parameter_times_out_for_nonexistent_param(self) -> None:
         """
         Fetching nonexistent parameter raises TimeoutError.

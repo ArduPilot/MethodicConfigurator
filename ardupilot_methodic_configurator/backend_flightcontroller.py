@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from argparse import ArgumentParser
 from collections.abc import Callable, Sequence
+from contextlib import AbstractContextManager
 from logging import info as logging_info
 from logging import warning as logging_warning
 from os import path as os_path
@@ -292,6 +293,11 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
     def master(self) -> MavlinkConnection | None:
         """Get the MAVLink connection - delegates to connection manager."""
         return self._connection_manager.master
+
+    @property
+    def mavlink_transaction(self) -> AbstractContextManager[object]:
+        """Get the shared transaction protecting the MAVLink receive queue."""
+        return self._connection_manager.mavlink_transaction
 
     def set_master_for_testing(self, value: MavlinkConnection | None) -> None:
         """
@@ -737,9 +743,11 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         """Run simple one-shot accelerometer calibration - delegates to commands manager."""
         return self._commands_manager.start_accel_calibration_simple()
 
-    def start_accel_calibration_level(self) -> tuple[bool, str]:
+    def start_accel_calibration_level(self, cancel_requested: Callable[[], bool] | None = None) -> tuple[bool, str]:
         """Level-trim the accelerometers (sets AHRS_TRIM_*) - delegates to commands manager."""
-        return self._commands_manager.start_accel_calibration_level()
+        if cancel_requested is None:
+            return self._commands_manager.start_accel_calibration_level()
+        return self._commands_manager.start_accel_calibration_level(cancel_requested=cancel_requested)
 
     def send_accel_calibration_full_start(self) -> tuple[bool, str]:
         """Send the start command for interactive 6-position calibration - delegates to commands manager."""

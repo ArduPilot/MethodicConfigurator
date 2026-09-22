@@ -19,10 +19,35 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from pymavlink import mavutil
+from typing_extensions import Self
 
 from ardupilot_methodic_configurator.backend_flightcontroller_commands import FlightControllerCommands
 
 # pylint: disable=too-many-lines
+
+
+class RecordingTransaction:
+    """Small context manager that records whether a MAVLink read is serialized."""
+
+    def __init__(self) -> None:
+        self.depth = 0
+        self.enter_count = 0
+
+    def __enter__(self) -> Self:
+        """Enter the recording transaction."""
+        self.depth += 1
+        self.enter_count += 1
+        return self
+
+    def __exit__(self, *_args: object) -> None:
+        """Leave the recording transaction."""
+        self.depth -= 1
+
+
+def assert_in_transaction(transaction: RecordingTransaction) -> bool:
+    """Assert a receive callback is invoked while its transaction is held."""
+    assert transaction.depth > 0
+    return True
 
 
 def test_reboot_to_bootloader_holds_bootloader_without_force_flags() -> None:
@@ -143,6 +168,28 @@ class TestFlightControllerCommandsMotorTest:
         # Then: Clear failure
         assert success is False
         assert "connection" in error.lower()
+
+    def test_receive_only_operations_hold_the_shared_mavlink_transaction(self) -> None:
+        """Every command-side receive loop must serialize access to the one MAVLink queue."""
+        master = MagicMock()
+        master.target_system = 1
+        master.target_component = 1
+        transaction = RecordingTransaction()
+
+        def recv_match(*_args: object, **_kwargs: object) -> None:
+            assert_in_transaction(transaction)
+
+        master.recv_match.side_effect = recv_match
+        master.recv_msg.side_effect = lambda: assert_in_transaction(transaction) or None
+        connection = Mock(master=master, mavlink_transaction=transaction)
+        params_manager = Mock(fc_parameters={"BATT_MONITOR": 1})
+        commands = FlightControllerCommands(params_manager=params_manager, connection_manager=connection)
+
+        assert commands.poll_accel_cal_vehicle_pos() is None
+        assert commands.poll_scaled_imu() is None
+        assert commands.get_battery_status()[0] is None
+        assert not commands.get_compass_calibration_progress()
+        assert transaction.enter_count == 4
 
     def test_command_wait_uses_the_shared_mavlink_transaction(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
@@ -895,6 +942,35 @@ class TestFlightControllerCommandsAccelerometerCalibration:  # pylint: disable=t
         assert args[2] == mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
         assert args[8] == 2.0
 
+    def test_level_accelerometer_calibration_honors_cancellation(self, mock_connected_master) -> None:
+        """A cancellation request sends the abort command and stops waiting for the original ACK."""
+        mock_master, mock_conn_mgr = mock_connected_master
+        cancel_requested = Event()
+        cancel_requested.set()
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.start_accel_calibration_level(cancel_requested=cancel_requested.is_set)
+
+        assert success is False
+        assert error == "Command cancelled"
+        assert mock_master.mav.command_long_send.call_count == 2
+        assert mock_master.mav.command_long_send.call_args_list[-1].args[8] == 0
+        mock_master.recv_match.assert_not_called()
+
+    def test_level_calibration_reports_abort_send_failure(self, mock_connected_master) -> None:
+        """Cancellation must not be reported as successful when the FC abort cannot be sent."""
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_master.mav.command_long_send.side_effect = [None, RuntimeError("link down")]
+        cancel_requested = Event()
+        cancel_requested.set()
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.start_accel_calibration_level(cancel_requested=cancel_requested.is_set)
+
+        assert success is False
+        assert "cancel" in error.lower()
+        assert "link down" in error
+
     def test_level_accelerometer_calibration_retries_a_temporary_rejection(
         self, mock_connected_master: tuple[MagicMock, Mock]
     ) -> None:
@@ -954,6 +1030,34 @@ class TestFlightControllerCommandsAccelerometerCalibration:  # pylint: disable=t
         assert error == ""
         mock_sleep.assert_called_once_with(5.0)
 
+    def test_level_calibration_cancellation_interrupts_retry_delay(self, mock_connected_master) -> None:
+        """Cancellation during the cooldown must not wait for the whole retry delay."""
+        mock_master, mock_conn_mgr = mock_connected_master
+        temporary_ack = MagicMock()
+        temporary_ack.command = mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
+        temporary_ack.result = mavutil.mavlink.MAV_RESULT_TEMPORARILY_REJECTED
+        mock_master.recv_match.return_value = temporary_ack
+        cancel_requested = Event()
+        sleep_calls: list[float] = []
+
+        def interruptible_sleep(delay: float) -> None:
+            sleep_calls.append(delay)
+            cancel_requested.set()
+
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_commands.time_sleep",
+            side_effect=interruptible_sleep,
+        ):
+            success, error = commands_mgr.start_accel_calibration_level(
+                cancel_requested=cancel_requested.is_set,
+            )
+
+        assert success is False
+        assert error == "Command cancelled"
+        assert sleep_calls
+        assert sleep_calls[0] < commands_mgr.ACCEL_CALIBRATION_RETRY_DELAY
+
     def test_command_ack_result_is_available_without_parsing_localized_text(
         self, mock_connected_master: tuple[MagicMock, Mock]
     ) -> None:
@@ -988,7 +1092,7 @@ class TestFlightControllerCommandsAccelerometerCalibration:  # pylint: disable=t
         acknowledgement.get_type.return_value = "COMMAND_ACK"
         acknowledgement.command = mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
         acknowledgement.result = mavutil.mavlink.MAV_RESULT_FAILED
-        mock_master.recv_match.side_effect = [status_text, acknowledgement]
+        mock_master.recv_match.side_effect = [acknowledgement, status_text]
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
         success, error, _result = commands_mgr.send_command_and_wait_ack_with_result(
@@ -998,6 +1102,28 @@ class TestFlightControllerCommandsAccelerometerCalibration:  # pylint: disable=t
 
         assert success is False
         assert "disarm" in error.lower()
+        assert mock_master.recv_match.call_count == 2
+
+    def test_stale_disarm_status_before_a_later_ack_is_ignored(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
+        """A status text left by an earlier command must not affect a later failure."""
+        mock_master, mock_conn_mgr = mock_connected_master
+        stale_status_text = MagicMock()
+        stale_status_text.get_type.return_value = "STATUSTEXT"
+        stale_status_text.text = "Disarm to allow calibration"
+        acknowledgement = MagicMock()
+        acknowledgement.get_type.return_value = "COMMAND_ACK"
+        acknowledgement.command = mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
+        acknowledgement.result = mavutil.mavlink.MAV_RESULT_FAILED
+        mock_master.recv_match.side_effect = [stale_status_text, acknowledgement]
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+        with patch.object(FlightControllerCommands, "CALIBRATION_STATUS_TEXT_GRACE", 0.0):
+            success, error, _result = commands_mgr.send_command_and_wait_ack_with_result(
+                command=mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+                timeout=1.0,
+            )
+
+        assert success is False
+        assert error == "Command failed"
 
     def test_level_accelerometer_calibration_fails_without_connection(self) -> None:
         """

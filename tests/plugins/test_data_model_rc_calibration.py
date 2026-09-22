@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2026 ArduPilot Contributors
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from threading import Event, RLock, Thread
 from unittest.mock import MagicMock
 
 import pytest
@@ -254,6 +255,28 @@ class TestRCCalibrationDataModelFinish:
 
 class TestRCCalibrationDataModelTelemetry:
     """Test live RC telemetry parsing from MAVLink RC_CHANNELS messages."""
+
+    @pytest.mark.parametrize("reader_name", ["get_rc_telemetry", "get_flight_mode"])
+    def test_rc_telemetry_readers_wait_for_the_shared_mavlink_transaction(
+        self, connected_flight_controller, reader_name: str
+    ) -> None:
+        """RC telemetry readers must not consume messages during another FC transaction."""
+        transaction = RLock()
+        connected_flight_controller.mavlink_transaction = transaction
+        model = RCCalibrationDataModel(connected_flight_controller)
+        completed = Event()
+
+        def read_telemetry() -> None:
+            getattr(model, reader_name)()
+            completed.set()
+
+        with transaction:
+            reader_thread = Thread(target=read_telemetry)
+            reader_thread.start()
+            assert not completed.wait(timeout=0.1)
+
+        assert completed.wait(timeout=1.0)
+        reader_thread.join(timeout=1.0)
 
     def test_telemetry_is_empty_when_disconnected(self, disconnected_flight_controller) -> None:
         """

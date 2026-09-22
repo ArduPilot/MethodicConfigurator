@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import re
+from collections.abc import Callable
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
@@ -73,6 +74,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
     BATTERY_STATUS_REQUEST_DELAY: ClassVar[float] = 0.3
     BATTERY_STATUS_ACTIVATION_WAIT: ClassVar[float] = 1.0
     ACCEL_CALIBRATION_RETRY_DELAY: ClassVar[float] = 5.0
+    CALIBRATION_STATUS_TEXT_GRACE: ClassVar[float] = 1.0
 
     def __init__(
         self,
@@ -104,6 +106,28 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         """Get master connection - delegates to connection manager."""
         return self._connection_manager.master
 
+    def _calibration_disarm_hint_pending(self) -> bool:
+        """
+        Drain the STATUSTEXT ArduPilot queues just after a failed calibration ack.
+
+        ``handle_command_int()`` sends the ``COMMAND_ACK`` synchronously;
+        ``GCS_SEND_TEXT()`` only queues the text, so it lands a few milliseconds later.
+        """
+        if self.master is None:
+            return False
+        deadline = time_time() + self.CALIBRATION_STATUS_TEXT_GRACE
+        # Called from the command wait loop, which already owns this transaction.
+        while time_time() < deadline:
+            msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                type="STATUSTEXT", blocking=False
+            )
+            if msg is None:
+                time_sleep(0.01)
+                continue
+            if "disarm to allow calibration" in str(getattr(msg, "text", "")).casefold():
+                return True
+        return False
+
     def send_command_and_wait_ack(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         command: int,
@@ -130,7 +154,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         )
         return success, error_msg
 
-    def send_command_and_wait_ack_with_result(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    def send_command_and_wait_ack_with_result(  # noqa: PLR0913, PLR0917 pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         command: int,
         param1: float = 0,
@@ -141,14 +165,15 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         param6: float = 0,
         param7: float = 0,
         timeout: float = 5.0,
+        cancel_requested: Callable[[], bool] | None = None,
     ) -> tuple[bool, str, int | None]:
         """Send a command while exclusively owning the MAVLink receive queue."""
         with self._connection_manager.mavlink_transaction:
             return self._send_command_and_wait_ack_with_result_unlocked(
-                command, param1, param2, param3, param4, param5, param6, param7, timeout
+                command, param1, param2, param3, param4, param5, param6, param7, timeout, cancel_requested
             )
 
-    def _send_command_and_wait_ack_with_result_unlocked(  # pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
+    def _send_command_and_wait_ack_with_result_unlocked(  # noqa: PLR0913, PLR0917 pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals, too-many-branches
         self,
         command: int,
         param1: float = 0,
@@ -159,6 +184,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         param6: float = 0,
         param7: float = 0,
         timeout: float = 5.0,
+        cancel_requested: Callable[[], bool] | None = None,
     ) -> tuple[bool, str, int | None]:
         """
         Send a MAVLink command and wait for acknowledgment.
@@ -173,6 +199,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             param6: Command parameter 6
             param7: Command parameter 7
             timeout: Timeout in seconds to wait for acknowledgment
+            cancel_requested: Optional callback polled while waiting for the acknowledgment
 
         Returns:
             tuple[bool, str, int | None]: (success, error_message, result) where ``result`` is the raw
@@ -202,13 +229,18 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
 
             # Wait for acknowledgment
             start_time = time_time()
-            calibration_status_text = ""
             while time_time() - start_time < timeout:
+                if cancel_requested is not None and cancel_requested():
+                    cancellation_error = _("Command cancelled")
+                    if command == mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION:
+                        cancel_success, cancel_error = self.cancel_accel_calibration()
+                        if not cancel_success:
+                            cancellation_error = _("Failed to cancel calibration: %(error)s") % {"error": cancel_error}
+                    return False, cancellation_error, None
                 msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
                     type=["COMMAND_ACK", "STATUSTEXT"], blocking=False
                 )
                 if msg and getattr(msg, "get_type", lambda: "")() == "STATUSTEXT":
-                    calibration_status_text = str(getattr(msg, "text", ""))
                     continue
                 if msg and msg.command == command:
                     # Map result codes to error messages
@@ -225,7 +257,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
                         if (
                             msg.result == mavutil.mavlink.MAV_RESULT_FAILED
                             and command == mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
-                            and "disarm to allow calibration" in calibration_status_text.casefold()
+                            and self._calibration_disarm_hint_pending()
                         ):
                             error_msg = _("Command failed: Disarm the vehicle before calibration")
                         if not success:
@@ -518,7 +550,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             logging_error(_("Simple accelerometer calibration failed: %(error)s"), {"error": error_msg})
         return success, error_msg
 
-    def start_accel_calibration_level(self) -> tuple[bool, str]:
+    def start_accel_calibration_level(self, cancel_requested: Callable[[], bool] | None = None) -> tuple[bool, str]:
         """
         Level-trim the accelerometers to the vehicle's current attitude (sets AHRS_TRIM_*).
 
@@ -538,20 +570,39 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
             param5=2.0,  # level trim / AHRS trim
             timeout=15.0,
+            cancel_requested=cancel_requested,
         )
         if not success and result == mavutil.mavlink.MAV_RESULT_TEMPORARILY_REJECTED:
+            if cancel_requested is not None and cancel_requested():
+                return False, _("Command cancelled")
             logging_info(_("Level calibration was temporarily rejected; retrying after the calibration cooldown."))
-            time_sleep(self.ACCEL_CALIBRATION_RETRY_DELAY)
+            if self._calibration_retry_cancelled(cancel_requested):
+                return False, _("Command cancelled")
             success, error_msg, _result = self.send_command_and_wait_ack_with_result(
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
                 param5=2.0,  # level trim / AHRS trim
                 timeout=15.0,
+                cancel_requested=cancel_requested,
             )
         if success:
             logging_info(_("Level calibration completed successfully"))
         else:
             logging_error(_("Level calibration failed: %(error)s"), {"error": error_msg})
         return success, error_msg
+
+    def _calibration_retry_cancelled(self, cancel_requested: Callable[[], bool] | None) -> bool:
+        """Wait for the level-calibration cooldown while observing cancellation requests."""
+        if cancel_requested is None:
+            time_sleep(self.ACCEL_CALIBRATION_RETRY_DELAY)
+            return False
+
+        deadline = time_time() + self.ACCEL_CALIBRATION_RETRY_DELAY
+        while time_time() < deadline:
+            if cancel_requested():
+                return True
+            remaining = deadline - time_time()
+            time_sleep(min(0.1, remaining))
+        return cancel_requested()
 
     def send_accel_calibration_full_start(self) -> tuple[bool, str]:
         """
@@ -615,28 +666,29 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             return None
 
         try:
-            # Drain all pending ACCELCAL_VEHICLE_POS messages and keep only the latest
-            latest_pos: int | None = None
-            while True:
-                msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                    type="COMMAND_LONG", blocking=False
-                )
-                if msg is None:
-                    break
-                if msg.command == mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS:
-                    latest_pos = int(msg.param1)
+            with self._connection_manager.mavlink_transaction:
+                # Drain all pending ACCELCAL_VEHICLE_POS messages and keep only the latest
+                latest_pos: int | None = None
+                while True:
+                    msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                        type="COMMAND_LONG", blocking=False
+                    )
+                    if msg is None:
+                        break
+                    if msg.command == mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS:
+                        latest_pos = int(msg.param1)
 
-            if latest_pos is None:
-                return None
+                if latest_pos is None:
+                    return None
 
-            # Suppress duplicate: return None if the position hasn't changed since last poll.
-            # This prevents the UI from re-enabling Continue on a stale position value
-            # that was already confirmed by the user.
-            if latest_pos == self._last_accel_cal_vehicle_pos:
-                return None
+                # Suppress duplicate: return None if the position hasn't changed since last poll.
+                # This prevents the UI from re-enabling Continue on a stale position value
+                # that was already confirmed by the user.
+                if latest_pos == self._last_accel_cal_vehicle_pos:
+                    return None
 
-            self._last_accel_cal_vehicle_pos = latest_pos
-            return latest_pos
+                self._last_accel_cal_vehicle_pos = latest_pos
+                return latest_pos
         except Exception as e:  # pylint: disable=broad-exception-caught
             logging_debug(_("Exception while polling ACCELCAL_VEHICLE_POS: %(error)s"), {"error": str(e)})
         return None
@@ -735,18 +787,19 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         if self.master is None:
             return None
         try:
-            # Drain the receive buffer and keep only the most recent message.
-            latest = None
-            while True:
-                msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                    type="SCALED_IMU", blocking=False
-                )
-                if msg is None:
-                    break
-                latest = msg
-            if latest is None:
-                return None
-            return float(latest.xacc), float(latest.yacc), float(latest.zacc)
+            with self._connection_manager.mavlink_transaction:
+                # Drain the receive buffer and keep only the most recent message.
+                latest = None
+                while True:
+                    msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                        type="SCALED_IMU", blocking=False
+                    )
+                    if msg is None:
+                        break
+                    latest = msg
+                if latest is None:
+                    return None
+                return float(latest.xacc), float(latest.yacc), float(latest.zacc)
         except Exception as e:  # pylint: disable=broad-exception-caught
             logging_debug(_("Exception while polling SCALED_IMU: %(error)s"), {"error": str(e)})
             return None
@@ -863,10 +916,11 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             return None, error_msg
 
         try:
-            # Try to get real telemetry data
-            battery_status = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                type="BATTERY_STATUS", blocking=False, timeout=self.BATTERY_STATUS_TIMEOUT
-            )
+            with self._connection_manager.mavlink_transaction:
+                # Try to get real telemetry data
+                battery_status = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                    type="BATTERY_STATUS", blocking=False, timeout=self.BATTERY_STATUS_TIMEOUT
+                )
             if battery_status:
                 # Convert from millivolts to volts, and centiamps to amps using pure business logic
                 voltage, current = convert_battery_telemetry_units(
@@ -1013,73 +1067,77 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
 
         results: list[CompassCalibrationUpdate] = []
         try:
-            while True:
-                msg = self.master.recv_msg()  # pyright: ignore[reportAttributeAccessIssue]
-                if msg is None:
-                    break
+            with self._connection_manager.mavlink_transaction:
+                while True:
+                    msg = self.master.recv_msg()  # pyright: ignore[reportAttributeAccessIssue]
+                    if msg is None:
+                        break
 
-                msg_type = msg.get_type()
+                    msg_type = msg.get_type()
 
-                if msg_type in ["HEARTBEAT", "TIMESYNC", "PARAM_VALUE"]:
-                    continue  # ignore these periodic messages
+                    if msg_type in ["HEARTBEAT", "TIMESYNC", "PARAM_VALUE"]:
+                        continue  # ignore these periodic messages
 
-                if msg_type == "MAG_CAL_REPORT":
-                    results.append(
-                        {
-                            "type": "REPORT",
-                            "compass_id": msg.compass_id,
-                            "status": msg.cal_status,
-                            "fitness": msg.fitness,
-                            "saved": msg.autosaved,
-                        }
-                    )
+                    if msg_type == "MAG_CAL_REPORT":
+                        results.append(
+                            {
+                                "type": "REPORT",
+                                "compass_id": msg.compass_id,
+                                "status": msg.cal_status,
+                                "fitness": msg.fitness,
+                                "saved": msg.autosaved,
+                            }
+                        )
+                        logging_debug(
+                            _(
+                                "Compass calibration report queued for compass %(compass_id)s: "
+                                "status=%(status)s saved=%(saved)s"
+                            ),
+                            {"compass_id": msg.compass_id, "status": msg.cal_status, "saved": msg.autosaved},
+                        )
+                        continue
+
+                    if msg_type == "MAG_CAL_PROGRESS":
+                        results.append(
+                            {
+                                "type": "PROGRESS",
+                                "compass_id": msg.compass_id,
+                                "status": msg.cal_status,
+                                "completion_pct": msg.completion_pct,
+                                "direction_x": msg.direction_x,
+                                "direction_y": msg.direction_y,
+                                "direction_z": msg.direction_z,
+                            }
+                        )
+                        logging_debug(
+                            _("Compass calibration progress queued for compass %(compass_id)s: pct=%(pct)s status=%(status)s"),
+                            {"compass_id": msg.compass_id, "pct": msg.completion_pct, "status": msg.cal_status},
+                        )
+                        continue
+
+                    if msg_type == "STATUSTEXT":
+                        status_text = getattr(msg, "text", "")
+                        status_severity = getattr(msg, "severity", None)
+                        compass_match = re.search(r"Mag\((\d+)\)", status_text)
+                        compass_id = int(compass_match.group(1)) if compass_match else None
+                        results.append(
+                            {
+                                "type": "STATUS_TEXT",
+                                "compass_id": compass_id,
+                                "status": status_severity if status_severity is not None else 0,
+                                "text": status_text,
+                            }
+                        )
+                        logging_debug(
+                            _("Compass calibration status text received: severity=%(severity)s text=%(text)s"),
+                            {"severity": status_severity, "text": status_text},
+                        )
+                        continue
+
                     logging_debug(
-                        _("Compass calibration report queued for compass %(compass_id)s: status=%(status)s saved=%(saved)s"),
-                        {"compass_id": msg.compass_id, "status": msg.cal_status, "saved": msg.autosaved},
+                        _("Ignoring non calibration MAVLink message during compass calibration poll: %(message_type)s"),
+                        {"message_type": msg_type},
                     )
-                    continue
-
-                if msg_type == "MAG_CAL_PROGRESS":
-                    results.append(
-                        {
-                            "type": "PROGRESS",
-                            "compass_id": msg.compass_id,
-                            "status": msg.cal_status,
-                            "completion_pct": msg.completion_pct,
-                            "direction_x": msg.direction_x,
-                            "direction_y": msg.direction_y,
-                            "direction_z": msg.direction_z,
-                        }
-                    )
-                    logging_debug(
-                        _("Compass calibration progress queued for compass %(compass_id)s: pct=%(pct)s status=%(status)s"),
-                        {"compass_id": msg.compass_id, "pct": msg.completion_pct, "status": msg.cal_status},
-                    )
-                    continue
-
-                if msg_type == "STATUSTEXT":
-                    status_text = getattr(msg, "text", "")
-                    status_severity = getattr(msg, "severity", None)
-                    compass_match = re.search(r"Mag\((\d+)\)", status_text)
-                    compass_id = int(compass_match.group(1)) if compass_match else None
-                    results.append(
-                        {
-                            "type": "STATUS_TEXT",
-                            "compass_id": compass_id,
-                            "status": status_severity if status_severity is not None else 0,
-                            "text": status_text,
-                        }
-                    )
-                    logging_debug(
-                        _("Compass calibration status text received: severity=%(severity)s text=%(text)s"),
-                        {"severity": status_severity, "text": status_text},
-                    )
-                    continue
-
-                logging_debug(
-                    _("Ignoring non calibration MAVLink message during compass calibration poll: %(message_type)s"),
-                    {"message_type": msg_type},
-                )
 
         except Exception as e:  # pylint: disable=broad-exception-caught
             logging_debug(_("Error reading compass calibration progress: %(error)s"), {"error": str(e)})

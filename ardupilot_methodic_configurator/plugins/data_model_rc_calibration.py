@@ -107,12 +107,13 @@ class RCCalibrationDataModel:
         telemetry: dict[str, Any] = {}
 
         try:
-            latest_rc_msg = master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                type="RC_CHANNELS", blocking=False
-            )
-            latest_hb = master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                type="HEARTBEAT", blocking=False
-            )
+            with self.flight_controller.mavlink_transaction:
+                latest_rc_msg = master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                    type="RC_CHANNELS", blocking=False
+                )
+                latest_hb = master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                    type="HEARTBEAT", blocking=False
+                )
 
             if latest_rc_msg:
                 n_channels = min(latest_rc_msg.chancount, _RC_MAX_CHANNELS)
@@ -166,9 +167,10 @@ class RCCalibrationDataModel:
         if self.flight_controller.master is None:
             return _("Not connected")
         try:
-            hb = self.flight_controller.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                type="HEARTBEAT", blocking=False
-            )
+            with self.flight_controller.mavlink_transaction:
+                hb = self.flight_controller.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                    type="HEARTBEAT", blocking=False
+                )
             if hb:
                 return str(hb.custom_mode)
         except Exception as exc:  # pylint: disable=broad-exception-caught

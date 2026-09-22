@@ -8,6 +8,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from contextlib import AbstractContextManager
 from logging import error as logging_error
 from typing import TYPE_CHECKING, Union
 
@@ -18,7 +19,10 @@ if TYPE_CHECKING:
     from ardupilot_methodic_configurator.backend_flightcontroller_protocols import MavlinkConnection
 
 
-def create_mavftp(master: Union["MavlinkConnection", None]) -> MAVFTP:
+def create_mavftp(
+    master: Union["MavlinkConnection", None],
+    mavlink_transaction: AbstractContextManager[object] | None = None,
+) -> MAVFTP:
     """
     Factory function for creating MAVFTP instances.
 
@@ -26,6 +30,7 @@ def create_mavftp(master: Union["MavlinkConnection", None]) -> MAVFTP:
 
     Args:
         master: The MAVLink connection object
+        mavlink_transaction: Optional shared receive-queue lock.
 
     Returns:
         MAVFTP: The MAVFTP instance
@@ -37,11 +42,17 @@ def create_mavftp(master: Union["MavlinkConnection", None]) -> MAVFTP:
     if master is None:
         msg = "No MAVLink connection available for MAVFTP"
         raise RuntimeError(msg)
-    return MAVFTP(master, target_system=master.target_system, target_component=master.target_component)
+    return MAVFTP(
+        master,
+        target_system=master.target_system,
+        target_component=master.target_component,
+        mavlink_transaction=mavlink_transaction,
+    )
 
 
 def create_mavftp_safe(
     master: Union["MavlinkConnection", None],
+    mavlink_transaction: AbstractContextManager[object] | None = None,
 ) -> MAVFTP | None:  # pyright: ignore[reportGeneralTypeIssues]
     """
     Factory function for creating MAVFTP instances with safe error handling.
@@ -52,6 +63,7 @@ def create_mavftp_safe(
 
     Args:
         master: The MAVLink connection object
+        mavlink_transaction: Optional shared receive-queue lock.
 
     Returns:
         MAVFTP: The MAVFTP instance, or None if not available
@@ -64,6 +76,7 @@ def create_mavftp_safe(
             master,
             target_system=master.target_system,
             target_component=master.target_component,
+            mavlink_transaction=mavlink_transaction,
         )
     except Exception as e:  # pylint: disable=broad-exception-caught
         logging_error(_("Failed to initialize MAVFTP: %(error)s"), {"error": str(e)})

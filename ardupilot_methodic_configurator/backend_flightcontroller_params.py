@@ -248,7 +248,7 @@ class FlightControllerParams:
             progress_callback if isinstance(progress_callback, _ProgressReporter) else _ProgressReporter(progress_callback)
         )
         try:
-            mavftp = create_mavftp(self.master)
+            mavftp = create_mavftp(self.master, self._connection_manager.mavlink_transaction)
 
             def get_params_progress_callback(completion: float) -> None:
                 if progress_callback is not None and completion is not None:
@@ -362,28 +362,29 @@ class FlightControllerParams:
             logging_error(msg)
             raise ValueError(msg)
 
-        # Send PARAM_REQUEST_READ message
-        self.master.mav.param_request_read_send(
-            self.master.target_system,
-            self.master.target_component,
-            param_name.encode("utf-8"),
-            -1,  # param_index: -1 means use param_id instead
-        )
+        with self._connection_manager.mavlink_transaction:
+            # Send PARAM_REQUEST_READ message
+            self.master.mav.param_request_read_send(
+                self.master.target_system,
+                self.master.target_component,
+                param_name.encode("utf-8"),
+                -1,  # param_index: -1 means use param_id instead
+            )
 
-        # Wait for PARAM_VALUE response
-        start_time = time_time()
-        while time_time() - start_time < timeout:
-            param_msg: Any = self.master.recv_match(type="PARAM_VALUE", blocking=False)
-            if param_msg is not None:
-                # Check if this is the parameter we requested
-                received_param_name = param_msg.param_id.rstrip("\x00")
-                if received_param_name == param_name:
-                    logging_debug(_("Received parameter: %s = %s"), param_name, param_msg.param_value)
-                    value = float(param_msg.param_value)
-                    # Update local cache
-                    self.fc_parameters[param_name] = value
-                    return value
-            time_sleep(self.PARAM_FETCH_POLL_DELAY)  # Small sleep to prevent busy waiting
+            # Wait for PARAM_VALUE response
+            start_time = time_time()
+            while time_time() - start_time < timeout:
+                param_msg: Any = self.master.recv_match(type="PARAM_VALUE", blocking=False)
+                if param_msg is not None:
+                    # Check if this is the parameter we requested
+                    received_param_name = param_msg.param_id.rstrip("\x00")
+                    if received_param_name == param_name:
+                        logging_debug(_("Received parameter: %s = %s"), param_name, param_msg.param_value)
+                        value = float(param_msg.param_value)
+                        # Update local cache
+                        self.fc_parameters[param_name] = value
+                        return value
+                time_sleep(self.PARAM_FETCH_POLL_DELAY)  # Small sleep to prevent busy waiting
 
         raise TimeoutError(_("Timeout waiting for parameter %s") % param_name)
 
