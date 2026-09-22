@@ -784,7 +784,7 @@ class FlightControllerBootloaderBackend:  # pylint:disable=too-many-instance-att
         )
         # pylint: enable=duplicate-code
 
-    def _wait_for_bootloader(  # pylint: disable=too-many-locals
+    def _wait_for_bootloader(  # pylint: disable=too-many-locals,too-many-branches
         self, cancellation_requested: CancellationRequested | None = None
     ) -> tuple[BootloaderClient, BootloaderInfo]:
         if self._open_retries < 1:
@@ -820,6 +820,9 @@ class FlightControllerBootloaderBackend:  # pylint:disable=too-many-instance-att
                     # so a slow re-enumeration can be retried.
                     attempt_deadline = min(deadline, self._clock() + attempt_timeout)
                     info = client.identify(deadline=attempt_deadline)
+                    if self._clock() >= deadline:
+                        msg = _("bootloader discovery deadline expired")
+                        raise BootloaderProtocolError(msg)
                     _restore_transport_timeout(transport, self._timeout)
                     return client, info
                 except BootloaderProtocolError as exc:
