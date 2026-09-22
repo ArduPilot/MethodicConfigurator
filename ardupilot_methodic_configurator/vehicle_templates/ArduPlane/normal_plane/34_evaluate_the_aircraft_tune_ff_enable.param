@@ -1,1 +1,2 @@
 ATC_RATE_FF_ENAB,1  # re-enable normal operation, activate input shaping
+Q_A_RATE_FF_ENAB,1  # re-enable normal operation, activate input shaping

@@ -1,2 +1,3 @@
 BRD_SER1_RTSCTS,1  # we have RTS/CTS pins connected
 SERIAL1_BAUD,115  # The MAVLink telemetry
+SERIAL2_PROTOCOL,2  # Telemetry on SERIAL2 protocol defined in component editor

@@ -1,4 +1,4 @@
 RC_OPTIONS,2848
 RC_PROTOCOLS,1  # Selected in the component editor
 RSSI_TYPE,3
-SERIAL2_PROTOCOL,23
+SERIAL2_PROTOCOL,23  # RC receiver on SERIAL2 requires RCIN
