@@ -208,9 +208,72 @@ def test_arduplane_configuration_steps_use_plane_parameter_names() -> None:
     assert "THR_FS_VALUE" in rc_step["autoimport_nondefault_regexp"]
     assert "FS_THR_VALUE" not in rc_step["autoimport_nondefault_regexp"]
     assert "FRAME_CLASS" not in steps["05_board_orientation.param"]["derived_parameters"]
-    assert {"Q_A_ACC_P_MAX", "Q_A_ACC_R_MAX", "Q_A_ACC_Y_MAX"} <= set(attitude_step["derived_parameters"])
+    expected_acceleration_parameters = {
+        "Q_A_ACCEL_P_MAX",
+        "Q_A_ACCEL_R_MAX",
+        "Q_A_ACCEL_Y_MAX",
+        "Q_A_ACC_P_MAX",
+        "Q_A_ACC_R_MAX",
+        "Q_A_ACC_Y_MAX",
+    }
+    assert expected_acceleration_parameters <= set(attitude_step["derived_parameters"])
+    assert "Q_A_ACC(EL)?_[PRY]_MAX$" in attitude_step["autoimport_nondefault_regexp"]
     assert "TKOFF_RPM_MIN" not in throttle_step["add_parameters"]
     assert "Q_TKOFF_RPM_MIN" in throttle_step["add_parameters"]
+
+
+def test_arduplane_4_7_throttle_controller_uses_scaled_quadplane_acceleration_gains() -> None:
+    """The renamed Plane 4.7 throttle gains retain the firmware conversion scale."""
+    parameter_file = (
+        Path(__file__).parent.parent
+        / "ardupilot_methodic_configurator"
+        / "vehicle_templates"
+        / "ArduPlane"
+        / "empty_4.7.x"
+        / "24_throttle_controller.param"
+    )
+    values = {
+        name: float(value)
+        for line in parameter_file.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+        for name, value in [line.split(",", maxsplit=1)]
+    }
+
+    assert values["Q_P_D_ACC_I"] == pytest.approx(0.0400526)
+    assert values["Q_P_D_ACC_P"] == pytest.approx(0.0200263)
+
+
+@pytest.mark.parametrize(
+    "parameter_names",
+    [
+        {"Q_A_ACCEL_P_MAX", "Q_A_ACCEL_R_MAX", "Q_A_ACCEL_Y_MAX"},
+        {"Q_A_ACC_P_MAX", "Q_A_ACC_R_MAX", "Q_A_ACC_Y_MAX"},
+    ],
+)
+def test_arduplane_initial_attitude_formulas_evaluate_for_both_parameter_generations(
+    parameter_names: set[str],
+) -> None:
+    """Both Plane acceleration parameter generations compute without expression errors."""
+    configuration_steps_file = (
+        Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "configuration_steps_ArduPlane.json"
+    )
+    with open(configuration_steps_file, encoding="utf-8") as file:
+        config = json.load(file)
+
+    step_file = "13_initial_atc.param"
+    config_steps = ConfigurationSteps("vehicle_dir", "ArduPlane")
+    error = config_steps.compute_parameters(
+        step_file,
+        config["steps"][step_file],
+        "derived",
+        {
+            "fc_parameters": dict.fromkeys(parameter_names, 0),
+            "vehicle_components": {"Propellers": {"Specifications": {"Diameter_inches": 3}}},
+        },
+    )
+
+    assert error == ""
+    assert parameter_names <= set(config_steps.derived_parameters[step_file])
 
 
 @pytest.mark.parametrize(
