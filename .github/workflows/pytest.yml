@@ -348,7 +348,7 @@ jobs:
 
       - name: Install coverage
         if: needs.pytest.result != 'skipped'
-        run: uv pip install "coverage==7.10.7"
+        run: uv pip install ".[dev]"
 
       - name: Check coverage
         if: needs.pytest.result != 'skipped'
