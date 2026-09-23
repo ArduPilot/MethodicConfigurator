@@ -1718,7 +1718,7 @@ msgstr "A aguardar heartbeats MAVLink..."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:946
 msgid "Connection attempt %d/%d failed: %s. Retrying in %.1f seconds."
-msgstr ""
+msgstr "Tentativa de ligação %d/%d falhou: %s. Nova tentativa em %.1f segundos."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:956
 msgid "Connection failed: %s"
@@ -5284,7 +5284,7 @@ msgstr "Falha ao enviar os seguintes parâmetros para o controlador de voo:\n"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1219
 msgid ""
 "Uploaded and verified %(parameter_count)d parameters in %(duration_ms)d ms"
-msgstr ""
+msgstr "Parâmetros carregados e verificados (%(parameter_count)d) em %(duration_ms)d ms"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1225
 msgid "All parameters uploaded to the flight controller successfully"
@@ -7577,7 +7577,7 @@ msgstr "Carregado {} de {} parâmetros"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py:501
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py:592
 msgid "Restarting Flight Controller"
-msgstr ""
+msgstr "A reiniciar o controlador de voo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:215
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1666
@@ -7585,7 +7585,7 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py:502
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py:593
 msgid "Reset command sent"
-msgstr ""
+msgstr "Comando de redefinição enviado"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:232
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1382
@@ -8497,19 +8497,19 @@ msgstr "A atualizar widgets de progresso: {_e}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:180
 msgid "Waiting for flight controller restart"
-msgstr ""
+msgstr "A aguardar o reinício do controlador de voo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:185
 msgid "Reconnecting to flight controller"
-msgstr ""
+msgstr "A restabelecer ligação ao controlador de voo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:187
 msgid "Retrieving flight controller information"
-msgstr ""
+msgstr "A obter informações do controlador de voo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:189
 msgid "Flight Controller connected"
-msgstr ""
+msgstr "Controlador de voo ligado"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:56
 msgid " - Create a new vehicle project directory"
