@@ -57,6 +57,11 @@ PARAMETER_FILE_REGEXP = r"^\d{2}_.*\.param$"
 TOOLTIP_MAX_LENGTH = 105
 
 
+def _firmware_versions_match(left: str, right: str) -> bool:
+    """Compare every dot-separated firmware component, including the patch version."""
+    return tuple(left.split(".")) == tuple(right.split("."))
+
+
 class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  # pylint: disable=too-many-public-methods, too-many-instance-attributes
     """
     A class to manage local filesystem operations for the ArduPilot methodic configurator.
@@ -166,7 +171,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             return False
 
         project_fw_version = self.get_fc_fw_version_from_vehicle_components_json()
-        if not project_fw_version or project_fw_version == fc_fw_version:
+        if not project_fw_version or _firmware_versions_match(project_fw_version, fc_fw_version):
             return False
 
         project_vehicle_type = self.get_fc_fw_type_from_vehicle_components_json()

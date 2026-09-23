@@ -595,28 +595,30 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):  # pylint: disable=too-many-
         assert self.mav_ftp.get_result is None
 
     def test_websocket_batch_uses_link_write_for_websocket_framing(self) -> None:
-        """Batched MAVLink packets must pass through the WebSocket transport wrapper."""
-        port = Mock()
-        port.type = socket.SOCK_STREAM
-        link = Mock()
-        link.port = port
-        link.write.return_value = None
-        mav = SimpleNamespace(file=link, file_transfer_protocol_encode=Mock())
-        self.mav_ftp.master = SimpleNamespace(mav=mav)
-        packets = iter((b"first", b"second"))
+        """Batched packets use write() for both pymavlink WebSocket link classes."""
+        for link_name in ("mavwebsocket", "mavwebsocket_client"):
+            with self.subTest(link_name=link_name):
+                port = Mock()
+                port.type = socket.SOCK_STREAM
+                link = type(link_name, (), {})()
+                link.port = port
+                link.write = Mock(return_value=None)
+                mav = SimpleNamespace(file=link, file_transfer_protocol_encode=Mock())
+                self.mav_ftp.master = SimpleNamespace(mav=mav)
+                packets = iter((b"first", b"second"))
 
-        def collect_packet(_operation, *, writer) -> None:
-            writer.write(next(packets))
+                def collect_packet(_operation, *, writer, packet_iterator=packets) -> None:
+                    writer.write(next(packet_iterator))
 
-        with patch.object(
-            self.mav_ftp,
-            "_MAVFTP__send",
-            side_effect=collect_packet,
-        ):
-            self.mav_ftp._MAVFTP__send_batch([Mock(), Mock()])  # pylint: disable=protected-access
+                with patch.object(
+                    self.mav_ftp,
+                    "_MAVFTP__send",
+                    side_effect=collect_packet,
+                ):
+                    self.mav_ftp._MAVFTP__send_batch([Mock(), Mock()])  # pylint: disable=protected-access
 
-        link.write.assert_called_once_with(b"firstsecond")
-        port.sendall.assert_not_called()
+                link.write.assert_called_once_with(b"firstsecond")  # pylint: disable=no-member
+                port.sendall.assert_not_called()
 
     def test_write_payload_releases_staging_after_disk_write_failure(self) -> None:
         """A staging-file write failure terminates the transfer and reports a recoverable error."""

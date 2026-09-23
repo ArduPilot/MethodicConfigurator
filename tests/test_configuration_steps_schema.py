@@ -24,6 +24,7 @@ import pytest
 from jsonschema import ValidationError, exceptions, validate, validators
 
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
+from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 
 # Path to the schema file
 SCHEMA_FILE_PATH = os.path.join("ardupilot_methodic_configurator", "configuration_steps_schema.json")
@@ -31,6 +32,10 @@ SCHEMA_FILE_PATH = os.path.join("ardupilot_methodic_configurator", "configuratio
 # Load the schema
 with open(SCHEMA_FILE_PATH, encoding="utf-8") as schema_file:
     schema = json.load(schema_file)
+
+# The template values are six-decimal exports of these gains applied to this learned hover-thrust
+# fixture: 0.2 * 0.200263 -> 0.040053 and 0.1 * 0.200263 -> 0.020026.
+PLANE_47_TEMPLATE_HOVER_THRUST = 0.200263
 
 
 def test_schema_validity() -> None:
@@ -239,8 +244,65 @@ def test_arduplane_4_7_throttle_controller_uses_scaled_quadplane_acceleration_ga
         for name, value in [line.split(",", maxsplit=1)]
     }
 
-    assert values["Q_P_D_ACC_I"] == pytest.approx(0.040053)
-    assert values["Q_P_D_ACC_P"] == pytest.approx(0.020026)
+    assert values["Q_P_D_ACC_I"] == pytest.approx(round(0.2 * PLANE_47_TEMPLATE_HOVER_THRUST, 6))
+    assert values["Q_P_D_ACC_P"] == pytest.approx(round(0.1 * PLANE_47_TEMPLATE_HOVER_THRUST, 6))
+
+
+def test_arduplane_4_7_throttle_controller_formulas_scale_hover_thrust() -> None:
+    """The Plane 4.7 configuration formulas apply the documented 0.2/0.1 gains."""
+    configuration_steps_file = (
+        Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "configuration_steps_ArduPlane.json"
+    )
+    config = json.loads(configuration_steps_file.read_text(encoding="utf-8"))
+    config_steps = ConfigurationSteps("vehicle_dir", "ArduPlane")
+    variables = {
+        "fc_parameters": {"Q_M_THST_HOVER": PLANE_47_TEMPLATE_HOVER_THRUST},
+        "vehicle_components": {"Flight Controller": {"Firmware": {"Version": "4.7.0"}}},
+    }
+
+    error = config_steps.compute_parameters(
+        "24_throttle_controller.param",
+        config["steps"]["24_throttle_controller.param"],
+        "derived",
+        variables,
+    )
+
+    assert error == ""
+    derived = config_steps.derived_parameters["24_throttle_controller.param"]
+    assert derived["Q_P_D_ACC_I"].value == pytest.approx(0.2 * PLANE_47_TEMPLATE_HOVER_THRUST)
+    assert derived["Q_P_D_ACC_P"].value == pytest.approx(0.1 * PLANE_47_TEMPLATE_HOVER_THRUST)
+
+
+def test_arduplane_4_7_throttle_controller_exports_six_decimal_gains(tmp_path: Path) -> None:
+    """Computed Plane 4.7 gains retain their six-decimal parameter-file representation."""
+    configuration_steps_file = (
+        Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "configuration_steps_ArduPlane.json"
+    )
+    config = json.loads(configuration_steps_file.read_text(encoding="utf-8"))
+    config_steps = ConfigurationSteps("vehicle_dir", "ArduPlane")
+    variables = {
+        "fc_parameters": {"Q_M_THST_HOVER": PLANE_47_TEMPLATE_HOVER_THRUST},
+        "vehicle_components": {"Flight Controller": {"Firmware": {"Version": "4.7.0"}}},
+    }
+
+    assert (
+        config_steps.compute_parameters(
+            "24_throttle_controller.param",
+            config["steps"]["24_throttle_controller.param"],
+            "derived",
+            variables,
+        )
+        == ""
+    )
+    derived = config_steps.derived_parameters["24_throttle_controller.param"]
+    output_file = tmp_path / "24_throttle_controller.param"
+    ParDict({name: derived[name] for name in ("Q_P_D_ACC_I", "Q_P_D_ACC_P")}).export_to_param(str(output_file))
+
+    parameter_lines = [line.split("  #", maxsplit=1)[0] for line in output_file.read_text(encoding="utf-8").splitlines()]
+    assert parameter_lines == [
+        "Q_P_D_ACC_I,0.040053",
+        "Q_P_D_ACC_P,0.020026",
+    ]
 
 
 @pytest.mark.parametrize(
