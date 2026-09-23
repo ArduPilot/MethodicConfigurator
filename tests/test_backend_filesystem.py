@@ -196,6 +196,66 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
 
         assert ("ArduCopter", "4.7.0", get_xml_dir(vehicle_dir)) not in filesystem._parameter_metadata_cache
 
+    def test_firmware_patch_mismatch_removes_cached_parameter_metadata(self) -> None:
+        """A patch-level firmware mismatch also removes stale parameter metadata."""
+        filesystem = LocalFilesystem(
+            None,
+            "ArduCopter",
+            "4.6.4",
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
+        )
+        filesystem.vehicle_components_fs.data = {
+            "Components": {"Flight Controller": {"Firmware": {"Type": "ArduCopter", "Version": "4.6.3"}}}
+        }
+
+        with tempfile.TemporaryDirectory() as vehicle_dir:
+            filesystem._parameter_metadata_cache[("ArduCopter", "4.6.4", get_xml_dir(vehicle_dir))] = {}
+            metadata_file = os_path.join(vehicle_dir, "apm.pdef.xml")
+            with open(metadata_file, "w", encoding="utf-8") as file:
+                file.write("<parameters />")
+
+            with patch.object(
+                filesystem,
+                "load_vehicle_components_json_data",
+                return_value=filesystem.vehicle_components_fs.data,
+            ):
+                assert filesystem.remove_cached_parameter_metadata_for_mismatched_firmware(vehicle_dir)
+
+            assert not os_path.exists(metadata_file)
+
+        assert ("ArduCopter", "4.6.4", get_xml_dir(vehicle_dir)) not in filesystem._parameter_metadata_cache
+
+    def test_firmware_patch_match_keeps_cached_parameter_metadata(self) -> None:
+        """Matching major, minor, and patch versions keep cached metadata intact."""
+        filesystem = LocalFilesystem(
+            None,
+            "ArduCopter",
+            "4.6.3",
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
+        )
+        filesystem.vehicle_components_fs.data = {
+            "Components": {"Flight Controller": {"Firmware": {"Type": "ArduCopter", "Version": "4.6.3"}}}
+        }
+
+        with tempfile.TemporaryDirectory() as vehicle_dir:
+            cache_key = ("ArduCopter", "4.6.3", get_xml_dir(vehicle_dir))
+            filesystem._parameter_metadata_cache[cache_key] = {}
+            metadata_file = os_path.join(vehicle_dir, "apm.pdef.xml")
+            with open(metadata_file, "w", encoding="utf-8") as file:
+                file.write("<parameters />")
+
+            with patch.object(
+                filesystem,
+                "load_vehicle_components_json_data",
+                return_value=filesystem.vehicle_components_fs.data,
+            ):
+                assert not filesystem.remove_cached_parameter_metadata_for_mismatched_firmware(vehicle_dir)
+
+            assert os_path.exists(metadata_file)
+            assert cache_key in filesystem._parameter_metadata_cache
+
     def test_metadata_cache_is_scoped_to_project_xml_directory(self) -> None:
         """Projects with different local metadata do not share parsed documentation."""
         filesystem = LocalFilesystem(
