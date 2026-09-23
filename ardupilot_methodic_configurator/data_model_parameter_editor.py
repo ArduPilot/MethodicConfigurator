@@ -1894,6 +1894,17 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
     # frontend_tkinter_parameter_editor_table.py API start
 
+    def _filter_derived_parameters_for_manual_overrides(self, derived_params: ParDict) -> ParDict:
+        """Exclude derived updates for parameters whose persisted value is manually overridden."""
+        return ParDict(
+            {
+                param_name: derived_par
+                for param_name, derived_par in derived_params.items()
+                if param_name not in self.current_step_parameters
+                or not self.current_step_parameters[param_name].is_manual_override
+            }
+        )
+
     def _repopulate_configuration_step_parameters(  # pylint: disable=too-many-locals, too-many-branches
         self,
     ) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
@@ -1920,6 +1931,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             autoimported_parameters,
         ) = self._config_step_processor.process_configuration_step(self.current_file, self.fc_parameters)
         self._added_parameters.update(autoimported_parameters)
+        derived_params = self._filter_derived_parameters_for_manual_overrides(derived_params)
 
         # Apply derived parameters to domain model using specialized setters
         for param_name, derived_par in derived_params.items():

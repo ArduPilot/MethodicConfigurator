@@ -4637,6 +4637,7 @@ class TestParameterManagementBehavior:
         parameter_editor.current_file = "test.param"
         parameter_editor._local_filesystem.file_parameters = {"test.param": ParDict()}
         mock_der = MagicMock()
+        mock_der.is_manual_override = False
 
         # Act
         with patch.object(
@@ -6211,6 +6212,38 @@ class TestUnsavedComponentChangesPrompt:
 
         assert result is False
         mock_revert.assert_called_once()
+
+
+class TestManualOverridePersistenceAcrossNavigation:  # pylint: disable=too-few-public-methods
+    """Protect persisted manual override values during configuration-step rebuilds."""
+
+    def test_repopulate_does_not_reapply_derived_value_to_manual_override(self, parameter_editor: ParameterEditor) -> None:
+        """A saved derived override must win over the newly computed derived value."""
+        parameter_editor.current_file = "test_file.param"
+        manual_param = ArduPilotParameter(
+            "PARAM1",
+            Par(42.0, "@manual_override user value"),
+            derived_par=Par(99.0, "derived by configuration"),
+        )
+        derived_params = ParDict({"PARAM1": Par(99.0, "derived by configuration")})
+        parameter_editor._config_step_processor.process_configuration_step = MagicMock(
+            return_value=(
+                {"PARAM1": manual_param},
+                [],
+                [],
+                set(),
+                [],
+                derived_params,
+                set(),
+            )
+        )
+
+        parameter_editor._repopulate_configuration_step_parameters()
+
+        reloaded_param = parameter_editor.current_step_parameters["PARAM1"]
+        assert reloaded_param.is_manual_override
+        assert reloaded_param.get_new_value() == 42.0
+        assert reloaded_param.change_reason == "user value"
 
 
 class TestCopyFlightControllerValuesEdgeCases:
