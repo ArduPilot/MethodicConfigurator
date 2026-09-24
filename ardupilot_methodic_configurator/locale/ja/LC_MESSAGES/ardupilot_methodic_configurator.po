@@ -41,15 +41,15 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:181
 msgid "--template-dir can only be used together with --bin-log"
-msgstr ""
+msgstr "--template-dir は --bin-log と一緒にのみ使用できます"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:183
 msgid "--device cannot be used together with --bin-log"
-msgstr ""
+msgstr "--device は --bin-log と一緒に使用できません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:186
 msgid "--vehicle-type {vehicle_type} cannot be used together with --bin-log"
-msgstr ""
+msgstr "--vehicle-type {vehicle_type} は --bin-log と一緒に使用できません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:213
 msgid "Will now exit the old software version."
@@ -78,7 +78,7 @@ msgstr ""
 msgid ""
 "Creating a vehicle project from a .bin log without connecting to a flight "
 "controller."
-msgstr ""
+msgstr "フライトコントローラーに接続せずに .bin ログから機体プロジェクトを作成しています。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:379
 msgid "Using Vehicle directory %(new_dir)s for initial parameter download."
@@ -110,7 +110,7 @@ msgstr "パラメータのデフォルト値へのリセットに失敗しまし
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:496
 msgid "Created vehicle project at %s"
-msgstr ""
+msgstr "%s に機体プロジェクトを作成しました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:563
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:128
@@ -234,19 +234,19 @@ msgstr "値は数字である必要があります。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_bin_log.py:112
 msgid "Timed out while validating logfile {logfile}"
-msgstr ""
+msgstr "ログファイル {logfile} の検証中にタイムアウトしました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_bin_log.py:115
 msgid "Logfile validator terminated by signal {signal}"
-msgstr ""
+msgstr "ログファイル検証プロセスがシグナル {signal} により終了しました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_bin_log.py:117
 msgid "pymavlink rejected the log"
-msgstr ""
+msgstr "pymavlink がログを拒否しました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_bin_log.py:118
 msgid "Invalid DataFlash logfile: {error}"
-msgstr ""
+msgstr "無効な DataFlash ログファイルです: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_bin_log.py:142
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_bin_log.py:316
@@ -454,27 +454,27 @@ msgid ""
 "The type of the vehicle. With --bin-log, validates the vehicle type reported "
 "by the log and the selected template. SITL and AP_Periph cannot be used with "
 "--bin-log. Default is ArduCopter"
-msgstr ""
+msgstr "機体の種類です。--bin-log を使用すると、ログが報告した機体タイプと選択したテンプレートを検証します。SITL と AP_Periph は --bin-log では使用できません。デフォルトは ArduCopter です"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:1205
 msgid ""
 "Directory containing vehicle-specific intermediate parameter files. For --"
 "bin-log, an explicitly supplied value is the complete destination project "
 "directory. Default is the current working directory"
-msgstr ""
+msgstr "機体固有の中間パラメータファイルを含むディレクトリです。--bin-log では、明示的に指定した値が完全な保存先プロジェクトディレクトリになります。デフォルトは現在の作業ディレクトリです"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:1216
 msgid ""
 "Create a vehicle project from an ArduPilot .bin log file. By default, the "
 "project is created in the default vehicles directory; an explicitly supplied "
 "--vehicle-dir is the complete destination project directory."
-msgstr ""
+msgstr "ArduPilot の .bin ログファイルから機体プロジェクトを作成します。デフォルトでは、プロジェクトは既定の機体ディレクトリに作成されます。--vehicle-dir を明示的に指定した場合、その値が完全な保存先プロジェクトディレクトリになります。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:1227
 msgid ""
 "Optional template directory to use with --bin-log. Defaults to the empty "
 "template matching the log firmware version."
-msgstr ""
+msgstr "--bin-log で使用する任意のテンプレートディレクトリです。デフォルトでは、ログのファームウェアバージョンに一致する空のテンプレートが使用されます。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:1236
 msgid ""
@@ -6080,26 +6080,26 @@ msgstr ".binログインポート"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:417
 msgid "--vehicle-dir must be the complete destination project directory."
-msgstr ""
+msgstr "--vehicle-dir は完全な保存先プロジェクトディレクトリでなければなりません。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:431
 msgid ""
 "The requested vehicle type %(expected_vehicle_type)s does not match the .bin "
 "log firmware type %(firmware_vehicle_type)s."
-msgstr ""
+msgstr "要求された機体タイプ %(expected_vehicle_type)s は、.bin ログのファームウェアタイプ %(firmware_vehicle_type)s と一致しません。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:451
 msgid ""
 "The selected template %(template_dir)s is for %(template_vehicle_type)s, but "
 "the requested vehicle type is %(expected_vehicle_type)s."
-msgstr ""
+msgstr "選択したテンプレート %(template_dir)s は %(template_vehicle_type)s 用ですが、要求された機体タイプは %(expected_vehicle_type)s です。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:476
 msgid ""
 "The selected template %(template_dir)s is for %(template_vehicle_type)s, but "
 "the .bin log is for %(vehicle_type)s. Continuing with the explicit template "
 "override."
-msgstr ""
+msgstr "選択したテンプレート %(template_dir)s は %(template_vehicle_type)s 用ですが、.bin ログは %(vehicle_type)s 用です。明示的なテンプレート上書きを続行します。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:676
 msgid ""
@@ -6257,7 +6257,7 @@ msgstr "フライトコントローラパラメータ"
 msgid ""
 "The vehicle type {vehicle_type} selects a template outside the installed "
 "templates directory."
-msgstr ""
+msgstr "機体タイプ {vehicle_type} は、インストール済みテンプレートディレクトリ外のテンプレートを選択しています。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:424
 msgid ""
@@ -6300,7 +6300,7 @@ msgstr "新しい機体ディレクトリ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:529
 msgid "Could not create vehicle directory {new_vehicle_dir}: {error_msg}"
-msgstr ""
+msgstr "機体ディレクトリ {new_vehicle_dir} を作成できませんでした: {error_msg}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:546
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:549

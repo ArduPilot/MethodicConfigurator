@@ -43,15 +43,15 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:181
 msgid "--template-dir can only be used together with --bin-log"
-msgstr ""
+msgstr "--template-dir può essere usato solo insieme a --bin-log"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:183
 msgid "--device cannot be used together with --bin-log"
-msgstr ""
+msgstr "--device non può essere usato insieme a --bin-log"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:186
 msgid "--vehicle-type {vehicle_type} cannot be used together with --bin-log"
-msgstr ""
+msgstr "--vehicle-type {vehicle_type} non può essere usato insieme a --bin-log"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:213
 msgid "Will now exit the old software version."
@@ -81,7 +81,7 @@ msgstr ""
 msgid ""
 "Creating a vehicle project from a .bin log without connecting to a flight "
 "controller."
-msgstr ""
+msgstr "Creazione di un progetto veicolo da un log .bin senza collegarsi a un flight controller."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:379
 msgid "Using Vehicle directory %(new_dir)s for initial parameter download."
@@ -117,7 +117,7 @@ msgstr "Errore nel ripristino dei parametri ai valori predefiniti: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:496
 msgid "Created vehicle project at %s"
-msgstr ""
+msgstr "Progetto veicolo creato in %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:563
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:128
@@ -241,19 +241,19 @@ msgstr "Il valore deve essere un numero."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_bin_log.py:112
 msgid "Timed out while validating logfile {logfile}"
-msgstr ""
+msgstr "Tempo scaduto durante la convalida del file di log {logfile}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_bin_log.py:115
 msgid "Logfile validator terminated by signal {signal}"
-msgstr ""
+msgstr "Il validatore del file di log è terminato con il segnale {signal}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_bin_log.py:117
 msgid "pymavlink rejected the log"
-msgstr ""
+msgstr "pymavlink ha rifiutato il log"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_bin_log.py:118
 msgid "Invalid DataFlash logfile: {error}"
-msgstr ""
+msgstr "File di log DataFlash non valido: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_bin_log.py:142
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_bin_log.py:316
@@ -461,27 +461,27 @@ msgid ""
 "The type of the vehicle. With --bin-log, validates the vehicle type reported "
 "by the log and the selected template. SITL and AP_Periph cannot be used with "
 "--bin-log. Default is ArduCopter"
-msgstr ""
+msgstr "Il tipo di veicolo. Con --bin-log, convalida il tipo di veicolo riportato dal log e il modello selezionato. SITL e AP_Periph non possono essere usati con --bin-log. Il valore predefinito è ArduCopter"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:1205
 msgid ""
 "Directory containing vehicle-specific intermediate parameter files. For --"
 "bin-log, an explicitly supplied value is the complete destination project "
 "directory. Default is the current working directory"
-msgstr ""
+msgstr "Directory contenente i file di parametri intermedi specifici del veicolo. Con --bin-log, un valore fornito esplicitamente corrisponde alla directory completa del progetto di destinazione. Il valore predefinito è la directory di lavoro corrente"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:1216
 msgid ""
 "Create a vehicle project from an ArduPilot .bin log file. By default, the "
 "project is created in the default vehicles directory; an explicitly supplied "
 "--vehicle-dir is the complete destination project directory."
-msgstr ""
+msgstr "Crea un progetto veicolo da un file di log .bin di ArduPilot. Per impostazione predefinita, il progetto viene creato nella directory predefinita dei veicoli; un --vehicle-dir fornito esplicitamente corrisponde alla directory completa del progetto di destinazione."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:1227
 msgid ""
 "Optional template directory to use with --bin-log. Defaults to the empty "
 "template matching the log firmware version."
-msgstr ""
+msgstr "Directory del modello facoltativa da usare con --bin-log. Per impostazione predefinita viene usato il modello vuoto corrispondente alla versione firmware del log."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:1236
 msgid ""
@@ -6337,26 +6337,26 @@ msgstr "Importazione registro .bin"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:417
 msgid "--vehicle-dir must be the complete destination project directory."
-msgstr ""
+msgstr "--vehicle-dir deve essere la directory completa del progetto di destinazione."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:431
 msgid ""
 "The requested vehicle type %(expected_vehicle_type)s does not match the .bin "
 "log firmware type %(firmware_vehicle_type)s."
-msgstr ""
+msgstr "Il tipo di veicolo richiesto %(expected_vehicle_type)s non corrisponde al tipo firmware del log .bin %(firmware_vehicle_type)s."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:451
 msgid ""
 "The selected template %(template_dir)s is for %(template_vehicle_type)s, but "
 "the requested vehicle type is %(expected_vehicle_type)s."
-msgstr ""
+msgstr "Il modello selezionato %(template_dir)s è per %(template_vehicle_type)s, ma il tipo di veicolo richiesto è %(expected_vehicle_type)s."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:476
 msgid ""
 "The selected template %(template_dir)s is for %(template_vehicle_type)s, but "
 "the .bin log is for %(vehicle_type)s. Continuing with the explicit template "
 "override."
-msgstr ""
+msgstr "Il modello selezionato %(template_dir)s è per %(template_vehicle_type)s, ma il log .bin è per %(vehicle_type)s. Si continua con la sostituzione esplicita del modello."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:676
 msgid ""
@@ -6521,7 +6521,7 @@ msgstr "Parametri del controllore di volo"
 msgid ""
 "The vehicle type {vehicle_type} selects a template outside the installed "
 "templates directory."
-msgstr ""
+msgstr "Il tipo di veicolo {vehicle_type} seleziona un modello al di fuori della directory dei modelli installati."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:424
 msgid ""
@@ -6564,7 +6564,7 @@ msgstr "Nuova directory veicolo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:529
 msgid "Could not create vehicle directory {new_vehicle_dir}: {error_msg}"
-msgstr ""
+msgstr "Impossibile creare la directory del veicolo {new_vehicle_dir}: {error_msg}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:546
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:549
