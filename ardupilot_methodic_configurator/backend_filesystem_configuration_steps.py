@@ -308,7 +308,7 @@ class ConfigurationSteps:
         if filename not in destination:
             destination[filename] = ParDict()
 
-    def _eval_new_value(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def _eval_new_value(
         self,
         new_value_expr: str | float | bool,
         filename: str,
@@ -349,7 +349,7 @@ class ConfigurationSteps:
                 eval_err=eval_err,
             )
 
-    def _resolve_string_result(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def _resolve_string_result(
         self,
         result: str,
         parameter: str,
@@ -500,7 +500,7 @@ class ConfigurationSteps:
             return self._handle_param_error(error_msg, parameter_type, ignore_fc_derived_param_warnings)
         return ""
 
-    def compute_parameters(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def compute_parameters(
         self,
         filename: str,
         file_info: dict,
@@ -570,7 +570,7 @@ class ConfigurationSteps:
         )
         return forced_error, derived_error
 
-    def compute_add_parameters(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def compute_add_parameters(
         self,
         filename: str,
         file_info: dict,

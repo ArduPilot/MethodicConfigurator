@@ -613,7 +613,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
             return False
         return False
 
-    def _update_combobox_style_on_selection(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def _update_combobox_style_on_selection(
         self,
         combobox_widget: PairTupleCombobox,
         param: ArduPilotParameter,

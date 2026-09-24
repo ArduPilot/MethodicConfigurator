@@ -63,7 +63,7 @@ def argument_parser() -> Namespace:
 class ComponentEditorWindow(ComponentEditorWindowBase):
     """Validates the user input and handles user interactions for editing component configurations."""
 
-    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def __init__(
         self,
         version: str,
         local_filesystem: LocalFilesystem,

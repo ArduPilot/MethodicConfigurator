@@ -123,7 +123,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         "udp:0.0.0.0:14550",
     ]
 
-    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def __init__(
         self,
         info: FlightControllerInfo,
         baudrate: int = DEFAULT_BAUDRATE,
@@ -264,7 +264,6 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             logging_debug(_("Did not add empty connection"))
         return False
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def _register_and_try_connect(
         self,
         comport: mavutil.SerialPort | serial.tools.list_ports_common.ListPortInfo,
@@ -398,7 +397,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
         return _("No auto-detected ports responded.")
 
-    def _create_mavlink_connection(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def _create_mavlink_connection(
         self,
         device: str,
         baudrate: int = 115200,

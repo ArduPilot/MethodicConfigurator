@@ -447,7 +447,7 @@ class TestMotorTestView:
         motor_view._on_frame_type_change(object())
 
     @pytest.mark.parametrize("handler", ["frame", "spin_arm"])
-    def test_progress_window_is_destroyed_when_parameter_update_fails(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def test_progress_window_is_destroyed_when_parameter_update_fails(
         self,
         handler: str,
         motor_view: MotorTestView,
@@ -577,7 +577,7 @@ class TestMotorTestView:
             (RuntimeError("unexpected"), "showerror"),
         ],
     )
-    def test_test_motor_exceptions(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def test_test_motor_exceptions(
         self,
         motor_view: MotorTestView,
         fake_model: FakeMotorTestModel,

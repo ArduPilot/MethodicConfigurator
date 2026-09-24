@@ -105,7 +105,7 @@ class Coefficients:  # pylint: disable=too-many-instance-attributes
     def set_enable(self, imu: int, value: int) -> None:
         self.enable[imu] = value
 
-    def correction(self, coeff: dict, imu: int, temperature: float, axis: str, cal_temp: float) -> float:  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def correction(self, coeff: dict, imu: int, temperature: float, axis: str, cal_temp: float) -> float:
         """Calculate correction from temperature calibration from log data using parameters."""
         if self.enable[imu] != 1.0:
             return 0.0

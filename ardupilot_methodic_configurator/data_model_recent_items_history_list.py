@@ -22,7 +22,7 @@ class RecentItemsHistoryList:
     with configurable validation, normalization, and comparison strategies.
     """
 
-    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def __init__(
         self,
         settings_key: str,
         max_items: int,

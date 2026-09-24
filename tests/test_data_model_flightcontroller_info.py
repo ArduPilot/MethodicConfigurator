@@ -154,7 +154,7 @@ class TestFlightcontrollerInfo:  # pylint: disable=too-many-public-methods
             (0x10111201, 16, 17, 18, "undefined"),
         ],
     )
-    def test_decode_flight_sw_version_parameterized(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    def test_decode_flight_sw_version_parameterized(
         self, version_code, expected_major, expected_minor, expected_patch, expected_type
     ) -> None:
         """Test decoding flight software version with parameterized values."""

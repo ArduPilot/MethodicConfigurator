@@ -126,7 +126,7 @@ class TestComponentTemplateManager:
     @patch("tkinter.simpledialog.askstring", return_value="Existing Template")
     @patch("tkinter.messagebox.askyesno", return_value=True)  # Confirm overwrite
     @patch("tkinter.messagebox.showinfo")
-    def test_save_component_as_template_existing(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def test_save_component_as_template_existing(
         self,
         mock_info,  # pylint: disable=unused-argument
         mock_askyesno,
@@ -260,7 +260,7 @@ class TestComponentTemplateManager:
     @patch("tkinter.simpledialog.askstring", return_value="System Template")
     @patch("tkinter.messagebox.askyesno", return_value=True)  # Confirm overwrite
     @patch("tkinter.messagebox.showinfo")
-    def test_save_component_as_template_override_system(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def test_save_component_as_template_override_system(
         self,
         mock_info,  # pylint: disable=unused-argument
         mock_askyesno,  # pylint: disable=unused-argument
