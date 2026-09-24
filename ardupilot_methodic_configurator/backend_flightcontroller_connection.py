@@ -20,7 +20,7 @@ from os import readlink as os_readlink
 from sys import platform as sys_platform
 from time import sleep as time_sleep
 from time import time as time_time
-from typing import TYPE_CHECKING, Any, ClassVar, NoReturn, Optional, Union, no_type_check
+from typing import TYPE_CHECKING, Any, ClassVar, NoReturn, Optional, Union, cast, no_type_check
 
 import serial.tools.list_ports
 import serial.tools.list_ports_common
@@ -42,6 +42,9 @@ from ardupilot_methodic_configurator.data_model_flightcontroller_info import Fli
 
 if TYPE_CHECKING:
     from ardupilot_methodic_configurator.backend_flightcontroller_protocols import MavlinkConnection
+
+# pymavlink initializes this dialect module dynamically and types it as optional.
+mavlink = cast("Any", mavutil.mavlink)
 
 # pylint: disable=too-many-lines
 
@@ -468,7 +471,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             compid = m.get_srcComponent()
             detected_vehicles[(sysid, compid)] = m
             logging_debug(_("Detected vehicle %u:%u (autopilot=%u, type=%u)"), sysid, compid, m.autopilot, m.type)
-            if return_after_first_heartbeat and m.autopilot == mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA:
+            if return_after_first_heartbeat and m.autopilot == mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA:
                 return detected_vehicles
 
         return detected_vehicles
@@ -522,7 +525,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         banner_msgs = self._receive_banner_text()
 
         # Request AUTOPILOT_VERSION message
-        self._request_message(mavutil.mavlink.MAVLINK_MSG_ID_AUTOPILOT_VERSION)
+        self._request_message(mavlink.MAVLINK_MSG_ID_AUTOPILOT_VERSION)
         m = (
             self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
                 type="AUTOPILOT_VERSION", blocking=True, timeout=timeout
@@ -542,7 +545,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             self.master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
                 self.master.target_system,  # pyright: ignore[reportAttributeAccessIssue]
                 self.master.target_component,  # pyright: ignore[reportAttributeAccessIssue]
-                mavutil.mavlink.MAV_CMD_DO_SEND_BANNER,
+                mavlink.MAV_CMD_DO_SEND_BANNER,
                 # pylint: disable=duplicate-code
                 0,
                 0,
@@ -598,7 +601,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             self.master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
                 system_id,
                 component_id,
-                mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
+                mavlink.MAV_CMD_REQUEST_MESSAGE,
                 0,  # confirmation
                 message_id,
                 0,
