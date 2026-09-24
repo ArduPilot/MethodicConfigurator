@@ -27,7 +27,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from logging import error as logging_error
 from logging import warning as logging_warning
-from typing import TYPE_CHECKING, Any, BinaryIO, Protocol, cast
+from typing import IO, TYPE_CHECKING, Any, Protocol, cast
 
 import numpy as np
 from pymavlink import mavutil
@@ -85,7 +85,7 @@ def _fast_indexer_validation_command(logfile: str) -> list[str]:
     return [sys.executable, "-c", _FAST_INDEXER_VALIDATION_SCRIPT, logfile]
 
 
-def _last_output_line(output_file: BinaryIO) -> str:
+def _last_output_line(output_file: IO[bytes]) -> str:
     """Read only the tail needed to identify the last non-empty output line."""
     output_file.seek(0, os.SEEK_END)
     output_file.seek(max(0, output_file.tell() - _FAST_INDEXER_ERROR_TAIL_BYTES))

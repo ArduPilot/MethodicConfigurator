@@ -14,7 +14,7 @@ from logging import error as logging_error
 from logging import info as logging_info
 from time import sleep as time_sleep
 from time import time as time_time
-from typing import ClassVar, Literal, TypedDict
+from typing import Any, ClassVar, Literal, TypedDict, cast  # pylint: disable=unused-import
 
 from pymavlink import mavutil
 
@@ -30,6 +30,9 @@ from ardupilot_methodic_configurator.backend_flightcontroller_protocols import (
     FlightControllerParamsProtocol,
     MavlinkConnection,
 )
+
+# pymavlink initializes this dialect module dynamically and types it as optional.
+mavlink = cast("Any", mavutil.mavlink)
 
 # pylint: disable=too-many-lines
 
@@ -164,11 +167,11 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
                 if msg and msg.command == command:
                     # Map result codes to error messages
                     result_messages = {
-                        mavutil.mavlink.MAV_RESULT_ACCEPTED: ("", True),
-                        mavutil.mavlink.MAV_RESULT_TEMPORARILY_REJECTED: (_("Command temporarily rejected"), False),
-                        mavutil.mavlink.MAV_RESULT_DENIED: (_("Command denied"), False),
-                        mavutil.mavlink.MAV_RESULT_UNSUPPORTED: (_("Command unsupported"), False),
-                        mavutil.mavlink.MAV_RESULT_FAILED: (_("Command failed"), False),
+                        mavlink.MAV_RESULT_ACCEPTED: ("", True),
+                        mavlink.MAV_RESULT_TEMPORARILY_REJECTED: (_("Command temporarily rejected"), False),
+                        mavlink.MAV_RESULT_DENIED: (_("Command denied"), False),
+                        mavlink.MAV_RESULT_UNSUPPORTED: (_("Command unsupported"), False),
+                        mavlink.MAV_RESULT_FAILED: (_("Command failed"), False),
                     }
 
                     if msg.result in result_messages:
@@ -177,7 +180,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
                             logging_error(error_msg)
                         return success, error_msg
 
-                    if msg.result == mavutil.mavlink.MAV_RESULT_IN_PROGRESS:
+                    if msg.result == mavlink.MAV_RESULT_IN_PROGRESS:
                         # Command is still in progress, continue waiting
                         if msg.progress is not None and msg.progress > 0:
                             logging_debug(_("Command in progress: %(progress)d%%"), {"progress": msg.progress})
@@ -203,7 +206,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
     def reboot_to_bootloader(self) -> tuple[bool, str]:
         """Request reboot into the bootloader and wait for its command acknowledgment."""
         return self.send_command_and_wait_ack(
-            mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
+            mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
             param1=3,
             timeout=self.COMMAND_ACK_TIMEOUT,
         )
@@ -235,7 +238,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         # https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_STORAGE
         # param1 = 2: Erase all parameters
         success, error_msg = self.send_command_and_wait_ack(
-            mavutil.mavlink.MAV_CMD_PREFLIGHT_STORAGE,
+            mavlink.MAV_CMD_PREFLIGHT_STORAGE,
             param1=2,  # Storage action (2 = erase all parameters)
             param2=0,  # Parameter reset (0 = No parameter reset)
             param3=0,  # Mission reset (not used)
@@ -282,9 +285,9 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         # MAV_CMD_DO_MOTOR_TEST command
         # https://mavlink.io/en/messages/common.html#MAV_CMD_DO_MOTOR_TEST
         success, error_msg = self.send_command_and_wait_ack(
-            mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
+            mavlink.MAV_CMD_DO_MOTOR_TEST,
             param1=test_sequence_nr + 1,  # motor test number, this is not the same as the output number!
-            param2=mavutil.mavlink.MOTOR_TEST_THROTTLE_PERCENT,  # throttle type
+            param2=mavlink.MOTOR_TEST_THROTTLE_PERCENT,  # throttle type
             param3=throttle_percent,  # throttle value
             param4=timeout_seconds,  # timeout
             param5=0,  # motor count (0=test just the motor specified in param1)
@@ -335,10 +338,10 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             self.master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
                 self.master.target_system,  # pyright: ignore[reportAttributeAccessIssue]
                 self.master.target_component,  # pyright: ignore[reportAttributeAccessIssue]
-                mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
+                mavlink.MAV_CMD_DO_MOTOR_TEST,
                 0,  # confirmation
                 param1=i + 1,  # motor number (1-based)
-                param2=mavutil.mavlink.MOTOR_TEST_THROTTLE_PERCENT,  # throttle type
+                param2=mavlink.MOTOR_TEST_THROTTLE_PERCENT,  # throttle type
                 param3=throttle_percent,  # throttle value
                 param4=timeout_seconds,  # timeout
                 param5=0,  # motor count (0=all motors when param1=0)
@@ -373,13 +376,13 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
 
         # MAV_CMD_DO_MOTOR_TEST command for sequence test
         success, error_msg = self.send_command_and_wait_ack(
-            mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
+            mavlink.MAV_CMD_DO_MOTOR_TEST,
             param1=start_motor,  # starting motor number (1-based)
-            param2=mavutil.mavlink.MOTOR_TEST_THROTTLE_PERCENT,  # throttle type
+            param2=mavlink.MOTOR_TEST_THROTTLE_PERCENT,  # throttle type
             param3=throttle_percent,  # throttle value
             param4=timeout_seconds,  # timeout per motor
             param5=motor_count,  # number of motors to test in sequence
-            param6=mavutil.mavlink.MOTOR_TEST_ORDER_SEQUENCE,  # test order (sequence)
+            param6=mavlink.MOTOR_TEST_ORDER_SEQUENCE,  # test order (sequence)
             param7=0,  # unused
         )
 
@@ -413,9 +416,9 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
 
         # Send motor test command with 0% throttle to stop all motors
         success, error_msg = self.send_command_and_wait_ack(
-            mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
+            mavlink.MAV_CMD_DO_MOTOR_TEST,
             param1=0,  # motor number (0 = all motors)
-            param2=mavutil.mavlink.MOTOR_TEST_THROTTLE_PERCENT,  # throttle type
+            param2=mavlink.MOTOR_TEST_THROTTLE_PERCENT,  # throttle type
             param3=0,  # throttle value (0% = stop)
             param4=0,  # timeout (0 = immediate stop)
             param5=0,  # motor count (0 = all motors when param1=0)
@@ -453,7 +456,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             return False, error_msg
 
         success, error_msg = self.send_command_and_wait_ack(
-            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
             param5=4.0,  # simple one-shot level calibration
             timeout=30.0,
         )
@@ -480,7 +483,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             return False, error_msg
 
         success, error_msg = self.send_command_and_wait_ack(
-            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
             param5=2.0,  # level trim / AHRS trim
             timeout=15.0,
         )
@@ -513,7 +516,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             self.master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
                 self.master.target_system,  # pyright: ignore[reportAttributeAccessIssue]
                 self.master.target_component,  # pyright: ignore[reportAttributeAccessIssue]
-                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+                mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
                 # pylint: disable=duplicate-code
                 0,  # confirmation
                 0,  # param1: gyro (0 = no gyro cal)
@@ -560,7 +563,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
                 )
                 if msg is None:
                     break
-                if msg.command == mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS:
+                if msg.command == mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS:
                     latest_pos = int(msg.param1)
 
             if latest_pos is None:
@@ -602,7 +605,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             self.master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
                 self.master.target_system,  # pyright: ignore[reportAttributeAccessIssue]
                 self.master.target_component,  # pyright: ignore[reportAttributeAccessIssue]
-                mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS,
+                mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS,
                 0,  # confirmation
                 float(position),  # param1: position enum value
                 # pylint: disable=duplicate-code
@@ -641,7 +644,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             self.master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
                 self.master.target_system,  # pyright: ignore[reportAttributeAccessIssue]
                 self.master.target_component,  # pyright: ignore[reportAttributeAccessIssue]
-                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+                mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
                 # pylint: disable=duplicate-code
                 0,  # confirmation
                 0,  # param1: gyro
@@ -709,8 +712,8 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             return False, error_msg
 
         success, error_msg = self.send_command_and_wait_ack(
-            mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,
-            param1=float(mavutil.mavlink.MAVLINK_MSG_ID_SCALED_IMU),
+            mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,
+            param1=float(mavlink.MAVLINK_MSG_ID_SCALED_IMU),
             param2=float(interval_microseconds),
             timeout=self.COMMAND_ACK_TIMEOUT_BATTERY,
         )
@@ -744,8 +747,8 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         request_succeeded = False
         for attempt in range(self.BATTERY_STATUS_REQUEST_ATTEMPTS):
             success, error_msg = self.send_command_and_wait_ack(
-                mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,
-                param1=mavutil.mavlink.MAVLINK_MSG_ID_BATTERY_STATUS,  # message ID (BATTERY_STATUS)
+                mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,
+                param1=mavlink.MAVLINK_MSG_ID_BATTERY_STATUS,  # message ID (BATTERY_STATUS)
                 param2=interval_microseconds,  # interval in microseconds
                 param3=0,
                 param4=0,
@@ -884,7 +887,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             },
         )
         success, error_msg = self.send_command_and_wait_ack(
-            mavutil.mavlink.MAV_CMD_DO_START_MAG_CAL,
+            mavlink.MAV_CMD_DO_START_MAG_CAL,
             param1=0,  # All compasses
             param2=1,  # Retry
             param3=1,  # Autosave
@@ -915,7 +918,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             return False, error_msg
 
         success, error_msg = self.send_command_and_wait_ack(
-            mavutil.mavlink.MAV_CMD_DO_CANCEL_MAG_CAL,
+            mavlink.MAV_CMD_DO_CANCEL_MAG_CAL,
             param1=0,  # Cancel all
             param2=0,  # unused
             param3=0,  # unused

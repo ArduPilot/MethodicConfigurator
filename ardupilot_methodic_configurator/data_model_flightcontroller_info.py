@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Sequence
 from logging import info as logging_info
+from typing import Any, cast
 
 from pymavlink import mavutil
 
@@ -22,6 +23,14 @@ from ardupilot_methodic_configurator.data_model_fc_ids import (
     VID_PID_PRODUCT_DICT,
     VID_VENDOR_DICT,
 )
+
+# pymavlink initializes this dialect module dynamically and types it as optional.
+mavlink = cast("Any", mavutil.mavlink)
+
+
+def _get_mavlink() -> Any:  # noqa: ANN401
+    """Return the currently initialized pymavlink dialect."""
+    return cast("Any", mavutil.mavlink)
 
 
 class FlightControllerInfo:  # pylint: disable=too-many-instance-attributes
@@ -110,7 +119,7 @@ class FlightControllerInfo:  # pylint: disable=too-many-instance-attributes
 
     def set_autopilot(self, autopilot: int) -> None:
         self.autopilot = self.__decode_mav_autopilot(autopilot)
-        self.is_supported = autopilot == mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA
+        self.is_supported = autopilot == mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA
 
     def set_type(self, mav_type: int) -> None:
         self.vehicle_type = self.__classify_vehicle_type(mav_type)
@@ -149,7 +158,7 @@ class FlightControllerInfo:  # pylint: disable=too-many-instance-attributes
 
     def set_capabilities(self, capabilities: int) -> None:
         self.capabilities = self.__decode_flight_capabilities(capabilities)
-        self.is_mavftp_supported = bool(capabilities & mavutil.mavlink.MAV_PROTOCOL_CAPABILITY_FTP)
+        self.is_mavftp_supported = bool(capabilities & mavlink.MAV_PROTOCOL_CAPABILITY_FTP)
 
     @staticmethod
     def __decode_flight_sw_version(flight_sw_version: int) -> tuple[int, int, int, str]:
@@ -190,7 +199,10 @@ class FlightControllerInfo:  # pylint: disable=too-many-instance-attributes
             # Check if the bit is set
             if capabilities & (1 << bit):
                 # Use the bit value to get the corresponding capability enum
-                capability = mavutil.mavlink.enums["MAV_PROTOCOL_CAPABILITY"].get(1 << bit, "Unknown capability")
+                # Resolve mavlink through mavutil at call time.  pymavlink can
+                # replace the dialect object while initializing it, so a module
+                # level alias may otherwise point at stale enum tables.
+                capability = _get_mavlink().enums["MAV_PROTOCOL_CAPABILITY"].get(1 << bit, "Unknown capability")
 
                 if hasattr(capability, "description"):
                     # Append the abbreviated name and description of the capability dictionary
@@ -205,17 +217,19 @@ class FlightControllerInfo:  # pylint: disable=too-many-instance-attributes
     # pymavlink.dialects.v20.ardupilotmega.enums["MAV_TYPE"]
     @staticmethod
     def __decode_mav_type(mav_type: int) -> str:
-        return str(
-            mavutil.mavlink.enums["MAV_TYPE"].get(mav_type, mavutil.mavlink.EnumEntry("None", "Unknown type")).description
-        )
+        current_mavlink = _get_mavlink()
+        entry = current_mavlink.enums["MAV_TYPE"].get(mav_type)
+        if entry is None:
+            entry = current_mavlink.EnumEntry("None", "Unknown type")
+        return str(entry.description)
 
     @staticmethod
     def __decode_mav_autopilot(mav_autopilot: int) -> str:
-        return str(
-            mavutil.mavlink.enums["MAV_AUTOPILOT"]
-            .get(mav_autopilot, mavutil.mavlink.EnumEntry("None", "Unknown type"))
-            .description
-        )
+        current_mavlink = _get_mavlink()
+        entry = current_mavlink.enums["MAV_AUTOPILOT"].get(mav_autopilot)
+        if entry is None:
+            entry = current_mavlink.EnumEntry("None", "Unknown type")
+        return str(entry.description)
 
     @staticmethod
     def __classify_vehicle_type(mav_type_int: int) -> str:
@@ -231,48 +245,48 @@ class FlightControllerInfo:  # pylint: disable=too-many-instance-attributes
         """
         # Define the mapping from MAV_TYPE_* integer to vehicle type category
         mav_type_to_vehicle_type: dict[int, str] = {
-            mavutil.mavlink.MAV_TYPE_FIXED_WING: "ArduPlane",
-            mavutil.mavlink.MAV_TYPE_QUADROTOR: "ArduCopter",
-            mavutil.mavlink.MAV_TYPE_COAXIAL: "Heli",
-            mavutil.mavlink.MAV_TYPE_HELICOPTER: "Heli",
-            mavutil.mavlink.MAV_TYPE_ANTENNA_TRACKER: "AntennaTracker",
-            mavutil.mavlink.MAV_TYPE_GCS: "AP_Periph",
-            mavutil.mavlink.MAV_TYPE_AIRSHIP: "ArduBlimp",
-            mavutil.mavlink.MAV_TYPE_FREE_BALLOON: "ArduBlimp",
-            mavutil.mavlink.MAV_TYPE_ROCKET: "ArduCopter",
-            mavutil.mavlink.MAV_TYPE_GROUND_ROVER: "Rover",
-            mavutil.mavlink.MAV_TYPE_SURFACE_BOAT: "Rover",
-            mavutil.mavlink.MAV_TYPE_SUBMARINE: "ArduSub",
-            mavutil.mavlink.MAV_TYPE_HEXAROTOR: "ArduCopter",
-            mavutil.mavlink.MAV_TYPE_OCTOROTOR: "ArduCopter",
-            mavutil.mavlink.MAV_TYPE_TRICOPTER: "ArduCopter",
-            mavutil.mavlink.MAV_TYPE_FLAPPING_WING: "ArduPlane",
-            mavutil.mavlink.MAV_TYPE_KITE: "ArduPlane",
-            mavutil.mavlink.MAV_TYPE_ONBOARD_CONTROLLER: "AP_Periph",
-            mavutil.mavlink.MAV_TYPE_VTOL_DUOROTOR: "ArduPlane",
-            mavutil.mavlink.MAV_TYPE_VTOL_QUADROTOR: "ArduPlane",
-            mavutil.mavlink.MAV_TYPE_VTOL_TILTROTOR: "ArduPlane",
-            mavutil.mavlink.MAV_TYPE_VTOL_RESERVED2: "ArduPlane",
-            mavutil.mavlink.MAV_TYPE_VTOL_RESERVED3: "ArduPlane",
-            mavutil.mavlink.MAV_TYPE_VTOL_RESERVED4: "ArduPlane",
-            mavutil.mavlink.MAV_TYPE_VTOL_RESERVED5: "ArduPlane",
-            mavutil.mavlink.MAV_TYPE_GIMBAL: "AP_Periph",
-            mavutil.mavlink.MAV_TYPE_ADSB: "AP_Periph",
-            mavutil.mavlink.MAV_TYPE_PARAFOIL: "ArduPlane",
-            mavutil.mavlink.MAV_TYPE_DODECAROTOR: "ArduCopter",
-            mavutil.mavlink.MAV_TYPE_CAMERA: "AP_Periph",
-            mavutil.mavlink.MAV_TYPE_CHARGING_STATION: "AP_Periph",
-            mavutil.mavlink.MAV_TYPE_FLARM: "AP_Periph",
-            mavutil.mavlink.MAV_TYPE_SERVO: "AP_Periph",
-            mavutil.mavlink.MAV_TYPE_ODID: "AP_Periph",
-            mavutil.mavlink.MAV_TYPE_DECAROTOR: "ArduCopter",
-            mavutil.mavlink.MAV_TYPE_BATTERY: "AP_Periph",
-            mavutil.mavlink.MAV_TYPE_PARACHUTE: "AP_Periph",
-            mavutil.mavlink.MAV_TYPE_LOG: "AP_Periph",
-            mavutil.mavlink.MAV_TYPE_OSD: "AP_Periph",
-            mavutil.mavlink.MAV_TYPE_IMU: "AP_Periph",
-            mavutil.mavlink.MAV_TYPE_GPS: "AP_Periph",
-            mavutil.mavlink.MAV_TYPE_WINCH: "AP_Periph",
+            mavlink.MAV_TYPE_FIXED_WING: "ArduPlane",
+            mavlink.MAV_TYPE_QUADROTOR: "ArduCopter",
+            mavlink.MAV_TYPE_COAXIAL: "Heli",
+            mavlink.MAV_TYPE_HELICOPTER: "Heli",
+            mavlink.MAV_TYPE_ANTENNA_TRACKER: "AntennaTracker",
+            mavlink.MAV_TYPE_GCS: "AP_Periph",
+            mavlink.MAV_TYPE_AIRSHIP: "ArduBlimp",
+            mavlink.MAV_TYPE_FREE_BALLOON: "ArduBlimp",
+            mavlink.MAV_TYPE_ROCKET: "ArduCopter",
+            mavlink.MAV_TYPE_GROUND_ROVER: "Rover",
+            mavlink.MAV_TYPE_SURFACE_BOAT: "Rover",
+            mavlink.MAV_TYPE_SUBMARINE: "ArduSub",
+            mavlink.MAV_TYPE_HEXAROTOR: "ArduCopter",
+            mavlink.MAV_TYPE_OCTOROTOR: "ArduCopter",
+            mavlink.MAV_TYPE_TRICOPTER: "ArduCopter",
+            mavlink.MAV_TYPE_FLAPPING_WING: "ArduPlane",
+            mavlink.MAV_TYPE_KITE: "ArduPlane",
+            mavlink.MAV_TYPE_ONBOARD_CONTROLLER: "AP_Periph",
+            mavlink.MAV_TYPE_VTOL_DUOROTOR: "ArduPlane",
+            mavlink.MAV_TYPE_VTOL_QUADROTOR: "ArduPlane",
+            mavlink.MAV_TYPE_VTOL_TILTROTOR: "ArduPlane",
+            mavlink.MAV_TYPE_VTOL_RESERVED2: "ArduPlane",
+            mavlink.MAV_TYPE_VTOL_RESERVED3: "ArduPlane",
+            mavlink.MAV_TYPE_VTOL_RESERVED4: "ArduPlane",
+            mavlink.MAV_TYPE_VTOL_RESERVED5: "ArduPlane",
+            mavlink.MAV_TYPE_GIMBAL: "AP_Periph",
+            mavlink.MAV_TYPE_ADSB: "AP_Periph",
+            mavlink.MAV_TYPE_PARAFOIL: "ArduPlane",
+            mavlink.MAV_TYPE_DODECAROTOR: "ArduCopter",
+            mavlink.MAV_TYPE_CAMERA: "AP_Periph",
+            mavlink.MAV_TYPE_CHARGING_STATION: "AP_Periph",
+            mavlink.MAV_TYPE_FLARM: "AP_Periph",
+            mavlink.MAV_TYPE_SERVO: "AP_Periph",
+            mavlink.MAV_TYPE_ODID: "AP_Periph",
+            mavlink.MAV_TYPE_DECAROTOR: "ArduCopter",
+            mavlink.MAV_TYPE_BATTERY: "AP_Periph",
+            mavlink.MAV_TYPE_PARACHUTE: "AP_Periph",
+            mavlink.MAV_TYPE_LOG: "AP_Periph",
+            mavlink.MAV_TYPE_OSD: "AP_Periph",
+            mavlink.MAV_TYPE_IMU: "AP_Periph",
+            mavlink.MAV_TYPE_GPS: "AP_Periph",
+            mavlink.MAV_TYPE_WINCH: "AP_Periph",
             # Add more mappings as needed
         }
 
