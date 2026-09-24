@@ -24,6 +24,7 @@ from logging import error as logging_error
 from logging import exception as logging_exception
 from logging import getLevelName as logging_getLevelName
 from logging import warning as logging_warning
+from queue import Empty, Queue
 from sys import exit as sys_exit
 from sys import platform as sys_platform
 from tkinter import filedialog, ttk
@@ -293,6 +294,13 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.inline_component_editor: ComponentEditorWindow | None = None
         self._inline_component_name: str | None = None
         self._updating_inline_editor: bool = False
+        self._confirmed_absent_fc_parameter_names: set[str] = set()
+        self._checked_parameter_presence_names: set[str] = set()
+        self._parameter_presence_request_id = 0
+        self._pending_parameter_presence_request: tuple[int, str, tuple[str, ...]] | None = None
+        self._active_parameter_presence_request: tuple[int, str, tuple[str, ...]] | None = None
+        self._parameter_presence_results: Queue[tuple[int, str, set[str]]] = Queue()
+        self._parameter_presence_poll_scheduled = False
 
         self.root.title(
             _("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - Parameter file editor and uploader")
@@ -1350,8 +1358,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             plugin = self.parameter_editor.get_plugin(final_file)
             self._update_plugin_layout(plugin)
 
-            # Repopulate parameter table with new file
-            self.repopulate_parameter_table()
+            # A direct read distinguishes a hidden parameter from one that is
+            # absent from this firmware.  Wait for that inexpensive batch
+            # check before rendering, so confirmed-absent rows never flash.
+            if not self._queue_parameter_presence_check():
+                self.repopulate_parameter_table()
             self._update_skip_button_state()
             self._update_previous_button_state()
 
@@ -1409,8 +1420,95 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def repopulate_parameter_table(self) -> None:
         if not self.parameter_editor.current_file:
             return  # no file was yet selected, so skip it
+        if self._parameter_presence_check_is_pending_for_current_file():
+            return
         # Re-populate the table with the new parameters
         self.parameter_editor_table.repopulate_table(self.show_only_differences.get(), self.gui_complexity)
+
+    def _queue_parameter_presence_check(self, reset: bool = True) -> bool:
+        """Queue a direct-read check for current-step parameters shown as N/A."""
+        if reset:
+            self._confirmed_absent_fc_parameter_names.clear()
+            self._checked_parameter_presence_names.clear()
+        if self.parameter_editor.is_fc_connected is not True:
+            return False
+
+        param_names = tuple(
+            name
+            for name, parameter in self.parameter_editor.current_step_parameters.items()
+            if not parameter.has_fc_value and name not in self._checked_parameter_presence_names
+        )
+        if not param_names:
+            return False
+
+        self._parameter_presence_request_id += 1
+        self._pending_parameter_presence_request = (
+            self._parameter_presence_request_id,
+            self.parameter_editor.current_file,
+            param_names,
+        )
+        self.parameter_editor_table.show_parameter_presence_check_in_progress()
+        self._start_pending_parameter_presence_check()
+        self._schedule_parameter_presence_result_poll()
+        return True
+
+    def _start_pending_parameter_presence_check(self) -> None:
+        """Start at most one MAVLink presence check at a time."""
+        if self._active_parameter_presence_request is not None or self._pending_parameter_presence_request is None:
+            return
+        request = self._pending_parameter_presence_request
+        self._pending_parameter_presence_request = None
+        self._active_parameter_presence_request = request
+
+        def check_parameter_presence() -> None:
+            request_id, filename, param_names = request
+            try:
+                nonexistent = self.parameter_editor.get_nonexistent_fc_parameters(list(param_names))
+            except Exception as error:  # pylint: disable=broad-exception-caught
+                logging_warning("Could not check flight-controller parameter presence: %s", error)
+                nonexistent = set()
+            self._parameter_presence_results.put((request_id, filename, nonexistent))
+
+        threading.Thread(target=check_parameter_presence, daemon=True).start()
+
+    def _schedule_parameter_presence_result_poll(self) -> None:
+        if not self._parameter_presence_poll_scheduled:
+            self._parameter_presence_poll_scheduled = True
+            self.root.after(25, self._poll_parameter_presence_results)
+
+    def _poll_parameter_presence_results(self) -> None:
+        self._parameter_presence_poll_scheduled = False
+        try:
+            request_id, filename, nonexistent = self._parameter_presence_results.get_nowait()
+        except Empty:
+            if self._active_parameter_presence_request is not None or self._pending_parameter_presence_request is not None:
+                self._schedule_parameter_presence_result_poll()
+            return
+
+        completed_request = self._active_parameter_presence_request
+        self._active_parameter_presence_request = None
+        if request_id == self._parameter_presence_request_id and filename == self.parameter_editor.current_file:
+            self._confirmed_absent_fc_parameter_names = nonexistent
+            if completed_request is not None:
+                self._checked_parameter_presence_names.update(completed_request[2])
+            ui_errors, ui_infos = self.parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update()
+            for title, message in ui_errors:
+                self.ui.show_error(title, message)
+            for title, message in ui_infos:
+                self.ui.show_info(title, message)
+            if not self._queue_parameter_presence_check(reset=False):
+                self.repopulate_parameter_table()
+
+        self._start_pending_parameter_presence_check()
+        if self._active_parameter_presence_request is not None or self._pending_parameter_presence_request is not None:
+            self._schedule_parameter_presence_result_poll()
+
+    def _parameter_presence_check_is_pending_for_current_file(self) -> bool:
+        current_file = self.parameter_editor.current_file
+        return any(
+            request is not None and request[1] == current_file
+            for request in (self._active_parameter_presence_request, self._pending_parameter_presence_request)
+        )
 
     def _on_component_data_changed(self) -> None:
         """Called when a field in the inline component editor is changed by the user."""

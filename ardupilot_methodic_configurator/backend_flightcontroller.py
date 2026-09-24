@@ -687,6 +687,10 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         """Fetch a parameter from the flight controller - delegates to params manager."""
         return self._params_manager.fetch_param(param_name, timeout)
 
+    def get_nonexistent_parameters(self, param_names: list[str], timeout: float = 2.0) -> set[str]:
+        """Return parameters explicitly reported absent by the flight controller."""
+        return self._params_manager.get_nonexistent_parameters(param_names, timeout)
+
     def reset_all_parameters_to_default(self) -> tuple[bool, str]:
         """Reset all parameters to their factory default values - delegates to commands manager."""
         return self._commands_manager.reset_all_parameters_to_default()
