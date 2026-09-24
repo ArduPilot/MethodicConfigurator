@@ -492,11 +492,16 @@ class TestWidgetFactoryMethods:
         parameter_editor.get_vehicle_directory.return_value = "vehicle_dir"
 
         directory_widget = MagicMock()
-        button_widgets = [MagicMock(), MagicMock()]
+        button_widgets = [MagicMock() for _ in range(4)]
 
         with (
             patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Frame", return_value=MagicMock()),
             patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Label", return_value=MagicMock()),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.get_widget_font_family_and_size",
+                return_value=("TkDefaultFont", 10),
+            ),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Style"),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.VehicleDirectorySelectionWidgets",
                 return_value=directory_widget,
@@ -519,8 +524,11 @@ class TestWidgetFactoryMethods:
             editor._create_conf_widgets("__VERSION__")
 
         button_widgets[1].configure.assert_called_once_with(state=expected_state)
-        button_widgets[0].grid.assert_called_once_with(row=0, column=0, padx=(6, 2), sticky=tk.NW)
-        button_widgets[1].grid.assert_called_once_with(row=1, column=0, padx=(8, 8), pady=(4, 0), sticky=tk.NW)
+        button_widgets[3].configure.assert_called_once_with(state="normal")
+        button_widgets[0].grid.assert_called_once_with(row=0, column=0, padx=(8, 8), sticky=tk.EW)
+        button_widgets[1].grid.assert_called_once_with(row=1, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
+        button_widgets[2].grid.assert_called_once_with(row=2, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
+        button_widgets[3].grid.assert_called_once_with(row=3, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
 
     def test_user_can_open_the_flight_controller_banner(self, parameter_editor_window: ParameterEditorWindow) -> None:
         """
@@ -2087,6 +2095,41 @@ class TestParameterUploads:
         mock_write.assert_called_once()
         mock_upload.assert_called_once_with(selected_params)
         mock_skip.assert_called_once()
+
+    def test_user_uploads_selected_parameters_and_stays_on_current_file(
+        self, parameter_editor_window: ParameterEditorWindow
+    ) -> None:
+        """The stay variant uploads selected values without advancing to another parameter file."""
+        selected_params = {"ROLL_P": 0.2}
+
+        with (
+            patch.object(
+                parameter_editor_window.parameter_editor_table,
+                "get_upload_selected_params",
+                return_value=selected_params,
+            ),
+            patch.object(parameter_editor_window, "write_changes_to_intermediate_parameter_file") as mock_write,
+            patch.object(parameter_editor_window, "upload_selected_params", return_value=True) as mock_upload,
+            patch.object(parameter_editor_window, "_continue_to_analyse") as mock_continue,
+            patch.object(parameter_editor_window, "repopulate_parameter_table") as mock_repopulate,
+            patch.object(
+                parameter_editor_window.parameter_editor,
+                "ensure_upload_preconditions",
+                return_value=True,
+            ) as mock_preconditions,
+            patch.object(parameter_editor_window, "on_skip_click") as mock_skip,
+        ):
+            parameter_editor_window.on_upload_selected_and_stay_click()
+
+        mock_preconditions.assert_called_once_with(
+            selected_params,
+            parameter_editor_window.ui.show_warning,
+        )
+        mock_write.assert_called_once()
+        mock_upload.assert_called_once_with(selected_params)
+        mock_continue.assert_called_once()
+        mock_repopulate.assert_called_once()
+        mock_skip.assert_not_called()
 
     def test_user_receives_warning_when_no_fc_connection(self, parameter_editor_window: ParameterEditorWindow) -> None:
         """

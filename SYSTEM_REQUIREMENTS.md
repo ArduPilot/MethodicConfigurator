@@ -96,9 +96,10 @@ To semi-automate the steps and processes on that guide the following *system des
   vehicles [PR #175](https://github.com/ArduPilot/MethodicConfigurator/pull/175)
   - The AI assistant should be able to answer questions about the parameters and the configuration process
   - The AI assistant should be able to provide guidance on how to resolve common issues that may arise during the configuration process
-- The software must have a "Zip Vehicle for Forum Help" button that creates a support package:
-  - **Button location**: The button must be placed on the parameter editor window, positioned between the "Download .bin" button and the "Skip Step" button
-  - **Button label**: The default English label must read "Zip Vehicle for Forum Help" while still allowing translations for other locales
+- The software must have a "Zip vehicle for Forum help" button that creates a support package:
+  - **Button location**: The button must be placed in the parameter editor window as the fourth button in the single-column parameter-action group,
+    below the "Compare and upload", "FC banner", and "Analyse a .bin log" buttons
+  - **Button label**: The default English label must read "Zip vehicle for Forum help" while still allowing translations for other locales
   - **Files to include**: The button must create a zip archive containing:
     - All intermediate parameter files (numbered configuration step files like `01_setup.param`, `02_config.param`, etc.)
     - The file `00_default.param` if it exists

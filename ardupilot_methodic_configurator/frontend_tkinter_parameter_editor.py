@@ -257,7 +257,7 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
                 download_progress_window.destroy()
 
 
-class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes
+class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes, too-many-public-methods
     """
     Parameter editor and upload graphical user interface (GUI) window.
 
@@ -352,7 +352,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         """
         self.root.mainloop()
 
-    def _create_conf_widgets(self, version: str) -> None:
+    def _create_conf_widgets(self, version: str) -> None:  # pylint: disable=too-many-locals
         config_frame = ttk.Frame(self.main_frame)
         config_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(4, 0))  # Pack the frame at the top of the window
 
@@ -403,14 +403,19 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         parameter_actions_frame = ttk.Frame(config_subframe)
         parameter_actions_frame.pack(side=tk.LEFT, anchor=tk.NW)
+        font_family, font_size = get_widget_font_family_and_size(parameter_actions_frame)
+        smaller_button_font = (font_family, font_size - 1 if font_size > 0 else font_size + 1)
+        smaller_button_style = "SmallParameterAction.TButton"
+        ttk.Style().configure(smaller_button_style, font=smaller_button_font, padding=(4, -1))
 
         compare_and_upload_button = ttk.Button(
             parameter_actions_frame,
             text=_("Compare and upload"),
             command=self.on_compare_and_upload_parameter_file_click,
+            style=smaller_button_style,
         )
         compare_and_upload_button.configure(state="normal" if self.parameter_editor.is_fc_connected else "disabled")
-        compare_and_upload_button.grid(row=0, column=0, padx=(6, 2), sticky=tk.NW)
+        compare_and_upload_button.grid(row=0, column=0, padx=(8, 8), sticky=tk.EW)
         show_tooltip(
             compare_and_upload_button,
             _("Select a .parm or .param file to compare with the FC and optionally upload")
@@ -422,12 +427,37 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             parameter_actions_frame,
             text=_("FC banner"),
             command=self.on_fc_banner_click,
+            style=smaller_button_style,
         )
         fc_banner_button.configure(state="normal" if self.parameter_editor.is_fc_connected else "disabled")
-        fc_banner_button.grid(row=1, column=0, padx=(8, 8), pady=(4, 0), sticky=tk.NW)
+        fc_banner_button.grid(row=1, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
         show_tooltip(
             fc_banner_button,
             _("Display the latest flight-controller banner"),
+        )
+
+        analyse_log_button = ttk.Button(
+            parameter_actions_frame,
+            text=_("Analyse a .bin log"),
+            command=self.on_analyse_log_click,
+            style=smaller_button_style,
+        )
+        analyse_log_button.grid(row=2, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
+        show_tooltip(analyse_log_button, _("Open a .bin flight log and analyse its availability"))
+
+        zip_vehicle_for_forum_button = ttk.Button(
+            parameter_actions_frame,
+            text=_("Zip vehicle for Forum help"),
+            command=self.on_zip_vehicle_for_forum_help_click,
+            style=smaller_button_style,
+        )
+        zip_vehicle_for_forum_button.configure(state=("normal" if self.parameter_editor.parameter_files() else "disabled"))
+        zip_vehicle_for_forum_button.grid(row=3, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
+        show_tooltip(
+            zip_vehicle_for_forum_button,
+            _("Creates a .zip file of the configuration files\nso that they can be easily shared for forum help")
+            if self.parameter_editor.parameter_files()
+            else _("No intermediate parameter files available"),
         )
 
         image_label = self.put_image_in_label(config_frame, LocalFilesystem.application_logo_filepath())
@@ -543,6 +573,25 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             )
 
         # Create upload button
+        upload_selected_and_stay_button = ttk.Button(
+            buttons_frame,
+            text=_("Upload selected params to FC"),
+            command=self.on_upload_selected_and_stay_click,
+        )
+        upload_selected_and_stay_button.configure(state="normal" if self.parameter_editor.is_fc_connected else "disabled")
+        upload_selected_and_stay_button.pack(side=tk.LEFT, padx=(8, 8))
+        show_tooltip(
+            upload_selected_and_stay_button,
+            _(
+                "Upload selected parameters to the flight controller and stay on the current step\n"
+                "If changes have been made to the current file it will ask if you want to save them\n"
+                "It will reset the FC if necessary, re-download all parameters and validate their value"
+            )
+            if self.parameter_editor.is_fc_connected
+            else _("No flight controller connected, upload not available"),
+        )
+
+        # Create upload and advance button
         upload_selected_button = ttk.Button(
             buttons_frame,
             text=_("Upload selected params to FC,\nand advance to next param file"),
@@ -564,7 +613,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Create download last flight log button
         download_log_button = ttk.Button(
             buttons_frame,
-            text=_("Download last flight log"),
+            text=_("Download last\nflight log"),
             command=self.on_download_last_flight_log_click,
         )
         download_log_button.configure(
@@ -583,31 +632,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             )
             if (self.parameter_editor.is_fc_connected and self.parameter_editor.is_mavftp_supported)
             else _("No flight controller connected or MAVFTP not supported"),
-        )
-        # Create analyse flight log button
-        analyse_log_button = ttk.Button(
-            buttons_frame,
-            text=_("Analyse a .bin log"),
-            command=self.on_analyse_log_click,
-        )
-        analyse_log_button.pack(side=tk.LEFT, padx=(8, 8))
-        show_tooltip(analyse_log_button, _("Open a .bin flight log and analyse its availability"))
-
-        # Create Zip file for forum button
-        zip_vehicle_for_forum_button = ttk.Button(
-            buttons_frame,
-            text=_("Zip Vehicle for Forum Help"),
-            command=self.on_zip_vehicle_for_forum_help_click,
-        )
-        zip_vehicle_for_forum_button.configure(state=("normal" if self.parameter_editor.parameter_files() else "disabled"))
-        zip_vehicle_for_forum_button.pack(
-            side=tk.LEFT, padx=(8, 8)
-        )  # Add padding on both sides of the Create Zip file for forum button
-        show_tooltip(
-            zip_vehicle_for_forum_button,
-            _("Creates a .zip file of the configuration files\nso that they can be easily shared for forum help")
-            if self.parameter_editor.parameter_files()
-            else _("No intermediate parameter files available"),
         )
         # Create skip buttons
         self.skip_button = ttk.Button(buttons_frame, text=_("Skip >"), command=self.on_skip_click)
@@ -1495,6 +1519,20 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             return
 
         ParameterFileUploadWindow(self, filepath, parameters)
+
+    def on_upload_selected_and_stay_click(self) -> None:
+        """Upload selected parameters and remain on the current parameter file."""
+        if isinstance(self.root, tk.Tk) and UsagePopupWindow.should_display("only_changed_get_uploaded"):
+            only_upload_changed_parameters_usage_popup(self.root)
+        self.write_changes_to_intermediate_parameter_file()
+        selected_params: ParDict = self.parameter_editor_table.get_upload_selected_params(self.gui_complexity)
+        precondition_payload: dict[str, object] = dict(selected_params)
+        if not self.parameter_editor.ensure_upload_preconditions(precondition_payload, self.ui.show_warning):
+            return
+
+        if self.upload_selected_params(selected_params):
+            self._continue_to_analyse()
+            self.repopulate_parameter_table()
 
     def on_upload_selected_click(self) -> None:
         if isinstance(self.root, tk.Tk) and UsagePopupWindow.should_display("only_changed_get_uploaded"):
