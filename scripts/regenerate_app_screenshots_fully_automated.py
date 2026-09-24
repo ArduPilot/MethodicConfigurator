@@ -60,6 +60,7 @@ if TYPE_CHECKING:
 ROOT_DIR = Path(__file__).resolve().parents[1]
 IMAGES_DIR = ROOT_DIR / "images"
 DEFAULT_VEHICLE_DIR = ROOT_DIR / "ardupilot_methodic_configurator" / "vehicle_templates" / "ArduCopter" / "empty_4.6.x"
+WINDOWS_APPLICATION_ICON_PATH = ROOT_DIR / "windows" / "ardupilot_methodic_configurator.ico"
 
 
 # pylint: disable=too-many-lines
@@ -365,6 +366,18 @@ def _widget_text(widget: tk.Misc) -> str:
     return str(text)
 
 
+def _set_windows_application_icon(widget: tk.Misc) -> None:
+    """Use the native AMC icon for screenshot windows on Windows."""
+    if platform.system() != "Windows" or not WINDOWS_APPLICATION_ICON_PATH.is_file():
+        return
+
+    window = widget if isinstance(widget, (tk.Tk, tk.Toplevel)) else widget.winfo_toplevel()
+    try:
+        window.iconbitmap(default=str(WINDOWS_APPLICATION_ICON_PATH))
+    except (OSError, tk.TclError) as exc:
+        logging.debug("Could not set the Windows application icon: %s", exc)
+
+
 def _find_descendant(widget: tk.Misc, predicate: Callable[[tk.Misc], bool]) -> tk.Misc | None:
     """Return first descendant matching predicate."""
     for candidate in _iter_descendants(widget):
@@ -479,6 +492,7 @@ def capture_widget(  # pylint: disable=too-many-arguments, too-many-positional-a
     highlight_boxes: list[tuple[int, int, int, int]] | None = None,
 ) -> None:
     """Capture screenshot of a Tk widget region."""
+    _set_windows_application_icon(widget)
     settle_tk(widget)
     if delay > 0:
         time.sleep(delay)

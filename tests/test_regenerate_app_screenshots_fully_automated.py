@@ -48,6 +48,19 @@ def test_cleanup_plugin_view_ignores_non_callable_optional_hook() -> None:
     destroy.assert_called_once_with()
 
 
+def test_screenshot_window_uses_native_windows_application_icon() -> None:
+    """Screenshot windows use the AMC .ico instead of Python's default process icon."""
+    window = MagicMock()
+
+    with patch.object(screenshot_generator.platform, "system", return_value="Windows"):
+        screenshot_generator._set_windows_application_icon(window)
+
+    window.winfo_toplevel.assert_called_once_with()
+    window.winfo_toplevel.return_value.iconbitmap.assert_called_once_with(
+        default=str(screenshot_generator.WINDOWS_APPLICATION_ICON_PATH)
+    )
+
+
 def test_screenshot_generator_registers_application_plugins_before_capture(tmp_path) -> None:
     """Screenshot generation initializes plugins just like normal application startup."""
     args = argparse.Namespace(
