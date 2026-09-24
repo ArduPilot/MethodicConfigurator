@@ -171,7 +171,7 @@ class TestVehicleComponentsInternals:
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
-    def test_save_component_templates_to_file_uses_local_dir_when_local_file_exists(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    def test_save_component_templates_to_file_uses_local_dir_when_local_file_exists(
         self,
         mock_get_base_dir: MagicMock,
         mock_safe_write: MagicMock,

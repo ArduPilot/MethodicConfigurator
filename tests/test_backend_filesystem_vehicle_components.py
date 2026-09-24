@@ -637,7 +637,7 @@ class TestVehicleComponents:
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
-    def test_save_component_templates_basic(  # type: ignore[misc] # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def test_save_component_templates_basic(  # type: ignore[misc]
         self, mock_get_base_dir, mock_makedirs, mock_safe_write, mock_load_user, mock_load_system
     ) -> None:
         """
@@ -682,7 +682,7 @@ class TestVehicleComponents:
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
-    def test_save_component_templates_only_modified(  # type: ignore[misc] # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def test_save_component_templates_only_modified(  # type: ignore[misc]
         self,
         mock_get_base_dir,
         mock_makedirs,  # pylint: disable=unused-argument
@@ -737,7 +737,7 @@ class TestVehicleComponents:
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
-    def test_save_component_templates_different_data(  # type: ignore[misc] # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def test_save_component_templates_different_data(  # type: ignore[misc]
         self,
         mock_get_base_dir,
         mock_makedirs,  # pylint: disable=unused-argument
@@ -786,7 +786,7 @@ class TestVehicleComponents:
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
-    def test_save_component_templates_not_in_system(  # type: ignore[misc] # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def test_save_component_templates_not_in_system(  # type: ignore[misc]
         self,
         mock_get_base_dir,
         mock_makedirs,  # pylint: disable=unused-argument
@@ -865,7 +865,7 @@ class TestVehicleComponents:
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
-    def test_save_component_templates_directory_creation_error(  # type: ignore[misc] # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def test_save_component_templates_directory_creation_error(  # type: ignore[misc]
         self, mock_get_base_dir, mock_makedirs, mock_safe_write, mock_load_user, mock_load_system
     ) -> None:
         """
@@ -896,7 +896,7 @@ class TestVehicleComponents:
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
-    def test_save_component_templates_file_errors(  # type: ignore[misc] # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def test_save_component_templates_file_errors(  # type: ignore[misc]
         self,
         mock_get_base_dir,
         mock_makedirs,  # pylint: disable=unused-argument
@@ -932,7 +932,7 @@ class TestVehicleComponents:
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
-    def test_save_component_templates_empty_input(  # type: ignore[misc] # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def test_save_component_templates_empty_input(  # type: ignore[misc]
         self,
         mock_get_base_dir,
         mock_makedirs,  # pylint: disable=unused-argument
@@ -970,7 +970,7 @@ class TestVehicleComponents:
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
-    def test_save_component_templates_json_error(  # type: ignore[misc] # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def test_save_component_templates_json_error(  # type: ignore[misc]
         self,
         mock_get_base_dir,
         mock_makedirs,  # pylint: disable=unused-argument
@@ -1053,7 +1053,7 @@ class TestVehicleComponents:
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
-    def test_save_component_templates_preserves_existing_user_components(  # type: ignore[misc] # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def test_save_component_templates_preserves_existing_user_components(  # type: ignore[misc]
         self,
         mock_get_base_dir,
         mock_makedirs,  # pylint: disable=unused-argument

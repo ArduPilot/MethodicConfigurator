@@ -237,7 +237,7 @@ class FakeFlightControllerForInfoWindow:  # pylint: disable=too-few-public-metho
 class FakeProjectManager:
     """Minimal project manager API for opener/creator windows."""
 
-    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def __init__(
         self,
         template_dir: Path,
         base_dir: Path,

@@ -1388,7 +1388,7 @@ class PlaneLandingEvidenceExtractor:  # pylint: disable=too-many-locals
         return transitions
 
     @classmethod
-    def _build_stage_evidence(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    def _build_stage_evidence(
         cls,
         log_data: LogData,
         attempt: PlaneLandingAttempt,

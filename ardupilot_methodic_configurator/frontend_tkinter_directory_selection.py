@@ -197,7 +197,7 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
     selected vehicle directory and re-initializing the filesystem with the new directory.
     """
 
-    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def __init__(
         self,
         parent: BaseWindow,
         parent_frame: ttk.Widget,

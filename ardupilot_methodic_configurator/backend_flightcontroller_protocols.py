@@ -84,7 +84,7 @@ class FlightControllerConnectionProtocol(Protocol):
     @property
     def info(self) -> FlightControllerInfo:  # pyright: ignore[reportInvalidTypeForm]
         """Get flight controller information (connection manager is sole mutator)."""
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
     @property
     def comport(self) -> mavutil.SerialPort | serial.tools.list_ports_common.ListPortInfo | None:
@@ -96,12 +96,12 @@ class FlightControllerConnectionProtocol(Protocol):
     @property
     def baudrate(self) -> int:
         """Get the default baud rate for serial connections."""
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
     @property
     def active_baudrate(self) -> int:
         """Get the baud rate used for the current or most recent serial session."""
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
     def discover_connections(
         self,
@@ -134,11 +134,11 @@ class FlightControllerConnectionProtocol(Protocol):
 
     def get_serial_ports(self) -> list[serial.tools.list_ports_common.ListPortInfo]:
         """Get all available serial ports."""
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
     def get_network_ports(self) -> list[str]:
         """Get all available network ports."""
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
     def get_connection_tuples(self) -> list[tuple[str, str]]: ...
 
@@ -189,7 +189,7 @@ class FlightControllerParamsProtocol(Protocol):
     @property
     def fc_parameters(self) -> dict[str, float]:
         """Get the parameter dictionary."""
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
     @fc_parameters.setter
     def fc_parameters(self, value: dict[str, float]) -> None:
@@ -246,7 +246,7 @@ class FlightControllerCommandsProtocol(Protocol):  # pylint: disable=too-many-pu
 
     def reset_all_parameters_to_default(self) -> tuple[bool, str]: ...
 
-    def test_motor(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def test_motor(
         self, test_sequence_nr: int, motor_letters: str, motor_output_nr: int, throttle_percent: int, timeout_seconds: int
     ) -> tuple[bool, str]: ...
 

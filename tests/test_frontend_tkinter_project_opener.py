@@ -249,7 +249,7 @@ class TestVehicleProjectOpenerWindow:
             (True, {"PARAM1": 1.0}, tk.NORMAL),
         ],
     )
-    def test_user_sees_flight_controller_option_only_when_fc_is_configured(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    def test_user_sees_flight_controller_option_only_when_fc_is_configured(
         self,
         configured_opener_window,
         mocked_option1_widget_construction,

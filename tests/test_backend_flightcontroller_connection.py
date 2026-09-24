@@ -898,7 +898,7 @@ class TestConnectionErrorHandling:
         class ExplodingFactory(SystemMavlinkConnectionFactory):  # pylint: disable=too-few-public-methods
             """MAVLink factory that always raises ConnectionError."""
 
-            def create(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+            def create(
                 self,
                 device: str,
                 baudrate: int,
@@ -1886,9 +1886,9 @@ class TestFlightControllerConnectionRetry:
                 self.calls = 0
                 self.retries: list[int] = []
 
-            def create(  # pylint: disable=too-many-arguments, too-many-positional-arguments
-                self, device, baudrate=115200, timeout=5.0, retries=3, progress_callback=None
-            ) -> Mock:  # type: ignore[override]
+            # pylint: disable=line-too-long
+            def create(self, device, baudrate=115200, timeout=5.0, retries=3, progress_callback=None) -> Mock:  # type: ignore[override]
+                # pylint: enable=line-too-long
                 self.calls += 1
                 self.retries.append(retries)
                 if self.calls == 1:
@@ -2150,11 +2150,12 @@ class TestFlightControllerConnectionRetry:
         """
         master = Mock()
 
+        # pylint: disable=line-too-long
         class MasterFactory(MavlinkConnectionFactory):  # pylint: disable=too-few-public-methods, missing-class-docstring
-            def create(  # pylint: disable=too-many-arguments, too-many-positional-arguments
-                self, device, baudrate=115200, timeout=5.0, retries=3, progress_callback=None
-            ) -> Mock:  # type: ignore[override]
+            def create(self, device, baudrate=115200, timeout=5.0, retries=3, progress_callback=None) -> Mock:  # type: ignore[override]
                 return master
+
+        # pylint: enable=line-too-long
 
         connection = FlightControllerConnection(
             info=FlightControllerInfo(),
@@ -2178,11 +2179,12 @@ class TestFlightControllerConnectionRetry:
         THEN: The returned string should contain the device name
         """
 
+        # pylint: disable=line-too-long
         class NullFactory(MavlinkConnectionFactory):  # pylint: disable=too-few-public-methods, missing-class-docstring
-            def create(  # pylint: disable=too-many-arguments, too-many-positional-arguments
-                self, device, baudrate=115200, timeout=5.0, retries=3, progress_callback=None
-            ) -> None:  # type: ignore[override]
+            def create(self, device, baudrate=115200, timeout=5.0, retries=3, progress_callback=None) -> None:  # type: ignore[override]
                 return None
+
+        # pylint: enable=line-too-long
 
         connection = FlightControllerConnection(
             info=FlightControllerInfo(),
@@ -2203,11 +2205,12 @@ class TestFlightControllerConnectionRetry:
         THEN: logging_warning and logging_error should each be called once
         """
 
+        # pylint: disable=line-too-long
         class NullFactory(MavlinkConnectionFactory):  # pylint: disable=too-few-public-methods, missing-class-docstring
-            def create(  # pylint: disable=too-many-arguments, too-many-positional-arguments
-                self, device, baudrate=115200, timeout=5.0, retries=3, progress_callback=None
-            ) -> None:  # type: ignore[override]
+            def create(self, device, baudrate=115200, timeout=5.0, retries=3, progress_callback=None) -> None:  # type: ignore[override]
                 return None
+
+        # pylint: enable=line-too-long
 
         connection = FlightControllerConnection(
             info=FlightControllerInfo(),
@@ -2234,9 +2237,7 @@ class TestFlightControllerConnectionRetry:
         """
 
         class PermErrorFactory(MavlinkConnectionFactory):  # pylint: disable=too-few-public-methods, missing-class-docstring
-            def create(  # pylint: disable=too-many-arguments, too-many-positional-arguments
-                self, device, baudrate=115200, timeout=5.0, retries=3, progress_callback=None
-            ) -> NoReturn:
+            def create(self, device, baudrate=115200, timeout=5.0, retries=3, progress_callback=None) -> NoReturn:
                 err_msg = "Permission denied"
                 raise PermissionError(err_msg)
 

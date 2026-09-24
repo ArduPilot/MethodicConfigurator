@@ -1011,7 +1011,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             return BatteryCell.recommended_cell_voltage(self._battery_chemistry, path[-1])
         return 3.8
 
-    def validate_against_another_value(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    def validate_against_another_value(
         self,
         value: float,
         limit_value,  # limit_value has no type, because it can have any type # noqa: ANN001

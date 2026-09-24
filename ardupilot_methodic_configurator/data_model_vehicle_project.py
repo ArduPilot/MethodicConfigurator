@@ -368,7 +368,7 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
         self.store_recently_used_template_dirs(template_dir, new_base_dir)
         return new_path
 
-    def create_new_vehicle_from_bin_log(  # noqa: PLR0915 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-branches,too-many-locals,too-many-statements
+    def create_new_vehicle_from_bin_log(  # noqa: PLR0915 # pylint: disable=too-many-branches,too-many-locals,too-many-statements
         self,
         bin_file: str,
         progress_callback: Callable[[int, int], None] | None = None,

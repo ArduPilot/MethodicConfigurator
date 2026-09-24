@@ -34,12 +34,12 @@ class VehicleComponentsProviderProtocol(Protocol):
     @staticmethod
     def get_vehicle_components_overviews() -> dict[str, TemplateOverview]:
         """Get vehicle components overviews."""
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
     @staticmethod
     def get_vehicle_image_filepath(relative_template_path: str) -> str:
         """Get vehicle image filepath."""
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
 
 class ProgramSettingsProviderProtocol(Protocol):  # pylint: disable=too-few-public-methods
@@ -48,7 +48,7 @@ class ProgramSettingsProviderProtocol(Protocol):  # pylint: disable=too-few-publ
     @staticmethod
     def store_template_dir(relative_template_dir: str) -> None:
         """Store template directory."""
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
 
 IMAGE_HEIGHT_PX = 100
@@ -73,7 +73,7 @@ class TemplateOverviewWindow(BaseWindow):  # pylint: disable=too-many-instance-a
 
     """
 
-    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def __init__(
         self,
         parent: tk.Tk | None = None,
         vehicle_components_provider: VehicleComponentsProviderProtocol | None = None,
