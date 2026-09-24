@@ -23,7 +23,7 @@ from ardupilot_methodic_configurator.annotate_params import get_xml_dir
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 
-# pylint: disable=too-many-lines, too-many-arguments, too-many-positional-arguments, protected-access
+# pylint: disable=too-many-lines, protected-access
 
 
 class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public-methods

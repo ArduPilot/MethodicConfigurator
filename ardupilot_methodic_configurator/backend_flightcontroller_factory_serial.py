@@ -21,11 +21,11 @@ class SerialPortDiscovery(Protocol):
         self,
     ) -> list[serial.tools.list_ports_common.ListPortInfo]:
         """Get list of available serial ports."""
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
     def get_port_description(self, device: str) -> str:
         """Get description for a serial port device."""
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
 
 class SystemSerialPortDiscovery:

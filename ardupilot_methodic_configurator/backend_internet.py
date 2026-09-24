@@ -90,7 +90,7 @@ def _write_response(  # pylint: disable=too-many-arguments, too-many-positional-
 ) -> int:
     """Write HTTP response to disk with progress tracking."""
     downloaded_local = initial_downloaded
-    with open(path, mode) as fh:  # pylint: disable=unspecified-encoding
+    with open(path, mode) as fh:
         for chunk in response.iter_content(chunk_size=DOWNLOAD_BLOCK_SIZE):
             if chunk:
                 fh.write(chunk)

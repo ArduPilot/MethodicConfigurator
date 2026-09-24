@@ -646,7 +646,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         return True
 
-    def should_upload_file_to_fc_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def should_upload_file_to_fc_workflow(
         self,
         selected_file: str,
         ask_confirmation: Callable[[str, str], bool],

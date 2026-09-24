@@ -75,7 +75,7 @@ class BaseLogModel:
         columns = self.log_data.get_message_columns(message_name)
         return columns is not None and field_name in (columns.dtype.names or ())
 
-    def field_values_or_issue(  # pylint: disable=too-many-arguments
+    def field_values_or_issue(
         self,
         message_name: str,
         field_name: str,

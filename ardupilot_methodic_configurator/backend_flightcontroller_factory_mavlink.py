@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 class MavlinkConnectionFactory(Protocol):  # pylint: disable=too-few-public-methods
     """Protocol for creating MAVLink connections."""
 
-    def create(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def create(
         self,
         device: str,
         baudrate: int,
@@ -28,13 +28,13 @@ class MavlinkConnectionFactory(Protocol):  # pylint: disable=too-few-public-meth
         progress_callback: object | None = None,
     ) -> Optional["MavlinkConnection"]:
         """Create a MAVLink connection."""
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
 
 class SystemMavlinkConnectionFactory:  # pylint: disable=too-few-public-methods
     """Real implementation using PyMAVLink library."""
 
-    def create(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def create(
         self,
         device: str,
         baudrate: int,
@@ -69,7 +69,7 @@ class FakeMavlinkConnectionFactory:
         """Initialize mock factory."""
         self._connections: dict[str, FakeMavlinkConnection] = {}
 
-    def create(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def create(
         self,
         device: str,
         baudrate: int,

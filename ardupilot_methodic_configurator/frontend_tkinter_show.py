@@ -527,7 +527,7 @@ class Tooltip:
 
     _active_tooltip: ClassVar[Optional["Tooltip"]] = None
 
-    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def __init__(
         self,
         widget: tk.Widget,
         text: str,

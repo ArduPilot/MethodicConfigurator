@@ -448,7 +448,7 @@ class TestMonitorBoundsDetection:
             ("Linux", None, MonitorBounds(0, 0, 1920, 1080), MonitorBounds(0, 0, 1920, 1080)),
         ],
     )
-    def test_system_returns_correct_monitor_bounds_for_platform(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def test_system_returns_correct_monitor_bounds_for_platform(
         self,
         mock_widget: MagicMock,
         platform: str,

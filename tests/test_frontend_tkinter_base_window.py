@@ -378,7 +378,7 @@ class TestImageDisplayBehavior:
             ((100, 200), 100, 50),  # 1:2 aspect ratio
         ],
     )
-    def test_maintains_image_aspect_ratios(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    def test_maintains_image_aspect_ratios(
         self, image_test_context, original_size, target_height, expected_width, mocked_base_window
     ) -> None:
         """

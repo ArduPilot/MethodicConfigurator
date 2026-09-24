@@ -4084,7 +4084,7 @@ class TestWorkflowEdgeCases:
             (None, "simple", "dest.param", False),  # Simple GUI → auto-jump, no prompt
         ],
     )
-    def test_system_navigates_to_destination_based_on_gui_complexity_and_user_choice(  # pylint: disable= too-many-arguments, too-many-positional-arguments
+    def test_system_navigates_to_destination_based_on_gui_complexity_and_user_choice(
         self, parameter_editor, jump_choice: bool | None, gui_complexity: str, expected_file: str, expect_asked: bool
     ) -> None:
         """

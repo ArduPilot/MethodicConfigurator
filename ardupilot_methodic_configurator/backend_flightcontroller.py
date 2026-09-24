@@ -709,7 +709,7 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
 
     # Motor Test Functionality - Delegated to commands manager
 
-    def test_motor(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def test_motor(
         self, test_sequence_nr: int, motor_letters: str, motor_output_nr: int, throttle_percent: int, timeout_seconds: int
     ) -> tuple[bool, str]:
         """Test a specific motor - delegates to commands manager."""

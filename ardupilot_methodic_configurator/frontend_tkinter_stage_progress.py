@@ -100,7 +100,7 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
             end = phase_data.get("end", self.total_files)
             self.phase_frames[phase_name] = self._create_phase_frame(container, i, phase_name, phase_data, (start, end))
 
-    def _create_phase_frame(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def _create_phase_frame(
         self, container: ttk.Frame, i: int, phase_name: str, phase_data: PhaseData, limits: tuple[int, int]
     ) -> ttk.Frame:
         frame = ttk.Frame(container)
