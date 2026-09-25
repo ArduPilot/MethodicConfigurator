@@ -26,7 +26,7 @@ from logging import getLevelName as logging_getLevelName
 from logging import warning as logging_warning
 from sys import exit as sys_exit
 from sys import platform as sys_platform
-from tkinter import filedialog, ttk
+from tkinter import filedialog, simpledialog, ttk
 from typing import TYPE_CHECKING, Optional, Protocol, Union, cast
 
 # from logging import critical as logging_critical
@@ -56,6 +56,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 from ardupilot_methodic_configurator.frontend_tkinter_fc_banner_window import FlightControllerBannerWindow
+from ardupilot_methodic_configurator.frontend_tkinter_file_browser import FileBrowserWindow
 from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_config
 from ardupilot_methodic_configurator.frontend_tkinter_log_availability import LogAvailabilityReportWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload import ParameterFileUploadWindow
@@ -112,6 +113,8 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
         extract_log_data: Callable[[str, Callable[[int, int], None] | None], LogData],
         analyze_log_data_callback: Callable[..., LogSummary],
         load_apm_doc: Callable[[str, str, str], APMDoc | None],
+        askdirectory: Callable[..., str] | None = None,
+        askstring: Callable[..., str | None] | None = None,
     ) -> None:
         self.create_progress_window = create_progress_window
         self.ask_yesno = ask_yesno
@@ -121,6 +124,8 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
         self.show_info = show_info
         self.asksaveasfilename = asksaveasfilename
         self.askopenfilename = askopenfilename
+        self.askdirectory = askdirectory or filedialog.askdirectory
+        self.askstring = askstring or simpledialog.askstring
         self.sys_exit = exit_callback
         self.extract_log_data = extract_log_data
         self.analyze_log_data = analyze_log_data_callback
@@ -167,6 +172,8 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
             extract_log_data=extract_log,
             analyze_log_data_callback=analyze_log_data,
             load_apm_doc=_load_apm_doc,
+            askdirectory=filedialog.askdirectory,
+            askstring=simpledialog.askstring,
         )
 
     def upload_params_with_progress(
@@ -289,6 +296,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.file_upload_progress_window: ProgressWindow | None = None
         self._param_download_progress_window: ProgressWindow | None = None
         self._log_availability_report_window: LogAvailabilityReportWindow | None = None
+        self._file_browser_window: FileBrowserWindow | None = None
         self._log_report_return_pending: bool = False
         self.inline_component_editor: ComponentEditorWindow | None = None
         self._inline_component_name: str | None = None
@@ -610,11 +618,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             else _("No flight controller connected, upload not available"),
         )
 
-        # Create download last flight log button
+        # Create download .bin log files button
         download_log_button = ttk.Button(
             buttons_frame,
-            text=_("Download last\nflight log"),
-            command=self.on_download_last_flight_log_click,
+            text=_("Download .bin\nlog file(s)"),
+            command=self.on_download_bin_logs_click,
         )
         download_log_button.configure(
             state=(
@@ -626,10 +634,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         download_log_button.pack(side=tk.LEFT, padx=(8, 8))  # Add padding on both sides of the download log button
         show_tooltip(
             download_log_button,
-            _(
-                "Download the last flight log from the flight controller\n"
-                "This will save the previous flight log to a file on your computer for analysis"
-            )
+            _("Browse files in the flight controller log directory and download one or more files")
             if (self.parameter_editor.is_fc_connected and self.parameter_editor.is_mavftp_supported)
             else _("No flight controller connected or MAVFTP not supported"),
         )
@@ -784,10 +789,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         error_container: list = []
 
         progress_callback, flush_progress = self._set_log_analysis_progress_mode(progress)
+        extract_log_data = self.ui.extract_log_data
 
         def run_extraction() -> None:
             try:
-                result_container.append(self.ui.extract_log_data(filepath, progress_callback))
+                result_container.append(extract_log_data(filepath, progress_callback))
             except Exception as e:  # pylint: disable=broad-exception-caught
                 error_container.append(e)
 
@@ -1583,34 +1589,21 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             logging_exception("Parameter upload failed")
             return False
 
-    def on_download_last_flight_log_click(self) -> None:
-        """Handle the download last flight log button click."""
-        # Create a progress window for the download
-        show_when_updating = False
-        progress_window = self.ui.create_progress_window(
-            self.root,
-            _("Downloading Flight Log"),
-            _("Downloaded {}% from {}%"),
-            show_when_updating,
-        )
+    def on_download_bin_logs_click(self) -> None:
+        """Open the modal window for browsing and downloading FC log files."""
+        existing_window = getattr(self, "_file_browser_window", None)
+        if existing_window is not None:
+            try:
+                if existing_window.root.winfo_exists():
+                    existing_window.root.lift()
+                    existing_window.root.focus_force()
+                    return
+            except tk.TclError:
+                self._file_browser_window = None
 
-        def ask_saveas_filename() -> str:
-            return self.ui.asksaveasfilename(
-                title=_("Save flight log as"),
-                defaultextension=".bin",
-                filetypes=[
-                    (_("Binary log files"), "*.bin"),
-                    (_("All files"), "*.*"),
-                ],
-            )
-
-        self.parameter_editor.download_last_flight_log_workflow(
-            ask_saveas_filename=ask_saveas_filename,
-            show_error=self.ui.show_error,
-            show_info=self.ui.show_info,
-            progress_callback=progress_window.update_progress_bar,
-        )
-        progress_window.destroy()
+        download_window = FileBrowserWindow(self.root, self.parameter_editor, self.ui)
+        self._file_browser_window = download_window
+        download_window.set_closed_callback(lambda: setattr(self, "_file_browser_window", None))
 
     def on_fc_banner_click(self) -> None:
         """Display the latest flight-controller banner."""

@@ -272,6 +272,40 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):  # pylint: disable=too-many-
 
         assert result.error_code == FtpError.Success
 
+    def test_one_reply_request_without_initial_retries_waits_for_idle_deadline(self) -> None:
+        """Disabled retransmission waits for idle detection before reporting timeout."""
+        self.mav_ftp.last_op = FTP_OP(
+            seq=0,
+            session=self.mav_ftp.session,
+            opcode=OP_ListDirectory,
+            size=0,
+            req_opcode=0,
+            burst_complete=0,
+            offset=0,
+            payload=None,
+        )
+        self.mav_ftp.last_op_time = 0.0
+        self.mav_ftp.request_cancelled = False
+        self.mav_ftp.ftp_settings.initial_retries = 0
+
+        # Replace the backend's module binding rather than time.time itself.
+        # Patching the shared time module also changes logging's clock, so
+        # creating the timeout log record would consume another side effect.
+        backend_clock = SimpleNamespace(time=Mock(side_effect=[2.0, 3.8]))
+        with (
+            patch("ardupilot_methodic_configurator.backend_mavftp.time", backend_clock),
+            patch.object(self.mav_ftp, "_MAVFTP__terminate_session") as terminate,
+        ):
+            early_idle = self.mav_ftp._MAVFTP__idle_task()  # pylint: disable=protected-access
+            assert early_idle is False
+            assert self.mav_ftp.terminal_timeout is False
+
+            idle = self.mav_ftp._MAVFTP__idle_task()  # pylint: disable=protected-access
+
+        assert idle is False
+        assert self.mav_ftp.terminal_timeout is True
+        terminate.assert_called_once()
+
     def test_read_renews_deadline_when_idle_flush_accepts_delayed_reply(self) -> None:
         """A delayed reply accepted by idle_task must extend read's deadline."""
         idle_calls = 0
@@ -579,6 +613,18 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):  # pylint: disable=too-many-
         terminate.assert_called_once()
         assert "Wrote 4/4 bytes to destination.bin" in self.log_stream.getvalue()
 
+    def test_directory_fsync_is_skipped_on_windows(self) -> None:
+        """Windows cannot fsync a directory after publishing a staged file."""
+        with (
+            patch("ardupilot_methodic_configurator.backend_mavftp.os.name", "nt"),
+            patch("ardupilot_methodic_configurator.backend_mavftp.os.open") as open_file,
+            patch("ardupilot_methodic_configurator.backend_mavftp.os.fsync") as fsync,
+        ):
+            self.mav_ftp._MAVFTP__fsync_directory("C:\\downloads")  # pylint: disable=protected-access
+
+        open_file.assert_not_called()
+        fsync.assert_not_called()
+
     def test_console_idle_detection_default_matches_the_established_cli_value(self) -> None:
         """The standalone MAVFTP console uses the current MAVFTP idle timeout."""
         args = create_argument_parser().parse_args(["get", "remote.bin"])
@@ -594,6 +640,43 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):  # pylint: disable=too-many-
 
         assert result.error_code == FtpError.Success
         assert self.mav_ftp.get_result is None
+
+    def test_sysfs_download_treats_placeholder_size_as_an_upper_bound(self) -> None:
+        """Generated @SYS files finish at EOF instead of their placeholder stat size."""
+        with patch.object(self.mav_ftp, "_MAVFTP__send"):
+            result = self.mav_ftp.cmd_get(["/@SYS/uarts.txt", "uarts.txt"])
+
+        assert result.error_code == FtpError.Success
+        assert self.mav_ftp.remote_size_is_upper_bound is True
+
+        self.mav_ftp.fh = Mock()
+        self.mav_ftp.fh.tell.return_value = 746
+        self.mav_ftp.fh.fileno.return_value = 42
+        self.mav_ftp.fh_owned = True
+        self.mav_ftp.temp_filename = "staging.uarts.txt"
+        self.mav_ftp.filename = "uarts.txt"
+        self.mav_ftp.op_start = 1.0
+        self.mav_ftp.read_gaps = []
+        self.mav_ftp.reached_eof = True
+        self.mav_ftp.read_total = 746
+        self.mav_ftp.requested_offset = 0
+        self.mav_ftp.requested_size = 100000
+        self.mav_ftp.remote_size_known = False
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_mavftp.os.fstat",
+                return_value=Mock(st_size=746),
+            ),
+            patch("ardupilot_methodic_configurator.backend_mavftp.os.fsync"),
+            patch("ardupilot_methodic_configurator.backend_mavftp.os.replace") as replace,
+            patch.object(self.mav_ftp, "_MAVFTP__terminate_session") as terminate,
+        ):
+            assert self.mav_ftp._MAVFTP__check_read_finished()  # pylint: disable=protected-access
+
+        replace.assert_called_once_with("staging.uarts.txt", "uarts.txt")
+        terminate.assert_called_once()
+        assert "Wrote 746/746 bytes to uarts.txt" in self.log_stream.getvalue()
 
     def test_websocket_batch_uses_link_write_for_websocket_framing(self) -> None:
         """Batched packets use write() for both pymavlink WebSocket link classes."""
@@ -1007,6 +1090,27 @@ class TestMAVFTPWritePathCrashes(unittest.TestCase):
             self.mav_ftp._MAVFTP__handle_write_reply(op, None)  # pylint: disable=protected-access
         except ZeroDivisionError as e:
             self.fail(f"__handle_write_reply raised ZeroDivisionError for empty file: {e}")
+
+    def test_unknown_remote_size_still_reports_download_progress(self) -> None:
+        """Downloads without a reported size still notify callbacks so they can be cancelled."""
+        self.mav_ftp.fh = BytesIO()
+        self.mav_ftp.remote_file_size = 0
+        progress_callback = Mock()
+        operation = FTP_OP(
+            seq=1,
+            session=1,
+            opcode=OP_Ack,
+            size=4,
+            req_opcode=OP_ReadFile,
+            burst_complete=0,
+            offset=0,
+            payload=b"data",
+        )
+        self.mav_ftp.callback_progress = progress_callback
+
+        self.mav_ftp._MAVFTP__write_payload(operation)  # pylint: disable=protected-access
+
+        progress_callback.assert_called_once_with(0.0)
 
     def test_send_more_writes_none_guard_at_line_886(self) -> None:
         """Bug fix: Missing None guard before len(write_list) at line 886."""
