@@ -490,7 +490,7 @@ class TestWidgetFactoryMethods:
         parameter_editor.get_vehicle_directory.return_value = "vehicle_dir"
 
         directory_widget = MagicMock()
-        button_widgets = [MagicMock() for _ in range(4)]
+        button_widgets = [MagicMock() for _ in range(5)]
 
         with (
             patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Frame", return_value=MagicMock()),
@@ -521,12 +521,13 @@ class TestWidgetFactoryMethods:
         ):
             editor._create_conf_widgets("__VERSION__")
 
-        button_widgets[1].configure.assert_called_once_with(state=expected_state)
-        button_widgets[3].configure.assert_called_once_with(state="normal")
+        button_widgets[2].configure.assert_called_once_with(state=expected_state)
+        button_widgets[4].configure.assert_called_once_with(state="normal")
         button_widgets[0].grid.assert_called_once_with(row=0, column=0, padx=(8, 8), sticky=tk.EW)
         button_widgets[1].grid.assert_called_once_with(row=1, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
         button_widgets[2].grid.assert_called_once_with(row=2, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
         button_widgets[3].grid.assert_called_once_with(row=3, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
+        button_widgets[4].grid.assert_called_once_with(row=4, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
 
     def test_user_can_open_the_flight_controller_banner(self, parameter_editor_window: ParameterEditorWindow) -> None:
         """

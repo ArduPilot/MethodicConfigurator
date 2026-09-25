@@ -30,6 +30,7 @@ from time import perf_counter, time
 from typing import Any, Literal
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.annotate_params import update_parameter_documentation
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import PhaseData
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
@@ -127,6 +128,20 @@ class FcParameterCopyResult:
     copied: int = 0
     unchanged: int = 0
     failed: int = 0
+
+
+@dataclass(frozen=True)
+class ParameterExportFilters:  # pylint: disable=too-many-instance-attributes
+    """Filter choices used when selecting parameters for export."""
+
+    include_calibrations: bool = False
+    include_non_calibrations: bool = True
+    include_read_only: bool = False
+    include_non_read_only: bool = True
+    include_default_values: bool = False
+    include_non_default_values: bool = True
+    include_inside_limits: bool = True
+    include_outside_limits: bool = True
 
 
 # pylint: disable=too-many-lines
@@ -2111,6 +2126,63 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             )
             for param_name, par in file_parameters.items()
         }
+
+    def get_fc_parameters_for_export(self) -> dict[str, ArduPilotParameter]:
+        """Create independent parameter objects for the current FC values."""
+        return {
+            param_name: self._config_step_processor.create_ardupilot_parameter(
+                param_name,
+                Par(param_value),
+                "",
+                self.fc_parameters,
+            )
+            for param_name, param_value in self.fc_parameters.items()
+        }
+
+    @staticmethod
+    def filter_parameters_for_export(
+        parameters: dict[str, ArduPilotParameter], filters: ParameterExportFilters
+    ) -> dict[str, ArduPilotParameter]:
+        """Return parameters matching every selected export filter row."""
+
+        def matches_pair(selected: bool, alternative_selected: bool, value: bool) -> bool:
+            return (selected and value) or (alternative_selected and not value)
+
+        def is_outside_limits(parameter: ArduPilotParameter) -> bool:
+            return bool(parameter.fc_value_is_above_limit() or parameter.fc_value_is_below_limit())
+
+        def is_inside_limits(parameter: ArduPilotParameter) -> bool:
+            return not is_outside_limits(parameter)
+
+        return {
+            param_name: parameter
+            for param_name, parameter in parameters.items()
+            if matches_pair(filters.include_calibrations, filters.include_non_calibrations, parameter.is_calibration)
+            and matches_pair(filters.include_read_only, filters.include_non_read_only, parameter.is_readonly)
+            and matches_pair(
+                filters.include_default_values,
+                filters.include_non_default_values,
+                parameter.fc_value_equals_default_value,
+            )
+            and matches_pair(filters.include_inside_limits, filters.include_outside_limits, is_inside_limits(parameter))
+        }
+
+    def export_parameters(
+        self,
+        parameters: dict[str, ArduPilotParameter],
+        filename: str,
+        annotate_doc: bool,
+    ) -> None:
+        """Export selected FC parameters without changing AMC project state."""
+        params = self.parameters_as_par_dict(parameters)
+        params.export_to_param(filename)
+        if annotate_doc:
+            update_parameter_documentation(
+                self._local_filesystem.doc_dict,
+                filename,
+                "missionplanner",
+                self._local_filesystem.param_default_dict,
+            )
 
     @staticmethod
     def parameters_as_par_dict(parameters: dict[str, ArduPilotParameter]) -> ParDict:

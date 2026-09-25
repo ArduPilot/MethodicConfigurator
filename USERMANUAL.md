@@ -13,6 +13,7 @@ There are also [quick start instructions](README.md), [specific use case instruc
 
 1. [Step-by-Step Workflow](#step-by-step-workflow)
 1. [Configuring multiple similar vehicles](#configuring-multiple-similar-vehicles)
+1. [Flight-Controller Parameter Export](USERMANUAL_fc_parameter_export.md)
 1. [MAVFTP File Browser](USERMANUAL_MAVFTP.md)
 1. [Customizing configuration steps](https://ardupilot.github.io/MethodicConfigurator/CUSTOMIZING_CONFIGURATION_STEPS.html) (external document)
 1. [Command Line Usage](#command-line-usage)
@@ -276,6 +277,8 @@ Correct those entries and press the `Save data and start configuration` button a
 ### Step 4: Parameter File Editor and uploader interface
 
 Here you sequentially configure the parameters of your flight controller to meet your needs while having all the available documentation at your fingertips.
+
+For exporting the current flight-controller values, see the [Flight-Controller Parameter Export](USERMANUAL_fc_parameter_export.md) guide.
 
 ![Parameter File Editor and Uploader Window (main application)](images/App_screenshot_Parameter_file_editor_and_uploader4_4_simple.png)
 <figure align="center">

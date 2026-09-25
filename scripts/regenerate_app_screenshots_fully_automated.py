@@ -84,6 +84,7 @@ TARGETS: tuple[CaptureTarget, ...] = (
     CaptureTarget("App_screenshot_FC_info_and_param_download.png", "fc_info"),
     CaptureTarget("App_screenshot_instructions.png", "instructions"),
     CaptureTarget("App_screenshot_motor_test.png", "motor_test"),
+    CaptureTarget("App_screenshot_Parameter_export.png", "parameter_export"),
     CaptureTarget(
         "App_screenshot_Parameter_file_editor_and_uploader4_4_simple.png",
         "param_04_simple",
@@ -944,6 +945,37 @@ def _capture_parameter_editor(  # pylint: disable=too-many-arguments, too-many-p
             flight_controller.disconnect()
 
 
+def _capture_parameter_export(output_path: Path, delay: float, padding: int, vehicle_dir: Path) -> None:
+    """Capture the FC parameter export dialog with representative downloaded values."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_vehicle_dir = Path(tmpdir) / vehicle_dir.name
+        shutil.copytree(vehicle_dir, tmp_vehicle_dir)
+        editor_window, flight_controller = _build_parameter_editor(
+            "05_board_orientation.param",
+            tmp_vehicle_dir,
+            "normal",
+        )
+        if "WPNAV_SPEED" in flight_controller.fc_parameters:
+            flight_controller.fc_parameters["WPNAV_SPEED"] += 100.0
+        export_window = None
+        try:
+            editor_window.on_export_parameters_click()
+            export_window = next(
+                child
+                for child in editor_window.root.winfo_children()
+                if isinstance(child, tk.Toplevel) and child.title() == translate("Export parameters")
+            )
+            capture_widget(export_window, output_path, delay, padding)
+        finally:
+            if export_window is not None and export_window.winfo_exists():
+                export_window.destroy()
+            if editor_window.current_plugin_view is not None:
+                _cleanup_plugin_view(editor_window.current_plugin_view)
+            if editor_window.root.winfo_exists():
+                editor_window.root.destroy()
+            flight_controller.disconnect()
+
+
 def _capture_motor_test(output_path: Path, delay: float, padding: int, vehicle_dir: Path) -> None:
     fc_params = _load_fc_params_from_file(vehicle_dir)
     fc_params["FRAME_CLASS"] = 1.0
@@ -1008,6 +1040,8 @@ def capture_target(target: CaptureTarget, output_path: Path, args: argparse.Name
         _capture_instructions(output_path, args.delay, args.padding)
     elif action == "motor_test":
         _capture_motor_test(output_path, args.delay, args.padding, args.vehicle_dir)
+    elif action == "parameter_export":
+        _capture_parameter_export(output_path, args.delay, args.padding, args.vehicle_dir)
     elif action.startswith("param_"):
         if target.gui_complexity is None:
             msg = f"gui_complexity required for {action}"

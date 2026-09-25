@@ -62,6 +62,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_log_availability import Lo
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload import ParameterFileUploadWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame import DocumentationFrame
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
+from ardupilot_methodic_configurator.frontend_tkinter_parameter_export import ParameterExportWindow
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import (
     ProgressWindow,
     update_flight_controller_restart_progress,
@@ -431,6 +432,21 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             else _("No flight controller connected, external parameter upload not available"),
         )
 
+        export_parameters_button = ttk.Button(
+            parameter_actions_frame,
+            text=_("Export parameters"),
+            command=self.on_export_parameters_click,
+            style=smaller_button_style,
+        )
+        export_parameters_button.configure(state="normal" if self.parameter_editor.is_fc_connected else "disabled")
+        export_parameters_button.grid(row=1, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
+        show_tooltip(
+            export_parameters_button,
+            _("Select parameter categories and export the current FC values")
+            if self.parameter_editor.is_fc_connected
+            else _("No flight controller connected, parameter export not available"),
+        )
+
         fc_banner_button = ttk.Button(
             parameter_actions_frame,
             text=_("FC banner"),
@@ -438,7 +454,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             style=smaller_button_style,
         )
         fc_banner_button.configure(state="normal" if self.parameter_editor.is_fc_connected else "disabled")
-        fc_banner_button.grid(row=1, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
+        fc_banner_button.grid(row=2, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
         show_tooltip(
             fc_banner_button,
             _("Display the latest flight-controller banner"),
@@ -450,7 +466,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             command=self.on_analyse_log_click,
             style=smaller_button_style,
         )
-        analyse_log_button.grid(row=2, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
+        analyse_log_button.grid(row=3, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
         show_tooltip(analyse_log_button, _("Open a .bin flight log and analyse its availability"))
 
         zip_vehicle_for_forum_button = ttk.Button(
@@ -460,7 +476,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             style=smaller_button_style,
         )
         zip_vehicle_for_forum_button.configure(state=("normal" if self.parameter_editor.parameter_files() else "disabled"))
-        zip_vehicle_for_forum_button.grid(row=3, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
+        zip_vehicle_for_forum_button.grid(row=4, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
         show_tooltip(
             zip_vehicle_for_forum_button,
             _("Creates a .zip file of the configuration files\nso that they can be easily shared for forum help")
@@ -1525,6 +1541,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             return
 
         ParameterFileUploadWindow(self, filepath, parameters)
+
+    def on_export_parameters_click(self) -> None:
+        """Open the parameter export window for the current FC values."""
+        parameters = self.parameter_editor.get_fc_parameters_for_export()
+        ParameterExportWindow(self, parameters)
 
     def on_upload_selected_and_stay_click(self) -> None:
         """Upload selected parameters and remain on the current parameter file."""
