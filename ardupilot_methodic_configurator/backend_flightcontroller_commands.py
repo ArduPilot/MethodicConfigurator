@@ -106,7 +106,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         """Get master connection - delegates to connection manager."""
         return self._connection_manager.master
 
-    def send_command_and_wait_ack(  # pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
+    def send_command_and_wait_ack(  # noqa: PLR0913, PLR0917 # pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
         self,
         command: int,
         param1: float = 0,
@@ -117,6 +117,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         param6: float = 0,
         param7: float = 0,
         timeout: float = 5.0,
+        log_error: bool = True,
     ) -> tuple[bool, str]:
         """
         Send a MAVLink command and wait for acknowledgment.
@@ -131,6 +132,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             param6: Command parameter 6
             param7: Command parameter 7
             timeout: Timeout in seconds to wait for acknowledgment
+            log_error: Whether to log failure messages at error level (True) or debug level (False)
 
         Returns:
             tuple[bool, str]: (success, error_message) - success is True if command was acknowledged successfully,
@@ -139,7 +141,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         """
         if self.master is None:
             error_msg = _("No flight controller connection available for command")
-            logging_error(error_msg)
+            self._log_command_error(error_msg, log_error=log_error)
             return False, error_msg
 
         try:
@@ -177,7 +179,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
                     if msg.result in result_messages:
                         error_msg, success = result_messages[msg.result]
                         if not success:
-                            logging_error(error_msg)
+                            self._log_command_error(error_msg, log_error=log_error)
                         return success, error_msg
 
                     if msg.result == mavlink.MAV_RESULT_IN_PROGRESS:
@@ -188,20 +190,27 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
 
                     # Unknown result code
                     error_msg = _("Command acknowledgment with unknown result: %(result)d") % {"result": msg.result}
-                    logging_error(error_msg)
+                    self._log_command_error(error_msg, log_error=log_error)
                     return False, error_msg
 
                 time_sleep(0.1)  # Sleep briefly to reduce CPU usage
 
             # Timeout occurred
             error_msg = _("Command acknowledgment timeout after %(timeout).1f seconds") % {"timeout": timeout}
-            logging_error(error_msg)
+            self._log_command_error(error_msg, log_error=log_error)
             return False, error_msg
 
         except Exception as e:  # pylint: disable=broad-exception-caught
             error_msg = _("Failed to send command: %(error)s") % {"error": str(e)}
-            logging_error(error_msg)
+            self._log_command_error(error_msg, log_error=log_error)
             return False, error_msg
+
+    @staticmethod
+    def _log_command_error(msg: str, *, log_error: bool) -> None:
+        if log_error:
+            logging_error(msg)
+        else:
+            logging_debug(msg)
 
     def reboot_to_bootloader(self) -> tuple[bool, str]:
         """Request reboot into the bootloader and wait for its command acknowledgment."""
@@ -750,12 +759,8 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
                 mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,
                 param1=mavlink.MAVLINK_MSG_ID_BATTERY_STATUS,  # message ID (BATTERY_STATUS)
                 param2=interval_microseconds,  # interval in microseconds
-                param3=0,
-                param4=0,
-                param5=0,
-                param6=0,
-                param7=0,
                 timeout=self.COMMAND_ACK_TIMEOUT_BATTERY,
+                log_error=False,
             )
             if success:
                 request_succeeded = True
@@ -763,12 +768,17 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
                     _("BATTERY_STATUS stream request attempt %(attempt)d confirmed"),
                     {"attempt": attempt + 1},
                 )
-            else:
-                last_error = error_msg
-                logging_debug(
-                    _("BATTERY_STATUS stream request attempt %(attempt)d failed: %(error)s"),
-                    {"attempt": attempt + 1, "error": error_msg},
-                )
+                break
+
+            last_error = error_msg
+            logging_debug(
+                _("BATTERY_STATUS stream request attempt %(attempt)d failed: %(error)s"),
+                {"attempt": attempt + 1, "error": error_msg},
+            )
+            # If the flight controller connection is disconnected, avoid retrying futile attempts
+            device_errors = ("device not configured", "input/output error", "bad file descriptor", "no such device")
+            if any(err in error_msg.lower() for err in device_errors):
+                break
             time_sleep(self.BATTERY_STATUS_REQUEST_DELAY)
 
         if not request_succeeded:

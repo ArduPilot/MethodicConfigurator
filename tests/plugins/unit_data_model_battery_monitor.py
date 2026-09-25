@@ -14,7 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from math import isnan, nan
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -441,3 +441,80 @@ class TestBatteryMonitorDataModelEdgeCases:
 
         # Assert: Returns unavailable
         assert status == "unavailable"
+
+    def test_warning_logged_once_on_stream_loss_and_debug_thereafter(
+        self, connected_flight_controller_with_battery_enabled: MagicMock
+    ) -> None:
+        """
+        Warning is logged once when stream is lost, subsequent calls log at debug level.
+
+        GIVEN: Battery monitor has established a stream (_got_battery_status is True)
+        WHEN: get_battery_status encounters error messages across multiple calls
+        THEN: logging_warning should be called only once (on transition)
+        AND: logging_debug should be called on subsequent errors without spamming warnings
+        """
+        fc = connected_flight_controller_with_battery_enabled
+        model = BatteryMonitorDataModel(fc)
+        # Establish stream first
+        model._got_battery_status = True
+
+        fc.get_battery_status.return_value = (None, "Battery status not available from telemetry")
+
+        with (
+            patch("ardupilot_methodic_configurator.plugins.data_model_battery_monitor.logging_warning") as mock_warn,
+            patch("ardupilot_methodic_configurator.plugins.data_model_battery_monitor.logging_debug") as mock_dbg,
+        ):
+            # First poll after stream loss
+            res1 = model.get_battery_status()
+            assert res1 is None
+            assert model._got_battery_status is False
+            mock_warn.assert_called_once_with("Battery status not available from telemetry")
+
+            # Second poll while still lost - should NOT call warning again
+            res2 = model.get_battery_status()
+            assert res2 is None
+            assert mock_warn.call_count == 1
+            mock_dbg.assert_called_with("Battery status not available from telemetry")
+
+    def test_voltage_status_and_color_use_provided_battery_status(
+        self, connected_flight_controller_with_battery_enabled: MagicMock
+    ) -> None:
+        """
+        Providing battery_status directly prevents redundant get_battery_status calls.
+
+        GIVEN: A connected battery monitor data model
+        WHEN: get_voltage_status and get_battery_status_color are called with explicit battery_status
+        THEN: model.get_battery_status() should not be called
+        """
+        fc = connected_flight_controller_with_battery_enabled
+        fc.get_voltage_thresholds.return_value = (11.0, 16.8)
+        model = BatteryMonitorDataModel(fc)
+
+        with patch.object(model, "get_battery_status") as mock_get_status:
+            status = model.get_voltage_status(battery_status=(14.8, 2.5))
+            color = model.get_battery_status_color(battery_status=(14.8, 2.5))
+
+            assert status == "safe"
+            assert color == "green"
+            mock_get_status.assert_not_called()
+
+    def test_voltage_status_and_color_use_provided_battery_status_when_none(
+        self, connected_flight_controller_with_battery_enabled: MagicMock
+    ) -> None:
+        """
+        Providing battery_status=None prevents redundant get_battery_status calls.
+
+        GIVEN: A connected battery monitor data model
+        WHEN: get_voltage_status and get_battery_status_color are called with explicit battery_status=None
+        THEN: model.get_battery_status() should not be called again
+        """
+        fc = connected_flight_controller_with_battery_enabled
+        model = BatteryMonitorDataModel(fc)
+
+        with patch.object(model, "get_battery_status") as mock_get_status:
+            status = model.get_voltage_status(battery_status=None)
+            color = model.get_battery_status_color(battery_status=None)
+
+            assert status == "unavailable"
+            assert color == "gray"
+            mock_get_status.assert_not_called()
