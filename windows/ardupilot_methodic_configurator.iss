@@ -100,6 +100,7 @@ Source: "..\ardupilot_methodic_configurator\images\*.png"; DestDir: "{app}\_inte
 Source: "..\ardupilot_methodic_configurator\images\*.svg"; DestDir: "{app}\_internal\ardupilot_methodic_configurator\images"; Flags: ignoreversion
 Source: "..\ardupilot_methodic_configurator\plugins\AP_Motors_test*.json"; DestDir: "{app}\_internal\ardupilot_methodic_configurator\plugins"; Flags: ignoreversion
 Source: "..\ardupilot_methodic_configurator\configuration_steps_*.json"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
+Source: "..\ardupilot_methodic_configurator\devid.json"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
 Source: "..\ardupilot_methodic_configurator\vehicle_components_schema.json"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
 Source: "..\LICENSES\*.*"; DestDir: "{app}\LICENSES"; Flags: ignoreversion
 Source: "..\credits\*.*"; DestDir: "{app}\credits"; Flags: ignoreversion
