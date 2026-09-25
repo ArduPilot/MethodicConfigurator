@@ -61,6 +61,30 @@ def test_screenshot_window_uses_native_windows_application_icon() -> None:
     )
 
 
+def test_screenshot_generator_can_select_individual_targets(tmp_path) -> None:
+    """The CLI selection limits generation to the requested screenshot target."""
+    args = argparse.Namespace(
+        images_dir=tmp_path,
+        vehicle_dir=tmp_path,
+        delay=0.0,
+        padding=0,
+        overwrite=False,
+        log_level="WARNING",
+        screenshots=["App_screenshot_Parameter_export.png"],
+    )
+
+    with (
+        patch.object(screenshot_generator, "parse_args", return_value=args),
+        patch.object(screenshot_generator, "configure_logging"),
+        patch.object(screenshot_generator, "register_plugins"),
+        patch.object(screenshot_generator, "capture_target") as capture,
+    ):
+        assert screenshot_generator.main() == 0
+
+    assert capture.call_count == 1
+    assert capture.call_args.args[0].action == "parameter_export"
+
+
 def test_screenshot_generator_registers_application_plugins_before_capture(tmp_path) -> None:
     """Screenshot generation initializes plugins just like normal application startup."""
     args = argparse.Namespace(

@@ -29,7 +29,7 @@ from pathlib import Path
 from time import perf_counter, time
 from typing import Any, Literal
 
-from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator import _, data_model_parameter_export
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import PhaseData
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
@@ -43,6 +43,9 @@ from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
 )
 from ardupilot_methodic_configurator.data_model_configuration_step import ConfigurationStepProcessor
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParamFileError, ParDict, is_within_tolerance
+from ardupilot_methodic_configurator.data_model_parameter_conversion import (
+    parameters_as_par_dict as convert_parameters_to_par_dict,
+)
 from ardupilot_methodic_configurator.data_model_safe_evaluator import ConfigurationStepEvalError, safe_evaluate
 from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
@@ -179,6 +182,30 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self._at_least_one_changed = False
 
         self._last_time_asked_to_save: float = 0
+
+    @classmethod
+    def for_connected_flight_controller(
+        cls,
+        flight_controller: FlightController,
+        vehicle_dir: str,
+        vehicle_type_override: str = "",
+    ) -> "ParameterEditor":
+        """Create a standalone parameter model with FC values and matching pdef metadata."""
+        fc_parameters, default_parameters = flight_controller.download_params()
+        if not fc_parameters:
+            msg = _("Could not download parameters from the flight controller.")
+            raise ValueError(msg)
+
+        vehicle_info = flight_controller.info
+        vehicle_type = vehicle_type_override or vehicle_info.vehicle_type or ""
+        firmware_version = vehicle_info.flight_sw_version or ""
+        filesystem = LocalFilesystem.for_external_parameter_file(
+            vehicle_dir,
+            vehicle_type,
+            firmware_version,
+            default_parameters,
+        )
+        return cls("", flight_controller, filesystem)
 
     # frontend_tkinter_parameter_editor.py API start
     @property
@@ -2145,12 +2172,36 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             for param_name, par in file_parameters.items()
         }
 
+    def get_fc_parameters_for_export(self) -> dict[str, ArduPilotParameter]:
+        """Create independent parameter objects for the current FC values."""
+        return data_model_parameter_export.create_fc_parameter_snapshot(self._config_step_processor, self.fc_parameters)
+
+    @staticmethod
+    def filter_parameters_for_export(
+        parameters: dict[str, ArduPilotParameter], filters: data_model_parameter_export.ParameterExportFilters
+    ) -> dict[str, ArduPilotParameter]:
+        """Return parameters matching every selected export filter row."""
+        return data_model_parameter_export.filter_parameters_for_export(parameters, filters)
+
+    def export_parameters(
+        self,
+        parameters: dict[str, ArduPilotParameter],
+        filename: str,
+        annotate_doc: bool,
+    ) -> None:
+        """Export selected FC parameters without changing AMC project state."""
+        data_model_parameter_export.export_parameters(
+            parameters,
+            filename,
+            annotate_doc,
+            self._local_filesystem.doc_dict,
+            self._local_filesystem.param_default_dict,
+        )
+
     @staticmethod
     def parameters_as_par_dict(parameters: dict[str, ArduPilotParameter]) -> ParDict:
         """Convert parameter objects to the values expected by the FC upload workflow."""
-        return ParDict(
-            {name: Par(parameter.get_new_value(), parameter.change_reason_for_file) for name, parameter in parameters.items()}
-        )
+        return convert_parameters_to_par_dict(parameters)
 
     def get_different_parameters(self) -> dict[str, ArduPilotParameter]:
         """

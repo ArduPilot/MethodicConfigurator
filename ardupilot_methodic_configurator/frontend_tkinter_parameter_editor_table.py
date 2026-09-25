@@ -24,6 +24,10 @@ from typing import Protocol
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter, BitmaskHelper
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
+from ardupilot_methodic_configurator.data_model_parameter_compare_and_upload import (
+    selected_external_parameters,
+    unselected_manual_edits,
+)
 from ardupilot_methodic_configurator.data_model_parameter_editor import (
     InvalidParameterNameError,
     OperationNotPossibleError,
@@ -197,7 +201,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
 
         base_tooltips.extend(
             [
-                _("Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long"),
+                _("Parameter name must be ^[A-Z][A-Z_0-9]* and at most 16 characters long"),
                 _("Current value on the flight controller"),
                 _("Is the new value different from the current FC value?"),
                 _("New value from the above selected intermediate parameter file")
@@ -1318,24 +1322,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         # Get only selected parameters
         selected_names = [name for name, checkbutton_state in self.upload_checkbutton_var.items() if checkbutton_state.get()]
         if self.parameters is not None:
-            return self.parameter_editor.parameters_as_par_dict(
-                {
-                    name: self.parameters[name]
-                    for name in selected_names
-                    if name in self.parameters and not self.parameters[name].is_readonly
-                }
-            )
+            return self.parameter_editor.parameters_as_par_dict(selected_external_parameters(self.parameters, selected_names))
         return self.parameter_editor.get_parameters_as_par_dict(selected_names)
 
     def get_unselected_manually_edited_different_parameter_names(self) -> list[str]:
         """Return temporary manual edits that differ from the FC but are not selected for upload."""
         if self.parameters is None:
             return []
-        return [
-            name
-            for name in sorted(self.options.manually_editable_parameters)
-            if name in self.parameters
-            and self.parameters[name].is_dirty
-            and self.parameters[name].is_different_from_fc
-            and (name not in self.upload_checkbutton_var or not self.upload_checkbutton_var[name].get())
-        ]
+        selected_names = {name for name, state in self.upload_checkbutton_var.items() if state.get()}
+        return unselected_manual_edits(self.parameters, self.options.manually_editable_parameters, selected_names)
