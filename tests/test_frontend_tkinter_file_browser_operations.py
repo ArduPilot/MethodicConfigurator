@@ -511,6 +511,59 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
         assert progress_during_crc[0][0] < progress_during_crc[0][1]
         assert progress[-1] == (12, 12)
 
+    def test_upload_verification_keeps_progress_open_until_crc_finishes(self) -> None:
+        """Upload progress also waits for optional CRC verification."""
+        plan = LocalUploadPlan((), ((Path("log.bin"), "/APM/LOGS/log.bin", 12),))
+        progress: list[tuple[int, int]] = []
+
+        def upload(_local: str, _remote: str, callback) -> bool:
+            callback(100, 100)
+            return True
+
+        def verify(_remote: str, _local: str) -> bool:
+            assert progress[-1] == (11, 12)
+            return True
+
+        attempt = _upload_local_plan_worker(
+            plan, 12, MagicMock(), upload, lambda *args: progress.append(args), verify_remote_file=verify
+        )
+
+        assert attempt.files_succeeded == ["/APM/LOGS/log.bin"]
+        assert not attempt.files_failed
+        assert progress[-1] == (12, 12)
+
+    @pytest.mark.parametrize("direction", ["download", "upload"])
+    def test_transfer_exception_records_failure_and_advances_progress(self, direction: str, tmp_path: Path) -> None:
+        """An unexpected transfer exception fails only that file in either direction."""
+        remote = "/APM/LOGS/log.bin"
+        progress = MagicMock()
+        verify = MagicMock()
+        transfer = MagicMock(side_effect=RuntimeError("transfer failed"))
+        if direction == "download":
+            entry = FlightControllerLogFile("log.bin", remote, 12)
+            outcome = _download_remote_plan_worker(
+                RemoteDownloadPlan((), ((entry, tmp_path / "log.bin"),)),
+                tmp_path,
+                12,
+                transfer,
+                progress,
+                verify_remote_file=verify,
+            )
+        else:
+            outcome = _upload_local_plan_worker(
+                LocalUploadPlan((), ((tmp_path / "log.bin", remote, 12),)),
+                12,
+                MagicMock(),
+                transfer,
+                progress,
+                verify_remote_file=verify,
+            )
+
+        assert outcome.files_succeeded == []
+        assert outcome.files_failed == [remote]
+        verify.assert_not_called()
+        progress.assert_called_with(12, 12)
+
     def test_upload_verification_can_be_skipped_for_virtual_file(self) -> None:
         """An unsupported verification result must not masquerade as verified."""
         plan = LocalUploadPlan((), ((Path("threads.txt"), "/@SYS/threads.txt", 12),))

@@ -1483,6 +1483,32 @@ class TestFileBrowserWindow:
         window.parameter_editor.verify_remote_file.assert_called_once_with(entry.remote_path, str(tmp_path / entry.name))
         assert "Verified: /APM/LOGS/log.bin" in window.ui.show_info.call_args.args[1]
 
+    def test_retry_replaces_failed_crc_with_successful_verification(self, tmp_path: Path) -> None:
+        """A retry presents its new CRC result rather than the first attempt's failure."""
+        window = _bare_window()
+        window.verify_transfers_var.get.return_value = True
+        entry = FlightControllerLogFile("log.bin", "/APM/LOGS/log.bin", 12)
+        window.remote_entries = [entry]
+        window.remote_tree = MagicMock()
+        window.remote_tree.selection.return_value = ("0",)
+        window.local_directory_var = MagicMock()
+        window.local_directory_var.get.return_value = str(tmp_path)
+        window.parameter_editor = MagicMock()
+        window.parameter_editor.download_remote_file.return_value = True
+        window.parameter_editor.verify_remote_file.side_effect = [False, True]
+        window.ui = MagicMock()
+        window.ui.ask_yesno.return_value = True
+        window._progress_window = MagicMock(return_value=MagicMock())
+        window.refresh_local_panel = MagicMock()
+
+        window.download_selected_remote_entries()
+
+        assert window.parameter_editor.download_remote_file.call_count == 2
+        window.ui.ask_yesno.assert_called_once()
+        assert "Not verified: /APM/LOGS/log.bin" in window.ui.show_error.call_args.args[1]
+        assert "Verified: /APM/LOGS/log.bin" in window.ui.show_info.call_args.args[1]
+        window.refresh_local_panel.assert_called()
+
     def test_skipped_verification_is_not_claimed_verified(self) -> None:
         """Generated files retain an explicit not-verified status in the summary."""
         window = _bare_window()

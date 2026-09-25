@@ -17,12 +17,13 @@ import subprocess
 import sys
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
 from pathlib import Path
 from tkinter import filedialog, simpledialog, ttk
-from typing import TYPE_CHECKING, Literal, Protocol, cast
+from typing import TYPE_CHECKING, Literal, Protocol, TypeVar, cast
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -68,6 +69,20 @@ from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
+
+
+TransferPlan = TypeVar("TransferPlan", RemoteDownloadPlan, LocalUploadPlan)
+
+
+@dataclass(frozen=True)
+class _TransferBatchUi:
+    """Labels and refresh action for a download or upload batch."""
+
+    title: str
+    progress_message: str
+    summary_title: str
+    retry_prompt: tuple[str, str]
+    refresh: Callable[[], None]
 
 
 class FileBrowserUiServices(Protocol):  # pylint: disable=too-few-public-methods
@@ -1294,23 +1309,43 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         message = format_transfer_summary(succeeded, failed, verification, self.MAX_SUMMARY_ENTRIES)
         (self.ui.show_error if failed else self.ui.show_info)(title, message)
 
-    # Keep the summary and retry dependencies explicit rather than adding a one-use options object.
-    def _complete_transfer_batch(  # pylint: disable=too-many-arguments
+    def _run_transfer_batch(
         self,
+        batch: TransferPlan,
         results: TransferBatchResults,
-        attempt: TransferAttempt,
         *,
-        summary_title: str,
-        refresh: Callable[[], None],
-        retry_prompt: tuple[str, str],
-        retry_action: Callable[[], None] | None,
+        items: Callable[[TransferPlan], Sequence[tuple[str, int]]],
+        execute: Callable[[TransferPlan, int, Callable[[int, int], None]], TransferAttempt],
+        retry: Callable[[TransferPlan, Sequence[str]], TransferPlan],
+        ui: _TransferBatchUi,
+        allow_retry: bool = True,
     ) -> None:
-        """Show this batch's cumulative outcome and offer its one optional retry."""
-        results.record(attempt)
-        self._show_summary(summary_title, results.succeeded, results.failed, results.verification)
-        if retry_action is not None and self.ui.ask_yesno(*retry_prompt) is True:
-            retry_action()
-        refresh()
+        """Run a transfer attempt, present cumulative results, and offer one retry."""
+        file_items = items(batch)
+        total = max(sum(max(size, 1) for _path, size in file_items), 1)
+        results.prepare([path for path, _size in file_items])
+
+        def worker(report_progress: Callable[[int, int], None]) -> TransferAttempt:
+            return execute(batch, total, report_progress)
+
+        def completion(attempt: TransferAttempt) -> None:
+            retry_batch = retry(batch, attempt.files_failed) if allow_retry else None
+            results.record(attempt)
+            self._show_summary(ui.summary_title, results.succeeded, results.failed, results.verification)
+            if retry_batch is not None and items(retry_batch) and self.ui.ask_yesno(*ui.retry_prompt) is True:
+                self._run_transfer_batch(
+                    retry_batch,
+                    results,
+                    items=items,
+                    execute=execute,
+                    retry=retry,
+                    ui=ui,
+                    allow_retry=False,
+                )
+            # A remote refresh could occupy the single-task runner before a retry starts.
+            ui.refresh()
+
+        self._start_transfer_operation(ui.title, ui.progress_message, worker, completion)
 
     def download_selected_remote_entries(self) -> None:
         """Recursively download selected remote entries into the local panel directory."""
@@ -1352,46 +1387,27 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
             download_remote_file = self.parameter_editor.download_remote_file
             verify_remote_file = self.parameter_editor.verify_remote_file if self.verify_transfers_var.get() else None
             results = TransferBatchResults()
-
-            def run_batch(
-                batch: RemoteDownloadPlan,
-                *,
-                allow_retry: bool,
-            ) -> None:
-                total = max(sum(max(entry.size_bytes, 1) for entry, _path in batch.files), 1)
-                results.prepare([entry.remote_path for entry, _target in batch.files])
-
-                def worker(report_progress: Callable[[int, int], None]) -> TransferAttempt:
-                    return _download_remote_plan_worker(
-                        batch,
-                        local_directory,
-                        total,
-                        download_remote_file,
-                        report_progress,
-                        verify_remote_file=verify_remote_file,
-                    )
-
-                def completion(attempt: TransferAttempt) -> None:
-                    retry_plan = _retry_remote_download_plan(batch, attempt.files_failed) if allow_retry else None
-                    self._complete_transfer_batch(
-                        results,
-                        attempt,
-                        summary_title=_("Download summary"),
-                        refresh=self.refresh_local_panel,
-                        retry_prompt=(_("Retry failed downloads?"), _("Retry only the failed file downloads?")),
-                        retry_action=(lambda: run_batch(retry_plan, allow_retry=False))
-                        if retry_plan is not None and retry_plan.files
-                        else None,
-                    )
-
-                self._start_transfer_operation(
+            self._run_transfer_batch(
+                plan,
+                results,
+                items=lambda batch: [(entry.remote_path, entry.size_bytes) for entry, _target in batch.files],
+                execute=lambda batch, total, progress: _download_remote_plan_worker(
+                    batch,
+                    local_directory,
+                    total,
+                    download_remote_file,
+                    progress,
+                    verify_remote_file=verify_remote_file,
+                ),
+                retry=_retry_remote_download_plan,
+                ui=_TransferBatchUi(
                     _("Downloading selected entries"),
                     _("Downloaded {} of {} bytes"),
-                    worker,
-                    completion,
-                )
-
-            run_batch(plan, allow_retry=True)
+                    _("Download summary"),
+                    (_("Retry failed downloads?"), _("Retry only the failed file downloads?")),
+                    self.refresh_local_panel,
+                ),
+            )
 
         get_remote_files = self.parameter_editor.get_remote_files
         self._start_remote_task(
@@ -1435,46 +1451,27 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
             upload_file_to_fc = self.parameter_editor.upload_file_to_fc
             verify_remote_file = self.parameter_editor.verify_remote_file if self.verify_transfers_var.get() else None
             results = TransferBatchResults()
-
-            def run_batch(
-                batch: LocalUploadPlan,
-                *,
-                allow_retry: bool,
-            ) -> None:
-                total = max(sum(max(size, 1) for _path, _remote, size in batch.files), 1)
-                results.prepare([remote_path for _path, remote_path, _size in batch.files])
-
-                def worker(report_progress: Callable[[int, int], None]) -> TransferAttempt:
-                    return _upload_local_plan_worker(
-                        batch,
-                        total,
-                        make_remote_directory,
-                        upload_file_to_fc,
-                        report_progress,
-                        verify_remote_file=verify_remote_file,
-                    )
-
-                def completion(attempt: TransferAttempt) -> None:
-                    retry_plan = _retry_local_upload_plan(batch, attempt.files_failed) if allow_retry else None
-                    self._complete_transfer_batch(
-                        results,
-                        attempt,
-                        summary_title=_("Upload summary"),
-                        refresh=self.refresh_remote_panel,
-                        retry_prompt=(_("Retry failed uploads?"), _("Retry only the failed file uploads?")),
-                        retry_action=(lambda: run_batch(retry_plan, allow_retry=False))
-                        if retry_plan is not None and retry_plan.files
-                        else None,
-                    )
-
-                self._start_transfer_operation(
+            self._run_transfer_batch(
+                result,
+                results,
+                items=lambda batch: [(remote_path, size) for _path, remote_path, size in batch.files],
+                execute=lambda batch, total, progress: _upload_local_plan_worker(
+                    batch,
+                    total,
+                    make_remote_directory,
+                    upload_file_to_fc,
+                    progress,
+                    verify_remote_file=verify_remote_file,
+                ),
+                retry=_retry_local_upload_plan,
+                ui=_TransferBatchUi(
                     _("Uploading selected entries"),
                     _("Uploaded {} of {} bytes"),
-                    worker,
-                    completion,
-                )
-
-            run_batch(result, allow_retry=True)
+                    _("Upload summary"),
+                    (_("Retry failed uploads?"), _("Retry only the failed file uploads?")),
+                    self.refresh_remote_panel,
+                ),
+            )
 
         self._start_remote_task(
             lambda: _build_local_upload_plan(selected, remote_directory),

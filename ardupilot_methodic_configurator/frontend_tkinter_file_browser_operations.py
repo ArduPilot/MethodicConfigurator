@@ -13,6 +13,7 @@ import posixpath
 import sys
 from collections.abc import Callable, Sequence  # noqa: TC003
 from dataclasses import dataclass, field
+from functools import partial
 from pathlib import Path  # noqa: TC003
 
 from ardupilot_methodic_configurator import _
@@ -93,6 +94,48 @@ class TransferAttempt:
     # Planning failures and operation-wide errors have no individual file/directory result.
     other_failed: list[str] = field(default_factory=list)
     verification: dict[str, bool | None] = field(default_factory=dict)
+
+
+@dataclass
+class _FileTransferState:
+    """Track progress and file outcomes for one transfer attempt."""
+
+    total: int
+    report_progress: Callable[[int, int], None]
+    verify_remote_file: Callable[[str, str], bool | None] | None
+    attempt: TransferAttempt
+    completed: int = 0
+
+    def process(
+        self,
+        remote_path: str,
+        local_path: str,
+        size: int,
+        transfer: Callable[[Callable[[int, int], None]], bool] | None,
+    ) -> None:
+        """Transfer and optionally verify one file, always advancing progress."""
+        units = max(size, 1)
+
+        def file_progress(current: int, maximum: int) -> None:
+            # Keep the window open until optional CRC verification finishes.
+            limit = self.total - 1 if self.verify_remote_file is not None else self.total
+            progress = min(limit, int(self.completed + units * (current / maximum if maximum else 0.0)))
+            self.report_progress(progress, self.total)
+
+        try:
+            success = transfer(file_progress) if transfer is not None else False
+        except Exception:  # pylint: disable=broad-exception-caught
+            success = False
+        if success and self.verify_remote_file is not None:
+            try:
+                verification = self.verify_remote_file(remote_path, local_path)
+            except Exception:  # pylint: disable=broad-exception-caught
+                verification = False
+            self.attempt.verification[remote_path] = verification
+            success = verification is not False
+        (self.attempt.files_succeeded if success else self.attempt.files_failed).append(remote_path)
+        self.completed += units
+        self.report_progress(self.completed, self.total)
 
 
 @dataclass
@@ -330,8 +373,8 @@ def _download_remote_plan_worker(  # pylint: disable=too-many-arguments
     verify_remote_file: Callable[[str, str], bool | None] | None = None,
 ) -> TransferAttempt:
     """Create local directories and transfer files without retaining a Tk window."""
-    completed = 0
     attempt = TransferAttempt(other_failed=list(plan.failed))
+    state = _FileTransferState(total, report_progress, verify_remote_file, attempt)
     for directory in plan.directories:
         success = False
         try:
@@ -345,43 +388,15 @@ def _download_remote_plan_worker(  # pylint: disable=too-many-arguments
         _record_directory_result(str(directory), success, attempt)
 
     for entry, target in plan.files:
-        units = max(entry.size_bytes, 1)
-        if not _local_target_is_contained(local_directory, target) or (
+        safe_target = _local_target_is_contained(local_directory, target) and not (
             target.is_symlink() or (target.parent.exists() and not target.parent.is_dir())
-        ):
-            attempt.files_failed.append(entry.remote_path)
-            completed += units
-            report_progress(completed, total)
-            continue
-
-        def report_file_progress(
-            current: int,
-            maximum: int,
-            offset: int = completed,
-            size: int = units,
-        ) -> None:
-            # Keep the progress window open until optional CRC verification finishes.
-            limit = total - 1 if verify_remote_file is not None else total
-            progress = min(limit, int(offset + size * (current / maximum if maximum else 0.0)))
-            report_progress(progress, total)
-
-        try:
-            success = download_remote_file(entry.remote_path, str(target), report_file_progress)
-        except Exception:  # pylint: disable=broad-exception-caught
-            success = False
-        if success and verify_remote_file is not None:
-            try:
-                verification = verify_remote_file(entry.remote_path, str(target))
-            except Exception:  # pylint: disable=broad-exception-caught
-                verification = False
-            attempt.verification[entry.remote_path] = verification
-            success = verification is not False
-        if success:
-            attempt.files_succeeded.append(entry.remote_path)
-        else:
-            attempt.files_failed.append(entry.remote_path)
-        completed += units
-        report_progress(completed, total)
+        )
+        state.process(
+            entry.remote_path,
+            str(target),
+            entry.size_bytes,
+            partial(download_remote_file, entry.remote_path, str(target)) if safe_target else None,
+        )
     return attempt
 
 
@@ -456,8 +471,8 @@ def _upload_local_plan_worker(  # pylint: disable=too-many-arguments,too-many-lo
     verify_remote_file: Callable[[str, str], bool | None] | None = None,
 ) -> TransferAttempt:
     """Create remote directories and upload files without retaining a Tk window."""
-    completed = 0
     attempt = TransferAttempt(other_failed=list(plan.failed))
+    state = _FileTransferState(total, report_progress, verify_remote_file, attempt)
     failed_directories: set[str] = set()
 
     def below_failed_directory(remote_path: str) -> bool:
@@ -471,34 +486,14 @@ def _upload_local_plan_worker(  # pylint: disable=too-many-arguments,too-many-lo
         if not success:
             failed_directories.add(directory)
     for local_path, remote_path, size in plan.files:
-        units = max(size, 1)
-
-        def report_file_progress(
-            current: int,
-            maximum: int,
-            offset: int = completed,
-            file_size: int = units,
-        ) -> None:
-            limit = total - 1 if verify_remote_file is not None else total
-            progress = min(limit, int(offset + file_size * (current / maximum if maximum else 0.0)))
-            report_progress(progress, total)
-
-        success = not below_failed_directory(remote_path) and _call_remote_bool(
-            upload_file_to_fc, str(local_path), remote_path, report_file_progress
+        state.process(
+            remote_path,
+            str(local_path),
+            size,
+            partial(_call_remote_bool, upload_file_to_fc, str(local_path), remote_path)
+            if not below_failed_directory(remote_path)
+            else None,
         )
-        if success and verify_remote_file is not None:
-            try:
-                verification = verify_remote_file(remote_path, str(local_path))
-            except Exception:  # pylint: disable=broad-exception-caught
-                verification = False
-            attempt.verification[remote_path] = verification
-            success = verification is not False
-        if success:
-            attempt.files_succeeded.append(remote_path)
-        else:
-            attempt.files_failed.append(remote_path)
-        completed += units
-        report_progress(completed, total)
     return attempt
 
 
