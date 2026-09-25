@@ -103,6 +103,7 @@ Each sub-application has detailed architecture documentation covering requiremen
    - [`frontend_tkinter_parameter_editor.py`](ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py)
      - [MAVFTP file-browser architecture](ARCHITECTURE_file_browser.md)
      - [External parameter file upload architecture](ARCHITECTURE_parameter_upload.md)
+       - [Flight-controller parameter export architecture](ARCHITECTURE_fc_param_export.md)
      - [`frontend_tkinter_parameter_editor_documentation_frame.py`](ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py)
      - [`frontend_tkinter_parameter_editor_table.py`](ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py)
      - [`frontend_tkinter_stage_progress.py`](ardupilot_methodic_configurator/frontend_tkinter_stage_progress.py)

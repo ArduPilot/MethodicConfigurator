@@ -13,15 +13,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
 # pylint: disable=protected-access
 
 from argparse import Namespace
-from tkinter import TclError
-from types import SimpleNamespace
 from unittest.mock import MagicMock, call, patch
 
 import pytest
 
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
-from ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload import ParameterFileUploadWindow
+from ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload import (
+    ParameterFileUploadWindow,
+    StandaloneUploadHost,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload import main as standalone_main
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import (
@@ -410,6 +411,17 @@ def test_successful_external_upload_updates_fc_values_before_closing() -> None:
     window.close.assert_called_once_with()
 
 
+def test_standalone_upload_host_closes_the_event_loop() -> None:
+    """The shared host callback retains the standalone upload close behavior."""
+    root = MagicMock()
+    host = StandaloneUploadHost(root, MagicMock(), MagicMock(), on_close=root.quit)
+
+    host.repopulate_parameter_table()
+    host.on_skip_click()
+
+    root.quit.assert_called_once_with()
+
+
 def test_closing_external_upload_window_refreshes_parent_table() -> None:
     """Refresh the normal parameter table after the modal is closed."""
     window = _window_without_tk()
@@ -500,83 +512,62 @@ def test_parameter_editor_propagates_external_workflow_failure() -> None:
     )
 
 
-@pytest.mark.parametrize("fail_at", ["connect", "download", "metadata", "dialog", "mainloop", "closed", "destroyed"])
-def test_standalone_cleans_up_after_failure(fail_at: str) -> None:
-    """Closing or failing during standalone startup releases the FC and Tk root."""
+def test_standalone_main_uses_shared_parameter_application() -> None:
+    """Standalone compare and upload delegates connection and model startup to shared layers."""
     args = Namespace(
         loglevel="INFO",
         reboot_time=8,
         baudrate=115200,
         device="test",
-        vehicle_dir=".",
+        vehicle_dir="vehicle",
+        vehicle_type="ArduPlane",
         allow_editing_template_files=False,
         save_component_to_system_templates=False,
     )
+    with (
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload.argument_parser",
+            return_value=args,
+        ),
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload."
+            "run_standalone_parameter_application"
+        ) as run_application,
+    ):
+        standalone_main()
+
+    run_application.assert_called_once()
+    called_args, kwargs = run_application.call_args
+    assert called_args[0] is args
+    assert kwargs["root_factory"]
+    assert kwargs["flight_controller_factory"]
+    initialize_editor = called_args[1]
+    open_window = called_args[2]
     root = MagicMock()
+    flight_controller = MagicMock()
     ui = MagicMock()
     ui.askopenfilename.return_value = "external.param"
-    fc = MagicMock()
-    fc.connect.return_value = ""
-    fc.info = SimpleNamespace(vehicle_type="ArduPlane", flight_sw_version="4.6.3")
-    fc.download_params.return_value = ({"ROLL_P": 0.1}, ParDict())
-    filesystem = MagicMock()
-    editor = MagicMock()
-    editor.load_external_parameter_file.return_value = {"ROLL_P": MagicMock()}
-    if fail_at == "connect":
-        fc.connect.side_effect = RuntimeError("connect failed")
-    elif fail_at == "download":
-        fc.download_params.side_effect = RuntimeError("download failed")
-    elif fail_at == "metadata":
-        metadata_error = RuntimeError("metadata failed")
-    elif fail_at == "dialog":
-        dialog_error = RuntimeError("dialog failed")
-    elif fail_at == "mainloop":
-        root.mainloop.side_effect = RuntimeError("mainloop failed")
-    elif fail_at == "destroyed":
-        root.destroy.side_effect = TclError("application has been destroyed")
+    parameter_editor = MagicMock()
+    parameter_editor.load_external_parameter_file.return_value = {"ROLL_P": MagicMock()}
 
     with (
         patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload.argument_parser", return_value=args
-        ),
-        patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload.tk.Tk", return_value=root),
+            "ardupilot_methodic_configurator.data_model_parameter_editor.ParameterEditor.for_connected_flight_controller",
+            return_value=parameter_editor,
+        ) as create_editor,
         patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload.FlightController", return_value=fc
-        ),
-        patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload.LocalFilesystem") as fs_type,
-        patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload.ParameterEditor",
-            return_value=editor,
-        ),
-        patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload.ParameterFileUploadWindow"
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload.ParameterFileUploadWindow",
         ) as dialog,
-        patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ParameterEditorUiServices.default",
-            return_value=ui,
-        ),
     ):
-        fs_type.for_external_parameter_file.return_value = filesystem
-        if fail_at == "metadata":
-            fs_type.for_external_parameter_file.side_effect = metadata_error
-        if fail_at == "dialog":
-            dialog.side_effect = dialog_error
-        elif fail_at == "closed":
-            dialog.side_effect = lambda host, *_args: host.repopulate_parameter_table()
-        if fail_at in {"closed", "destroyed"}:
-            standalone_main()
-        else:
-            with pytest.raises(RuntimeError, match="failed"):
-                standalone_main()
+        assert initialize_editor(root, flight_controller, ui) is parameter_editor
+        opened_window = open_window(root, parameter_editor, ui)
 
-    if fail_at not in {"connect", "download"}:
-        fs_type.for_external_parameter_file.assert_called_once_with(
-            ".", "ArduPlane", "4.6.3", fc.download_params.return_value[1]
-        )
-    fc.disconnect.assert_called_once_with()
-    root.destroy.assert_called_once_with()
-    if fail_at == "closed":
-        root.quit.assert_called_once_with()
+    ui.askopenfilename.assert_called_once()
+    assert ui.askopenfilename.call_args.kwargs["parent"] is root
+    create_editor.assert_called_once_with(flight_controller, "vehicle", "ArduPlane")
+    parameter_editor.load_external_parameter_file.assert_called_once_with("external.param")
+    dialog.assert_called_once()
+    assert opened_window is dialog.return_value
 
 
 @pytest.mark.parametrize("parent_visible", [False, True])
@@ -615,3 +606,74 @@ def test_upload_dialog_centers_on_visible_parent_or_screen(parent_visible: bool)
         dialog.center_window_on_screen.assert_called_once_with(dialog.root)
         dialog.center_window.assert_not_called()
         dialog.root.transient.assert_not_called()
+
+
+@pytest.fixture(name="standalone_callbacks")
+def _standalone_callbacks() -> tuple:
+    """Capture the compare/upload callbacks supplied to the shared application."""
+    args = Namespace(loglevel="INFO", reboot_time=8, baudrate=115200, device="", vehicle_dir="vehicle", vehicle_type="Copter")
+    with (
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload.argument_parser",
+            return_value=args,
+        ),
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload."
+            "run_standalone_parameter_application"
+        ) as run,
+    ):
+        standalone_main()
+    return run.call_args.args[1:]
+
+
+def test_cancelling_external_file_selection_skips_model_setup(standalone_callbacks) -> None:
+    """
+    Cancel standalone compare/upload file selection without loading parameters.
+
+    GIVEN: The flight controller is connected and the file chooser is open
+    WHEN: The user cancels the chooser
+    THEN: The callback returns no editor and does not start metadata setup
+    """
+    initialize, _open_dialog = standalone_callbacks
+    root = MagicMock()
+    ui = MagicMock()
+    ui.askopenfilename.return_value = ""
+    with patch(
+        "ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload.initialize_standalone_parameter_editor"
+    ) as create_editor:
+        result = initialize(root, MagicMock(), ui)
+
+    assert result is None
+    assert ui.askopenfilename.call_args.kwargs["parent"] is root
+    create_editor.assert_not_called()
+
+
+def test_invalid_external_file_reports_error_before_opening_dialog(standalone_callbacks) -> None:
+    """
+    Keep the standalone comparison closed when a selected file cannot be loaded.
+
+    GIVEN: The user selected an invalid parameter file
+    WHEN: The model rejects the file
+    THEN: The UI reports the file error and no dialog is created
+    """
+    initialize, open_dialog = standalone_callbacks
+    editor = MagicMock()
+    editor.load_external_parameter_file.side_effect = ValueError("invalid parameter syntax")
+    ui = MagicMock()
+    ui.askopenfilename.return_value = "invalid.param"
+    with (
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload."
+            "initialize_standalone_parameter_editor",
+            return_value=editor,
+        ),
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload.ParameterFileUploadWindow"
+        ) as dialog_type,
+    ):
+        initialize(MagicMock(), MagicMock(), ui)
+        result = open_dialog(MagicMock(), editor, ui)
+
+    assert result is False
+    ui.show_error.assert_called_once_with("Parameter file error", "invalid parameter syntax")
+    dialog_type.assert_not_called()

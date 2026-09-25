@@ -84,6 +84,7 @@ TARGETS: tuple[CaptureTarget, ...] = (
     CaptureTarget("App_screenshot_FC_info_and_param_download.png", "fc_info"),
     CaptureTarget("App_screenshot_instructions.png", "instructions"),
     CaptureTarget("App_screenshot_motor_test.png", "motor_test"),
+    CaptureTarget("App_screenshot_Parameter_export.png", "parameter_export"),
     CaptureTarget(
         "App_screenshot_Parameter_file_editor_and_uploader4_4_simple.png",
         "param_04_simple",
@@ -303,6 +304,13 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--delay", type=float, default=0.2, help="Delay before capture in seconds")
     parser.add_argument("--padding", type=int, default=0, help="Capture padding in pixels")
+    parser.add_argument(
+        "--screenshots",
+        nargs="+",
+        choices=[target.filename for target in TARGETS],
+        metavar="FILENAME",
+        help="Screenshot filenames to regenerate (default: all screenshots)",
+    )
     parser.add_argument("--overwrite", action="store_true", help="Overwrite existing files")
     parser.add_argument(
         "--log-level",
@@ -944,6 +952,37 @@ def _capture_parameter_editor(  # pylint: disable=too-many-arguments, too-many-p
             flight_controller.disconnect()
 
 
+def _capture_parameter_export(output_path: Path, delay: float, padding: int, vehicle_dir: Path) -> None:
+    """Capture the FC parameter export dialog with representative downloaded values."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_vehicle_dir = Path(tmpdir) / vehicle_dir.name
+        shutil.copytree(vehicle_dir, tmp_vehicle_dir)
+        editor_window, flight_controller = _build_parameter_editor(
+            "05_board_orientation.param",
+            tmp_vehicle_dir,
+            "normal",
+        )
+        if "WPNAV_SPEED" in flight_controller.fc_parameters:
+            flight_controller.fc_parameters["WPNAV_SPEED"] += 100.0
+        export_window = None
+        try:
+            editor_window.on_export_parameters_click()
+            export_window = next(
+                child
+                for child in editor_window.root.winfo_children()
+                if isinstance(child, tk.Toplevel) and child.title() == translate("Export parameters")
+            )
+            capture_widget(export_window, output_path, delay, padding)
+        finally:
+            if export_window is not None and export_window.winfo_exists():
+                export_window.destroy()
+            if editor_window.current_plugin_view is not None:
+                _cleanup_plugin_view(editor_window.current_plugin_view)
+            if editor_window.root.winfo_exists():
+                editor_window.root.destroy()
+            flight_controller.disconnect()
+
+
 def _capture_motor_test(output_path: Path, delay: float, padding: int, vehicle_dir: Path) -> None:
     fc_params = _load_fc_params_from_file(vehicle_dir)
     fc_params["FRAME_CLASS"] = 1.0
@@ -1008,6 +1047,8 @@ def capture_target(target: CaptureTarget, output_path: Path, args: argparse.Name
         _capture_instructions(output_path, args.delay, args.padding)
     elif action == "motor_test":
         _capture_motor_test(output_path, args.delay, args.padding, args.vehicle_dir)
+    elif action == "parameter_export":
+        _capture_parameter_export(output_path, args.delay, args.padding, args.vehicle_dir)
     elif action.startswith("param_"):
         if target.gui_complexity is None:
             msg = f"gui_complexity required for {action}"
@@ -1094,8 +1135,12 @@ def main() -> int:
         logging.error("Vehicle dir does not exist: %s", args.vehicle_dir)
         return 1
 
+    requested_screenshots = getattr(args, "screenshots", None)
+    targets = [target for target in TARGETS if requested_screenshots is None or target.filename in requested_screenshots]
+    selected_filenames = {target.filename for target in targets}
+
     failures: list[str] = []
-    for target in TARGETS:
+    for target in targets:
         output_path = args.images_dir / target.filename if args.overwrite else args.images_dir / f"{target.filename}.new.png"
 
         try:
@@ -1105,16 +1150,15 @@ def main() -> int:
             logging.exception("Failed to generate %s: %s", target.filename, exc)
 
     # Keep the historical alias in sync in case only one of the two was captured.
-    if args.overwrite:
-        path_4 = args.images_dir / "App_screenshot_Parameter_file_editor_and_uploader4.png"
-        path_1 = args.images_dir / "App_screenshot1.png"
-    else:
-        path_4 = args.images_dir / "App_screenshot_Parameter_file_editor_and_uploader4.png.new.png"
-        path_1 = args.images_dir / "App_screenshot1.png.new.png"
-    if path_4.exists() and not path_1.exists():
-        shutil.copy2(path_4, path_1)
-    if path_1.exists() and not path_4.exists():
-        shutil.copy2(path_1, path_4)
+    alias_filenames = {"App_screenshot_Parameter_file_editor_and_uploader4.png", "App_screenshot1.png"}
+    if selected_filenames & alias_filenames:
+        suffix = "" if args.overwrite else ".new.png"
+        path_4 = args.images_dir / f"App_screenshot_Parameter_file_editor_and_uploader4{suffix}"
+        path_1 = args.images_dir / f"App_screenshot1{suffix}"
+        if path_4.exists() and not path_1.exists():
+            shutil.copy2(path_4, path_1)
+        if path_1.exists() and not path_4.exists():
+            shutil.copy2(path_1, path_4)
 
     if failures:
         logging.error("Completed with failures: %s", ", ".join(failures))

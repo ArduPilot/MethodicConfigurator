@@ -131,6 +131,7 @@ annotate_params = "ardupilot_methodic_configurator.annotate_params:main"
 param_pid_adjustment_update = "ardupilot_methodic_configurator.param_pid_adjustment_update:main"
 mavftp = "ardupilot_methodic_configurator.backend_mavftp:main"
 amc_parameter_compare_and_upload = "ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload:main"
+amc_parameter_export = "ardupilot_methodic_configurator.frontend_tkinter_parameter_export:main"
 
 [project.entry-points."argcomplete.completers"]
 ardupilot_methodic_configurator = "ardupilot_methodic_configurator.__main__:create_argument_parser"
@@ -139,6 +140,7 @@ annotate_params = "ardupilot_methodic_configurator.annotate_params:create_argume
 param_pid_adjustment_update = "ardupilot_methodic_configurator.param_pid_adjustment_update:create_argument_parser"
 mavftp = "ardupilot_methodic_configurator.backend_mavftp:create_argument_parser"
 amc_parameter_compare_and_upload = "ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload:argument_parser"
+amc_parameter_export = "ardupilot_methodic_configurator.frontend_tkinter_parameter_export:argument_parser"
 
 [project.urls]
 homepage = "https://ardupilot.github.io/MethodicConfigurator/"

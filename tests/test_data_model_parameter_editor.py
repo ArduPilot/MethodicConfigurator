@@ -1298,6 +1298,59 @@ class TestSummaryFileWritingWorkflows:
         )
 
 
+class TestConnectedFlightControllerFactory:
+    """Test creation of a standalone parameter model from a connected controller."""
+
+    def test_uses_connected_firmware_metadata_and_downloaded_defaults(self) -> None:
+        """The model factory creates an external filesystem for the connected FC firmware."""
+        flight_controller = MagicMock()
+        flight_controller.info = SimpleNamespace(vehicle_type="ArduPlane", flight_sw_version="4.6.3")
+        downloaded_parameters = {"ROLL_P": 0.1}
+        default_parameters = ParDict({"ROLL_P": Par(0.0)})
+        flight_controller.download_params.return_value = (downloaded_parameters, default_parameters)
+        filesystem = MagicMock()
+
+        with patch(
+            "ardupilot_methodic_configurator.data_model_parameter_editor.LocalFilesystem.for_external_parameter_file",
+            return_value=filesystem,
+        ) as create_filesystem:
+            parameter_editor = ParameterEditor.for_connected_flight_controller(flight_controller, "vehicle")
+
+        create_filesystem.assert_called_once_with("vehicle", "ArduPlane", "4.6.3", default_parameters)
+        flight_controller.download_params.assert_called_once_with()
+        assert parameter_editor._flight_controller is flight_controller
+        assert parameter_editor._local_filesystem is filesystem
+
+    def test_vehicle_type_override_is_passed_to_metadata_loader(self) -> None:
+        """An explicit vehicle type takes precedence over the controller report."""
+        flight_controller = MagicMock()
+        flight_controller.info = SimpleNamespace(vehicle_type="ArduPlane", flight_sw_version="4.6.3")
+        flight_controller.download_params.return_value = ({"ROLL_P": 0.1}, ParDict())
+
+        with patch(
+            "ardupilot_methodic_configurator.data_model_parameter_editor.LocalFilesystem.for_external_parameter_file",
+            return_value=MagicMock(),
+        ) as create_filesystem:
+            ParameterEditor.for_connected_flight_controller(flight_controller, "vehicle", "Copter")
+
+        create_filesystem.assert_called_once_with("vehicle", "Copter", "4.6.3", ParDict())
+
+    def test_empty_parameter_download_fails_before_metadata_loading(self) -> None:
+        """Metadata is not fetched when the FC did not provide parameters."""
+        flight_controller = MagicMock()
+        flight_controller.download_params.return_value = ({}, ParDict())
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.data_model_parameter_editor.LocalFilesystem.for_external_parameter_file"
+            ) as create_filesystem,
+            pytest.raises(ValueError, match="Could not download parameters"),
+        ):
+            ParameterEditor.for_connected_flight_controller(flight_controller, "vehicle")
+
+        create_filesystem.assert_not_called()
+
+
 class TestFlightControllerDownloadWorkflows:
     """Test flight controller parameter download business logic workflows."""
 
