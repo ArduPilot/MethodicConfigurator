@@ -1580,7 +1580,7 @@ class TestFileCopyWorkflows:
         User can update in-memory parameters from FC values.
 
         GIVEN: A user has relevant FC parameters to copy that exist in current_step_parameters
-        WHEN: They call _update_parameters_from_fc_values
+        WHEN: They call update_parameters_from_fc_values
         THEN: The in-memory parameter values should be updated and the result counts both updates
         """
         # Arrange (Given): Set up parameters in current_step_parameters
@@ -1602,12 +1602,35 @@ class TestFileCopyWorkflows:
         relevant_params = {"PARAM1": 1.0, "PARAM2": 2.0}
 
         # Act (When): Update parameters from FC values
-        result = parameter_editor._update_parameters_from_fc_values(relevant_params)
+        result = parameter_editor.update_parameters_from_fc_values(relevant_params)
 
         # Assert (Then): In-memory values were updated
         assert result == FcParameterCopyResult(copied=2)
         assert param1.get_new_value() == pytest.approx(1.0)
         assert param2.get_new_value() == pytest.approx(2.0)
+
+    def test_user_can_update_the_current_step_from_fc_values(self, parameter_editor) -> None:
+        """
+        A calibration readback updates the active step's new values from the FC.
+
+        GIVEN: The active step contains parameters with freshly downloaded FC values
+        WHEN: The current step is synchronized with those values
+        THEN: The active parameters contain the downloaded values
+        """
+        param = ArduPilotParameter(
+            name="PARAM1",
+            par_obj=Par(0.0, ""),
+            metadata={},
+            default_par=Par(0.0, ""),
+            fc_value=1.0,
+        )
+        parameter_editor.current_step_parameters = {"PARAM1": param}
+        parameter_editor._flight_controller.fc_parameters = {"PARAM1": 3.5}
+
+        result = parameter_editor.update_parameters_from_fc_values()
+
+        assert result == FcParameterCopyResult(copied=1)
+        assert param.get_new_value() == pytest.approx(3.5)
 
     def test_user_sees_ui_updated_when_copying_fc_values_to_current_file(self, parameter_editor) -> None:
         """
@@ -5252,105 +5275,9 @@ class TestRefreshConnectionRenames:
         assert parameter_editor._connection_renames.get("ORIG_PARAM") == "OLD_TARGET"
 
 
-class TestFlightLogDownloadWorkflow:
-    """Test the flight log download workflow and its guard clauses."""
-
-    def test_user_is_warned_when_downloading_log_without_a_connected_fc(self, parameter_editor: ParameterEditor) -> None:
-        """
-        User is told to connect a flight controller before a log download is attempted.
-
-        GIVEN: No flight controller is connected
-        WHEN: The user triggers the flight log download
-        THEN: An error is shown and no save dialog is opened
-        """
-        parameter_editor._flight_controller.master = None
-        ask_saveas_filename = MagicMock()
-        show_error = MagicMock()
-        show_info = MagicMock()
-
-        parameter_editor.download_last_flight_log_workflow(ask_saveas_filename, show_error, show_info)
-
-        show_error.assert_called_once()
-        ask_saveas_filename.assert_not_called()
-        show_info.assert_not_called()
-
-    def test_user_is_warned_when_flight_controller_lacks_mavftp(self, parameter_editor: ParameterEditor) -> None:
-        """
-        User is told the download is impossible when the flight controller has no MAVFTP support.
-
-        GIVEN: A connected flight controller that does not support MAVFTP
-        WHEN: The user triggers the flight log download
-        THEN: An error is shown and no save dialog is opened
-        """
-        parameter_editor._flight_controller.master = MagicMock()
-        parameter_editor._flight_controller.info.is_mavftp_supported = False
-        ask_saveas_filename = MagicMock()
-        show_error = MagicMock()
-
-        parameter_editor.download_last_flight_log_workflow(ask_saveas_filename, show_error, MagicMock())
-
-        show_error.assert_called_once()
-        ask_saveas_filename.assert_not_called()
-
-    def test_user_can_cancel_the_save_dialog_without_downloading(self, parameter_editor: ParameterEditor) -> None:
-        """
-        User cancelling the save dialog aborts the download silently.
-
-        GIVEN: A connected flight controller with MAVFTP support
-        WHEN: The user closes the save dialog without picking a filename
-        THEN: No download is started and no message is shown
-        """
-        parameter_editor._flight_controller.master = MagicMock()
-        parameter_editor._flight_controller.info.is_mavftp_supported = True
-        show_error = MagicMock()
-        show_info = MagicMock()
-
-        parameter_editor.download_last_flight_log_workflow(lambda: "", show_error, show_info)
-
-        parameter_editor._flight_controller.download_last_flight_log.assert_not_called()
-        show_error.assert_not_called()
-        show_info.assert_not_called()
-
-    def test_user_sees_the_saved_path_after_a_successful_download(self, parameter_editor: ParameterEditor) -> None:
-        """
-        User is shown the destination path once the flight log has been downloaded.
-
-        GIVEN: A connected flight controller with MAVFTP support and a chosen filename
-        WHEN: The download succeeds
-        THEN: A success message containing the filename is shown
-        AND: The progress callback is forwarded to the backend
-        """
-        parameter_editor._flight_controller.master = MagicMock()
-        parameter_editor._flight_controller.info.is_mavftp_supported = True
-        parameter_editor._flight_controller.download_last_flight_log.return_value = True
-        show_info = MagicMock()
-        progress_callback = MagicMock()
-
-        parameter_editor.download_last_flight_log_workflow(lambda: "flight_log.bin", MagicMock(), show_info, progress_callback)
-
-        parameter_editor._flight_controller.download_last_flight_log.assert_called_once_with(
-            "flight_log.bin", progress_callback
-        )
-        assert "flight_log.bin" in show_info.call_args[0][1]
-
-    def test_user_is_told_when_the_flight_log_download_fails(self, parameter_editor: ParameterEditor) -> None:
-        """
-        User receives an error when the backend reports a failed download.
-
-        GIVEN: A connected flight controller with MAVFTP support and a chosen filename
-        WHEN: The backend download returns failure
-        THEN: An error is shown and no success message is displayed
-        """
-        parameter_editor._flight_controller.master = MagicMock()
-        parameter_editor._flight_controller.info.is_mavftp_supported = True
-        parameter_editor._flight_controller.download_last_flight_log.return_value = False
-        show_error = MagicMock()
-        show_info = MagicMock()
-
-        parameter_editor.download_last_flight_log_workflow(lambda: "flight_log.bin", show_error, show_info)
-
-        show_error.assert_called_once()
-        show_info.assert_not_called()
+def test_old_flight_log_ui_workflow_is_retired() -> None:
+    """Dialogs and progress belong to FileBrowserWindow, not the model."""
+    assert not hasattr(ParameterEditor, "download_last_flight_log_workflow")
 
 
 class TestConfigurationStepNumbering:

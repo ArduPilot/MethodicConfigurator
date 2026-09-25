@@ -10,7 +10,7 @@ Test plugins.
 
 **Key Features:**
 
-- Three calibration modes: Simple (one-shot), Level trim, and Full 6-position
+- Two calibration modes: Simple (one-shot) and Full 6-position
 - Interactive 6-position wizard with non-blocking tkinter polling (`after()`)
 - All MAVLink communication delegated to `backend_flightcontroller_commands.py`
 - Integrated at the accelerometer calibration configuration step
@@ -22,7 +22,7 @@ Test plugins.
 ```text
 ┌──────────────────────────────────────────────────────────────────┐
 │ GUI Layer (frontend_tkinter_accelerometer_calibration.py)        │
-│ - Three calibration buttons (Simple / Level / Full)              │
+│ - Two calibration buttons (Simple / Full)                       │
 │ - 6-position wizard panel (hidden until full cal is active)      │
 │ - Non-blocking 100 ms polling via tkinter after()                │
 │ - Position instructions label + Continue / Cancel buttons        │
@@ -30,7 +30,7 @@ Test plugins.
                             │
 ┌───────────────────────────▼──────────────────────────────────────┐
 │ Data Model (data_model_accelerometer_calibration.py)             │
-│ - Three start_*_calibration() entry points                       │
+│ - Two start_*_calibration() entry points                          │
 │ - poll_for_next_position() / confirm_current_position()          │
 │ - POSITION_LABELS dict (human-readable instructions)             │
 │ - Tracks _current_position state across the protocol exchange    │
@@ -38,13 +38,12 @@ Test plugins.
                             │
 ┌───────────────────────────▼──────────────────────────────────────┐
 │ FlightController facade (backend_flightcontroller.py)            │
-│ - Thin delegation wrappers for all five methods below            │
+│ - Thin delegation wrappers for the calibration and position-exchange methods below │
 └───────────────────────────┬──────────────────────────────────────┘
                             │
 ┌───────────────────────────▼──────────────────────────────────────┐
 │ Commands Backend (backend_flightcontroller_commands.py)          │
 │ - start_accel_calibration_simple()    param5=4, with ACK wait    │
-│ - start_accel_calibration_level()     param5=2, with ACK wait    │
 │ - send_accel_calibration_full_start() param5=1, fire-and-return  │
 │ - poll_accel_cal_vehicle_pos()        recv_match COMMAND_LONG    │
 │ - confirm_accel_vehicle_pos()         send COMMAND_LONG reply    │
@@ -53,14 +52,13 @@ Test plugins.
 
 ### MAVLink Protocol
 
-All three modes use
+Both modes use
 [`MAV_CMD_PREFLIGHT_CALIBRATION`](https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_CALIBRATION)
 (command ID 241).  The `param5` field selects the calibration type:
 
 | param5 | Mode | Interaction |
 | ------ | ---- | ----------- |
 | `4` | **Simple** — one-shot level calibration (`AP_InertialSensor::simple_accel_cal`) | None — wait for `COMMAND_ACK` |
-| `2` | **Level trim** — sets `AHRS_TRIM_*` to current attitude | None — wait for `COMMAND_ACK` |
 | `1` | **Full 6-position** — interactive multi-step calibration | Bidirectional `COMMAND_LONG` exchange |
 
 The full 6-position protocol (param5=1) uses a secondary command:
@@ -94,7 +92,6 @@ Position enum values (`ACCELCAL_VEHICLE_POS_*`):
 | ------ | ----------- |
 | `is_connected()` | Guard — checks `flight_controller.master is not None` |
 | `start_simple_calibration()` | Calls `start_accel_calibration_simple()`, blocks until ACK |
-| `start_level_calibration()` | Calls `start_accel_calibration_level()`, blocks until ACK |
 | `start_full_calibration()` | Calls `send_accel_calibration_full_start()`, returns immediately |
 | `poll_for_next_position()` | Thin wrapper around `poll_accel_cal_vehicle_pos()` |
 | `get_position_label(pos)` | Looks up `POSITION_LABELS[pos]` |
@@ -123,7 +120,7 @@ mavutil.mavlink.ACCELCAL_VEHICLE_POS_FAILED     # = 16777216
 ```
 <!-- fmt:on -->
 
-**Simple and level modes** use `send_command_and_wait_ack()` (existing shared helper) with
+**Simple mode** uses `send_command_and_wait_ack()` (existing shared helper) with
 timeouts of 30 s and 15 s respectively, relying on the standard `COMMAND_ACK` response.
 
 **Full calibration** cannot use `send_command_and_wait_ack()` because the final ACK only
@@ -140,7 +137,7 @@ arrives after the complete 6-position exchange (potentially minutes later).  Ins
 **Key design points:**
 
 - The **wizard panel** (`_wizard_frame`) is hidden at startup and shown only when full
-  calibration begins.  While it is visible the three top-level buttons are disabled to
+  calibration begins.  While it is visible the two top-level buttons are disabled to
   prevent concurrent calibration commands.
 - A **100 ms `after()` poll loop** (`_poll_tick`) replaces a blocking thread.  It calls
   `model.poll_for_next_position()` and either reschedules itself (no message yet), enables
@@ -152,13 +149,13 @@ arrives after the complete 6-position exchange (potentially minutes later).  Ins
 
 ## Data Flow
 
-### Simple / Level Calibration
+### Simple Calibration
 
 ```text
 User clicks button
-  → model.start_simple_calibration() / start_level_calibration()
-    → flight_controller.start_accel_calibration_simple/level()
-      → FlightControllerCommands.send_command_and_wait_ack(241, param5=4/2)
+  → model.start_simple_calibration()
+    → flight_controller.start_accel_calibration_simple()
+      → FlightControllerCommands.send_command_and_wait_ack(241, param5=4)
         → MAVLink COMMAND_LONG sent to FC
         → Wait for COMMAND_ACK (MAV_RESULT_ACCEPTED)
       → returns (True, "")
@@ -234,7 +231,7 @@ The following source files are the authoritative reference:
 
 ## Design Decisions
 
-- **param5 values are not symmetric:** `4` = simple, `2` = level, `1` = full.
+- **param5 values are not symmetric:** `4` = simple and `1` = full.
   This ordering comes directly from ArduPilot firmware (`GCS_Common.cpp`) and Mission
   Planner, not from any logical sequence.
 - **Full calibration uses fire-and-return:** `send_accel_calibration_full_start()` does

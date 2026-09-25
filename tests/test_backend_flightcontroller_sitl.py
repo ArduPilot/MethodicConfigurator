@@ -53,7 +53,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp imp
     create_mavftp_safe,
 )
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavlink import SystemMavlinkConnectionFactory
-from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerFiles
+from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerFiles, LastLogDownloadResult
 from ardupilot_methodic_configurator.backend_mavftp import FtpError
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
@@ -1289,7 +1289,7 @@ def test_user_can_download_synthetic_log_via_files_manager(sitl_flight_controlle
             progress_callback=download_progress,
         )
 
-        assert result is True
+        assert result is LastLogDownloadResult.SUCCESS
         assert downloaded_file.read_bytes() == local_source.read_bytes()
         if progress_updates:
             assert max(current for current, _total in progress_updates) == 100

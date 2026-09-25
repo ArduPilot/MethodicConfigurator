@@ -33,6 +33,7 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import PhaseData
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerLogFile, LastLogDownloadResult
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url, webbrowser_open_url
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ArduPilotParameter,
@@ -191,6 +192,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
     @property
     def is_fc_connected(self) -> bool:
         return self._flight_controller.master is not None and bool(self._flight_controller.fc_parameters)
+
+    @property
+    def is_fc_link_connected(self) -> bool:
+        """Whether a controller transport exists, independently of parameter download."""
+        return self._flight_controller.master is not None
 
     def get_fc_banner_text(self) -> list[str]:
         """Return the latest flight-controller banner text."""
@@ -378,6 +384,22 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 params_failed += 1
         return FcParameterCopyResult(params_copied, params_unchanged, params_failed)
 
+    def update_parameters_from_fc_values(self, relevant_fc_params: dict[str, float] | None = None) -> FcParameterCopyResult:
+        """
+        Copy flight-controller values into the active step's new values.
+
+        If no parameter subset is provided, all current-step parameters available from the
+        flight controller are copied. A subset can be provided by workflows that already
+        filtered the parameters, such as external-tool readback.
+        """
+        if relevant_fc_params is None:
+            relevant_fc_params = {
+                param_name: self.fc_parameters[param_name]
+                for param_name in self.current_step_parameters
+                if param_name in self.fc_parameters
+            }
+        return self._update_parameters_from_fc_values(relevant_fc_params)
+
     def handle_copy_fc_values_workflow(
         self,
         selected_file: str,
@@ -411,7 +433,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             user_choice = ask_user_choice(_("Update file with values from FC?"), msg, [_("Close"), _("Yes"), _("No")])
 
             if user_choice is True:  # Yes option
-                copy_result = self._update_parameters_from_fc_values(relevant_fc_params)
+                copy_result = self.update_parameters_from_fc_values(relevant_fc_params)
                 if copy_result.copied:
                     show_info(
                         _("Parameters copied"),
@@ -1387,41 +1409,54 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             non_default_non_read_only_fc_params, last_config_step_filename
         )
 
-    def download_last_flight_log_workflow(
+    def get_remote_files(
         self,
-        ask_saveas_filename: Callable[[], str],
-        show_error: Callable[[str, str], None],
-        show_info: Callable[[str, str], None],
+        remote_directory: str = "/APM/LOGS/",
+    ) -> list[FlightControllerLogFile] | None:
+        """Return files and directories in the selected remote directory."""
+        return self._flight_controller.list_remote_files(remote_directory)
+
+    def download_last_flight_log(
+        self,
+        local_filename: str,
         progress_callback: Callable[[int, int], None] | None = None,
-    ) -> None:
-        """
-        Download the last flight log from the flight controller, using GUI callbacks for interaction.
+    ) -> LastLogDownloadResult:
+        """Download the last log while preserving its specific outcome."""
+        return self._flight_controller.download_last_flight_log(local_filename, progress_callback)
 
-        Args:
-            ask_saveas_filename: Callback to show file dialog and get filename.
-            show_error: Callback to show error messages.
-            show_info: Callback to show info messages.
-            progress_callback: Progress bar update callback.
-            run_in_thread: Callback to run the download in a thread (optional).
+    def upload_file_to_fc(
+        self,
+        local_filename: str,
+        remote_filename: str,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> bool:
+        """Upload one local file to the flight controller."""
+        return self._flight_controller.upload_file(local_filename, remote_filename, progress_callback)
 
-        """
-        if self._flight_controller.master is None:
-            show_error(_("Error"), _("No flight controller connected"))
-            return
+    def download_remote_file(
+        self,
+        remote_path: str,
+        local_filename: str,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> bool:
+        """Download one explicitly selected remote file."""
+        return self._flight_controller.download_remote_file(remote_path, local_filename, progress_callback)
 
-        if not self.is_mavftp_supported:
-            show_error(_("Error"), _("MAVFTP is not supported by the flight controller"))
-            return
+    def verify_remote_file(self, remote_path: str, local_filename: str) -> bool | None:
+        """Compare a transferred local file with the remote file CRC."""
+        return self._flight_controller.verify_remote_file(remote_path, local_filename)
 
-        filename = ask_saveas_filename()
-        if not filename:
-            return
+    def make_remote_directory(self, remote_directory: str) -> bool:
+        """Create one remote directory."""
+        return self._flight_controller.make_remote_directory(remote_directory)
 
-        success = self._flight_controller.download_last_flight_log(filename, progress_callback)
-        if success:
-            show_info(_("Success"), _("Flight log downloaded successfully to:\n%s") % filename)
-        else:
-            show_error(_("Error"), _("Failed to download flight log. Check the console for details."))
+    def delete_remote_path(self, remote_path: str, is_directory: bool = False) -> bool:
+        """Delete one remote file or directory."""
+        return self._flight_controller.delete_remote_path(remote_path, is_directory)
+
+    def rename_remote_path(self, remote_path: str, new_remote_path: str) -> bool:
+        """Rename one remote file or directory."""
+        return self._flight_controller.rename_remote_path(remote_path, new_remote_path)
 
     def is_configuration_step_optional(self, file_name: str | None = None, threshold_pct: int = 20) -> bool:
         """

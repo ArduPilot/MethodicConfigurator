@@ -14,7 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import time
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from pymavlink import mavutil
@@ -863,6 +863,37 @@ class TestFlightControllerCommandsAccelerometerCalibration:
         args = mock_master.mav.command_long_send.call_args.args
         assert args[2] == mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
         assert args[8] == 2.0
+
+    def test_level_accelerometer_calibration_retries_a_temporary_rejection(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """
+        Level trim retries when the flight controller is still cooling down.
+
+        GIVEN: The flight controller temporarily rejects the first level-trim request
+        WHEN: The cooldown has elapsed and the command is retried
+        THEN: The level calibration succeeds without showing the transient rejection
+        """
+        # Arrange (Given)
+        mock_master, mock_conn_mgr = mock_connected_master
+        temporary_ack = MagicMock()
+        temporary_ack.command = mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
+        temporary_ack.result = mavutil.mavlink.MAV_RESULT_TEMPORARILY_REJECTED
+        accepted_ack = MagicMock()
+        accepted_ack.command = mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
+        accepted_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
+        mock_master.recv_match.side_effect = [temporary_ack, accepted_ack]
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        # Act (When)
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_sleep") as mock_sleep:
+            success, error = commands_mgr.start_accel_calibration_level()
+
+        # Assert (Then)
+        assert success is True
+        assert error == ""
+        assert mock_master.mav.command_long_send.call_count == 2
+        mock_sleep.assert_any_call(5.0)
 
     def test_level_accelerometer_calibration_fails_without_connection(self) -> None:
         """

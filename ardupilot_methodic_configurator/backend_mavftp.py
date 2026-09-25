@@ -542,6 +542,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         self.accepted_reply_generation = 0
         self.remote_file_size: int = 0
         self.remote_size_known = False
+        self.remote_size_is_upper_bound = False
         self.duplicates = 0
         self.last_read = None
         self.last_burst_read: Union[None, float] = None
@@ -1105,6 +1106,11 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
     @staticmethod
     def __fsync_directory(directory: str) -> None:
         """Flush a directory entry after atomically replacing a download."""
+        # Windows does not support opening a directory for fsync. The staged
+        # file itself is already fsynced before os.replace(); directory-entry
+        # durability is an additional POSIX-only best-effort step.
+        if os.name == "nt":
+            return
         try:
             flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
             directory_fd = os.open(directory, flags)
@@ -1132,6 +1138,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         self.filename = None
         self.read_to_memory = False
         self.remote_size_known = False
+        self.remote_size_is_upper_bound = False
         self.transfer_active = False
         self.write_list = None
         self.write_open = False
@@ -1471,6 +1478,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         self.requested_size = size
         self.filename = path
         self.read_to_memory = True
+        self.remote_size_is_upper_bound = False
         self.show_progress = False
         self.callback = None
         self.callback_failure = None
@@ -1593,6 +1601,9 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         else:
             self.filename = os.path.basename(fname)
         self.get_result = None
+        # AP_Filesystem_Sys reports a fixed 100000-byte placeholder from
+        # stat() for generated @SYS text files. Their actual EOF is smaller.
+        self.remote_size_is_upper_bound = fname.lstrip("/").startswith("@SYS/")
         if callback is None or self.ftp_settings.debug > 1:
             logging.info("Getting %s to %s", fname, self.filename)
         self.op_start = time.time()
@@ -1674,7 +1685,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
                     logging.info("Remote file size: %u", self.remote_file_size)
                 if not self.read_to_memory:
                     self.requested_size = self.remote_file_size
-                self.remote_size_known = True
+                self.remote_size_known = not self.remote_size_is_upper_bound
             else:
                 self.remote_file_size = 0
                 self.remote_size_known = False
@@ -1905,9 +1916,10 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
             self.__terminate_session()
             return False
         self.read_total += len(op.payload)
-        if self.callback_progress is not None and self.remote_file_size:
+        if self.callback_progress is not None:
             try:
-                self.callback_progress(self.read_total / self.remote_file_size)
+                completion = self.read_total / self.remote_file_size if self.remote_file_size else 0.0
+                self.callback_progress(completion)
             except Exception as exc:  # pylint: disable=broad-exception-caught
                 logging.error("FTP: download progress callback failed: %s", exc)
                 self.callback_failure = MAVFTPReturn("Get", FtpError.Fail)
@@ -3416,9 +3428,15 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         retry_timeout = self.retry_timeout() * 2 ** min(
             self.request_retries, max(initial_retry_limit - 1, 0)
         )
+        request_timeout = (
+            max(retry_timeout, float(self.ftp_settings.idle_detection_time))
+            if initial_retry_limit == 0
+            else retry_timeout
+        )
+        # Keep a no-retry request pending until its first timeout so callers
+        # receive RemoteReplyTimeout instead of the generic idle-expiry Fail.
         initial_request_pending = (
-            initial_retry_limit > 0
-            and self.last_op is not None
+            self.last_op is not None
             and not self.request_cancelled
             and not self.last_op_reply
             and self.last_op.opcode in initial_opcodes
@@ -3438,7 +3456,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         if (
             initial_request_pending
             and (not crc_request_pending or self.no_sessions_retry_pending)
-            and now - self.last_op_time > retry_timeout
+            and now - self.last_op_time > request_timeout
         ):
             if self.request_retries >= initial_retry_limit:
                 logging.error("FTP: request timed out: %s", self.last_op)
