@@ -25,6 +25,7 @@ from pymavlink import mavutil
 
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import (
     DEFAULT_BAUDRATE,
+    DEFAULT_FALLBACK_BAUDRATE,
     SUPPORTED_BAUDRATES,
     FakeSerialForTests,
     FlightControllerConnection,
@@ -390,6 +391,43 @@ class TestFlightControllerConnectionLifecycle:
         assert not connection.banner_text_buffer
         assert info.system_id == ""
         assert not info.capabilities
+
+
+class TestFlightControllerConnectionBaudrateFallback:  # pylint: disable=too-few-public-methods
+    """Test serial baudrate fallback during auto-detection."""
+
+    def test_connect_falls_back_to_default_fallback_baudrate(self) -> None:
+        """
+        Auto detected connection fallback baudrate when the default baudrate does not receive a heartbeat.
+
+        GIVEN: An auto-detected serial port
+        WHEN: connect() is called without specifying a device
+        THEN: The default baudrate should be tried first
+        """
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            network_ports=[],
+        )
+
+        mock_port = Mock()
+        mock_port.device = "/dev/ttyUSB0"
+        mock_port.description = "USB Serial"
+
+        with (
+            patch.object(connection, "_auto_detect_serial", return_value=[mock_port]),
+            patch.object(
+                connection,
+                "_register_and_try_connect",
+                side_effect=["No MAVLink heartbeat received, connection failed.", ""],
+            ) as mock_connect,
+        ):
+            result = connection.connect(device="")
+
+        assert result == ""
+
+        assert mock_connect.call_count == 2
+        assert mock_connect.call_args_list[0].kwargs["baudrate"] == DEFAULT_BAUDRATE
+        assert mock_connect.call_args_list[1].kwargs["baudrate"] == int(DEFAULT_FALLBACK_BAUDRATE)
 
 
 class TestFlightControllerConnectionConfiguration:
