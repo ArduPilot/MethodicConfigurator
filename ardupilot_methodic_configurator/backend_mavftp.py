@@ -1314,7 +1314,9 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         self.total_size = 0
         self.list_temp_result = []
         more = self.last_op
-        assert more is not None  # noqa: S101
+        if more is None:
+            logging.error("FTP: cannot fall back to baseline listing without a request")
+            return
         more.opcode = OP_ListDirectory
         more.offset = 0
         self.__send(more)
@@ -2207,7 +2209,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
                 if pending_for_offset or op.size >= self.burst_size:
                     self.duplicates += 1
                     if self.ftp_settings.debug > 0:
-                        logging.info("FTP: no gap read %u, %u", gap, len(self.read_gaps))
+                        logging.info("FTP: no gap read %s, %u", gap, len(self.read_gaps))
                 else:
                     logging.info("FTP: unexpected short read at %u", op.offset)
                     self.__terminate_session()
@@ -3547,7 +3549,13 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
     def process_ftp_reply(  # pylint: disable=too-many-branches,too-many-locals,too-many-statements,too-many-nested-blocks
         self, operation_name: str, timeout: Optional[float] = None
     ) -> MAVFTPReturn:
-        """Execute an FTP operation that requires processing a MAVLink response."""
+        """Execute an FTP operation that requires processing a MAVLink response.
+
+        Command helpers may set the one-shot
+        ``_next_no_sessions_timeout_extension`` flag to control whether an
+        omitted timeout is extended after ``NoSessionsAvailable`` replies;
+        direct callers default to extending an omitted timeout.
+        """
         start_time = time.time()
         ret = MAVFTPReturn(operation_name, FtpError.Fail)
         default_timeout = timeout is None
