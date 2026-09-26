@@ -138,7 +138,7 @@ Data availability problem does not necessarily mean that the hardware is broken.
 ## Battery Analysis
 
 Battery Analysis examines the battery information recorded in the BAT messages together with the vehicle's [battery monitor parameters]
-(<https://ardupilot.org/copter/docs/common-battery-monitor-landing-page.html>). It currently checks:
+(<https://ardupilot.org/copter/docs/common-powermodule-landingpage.html>). It currently checks:
 
 * Battery capacity usage
 * Voltage extremes
@@ -165,7 +165,7 @@ This gives an indication of how much of the configured battery capacity was cons
 The analysis examines the voltage recorded during the flight. If unusual voltage values are reported, investigate:
 
 * Battery condition
-* [Battery monitor configuration](https://ardupilot.org/copter/docs/common-battery-monitor-landing-page.html)
+* [Battery monitor configuration](https://ardupilot.org/copter/docs/common-powermodule-landingpage.html)
 * Battery wiring
 * Vehicle load
 * Battery parameters
@@ -449,7 +449,7 @@ Because an analysis based on missing or invalid data could produce a misleading 
 * [Copter Documentation](https://ardupilot.org/copter/index.html)
 * [ArduPilot Methodic Configurator](https://github.com/ArduPilot/MethodicConfigurator)
 * [ESC (Electronic Speed Controls) Guide](https://ardupilot.org/copter/docs/common-esc-guide.html)
-* [Battery Monitor Documentation](https://ardupilot.org/copter/docs/common-battery-monitor-landing-page.html)
+* [Battery Monitor Documentation](https://ardupilot.org/copter/docs/common-powermodule-landingpage.html)
 * [Mounting the Autopilot / Vibration Damping](https://ardupilot.org/copter/docs/common-vibration-damping.html)
 * [Motor Thrust Scaling](https://ardupilot.org/copter/docs/motor-thrust-scaling.html)
 * [Diagnosing Common Problems Using Logs](https://ardupilot.org/copter/docs/common-diagnosing-problems-using-logs.html)

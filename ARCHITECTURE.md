@@ -131,10 +131,12 @@ This convention keeps the architecture small while preserving testability. Backe
 data-model logic can be tested with in-memory inputs; and the frontend stays focused on presentation and interaction.
 
 For example, log analysis uses backend modules to parse `.bin` logs and uses `LocalFilesystem.doc_dict` for already loaded
-parameter metadata. Those loaded values are passed into `data_model_log_analysis.py`, `data_model_log_quality_check.py`,
-`data_model_quality_*.py`, and the `data_model_vehicle_overview_*.py` models. The data model may combine `LogData`,
-parameters, configuration steps, `apm.pdef` metadata, and vehicle components to produce a report, but it should not fetch
-those inputs itself.
+parameter metadata.
+Those loaded values are passed into `data_model_log_analysis.py`, `data_model_log_analysis_result.py`,
+`data_model_log_availability.py`, `data_model_log_availability_check.py`, and the `data_model_vehicle_overview_*.py`
+models.
+The data model may combine `LogData`, parameters, configuration steps, `apm.pdef` metadata, and vehicle components
+to produce a report, but it should not fetch those inputs itself.
 
 1. Check for software updates:
    1. [`data_model_software_updates.py`](ardupilot_methodic_configurator/data_model_software_updates.py)
@@ -159,9 +161,10 @@ those inputs itself.
    1. [`data_model_par_dict.py`](ardupilot_methodic_configurator/data_model_par_dict.py)
    1. [`data_model_ardupilot_parameter.py`](ardupilot_methodic_configurator/data_model_ardupilot_parameter.py)
    1. [`data_model_log_analysis.py`](ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py)
-   1. [`data_model_log_quality.py`](ardupilot_methodic_configurator/log_analysis/data_model_log_quality.py)
-   1. [`data_model_log_quality_check.py`](ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py)
-   1. [`data_model_quality_*.py`](ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py)
+   1. [`data_model_log_analysis_result.py`](ardupilot_methodic_configurator/log_analysis/data_model_log_analysis_result.py)
+   1. [`data_model_log_availability.py`](ardupilot_methodic_configurator/log_analysis/data_model_log_availability.py)
+   1. [`data_model_log_availability_check.py`](ardupilot_methodic_configurator/log_analysis/data_model_log_availability_check.py)
+   1. [`data_model_availability_base.py`](ardupilot_methodic_configurator/log_analysis/data_model_availability_base.py)
    1. [`data_model_vehicle_overview*.py`](ardupilot_methodic_configurator/log_analysis/data_model_vehicle_overview.py)
 
 The detailed data models, components, and dependencies for each sub-application are documented in their respective architecture files linked above.

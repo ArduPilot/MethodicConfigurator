@@ -2,6 +2,15 @@
   "ignorePatterns": [
     {
       "pattern": "^https://www.mediafire.com/file/fj1p9qlbzo5bl5g/BLHeliSuite32_32.9.0.6.zip/file"
+    },
+    {
+      "pattern": "^https://coveralls\\.io/"
+    },
+    {
+      "pattern": "^https://www\\.gnu\\.org/licenses/"
+    },
+    {
+      "pattern": "^https://www\\.blackduck\\.com/"
     }
   ],
   "timeout": "20s",
