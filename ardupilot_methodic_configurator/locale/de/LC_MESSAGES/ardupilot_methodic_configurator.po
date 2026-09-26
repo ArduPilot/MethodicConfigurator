@@ -3576,7 +3576,7 @@ msgstr "Ardupilot Filter-Überprüfungswerkzeug"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:240
 msgid "Ardupilot PID Review tool"
-msgstr ""
+msgstr "ArduPilot PID-Prüfwerkzeug"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:241
 msgid "BLHeliSuite32"
@@ -3620,7 +3620,7 @@ msgstr "Rover Analytisches Abstimmungswerkzeug"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:251
 msgid "Suppress frame resonance with PID notch filters"
-msgstr ""
+msgstr "Rahmenresonanz mit PID-Kerbfiltern unterdrücken"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:252
 msgid "VTOL-quicktune lua script"
@@ -7839,7 +7839,7 @@ msgstr "Ein .bin-Flugprotokoll öffnen und seine Verfügbarkeit analysieren"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:450
 msgid "Zip vehicle for Forum help"
-msgstr ""
+msgstr "Fahrzeug für Hilfe im Forum zippen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:458
 msgid ""
@@ -7974,7 +7974,7 @@ msgid ""
 "save them\n"
 "It will reset the FC if necessary, re-download all parameters and validate "
 "their value"
-msgstr ""
+msgstr "Ausgewählte Parameter auf den Flugcontroller hochladen und auf dem aktuellen Schritt bleiben\nWenn Änderungen an der aktuellen Datei vorgenommen wurden, werden Sie gefragt, ob Sie sie speichern möchten\nFalls erforderlich, wird der FC zurückgesetzt, alle Parameter erneut heruntergeladen und ihre Werte validiert"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:597
 msgid ""
@@ -8004,7 +8004,7 @@ msgstr ""
 msgid ""
 "Download last\n"
 "flight log"
-msgstr ""
+msgstr "Letztes\nFlugprotokoll herunterladen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:629
 msgid ""

@@ -3141,7 +3141,7 @@ msgstr "Ardupilot滤波器审查工具"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:240
 msgid "Ardupilot PID Review tool"
-msgstr ""
+msgstr "ArduPilot PID 审查工具"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:241
 msgid "BLHeliSuite32"
@@ -3185,7 +3185,7 @@ msgstr "Rover分析性调谐工具"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:251
 msgid "Suppress frame resonance with PID notch filters"
-msgstr ""
+msgstr "使用 PID 陷波滤波器抑制机架共振"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:252
 msgid "VTOL-quicktune lua script"
@@ -7081,7 +7081,7 @@ msgstr "打开 .bin 飞行日志并分析其可用性"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:450
 msgid "Zip vehicle for Forum help"
-msgstr ""
+msgstr "压缩飞行器项目以便在论坛求助"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:458
 msgid ""
@@ -7210,7 +7210,7 @@ msgid ""
 "save them\n"
 "It will reset the FC if necessary, re-download all parameters and validate "
 "their value"
-msgstr ""
+msgstr "将选定参数上传到飞行控制器并停留在当前步骤\n如果当前文件已被修改，它会询问您是否要保存\n如有必要，它会重置 FC，重新下载所有参数并验证其值"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:597
 msgid ""
@@ -7237,7 +7237,7 @@ msgstr ""
 msgid ""
 "Download last\n"
 "flight log"
-msgstr ""
+msgstr "下载最后一次\n飞行日志"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:629
 msgid ""

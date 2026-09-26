@@ -3425,7 +3425,7 @@ msgstr "Ardupilotフィルターレビューツール"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:240
 msgid "Ardupilot PID Review tool"
-msgstr ""
+msgstr "ArduPilot PIDレビュー ツール"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:241
 msgid "BLHeliSuite32"
@@ -3469,7 +3469,7 @@ msgstr "ローバー解析チューンツール"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:251
 msgid "Suppress frame resonance with PID notch filters"
-msgstr ""
+msgstr "PIDノッチフィルターでフレームの共振を抑制"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:252
 msgid "VTOL-quicktune lua script"
@@ -7554,7 +7554,7 @@ msgstr ".bin フライトログを開いて、その利用可能性を解析す�
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:450
 msgid "Zip vehicle for Forum help"
-msgstr ""
+msgstr "フォーラムでの支援用に機体をZIP圧縮"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:458
 msgid ""
@@ -7687,7 +7687,7 @@ msgid ""
 "save them\n"
 "It will reset the FC if necessary, re-download all parameters and validate "
 "their value"
-msgstr ""
+msgstr "選択したパラメータをフライトコントローラにアップロードし、現在のステップにとどまります\n現在のファイルに変更がある場合は、保存するかどうか確認します\n必要に応じてFCをリセットし、すべてのパラメータを再ダウンロードしてその値を検証します"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:597
 msgid ""
@@ -7716,7 +7716,7 @@ msgstr ""
 msgid ""
 "Download last\n"
 "flight log"
-msgstr ""
+msgstr "最新の\nフライトログをダウンロード"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:629
 msgid ""
