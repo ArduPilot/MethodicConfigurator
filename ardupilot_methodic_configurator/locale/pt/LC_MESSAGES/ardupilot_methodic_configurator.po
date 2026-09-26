@@ -3553,7 +3553,7 @@ msgstr "Ferramenta de Revisão de Filtro do ArduPilot"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:240
 msgid "Ardupilot PID Review tool"
-msgstr ""
+msgstr "Ferramenta de revisão PID do ArduPilot"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:241
 msgid "BLHeliSuite32"
@@ -3597,7 +3597,7 @@ msgstr "Ferramenta de Afinação Analítica do Rover"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:251
 msgid "Suppress frame resonance with PID notch filters"
-msgstr ""
+msgstr "Suprimir a ressonância da estrutura com filtros notch PID"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:252
 msgid "VTOL-quicktune lua script"
@@ -7776,7 +7776,7 @@ msgstr "Abrir um registo de voo .bin e analisar a sua disponibilidade"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:450
 msgid "Zip vehicle for Forum help"
-msgstr ""
+msgstr "Criar ZIP do veículo para ajuda no Fórum"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:458
 msgid ""
@@ -7909,7 +7909,7 @@ msgid ""
 "save them\n"
 "It will reset the FC if necessary, re-download all parameters and validate "
 "their value"
-msgstr ""
+msgstr "Enviar os parâmetros selecionados para o controlador de voo e permanecer no passo atual\nSe tiverem sido feitas alterações ao ficheiro atual, será perguntado se as quer guardar\nIrá reinicializar o FC se necessário, transferir novamente todos os parâmetros e validar o respetivo valor"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:597
 msgid ""
@@ -7939,7 +7939,7 @@ msgstr ""
 msgid ""
 "Download last\n"
 "flight log"
-msgstr ""
+msgstr "Transferir o último\nregisto de voo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:629
 msgid ""

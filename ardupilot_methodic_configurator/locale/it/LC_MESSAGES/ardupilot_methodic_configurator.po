@@ -3603,7 +3603,7 @@ msgstr "Strumento di Revisione Filtri Ardupilot"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:240
 msgid "Ardupilot PID Review tool"
-msgstr ""
+msgstr "Strumento di Revisione PID ArduPilot"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:241
 msgid "BLHeliSuite32"
@@ -3647,7 +3647,7 @@ msgstr "Strumento di Sintonizzazione Analitica Rover"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:251
 msgid "Suppress frame resonance with PID notch filters"
-msgstr ""
+msgstr "Sopprimi la risonanza del telaio con filtri notch PID"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:252
 msgid "VTOL-quicktune lua script"
@@ -7846,7 +7846,7 @@ msgstr "Apri un log di volo .bin e analizzane la disponibilità"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:450
 msgid "Zip vehicle for Forum help"
-msgstr ""
+msgstr "Comprimi veicolo per aiuto sul forum"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:458
 msgid ""
@@ -7981,7 +7981,7 @@ msgid ""
 "save them\n"
 "It will reset the FC if necessary, re-download all parameters and validate "
 "their value"
-msgstr ""
+msgstr "Carica i parametri selezionati sul controllore di volo e rimani nel passaggio corrente\nSe sono state apportate modifiche al file corrente chiederà se si desidera salvarle\nResetterà il FC se necessario, riscaricherà tutti i parametri e ne convaliderà i valori"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:597
 msgid ""
@@ -8011,7 +8011,7 @@ msgstr ""
 msgid ""
 "Download last\n"
 "flight log"
-msgstr ""
+msgstr "Scarica ultimo\nregistro di volo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:629
 msgid ""
