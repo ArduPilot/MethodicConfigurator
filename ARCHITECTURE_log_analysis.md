@@ -13,7 +13,6 @@ The main components are:
 1. **Log Analysis Backend** - Loads and validates ArduPilot `.bin` logs and prepares the data required by the analysis layer.
 
    * [`backend_log_analysis.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/backend_log_analysis.py)
-   * [`backend_log_extraction.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py)
 
 2. **Log Analysis Data Models** - Contains the analysis pipeline, shared context, availability models, analysis models, and result structures.
 
