@@ -8,23 +8,56 @@ SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import sys
 import tkinter as tk
+from argparse import ArgumentParser, Namespace
+from contextlib import suppress
+from logging import basicConfig as logging_basicConfig
+from logging import getLevelName as logging_getLevelName
 from pathlib import Path
 from sys import platform as sys_platform
 from tkinter import ttk
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
+
+# Keep the direct-execution bootstrap before package imports.
+# pylint: disable=wrong-import-position
+# Support direct execution from the repository root as well as package imports.
+if __package__ in {None, ""}:  # pragma: no cover
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
+from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
-from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
+from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow, show_error_popup
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import (
     ParameterEditorTable,
+    ParameterEditorTableHost,
     ParameterTableOptions,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 
+# pylint: enable=wrong-import-position
+
 if TYPE_CHECKING:
-    from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
+    from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorUiServices
+
+
+class ParameterUploadHost(ParameterEditorTableHost, Protocol):
+    """The UI operations required by the external parameter upload dialog."""
+
+    @property
+    def root(self) -> tk.Tk | tk.Toplevel: ...
+
+    parameter_editor: ParameterEditor
+    ui: "ParameterEditorUiServices"
+
+    def upload_external_params(self, selected_params: dict) -> bool: ...
+
+    def reset_all_parameters_to_default(self) -> bool: ...
 
 
 class ParameterFileUploadWindow(BaseWindow):
@@ -32,7 +65,7 @@ class ParameterFileUploadWindow(BaseWindow):
 
     def __init__(
         self,
-        parent: "ParameterEditorWindow",
+        parent: ParameterUploadHost,
         filepath: str,
         parameters: dict[str, ArduPilotParameter],
     ) -> None:
@@ -104,9 +137,14 @@ class ParameterFileUploadWindow(BaseWindow):
         self.upload_button.pack(side=tk.LEFT)
         show_tooltip(self.upload_button, _("Upload the selected parameters to the flight controller"))
 
-        self.root.transient(parent.root)
+        parent_is_visible = parent.root.winfo_viewable()
+        if parent_is_visible:
+            self.root.transient(parent.root)
         self.root.update_idletasks()
-        self.center_window(self.root, parent.root)
+        if parent_is_visible:
+            self.center_window(self.root, parent.root)
+        else:
+            self.center_window_on_screen(self.root)
         if sys_platform != "darwin":
             self.root.grab_set()
 
@@ -173,3 +211,126 @@ class ParameterFileUploadWindow(BaseWindow):
             self.root.grab_release()
         self.root.destroy()
         self.parent.repopulate_parameter_table()
+
+
+class StandaloneUploadHost:
+    """Adapt the standalone Tk root to the upload dialog's parent interface."""
+
+    def __init__(self, root: tk.Tk, parameter_editor: ParameterEditor, ui: "ParameterEditorUiServices") -> None:
+        self.root = root
+        self.parameter_editor = parameter_editor
+        self.ui = ui
+        self.gui_complexity = str(ProgramSettings.get_setting("gui_complexity"))
+
+    def repopulate_parameter_table(self) -> None:
+        """Leave the event loop after the standalone dialog closes."""
+        self.root.quit()
+
+    def on_skip_click(self) -> None:
+        """Satisfy the parameter-table host interface; skipping is disabled here."""
+
+    def upload_external_params(self, selected_params: dict) -> bool:
+        """Upload selected parameters using the editor's progress UI."""
+        try:
+            return self.ui.upload_params_with_progress(
+                self.root,
+                self.parameter_editor.upload_external_params_workflow,
+                selected_params,
+            )
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            self.ui.show_error(_("Upload Error"), f"{_('Failed to upload parameters:')} {exc}")
+            return False
+
+    def reset_all_parameters_to_default(self) -> bool:
+        """Reset the FC with the same progress UI used by AMC."""
+        return self.ui.reset_all_parameters_to_default_with_progress(
+            self.root, self.parameter_editor.reset_all_parameters_to_default
+        )
+
+
+def create_argument_parser() -> ArgumentParser:  # pragma: no cover
+    """Create the argument parser for the standalone comparison/upload program."""
+    parser = ArgumentParser(description=_("Compare an ArduPilot parameter file with a flight controller and upload values."))
+    parser = FlightController.add_argparse_arguments(parser)
+    parser = LocalFilesystem.add_argparse_arguments(parser)
+    return add_common_arguments(parser)
+
+
+def argument_parser() -> Namespace:  # pragma: no cover
+    """Parse arguments for running the parameter editor and upload preview standalone."""
+    return create_argument_parser().parse_args()
+
+
+def main() -> None:  # pragma: no cover
+    """Open the external parameter-file comparison and upload window standalone."""
+    args = argument_parser()
+    logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
+
+    # Reuse the upload-progress service used by the full editor without creating
+    # or displaying a ParameterEditorWindow.
+    # pylint: disable=import-outside-toplevel
+    from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (  # noqa: PLC0415
+        ParameterEditorUiServices,
+    )
+    # pylint: enable=import-outside-toplevel
+
+    ui = ParameterEditorUiServices.default()
+    root = tk.Tk(className="ArduPilotMethodicConfigurator")
+    root.withdraw()
+    try:
+        filepath = ui.askopenfilename(
+            title=_("Select an ArduPilot parameter file"),
+            filetypes=[
+                (_("ArduPilot parameter files"), "*.parm *.param"),
+                (_("All files"), "*.*"),
+            ],
+        )
+        if not filepath:
+            return
+
+        flight_controller = FlightController(reboot_time=args.reboot_time, baudrate=args.baudrate)
+        try:
+            connection_error = flight_controller.connect(args.device)
+            if connection_error:
+                show_error_popup(_("Flight-controller connection error"), connection_error)
+                return
+
+            downloaded_parameters, default_parameters = flight_controller.download_params()
+            if not downloaded_parameters:
+                show_error_popup(
+                    _("Flight-controller parameter download error"),
+                    _("Could not download parameters from the flight controller."),
+                )
+                return
+
+            try:
+                filesystem = LocalFilesystem.for_external_parameter_file(
+                    args.vehicle_dir,
+                    flight_controller.info.vehicle_type,
+                    flight_controller.info.flight_sw_version,
+                    default_parameters,
+                )
+            except (OSError, ValueError, SystemExit) as exc:
+                show_error_popup(_("Parameter metadata error"), str(exc))
+                return
+
+            parameter_editor = ParameterEditor("", flight_controller, filesystem)
+            try:
+                parameters = parameter_editor.load_external_parameter_file(filepath)
+            except (OSError, ValueError) as exc:
+                show_error_popup(_("Parameter file error"), str(exc))
+                return
+
+            host = StandaloneUploadHost(root, parameter_editor, ui)
+            ParameterFileUploadWindow(host, filepath, parameters)
+            root.mainloop()
+        finally:
+            flight_controller.disconnect()
+    finally:
+        # Tk may already have destroyed its root and removed the winfo command.
+        with suppress(tk.TclError):
+            root.destroy()
+
+
+if __name__ == "__main__":  # pragma: no cover
+    main()

@@ -19,7 +19,7 @@ from platform import system as platform_system
 from sys import exit as sys_exit
 from sys import platform as sys_platform
 from tkinter import ttk
-from typing import TYPE_CHECKING
+from typing import Protocol
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter, BitmaskHelper
@@ -49,9 +49,6 @@ from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import 
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import (  # pylint: disable=cyclic-import
     display_bitmask_parameters_editor_usage_popup,
 )
-
-if TYPE_CHECKING:  # pragma: no cover - import for type checking only
-    from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 
 NEW_VALUE_WIDGET_WIDTH = 9
 NEW_VALUE_DIFFERENT_STR = "\u2260" if platform_system() == "Windows" else "!="
@@ -85,6 +82,16 @@ class ParameterTableOptions:  # pylint: disable=too-many-instance-attributes
     render_complete_callback: Callable[[], None] | None = None
 
 
+class ParameterEditorTableHost(Protocol):
+    """The parent-window operations used by a parameter table."""
+
+    gui_complexity: str
+
+    def repopulate_parameter_table(self) -> None: ...
+
+    def on_skip_click(self) -> None: ...
+
+
 class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,too-many-instance-attributes
     """
     A class to manage and display the parameter editor table within the GUI.
@@ -98,7 +105,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         self,
         master: tk.Misc,
         parameter_editor: ParameterEditor,
-        parameter_editor_window: "ParameterEditorWindow",
+        parameter_editor_window: ParameterEditorTableHost,
         dialogs: ParameterEditorTableDialogs | None = None,
         options: ParameterTableOptions | None = None,
         parameters: dict[str, ArduPilotParameter] | None = None,
