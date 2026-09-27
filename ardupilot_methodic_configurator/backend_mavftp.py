@@ -1192,30 +1192,32 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         self.write_inflight.clear()
         if self.ftp_settings.debug > 0:
             logging.info("FTP: Terminated session")
-        if self.master is None or termination_send_failed:
-            self.pending_terminate_seq = None
-            termination_result = MAVFTPReturn(
-                "TerminateSession", FtpError.RemoteReplyTimeout
-            )
-        else:
-            termination_timeout = min(1.0, self.retry_timeout())
-            termination_result = self.process_ftp_reply(
-                "TerminateSession", timeout=termination_timeout
-            )
-        for _attempt in range(1, TERMINATE_ATTEMPTS):
-            if termination_result.error_code == FtpError.Success:
-                break
-            if self.master is None or termination_send_failed:
-                break
-            if not self.__send_termination():
-                break
-            termination_result = self.process_ftp_reply(
-                "TerminateSession", timeout=termination_timeout
-            )
-        if termination_result.error_code != FtpError.Success:
-            # Do not let an unanswered old handshake block a later operation.
-            self.pending_terminate_seq = None
-        self.session = (self.session + 1) % FTP_SESSION_MODULUS
+        termination_result = MAVFTPReturn("TerminateSession", FtpError.RemoteReplyTimeout)
+        try:
+            if self.master is not None and not termination_send_failed:
+                termination_timeout = min(1.0, self.retry_timeout())
+                termination_result = self.process_ftp_reply(
+                    "TerminateSession", timeout=termination_timeout
+                )
+                for _attempt in range(1, TERMINATE_ATTEMPTS):
+                    if termination_result.error_code == FtpError.Success:
+                        break
+                    if not self.__send_termination():
+                        break
+                    termination_result = self.process_ftp_reply(
+                        "TerminateSession", timeout=termination_timeout
+                    )
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            # A simulated TX delay sends from idle_task, after __send has
+            # returned. Keep a failed deferred send within the cleanup boundary.
+            logging.warning("FTP: could not complete session termination: %s", exc)
+            self.__discard_delayed_traffic()
+            termination_result = MAVFTPReturn("TerminateSession", FtpError.RemoteReplyTimeout)
+        finally:
+            if termination_result.error_code != FtpError.Success:
+                # Do not let an unanswered old handshake block a later operation.
+                self.pending_terminate_seq = None
+            self.session = (self.session + 1) % FTP_SESSION_MODULUS
         return termination_result
 
     def __send_termination(self) -> bool:
