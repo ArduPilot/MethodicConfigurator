@@ -15,10 +15,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import logging
 import socket
 import struct
+import tempfile
 import unittest
 
 # from unittest.mock import patch
 from io import BytesIO, StringIO
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
@@ -643,40 +645,58 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):  # pylint: disable=too-many-
 
     def test_sysfs_download_treats_placeholder_size_as_an_upper_bound(self) -> None:
         """Generated @SYS files finish at EOF instead of their placeholder stat size."""
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "uarts.txt"
+            self._finish_short_download("/@SYS/uarts.txt", destination, 100000)
+            assert destination.read_bytes() == b"data"
+            assert self.mav_ftp.callback_failure is None
+
+    def test_sysfs_exact_size_files_reject_short_downloads(self) -> None:
+        """Storage and crash dumps retain their authoritative OpenFileRO sizes."""
+        for remote in ("/@SYS/storage.bin", "/@SYS/crash_dump.bin"):
+            with self.subTest(remote=remote), tempfile.TemporaryDirectory() as directory:
+                destination = Path(directory) / "original.bin"
+                destination.write_bytes(b"original")
+                self._finish_short_download(remote, destination, 16384)
+                assert destination.read_bytes() == b"original"
+                assert self.mav_ftp.callback_failure.error_code == FtpError.InvalidDataSize
+
+    def _finish_short_download(self, remote: str, destination: Path, advertised_size: int) -> None:
+        """Drive the real open reply and EOF publication path with a short payload."""
         with patch.object(self.mav_ftp, "_MAVFTP__send"):
-            result = self.mav_ftp.cmd_get(["/@SYS/uarts.txt", "uarts.txt"])
+            result = self.mav_ftp.cmd_get([remote, str(destination)])
+            assert result.error_code == FtpError.Success
+            reply = FTP_OP(
+                seq=self.mav_ftp.seq,
+                session=self.mav_ftp.session,
+                opcode=OP_Ack,
+                size=4,
+                req_opcode=0,
+                burst_complete=0,
+                offset=0,
+                payload=bytearray(struct.pack("<I", advertised_size)),
+            )
+            self.mav_ftp._MAVFTP__handle_open_ro_reply(reply, None)  # pylint: disable=protected-access
+            self.mav_ftp.fh.write(b"data")
+            self.mav_ftp.read_total = 4
+            self.mav_ftp.reached_eof = True
+            with patch.object(
+                self.mav_ftp, "process_ftp_reply", return_value=MAVFTPReturn("TerminateSession", FtpError.Success)
+            ):
+                assert self.mav_ftp._MAVFTP__check_read_finished()  # pylint: disable=protected-access
 
-        assert result.error_code == FtpError.Success
-        assert self.mav_ftp.remote_size_is_upper_bound is True
-
-        self.mav_ftp.fh = Mock()
-        self.mav_ftp.fh.tell.return_value = 746
-        self.mav_ftp.fh.fileno.return_value = 42
-        self.mav_ftp.fh_owned = True
-        self.mav_ftp.temp_filename = "staging.uarts.txt"
-        self.mav_ftp.filename = "uarts.txt"
-        self.mav_ftp.op_start = 1.0
-        self.mav_ftp.read_gaps = []
-        self.mav_ftp.reached_eof = True
-        self.mav_ftp.read_total = 746
-        self.mav_ftp.requested_offset = 0
-        self.mav_ftp.requested_size = 100000
-        self.mav_ftp.remote_size_known = False
-
-        with (
-            patch(
-                "ardupilot_methodic_configurator.backend_mavftp.os.fstat",
-                return_value=Mock(st_size=746),
-            ),
-            patch("ardupilot_methodic_configurator.backend_mavftp.os.fsync"),
-            patch("ardupilot_methodic_configurator.backend_mavftp.os.replace") as replace,
-            patch.object(self.mav_ftp, "_MAVFTP__terminate_session") as terminate,
-        ):
-            assert self.mav_ftp._MAVFTP__check_read_finished()  # pylint: disable=protected-access
-
-        replace.assert_called_once_with("staging.uarts.txt", "uarts.txt")
-        terminate.assert_called_once()
-        assert "Wrote 746/746 bytes to uarts.txt" in self.log_stream.getvalue()
+    def test_cancel_releases_staging_when_termination_send_fails(self) -> None:
+        """A lost link cannot leave an open staging handle behind after cancel."""
+        with tempfile.TemporaryDirectory() as directory:
+            staging = Path(directory) / "staging.bin"
+            self.mav_ftp.fh = staging.open("wb+")
+            self.mav_ftp.fh_owned = True
+            self.mav_ftp.temp_filename = str(staging)
+            with patch.object(self.mav_ftp, "_MAVFTP__send", side_effect=OSError("disconnected")):
+                result = self.mav_ftp.cmd_cancel()
+            assert result.error_code == FtpError.RemoteReplyTimeout
+            assert self.mav_ftp.fh is None
+            assert not staging.exists()
 
     def test_websocket_batch_uses_link_write_for_websocket_framing(self) -> None:
         """Batched packets use write() for both pymavlink WebSocket link classes."""
