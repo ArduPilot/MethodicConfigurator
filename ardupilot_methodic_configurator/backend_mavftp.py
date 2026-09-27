@@ -1130,9 +1130,14 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         # after this purge and is therefore the only packet retained.
         self.__discard_delayed_traffic()
         self.pending_terminate_seq = self.seq
-        self.__send(
-            FTP_OP(self.seq, self.session, OP_TerminateSession, 0, 0, 0, 0, None)
-        )
+        try:
+            self.__send(
+                FTP_OP(self.seq, self.session, OP_TerminateSession, 0, 0, 0, 0, None)
+            )
+            termination_send_failed = False
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logging.warning("FTP: could not send session termination: %s", exc)
+            termination_send_failed = True
         self.__release_staging()
         self.fh = None
         self.filename = None
@@ -1192,7 +1197,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         self.write_inflight.clear()
         if self.ftp_settings.debug > 0:
             logging.info("FTP: Terminated session")
-        if self.master is None:
+        if self.master is None or termination_send_failed:
             self.pending_terminate_seq = None
             termination_result = MAVFTPReturn(
                 "TerminateSession", FtpError.RemoteReplyTimeout
@@ -1205,7 +1210,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         for _attempt in range(1, TERMINATE_ATTEMPTS):
             if termination_result.error_code == FtpError.Success:
                 break
-            if self.master is None:
+            if self.master is None or termination_send_failed:
                 break
             self.pending_terminate_seq = self.seq
             self.__send(
@@ -1603,9 +1608,12 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         else:
             self.filename = os.path.basename(fname)
         self.get_result = None
-        # AP_Filesystem_Sys reports a fixed 100000-byte placeholder from
-        # stat() for generated @SYS text files. Their actual EOF is smaller.
-        self.remote_size_is_upper_bound = fname.lstrip("/").startswith("@SYS/")
+        # AP_Filesystem_Sys reports a fixed 100000-byte placeholder for
+        # generated files. Storage and crash dumps have authoritative sizes.
+        sys_path = fname.lstrip("/")
+        self.remote_size_is_upper_bound = sys_path.startswith("@SYS/") and sys_path[len("@SYS/") :] not in (
+            "storage.bin", "crash_dump.bin"
+        )
         if callback is None or self.ftp_settings.debug > 1:
             logging.info("Getting %s to %s", fname, self.filename)
         self.op_start = time.time()
