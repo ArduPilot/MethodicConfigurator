@@ -14,6 +14,7 @@ import tempfile
 import unittest
 from argparse import ArgumentParser
 from os import path as os_path
+from pathlib import Path
 from subprocess import SubprocessError
 from unittest.mock import MagicMock, mock_open, patch
 
@@ -24,6 +25,60 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 
 # pylint: disable=too-many-lines, protected-access
+
+
+def test_standalone_metadata_uses_connected_firmware_and_normalizes_reboot_field() -> None:
+    """A standalone editor receives the same parsed reboot metadata as an AMC project."""
+    filesystem = LocalFilesystem(None, "ArduPlane", "4.6.3", False, False)  # noqa: FBT003
+    metadata = {
+        "ROLL_P": {
+            "humanName": "Roll P",
+            "documentation": [],
+            "fields": {"RebootRequired": "True"},
+            "values": {},
+        }
+    }
+    with (
+        patch("ardupilot_methodic_configurator.backend_filesystem.download_file_from_url", return_value=True) as download,
+        patch("ardupilot_methodic_configurator.backend_filesystem.parse_parameter_metadata", return_value=metadata) as parse,
+    ):
+        source = filesystem.load_parameter_metadata_for_flight_controller("ArduPlane", "4.6.3")
+
+    assert source.endswith("/versioned/Plane/stable-4.6.3/apm.pdef.xml")
+    assert download.call_args.args[0] == source
+    assert parse.call_args.args[0] == ""
+    assert parse.call_args.args[3] == "ArduPlane"
+    assert filesystem.doc_dict["ROLL_P"]["RebootRequired"] is True
+
+
+def test_fc_metadata_fetch_ignores_unrelated_xml_in_current_directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A cached XML from another vehicle must not replace the connected FC metadata."""
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "apm.pdef.xml").write_text("<stale/>", encoding="utf-8")
+
+    def download_metadata(_url: str, destination: str) -> bool:
+        Path(destination).write_text(
+            '<parameters><param name="ArduPlane:ROLL_P" humanName="Roll P" documentation="">'
+            '<field name="RebootRequired">True</field></param></parameters>',
+            encoding="utf-8",
+        )
+        return True
+
+    with patch("ardupilot_methodic_configurator.backend_filesystem.download_file_from_url", side_effect=download_metadata):
+        filesystem = LocalFilesystem.for_external_parameter_file(str(tmp_path), "ArduPlane", "4.6.3", ParDict())
+
+    assert filesystem.doc_dict["ROLL_P"]["RebootRequired"] is True
+
+
+def test_standalone_metadata_rejects_generic_fallback() -> None:
+    """A failed exact-version download must stop before upload metadata is created."""
+    with (
+        patch("ardupilot_methodic_configurator.backend_filesystem.download_file_from_url", return_value=False) as download,
+        pytest.raises(ValueError, match=r"stable-4\.6\.3/apm\.pdef\.xml"),
+    ):
+        LocalFilesystem.for_external_parameter_file(".", "ArduPlane", "4.6.3", ParDict())
+
+    download.assert_called_once()
 
 
 class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public-methods

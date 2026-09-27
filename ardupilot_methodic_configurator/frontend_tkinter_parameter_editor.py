@@ -263,6 +263,42 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
             if download_progress_window is not None:
                 download_progress_window.destroy()
 
+    def reset_all_parameters_to_default_with_progress(
+        self,
+        parent_window: tk.Misc,
+        reset_callback: Callable[..., bool],
+    ) -> bool:
+        """Run a parameter reset with shared restart and download progress windows."""
+        download_progress_window: ProgressWindow | None = None
+
+        def get_download_progress_callback() -> Callable[[int, int], None]:
+            nonlocal download_progress_window
+            download_progress_window = self.create_progress_window(
+                parent_window,
+                _("Re-downloading FC parameters"),
+                _("Downloaded {} of {} parameters"),
+                False,  # noqa: FBT003
+            )
+            return download_progress_window.update_progress_bar
+
+        reset_progress_window = self.create_progress_window(
+            parent_window,
+            _("Restarting Flight Controller"),
+            _("Reset command sent"),
+            True,  # noqa: FBT003
+            auto_close_on_complete=False,
+        )
+
+        def update_progress(current: int, total: int) -> None:
+            update_flight_controller_restart_progress(reset_progress_window, current, total)
+
+        try:
+            return bool(reset_callback(self.show_error, update_progress, get_download_progress_callback))
+        finally:
+            reset_progress_window.destroy()
+            if download_progress_window is not None:
+                download_progress_window.destroy()
+
 
 class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes, too-many-public-methods
     """
@@ -1682,43 +1718,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def reset_all_parameters_to_default(self) -> bool:
         """Reset all flight-controller parameters to defaults with a progress window."""
-        download_progress_window: ProgressWindow | None = None
-
-        def get_download_progress_callback() -> Callable[[int, int], None]:
-            """Create the download progress window after reconnection succeeds."""
-            nonlocal download_progress_window
-            download_progress_window = self.ui.create_progress_window(
-                self.root,
-                _("Re-downloading FC parameters"),
-                _("Downloaded {} of {} parameters"),
-                False,  # noqa: FBT003
-            )
-            return download_progress_window.update_progress_bar
-
-        reset_reconnect_progress_window = self.ui.create_progress_window(
-            self.root,
-            _("Restarting Flight Controller"),
-            _("Reset command sent"),
-            True,  # noqa: FBT003
-            auto_close_on_complete=False,
+        success = self.ui.reset_all_parameters_to_default_with_progress(
+            self.root, self.parameter_editor.reset_all_parameters_to_default
         )
-
-        def update_progress(current: int, total: int) -> None:
-            update_flight_controller_restart_progress(reset_reconnect_progress_window, current, total)
-
-        try:
-            success = self.parameter_editor.reset_all_parameters_to_default(
-                self.ui.show_error,
-                update_progress,
-                get_download_progress_callback,
-            )
-            if success:
-                self.repopulate_parameter_table()
-            return success
-        finally:
-            reset_reconnect_progress_window.destroy()
-            if download_progress_window is not None:
-                download_progress_window.destroy()
+        if success:
+            self.repopulate_parameter_table()
+        return success
 
     def close_connection_and_quit(self) -> None:
         focused_widget = self.parameter_editor_table.view_port.focus_get()

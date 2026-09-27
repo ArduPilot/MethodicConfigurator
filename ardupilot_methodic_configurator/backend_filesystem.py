@@ -32,6 +32,7 @@ from shutil import copy2 as shutil_copy2
 from shutil import copytree as shutil_copytree
 from shutil import rmtree as shutil_rmtree
 from subprocess import SubprocessError, run
+from tempfile import TemporaryDirectory
 from typing import Any
 from zipfile import ZipFile
 
@@ -52,6 +53,7 @@ from ardupilot_methodic_configurator.annotate_params import (
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
+from ardupilot_methodic_configurator.backend_internet import download_file_from_url
 from ardupilot_methodic_configurator.data_model_par_dict import MANUAL_OVERRIDE_PREFIX, Par, ParDict, is_within_tolerance
 
 PARAMETER_FILE_REGEXP = r"^\d{2}_.*\.param$"
@@ -93,13 +95,15 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         vehicle_dir: str,
         vehicle_type: str,
         fw_version: str,
         allow_editing_template_files: bool,
         save_component_to_system_templates: bool,
+        *,
+        load_project: bool = True,
     ) -> None:
         self.file_parameters: dict[str, ParDict] = {}
         VehicleComponents.__init__(self, save_component_to_system_templates)
@@ -113,9 +117,30 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         self.vehicle_dir = vehicle_dir
         self.doc_dict: dict[str, Any] = {}
         self._parameter_metadata_cache: dict[tuple[str, str, str], dict[str, Any]] = {}
-        if vehicle_dir is not None:
+        if load_project and vehicle_dir is not None:
             self.remove_cached_parameter_metadata_for_mismatched_firmware(vehicle_dir)
             self.re_init(vehicle_dir, vehicle_type)
+
+    @classmethod
+    def for_external_parameter_file(
+        cls,
+        vehicle_dir: str,
+        vehicle_type: str,
+        firmware_version: str,
+        default_parameters: ParDict,
+    ) -> "LocalFilesystem":
+        """Create filesystem services for an external file without opening an AMC project."""
+        filesystem = cls(
+            vehicle_dir,
+            vehicle_type,
+            firmware_version,
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
+            load_project=False,
+        )
+        filesystem.param_default_dict = default_parameters
+        filesystem.load_parameter_metadata_for_flight_controller(vehicle_type, firmware_version)
+        return filesystem
 
     def re_init(self, vehicle_dir: str, vehicle_type: str, blank_component_data: bool = False) -> None:
         self.vehicle_dir = vehicle_dir
@@ -170,6 +195,32 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 self.doc_dict.update(doc_dict)
 
         self.__extend_and_reformat_parameter_documentation_metadata()
+
+    def load_parameter_metadata_for_flight_controller(self, vehicle_type: str, firmware_version: str) -> str:
+        """Fetch metadata for the exact FC firmware and return its source URL."""
+        if not vehicle_type or not firmware_version:
+            msg = _("The connected flight controller did not report its vehicle type and firmware version.")
+            raise ValueError(msg)
+
+        version = re_compile(r"[ _-]").split(firmware_version, 1)[0]
+        metadata_url = get_xml_url(vehicle_type, version) + PARAM_DEFINITION_XML_FILE
+
+        with TemporaryDirectory() as xml_dir:
+            metadata_path = os_path.join(xml_dir, PARAM_DEFINITION_XML_FILE)
+            if not download_file_from_url(metadata_url, metadata_path):
+                msg = _("Could not download parameter metadata for the connected firmware from {url}").format(url=metadata_url)
+                raise ValueError(msg)
+            self.doc_dict = parse_parameter_metadata(
+                "",
+                xml_dir,
+                PARAM_DEFINITION_XML_FILE,
+                vehicle_type,
+                TOOLTIP_MAX_LENGTH,
+            )
+        self.vehicle_type = vehicle_type
+        self.fw_version = firmware_version
+        self.__extend_and_reformat_parameter_documentation_metadata()
+        return metadata_url
 
     def remove_cached_parameter_metadata_for_mismatched_firmware(self, vehicle_dir: str) -> bool:
         """
