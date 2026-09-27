@@ -1820,7 +1820,7 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:169
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:618
 msgid "Invalid remote file: %(error)s"
-msgstr ""
+msgstr "File remoto non valido: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:174
 msgid "MAVFTP is not available for file upload"
@@ -1867,29 +1867,29 @@ msgstr "Errore durante il download del registro di volo: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:342
 msgid "Remote path must not be empty"
-msgstr ""
+msgstr "Il percorso remoto non deve essere vuoto"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:350
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:359
 msgid "Remote path must be absolute"
-msgstr ""
+msgstr "Il percorso remoto deve essere assoluto"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:354
 msgid "Remote path must not contain parent-directory segments"
-msgstr ""
+msgstr "Il percorso remoto non deve contenere segmenti della directory padre"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:370
 msgid "Remote directory entries must be regular file names"
-msgstr ""
+msgstr "Le voci della directory remota devono essere nomi di file regolari"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:411
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:469
 msgid "Invalid remote directory: %(error)s"
-msgstr ""
+msgstr "Directory remota non valida: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:416
 msgid "MAVFTP is not available for file listing"
-msgstr ""
+msgstr "MAVFTP non è disponibile per l'elenco dei file"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:429
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:725
@@ -1898,44 +1898,44 @@ msgstr "Nessun elenco directory trovato in MAVFTPReturn"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:439
 msgid "Skipping invalid remote directory entry: %(name)s"
-msgstr ""
+msgstr "Voce non valida della directory remota ignorata: %(name)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:454
 msgid "Failed to list remote directory: %(error)s"
-msgstr ""
+msgstr "Impossibile elencare la directory remota: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:493
 msgid "Failed to create remote directory: %(error)s"
-msgstr ""
+msgstr "Impossibile creare la directory remota: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:508
 msgid "The remote root cannot be deleted"
-msgstr ""
+msgstr "La radice remota non può essere eliminata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:510
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:544
 msgid "Invalid remote path: %(error)s"
-msgstr ""
+msgstr "Percorso remoto non valido: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:526
 msgid "Failed to delete remote path: %(error)s"
-msgstr ""
+msgstr "Impossibile eliminare il percorso remoto: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:542
 msgid "The remote root cannot be renamed"
-msgstr ""
+msgstr "La radice remota non può essere rinominata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:557
 msgid "Failed to rename remote path: %(error)s"
-msgstr ""
+msgstr "Impossibile rinominare il percorso remoto: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:591
 msgid "Could not verify remote file %(remote)s"
-msgstr ""
+msgstr "Impossibile verificare il file remoto %(remote)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:596
 msgid "Could not verify remote file %(remote)s: %(error)s"
-msgstr ""
+msgstr "Impossibile verificare il file remoto %(remote)s: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:670
 msgid "Could not determine the last log number using any method"
@@ -1978,7 +1978,7 @@ msgstr "Tentativo di trovare il numero di registro usando ricerca binaria"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:761
 msgid "Stopped probing log numbers after the time budget expired"
-msgstr ""
+msgstr "Interrotto il rilevamento dei numeri di log dopo l'esaurimento del tempo disponibile"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:777
 msgid "Log %(number)d exists, searching higher"
@@ -7358,7 +7358,7 @@ msgstr "Nessun messaggio del banner acquisito."
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:579
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:647
 msgid "Name"
-msgstr ""
+msgstr "Nome"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:95
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:580
@@ -7371,168 +7371,168 @@ msgstr "Tipo"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:581
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:649
 msgid "Size"
-msgstr ""
+msgstr "Dimensione"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:97
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:582
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:650
 msgid "Modified"
-msgstr ""
+msgstr "Modificato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:133
 msgid "Flight-controller files"
-msgstr ""
+msgstr "File del controller di volo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:179
 msgid "Download selected →"
-msgstr ""
+msgstr "Scarica selezionati →"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:185
 msgid ""
 "Download selected files and directories from the flight controller to the "
 "local computer"
-msgstr ""
+msgstr "Scarica i file e le directory selezionati dal controller di volo al computer locale"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:190
 msgid "← Upload selected"
-msgstr ""
+msgstr "← Carica selezionati"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:196
 msgid ""
 "Upload selected files and directories from the local computer to the flight "
 "controller"
-msgstr ""
+msgstr "Carica i file e le cartelle selezionati dal computer locale al controller di volo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:201
 msgid "Verify transfers with CRC32"
-msgstr ""
+msgstr "Verifica i trasferimenti con CRC32"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:205
 msgid "Compare local and flight-controller checksums after each transfer"
-msgstr ""
+msgstr "Confronta i checksum locali e del controller di volo dopo ogni trasferimento"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:209
 msgid "Download last FC log"
-msgstr ""
+msgstr "Scarica l'ultimo log del FC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:213
 msgid "Download the last flight-controller .bin log file"
-msgstr ""
+msgstr "Scarica l'ultimo file di log .bin del controller di volo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:217
 msgid "Help"
-msgstr ""
+msgstr "Aiuto"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:221
 msgid "Open the MAVFTP file browser user manual"
-msgstr ""
+msgstr "Apri il manuale utente del browser file MAVFTP"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:225
 msgid "Close the file browser"
-msgstr ""
+msgstr "Chiudi il browser file"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:249
 msgid "FC directory:"
-msgstr ""
+msgstr "Directory FC:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:260
 msgid "Go to the parent directory on the flight controller"
-msgstr ""
+msgstr "Vai alla directory padre sul controller di volo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:264
 msgid "Open the remote directory and refresh its contents"
-msgstr ""
+msgstr "Apri la directory remota e aggiorna il suo contenuto"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:266
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:301
 msgid "Select all"
-msgstr ""
+msgstr "Seleziona tutto"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:268
 msgid "Select all remote files and directories"
-msgstr ""
+msgstr "Seleziona tutti i file e le cartelle remoti"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:280
 msgid "PC directory:"
-msgstr ""
+msgstr "Directory PC:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:291
 msgid "Go to the parent directory on the local computer"
-msgstr ""
+msgstr "Vai alla directory padre sul computer locale"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:293
 msgid "Browse"
-msgstr ""
+msgstr "Sfoglia"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:295
 msgid "Choose a local directory"
-msgstr ""
+msgstr "Scegli una directory locale"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:299
 msgid "Refresh the local directory contents"
-msgstr ""
+msgstr "Aggiorna il contenuto della directory locale"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:303
 msgid "Select all local files and directories"
-msgstr ""
+msgstr "Seleziona tutti i file e le cartelle locali"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:372
 msgid "The remote destination must not be empty."
-msgstr ""
+msgstr "La destinazione remota non deve essere vuota."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:372
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:397
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:402
 msgid "Remote directory error"
-msgstr ""
+msgstr "Errore della directory remota"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:383
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:410
 msgid "Remote files in {remote_directory}"
-msgstr ""
+msgstr "File remoti in {remote_directory}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:402
 msgid "Could not list the remote directory."
-msgstr ""
+msgstr "Impossibile elencare la directory remota."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:413
 msgid "Loading remote directory…"
-msgstr ""
+msgstr "Caricamento della directory remota…"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:427
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:433
 msgid "Local directory error"
-msgstr ""
+msgstr "Errore della directory locale"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:427
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1324
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1581
 msgid "The selected local directory does not exist."
-msgstr ""
+msgstr "La directory locale selezionata non esiste."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:439
 msgid "Local files in {directory}"
-msgstr ""
+msgstr "File locali in {directory}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:480
 msgid "Select local directory"
-msgstr ""
+msgstr "Seleziona directory locale"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:512
 msgid "Directory"
-msgstr ""
+msgstr "Directory"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:512
 msgid "File"
-msgstr ""
+msgstr "File"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:558
 msgid "No entries found in this directory."
-msgstr ""
+msgstr "Nessuna voce trovata in questa directory."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:564
 msgid "Unsupported"
-msgstr ""
+msgstr "Non supportato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:850
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:879
@@ -7546,81 +7546,81 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1636
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1641
 msgid "Rename error"
-msgstr ""
+msgstr "Errore di rinomina"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:850
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:879
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1611
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1632
 msgid "The new name must be one file or directory name."
-msgstr ""
+msgstr "Il nuovo nome deve essere il nome di un singolo file o directory."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:871
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1607
 msgid "Rename remote entry"
-msgstr ""
+msgstr "Rinomina voce remota"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:871
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1628
 msgid "Rename local entry"
-msgstr ""
+msgstr "Rinomina voce locale"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:872
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1607
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1628
 msgid "New name:"
-msgstr ""
+msgstr "Nuovo nome:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:906
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:937
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1643
 msgid "Rename summary"
-msgstr ""
+msgstr "Riepilogo rinomina"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:907
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:938
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1643
 msgid "Renamed %(old)s to %(new)s."
-msgstr ""
+msgstr "Rinominato %(old)s in %(new)s."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:911
 msgid "Could not rename the remote entry."
-msgstr ""
+msgstr "Impossibile rinominare la voce remota."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:914
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:915
 msgid "Renaming remote entry"
-msgstr ""
+msgstr "Rinomina della voce remota"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:929
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1585
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1636
 msgid "The target name already exists."
-msgstr ""
+msgstr "Il nome di destinazione esiste già."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1015
 msgid "New directory"
-msgstr ""
+msgstr "Nuova directory"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1020
 msgid "Open"
-msgstr ""
+msgstr "Apri"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1070
 msgid "Open file error"
-msgstr ""
+msgstr "Errore di apertura del file"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1200
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1222
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1245
 msgid "Transfer error"
-msgstr ""
+msgstr "Errore di trasferimento"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1201
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1223
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1246
 msgid "Another file operation is already in progress."
-msgstr ""
+msgstr "È già in corso un'altra operazione sui file."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1324
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1329
@@ -7628,130 +7628,130 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1340
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1706
 msgid "Download error"
-msgstr ""
+msgstr "Errore di download"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1332
 msgid "Could not prepare the selected remote entries."
-msgstr ""
+msgstr "Impossibile preparare le voci remote selezionate."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1341
 msgid ""
 "Several selected entries map to the same local target:\n"
 "\n"
 "%s"
-msgstr ""
+msgstr "Più voci selezionate corrispondono alla stessa destinazione locale:\n\n%s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1345
 msgid "Overwrite existing local entries?"
-msgstr ""
+msgstr "Sovrascrivere le voci locali esistenti?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1346
 msgid "Some local entries already exist. Overwrite them?"
-msgstr ""
+msgstr "Alcune voci locali esistono già. Sovrascriverle?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1350
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1379
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1714
 msgid "Download summary"
-msgstr ""
+msgstr "Riepilogo del download"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1381
 msgid "Retry failed downloads?"
-msgstr ""
+msgstr "Riprovare i download non riusciti?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1381
 msgid "Retry only the failed file downloads?"
-msgstr ""
+msgstr "Riprovare solo i download dei file non riusciti?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1388
 msgid "Downloading selected entries"
-msgstr ""
+msgstr "Download delle voci selezionate in corso"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1389
 msgid "Downloaded {} of {} bytes"
-msgstr ""
+msgstr "Scaricati {} di {} byte"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1415
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1426
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1429
 msgid "Upload error"
-msgstr ""
+msgstr "Errore di caricamento"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1415
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1545
 msgid "The remote destination must be an absolute directory path."
-msgstr ""
+msgstr "La destinazione remota deve essere un percorso assoluto di directory."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1419
 msgid "Upload selected entries?"
-msgstr ""
+msgstr "Caricare le voci selezionate?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1420
 msgid "Uploading may overwrite remote files. Continue?"
-msgstr ""
+msgstr "Il caricamento potrebbe sovrascrivere i file remoti. Continuare?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1429
 msgid "Could not prepare the selected local entries."
-msgstr ""
+msgstr "Impossibile preparare le voci locali selezionate."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1432
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1462
 msgid "Upload summary"
-msgstr ""
+msgstr "Riepilogo del caricamento"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1464
 msgid "Retry failed uploads?"
-msgstr ""
+msgstr "Riprovare i caricamenti non riusciti?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1464
 msgid "Retry only the failed file uploads?"
-msgstr ""
+msgstr "Riprovare solo i caricamenti dei file non riusciti?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1471
 msgid "Uploading selected entries"
-msgstr ""
+msgstr "Caricamento delle voci selezionate in corso"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1472
 msgid "Uploaded {} of {} bytes"
-msgstr ""
+msgstr "Caricati {} di {} byte"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1491
 msgid "Delete remote entries?"
-msgstr ""
+msgstr "Eliminare le voci remote?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1492
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1520
 msgid "Delete selected files and empty directories?"
-msgstr ""
+msgstr "Eliminare i file selezionati e le directory vuote?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1503
 msgid "Remote delete summary"
-msgstr ""
+msgstr "Riepilogo dell'eliminazione remota"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1507
 msgid "Deleting remote entries"
-msgstr ""
+msgstr "Eliminazione delle voci remote in corso"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1508
 msgid "Deleted selected remote entries"
-msgstr ""
+msgstr "Voci remote selezionate eliminate"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1519
 msgid "Delete local entries?"
-msgstr ""
+msgstr "Eliminare le voci locali?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1530
 msgid "Local delete summary"
-msgstr ""
+msgstr "Riepilogo dell'eliminazione locale"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1537
 msgid "New remote directory"
-msgstr ""
+msgstr "Nuova directory remota"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1537
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1573
 msgid "Directory name:"
-msgstr ""
+msgstr "Nome della directory:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1541
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1545
@@ -7761,46 +7761,46 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1585
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1590
 msgid "New directory error"
-msgstr ""
+msgstr "Errore nuova directory"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1541
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1577
 msgid "The directory name must be a single directory name."
-msgstr ""
+msgstr "Il nome della directory deve essere un singolo nome di directory."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1556
 msgid "Created remote directory %(name)s."
-msgstr ""
+msgstr "Directory remota %(name)s creata."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1556
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1592
 msgid "New directory summary"
-msgstr ""
+msgstr "Riepilogo nuova directory"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1560
 msgid "Could not create the remote directory."
-msgstr ""
+msgstr "Impossibile creare la directory remota."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1563
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1564
 msgid "Creating remote directory"
-msgstr ""
+msgstr "Creazione della directory remota"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1573
 msgid "New local directory"
-msgstr ""
+msgstr "Nuova directory locale"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1592
 msgid "Created local directory %(name)s."
-msgstr ""
+msgstr "Directory locale %(name)s creata."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1602
 msgid "Select exactly one remote entry to rename."
-msgstr ""
+msgstr "Seleziona esattamente un elemento remoto da rinominare."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1623
 msgid "Select exactly one local entry to rename."
-msgstr ""
+msgstr "Seleziona esattamente un elemento locale da rinominare."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1689
 msgid "Save flight log as"
@@ -7812,11 +7812,11 @@ msgstr "File registro binari"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1708
 msgid "No flight logs found on the flight controller."
-msgstr ""
+msgstr "Nessun registro di volo trovato sul controllore di volo."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1710
 msgid "Could not download the flight log; check the console for details."
-msgstr ""
+msgstr "Impossibile scaricare il registro di volo; controlla la console per i dettagli."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1718
 msgid "Downloading Flight Log"
@@ -7828,36 +7828,36 @@ msgstr "Scaricato {}% da {}%"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1727
 msgid "Browse and transfer files on an ArduPilot flight controller."
-msgstr ""
+msgstr "Sfoglia e trasferisci file su un controllore di volo ArduPilot."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1785
 msgid "Flight-controller connection error"
-msgstr ""
+msgstr "Errore di connessione al controllore di volo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser_operations.py:150
 msgid "Failed: %s"
-msgstr ""
+msgstr "Fallito: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser_operations.py:150
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser_operations.py:155
 msgid "Not verified: %s"
-msgstr ""
+msgstr "Non verificato: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser_operations.py:153
 msgid "Verified: %s"
-msgstr ""
+msgstr "Verificato: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser_operations.py:157
 msgid "Succeeded: %s"
-msgstr ""
+msgstr "Riuscito: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser_operations.py:168
 msgid "… %s more entries omitted."
-msgstr ""
+msgstr "… omesse altre %s voci."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser_operations.py:169
 msgid "No entries processed."
-msgstr ""
+msgstr "Nessuna voce elaborata."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_connection_progress.py:47
 msgid "Initializing Flight Controller"
@@ -8589,13 +8589,13 @@ msgstr ""
 msgid ""
 "Download .bin\n"
 "log file(s)"
-msgstr ""
+msgstr "Scarica file .bin\ndi log"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:637
 msgid ""
 "Browse files in the flight controller log directory and download one or more "
 "files"
-msgstr ""
+msgstr "Sfoglia i file nella directory dei log del controllore di volo e scarica uno o più file"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:639
 msgid "No flight controller connected or MAVFTP not supported"
