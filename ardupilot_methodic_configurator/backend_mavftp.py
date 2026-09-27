@@ -1129,15 +1129,10 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         # cancellation or completion. The termination packet is queued below
         # after this purge and is therefore the only packet retained.
         self.__discard_delayed_traffic()
-        self.pending_terminate_seq = self.seq
-        try:
-            self.__send(
-                FTP_OP(self.seq, self.session, OP_TerminateSession, 0, 0, 0, 0, None)
-            )
-            termination_send_failed = False
-        except Exception as exc:  # pylint: disable=broad-exception-caught
-            logging.warning("FTP: could not send session termination: %s", exc)
-            termination_send_failed = True
+        self.op_start = None
+        self.no_sessions_retry_pending = False
+        self.request_cancelled = True
+        termination_send_failed = not self.__send_termination()
         self.__release_staging()
         self.fh = None
         self.filename = None
@@ -1212,10 +1207,8 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
                 break
             if self.master is None or termination_send_failed:
                 break
-            self.pending_terminate_seq = self.seq
-            self.__send(
-                FTP_OP(self.seq, self.session, OP_TerminateSession, 0, 0, 0, 0, None)
-            )
+            if not self.__send_termination():
+                break
             termination_result = self.process_ftp_reply(
                 "TerminateSession", timeout=termination_timeout
             )
@@ -1224,6 +1217,19 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
             self.pending_terminate_seq = None
         self.session = (self.session + 1) % FTP_SESSION_MODULUS
         return termination_result
+
+    def __send_termination(self) -> bool:
+        """Send a termination request and keep cancellation latched on failure."""
+        self.pending_terminate_seq = self.seq
+        try:
+            self.__send(FTP_OP(self.seq, self.session, OP_TerminateSession, 0, 0, 0, 0, None))
+            return True
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logging.warning("FTP: could not send session termination: %s", exc)
+            return False
+        finally:
+            # __send clears this flag for new commands, including TerminateSession.
+            self.request_cancelled = True
 
     def __has_active_session(self) -> bool:
         """Return whether a file operation may have opened a remote session."""
@@ -1932,10 +1938,8 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
                 self.callback_progress(completion)
             except Exception as exc:  # pylint: disable=broad-exception-caught
                 logging.error("FTP: download progress callback failed: %s", exc)
-                self.callback_failure = MAVFTPReturn("Get", FtpError.Fail)
                 self.callback_progress = None
-                self.__terminate_session()
-                return False
+                # Progress reporting is optional; keep the received data.
         return True
 
     def __read_position(self) -> int:
