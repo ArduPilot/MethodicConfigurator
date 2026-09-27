@@ -699,6 +699,29 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):  # pylint: disable=too-many-
             assert self.mav_ftp.fh is None
             assert not staging.exists()
 
+    def test_cancel_releases_staging_when_delayed_termination_send_fails(self) -> None:
+        """A queued termination send failure must still finish local cleanup."""
+        with tempfile.TemporaryDirectory() as directory:
+            staging = Path(directory) / "staging.bin"
+            self.mav_ftp.fh = staging.open("wb+")
+            self.mav_ftp.fh_owned = True
+            self.mav_ftp.temp_filename = str(staging)
+            old_session = self.mav_ftp.session
+            self.mav_ftp.ftp_settings.pkt_lag_tx = 1.0
+            with (
+                patch("ardupilot_methodic_configurator.backend_mavftp.time.monotonic", side_effect=[0.0, 1.0]),
+                patch.object(self.mock_master, "recv_match", return_value=None),
+                patch.object(self.mav_ftp, "_MAVFTP__transmit_payload", side_effect=OSError("link lost")),
+            ):
+                result = self.mav_ftp.cmd_cancel()
+
+            assert result.error_code == FtpError.RemoteReplyTimeout
+            assert self.mav_ftp.fh is None
+            assert not staging.exists()
+            assert self.mav_ftp.pending_terminate_seq is None
+            assert not self.mav_ftp.tx_delay_queue
+            assert self.mav_ftp.session == (old_session + 1) % 256
+
     def test_termination_retry_send_failure_still_advances_session(self) -> None:
         """A failed retry cannot turn a completed download into an exception."""
         old_session = self.mav_ftp.session
