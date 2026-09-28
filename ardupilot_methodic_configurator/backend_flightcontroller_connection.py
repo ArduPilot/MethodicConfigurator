@@ -726,7 +726,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                 firmware_type = firmware_type_banner_substrings[0]
 
         # Fallback: try first banner message (for SITL or systems without ChibiOS)
-        elif banner_msgs and not firmware_type:
+        elif banner_msgs:
             firmware_type_banner_substrings = banner_msgs[0].split(" ")
             if len(firmware_type_banner_substrings) >= 1 and firmware_type_banner_substrings[0].strip():
                 firmware_type = firmware_type_banner_substrings[0].strip()

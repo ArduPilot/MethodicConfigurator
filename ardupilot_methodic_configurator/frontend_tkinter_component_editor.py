@@ -18,7 +18,6 @@ from collections.abc import Callable
 # from logging import debug as logging_debug
 # from logging import info as logging_info
 from logging import basicConfig as logging_basicConfig
-from logging import getLevelName as logging_getLevelName
 from tkinter import ttk
 
 from ardupilot_methodic_configurator import _, __version__
@@ -513,7 +512,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 if __name__ == "__main__":  # pragma: no cover
     args = argument_parser()
 
-    logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
+    logging_basicConfig(level=args.loglevel, format="%(asctime)s - %(levelname)s - %(message)s")
 
     filesystem = LocalFilesystem(
         args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files, args.save_component_to_system_templates
