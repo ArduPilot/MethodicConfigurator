@@ -1321,15 +1321,15 @@ msgstr "没有飞控连接可用于水平校准"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:591
 msgid "The previous level calibration is still finishing; try again shortly"
-msgstr ""
+msgstr "上一次水平校准仍在完成中；请稍后再试"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:595
 msgid "A level calibration is already in progress"
-msgstr ""
+msgstr "水平校准已在进行中"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:663
 msgid "Failed to send level calibration command: %(error)s"
-msgstr ""
+msgstr "发送水平校准命令失败：%(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:672
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:703
@@ -1340,7 +1340,7 @@ msgstr "无可用的飞控连接"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:679
 msgid "Failed to receive level calibration acknowledgment: %(error)s"
-msgstr ""
+msgstr "接收水平校准确认失败：%(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:725
 msgid "Level calibration completed successfully"
@@ -1350,7 +1350,7 @@ msgstr "水平校准成功完成"
 msgid ""
 "Level calibration was temporarily rejected; retrying after the calibration "
 "cooldown."
-msgstr ""
+msgstr "水平校准被暂时拒绝；将在校准冷却时间后重试。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:796
 msgid "Level calibration failed: %(error)s"
@@ -10267,13 +10267,13 @@ msgstr "无法发送位置确认"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:190
 msgid "The full accelerometer calibration wizard was closed locally"
-msgstr ""
+msgstr "完整的加速度计校准向导已在本地关闭"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:191
 msgid ""
 "The calibration wizard was closed. The flight controller may still be "
 "finishing calibration; check its status before continuing."
-msgstr ""
+msgstr "校准向导已关闭。飞控可能仍在完成校准；继续之前请检查其状态。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:112
 msgid ""
@@ -10438,11 +10438,11 @@ msgstr "飞行器目录不可用"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_level_calibration.py:30
 msgid "Level calibration started"
-msgstr ""
+msgstr "水平校准已开始"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_level_calibration.py:31
 msgid "Failed to start level calibration"
-msgstr ""
+msgstr "启动水平校准失败"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_level_calibration.py:40
 msgid "Level calibration completed"
@@ -10836,58 +10836,58 @@ msgstr "无数据"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_servo_out.py:36
 msgid "All motor output functions are already assigned; no changes are needed."
-msgstr ""
+msgstr "所有电机输出功能均已分配；无需更改。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_servo_out.py:74
 msgid ""
 "Select either Main Out or AIO as the FC-to-ESC connection type before "
 "assigning outputs."
-msgstr ""
+msgstr "分配输出前，请先选择 Main Out 或 AIO 作为飞控到 ESC 的连接类型。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_servo_out.py:84
 msgid ""
 "FRAME_CLASS %(frame_class)s does not have a supported motor-output mapping."
-msgstr ""
+msgstr "FRAME_CLASS %(frame_class)s 没有受支持的电机输出映射。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_servo_out.py:91
 msgid ""
 "FRAME_CLASS %(frame_class)s requires more outputs than this plugin can "
 "assign."
-msgstr ""
+msgstr "FRAME_CLASS %(frame_class)s 需要的输出数量超过此插件可分配的范围。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_servo_out.py:142
 msgid ""
 "Skipped outputs with later saved changes because those steps would overwrite "
 "assignments: %(details)s."
-msgstr ""
+msgstr "已跳过后续步骤中另有已保存更改的输出，因为那些步骤会覆盖分配：%(details)s。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_servo_out.py:216
 msgid "No servo output assignments could be applied."
-msgstr ""
+msgstr "无法应用任何舵机输出分配。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_servo_out.py:218
 msgid "Applied %(count)d motor output assignment(s)."
-msgstr ""
+msgstr "已应用 %(count)d 个电机输出分配。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_servo_out.py:220
 msgid "Could not apply: %(parameters)s."
-msgstr ""
+msgstr "无法应用：%(parameters)s。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_servo_out.py:340
 msgid "Motor%(number)d is not assigned to any output."
-msgstr ""
+msgstr "Motor%(number)d 未分配到任何输出。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_servo_out.py:342
 msgid "%(motors)s are not assigned to any output."
-msgstr ""
+msgstr "%(motors)s 未分配到任何输出。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_servo_out.py:347
 msgid "Recommended %(count)d motor output assignment(s)."
-msgstr ""
+msgstr "建议 %(count)d 个电机输出分配。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_servo_out.py:349
 msgid "SERVO7 is the tricopter yaw servo; connect it to a servo, not an ESC."
-msgstr ""
+msgstr "SERVO7 是三旋翼的偏航舵机；请连接到舵机，而不是 ESC。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:87
 msgid "Accelerometer Calibration"
@@ -10906,14 +10906,14 @@ msgid ""
 "Slightly reduced accuracy. For large or heavy vehicles that are difficult to "
 "move.\n"
 "Place the vehicle level and click the button."
-msgstr ""
+msgstr "精度略有降低。适用于难以移动的大型或重型飞行器。\n请将飞行器放平，然后点击按钮。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:134
 msgid ""
 "Highest accuracy. Move the vehicle to 6 positions as instructed.\n"
 "The vehicle must rest completely still when you press Continue for each step "
 "— stillness matters more than exact angle."
-msgstr ""
+msgstr "最高精度。按照说明将飞行器移动到 6 个位置。\n在每一步按下“继续”时，飞行器必须完全静止——静止程度比角度是否精确更重要。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:147
 msgid "Live Sensor Status"
@@ -10949,12 +10949,12 @@ msgstr "继续"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:226
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_level_calibration.py:109
 msgid "Could not download the new calibration values."
-msgstr ""
+msgstr "无法下载新的校准值。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:228
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:248
 msgid "Review stale accelerometer calibration values in: %(filenames)s"
-msgstr ""
+msgstr "请检查以下文件中的过期加速度计校准值：%(filenames)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:231
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:333
@@ -10966,11 +10966,11 @@ msgstr "校准结果"
 msgid ""
 "The flight controller saved new calibration values despite the failed "
 "acknowledgment: %(parameters)s."
-msgstr ""
+msgstr "尽管确认失败，飞控仍保存了新的校准值：%(parameters)s。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:252
 msgid "Could not confirm whether the calibration values were saved."
-msgstr ""
+msgstr "无法确认校准值是否已保存。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:253
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:263
@@ -10992,7 +10992,7 @@ msgstr "校准错误"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:325
 msgid "Calibration Wizard Closed"
-msgstr ""
+msgstr "校准向导已关闭"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:333
 msgid "Full accelerometer calibration successful!"
@@ -11030,7 +11030,7 @@ msgstr "选项 1 - 手动设置 AHRS_ORIENTATION"
 msgid ""
 "Use this option if you know the vehicle orientation. Set AHRS_ORIENTATION "
 "manually in the parameter list below."
-msgstr ""
+msgstr "如果您知道飞行器朝向，请使用此选项。在下方参数列表中手动设置 AHRS_ORIENTATION。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:90
 msgid "Option 2 - Determine AHRS_ORIENTATION automatically"
@@ -11044,7 +11044,7 @@ msgid ""
 "\n"
 "It compensates for the current preset AHRS_ORIENTATION. If a custom "
 "orientation is active, set AHRS_ORIENTATION to 0 and upload parameters first."
-msgstr ""
+msgstr "如果您不知道飞行器朝向，请使用此选项。此向导根据飞行器的三个位置估算 AHRS_ORIENTATION：\n水平、机头朝下和右侧朝下。\n\n它会补偿当前预设的 AHRS_ORIENTATION。如果启用了自定义朝向，请先将 AHRS_ORIENTATION 设为 0 并上传参数。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:130
 msgid "Not Connected"
@@ -11467,7 +11467,7 @@ msgstr "需要支持 MAVFTP 的飞控连接。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_level_calibration.py:43
 msgid "Accelerometer Level Calibration"
-msgstr ""
+msgstr "加速度计水平校准"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_level_calibration.py:52
 msgid "Level Calibration (Trim)"
@@ -11478,22 +11478,22 @@ msgid ""
 "Must be performed AFTER a Simple or Full calibration. Place the calibrated "
 "vehicle on a level surface and keep it still. This trims roll and pitch "
 "only; it does not affect yaw."
-msgstr ""
+msgstr "必须在简单或完整校准之后执行。将已校准的飞行器放在水平表面上并保持静止。此操作仅微调横滚和俯仰；不会影响偏航。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_level_calibration.py:111
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_level_calibration.py:129
 msgid "Review stale AHRS trim values in: %(filenames)s"
-msgstr ""
+msgstr "请检查以下文件中的过时 AHRS 微调值：%(filenames)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_level_calibration.py:125
 msgid ""
 "The flight controller saved new trim values despite the failed "
 "acknowledgment: %(parameters)s."
-msgstr ""
+msgstr "尽管确认失败，飞控仍保存了新的微调值：%(parameters)s。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_level_calibration.py:133
 msgid "Could not confirm whether the trim values were saved."
-msgstr ""
+msgstr "无法确认微调值是否已保存。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py:138
 msgid ""
@@ -11896,17 +11896,17 @@ msgstr "启动 RC 校准失败：%(error)s"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_servo_out.py:70
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_servo_out.py:72
 msgid "Servo Output Functions"
-msgstr ""
+msgstr "舵机输出功能"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_servo_out.py:38
 msgid ""
 "Use the FC-to-ESC connection type and FRAME_CLASS to propose motor outputs. "
 "Existing non-zero function assignments are preserved."
-msgstr ""
+msgstr "根据飞控到 ESC 的连接类型和 FRAME_CLASS 推荐电机输出。现有的非零功能分配将被保留。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_servo_out.py:46
 msgid "Apply Recommended Motor Outputs"
-msgstr ""
+msgstr "应用推荐的电机输出"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/imu_helpers.py:57
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/imu_helpers.py:62
