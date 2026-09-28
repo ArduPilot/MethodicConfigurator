@@ -28,6 +28,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_files import (
     is_safe_remote_entry_name,
     normalize_remote_path,
 )
+from ardupilot_methodic_configurator.backend_flightcontroller_protocols import FileUploadCheckStatus, FileUploadResult
 from ardupilot_methodic_configurator.backend_mavftp import DirectoryEntry, FtpError
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
@@ -1277,7 +1278,7 @@ class TestFlightControllerFilesConstants:
         assert files_mgr._upload_timeout(str(large_file)) == 40
 
 
-class TestFlightControllerFilesResilience:
+class TestFlightControllerFilesResilience:  # pylint: disable=too-many-public-methods
     """BDD coverage for validation and transport-failure behavior."""
 
     @pytest.mark.parametrize("remote_path", ["", "   ", "relative/file.bin", "/APM/../file.bin", 7])
@@ -1476,6 +1477,223 @@ class TestFlightControllerFilesResilience:
             assert files_mgr.verify_remote_file("/APM/log.bin", "local.bin") is False
             mavftp.local_file_crc.side_effect = OSError("local read failed")
             assert files_mgr.verify_remote_file("/APM/log.bin", "local.bin") is False
+
+    def test_upload_preflight_distinguishes_match_missing_mismatch_and_unknown(self) -> None:
+        """Only a missing or CRC-mismatched remote file warrants an upload prompt."""
+        files_mgr = _create_files_manager()
+        mavftp = MagicMock()
+        mavftp.local_file_crc.return_value = 123
+        mavftp.last_crc = 123
+        create_path = "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe"
+
+        existing = FlightControllerLogFile("a.lua", "/APM/Scripts/a.lua", 10)
+        with (
+            patch.object(files_mgr, "_list_remote_files", return_value=[existing]) as list_files,
+            patch(create_path, return_value=mavftp),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.getsize", return_value=10),
+        ):
+            mavftp.cmd_crc.return_value = SimpleNamespace(error_code=FtpError.Success)
+            assert files_mgr.check_file_upload("/APM/Scripts/a.lua", "a.lua") is FileUploadCheckStatus.ALREADY_CURRENT
+            list_files.assert_called_with("/APM/Scripts")
+            mavftp.last_crc = 456
+            assert files_mgr.check_file_upload("/APM/Scripts/a.lua", "a.lua") is FileUploadCheckStatus.NEEDS_UPLOAD
+            mavftp.cmd_crc.return_value = SimpleNamespace(error_code=FtpError.FileNotFound)
+            assert files_mgr.check_file_upload("/APM/Scripts/a.lua", "a.lua") is FileUploadCheckStatus.NEEDS_UPLOAD
+            mavftp.cmd_crc.return_value = SimpleNamespace(error_code=FtpError.Fail)
+            assert files_mgr.check_file_upload("/APM/Scripts/a.lua", "a.lua") is FileUploadCheckStatus.VERIFICATION_FAILED
+            mavftp.cmd_crc.return_value = SimpleNamespace(error_code=FtpError.Success)
+            mavftp.last_crc = None
+            assert files_mgr.check_file_upload("/APM/Scripts/a.lua", "a.lua") is FileUploadCheckStatus.VERIFICATION_FAILED
+            mavftp.local_file_crc.side_effect = OSError("unreadable")
+            assert files_mgr.check_file_upload("/APM/Scripts/a.lua", "a.lua") is FileUploadCheckStatus.VERIFICATION_FAILED
+            mavftp.local_file_crc.side_effect = RuntimeError("connection lost")
+            assert files_mgr.check_file_upload("/APM/Scripts/a.lua", "a.lua") is FileUploadCheckStatus.VERIFICATION_FAILED
+
+        assert files_mgr.check_file_upload("relative", "a.lua") is FileUploadCheckStatus.VERIFICATION_FAILED
+        files_mgr._connection_manager.master = None
+        assert files_mgr.check_file_upload("/APM/Scripts/a.lua", "a.lua") is FileUploadCheckStatus.VERIFICATION_FAILED
+
+    def test_upload_status_uses_explicit_outcomes(self) -> None:
+        """Preflight status distinguishes current, changed, and unverifiable remote files."""
+        files_mgr = _create_files_manager()
+        mavftp = MagicMock()
+        mavftp.local_file_crc.return_value = 123
+        mavftp.last_crc = 123
+        target = FlightControllerLogFile("a.lua", "/APM/Scripts/a.lua", 10)
+        create_path = "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe"
+
+        with (
+            patch.object(files_mgr, "_list_remote_files", return_value=[target]),
+            patch(create_path, return_value=mavftp),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.getsize", return_value=10),
+        ):
+            mavftp.cmd_crc.return_value = SimpleNamespace(error_code=FtpError.Success)
+            assert files_mgr.check_file_upload("/APM/Scripts/a.lua", "a.lua") is FileUploadCheckStatus.ALREADY_CURRENT
+            mavftp.last_crc = 456
+            assert files_mgr.check_file_upload("/APM/Scripts/a.lua", "a.lua") is FileUploadCheckStatus.NEEDS_UPLOAD
+            mavftp.cmd_crc.return_value = SimpleNamespace(error_code=FtpError.Fail)
+            assert files_mgr.check_file_upload("/APM/Scripts/a.lua", "a.lua") is FileUploadCheckStatus.VERIFICATION_FAILED
+
+    def test_atomic_upload_rechecks_remote_and_skips_if_file_became_current(self) -> None:
+        """The final locked check prevents an unnecessary overwrite after stale preflight."""
+        files_mgr = _create_files_manager()
+        with (
+            patch.object(
+                files_mgr,
+                "_check_file_upload_locked",
+                side_effect=[FileUploadCheckStatus.NEEDS_UPLOAD, FileUploadCheckStatus.ALREADY_CURRENT],
+            ) as check,
+            patch.object(files_mgr, "_upload_file") as upload,
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.isfile", return_value=True),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.getsize", return_value=10),
+        ):
+            initial_status = files_mgr.check_file_upload("/APM/Scripts/a.lua", "a.lua")
+            final_status = files_mgr.upload_file_if_needed("a.lua", "/APM/Scripts/a.lua")
+
+        assert initial_status is FileUploadCheckStatus.NEEDS_UPLOAD
+        assert final_status is FileUploadResult.ALREADY_CURRENT
+        assert check.call_count == 2
+        upload.assert_not_called()
+
+    def test_atomic_upload_reports_missing_and_empty_local_files(self) -> None:
+        """Local-file races produce explicit validation outcomes before remote checks."""
+        files_mgr = _create_files_manager()
+        with (
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.isfile", return_value=False),
+            patch.object(files_mgr, "_check_file_upload_locked") as check,
+        ):
+            assert (
+                files_mgr.upload_file_if_needed("missing.lua", "/APM/Scripts/missing.lua")
+                is FileUploadResult.LOCAL_FILE_MISSING
+            )
+        check.assert_not_called()
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.isfile", return_value=True),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.getsize", return_value=0),
+            patch.object(files_mgr, "_check_file_upload_locked") as check,
+        ):
+            assert files_mgr.upload_file_if_needed("empty.lua", "/APM/Scripts/empty.lua") is FileUploadResult.EMPTY_LOCAL_FILE
+        check.assert_not_called()
+
+    def test_atomic_upload_transfers_when_remote_still_needs_update(self) -> None:
+        """The final check and upload run as one serialized file-manager operation."""
+        files_mgr = _create_files_manager()
+
+        def check_remote(_remote_path: str, _local_filename: str) -> FileUploadCheckStatus:
+            assert files_mgr._mavftp_lock._is_owned()
+            return FileUploadCheckStatus.NEEDS_UPLOAD
+
+        def upload(_local_filename: str, _remote_path: str, _progress_callback=None) -> bool:
+            assert files_mgr._mavftp_lock._is_owned()
+            return True
+
+        with (
+            patch.object(files_mgr, "_check_file_upload_locked", side_effect=check_remote),
+            patch.object(files_mgr, "_upload_file", side_effect=upload),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.isfile", return_value=True),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.getsize", return_value=10),
+        ):
+            result = files_mgr.upload_file_if_needed("a.lua", "/APM/Scripts/a.lua")
+
+        assert result is FileUploadResult.UPLOADED
+
+    def test_missing_remote_upload_target_never_requests_crc(self) -> None:
+        """A directory listing detects an absent file without a potentially long CRC timeout."""
+        files_mgr = _create_files_manager()
+        mavftp = MagicMock()
+        create_path = "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe"
+        other = FlightControllerLogFile("other.lua", "/APM/Scripts/other.lua", 10)
+
+        with patch.object(files_mgr, "_list_remote_files", return_value=[other]), patch(create_path, return_value=mavftp):
+            assert (
+                files_mgr.check_file_upload("/APM/Scripts/copter-magfit-helper.lua", "helper.lua")
+                is FileUploadCheckStatus.NEEDS_UPLOAD
+            )
+            mavftp.cmd_crc.assert_not_called()
+            mavftp.local_file_crc.assert_not_called()
+
+        with (
+            patch.object(files_mgr, "_list_remote_files", side_effect=FileNotFoundError("/APM/Scripts")),
+            patch(create_path, return_value=mavftp),
+        ):
+            assert (
+                files_mgr.check_file_upload("/APM/Scripts/copter-magfit-helper.lua", "helper.lua")
+                is FileUploadCheckStatus.NEEDS_UPLOAD
+            )
+            mavftp.cmd_crc.assert_not_called()
+
+    def test_preflight_listing_avoids_redundant_directory_operations_before_put(self) -> None:
+        """Successful preflight listing establishes the parent for the following upload."""
+        files_mgr = _create_files_manager()
+        mavftp = MagicMock()
+        mavftp.cmd_put.return_value = SimpleNamespace(error_code=FtpError.Success)
+        mavftp.process_ftp_reply.return_value = SimpleNamespace(error_code=FtpError.Success)
+        create_path = "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe"
+
+        with (
+            patch.object(files_mgr, "_list_remote_files", return_value=[]) as list_files,
+            patch(create_path, return_value=mavftp),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.isfile", return_value=True),
+        ):
+            assert files_mgr.check_file_upload("/APM/Scripts/helper.lua", "helper.lua") is FileUploadCheckStatus.NEEDS_UPLOAD
+            assert files_mgr.upload_file("helper.lua", "/APM/Scripts/helper.lua") is True
+
+        list_files.assert_called_once_with("/APM/Scripts")
+        mavftp.cmd_mkdir.assert_not_called()
+        mavftp.cmd_list.assert_not_called()
+        mavftp.cmd_put.assert_called_once()
+
+    def test_empty_or_partial_remote_upload_target_skips_crc(self) -> None:
+        """After a failed put, a listed zero-byte or partial target should be uploaded without CRC."""
+        files_mgr = _create_files_manager()
+        mavftp = MagicMock()
+        create_path = "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe"
+        local_size = 11196
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.getsize", return_value=local_size):
+            for remote_size in (0, 1234):
+                target = FlightControllerLogFile(
+                    "copter-magfit-helper.lua", "/APM/Scripts/copter-magfit-helper.lua", remote_size
+                )
+                with (
+                    patch.object(files_mgr, "_list_remote_files", return_value=[target]),
+                    patch(create_path, return_value=mavftp) as create_ftp,
+                ):
+                    assert (
+                        files_mgr.check_file_upload("/APM/Scripts/copter-magfit-helper.lua", "helper.lua")
+                        is FileUploadCheckStatus.NEEDS_UPLOAD
+                    )
+                    create_ftp.assert_not_called()
+            mavftp.cmd_crc.assert_not_called()
+
+    def test_empty_local_upload_target_is_not_considered_an_upload(self) -> None:
+        """A zero-byte local file cannot be used to repair a remote file."""
+        files_mgr = _create_files_manager()
+        target = FlightControllerLogFile("a.lua", "/APM/Scripts/a.lua", 0)
+        with (
+            patch.object(files_mgr, "_list_remote_files", return_value=[target]),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.getsize", return_value=0),
+        ):
+            assert files_mgr.check_file_upload("/APM/Scripts/a.lua", "a.lua") is FileUploadCheckStatus.VERIFICATION_FAILED
+
+    def test_unavailable_listing_or_directory_collision_does_not_trigger_upload(self) -> None:
+        """Listing errors and occupied directory paths are not evidence of an absent file."""
+        files_mgr = _create_files_manager()
+        mavftp = MagicMock()
+        create_path = "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe"
+        directory = FlightControllerLogFile("helper.lua", "/APM/Scripts/helper.lua", 0, is_directory=True)
+
+        with patch(create_path, return_value=mavftp), patch.object(files_mgr, "_list_remote_files", return_value=None):
+            assert (
+                files_mgr.check_file_upload("/APM/Scripts/helper.lua", "helper.lua")
+                is FileUploadCheckStatus.VERIFICATION_FAILED
+            )
+        with patch(create_path, return_value=mavftp), patch.object(files_mgr, "_list_remote_files", return_value=[directory]):
+            assert (
+                files_mgr.check_file_upload("/APM/Scripts/helper.lua", "helper.lua")
+                is FileUploadCheckStatus.VERIFICATION_FAILED
+            )
+        mavftp.cmd_crc.assert_not_called()
 
     def test_explicit_download_validates_prerequisites_and_reports_progress(self) -> None:
         """

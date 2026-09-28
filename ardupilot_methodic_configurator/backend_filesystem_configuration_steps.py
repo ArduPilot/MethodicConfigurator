@@ -20,7 +20,7 @@ from typing import Any, TypedDict
 
 # from sys import exit as sys_exit
 from jsonschema import validate as json_validate
-from jsonschema.exceptions import ValidationError
+from jsonschema.exceptions import SchemaError, ValidationError
 from simpleeval import NameNotDefined
 
 from ardupilot_methodic_configurator import _
@@ -48,6 +48,20 @@ class PhaseData(TypedDict, total=False):
     optional: bool
 
 
+class DownloadFileConfig(TypedDict):
+    """Normalized URL-to-local-file transfer configuration."""
+
+    source_url: str
+    dest_local: str
+
+
+class UploadFileConfig(TypedDict):
+    """Normalized local-to-flight-controller transfer configuration."""
+
+    source_local: str
+    dest_on_fc: str
+
+
 class ConfigurationSteps:
     """
     A class to manage configuration steps for the ArduPilot methodic configurator.
@@ -73,6 +87,11 @@ class ConfigurationSteps:
     def re_init(self, vehicle_dir: str, vehicle_type: str) -> None:  # pylint: disable=too-many-branches
         if vehicle_type == "":
             return
+        self.configuration_steps = {}
+        self.configuration_phases = {}
+        self.forced_parameters = {}
+        self.derived_parameters = {}
+        self.add_parameters = {}
         self.configuration_steps_filename = "configuration_steps_" + vehicle_type + ".json"
         # Define a list of directories to search for the configuration_steps_filename file
         search_directories = [vehicle_dir, os_path.dirname(os_path.abspath(__file__))]
@@ -101,20 +120,12 @@ class ConfigurationSteps:
                 logging_error(_("Error in file '%s': %s"), self.configuration_steps_filename, e)
                 break
         # Validate the vehicle configuration steps file against the configuration_steps_schema.json schema
+        configuration_is_valid = False
         if file_found:
             schema_file = os_path.join(os_path.dirname(os_path.abspath(__file__)), "configuration_steps_schema.json")
-            try:
-                with open(schema_file, encoding="utf-8") as schema:
-                    schema_data = json_load(schema)
-                    json_validate(instance=json_content, schema=schema_data)
-            except FileNotFoundError:
-                logging_error(_("Schema file '%s' not found"), schema_file)
-            except ValidationError as e:
-                logging_error(_("Configuration steps validation error: %s"), str(e))
-            except JSONDecodeError as e:
-                logging_error(_("Error in schema file '%s': %s"), schema_file, e)
+            configuration_is_valid = self._is_valid_configuration(json_content, schema_file)
 
-        if file_found and "steps" in json_content:
+        if configuration_is_valid:
             self.configuration_steps = json_content["steps"]
             for filename, file_info in self.configuration_steps.items():
                 self.__validate_parameters_in_configuration_steps(filename, file_info, "forced")
@@ -125,11 +136,29 @@ class ConfigurationSteps:
         else:
             logging_warning(_("No configuration steps documentation and no forced and derived parameters will be available."))
 
-        if file_found and "phases" in json_content:
+        if configuration_is_valid and "phases" in json_content:
             self.configuration_phases = json_content["phases"]
         else:
             logging_warning(_("No configuration phases documentation will be available."))
         self.log_loaded_file = True
+
+    @staticmethod
+    def _is_valid_configuration(json_content: dict, schema_file: str) -> bool:
+        """Validate configuration content and report schema or content errors."""
+        try:
+            with open(schema_file, encoding="utf-8") as schema:
+                schema_data = json_load(schema)
+                json_validate(instance=json_content, schema=schema_data)
+            return True
+        except FileNotFoundError:
+            logging_error(_("Schema file '%s' not found"), schema_file)
+        except ValidationError as error:
+            logging_error(_("Configuration steps validation error: %s"), str(error))
+        except SchemaError as error:
+            logging_error(_("Invalid configuration steps schema '%s': %s"), schema_file, str(error))
+        except JSONDecodeError as error:
+            logging_error(_("Error in schema file '%s': %s"), schema_file, error)
+        return False
 
     def __validate_no_overlap_between_derived_and_delete(self, filename: str, file_info: dict) -> None:
         """

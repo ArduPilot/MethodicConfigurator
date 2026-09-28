@@ -3823,7 +3823,7 @@ msgstr ""
 
 #:
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:335
-msgid "Quiktune is now completed. Disable it so that we can use the same RC switch to operate the wp-advance script"
+msgid "Quiktune is now completed. Disable it so that we can use the same RC switch to operate the advance-wp script"
 msgstr ""
 
 #:

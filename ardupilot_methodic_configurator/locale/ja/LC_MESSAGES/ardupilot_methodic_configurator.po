@@ -3936,9 +3936,9 @@ msgstr "Q_M_SPIN_ARM に少なくとも 0.03 を加えた値"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:335
 msgid ""
 "Quiktune is now completed. Disable it so that we can use the same RC switch "
-"to operate the wp-advance script"
+"to operate the advance-wp script"
 msgstr ""
-"Quiktune は完了しました。wp-advance スクリプトの操作に同じ RC スイッチを使え"
+"Quiktune は完了しました。advance-wp スクリプトの操作に同じ RC スイッチを使え"
 "るように、これを無効にしてください"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:336

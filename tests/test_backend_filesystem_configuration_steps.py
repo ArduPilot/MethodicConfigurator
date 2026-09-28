@@ -129,11 +129,11 @@ class TestReInit:
         self, config_steps: ConfigurationSteps, caplog: pytest.LogCaptureFixture
     ) -> None:
         """
-        A missing schema file is reported as an error without aborting step loading.
+        A missing schema file is reported and configuration steps are not loaded.
 
         GIVEN: The config file is valid JSON but the JSON schema file is absent
         WHEN: re_init is called
-        THEN: An error mentioning the schema file is logged
+        THEN: An error mentioning the schema file is logged and configuration stays empty
         """
         mock_config_file = '{"steps": {"test_file": {"forced_parameters": {}}}}'
         with (
@@ -150,6 +150,8 @@ class TestReInit:
 
         assert "Schema file" in caplog.text
         assert "not found" in caplog.text
+        assert not config_steps.configuration_steps
+        assert not config_steps.configuration_phases
 
     def test_re_init_loads_configuration_phases(self, config_steps: ConfigurationSteps) -> None:
         """
@@ -171,6 +173,43 @@ class TestReInit:
 
         assert "phase1" in config_steps.configuration_phases
         assert config_steps.configuration_phases["phase1"]["description"] == "Phase 1"
+
+    def test_re_init_keeps_file_transfer_lists(self, config_steps: ConfigurationSteps) -> None:
+        """Validated file transfer arrays are kept in their canonical list form."""
+        config_data: dict = {
+            "steps": {
+                "legacy.param": {
+                    "download_file": [{"source_url": "https://example.com/a.lua", "dest_local": "a.lua"}],
+                    "upload_file": [{"source_local": "a.lua", "dest_on_fc": "/APM/Scripts/a.lua"}],
+                },
+                "multiple.param": {
+                    "download_file": [
+                        {"source_url": "https://example.com/b.lua", "dest_local": "b.lua"},
+                        {"source_url": "https://example.com/c.lua", "dest_local": "c.lua"},
+                    ]
+                },
+            }
+        }
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_configuration_steps.json_load",
+                side_effect=[config_data, {}],
+            ),
+            patch("ardupilot_methodic_configurator.backend_filesystem_configuration_steps.json_validate"),
+            patch("builtins.open", mock_open()),
+            patch("os.path.join", side_effect=lambda *args: "/".join(args)),
+            patch("os.path.abspath", return_value="abs_path"),
+            patch("os.path.dirname", return_value="dir_name"),
+        ):
+            config_steps.re_init("vehicle_dir", "vehicle_type")
+
+        assert config_steps.configuration_steps["legacy.param"]["download_file"] == [
+            {"source_url": "https://example.com/a.lua", "dest_local": "a.lua"}
+        ]
+        assert config_steps.configuration_steps["legacy.param"]["upload_file"] == [
+            {"source_local": "a.lua", "dest_on_fc": "/APM/Scripts/a.lua"}
+        ]
+        assert len(config_steps.configuration_steps["multiple.param"]["download_file"]) == 2
 
     def test_second_reinit_logs_warning_when_config_file_overrides_default(
         self, config_steps: ConfigurationSteps, caplog: pytest.LogCaptureFixture
@@ -244,7 +283,9 @@ class TestReInit:
         WHEN: re_init is called
         THEN: An error mentioning 'validation error' is logged
         """
-        config_data: dict = {"steps": {}}
+        config_steps.configuration_steps = {"previous.param": {}}
+        config_steps.configuration_phases = {"previous_phase": {"description": "Previous"}}
+        config_data: dict = {"steps": {"invalid.param": {}}}
         with (
             patch(
                 "ardupilot_methodic_configurator.backend_filesystem_configuration_steps.json_load",
@@ -263,6 +304,8 @@ class TestReInit:
             config_steps.re_init("vehicle_dir", "vehicle_type")
 
         assert any("validation error" in r.message.lower() for r in caplog.records)
+        assert not config_steps.configuration_steps
+        assert not config_steps.configuration_phases
 
     def test_re_init_logs_error_for_schema_json_decode_error(
         self, config_steps: ConfigurationSteps, caplog: pytest.LogCaptureFixture
