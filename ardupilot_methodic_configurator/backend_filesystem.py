@@ -1127,20 +1127,36 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return os_path.realpath(os_path.join(base_dir, untrusted_path))
 
     def get_download_url_and_local_filename(self, selected_file: str) -> tuple[str, str]:
-        if selected_file in self.configuration_steps and self.configuration_steps[selected_file].get("download_file"):
-            src = self.configuration_steps[selected_file]["download_file"].get("source_url", "")
-            dst = self.configuration_steps[selected_file]["download_file"].get("dest_local", "")
-            if self.vehicle_dir and src and dst:
-                return src, self._safe_path_join(self.vehicle_dir, dst)
-        return "", ""
+        return next(iter(self.get_download_files(selected_file)), ("", ""))
 
     def get_upload_local_and_remote_filenames(self, selected_file: str) -> tuple[str, str]:
-        if selected_file in self.configuration_steps and self.configuration_steps[selected_file].get("upload_file"):
-            src = self.configuration_steps[selected_file]["upload_file"].get("source_local", "")
-            dst = self.configuration_steps[selected_file]["upload_file"].get("dest_on_fc", "")
-            if self.vehicle_dir and src and dst:
-                return self._safe_path_join(self.vehicle_dir, src), dst
-        return "", ""
+        return next(iter(self.get_upload_files(selected_file)), ("", ""))
+
+    def get_download_files(self, selected_file: str) -> list[tuple[str, str]]:
+        """Return all configured URL/local pairs; accept legacy single-file objects."""
+        entries = self.configuration_steps.get(selected_file, {}).get("download_file", [])
+        if isinstance(entries, dict):
+            entries = [entries]
+        if not self.vehicle_dir:
+            return []
+        return [
+            (entry["source_url"], self._safe_path_join(self.vehicle_dir, entry["dest_local"]))
+            for entry in entries
+            if entry.get("source_url") and entry.get("dest_local")
+        ]
+
+    def get_upload_files(self, selected_file: str) -> list[tuple[str, str]]:
+        """Return all configured local/FC pairs; accept legacy single-file objects."""
+        entries = self.configuration_steps.get(selected_file, {}).get("upload_file", [])
+        if isinstance(entries, dict):
+            entries = [entries]
+        if not self.vehicle_dir:
+            return []
+        return [
+            (self._safe_path_join(self.vehicle_dir, entry["source_local"]), entry["dest_on_fc"])
+            for entry in entries
+            if entry.get("source_local") and entry.get("dest_on_fc")
+        ]
 
     @staticmethod
     def get_git_commit_hash() -> str:
