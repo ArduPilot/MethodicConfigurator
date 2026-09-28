@@ -25,6 +25,8 @@ from ardupilot_methodic_configurator.backend_flightcontroller_files import (
     FlightControllerLogFile,
     LastLogDownloadResult,
     is_safe_local_entry_name,
+    is_safe_remote_entry_name,
+    normalize_remote_path,
 )
 from ardupilot_methodic_configurator.backend_mavftp import DirectoryEntry, FtpError
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
@@ -50,6 +52,14 @@ class TestFlightControllerFilesInitialization:
         """Remote names that Windows cannot safely create are never local targets."""
         for unsafe_name in ("C:evil.bin", "CON", "NUL.txt", "log.", "log ", "\x01log.bin"):
             assert not is_safe_local_entry_name(unsafe_name)
+
+    def test_remote_names_use_a_separate_less_restrictive_policy(self) -> None:
+        """Windows-reserved names are valid remote entries but not local targets."""
+        for remote_name in ("CON", "NUL.txt", "log.", "log "):
+            assert is_safe_remote_entry_name(remote_name)
+            assert not is_safe_local_entry_name(remote_name)
+        for invalid_name in ("", ".", "..", "nested/file", "nested\\file", "C:file"):
+            assert not is_safe_remote_entry_name(invalid_name)
 
     def test_user_can_create_files_manager(self) -> None:
         """
@@ -1313,6 +1323,15 @@ class TestFlightControllerFilesResilience:
         """
         assert FlightControllerFiles._normalize_remote_path("/", directory=True) == "/"
         assert FlightControllerFiles._normalize_remote_path("\\APM\\LOGS\\.\\", directory=True) == "/APM/LOGS/"
+        assert normalize_remote_path("//APM//LOGS//", directory=True) == "/APM/LOGS/"
+
+    @pytest.mark.parametrize("path", ["", "   ", "relative", "/APM/../LOGS", "/APM/C:bad"])
+    def test_shared_remote_directory_policy_rejects_invalid_paths(self, path: str) -> None:
+        """The backend entry point and UI-facing function reject the same paths."""
+        with pytest.raises(ValueError, match="Remote path"):
+            normalize_remote_path(path, directory=True)
+        with pytest.raises(ValueError, match="Remote path"):
+            FlightControllerFiles._normalize_remote_path(path, directory=True)
 
     def test_remote_listing_rejects_unavailable_and_invalid_requests_before_mavftp(self) -> None:
         """

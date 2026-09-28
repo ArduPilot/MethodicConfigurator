@@ -32,6 +32,8 @@ from ardupilot_methodic_configurator.backend_flightcontroller_files import (
     FlightControllerLogFile,
     LastLogDownloadResult,
     is_safe_local_entry_name,
+    is_safe_remote_entry_name,
+    normalize_remote_path,
 )
 from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
@@ -861,7 +863,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         try:
             new_name = editor.get()
             editor.destroy()
-            if not self._safe_name(new_name):
+            if not self._safe_entry_name(panel, new_name):
                 self.ui.show_error(_("Rename error"), _("The new name must be one file or directory name."))
                 return "break"
             if new_name == entry.name:
@@ -888,7 +890,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
                 initialvalue=entry.name,
                 parent=self.root,
             )
-            if new_name is not None and self._safe_name(new_name):
+            if new_name is not None and self._safe_entry_name(panel, new_name):
                 self._rename_entry(panel, entry, new_name)
             elif new_name is not None:
                 self.ui.show_error(_("Rename error"), _("The new name must be one file or directory name."))
@@ -1115,8 +1117,13 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
 
     @staticmethod
     def _safe_name(name: str) -> bool:
-        """Return whether a user-provided rename is one safe path component."""
+        """Return whether a name is safe on the local filesystem."""
         return is_safe_local_entry_name(name)
+
+    @staticmethod
+    def _safe_entry_name(panel: str, name: str) -> bool:
+        """Use remote rules for remote entries and local rules for local entries."""
+        return is_safe_remote_entry_name(name) if panel == "remote" else is_safe_local_entry_name(name)
 
     @staticmethod
     def _set_widget_state(widget: ttk.Widget, state: str) -> None:
@@ -1416,8 +1423,9 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         )
 
     def _remote_action_directory(self) -> str:
-        """Use the displayed remote directory, or the entry before the first listing."""
-        return (self._last_listed_remote_directory or self.remote_directory_var.get()).rstrip("/") or "/"
+        """Return the backend's canonical directory for remote mutations."""
+        directory = self._last_listed_remote_directory or self.remote_directory_var.get()
+        return normalize_remote_path(directory, directory=True)
 
     def upload_selected_local_entries(self) -> None:
         """Recursively upload selected local entries to the remote panel directory."""
@@ -1426,9 +1434,10 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         selected = [entry for entry in self._selected_local_entries() if entry.name != ".."]
         if not selected:
             return
-        remote_directory = self._remote_action_directory()
-        if not self._safe_remote_directory(remote_directory):
-            self.ui.show_error(_("Upload error"), _("The remote destination must be an absolute directory path."))
+        try:
+            remote_directory = self._remote_action_directory()
+        except ValueError as error:
+            self.ui.show_error(_("Upload error"), str(error))
             return
         self.remote_directory_var.set(remote_directory)
         if not self.ui.ask_yesno(
@@ -1534,12 +1543,13 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         new_name = self.ui.askstring(_("New remote directory"), _("Directory name:"), parent=self.root)
         if new_name is None:
             return
-        if not self._safe_name(new_name):
+        if not is_safe_remote_entry_name(new_name):
             self.ui.show_error(_("New directory error"), _("The directory name must be a single directory name."))
             return
-        remote_directory = self._remote_action_directory()
-        if not self._safe_remote_directory(remote_directory):
-            self.ui.show_error(_("New directory error"), _("The remote destination must be an absolute directory path."))
+        try:
+            remote_directory = self._remote_action_directory()
+        except ValueError as error:
+            self.ui.show_error(_("New directory error"), str(error))
             return
         self.remote_directory_var.set(remote_directory)
         new_path = posixpath.join(remote_directory, new_name)
@@ -1604,7 +1614,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
             new_name = self.ui.askstring(_("Rename remote entry"), _("New name:"), initialvalue=entry.name, parent=self.root)
             if new_name is None:
                 return
-            if not self._safe_name(new_name):
+            if not is_safe_remote_entry_name(new_name):
                 self.ui.show_error(_("Rename error"), _("The new name must be one file or directory name."))
                 return
             self._rename_remote_entry(entry, new_name)
@@ -1666,11 +1676,6 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         if upload_button is not None and hasattr(self, "local_tree"):
             selected_local = [entry for entry in self._selected_local_entries() if entry.name != ".."]
             upload_button.configure(state="normal" if selected_local else "disabled")
-
-    @staticmethod
-    def _safe_remote_directory(directory: str) -> bool:
-        """Return whether a remote destination is an absolute directory path."""
-        return bool(directory) and directory.startswith("/") and ".." not in directory.split("/")
 
     def download_last_flight_log(self) -> None:
         """Download the last flight log without blocking the Tk event loop."""

@@ -1904,6 +1904,45 @@ class TestFileBrowserWindow:
         window.ui.show_warning.assert_not_called()
         window.refresh_remote_panel.assert_called_once_with()
 
+    @pytest.mark.parametrize("directory", ["", "   ", "relative", "/APM/../LOGS", "/APM/C:bad"])
+    def test_remote_mutations_reject_paths_rejected_by_backend(self, directory: str) -> None:
+        """Neither upload nor mkdir reaches the model with an invalid directory."""
+        window = _bare_window()
+        window.remote_directory_var = MagicMock()
+        window.remote_directory_var.get.return_value = directory
+        window.local_entries = [LocalFileEntry("local.bin", Path("local.bin"), 1)]
+        window.local_tree = MagicMock()
+        window.local_tree.selection.return_value = ("0",)
+        window.ui = MagicMock()
+        window.ui.askstring.return_value = "new-dir"
+        window.parameter_editor = MagicMock()
+        window.root = MagicMock()
+
+        window.upload_selected_local_entries()
+        window.create_new_remote_directory()
+
+        window.parameter_editor.upload_file_to_fc.assert_not_called()
+        window.parameter_editor.make_remote_directory.assert_not_called()
+        assert window.ui.show_error.call_count == 2
+
+    def test_remote_actions_use_the_backends_canonical_directory(self) -> None:
+        """The UI passes the same normalized path that backend operations use."""
+        window = _bare_window()
+        window.remote_directory_var = MagicMock()
+        window.remote_directory_var.get.return_value = "\\APM\\LOGS\\.\\"
+        window.parameter_editor = MagicMock()
+        window.parameter_editor.make_remote_directory.return_value = True
+        window.ui = MagicMock()
+        window.ui.askstring.return_value = "CON"
+        window.root = MagicMock()
+        window._progress_window = MagicMock(return_value=MagicMock())
+        window.refresh_remote_panel = MagicMock()
+
+        window.create_new_remote_directory()
+
+        window.parameter_editor.make_remote_directory.assert_called_once_with("/APM/LOGS/CON")
+        window.remote_directory_var.set.assert_called_once_with("/APM/LOGS/")
+
     def test_new_local_directory_is_created_in_the_displayed_directory(self, tmp_path: Path) -> None:
         """Creating a local directory refreshes the local panel after it succeeds."""
         window = _bare_window()
@@ -1962,6 +2001,25 @@ class TestFileBrowserWindow:
             "/APM/LOGS/new.bin",
         )
         window.refresh_remote_panel.assert_called_once_with()
+
+    def test_remote_rename_allows_names_that_are_unsafe_only_locally(self) -> None:
+        """A remote-only rename can use a Windows-reserved basename."""
+        window = _bare_window()
+        entry = FlightControllerLogFile("old.bin", "/APM/LOGS/old.bin", 10)
+        window.remote_entries = [entry]
+        window.remote_tree = MagicMock()
+        window.remote_tree.selection.return_value = ("0",)
+        window.ui = MagicMock()
+        window.ui.askstring.return_value = "CON"
+        window.root = MagicMock()
+        window.parameter_editor = MagicMock()
+        window.parameter_editor.rename_remote_path.return_value = True
+        window.refresh_remote_panel = MagicMock()
+
+        window.rename_selected_remote_entry()
+
+        window.parameter_editor.rename_remote_path.assert_called_once_with("/APM/LOGS/old.bin", "/APM/LOGS/CON")
+        assert not window._safe_name("CON")
 
     def test_local_rename_uses_a_single_safe_new_name(self) -> None:
         """Local rename changes only the selected entry name."""
