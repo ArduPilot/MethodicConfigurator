@@ -57,8 +57,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_file_browser_operations im
     _delete_remote_entries_worker,
     _download_last_flight_log_worker,
     _download_remote_plan_worker,
-    _local_directory_entries,
     _prepare_remote_download,
+    _read_local_directory,
     _rename_remote_entry_worker,
     _retry_local_upload_plan,
     _retry_remote_download_plan,
@@ -85,6 +85,16 @@ class _TransferBatchUi:
     summary_title: str
     retry_prompt: tuple[str, str]
     refresh: Callable[[], None]
+
+
+@dataclass
+class _PanelState:
+    """Selection and sorting state belonging to one browser panel."""
+
+    sort_column: str = ""
+    sort_reverse: bool = False
+    selected_item: str | None = None
+    pending_entry: str | None = None
 
 
 class FileBrowserUiServices(Protocol):  # pylint: disable=too-few-public-methods
@@ -122,6 +132,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         ui_services: FileBrowserUiServices,
         *,
         task_runner: TaskRunner | None = None,
+        local_task_runner: TaskRunner | None = None,
     ) -> None:
         super().__init__(parent)
         self.parent = parent
@@ -129,14 +140,14 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         self.ui = ui_services
         self.remote_entries: list[FlightControllerLogFile] = []
         self.local_entries: list[LocalFileEntry] = []
-        self.remote_sort_column = ""
-        self.local_sort_column = ""
-        self.remote_sort_reverse = False
-        self.local_sort_reverse = False
+        self._panel_states = {"remote": _PanelState(), "local": _PanelState()}
         self.last_selected_panel = "remote"
-        self.last_selected_items: dict[str, str | None] = {"remote": None, "local": None}
-        self._pending_entry_selection: dict[str, str | None] = {"remote": None, "local": None}
         self._task_runner: TaskRunner = task_runner if task_runner is not None else BackgroundTaskRunner(self.root.after)
+        self._local_task_runner: TaskRunner = (
+            local_task_runner if local_task_runner is not None else BackgroundTaskRunner(self.root.after)
+        )
+        self._local_refresh_request: Path | None = None
+        self._all_controls_locked = False
         self.verify_transfers_var = tk.BooleanVar(master=self.root, value=False)
         self._panel_navigation_enabled = True
         self._closed_callback: Callable[[], None] | None = None
@@ -435,39 +446,44 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         )
 
     def refresh_local_panel(self) -> None:
-        """Refresh the local panel from the selected directory."""
+        """List locally off-thread, then update only the current panel on Tk."""
         directory = Path(self.local_directory_var.get()).expanduser()
+        self._local_refresh_request = directory
+        if self._local_task_runner.active:
+            return
         local_empty_state_label = getattr(self, "local_empty_state_label", None)
         if local_empty_state_label is not None:
             local_empty_state_label.configure(text="")
-        if not directory.is_dir():
-            self.ui.show_error(_("Local directory error"), _("The selected local directory does not exist."))
-            return
-        entries: list[LocalFileEntry] = []
-        try:
-            entries = _local_directory_entries(directory)
-        except OSError as error:
-            self.ui.show_error(_("Local directory error"), str(error))
-            return
-        self.local_entries = entries
-        self._populate_local_tree()
-        self._select_pending_entry("local")
-        self._update_parent_navigation_buttons()
-        self.local_directory_label.configure(text=_("Local files in {directory}").format(directory=directory))
+
+        def complete(result: object | None, error: Exception | None) -> None:
+            if self._local_refresh_request != directory:
+                self.refresh_local_panel()
+                return
+            if isinstance(error, FileNotFoundError):
+                self.ui.show_error(_("Local directory error"), _("The selected local directory does not exist."))
+                return
+            if error is not None:
+                self.ui.show_error(_("Local directory error"), str(error))
+                return
+            self.local_entries = cast("list[LocalFileEntry]", result)
+            self._populate_local_tree()
+            self._select_pending_entry("local")
+            self._update_parent_navigation_buttons()
+            self.local_directory_label.configure(text=_("Local files in {directory}").format(directory=directory))
+
+        self._local_task_runner.start(lambda _progress: _read_local_directory(directory), None, complete)
 
     def _update_parent_navigation_buttons(self) -> None:
         """Enable parent buttons only when the corresponding panel has a parent."""
-        if self._controls_locked():
-            return
         remote_button = getattr(self, "remote_parent_button", None)
         remote_directory_var = getattr(self, "remote_directory_var", None)
-        if remote_button is not None and remote_directory_var is not None:
+        if not self._controls_locked() and remote_button is not None and remote_directory_var is not None:
             remote_directory = remote_directory_var.get().rstrip("/")
             remote_button.configure(state="normal" if remote_directory and remote_directory != "/" else "disabled")
 
         local_button = getattr(self, "local_parent_button", None)
         local_directory_var = getattr(self, "local_directory_var", None)
-        if local_button is not None and local_directory_var is not None:
+        if not self._all_controls_locked and local_button is not None and local_directory_var is not None:
             local_directory = Path(local_directory_var.get()).expanduser()
             local_button.configure(state="normal" if local_directory.parent != local_directory else "disabled")
 
@@ -484,7 +500,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
 
     def navigate_local_parent(self) -> None:
         """Navigate the local panel to its parent directory."""
-        if self._controls_locked():
+        if self._all_controls_locked:
             return
         local_directory = Path(self.local_directory_var.get()).expanduser()
         if local_directory.parent != local_directory:
@@ -515,7 +531,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         tree = self.remote_tree if remote else self.local_tree
         entries: Sequence[FlightControllerLogFile | LocalFileEntry] = self.remote_entries if remote else self.local_entries
         empty_state_label = self.remote_empty_state_label if remote else self.local_empty_state_label
-        self.last_selected_items[panel] = None
+        self._panel_states[panel].selected_item = None
         self._reset_tree_headings(tree, panel)
         for item_id in tree.get_children():
             tree.delete(item_id)
@@ -536,23 +552,13 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
 
     def _select_entry_after_refresh(self, panel: str, entry_name: str) -> None:
         """Select an entry by name after the next successful panel refresh."""
-        pending_selection = cast(
-            "dict[str, str | None] | None",
-            getattr(self, "_pending_entry_selection", None),
-        )
-        if pending_selection is None:
-            new_pending_selection: dict[str, str | None] = {"remote": None, "local": None}
-            self._pending_entry_selection = new_pending_selection
-            pending_selection = new_pending_selection
-        pending_selection[panel] = entry_name
+        self._panel_states[panel].pending_entry = entry_name
 
     def _select_pending_entry(self, panel: str) -> None:
         """Select and reveal the entry requested before a panel refresh."""
-        pending_selection = getattr(self, "_pending_entry_selection", None)
-        if not pending_selection:
-            return
-        entry_name = pending_selection.get(panel)
-        pending_selection[panel] = None
+        state = self._panel_states[panel]
+        entry_name = state.pending_entry
+        state.pending_entry = None
         if entry_name is None:
             return
         entries: Sequence[FlightControllerLogFile | LocalFileEntry] = (
@@ -565,7 +571,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         tree.selection_set(item_id)
         tree.focus(item_id)
         tree.see(item_id)
-        self.last_selected_items[panel] = item_id
+        state.selected_item = item_id
         self._remember_panel(panel)
         self._update_transfer_buttons()
 
@@ -588,10 +594,9 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
 
     def _reset_tree_headings(self, tree: ttk.Treeview, prefix: str) -> None:
         """Reset translated headings and initial sort commands."""
-        sort_state = "remote_sort_column" if prefix == "remote" else "local_sort_column"
-        reverse_state = "remote_sort_reverse" if prefix == "remote" else "local_sort_reverse"
-        setattr(self, sort_state, "")
-        setattr(self, reverse_state, False)
+        state = self._panel_states[prefix]
+        state.sort_column = ""
+        state.sort_reverse = False
         for column, title in (
             ("name", _("Name")),
             ("type", _("Type")),
@@ -610,25 +615,21 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
 
     def _on_sort_heading(self, panel: str, column: str) -> None:
         """Toggle the selected column direction, or start a new ascending sort."""
-        state_name = "remote_sort_column" if panel == "remote" else "local_sort_column"
-        reverse_state = "remote_sort_reverse" if panel == "remote" else "local_sort_reverse"
-        previous_column = getattr(self, state_name)
-        previous_reverse = getattr(self, reverse_state)
-        reverse = not previous_reverse if previous_column == column else False
+        state = self._panel_states[panel]
+        reverse = not state.sort_reverse if state.sort_column == column else False
         self._sort_panel_by_column(panel, column, reverse)
 
     def _sort_panel_by_column(self, panel: str, column: str, reverse: bool) -> None:
         """Sort one panel by name, type, numeric size, or modification time."""
         tree = self.remote_tree if panel == "remote" else self.local_tree
         entries = self.remote_entries if panel == "remote" else self.local_entries
-        state_name = "remote_sort_column" if panel == "remote" else "local_sort_column"
-        reverse_state = "remote_sort_reverse" if panel == "remote" else "local_sort_reverse"
-        previous = getattr(self, state_name)
+        state = self._panel_states[panel]
+        previous = state.sort_column
         if previous and previous != column:
             self._set_heading_text(tree, previous, None)
         self._set_heading_text(tree, column, reverse)
-        setattr(self, state_name, column)
-        setattr(self, reverse_state, reverse)
+        state.sort_column = column
+        state.sort_reverse = reverse
         rows = [(self._panel_sort_key(entries, item_id, column), item_id) for item_id in tree.get_children("")]
         rows.sort(key=lambda row: row[0], reverse=reverse)
         for position, (_key, item_id) in enumerate(rows):
@@ -707,7 +708,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         tree = self.remote_tree if panel == "remote" else self.local_tree
         item_id = tree.identify_row(event.y)
         if item_id:
-            self.last_selected_items[panel] = item_id
+            self._panel_states[panel].selected_item = item_id
 
     def _remember_panel_from_selection(self, panel: str) -> None:
         """Remember the panel and focused row after a Treeview selection change."""
@@ -715,7 +716,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         tree = self.remote_tree if panel == "remote" else self.local_tree
         item_id = tree.focus()
         if item_id:
-            self.last_selected_items[panel] = item_id
+            self._panel_states[panel].selected_item = item_id
         self._update_transfer_buttons()
 
     def _on_left_arrow(self, _event: tk.Event | None = None) -> str:
@@ -752,7 +753,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
             item_id = self._first_selectable_tree_item(tree)
             if item_id is not None:
                 tree.selection_set(item_id)
-                self.last_selected_items[panel] = item_id
+                self._panel_states[panel].selected_item = item_id
         if item_id is not None:
             tree.focus(item_id)
             tree.see(item_id)
@@ -813,7 +814,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         if len(selected_items) != 1:
             return "break"
         item_id = selected_items[0]
-        self.last_selected_items[panel] = item_id
+        self._panel_states[panel].selected_item = item_id
         entries = self.remote_entries if panel == "remote" else self.local_entries
         entry = self._entry_from_tree(entries, item_id or "")
         if entry is None or entry.name == "..":
@@ -1002,7 +1003,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         if not item_id:
             return
         entry = self._entry_from_tree(self.local_entries, item_id)
-        if not isinstance(entry, LocalFileEntry) or self._controls_locked():
+        if not isinstance(entry, LocalFileEntry) or self._all_controls_locked:
             return
         if entry.is_directory:
             self.local_directory_var.set(str(entry.path))
@@ -1019,7 +1020,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
             if item_id not in tree.selection():
                 tree.selection_set(item_id)
             tree.focus(item_id)
-            self.last_selected_items[panel] = item_id
+            self._panel_states[panel].selected_item = item_id
         self._remember_panel(panel)
         self._update_transfer_buttons()
 
@@ -1136,8 +1137,6 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
             "remote_directory_entry",
             "remote_parent_button",
             "remote_tree",
-            "local_parent_button",
-            "browse_local_button",
         ):
             widget = getattr(self, name, None)
             if widget is not None:
@@ -1148,6 +1147,8 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         self._set_remote_controls_state(state)
         for name in (
             "local_directory_entry",
+            "local_parent_button",
+            "browse_local_button",
             "local_tree",
             "download_button",
             "upload_button",
@@ -1179,9 +1180,11 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
                 self.close_button.configure(state=state)
 
         set_controls("disabled")
+        self._all_controls_locked = disable_all_controls
 
         def done(result: object | None, error: Exception | None) -> None:
             set_controls("normal")
+            self._all_controls_locked = False
             self._update_parent_navigation_buttons()
             self._update_transfer_buttons()
             on_done(result, error)
@@ -1190,9 +1193,11 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
             started = self._task_runner.start(task, on_progress, done)
         except Exception:
             set_controls("normal")
+            self._all_controls_locked = False
             raise
         if not started:
             set_controls("normal")
+            self._all_controls_locked = False
         return started
 
     def _start_remote_task(
@@ -1217,7 +1222,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
 
     def _on_close(self) -> None:
         """Close only when no background operation is using the window."""
-        if self._controls_locked():
+        if self._controls_locked() or self._local_task_runner.active:
             self.ui.show_error(
                 _("Transfer error"),
                 _("Another file operation is already in progress."),

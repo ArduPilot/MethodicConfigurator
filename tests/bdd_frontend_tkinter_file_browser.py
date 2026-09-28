@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerLogFile
-from ardupilot_methodic_configurator.frontend_tkinter_file_browser import FileBrowserWindow
+from ardupilot_methodic_configurator.frontend_tkinter_file_browser import FileBrowserWindow, _PanelState
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -267,18 +267,16 @@ def browser(tmp_path: Path) -> FileBrowserWindow:
     """Create a browser with real operations and only external boundaries replaced."""
     window = FileBrowserWindow.__new__(FileBrowserWindow)
     window._task_runner = SynchronousTaskRunner()
+    window._local_task_runner = SynchronousTaskRunner()
+    window._local_refresh_request = None
+    window._all_controls_locked = False
+    window._panel_states = {"remote": _PanelState(), "local": _PanelState()}
     window.verify_transfers_var = Value(value=False)
     window.remote_directory_var = Value("/APM/LOGS")
     window.local_directory_var = Value(str(tmp_path))
     window._last_listed_remote_directory = None
-    window._pending_entry_selection = {"remote": None, "local": None}
-    window.last_selected_items = {"remote": None, "local": None}
     window.last_selected_panel = "remote"
     window._panel_navigation_enabled = True
-    window.remote_sort_column = ""
-    window.remote_sort_reverse = False
-    window.local_sort_column = ""
-    window.local_sort_reverse = False
     window.remote_entries = []
     window.local_entries = []
     window.remote_tree = Tree()
@@ -524,7 +522,7 @@ class TestFileBrowserUserWorkflows:
         assert browser.parameter_editor.upload_attempts == ["/APM/LOGS/log.bin"]
         assert browser.parameter_editor.files["/APM/LOGS/log.bin"] == b"log"
         assert "/APM/SCRIPTS/log.bin" not in browser.parameter_editor.files
-        assert browser.remote_directory_label.text == "Remote files in /APM/LOGS"
+        assert browser.remote_directory_label.text == "Remote files in /APM/LOGS/"
         assert browser.remote_tree.names() == ["log.bin", "old.bin"]
 
     def test_remote_directory_is_created_under_the_directory_currently_shown(self, browser: FileBrowserWindow) -> None:
@@ -538,8 +536,8 @@ class TestFileBrowserUserWorkflows:
         assert browser.parameter_editor.mkdir_attempts == ["/APM/LOGS/newdir"]
         assert "/APM/LOGS/newdir" in browser.parameter_editor.directories
         assert "/APM/newdir" not in browser.parameter_editor.directories
-        assert browser.remote_directory_var.get() == "/APM/LOGS"
-        assert browser.remote_directory_label.text == "Remote files in /APM/LOGS"
+        assert browser.remote_directory_var.get() == "/APM/LOGS/"
+        assert browser.remote_directory_label.text == "Remote files in /APM/LOGS/"
 
     def test_invalid_upload_destination_never_reaches_mavftp(self, browser: FileBrowserWindow, tmp_path: Path) -> None:
         """An unsafe destination rejects the transfer before reading local bytes."""
@@ -552,7 +550,7 @@ class TestFileBrowserUserWorkflows:
 
         assert browser.parameter_editor.upload_attempts == []
         assert browser.parameter_editor.files == {}
-        assert browser.ui.errors == [("Upload error", "The remote destination must be an absolute directory path.")]
+        assert browser.ui.errors == [("Upload error", "Remote path must not contain parent-directory segments")]
 
     def test_unsafe_directory_names_do_not_change_local_or_remote_tree(
         self, browser: FileBrowserWindow, tmp_path: Path

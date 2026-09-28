@@ -25,7 +25,7 @@ import pytest
 
 from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerLogFile, LastLogDownloadResult
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
-from ardupilot_methodic_configurator.frontend_tkinter_file_browser import FileBrowserWindow
+from ardupilot_methodic_configurator.frontend_tkinter_file_browser import FileBrowserWindow, _PanelState
 from ardupilot_methodic_configurator.frontend_tkinter_file_browser_operations import (
     LocalFileEntry,
     RemoteDownloadPlan,
@@ -77,6 +77,10 @@ def _bare_window() -> FileBrowserWindow:
     """Create a Tk-independent window with an explicitly injected task runner."""
     window = FileBrowserWindow.__new__(FileBrowserWindow)
     window._task_runner = ImmediateTaskRunner()
+    window._local_task_runner = ImmediateTaskRunner()
+    window._local_refresh_request = None
+    window._all_controls_locked = False
+    window._panel_states = {"remote": _PanelState(), "local": _PanelState()}
     window._last_listed_remote_directory = None
     window.verify_transfers_var = MagicMock()
     window.verify_transfers_var.get.return_value = False
@@ -132,7 +136,9 @@ def _headless_browser_window(mock_tkinter_context) -> typing.Iterator[FileBrowse
             ),
             patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser.show_tooltip"),
         ):
-            window = FileBrowserWindow(None, parameter_editor, MagicMock(), task_runner=ImmediateTaskRunner())
+            window = FileBrowserWindow(
+                None, parameter_editor, MagicMock(), task_runner=ImmediateTaskRunner(), local_task_runner=ImmediateTaskRunner()
+            )
             yield window
 
 
@@ -220,11 +226,8 @@ class TestFileBrowserWindow:
         window.remote_empty_state_label = MagicMock()
         window.local_empty_state_label = MagicMock()
         window._update_transfer_buttons = MagicMock()
-        window.last_selected_items = {"remote": "old-remote", "local": "old-local"}
-        window.remote_sort_column = "size"
-        window.local_sort_column = "size"
-        window.remote_sort_reverse = True
-        window.local_sort_reverse = True
+        for name in ("remote", "local"):
+            window._panel_states[name] = _PanelState(sort_column="size", sort_reverse=True, selected_item=f"old-{name}")
         tree = window.remote_tree if panel == "remote" else window.local_tree
         other_tree = window.local_tree if panel == "remote" else window.remote_tree
         tree.get_children.return_value = ("old-row",)
@@ -237,13 +240,13 @@ class TestFileBrowserWindow:
         tree.delete.assert_called_once_with("old-row")
         assert tree.insert.call_args.kwargs["values"] == ("log.bin", "File", "12 B", modified_text)
         other_tree.insert.assert_not_called()
-        assert window.last_selected_items[panel] is None
+        assert window._panel_states[panel].selected_item is None
         other_panel = "local" if panel == "remote" else "remote"
-        assert window.last_selected_items[other_panel] == f"old-{other_panel}"
-        assert getattr(window, f"{panel}_sort_column") == ""
-        assert getattr(window, f"{panel}_sort_reverse") is False
-        assert getattr(window, f"{other_panel}_sort_column") == "size"
-        assert getattr(window, f"{other_panel}_sort_reverse") is True
+        assert window._panel_states[other_panel].selected_item == f"old-{other_panel}"
+        assert window._panel_states[panel].sort_column == ""
+        assert window._panel_states[panel].sort_reverse is False
+        assert window._panel_states[other_panel].sort_column == "size"
+        assert window._panel_states[other_panel].sort_reverse is True
         window._update_transfer_buttons.assert_called_once_with()
 
     def test_initial_remote_listing_falls_back_from_missing_log_directory(self) -> None:
@@ -615,6 +618,95 @@ class TestFileBrowserWindow:
         window._populate_local_tree.assert_called_once_with()
         window.local_directory_label.configure.assert_called_once_with(text=f"Local files in {tmp_path}")
 
+    def test_local_refresh_enumerates_off_thread_and_renders_on_poll(self, tmp_path: Path) -> None:
+        """The worker must not touch widgets; the Tk-side poll applies its result."""
+        started, release = Event(), Event()
+        window = _bare_window()
+        window._local_task_runner = BackgroundTaskRunner(MagicMock())
+        window.local_directory_var = MagicMock()
+        window.local_directory_var.get.return_value = str(tmp_path)
+        window.local_directory_label = MagicMock()
+        window._populate_local_tree = MagicMock()
+        window._select_pending_entry = MagicMock()
+        window._update_parent_navigation_buttons = MagicMock()
+        window.ui = MagicMock()
+        main_thread = current_thread()
+        worker_threads: list[Thread] = []
+        entry = LocalFileEntry("flight.bin", tmp_path / "flight.bin", 6)
+
+        def read_directory(_directory: Path) -> list[LocalFileEntry]:
+            worker_threads.append(current_thread())
+            started.set()
+            assert release.wait(2)
+            return [entry]
+
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser._read_local_directory", read_directory):
+            try:
+                window.refresh_local_panel()
+                assert started.wait(2)
+                assert worker_threads[0] is not main_thread
+                window._populate_local_tree.assert_not_called()
+                release.set()
+                _join_worker(window._local_task_runner.thread)
+                window._populate_local_tree.assert_not_called()
+                window._local_task_runner.poll()
+            finally:
+                release.set()
+                _join_worker(window._local_task_runner.thread)
+
+        assert window.local_entries == [entry]
+        window._populate_local_tree.assert_called_once_with()
+        window.local_directory_label.configure.assert_called_once_with(text=f"Local files in {tmp_path}")
+
+    def test_local_refresh_discards_superseded_listing(self, tmp_path: Path) -> None:
+        """Navigating while a listing runs displays only the latest directory."""
+        first, second = tmp_path / "first", tmp_path / "second"
+        first.mkdir()
+        second.mkdir()
+        started, release = Event(), Event()
+        window = _bare_window()
+        window._local_task_runner = BackgroundTaskRunner(MagicMock())
+        current_directory = str(first)
+        window.local_directory_var = MagicMock()
+        window.local_directory_var.get.side_effect = lambda: current_directory
+        window.local_directory_label = MagicMock()
+        window._populate_local_tree = MagicMock()
+        window._select_pending_entry = MagicMock()
+        window._update_parent_navigation_buttons = MagicMock()
+        window.ui = MagicMock()
+        old_entry = LocalFileEntry("old.bin", first / "old.bin", 1)
+        new_entry = LocalFileEntry("new.bin", second / "new.bin", 1)
+        window.local_entries = []
+
+        def read_directory(directory: Path) -> list[LocalFileEntry]:
+            if directory == first:
+                started.set()
+                assert release.wait(2)
+                return [old_entry]
+            assert directory == second
+            return [new_entry]
+
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser._read_local_directory", read_directory):
+            try:
+                window.refresh_local_panel()
+                assert started.wait(2)
+                current_directory = str(second)
+                window.refresh_local_panel()
+                release.set()
+                _join_worker(window._local_task_runner.thread)
+                window._local_task_runner.poll()
+                assert window.local_entries == []
+                window._populate_local_tree.assert_not_called()
+                _join_worker(window._local_task_runner.thread)
+                window._local_task_runner.poll()
+            finally:
+                release.set()
+                _join_worker(window._local_task_runner.thread)
+
+        assert window.local_entries == [new_entry]
+        window._populate_local_tree.assert_called_once_with()
+        window.local_directory_label.configure.assert_called_once_with(text=f"Local files in {second}")
+
     def test_failed_remote_task_reconciles_transfer_buttons(self) -> None:
         """A failed remote listing restores buttons based on the current local selection."""
         window = _bare_window()
@@ -653,7 +745,7 @@ class TestFileBrowserWindow:
         window = _bare_window()
         window.remote_tree = tree
         window.local_tree = tree
-        window.last_selected_items = {"remote": None, "local": None}
+        window._panel_states = {"remote": _PanelState(), "local": _PanelState()}
         window._update_transfer_buttons = MagicMock()
         window.create_new_local_directory = lambda: command_fired.append(True)
 
@@ -708,7 +800,7 @@ class TestFileBrowserWindow:
         window = _bare_window()
         local_entry = LocalFileEntry("local.bin", Path("local.bin"), 1)
         window.last_selected_panel = "remote"
-        window.last_selected_items = {"remote": None, "local": None}
+        window._panel_states = {"remote": _PanelState(), "local": _PanelState()}
         window.local_entries = [local_entry]
         window.remote_entries = []
         window.local_tree = MagicMock()
@@ -932,8 +1024,8 @@ class TestFileBrowserWindow:
         window.download_button.configure.assert_called_once_with(state="disabled")
         window.upload_button.configure.assert_called_once_with(state="normal")
 
-    def test_busy_refresh_navigation_and_button_updates_leave_controls_untouched(self, tmp_path: Path) -> None:
-        """A running operation owns control state while local data may refresh."""
+    def test_busy_remote_listing_leaves_local_navigation_available(self, tmp_path: Path) -> None:
+        """A remote listing owns remote controls but not local navigation."""
         window = _bare_window()
         window._task_runner.active = True
         window.remote_parent_button = MagicMock()
@@ -951,7 +1043,7 @@ class TestFileBrowserWindow:
         window.ui = MagicMock()
         window.refresh_remote_panel = MagicMock()
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser._local_directory_entries") as local_entries:
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser._read_local_directory") as local_entries:
             window._update_parent_navigation_buttons()
             window._update_transfer_buttons()
             window._populate_local_tree = MagicMock()
@@ -963,12 +1055,12 @@ class TestFileBrowserWindow:
             window.navigate_local_parent()
 
         window.remote_parent_button.configure.assert_not_called()
-        window.local_parent_button.configure.assert_not_called()
+        window.local_parent_button.configure.assert_called_once_with(state="normal")
         window.download_button.configure.assert_not_called()
         window.upload_button.configure.assert_not_called()
-        local_entries.assert_called_once_with(tmp_path)
+        assert local_entries.call_args_list == [call(tmp_path), call(tmp_path)]
         window.remote_directory_var.set.assert_not_called()
-        window.local_directory_var.set.assert_not_called()
+        window.local_directory_var.set.assert_called_once_with(str(tmp_path.parent))
         window.refresh_remote_panel.assert_not_called()
 
     def test_failed_remote_listing_keeps_previous_directory_header(self) -> None:
@@ -1022,8 +1114,8 @@ class TestFileBrowserWindow:
         assert window.remote_directory_label.configure.call_args == call(text="Remote files in /APM/LOGS")
         assert [entry.remote_path for entry in window.remote_entries] == ["/APM/LOGS/old.bin"]
 
-    def test_remote_listing_disables_local_parent_button(self, tmp_path: Path) -> None:
-        """The local parent control must reflect its guarded, busy behavior."""
+    def test_remote_listing_keeps_local_navigation_enabled(self, tmp_path: Path) -> None:
+        """A remote listing must not prevent local navigation."""
         window = _bare_window()
         window._task_runner = MagicMock()
         window._task_runner.active = False
@@ -1040,8 +1132,10 @@ class TestFileBrowserWindow:
 
         window.refresh_remote_panel()
 
-        window.local_parent_button.state.assert_called_once_with(["disabled"])
-        window.browse_local_button.state.assert_called_once_with(["disabled"])
+        window.local_parent_button.state.assert_not_called()
+        window.browse_local_button.state.assert_not_called()
+        window.navigate_local_parent()
+        window.local_directory_var.set.assert_called_once_with(str(tmp_path))
 
     def test_backspace_navigates_to_parent_of_last_selected_remote_panel(self) -> None:
         """Backspace opens the remote parent directory when the remote panel was last selected."""
@@ -1082,7 +1176,7 @@ class TestFileBrowserWindow:
         window.local_tree.get_children.return_value = ("0", "1")
         window.remote_tree.item.return_value = ("remote.bin", "File", "1 B", "")
         window.local_tree.item.return_value = ("local.bin", "File", "1 B", "")
-        window.last_selected_items = {"remote": None, "local": None}
+        window._panel_states = {"remote": _PanelState(), "local": _PanelState()}
         window._update_transfer_buttons = MagicMock()
 
         assert window._on_left_arrow() == "break"
@@ -1182,8 +1276,8 @@ class TestFileBrowserWindow:
         window.refresh_local_panel.assert_called_once_with()
         window._open_local_file.assert_not_called()
 
-    def test_double_click_local_file_ignores_blank_rows_and_busy_window(self) -> None:
-        """A busy browser or empty row does not launch applications."""
+    def test_double_click_local_file_ignores_blank_rows_and_locked_window(self) -> None:
+        """An all-controls operation or empty row does not launch applications."""
         window = _bare_window()
         window.local_tree = MagicMock()
         window.local_entries = [LocalFileEntry("log.txt", Path("log.txt"), 3)]
@@ -1192,7 +1286,7 @@ class TestFileBrowserWindow:
 
         window._on_local_double_click(SimpleNamespace(y=12))
         window.local_tree.identify_row.return_value = "0"
-        window._task_runner.active = True
+        window._all_controls_locked = True
         window._on_local_double_click(SimpleNamespace(y=12))
 
         window._open_local_file.assert_not_called()
@@ -1657,7 +1751,7 @@ class TestFileBrowserWindow:
         entry = FlightControllerLogFile("old.bin", "/APM/LOGS/old.bin", 10)
         window = _bare_window()
         window.last_selected_panel = "remote"
-        window.last_selected_items = {"remote": "0", "local": None}
+        window._panel_states["remote"].selected_item = "0"
         window.remote_entries = [entry]
         window.remote_tree = MagicMock()
         window.remote_tree.bbox.return_value = ()
@@ -1687,7 +1781,7 @@ class TestFileBrowserWindow:
         window.remote_tree.selection.return_value = ("0",)
         window.remote_entries = [entry]
         window.last_selected_panel = "remote"
-        window.last_selected_items = {"remote": "0", "local": None}
+        window._panel_states["remote"].selected_item = "0"
         window.ui = MagicMock()
         window.parameter_editor = MagicMock()
         window.parameter_editor.rename_remote_path.return_value = True
@@ -1776,7 +1870,7 @@ class TestFileBrowserWindow:
         window.remote_tree.selection.return_value = ()
         window.remote_entries = [entry]
         window.last_selected_panel = "remote"
-        window.last_selected_items = {"remote": "0", "local": None}
+        window._panel_states["remote"].selected_item = "0"
         window.ui = MagicMock()
         window.parameter_editor = MagicMock()
 
@@ -1812,7 +1906,7 @@ class TestFileBrowserWindow:
         window.local_tree.identify_row.return_value = "3"
         window.local_tree.selection.return_value = ()
         window.local_entries = [LocalFileEntry("local.txt", Path("local.txt"), 10)]
-        window.last_selected_items = {"remote": None, "local": None}
+        window._panel_states = {"remote": _PanelState(), "local": _PanelState()}
         window._update_transfer_buttons = MagicMock()
         menu = MagicMock()
         event = MagicMock()
@@ -1825,7 +1919,7 @@ class TestFileBrowserWindow:
 
         assert result == "break"
         assert window.last_selected_panel == "local"
-        assert window.last_selected_items["local"] == "3"
+        assert window._panel_states["local"].selected_item == "3"
         window.local_tree.selection_set.assert_called_once_with("3")
         window.local_tree.focus.assert_called_once_with("3")
         assert menu.add_command.call_args_list == [
@@ -1867,7 +1961,7 @@ class TestFileBrowserWindow:
         window.remote_tree = MagicMock()
         window.local_tree = MagicMock()
         window.local_tree.identify_row.return_value = ""
-        window.last_selected_items = {"remote": None, "local": None}
+        window._panel_states = {"remote": _PanelState(), "local": _PanelState()}
         window._update_transfer_buttons = MagicMock()
         menu = FakeMenu()
         event = MagicMock()
@@ -1967,8 +2061,8 @@ class TestFileBrowserWindow:
         ]
         window.remote_tree = MagicMock()
         window.local_tree = MagicMock()
-        window.last_selected_items = {"remote": None, "local": None}
-        window._pending_entry_selection = {"remote": None, "local": None}
+        window._panel_states = {"remote": _PanelState(), "local": _PanelState()}
+        window._panel_states["remote"].pending_entry = None
         window._update_transfer_buttons = MagicMock()
 
         window._select_entry_after_refresh("remote", "new-folder")
@@ -1978,7 +2072,7 @@ class TestFileBrowserWindow:
         window.remote_tree.focus.assert_called_once_with("1")
         window.remote_tree.see.assert_called_once_with("1")
         assert window.last_selected_panel == "remote"
-        assert window.last_selected_items["remote"] == "1"
+        assert window._panel_states["remote"].selected_item == "1"
 
     def test_remote_rename_uses_a_single_safe_new_name(self) -> None:
         """Remote rename uses the selected entry's parent directory."""
@@ -2045,8 +2139,8 @@ class TestFileBrowserWindow:
     def test_user_can_toggle_remote_filename_sort_direction(self) -> None:
         """Clicking the filename heading repeatedly alternates ascending and descending."""
         window = _bare_window()
-        window.remote_sort_column = ""
-        window.remote_sort_reverse = False
+        window._panel_states["remote"].sort_column = ""
+        window._panel_states["remote"].sort_reverse = False
         window.remote_entries = [
             FlightControllerLogFile("alpha.BIN", "/APM/LOGS/alpha.BIN", 10),
             FlightControllerLogFile("zeta.BIN", "/APM/LOGS/zeta.BIN", 20),
@@ -2058,8 +2152,8 @@ class TestFileBrowserWindow:
         window.remote_tree.move.reset_mock()
         window._on_sort_heading("remote", "name")
 
-        assert window.remote_sort_column == "name"
-        assert window.remote_sort_reverse is True
+        assert window._panel_states["remote"].sort_column == "name"
+        assert window._panel_states["remote"].sort_reverse is True
         assert window.remote_tree.move.call_args_list == [
             call("1", "", 0),
             call("0", "", 1),
@@ -2068,8 +2162,8 @@ class TestFileBrowserWindow:
     def test_sorting_with_parent_entry_does_not_compare_strings_and_integers(self) -> None:
         """Sorting a navigable panel remains valid when the synthetic `..` row is present."""
         window = _bare_window()
-        window.remote_sort_column = ""
-        window.remote_sort_reverse = False
+        window._panel_states["remote"].sort_column = ""
+        window._panel_states["remote"].sort_reverse = False
         window.remote_entries = [
             FlightControllerLogFile("..", "/APM/LOGS", 0, is_directory=True),
             FlightControllerLogFile("log.bin", "/APM/LOGS/log.bin", 10),
