@@ -17,6 +17,7 @@ import tempfile
 import threading
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
+from functools import partial
 
 # from logging import debug as logging_debug
 from logging import basicConfig as logging_basicConfig
@@ -1348,25 +1349,15 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         )
 
     def _should_upload_file_to_fc(self, selected_file: str) -> bool:
-        def get_progress_callback() -> Callable | None:
-            """Create and return progress window callback only when upload will actually happen."""
-            show_only_on_update = True
-            self.file_upload_progress_window = self.ui.create_progress_window(
-                self.root,
-                _("Uploading file"),
-                _("Uploaded {} of {} %"),
-                show_only_on_update,
-            )
-            return self.file_upload_progress_window.update_progress_bar
-
         while True:
+            progress_windows: list[ProgressWindow] = []
             try:
                 upload_success = self.parameter_editor.should_upload_file_to_fc_workflow(
                     selected_file,
                     ask_confirmation=self.ui.ask_yesno,
                     show_error=self.ui.show_error,
                     show_warning=self.ui.show_warning,
-                    get_progress_callback=get_progress_callback,
+                    get_progress_callback=partial(self._create_file_upload_progress_callback, progress_windows),
                 )
             except Exception as e:  # pylint: disable=broad-exception-caught
                 logging_exception("File upload to flight controller failed")
@@ -1382,13 +1373,24 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     _("File upload failed. Do you want to retry?"),
                 )
             finally:
-                # Clean up progress window if it was created
-                if self.file_upload_progress_window is not None:
-                    self.file_upload_progress_window.destroy()
-                    self.file_upload_progress_window = None
+                for progress_window in progress_windows:
+                    progress_window.destroy()
+                self.file_upload_progress_window = None
 
             if not retry:
                 return False
+
+    def _create_file_upload_progress_callback(self, progress_windows: list[ProgressWindow]) -> Callable:
+        """Create and retain a progress window for one file upload."""
+        progress_window = self.ui.create_progress_window(
+            self.root,
+            _("Uploading file"),
+            _("Uploaded {} of {} %"),
+            only_show_when_update_called=True,
+        )
+        progress_windows.append(progress_window)
+        self.file_upload_progress_window = progress_window
+        return progress_window.update_progress_bar
 
     def on_param_file_combobox_change(self, _event: Union[tk.Event, None], forced: bool = False) -> None:  # noqa: UP007
         if not self.file_selection_combobox["values"]:

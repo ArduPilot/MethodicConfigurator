@@ -10,7 +10,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
 import posixpath
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum, auto
 from logging import debug as logging_debug
@@ -23,6 +24,10 @@ from typing import TYPE_CHECKING, ClassVar, Optional, cast
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp import create_mavftp_safe
+from ardupilot_methodic_configurator.backend_flightcontroller_protocols import (
+    FileUploadCheckStatus,
+    FileUploadResult,
+)
 from ardupilot_methodic_configurator.backend_mavftp import FtpError
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
@@ -119,15 +124,7 @@ def normalize_remote_path(remote_path: str, *, directory: bool = False) -> str:
 
 
 class FlightControllerFiles:
-    """
-    Handles file operations via MAVFTP protocol.
-
-    This class manages all file transfer operations:
-    - Uploading files to flight controller
-    - Downloading files from flight controller
-    - Finding and downloading last flight log
-    - Directory listing and fallback scanning
-    """
+    """Serialize file operations and reject callback re-entry without disturbing the active transfer."""
 
     # MAVFTP timeout constants
     MAVFTP_FILE_OPERATION_TIMEOUT: ClassVar[int] = 10
@@ -154,6 +151,7 @@ class FlightControllerFiles:
             raise ValueError(msg)
         self._connection_manager: FlightControllerConnectionProtocol = connection_manager
         self._mavftp_lock = RLock()
+        self._mavftp_operation_active = False
         self._verified_remote_directories: set[str] = set()
         self._directory_cache_master = self.master
 
@@ -167,11 +165,24 @@ class FlightControllerFiles:
         """Get flight controller info."""
         return self._connection_manager.info
 
+    @contextmanager
+    def _mavftp_operation(self) -> Iterator[None]:
+        """Serialize threads and reject callback re-entry before a client can reset sessions."""
+        with self._mavftp_lock:
+            if self._mavftp_operation_active:
+                msg = _("Another file operation is already in progress.")
+                raise RuntimeError(msg)
+            self._mavftp_operation_active = True
+            try:
+                yield
+            finally:
+                self._mavftp_operation_active = False
+
     def upload_file(
         self, local_filename: str, remote_filename: str, progress_callback: Callable[[int, int], None] | None = None
     ) -> bool:
         """Serialize and upload a file to the flight controller."""
-        with self._mavftp_lock:
+        with self._mavftp_operation():
             return self._upload_file(local_filename, remote_filename, progress_callback)
 
     # pylint: disable=too-many-return-statements
@@ -325,7 +336,7 @@ class FlightControllerFiles:
         self, local_filename: str, progress_callback: Callable[[int, int], None] | None = None
     ) -> LastLogDownloadResult:
         """Serialize a last-log download and distinguish confirmed absence from failures."""
-        with self._mavftp_lock:
+        with self._mavftp_operation():
             return self._download_last_flight_log(local_filename, progress_callback)
 
     def _download_last_flight_log(
@@ -392,7 +403,7 @@ class FlightControllerFiles:
         remote_directory: str = DEFAULT_LOG_DIRECTORY,
     ) -> list[FlightControllerLogFile] | None:
         """Serialize and list files and directories in a remote directory."""
-        with self._mavftp_lock:
+        with self._mavftp_operation():
             return self._list_remote_files(remote_directory)
 
     # pylint: disable=too-many-return-statements
@@ -459,7 +470,7 @@ class FlightControllerFiles:
 
     def make_remote_directory(self, remote_directory: str) -> bool:
         """Serialize and create a remote directory."""
-        with self._mavftp_lock:
+        with self._mavftp_operation():
             return self._make_remote_directory(remote_directory)
 
     def _make_remote_directory(self, remote_directory: str) -> bool:  # noqa: PLR0911
@@ -498,7 +509,7 @@ class FlightControllerFiles:
 
     def delete_remote_path(self, remote_path: str, is_directory: bool = False) -> bool:
         """Serialize and delete a remote file or directory."""
-        with self._mavftp_lock:
+        with self._mavftp_operation():
             return self._delete_remote_path(remote_path, is_directory)
 
     def _delete_remote_path(self, remote_path: str, is_directory: bool = False) -> bool:
@@ -531,7 +542,7 @@ class FlightControllerFiles:
 
     def rename_remote_path(self, remote_path: str, new_remote_path: str) -> bool:
         """Serialize and rename a remote file or directory."""
-        with self._mavftp_lock:
+        with self._mavftp_operation():
             return self._rename_remote_path(remote_path, new_remote_path)
 
     def _rename_remote_path(self, remote_path: str, new_remote_path: str) -> bool:
@@ -567,7 +578,7 @@ class FlightControllerFiles:
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> bool:
         """Serialize and download one explicitly selected remote regular file."""
-        with self._mavftp_lock:
+        with self._mavftp_operation():
             return self._download_selected_remote_file(remote_path, local_filename, progress_callback)
 
     def verify_remote_file(self, remote_path: str, local_filename: str) -> bool | None:  # noqa: PLR0911
@@ -581,7 +592,7 @@ class FlightControllerFiles:
             return None
         if sys_path.startswith("@SYS/") and sys_path[len("@SYS/") :] not in ("storage.bin", "crash_dump.bin"):
             return None
-        with self._mavftp_lock:
+        with self._mavftp_operation():
             if self.master is None or not self.info.is_mavftp_supported:
                 return False
             mavftp_instance = create_mavftp_safe(self.master)
@@ -600,6 +611,119 @@ class FlightControllerFiles:
                     {"remote": normalized_path, "error": error},
                 )
                 return False
+
+    def check_file_upload(self, remote_path: str, local_filename: str) -> FileUploadCheckStatus:
+        """Check whether a remote file is current, needs upload, or could not be verified."""
+        try:
+            normalized_path = self._normalize_remote_path(remote_path)
+        except ValueError:
+            return FileUploadCheckStatus.VERIFICATION_FAILED
+        with self._mavftp_operation():
+            return self._check_file_upload_locked(normalized_path, local_filename)
+
+    def _check_file_upload_locked(self, normalized_path: str, local_filename: str) -> FileUploadCheckStatus:  # noqa: PLR0911
+        """Perform upload preflight while the MAVFTP lock is held."""
+        if self.master is None or not self.info.is_mavftp_supported:
+            return FileUploadCheckStatus.VERIFICATION_FAILED
+        try:
+            # A missing file may not reply to CalcFileCRC32 at all. List its
+            # parent first so absent targets never incur a CRC timeout.
+            try:
+                entries = self._list_remote_files(posixpath.dirname(normalized_path))
+            except FileNotFoundError:
+                return FileUploadCheckStatus.NEEDS_UPLOAD  # The parent directory does not exist yet.
+            if entries is None:
+                return FileUploadCheckStatus.VERIFICATION_FAILED
+            # Reuse verified parent directories during upload. The transfer call
+            # repeats preflight while holding this same lock before writing.
+            if self._directory_cache_master is not self.master:
+                self._verified_remote_directories.clear()
+                self._directory_cache_master = self.master
+            self._verified_remote_directories.update(self._remote_parent_directories(normalized_path))
+            needs_upload = self._remote_target_needs_upload(normalized_path, local_filename, entries)
+            if needs_upload is None:
+                return FileUploadCheckStatus.VERIFICATION_FAILED
+            if needs_upload:
+                return FileUploadCheckStatus.NEEDS_UPLOAD
+            return FileUploadCheckStatus.ALREADY_CURRENT
+        except Exception as error:  # pylint: disable=broad-exception-caught
+            logging_warning(
+                _("Could not verify remote file %(remote)s: %(error)s"),
+                {"remote": normalized_path, "error": error},
+            )
+            return FileUploadCheckStatus.VERIFICATION_FAILED
+
+    def upload_file_if_needed(
+        self,
+        local_filename: str,
+        remote_filename: str,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> FileUploadResult:
+        """Recheck remote state and upload atomically relative to other MAVFTP operations."""
+        try:
+            normalized_path = self._normalize_remote_path(remote_filename)
+        except ValueError:
+            return FileUploadResult.VERIFICATION_FAILED
+        with self._mavftp_operation():
+            local_status = self._local_upload_file_status(local_filename)
+            if local_status is not None:
+                return local_status
+            status = self._check_file_upload_locked(normalized_path, local_filename)
+            if status is FileUploadCheckStatus.ALREADY_CURRENT:
+                return FileUploadResult.ALREADY_CURRENT
+            if status is FileUploadCheckStatus.VERIFICATION_FAILED:
+                return FileUploadResult.VERIFICATION_FAILED
+            return (
+                FileUploadResult.UPLOADED
+                if self._upload_file(local_filename, normalized_path, progress_callback)
+                else FileUploadResult.UPLOAD_FAILED
+            )
+
+    @staticmethod
+    def _local_upload_file_status(local_filename: str) -> FileUploadResult | None:
+        """Return a local-file failure status, or None when the file is ready."""
+        try:
+            if not os.path.isfile(local_filename):
+                return FileUploadResult.LOCAL_FILE_MISSING
+            if os.path.getsize(local_filename) == 0:
+                return FileUploadResult.EMPTY_LOCAL_FILE
+        except OSError:
+            return FileUploadResult.LOCAL_FILE_MISSING
+        return None
+
+    def _remote_target_needs_upload(
+        self,
+        normalized_path: str,
+        local_filename: str,
+        entries: list[FlightControllerLogFile],
+    ) -> bool | None:
+        """Compare a listed remote file with its local upload candidate."""
+        target = next((entry for entry in entries if entry.remote_path == normalized_path), None)
+        if target is None:
+            return True
+        if target.is_directory:
+            return None  # A directory cannot be safely overwritten as a file.
+
+        local_size = os.path.getsize(local_filename)
+        if local_size == 0:
+            return None  # There is no useful local file to upload.
+        if target.size_bytes != local_size:
+            return True  # An empty or partial remote file needs no CRC request.
+        return self._remote_crc_needs_upload(normalized_path, local_filename)
+
+    def _remote_crc_needs_upload(self, normalized_path: str, local_filename: str) -> bool | None:
+        """Compare CRCs when the listed remote file matches the local file size."""
+        mavftp_instance = create_mavftp_safe(self.master)
+        if mavftp_instance is None:
+            return None
+        local_crc = mavftp_instance.local_file_crc(local_filename)
+        result = mavftp_instance.cmd_crc([normalized_path], timeout=self._upload_timeout(local_filename))
+        if result.error_code == FtpError.FileNotFound:
+            return True
+        if result.error_code != FtpError.Success or mavftp_instance.last_crc is None:
+            logging_warning(_("Could not verify remote file %(remote)s"), {"remote": normalized_path})
+            return None
+        return local_crc != mavftp_instance.last_crc
 
     def _download_selected_remote_file(
         self,

@@ -52,6 +52,8 @@ from ardupilot_methodic_configurator.backend_flightcontroller_files import (
 )
 from ardupilot_methodic_configurator.backend_flightcontroller_params import FlightControllerParams
 from ardupilot_methodic_configurator.backend_flightcontroller_protocols import (
+    FileUploadCheckStatus,
+    FileUploadResult,
     FlightControllerCommandsProtocol,
     FlightControllerConnectionProtocol,
     FlightControllerFilesProtocol,
@@ -831,6 +833,19 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
     def verify_remote_file(self, remote_path: str, local_filename: str) -> bool | None:
         """Compare a transferred local file with the remote file CRC."""
         return self._files_manager.verify_remote_file(remote_path, local_filename)
+
+    def check_file_upload(self, remote_path: str, local_filename: str) -> FileUploadCheckStatus:
+        """Return an explicit outcome for remote upload preflight."""
+        return self._files_manager.check_file_upload(remote_path, local_filename)
+
+    def upload_file_if_needed(
+        self,
+        local_filename: str,
+        remote_filename: str,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> FileUploadResult:
+        """Recheck remote state and upload through the files manager."""
+        return self._files_manager.upload_file_if_needed(local_filename, remote_filename, progress_callback)
 
     def make_remote_directory(self, remote_directory: str) -> bool:
         """Create a remote directory - delegates to files manager."""

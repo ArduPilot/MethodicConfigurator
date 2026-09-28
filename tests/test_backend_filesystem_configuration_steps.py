@@ -11,7 +11,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import logging
+from io import TextIOWrapper
 from json import JSONDecodeError
+from json import dumps as json_dumps
+from pathlib import Path
 from unittest.mock import call, mock_open, patch
 
 import pytest
@@ -41,6 +44,97 @@ def config_steps() -> ConfigurationSteps:
 class TestReInit:
     """Tests for re_init() — loading and validating configuration step files."""
 
+    @pytest.mark.parametrize("read_error", [PermissionError("unreadable override"), IsADirectoryError("not a file")])
+    def test_unreadable_vehicle_override_does_not_disable_bundled_steps(
+        self, config_steps: ConfigurationSteps, caplog: pytest.LogCaptureFixture, read_error: OSError
+    ) -> None:
+        """
+        An unreadable override must not prevent use of bundled configuration.
+
+        GIVEN: Opening the vehicle override fails, while the bundled file is readable
+        WHEN: The vehicle configuration is loaded
+        THEN: Bundled steps are available and the failed override path is reported
+        """
+        original_open = open
+        vehicle_dir = "unreadable_vehicle"
+        override_path = str(Path(vehicle_dir) / "configuration_steps_ArduCopter.json")
+
+        def read_candidate(path: str, *, encoding: str) -> TextIOWrapper:
+            if str(path) == override_path:
+                raise read_error
+            return original_open(path, encoding=encoding)
+
+        with patch("builtins.open", side_effect=read_candidate), caplog.at_level(logging.INFO):
+            config_steps.re_init(vehicle_dir, "ArduCopter")
+
+        assert "02_imu_temperature_calibration_setup.param" in config_steps.configuration_steps
+        assert override_path in caplog.text
+        assert "loaded from" in caplog.text
+
+    def test_non_utf8_vehicle_override_falls_back_without_changing_the_file(
+        self, config_steps: ConfigurationSteps, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """
+        Invalid encoding is a rejected override rather than a startup exception.
+
+        GIVEN: A vehicle override contains bytes that are not UTF-8
+        WHEN: The vehicle configuration is loaded
+        THEN: Bundled steps load and the original bytes are preserved
+        """
+        override = tmp_path / "configuration_steps_ArduCopter.json"
+        contents = b'{"steps": "\xff"}'
+        override.write_bytes(contents)
+
+        config_steps.re_init(str(tmp_path), "ArduCopter")
+
+        assert "02_imu_temperature_calibration_setup.param" in config_steps.configuration_steps
+        assert override.read_bytes() == contents
+        assert str(override) in caplog.text
+
+    def test_malformed_unmatched_step_value_is_rejected_before_parameter_validation(
+        self, config_steps: ConfigurationSteps, tmp_path: Path
+    ) -> None:
+        """
+        Step values outside patternProperties must still be objects.
+
+        GIVEN: An override has a null step under a name outside patternProperties
+        WHEN: The configuration is loaded
+        THEN: The override is rejected and bundled steps load without a crash
+        """
+        override = tmp_path / "configuration_steps_ArduCopter.json"
+        override.write_text('{"steps": {"broken": null}}', encoding="utf-8")
+
+        config_steps.re_init(str(tmp_path), "ArduCopter")
+
+        assert "broken" not in config_steps.configuration_steps
+        assert "02_imu_temperature_calibration_setup.param" in config_steps.configuration_steps
+
+    @pytest.mark.parametrize("legacy_download", [True, False])
+    @pytest.mark.parametrize("legacy_upload", [True, False])
+    def test_user_can_load_legacy_and_array_transfers_without_rewriting_the_file(
+        self, config_steps: ConfigurationSteps, tmp_path: Path, legacy_download: bool, legacy_upload: bool
+    ) -> None:
+        """Given either format, loading real JSON validates it and exposes only transfer lists."""
+        download = {"source_url": "https://example.com/a.lua", "dest_local": "a.lua"}
+        upload = {"source_local": "a.lua", "dest_on_fc": "/APM/Scripts/a.lua"}
+        step = {
+            **dict.fromkeys(("why", "why_now", "blog_text", "wiki_text", "external_tool_text"), "demo"),
+            **dict.fromkeys(("blog_url", "wiki_url", "external_tool_url"), "https://example.com"),
+            "mandatory_text": "100% mandatory (0% optional)",
+            "download_file": download if legacy_download else [download],
+            "upload_file": upload if legacy_upload else [upload],
+        }
+        original_content = json_dumps({"steps": {"01_demo.param": step}})
+        config_file = tmp_path / "configuration_steps_vehicle_type.json"
+        config_file.write_text(original_content, encoding="utf-8")
+        config_file.chmod(0o444)
+
+        config_steps.re_init(str(tmp_path), "vehicle_type")
+
+        assert config_steps.configuration_steps["01_demo.param"]["download_file"] == [download]
+        assert config_steps.configuration_steps["01_demo.param"]["upload_file"] == [upload]
+        assert config_file.read_text(encoding="utf-8") == original_content
+
     def test_configuration_steps_are_loaded_from_vehicle_directory(self, config_steps: ConfigurationSteps) -> None:
         """
         Configuration steps are loaded when a valid file exists in the vehicle directory.
@@ -67,6 +161,38 @@ class TestReInit:
                 ],
                 any_order=True,
             )
+
+    def test_invalid_vehicle_configuration_steps_fall_back_to_bundled_file(
+        self, config_steps: ConfigurationSteps, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """A schema-invalid vehicle override is skipped in favor of valid bundled steps."""
+        invalid_vehicle_config: dict = {"steps": {"invalid.param": {}}}
+        bundled_config: dict = {"steps": {"bundled.param": {}}}
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_configuration_steps.json_load",
+                side_effect=[invalid_vehicle_config, {}, bundled_config, {}],
+            ),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_configuration_steps.json_validate",
+                side_effect=[ValidationError("Invalid vehicle configuration"), None],
+            ),
+            patch("builtins.open", mock_open()) as mock_file,
+            patch("os.path.join", side_effect=lambda *args: "/".join(args)),
+            patch("os.path.abspath", return_value="abs_path"),
+            patch("os.path.dirname", return_value="dir_name"),
+            caplog.at_level(logging.WARNING),
+        ):
+            config_steps.re_init("vehicle_dir", "vehicle_type")
+
+        assert set(config_steps.configuration_steps) == {"bundled.param"}
+        assert "Configuration steps validation error" in caplog.text
+        assert [call_args.args[0] for call_args in mock_file.call_args_list] == [
+            "vehicle_dir/configuration_steps_vehicle_type.json",
+            "dir_name/configuration_steps_schema.json",
+            "dir_name/configuration_steps_vehicle_type.json",
+            "dir_name/configuration_steps_schema.json",
+        ]
 
     def test_re_init_returns_early_when_vehicle_type_is_empty(self, config_steps: ConfigurationSteps) -> None:
         """
@@ -129,19 +255,22 @@ class TestReInit:
         self, config_steps: ConfigurationSteps, caplog: pytest.LogCaptureFixture
     ) -> None:
         """
-        A missing schema file is reported as an error without aborting step loading.
+        A missing schema file is reported and configuration steps are not loaded.
 
         GIVEN: The config file is valid JSON but the JSON schema file is absent
         WHEN: re_init is called
-        THEN: An error mentioning the schema file is logged
+        THEN: An error mentioning the schema file is logged and configuration stays empty
         """
         mock_config_file = '{"steps": {"test_file": {"forced_parameters": {}}}}'
+
+        def open_side_effect(path: str, **_kwargs: object) -> object:  # type: ignore[return]
+            if "configuration_steps_schema.json" in path:
+                raise FileNotFoundError
+            return mock_open(read_data=mock_config_file)()  # type: ignore[return-value]
+
         with (
-            patch(
-                "builtins.open",
-                side_effect=[mock_open(read_data=mock_config_file).return_value, FileNotFoundError()],
-            ),
-            patch("os.path.join", return_value="test_path"),
+            patch("builtins.open", side_effect=open_side_effect),
+            patch("os.path.join", side_effect=lambda *args: "/".join(args)),
             patch("os.path.dirname", return_value="dir_name"),
             patch("os.path.abspath", return_value="abs_path"),
             caplog.at_level(logging.ERROR),
@@ -150,6 +279,8 @@ class TestReInit:
 
         assert "Schema file" in caplog.text
         assert "not found" in caplog.text
+        assert not config_steps.configuration_steps
+        assert not config_steps.configuration_phases
 
     def test_re_init_loads_configuration_phases(self, config_steps: ConfigurationSteps) -> None:
         """
@@ -171,6 +302,43 @@ class TestReInit:
 
         assert "phase1" in config_steps.configuration_phases
         assert config_steps.configuration_phases["phase1"]["description"] == "Phase 1"
+
+    def test_re_init_keeps_file_transfer_lists(self, config_steps: ConfigurationSteps) -> None:
+        """Validated file transfer arrays are kept in their canonical list form."""
+        config_data: dict = {
+            "steps": {
+                "legacy.param": {
+                    "download_file": [{"source_url": "https://example.com/a.lua", "dest_local": "a.lua"}],
+                    "upload_file": [{"source_local": "a.lua", "dest_on_fc": "/APM/Scripts/a.lua"}],
+                },
+                "multiple.param": {
+                    "download_file": [
+                        {"source_url": "https://example.com/b.lua", "dest_local": "b.lua"},
+                        {"source_url": "https://example.com/c.lua", "dest_local": "c.lua"},
+                    ]
+                },
+            }
+        }
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_configuration_steps.json_load",
+                side_effect=[config_data, {}],
+            ),
+            patch("ardupilot_methodic_configurator.backend_filesystem_configuration_steps.json_validate"),
+            patch("builtins.open", mock_open()),
+            patch("os.path.join", side_effect=lambda *args: "/".join(args)),
+            patch("os.path.abspath", return_value="abs_path"),
+            patch("os.path.dirname", return_value="dir_name"),
+        ):
+            config_steps.re_init("vehicle_dir", "vehicle_type")
+
+        assert config_steps.configuration_steps["legacy.param"]["download_file"] == [
+            {"source_url": "https://example.com/a.lua", "dest_local": "a.lua"}
+        ]
+        assert config_steps.configuration_steps["legacy.param"]["upload_file"] == [
+            {"source_local": "a.lua", "dest_on_fc": "/APM/Scripts/a.lua"}
+        ]
+        assert len(config_steps.configuration_steps["multiple.param"]["download_file"]) == 2
 
     def test_second_reinit_logs_warning_when_config_file_overrides_default(
         self, config_steps: ConfigurationSteps, caplog: pytest.LogCaptureFixture
@@ -244,11 +412,13 @@ class TestReInit:
         WHEN: re_init is called
         THEN: An error mentioning 'validation error' is logged
         """
-        config_data: dict = {"steps": {}}
+        config_steps.configuration_steps = {"previous.param": {}}
+        config_steps.configuration_phases = {"previous_phase": {"description": "Previous"}}
+        config_data: dict = {"steps": {"invalid.param": {}}}
         with (
             patch(
                 "ardupilot_methodic_configurator.backend_filesystem_configuration_steps.json_load",
-                side_effect=[config_data, {}],
+                side_effect=[config_data, {}, config_data, {}],
             ),
             patch(
                 "ardupilot_methodic_configurator.backend_filesystem_configuration_steps.json_validate",
@@ -263,6 +433,8 @@ class TestReInit:
             config_steps.re_init("vehicle_dir", "vehicle_type")
 
         assert any("validation error" in r.message.lower() for r in caplog.records)
+        assert not config_steps.configuration_steps
+        assert not config_steps.configuration_phases
 
     def test_re_init_logs_error_for_schema_json_decode_error(
         self, config_steps: ConfigurationSteps, caplog: pytest.LogCaptureFixture
@@ -279,7 +451,7 @@ class TestReInit:
         with (
             patch(
                 "ardupilot_methodic_configurator.backend_filesystem_configuration_steps.json_load",
-                side_effect=[config_data, schema_error],
+                side_effect=[config_data, schema_error, config_data, schema_error],
             ),
             patch("builtins.open", mock_open()),
             patch("os.path.join", side_effect=lambda *args: "/".join(args)),
@@ -1742,13 +1914,13 @@ class TestConfigurationNavigation:
 
         GIVEN: An empty configuration_steps dict
         WHEN: get_documentation_text_and_url is called
-        THEN: A fallback message mentioning 'No intermediate parameter configuration steps available' is returned
+        THEN: A fallback message says no documentation is available for the selected step
         """
         config_steps.configuration_steps = {}
 
         text, url = config_steps.get_documentation_text_and_url("test_file", "prefix")
 
-        assert "No intermediate parameter configuration steps available" in text
+        assert "No documentation available" in text
         assert url == ""
 
     def test_documentation_url_defaults_to_empty_string_when_absent(self, config_steps: ConfigurationSteps) -> None:
@@ -1790,17 +1962,17 @@ class TestConfigurationNavigation:
 
         assert "No documentation available" in config_steps.get_seq_tooltip_text("test_file", "nonexistent_tooltip")
 
-    def test_tooltip_not_found_message_when_documentation_is_none(self, config_steps: ConfigurationSteps) -> None:
+    def test_tooltip_unavailable_message_when_configuration_steps_are_missing(self, config_steps: ConfigurationSteps) -> None:
         """
-        A 'not found' message is returned when configuration_steps itself is None.
+        A no-documentation message is returned when configuration steps are missing.
 
         GIVEN: configuration_steps is set to None
         WHEN: get_seq_tooltip_text is called
-        THEN: A message mentioning 'not found' is returned
+        THEN: A message says no documentation is available for the selected step
         """
         config_steps.configuration_steps = None  # type: ignore[assignment]
 
-        assert "not found" in config_steps.get_seq_tooltip_text("test_file", "tooltip_key")
+        assert "No documentation available" in config_steps.get_seq_tooltip_text("test_file", "tooltip_key")
 
     def test_instructions_popup_returns_dict_for_known_file_and_none_otherwise(self, config_steps: ConfigurationSteps) -> None:
         """

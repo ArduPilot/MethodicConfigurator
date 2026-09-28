@@ -769,8 +769,12 @@
                 "QUIK_ENABLE": { "New Value": 1, "Change Reason": "Use VTOL-Quicktune lua script to estimate a good PID starting values" }
             },
             "old_filenames": ["20_quick_tune_setup.param", "22_quick_tune_setup.param"],
-            "download_file": { "source_url": "https://raw.githubusercontent.com/ArduPilot/ardupilot/Copter-4.5/libraries/AP_Scripting/applets/VTOL-quicktune.lua", "dest_local": "VTOL-quicktune.lua" },
-            "upload_file": { "source_local": "VTOL-quicktune.lua", "dest_on_fc": "/APM/Scripts/VTOL-quicktune.lua" }
+            "download_file": [
+                { "source_url": "https://raw.githubusercontent.com/ArduPilot/ardupilot/Copter-4.5/libraries/AP_Scripting/applets/VTOL-quicktune.lua", "dest_local": "VTOL-quicktune.lua" }
+            ],
+            "upload_file": [
+                { "source_local": "VTOL-quicktune.lua", "dest_on_fc": "/APM/Scripts/VTOL-quicktune.lua" }
+            ]
         },
         "30_quick_tune_results.param": {
             "why": "The VTOL-quicktune lua script can safely estimate good PID starting values for the vehicle.",
@@ -820,7 +824,7 @@
             "autoimport_nondefault_regexp": ["MAGH_.*"],
             "forced_parameters": {
                 "MAGH_LOG_ENABLE": { "New Value": 1, "Change Reason": "Activates the logging of the MAGH.Active message" },
-                "QUIK_ENABLE": { "New Value": 0, "Change Reason": "Quiktune is now completed. Disable it so that we can use the same RC switch to operate the wp-advance script" },
+                "QUIK_ENABLE": { "New Value": 0, "Change Reason": "Quiktune is now completed. Disable it so that we can use the same RC switch to operate the advance-wp script" },
                 "SCR_ENABLE": { "New Value": 1, "Change Reason": "Use lua scripting for MagFit flight path automation" }
             },
             "add_parameters": {
@@ -837,8 +841,14 @@
             },
             "jump_possible": {"66_everyday_use.param": "If you are impatient and do not want a fully optimized flight controller\nYou can skip some steps now.\n\nJump to '66_everyday_use.param' file?"},
             "old_filenames": ["22_inflight_magnetometer_fit_setup.param", "24_inflight_magnetometer_fit_setup.param"],
-            "download_file": { "source_url": "https://discuss.ardupilot.org/uploads/short-url/4pyrl7PcfqiMEaRItUhljuAqLSs.lua", "dest_local": "copter-magfit-helper.lua" },
-            "upload_file": { "source_local": "copter-magfit-helper.lua", "dest_on_fc": "/APM/Scripts/copter-magfit-helper.lua" }
+            "download_file": [
+                { "source_url": "https://discuss.ardupilot.org/uploads/short-url/4pyrl7PcfqiMEaRItUhljuAqLSs.lua", "dest_local": "copter-magfit-helper.lua" },
+                { "source_url": "https://raw.githubusercontent.com/ArduPilot/ardupilot/Copter-4.6.0/libraries/AP_Scripting/applets/advance-wp.lua", "dest_local": "advance-wp.lua" }
+            ],
+            "upload_file": [
+                { "source_local": "copter-magfit-helper.lua", "dest_on_fc": "/APM/Scripts/copter-magfit-helper.lua" },
+                { "source_local": "advance-wp.lua", "dest_on_fc": "/APM/Scripts/advance-wp.lua" }
+            ]
         },
         "32_inflight_magnetometer_fit_results.param": {
             "why": "The compass heading is crucial for the vehicle's navigation and the calibration is very accurate if done during a special flight path.",

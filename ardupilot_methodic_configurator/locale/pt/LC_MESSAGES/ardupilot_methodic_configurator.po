@@ -4091,10 +4091,10 @@ msgstr "Q_M_SPIN_ARM mais pelo menos 0.03"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:335
 msgid ""
 "Quiktune is now completed. Disable it so that we can use the same RC switch "
-"to operate the wp-advance script"
+"to operate the advance-wp script"
 msgstr ""
 "O Quiktune está agora concluído. Desative-o para que possamos usar o mesmo "
-"interruptor RC para operar o script wp-advance"
+"interruptor RC para operar o script advance-wp"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:336
 msgid "RC receiver on SERIAL1 requires RCIN"
