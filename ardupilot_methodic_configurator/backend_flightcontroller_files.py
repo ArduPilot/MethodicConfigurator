@@ -80,6 +80,42 @@ def is_safe_local_entry_name(name: str) -> bool:
     )
 
 
+def is_safe_remote_entry_name(name: str) -> bool:
+    """Return whether a name is one unambiguous MAVFTP path component."""
+    return (
+        isinstance(name, str)
+        and bool(name)
+        and name not in {".", ".."}
+        and "/" not in name
+        and "\\" not in name
+        and ":" not in name
+    )
+
+
+def normalize_remote_path(remote_path: str, *, directory: bool = False) -> str:
+    """Normalize and validate an absolute MAVFTP path."""
+    if not isinstance(remote_path, str) or not remote_path.strip():
+        raise ValueError(_("Remote path must not be empty"))
+
+    # Do not strip filename whitespace; only whitespace-only paths are invalid.
+    path = remote_path.replace("\\", "/")
+    if not path.startswith("/"):
+        raise ValueError(_("Remote path must be absolute"))
+    if ".." in path.split("/"):
+        raise ValueError(_("Remote path must not contain parent-directory segments"))
+
+    normalized = posixpath.normpath(path)
+    if not normalized.startswith("/"):
+        raise ValueError(_("Remote path must be absolute"))
+    normalized = f"/{normalized.lstrip('/')}"
+    if any(not is_safe_remote_entry_name(part) for part in normalized.split("/") if part):
+        raise ValueError(_("Remote path contains an invalid name"))
+
+    if directory:
+        return normalized if normalized == "/" else f"{normalized}/"
+    return normalized
+
+
 class FlightControllerFiles:
     """
     Handles file operations via MAVFTP protocol.
@@ -335,54 +371,19 @@ class FlightControllerFiles:
             logging_error(_("Error during flight log download: %(error)s"), {"error": str(e)})
             return LastLogDownloadResult.FAILED
 
-    @classmethod
-    def _normalize_remote_path(cls, remote_path: str, *, directory: bool = False) -> str:
-        """Normalize and validate an absolute MAVFTP path."""
-        if not isinstance(remote_path, str) or not remote_path.strip():
-            msg = _("Remote path must not be empty")
-            raise ValueError(msg)
-
-        # Do not strip the path itself: leading/trailing spaces can be valid
-        # filename characters on the flight controller. Only whitespace-only
-        # paths are rejected above.
-        path = remote_path.replace("\\", "/")
-        if not path.startswith("/"):
-            msg = _("Remote path must be absolute")
-            raise ValueError(msg)
-
-        if ".." in path.split("/"):
-            msg = _("Remote path must not contain parent-directory segments")
-            raise ValueError(msg)
-
-        normalized = posixpath.normpath(path)
-        if not normalized.startswith("/"):
-            msg = _("Remote path must be absolute")
-            raise ValueError(msg)
-
-        if directory:
-            return normalized if normalized == "/" else f"{normalized}/"
-        return normalized
+    @staticmethod
+    def _normalize_remote_path(remote_path: str, *, directory: bool = False) -> str:
+        """Preserve the existing backend entry point for the shared path policy."""
+        return normalize_remote_path(remote_path, directory=directory)
 
     @classmethod
     def _remote_child_path(cls, remote_directory: str, filename: str) -> str:
         """Build a safe remote path for a direct child of a remote directory."""
-        if not cls._safe_remote_child_name(filename):
+        if not is_safe_remote_entry_name(filename):
             msg = _("Remote directory entries must be regular file names")
             raise ValueError(msg)
         directory = cls._normalize_remote_path(remote_directory, directory=True)
         return posixpath.join(directory, filename)
-
-    @staticmethod
-    def _safe_remote_child_name(filename: str) -> bool:
-        """Return whether a listing name is safe as one remote path component."""
-        return (
-            bool(filename)
-            and filename not in {".", ".."}
-            and "/" not in filename
-            and "\\" not in filename
-            and ":" not in filename
-            and posixpath.basename(filename) == filename
-        )
 
     def list_remote_files(
         self,
