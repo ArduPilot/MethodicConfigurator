@@ -1265,6 +1265,50 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             assert local_path == os_path.realpath(os_path.join(tmp_dir, "local_file.bin"))
             assert remote_path == "/fs/microsd/APM/file.bin"
 
+    def test_multiple_step_files_are_resolved_in_order(self) -> None:
+        """Both scripts are resolved relative to the vehicle directory."""
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            lfs = LocalFilesystem(
+                tmp_dir, "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+            )
+            lfs.configuration_steps = {
+                "step.param": {
+                    "download_file": [
+                        {"source_url": "https://example.com/a", "dest_local": "a.lua"},
+                        {"source_url": "https://example.com/b", "dest_local": "b.lua"},
+                    ],
+                    "upload_file": [
+                        {"source_local": "a.lua", "dest_on_fc": "/APM/Scripts/a.lua"},
+                        {"source_local": "b.lua", "dest_on_fc": "/APM/Scripts/b.lua"},
+                    ],
+                }
+            }
+            assert lfs.get_download_files("step.param") == [
+                ("https://example.com/a", os_path.realpath(os_path.join(tmp_dir, "a.lua"))),
+                ("https://example.com/b", os_path.realpath(os_path.join(tmp_dir, "b.lua"))),
+            ]
+            assert lfs.get_upload_files("step.param") == [
+                (os_path.realpath(os_path.join(tmp_dir, "a.lua")), "/APM/Scripts/a.lua"),
+                (os_path.realpath(os_path.join(tmp_dir, "b.lua")), "/APM/Scripts/b.lua"),
+            ]
+
+    def test_second_file_cannot_escape_vehicle_directory(self) -> None:
+        """Validate every array entry, not just the first."""
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            lfs = LocalFilesystem(
+                tmp_dir, "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+            )
+            lfs.configuration_steps = {
+                "step.param": {
+                    "download_file": [
+                        {"source_url": "https://example.com/a", "dest_local": "a.lua"},
+                        {"source_url": "https://example.com/b", "dest_local": "../escape.lua"},
+                    ]
+                }
+            }
+            with pytest.raises(ValueError, match="escapes vehicle directory"):
+                lfs.get_download_files("step.param")
+
 
 class TestPathTraversalPrevention:
     """Tests that file path operations reject path traversal attempts."""

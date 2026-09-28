@@ -601,6 +601,74 @@ class FlightControllerFiles:
                 )
                 return False
 
+    def needs_file_upload(self, remote_path: str, local_filename: str) -> bool | None:
+        """Return True for a missing or CRC-mismatched file, False for a match, None if the check failed."""
+        try:
+            normalized_path = self._normalize_remote_path(remote_path)
+        except ValueError:
+            return None
+        with self._mavftp_lock:
+            if self.master is None or not self.info.is_mavftp_supported:
+                return None
+            try:
+                # A missing file may not reply to CalcFileCRC32 at all. List its
+                # parent first so absent targets never incur a CRC timeout.
+                try:
+                    entries = self._list_remote_files(posixpath.dirname(normalized_path))
+                except FileNotFoundError:
+                    return True  # The parent directory does not exist yet.
+                if entries is None:
+                    return None
+                # A successful listing proves that this parent and all its
+                # ancestors exist. Reuse that knowledge during the imminent
+                # upload instead of issuing redundant mkdir/list requests
+                # immediately before CreateFile.
+                if self._directory_cache_master is not self.master:
+                    self._verified_remote_directories.clear()
+                    self._directory_cache_master = self.master
+                self._verified_remote_directories.update(self._remote_parent_directories(normalized_path))
+                return self._remote_target_needs_upload(normalized_path, local_filename, entries)
+            except Exception as error:  # pylint: disable=broad-exception-caught
+                logging_warning(
+                    _("Could not verify remote file %(remote)s: %(error)s"),
+                    {"remote": normalized_path, "error": error},
+                )
+                return None
+
+    def _remote_target_needs_upload(
+        self,
+        normalized_path: str,
+        local_filename: str,
+        entries: list[FlightControllerLogFile],
+    ) -> bool | None:
+        """Compare a listed remote file with its local upload candidate."""
+        target = next((entry for entry in entries if entry.remote_path == normalized_path), None)
+        if target is None:
+            return True
+        if target.is_directory:
+            return None  # A directory cannot be safely overwritten as a file.
+
+        local_size = os.path.getsize(local_filename)
+        if local_size == 0:
+            return None  # There is no useful local file to upload.
+        if target.size_bytes != local_size:
+            return True  # An empty or partial remote file needs no CRC request.
+        return self._remote_crc_needs_upload(normalized_path, local_filename)
+
+    def _remote_crc_needs_upload(self, normalized_path: str, local_filename: str) -> bool | None:
+        """Compare CRCs when the listed remote file matches the local file size."""
+        mavftp_instance = create_mavftp_safe(self.master)
+        if mavftp_instance is None:
+            return None
+        local_crc = mavftp_instance.local_file_crc(local_filename)
+        result = mavftp_instance.cmd_crc([normalized_path], timeout=self._upload_timeout(local_filename))
+        if result.error_code == FtpError.FileNotFound:
+            return True
+        if result.error_code != FtpError.Success or mavftp_instance.last_crc is None:
+            logging_warning(_("Could not verify remote file %(remote)s"), {"remote": normalized_path})
+            return None
+        return local_crc != mavftp_instance.last_crc
+
     def _download_selected_remote_file(
         self,
         remote_path: str,

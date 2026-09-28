@@ -634,9 +634,10 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             return self.current_file, False
 
         # Handle file download from URL
-        if self._should_download_file_from_url_workflow(self.current_file, ask_confirmation, show_error):
-            # Handle file upload to FC
-            handle_upload_file(self.current_file)
+        self._should_download_file_from_url_workflow(self.current_file, ask_confirmation, show_error)
+        # Uploads validate each local file independently; incomplete downloads
+        # must not prevent already available files from being uploaded.
+        handle_upload_file(self.current_file)
 
         return self.current_file, True
 
@@ -658,28 +659,26 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             show_error: Callback to show error messages to the user.
 
         Returns:
-            bool: True if download was successful or not needed, False if download failed.
+            bool: True if all downloads succeeded or were not needed, False if any failed or were declined.
 
         """
-        url, local_filename = self._local_filesystem.get_download_url_and_local_filename(selected_file)
-        if not url or not local_filename:
-            return True  # No download required
+        all_succeeded = True
+        for url, local_filename in self._local_filesystem.get_download_files(selected_file):
+            if self._local_filesystem.vehicle_configuration_file_exists(local_filename):
+                continue  # Already present in the vehicle directory
 
-        if self._local_filesystem.vehicle_configuration_file_exists(local_filename):
-            return True  # File already exists in the vehicle directory, no need to download it
+            msg = _("Should the {local_filename} file be downloaded from the URL\n{url}?")
+            if not ask_confirmation(_("Download file from URL"), msg.format(local_filename=local_filename, url=url)):
+                logging_info(_("Download declined for %s"), local_filename)
+                all_succeeded = False
+                continue
 
-        # Ask user for confirmation
-        msg = _("Should the {local_filename} file be downloaded from the URL\n{url}?")
-        if not ask_confirmation(_("Download file from URL"), msg.format(local_filename=local_filename, url=url)):
-            return False  # User declined download
+            if not download_file_from_url(url, local_filename):
+                error_msg = _("Failed to download {local_filename} from {url}, please download it manually")
+                show_error(_("Download failed"), error_msg.format(local_filename=local_filename, url=url))
+                all_succeeded = False
 
-        # Attempt download
-        if not download_file_from_url(url, local_filename):
-            error_msg = _("Failed to download {local_filename} from {url}, please download it manually")
-            show_error(_("Download failed"), error_msg.format(local_filename=local_filename, url=url))
-            return False
-
-        return True
+        return all_succeeded
 
     def should_upload_file_to_fc_workflow(
         self,
@@ -707,36 +706,45 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             bool: True if upload was successful or not needed, False if upload failed.
 
         """
-        local_filename, remote_filename = self._local_filesystem.get_upload_local_and_remote_filenames(selected_file)
-        if not local_filename or not remote_filename:
+        files = self._local_filesystem.get_upload_files(selected_file)
+        if not files:
             return True  # No upload required
 
-        if not self._local_filesystem.vehicle_configuration_file_exists(local_filename):
-            error_msg = _("Local file {local_filename} does not exist")
-            show_error(_("Will not upload any file"), error_msg.format(local_filename=local_filename))
-            return False
+        all_succeeded = True
+        for local_filename, remote_filename in files:
+            if not self._local_filesystem.vehicle_configuration_file_exists(local_filename):
+                error_msg = _("Local file {local_filename} does not exist")
+                show_error(_("Upload failed"), error_msg.format(local_filename=local_filename))
+                all_succeeded = False
+                continue
 
-        if self._flight_controller.master is None:
-            show_warning(_("Will not upload any file"), _("No flight controller connection"))
-            return False
+            if self._flight_controller.master is None:
+                show_warning(_("Will not upload any file"), _("No flight controller connection"))
+                return False
 
-        # Ask user for confirmation
-        msg = _("Should the {local_filename} file be uploaded to the flight controller as {remote_filename}?")
-        if not ask_confirmation(
-            _("Upload file to FC"), msg.format(local_filename=local_filename, remote_filename=remote_filename)
-        ):
-            return True  # User declined upload
+            needs_upload = self._flight_controller.needs_file_upload(remote_filename, local_filename)
+            if needs_upload is False:
+                continue
+            if needs_upload is None:
+                show_warning(_("Upload failed"), _("Could not verify remote file %s") % remote_filename)
+                all_succeeded = False
+                continue
 
-        # Get progress callback only after all checks passed
-        progress_callback = get_progress_callback()
+            msg = _("Should the {local_filename} file be uploaded to the flight controller as {remote_filename}?")
+            if not ask_confirmation(
+                _("Upload file to FC"), msg.format(local_filename=local_filename, remote_filename=remote_filename)
+            ):
+                continue
 
-        # Attempt upload
-        if not self._flight_controller.upload_file(local_filename, remote_filename, progress_callback):
-            error_msg = _("Failed to upload {local_filename} to {remote_filename}, please upload it manually")
-            show_error(_("Upload failed"), error_msg.format(local_filename=local_filename, remote_filename=remote_filename))
-            return False
+            progress_callback = get_progress_callback()
+            if not self._flight_controller.upload_file(local_filename, remote_filename, progress_callback):
+                error_msg = _("Failed to upload {local_filename} to {remote_filename}, please upload it manually")
+                show_error(
+                    _("Upload failed"), error_msg.format(local_filename=local_filename, remote_filename=remote_filename)
+                )
+                all_succeeded = False
 
-        return True
+        return all_succeeded
 
     def ensure_upload_preconditions(
         self,

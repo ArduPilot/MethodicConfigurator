@@ -832,6 +832,10 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         """Compare a transferred local file with the remote file CRC."""
         return self._files_manager.verify_remote_file(remote_path, local_filename)
 
+    def needs_file_upload(self, remote_path: str, local_filename: str) -> bool | None:
+        """Check whether a remote file is absent or differs from the local file."""
+        return self._files_manager.needs_file_upload(remote_path, local_filename)
+
     def make_remote_directory(self, remote_directory: str) -> bool:
         """Create a remote directory - delegates to files manager."""
         return self._files_manager.make_remote_directory(remote_directory)

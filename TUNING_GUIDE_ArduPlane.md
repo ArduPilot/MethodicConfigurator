@@ -918,14 +918,13 @@ And the weight that EKF should use for each source on the `26_ekf_config.param` 
 If your flight controller can run lua scripts perform a [PID lua VTOL-Quiktune](https://ardupilot.org/copter/docs/quiktune.html).
 If you have an STM32 F4 or F7 processor that can not run lua scripts perform a [manual PID tune](https://ardupilot.org/copter/docs/ac_rollpitchtuning.html) instead.
 
-Setup the lua script using:
+Set up the Lua scripts using:
 
 1. Connect your flight controller to the PC
 1. Close mission planner, open *ArduPilot Methodic Configurator* and select your vehicle's directory
 1. Make sure your PC has internet connection
 1. On *ArduPilot Methodic Configurator* select `29_quick_tune_setup.param` on the *Current intermediate parameter file:* Combobox.
-1. When asked if you want to download the .lua script from internet answer yes.
-1. When asked if you want to upload the .lua script to the FC answer yes.
+1. When asked, download and upload `VTOL-quicktune.lua`.
 1. Read the documentation links inside the `29_quick_tune_setup.param documentation`
 1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
 1. Press `Upload selected params to FC, and advance to next file` button.
@@ -961,14 +960,13 @@ This flight will be used to [calibrate the compass during a realistic operation 
 
 Follow these steps before the flight:
 
-1. On ArduPilot versions < 4.6.0 download the `advance-wp.lua` scripts from [ardupilot github repository](https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_Scripting/applets/advance-wp.lua), follow [Scripted MagFit flightpath generation](https://discuss.ardupilot.org/t/scripted-magfit-flightpath-generation/97536) and put it on the micro SDCard's `APM/scripts` folder.
-1. On ArduPilot versions >= 4.6.0 the script is already included.
 1. Insert the SD-Card on the flight controller
 1. Connect your flight controller to the PC
 1. Make sure your PC has internet connection
 1. On *ArduPilot Methodic Configurator* select `31_inflight_magnetometer_fit_setup.param` on the *Current intermediate parameter file:* Combobox.
-1. When asked if you want to download the .lua script from internet answer yes.
-1. When asked if you want to upload the .lua script to the FC answer yes.
+1. When asked, download the MAGFit and `advance-wp.lua` scripts.
+   If `wp-advance.lua` is already installed on the flight controller, remove that renamed copy before uploading `advance-wp.lua`; do not run both copies.
+1. When asked, upload both scripts to the FC.
 1. Read the documentation links inside the `31_inflight_magnetometer_fit_setup.param documentation`
 1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
 1. Press `Upload selected params to FC, and advance to next file` button.

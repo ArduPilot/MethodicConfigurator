@@ -51,6 +51,7 @@ def mock_flight_controller() -> MagicMock:
     mock_fc.fc_parameters = {"PARAM1": 1.0, "PARAM2": 3.0}
     # Configure set_param to return a tuple (success, error_message)
     mock_fc.set_param.return_value = (True, "")
+    mock_fc.needs_file_upload.return_value = True
     return mock_fc
 
 
@@ -65,6 +66,12 @@ def mock_local_filesystem() -> MagicMock:
     mock_fs.derived_parameters = {}
     mock_fs.export_to_param = MagicMock()
     mock_fs.vehicle_components_fs.has_unsaved_changes.return_value = False
+    mock_fs.get_download_files.side_effect = lambda selected: [
+        pair for pair in [mock_fs.get_download_url_and_local_filename(selected)] if all(pair)
+    ]
+    mock_fs.get_upload_files.side_effect = lambda selected: [
+        pair for pair in [mock_fs.get_upload_local_and_remote_filenames(selected)] if all(pair)
+    ]
 
     # Mock compound_params to compute first config filename based on file_parameters
     def mock_compound_params(last_filename=None, skip_default=True) -> tuple[ParDict, str | None]:
@@ -1864,8 +1871,25 @@ class TestFileNavigationWorkflows:  # pylint: disable=too-few-public-methods
         parameter_editor._local_filesystem.jump_possible.assert_called_once_with(selected_file)
 
 
-class TestFileDownloadWorkflows:  # pylint: disable=too-few-public-methods
+class TestFileDownloadWorkflows:
     """Test file download workflows."""
+
+    @pytest.mark.parametrize("declined", [True, False])
+    @patch("ardupilot_methodic_configurator.data_model_parameter_editor.download_file_from_url")
+    def test_download_problem_does_not_skip_later_files(self, mock_download, parameter_editor, declined) -> None:
+        """Declining or failing one download leaves subsequent downloads available."""
+        fs = parameter_editor._local_filesystem
+        fs.get_download_files.side_effect = None
+        fs.get_download_files.return_value = [("https://example.com/a", "a.lua"), ("https://example.com/b", "b.lua")]
+        fs.vehicle_configuration_file_exists.return_value = False
+        confirm = MagicMock(side_effect=[not declined, True])
+        mock_download.side_effect = [True] if declined else [False, True]
+        error = MagicMock()
+
+        assert not parameter_editor._should_download_file_from_url_workflow("step.param", confirm, error)
+        assert confirm.call_count == 2
+        assert mock_download.call_args_list[-1] == call("https://example.com/b", "b.lua")
+        assert error.call_count == (0 if declined else 1)
 
     @patch("ardupilot_methodic_configurator.data_model_parameter_editor.download_file_from_url")
     def test_user_can_download_file_successfully(self, mock_download, parameter_editor) -> None:
@@ -1899,9 +1923,62 @@ class TestFileDownloadWorkflows:  # pylint: disable=too-few-public-methods
         mock_show_error.assert_not_called()
         mock_download.assert_called_once_with("https://example.com/firmware.bin", "firmware.bin")
 
+    @patch("ardupilot_methodic_configurator.data_model_parameter_editor.download_file_from_url")
+    def test_multiple_downloads_skip_existing_file(self, mock_download, parameter_editor) -> None:
+        """Every absent file is downloaded, even when an earlier one already exists."""
+        fs = parameter_editor._local_filesystem
+        fs.get_download_files.side_effect = None
+        fs.get_download_files.return_value = [("https://example.com/a", "a.lua"), ("https://example.com/b", "b.lua")]
+        fs.vehicle_configuration_file_exists.side_effect = [True, False]
+        mock_download.return_value = True
+        confirm = MagicMock(return_value=True)
+
+        assert parameter_editor._should_download_file_from_url_workflow("step.param", confirm, MagicMock())
+        mock_download.assert_called_once_with("https://example.com/b", "b.lua")
+        confirm.assert_called_once()
+
+    @patch("ardupilot_methodic_configurator.data_model_parameter_editor.download_file_from_url")
+    def test_zero_byte_download_is_requested_again(self, mock_download, parameter_editor, tmp_path) -> None:
+        """An empty local script must not suppress a fresh download prompt."""
+        empty_file = tmp_path / "empty.lua"
+        empty_file.touch()
+        fs = parameter_editor._local_filesystem
+        fs.get_download_files.side_effect = None
+        fs.get_download_files.return_value = [("https://example.com/empty.lua", str(empty_file))]
+        fs.vehicle_configuration_file_exists.side_effect = lambda path: Path(path).is_file() and Path(path).stat().st_size > 0
+        mock_download.return_value = True
+        confirm = MagicMock(return_value=True)
+
+        assert parameter_editor._should_download_file_from_url_workflow("step.param", confirm, MagicMock())
+        confirm.assert_called_once()
+        mock_download.assert_called_once_with("https://example.com/empty.lua", str(empty_file))
+
 
 class TestFileUploadWorkflows:
     """Test file upload workflows."""
+
+    @pytest.mark.parametrize("problem", ["missing", "unknown", "failed"])
+    def test_one_unavailable_upload_does_not_block_the_next(self, parameter_editor, problem) -> None:
+        """Each file is checked independently without overwriting unverifiable remote files."""
+        fs = parameter_editor._local_filesystem
+        fc = parameter_editor._flight_controller
+        fs.get_upload_files.side_effect = None
+        fs.get_upload_files.return_value = [("a.lua", "/APM/Scripts/a.lua"), ("b.lua", "/APM/Scripts/b.lua")]
+        fs.vehicle_configuration_file_exists.side_effect = [problem != "missing", True]
+        fc.master = True
+        fc.needs_file_upload.side_effect = [None, True] if problem == "unknown" else [True, True]
+        fc.upload_file.side_effect = [False, True] if problem == "failed" else [True]
+        confirm = MagicMock(return_value=True)
+        error, warning = MagicMock(), MagicMock()
+        progress_factory = MagicMock(return_value=None)
+
+        assert not parameter_editor.should_upload_file_to_fc_workflow("step.param", confirm, error, warning, progress_factory)
+        assert fc.upload_file.call_args_list[-1] == call("b.lua", "/APM/Scripts/b.lua", None)
+        if problem != "failed":
+            fc.upload_file.assert_called_once()
+        assert error.call_count == (0 if problem == "unknown" else 1)
+        assert warning.call_count == (1 if problem == "unknown" else 0)
+        assert progress_factory.call_count == (2 if problem == "failed" else 1)
 
     def test_user_can_upload_file_workflow_success(self, parameter_editor) -> None:
         """
@@ -1943,6 +2020,62 @@ class TestFileUploadWorkflows:
         )
         show_error.assert_not_called()
         show_warning.assert_not_called()
+
+    def test_multiple_uploads_allow_individual_confirmation(self, parameter_editor) -> None:
+        """Declining one script does not prevent uploading the next."""
+        fs = parameter_editor._local_filesystem
+        fs.get_upload_files.side_effect = None
+        fs.get_upload_files.return_value = [("a.lua", "/APM/Scripts/a.lua"), ("b.lua", "/APM/Scripts/b.lua")]
+        fs.vehicle_configuration_file_exists.return_value = True
+        parameter_editor._flight_controller.master = True
+        parameter_editor._flight_controller.upload_file.return_value = True
+        confirm = MagicMock(side_effect=[False, True])
+        progress = MagicMock()
+        progress_factory = MagicMock(return_value=progress)
+
+        assert parameter_editor.should_upload_file_to_fc_workflow(
+            "step.param", confirm, MagicMock(), MagicMock(), progress_factory
+        )
+        assert confirm.call_count == 2
+        parameter_editor._flight_controller.upload_file.assert_called_once_with("b.lua", "/APM/Scripts/b.lua", progress)
+        progress_factory.assert_called_once()
+
+    def test_matching_remote_file_skips_upload_prompt(self, parameter_editor) -> None:
+        """Only a missing or CRC-mismatched script needs user confirmation."""
+        fc = parameter_editor._flight_controller
+        fs = parameter_editor._local_filesystem
+        fs.get_upload_files.side_effect = None
+        fs.get_upload_files.return_value = [("a.lua", "/APM/Scripts/a.lua"), ("b.lua", "/APM/Scripts/b.lua")]
+        fs.vehicle_configuration_file_exists.return_value = True
+        fc.master = True
+        fc.needs_file_upload.side_effect = [False, True]
+        fc.upload_file.return_value = True
+        confirm = MagicMock(return_value=True)
+
+        assert parameter_editor.should_upload_file_to_fc_workflow(
+            "step.param", confirm, MagicMock(), MagicMock(), MagicMock(return_value=None)
+        )
+        assert fc.needs_file_upload.call_count == 2
+        confirm.assert_called_once()
+        fc.upload_file.assert_called_once_with("b.lua", "/APM/Scripts/b.lua", None)
+
+    def test_unknown_remote_crc_does_not_prompt_or_overwrite(self, parameter_editor) -> None:
+        """Communication failures are not evidence that a file differs."""
+        fc = parameter_editor._flight_controller
+        parameter_editor._local_filesystem.get_upload_local_and_remote_filenames.return_value = (
+            "a.lua",
+            "/APM/Scripts/a.lua",
+        )
+        parameter_editor._local_filesystem.vehicle_configuration_file_exists.return_value = True
+        fc.master = True
+        fc.needs_file_upload.return_value = None
+        confirm = MagicMock()
+        warning = MagicMock()
+
+        assert not parameter_editor.should_upload_file_to_fc_workflow("step.param", confirm, MagicMock(), warning, MagicMock())
+        warning.assert_called_once()
+        confirm.assert_not_called()
+        fc.upload_file.assert_not_called()
 
     def test_user_can_decline_file_upload_workflow(self, parameter_editor) -> None:
         """
@@ -6886,6 +7019,23 @@ class TestParameterFileChangeWorkflow:
                 "10_step.param", forced=False, gui_complexity="normal", auto_open_documentation=False, **cb
             )
 
+        cb["handle_upload_file"].assert_called_once_with("10_step.param")
+
+    def test_incomplete_downloads_still_offer_available_uploads(self, parameter_editor: ParameterEditor) -> None:
+        """The upload workflow checks individual local files even when downloads were incomplete."""
+        parameter_editor.current_file = "01_first.param"
+        cb = self._callbacks()
+        with (
+            patch.object(parameter_editor, "_handle_file_jump_workflow", return_value="10_step.param"),
+            patch.object(parameter_editor, "_repopulate_configuration_step_parameters", return_value=([], [])),
+            patch.object(parameter_editor, "_should_download_file_from_url_workflow", return_value=False),
+            patch.object(parameter_editor, "open_documentation_in_browser"),
+        ):
+            selected, keep_going = parameter_editor.handle_param_file_change_workflow(
+                "10_step.param", forced=False, gui_complexity="normal", auto_open_documentation=False, **cb
+            )
+
+        assert (selected, keep_going) == ("10_step.param", True)
         cb["handle_upload_file"].assert_called_once_with("10_step.param")
 
     def test_step_errors_and_notices_are_surfaced_to_the_user(self, parameter_editor: ParameterEditor) -> None:
