@@ -165,6 +165,7 @@ def setup_zip_mock(
         fs_any.vehicle_components_fs = SimpleNamespace(json_filename="vehicle_components.json")
 
     fs_any.vehicle_configuration_file_exists = MethodType(LocalFilesystem.vehicle_configuration_file_exists, filesystem)
+    fs_any.vehicle_configuration_file_size = MethodType(LocalFilesystem.vehicle_configuration_file_size, filesystem)
     fs_any.add_configuration_file_to_zip = MethodType(LocalFilesystem.add_configuration_file_to_zip, filesystem)
     fs_any.zip_files = MethodType(LocalFilesystem.zip_files, filesystem)
     fs_any.zip_file_path = MethodType(LocalFilesystem.zip_file_path, filesystem)

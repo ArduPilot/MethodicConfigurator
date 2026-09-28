@@ -77,8 +77,18 @@ download_last_flight_log(local_filename, progress_callback)
 ```
 
 `FlightControllerFiles` serializes MAVFTP access with its `_mavftp_lock`.
+Its `_mavftp_operation()` guard also rejects same-thread callback re-entry
+before another client can reset the active session. Internal locked helpers
+do not acquire this guard again; it is released on success and failure.
 It implements remote listing, file transfer, directory creation, deletion,
 rename, and the existing LASTLOG/fallback workflow.
+
+For configured setup-step uploads, `ParameterEditor` retains one
+`FileUploadWorkflow` for its lifetime. The workflow rejects nested batch requests
+across confirmation and progress callbacks and releases batch ownership even
+when a callback raises. Recoverable filesystem and transport exceptions become
+per-file outcomes, allowing later files to proceed without treating an
+unverifiable target as permission to overwrite it.
 
 ## Data contracts
 

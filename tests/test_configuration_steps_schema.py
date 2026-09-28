@@ -472,3 +472,83 @@ def test_json_schema(json_file) -> None:
         error_path = e.path  # This gives the path in the JSON that caused the error
         pytest.fail(f"Validation error in {json_file} - Error Type: {error_type}, Path: {error_path}")
         # pytest.fail(f"Validation error in {json_file}: {e.message}")
+
+
+@pytest.mark.parametrize("json_file", git_tracked_json_files())
+def test_file_transfers_use_lists(json_file) -> None:
+    """Bundled configuration steps consistently use the multi-file format."""
+    with open(json_file, encoding="utf-8") as file:
+        steps = json.load(file)["steps"]
+
+    for step_name, step in steps.items():
+        for field in ("download_file", "upload_file"):
+            if field in step:
+                assert isinstance(step[field], list), f"{json_file}: {step_name}.{field}"
+                assert step[field], f"{json_file}: {step_name}.{field} is empty"
+
+
+@pytest.mark.parametrize(
+    ("field", "entry"),
+    [
+        ("download_file", {"source_url": "https://example.com/file.lua", "dest_local": "file.lua"}),
+        ("upload_file", {"source_local": "file.lua", "dest_on_fc": "/APM/Scripts/file.lua"}),
+    ],
+)
+@pytest.mark.parametrize("use_array", [True, False])
+def test_user_can_validate_legacy_and_array_file_transfers(field: str, entry: dict[str, str], use_array: bool) -> None:
+    """Both single-file formats are accepted by standalone schema validation."""
+    step = {
+        "why": "demo",
+        "why_now": "demo",
+        "blog_text": "demo",
+        "blog_url": "https://example.com",
+        "wiki_text": "demo",
+        "wiki_url": "https://example.com",
+        "external_tool_text": "demo",
+        "external_tool_url": "https://example.com",
+        "mandatory_text": "100% mandatory (0% optional)",
+        field: [entry] if use_array else entry,
+    }
+    document = {"steps": {"01_demo.param": step}}
+
+    validate(instance=document, schema=schema)
+
+
+@pytest.mark.parametrize("field", ["download_file", "upload_file"])
+@pytest.mark.parametrize("invalid_transfer", [None, "file.lua", 42, [], {}, [{}], [[{}]]])
+def test_schema_rejects_invalid_file_transfers_in_both_formats(field: str, invalid_transfer: object) -> None:
+    """Supporting legacy objects must not accept missing properties or malformed transfer values."""
+    transfer_schema = {
+        "$defs": schema["$defs"],
+        **schema["properties"]["steps"]["patternProperties"]["^[0-9]+_.+\\.param$"]["properties"][field],
+    }
+    with pytest.raises(ValidationError):
+        validate(instance=invalid_transfer, schema=transfer_schema)
+
+
+@pytest.mark.parametrize("vehicle_type", ["ArduCopter", "ArduPlane", "Heli", "Rover"])
+def test_waypoint_advance_script_is_transferred_during_magfit_setup(vehicle_type) -> None:
+    """Install advance-wp alongside the MAGFit helper in step 31, not quick-tune step 29."""
+    path = os.path.join("ardupilot_methodic_configurator", f"configuration_steps_{vehicle_type}.json")
+    with open(path, encoding="utf-8") as file:
+        steps = json.load(file)["steps"]
+
+    quick_tune_step = steps["29_quick_tune_setup.param"]
+    assert quick_tune_step["download_file"][0]["source_url"] == (
+        "https://raw.githubusercontent.com/ArduPilot/ardupilot/Copter-4.5/libraries/AP_Scripting/applets/VTOL-quicktune.lua"
+    )
+    assert {entry["dest_local"] for entry in quick_tune_step["download_file"]} == {"VTOL-quicktune.lua"}
+    assert {entry["dest_on_fc"] for entry in quick_tune_step["upload_file"]} == {"/APM/Scripts/VTOL-quicktune.lua"}
+
+    magfit_step = steps["31_inflight_magnetometer_fit_setup.param"]
+    assert {entry["dest_local"] for entry in magfit_step["download_file"]} == {
+        "copter-magfit-helper.lua",
+        "advance-wp.lua",
+    }
+    assert {entry["dest_on_fc"] for entry in magfit_step["upload_file"]} == {
+        "/APM/Scripts/copter-magfit-helper.lua",
+        "/APM/Scripts/advance-wp.lua",
+    }
+    assert {entry["source_local"] for entry in magfit_step["upload_file"]} == {
+        entry["dest_local"] for entry in magfit_step["download_file"]
+    }

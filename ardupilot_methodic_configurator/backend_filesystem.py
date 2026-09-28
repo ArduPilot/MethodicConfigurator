@@ -33,7 +33,7 @@ from shutil import copytree as shutil_copytree
 from shutil import rmtree as shutil_rmtree
 from subprocess import SubprocessError, run
 from tempfile import TemporaryDirectory
-from typing import Any
+from typing import Any, cast
 from zipfile import ZipFile
 
 from argcomplete.completers import DirectoriesCompleter, FilesCompleter
@@ -50,7 +50,11 @@ from ardupilot_methodic_configurator.annotate_params import (
     split_into_lines,
     update_parameter_documentation,
 )
-from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
+from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import (
+    ConfigurationSteps,
+    DownloadFileConfig,
+    UploadFileConfig,
+)
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url
@@ -283,22 +287,21 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         if self.vehicle_dir is None or self.configuration_steps is None:
             return
         # Rename parameter files if some new files got added to the vehicle directory
-        for new_filename in self.configuration_steps:
-            if "old_filenames" in self.configuration_steps[new_filename]:
-                for old_filename in self.configuration_steps[new_filename]["old_filenames"]:
-                    if self.vehicle_configuration_file_exists(old_filename) and old_filename != new_filename:
-                        if self.vehicle_configuration_file_exists(new_filename):
-                            logging_error(
-                                _("File %s already exists. Will not rename file %s to %s."),
-                                new_filename,
-                                old_filename,
-                                new_filename,
-                            )
-                            continue
-                        new_filename_path = os_path.join(self.vehicle_dir, new_filename)
-                        old_filename_path = os_path.join(self.vehicle_dir, old_filename)
-                        os_rename(old_filename_path, new_filename_path)
-                        logging_info("Renamed %s to %s", old_filename, new_filename)
+        for new_filename, file_info in self.configuration_steps.items():
+            for old_filename in file_info.get("old_filenames", []):
+                if self.vehicle_configuration_file_exists(old_filename) and old_filename != new_filename:
+                    if self.vehicle_configuration_file_exists(new_filename):
+                        logging_error(
+                            _("File %s already exists. Will not rename file %s to %s."),
+                            new_filename,
+                            old_filename,
+                            new_filename,
+                        )
+                        continue
+                    new_filename_path = os_path.join(self.vehicle_dir, new_filename)
+                    old_filename_path = os_path.join(self.vehicle_dir, old_filename)
+                    os_rename(old_filename_path, new_filename_path)
+                    logging_info("Renamed %s to %s", old_filename, new_filename)
 
     def _format_columns_sorted_numerically(  # pylint: disable=too-many-locals
         self, values: dict[str, Any], max_width: int = 105, max_columns: int = 4
@@ -571,8 +574,18 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
           bool: True if the file exists and is a file (not a directory) and is not empty, False otherwise.
 
         """
+        file_size = self.vehicle_configuration_file_size(filename)
+        return file_size is not None and file_size > 0
+
+    def vehicle_configuration_file_size(self, filename: str) -> int | None:
+        """Return a regular vehicle file's size, or None when it is unavailable."""
         file_path = os_path.join(self.vehicle_dir, filename)
-        return os_path.exists(file_path) and os_path.isfile(file_path) and os_path.getsize(file_path) > 0
+        if not os_path.exists(file_path) or not os_path.isfile(file_path):
+            return None
+        try:
+            return os_path.getsize(file_path)
+        except OSError:
+            return None
 
     def __all_intermediate_parameter_file_comments(self) -> dict[str, str]:
         """
@@ -950,7 +963,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             param_dict_as_par = ParDict({param: Par(float(value), "") for param, value in param_dict.items()})
             param_dict_as_par.export_to_param(os_path.join(self.vehicle_dir, filename))
 
-    def get_eval_variables(self) -> dict[str, dict[str, Any]]:
+    def get_eval_variables(self) -> dict[str, Any]:
         variables = {}
         if (
             hasattr(self, "vehicle_components_fs")
@@ -1178,20 +1191,36 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return os_path.realpath(os_path.join(base_dir, untrusted_path))
 
     def get_download_url_and_local_filename(self, selected_file: str) -> tuple[str, str]:
-        if selected_file in self.configuration_steps and self.configuration_steps[selected_file].get("download_file"):
-            src = self.configuration_steps[selected_file]["download_file"].get("source_url", "")
-            dst = self.configuration_steps[selected_file]["download_file"].get("dest_local", "")
-            if self.vehicle_dir and src and dst:
-                return src, self._safe_path_join(self.vehicle_dir, dst)
-        return "", ""
+        return next(iter(self.get_download_files(selected_file)), ("", ""))
 
     def get_upload_local_and_remote_filenames(self, selected_file: str) -> tuple[str, str]:
-        if selected_file in self.configuration_steps and self.configuration_steps[selected_file].get("upload_file"):
-            src = self.configuration_steps[selected_file]["upload_file"].get("source_local", "")
-            dst = self.configuration_steps[selected_file]["upload_file"].get("dest_on_fc", "")
-            if self.vehicle_dir and src and dst:
-                return self._safe_path_join(self.vehicle_dir, src), dst
-        return "", ""
+        return next(iter(self.get_upload_files(selected_file)), ("", ""))
+
+    def get_download_files(self, selected_file: str) -> list[tuple[str, str]]:
+        """Return all configured URL/local pairs in their normalized list form."""
+        entries: list[DownloadFileConfig] = cast(
+            "list[DownloadFileConfig]", self.configuration_steps.get(selected_file, {}).get("download_file", [])
+        )
+        if not self.vehicle_dir:
+            return []
+        return [
+            (entry["source_url"], self._safe_path_join(self.vehicle_dir, entry["dest_local"]))
+            for entry in entries
+            if entry.get("source_url") and entry.get("dest_local")
+        ]
+
+    def get_upload_files(self, selected_file: str) -> list[tuple[str, str]]:
+        """Return all configured local/FC pairs in their normalized list form."""
+        entries: list[UploadFileConfig] = cast(
+            "list[UploadFileConfig]", self.configuration_steps.get(selected_file, {}).get("upload_file", [])
+        )
+        if not self.vehicle_dir:
+            return []
+        return [
+            (self._safe_path_join(self.vehicle_dir, entry["source_local"]), entry["dest_on_fc"])
+            for entry in entries
+            if entry.get("source_local") and entry.get("dest_on_fc")
+        ]
 
     @staticmethod
     def get_git_commit_hash() -> str:

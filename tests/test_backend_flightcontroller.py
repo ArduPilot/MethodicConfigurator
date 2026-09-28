@@ -34,6 +34,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_factory_serial imp
     FakeSerialPortDiscovery,
 )
 from ardupilot_methodic_configurator.backend_flightcontroller_files import LastLogDownloadResult
+from ardupilot_methodic_configurator.backend_flightcontroller_protocols import FileUploadCheckStatus, FileUploadResult
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import (
     FlightControllerInfo,
 )
@@ -861,6 +862,18 @@ class TestFlightControllerResetAndDelegation:
         assert fc.download_last_flight_log("last.BIN") is LastLogDownloadResult.NO_LOGS
 
         files_mgr.download_last_flight_log.assert_called_once_with("last.BIN", None)
+
+    def test_explicit_upload_check_and_transfer_outcomes_are_delegated(self) -> None:
+        """The facade preserves typed file-upload results from the files manager."""
+        fc, _conn_mgr, _params_mgr, _commands_mgr, files_mgr, _master = _build_flight_controller_with_mocks()
+        files_mgr.check_file_upload.return_value = FileUploadCheckStatus.NEEDS_UPLOAD
+        files_mgr.upload_file_if_needed.return_value = FileUploadResult.UPLOADED
+
+        assert fc.check_file_upload("/APM/Scripts/test.lua", "test.lua") is FileUploadCheckStatus.NEEDS_UPLOAD
+        assert fc.upload_file_if_needed("test.lua", "/APM/Scripts/test.lua") is FileUploadResult.UPLOADED
+
+        files_mgr.check_file_upload.assert_called_once_with("/APM/Scripts/test.lua", "test.lua")
+        files_mgr.upload_file_if_needed.assert_called_once_with("test.lua", "/APM/Scripts/test.lua", None)
 
     def test_cli_argument_helper_exposes_expected_flags(self) -> None:
         """

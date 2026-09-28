@@ -16,6 +16,10 @@ The ArduPilot Methodic Configurator relies on the following key files:
 
 - **Configuration Steps File** (`configuration_steps_*.json`): Defines the workflow, documentation, explanations, and advanced behavior for each parameter file.
   Searched first in the vehicle-specific directory, then in the application's installation directory.
+  A vehicle-specific file is used only if it passes schema validation; otherwise, the bundled file is tried.
+  Unreadable files and invalid JSON or text encoding also trigger this fallback.
+  Logs identify the rejected file path and the bundled file that was loaded.
+  If neither file is valid or available, no configuration-step documentation or forced/derived parameters are loaded.
 
 - **Default Parameter Values File** (`00_default.param`): Located in the vehicle-specific directory.
   Automatically downloaded from the flight controller via MAVFTP or extracted from a `.bin` log file when creating a new project.
@@ -396,9 +400,9 @@ Start with the **Required Fields** for every step, then add **Optional Fields** 
   "rename_connection": "vehicle_components['RC Receiver']['FC Connection']['Type']"
   ```
 
-**`download_file`**: Downloads a file from the internet to the local vehicle project directory.
+**`download_file`**: Downloads one or more files from the internet to the local vehicle project directory.
 
-- **Type**: Object
+- **Type**: Object (legacy single-file format) or non-empty array of objects (recommended)
 - **Required properties**:
   - `source_url`: URL to download from (must start with `https://`)
   - `dest_local`: Local filename to save as
@@ -406,15 +410,15 @@ Start with the **Required Fields** for every step, then add **Optional Fields** 
 - **Example**:
 
   ```json
-  "download_file": {
+  "download_file": [{
     "source_url": "https://raw.githubusercontent.com/ArduPilot/ardupilot/Copter-4.5/libraries/AP_Scripting/applets/VTOL-quicktune.lua",
     "dest_local": "VTOL-quicktune.lua"
-  }
+  }]
   ```
 
-**`upload_file`**: Uploads a file from the vehicle project directory to the flight controller.
+**`upload_file`**: Uploads one or more files from the vehicle project directory to the flight controller.
 
-- **Type**: Object
+- **Type**: Object (legacy single-file format) or non-empty array of objects (recommended)
 - **Required properties**:
   - `source_local`: Local filename to upload
   - `dest_on_fc`: Destination path on flight controller (must start with `/APM/`)
@@ -422,11 +426,33 @@ Start with the **Required Fields** for every step, then add **Optional Fields** 
 - **Example**:
 
   ```json
+  "upload_file": [{
+    "source_local": "VTOL-quicktune.lua",
+    "dest_on_fc": "/APM/Scripts/VTOL-quicktune.lua"
+  }]
+  ```
+
+Both transfer fields support legacy objects and arrays, including a mixture of formats in the same configuration file.
+For example, these legacy entries are equivalent to the single-element arrays above:
+
+```json
+{
+  "download_file": {
+    "source_url": "https://raw.githubusercontent.com/ArduPilot/ardupilot/Copter-4.5/libraries/AP_Scripting/applets/VTOL-quicktune.lua",
+    "dest_local": "VTOL-quicktune.lua"
+  },
   "upload_file": {
     "source_local": "VTOL-quicktune.lua",
     "dest_on_fc": "/APM/Scripts/VTOL-quicktune.lua"
   }
-  ```
+}
+```
+
+When loading JSON, the application replaces each legacy object in the loaded dictionary with a single-element array.
+Existing arrays retain their entries and order; the JSON file on disk is unchanged.
+The rest of the application therefore always processes transfer lists.
+Use arrays to configure multiple files; omit a transfer field when no transfers are needed.
+Empty arrays and malformed entries are rejected by schema validation.
 
 **`plugin`**: Loads a specialized plugin window for this step.
 
