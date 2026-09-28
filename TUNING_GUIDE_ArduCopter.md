@@ -1198,14 +1198,13 @@ Afterward, repeat the steps to edit and upload the `28_pid_notch_filter_results.
 If your flight controller can run lua scripts perform a [PID lua VTOL-Quiktune](https://ardupilot.org/copter/docs/quiktune.html).
 If you have an STM32 F4 or F7 processor that can not run lua scripts perform a [manual PID tune](https://ardupilot.org/copter/docs/ac_rollpitchtuning.html) instead.
 
-Setup the lua script using:
+Set up the Lua scripts using:
 
 1. Connect your flight controller to the PC
 1. Close mission planner, open *ArduPilot Methodic Configurator* and select your vehicle's directory
 1. Make sure your PC has internet connection
 1. On *ArduPilot Methodic Configurator* select `29_quick_tune_setup.param` on the *Current intermediate parameter file:* Combobox.
-1. When asked if you want to download the .lua script from internet answer yes.
-1. When asked if you want to upload the .lua script to the FC answer yes.
+1. When asked, download and upload `VTOL-quicktune.lua`.
 1. Read the documentation links inside the `29_quick_tune_setup.param` documentation.
 1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements.
 1. Press `Upload selected params to FC, and advance to next file` button.
@@ -1243,14 +1242,12 @@ You can either manually perform a flight in `ALT_HOLD` or `STABILIZE` flight mod
 with throttle changes.
 Or you follow these steps to create an auto mission that performs the required flight patterns:
 
-1. On ArduPilot versions < 4.6.0 download the `advance-wp.lua` scripts from [ardupilot github repository](https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_Scripting/applets/advance-wp.lua), follow [Scripted MagFit flightpath generation](https://discuss.ardupilot.org/t/scripted-magfit-flightpath-generation/97536) and put it on the micro SDCard's `APM/scripts` folder.
-1. On ArduPilot versions >= 4.6.0 the script is already included.
 1. Insert the SD-Card on the flight controller.
 1. Connect your flight controller to the PC.
 1. Make sure your PC has internet connection.
 1. On *ArduPilot Methodic Configurator* select `31_inflight_magnetometer_fit_setup.param` on the *Current intermediate parameter file:* Combobox.
-1. When asked if you want to download the .lua script from internet answer yes.
-1. When asked if you want to upload the .lua script to the FC answer yes.
+1. When asked, download the MAGFit and `advance-wp.lua` scripts.
+1. When asked, upload both scripts to the FC.
 1. Read the documentation links inside the `31_inflight_magnetometer_fit_setup.param` documentation.
 1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements.
 1. Press `Upload selected params to FC, and advance to next file` button.
@@ -1266,7 +1263,7 @@ Or you follow these steps to create an auto mission that performs the required f
 1. Upon execution of the mission, several messages will be displayed via telemetry:
    ![MagFit MissionPlanner mission messages](images/blog/MagFit_MissionPlanner_mission_messages.png)
    At this point, the figure-8 has been created, and the script is awaiting the user to set the waypoint beyond the loiter to commence the pattern.
-   Download the mission to confirm obstacle clearance before proceeding, and then use the GCS to set the indicated waypoint to continue (or use the additional helper script `advance-wp.lua` above to use an RC switch for advancing the waypoint).
+   Download the mission to confirm obstacle clearance before proceeding, and then use the GCS to set the indicated waypoint to continue (or use the `advance-wp.lua` helper script uploaded during step 31 to use an RC switch for advancing the waypoint).
    ![MagFit MissionPlanner mission map figure8](images/blog/MagFit_MissionPlanner_mission_map_figure8.jpeg)
 1. The figure-8 will then repeat `MAGH_COUNT` times, occasionally climbing and descending by `MAGH_ALT_DELTA` meters and
    incrementing speed toward `WPNAV_SPEED`.

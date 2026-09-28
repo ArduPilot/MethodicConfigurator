@@ -149,10 +149,9 @@ class ConfigurationStepProcessor:
             )
 
             # Populate new_connection_prefix from rename_connection configuration step (per-step scope)
-            if "rename_connection" in self.local_filesystem.configuration_steps.get(selected_file, {}):
-                variables["new_connection_prefix"] = self.local_filesystem.configuration_steps[selected_file][
-                    "rename_connection"
-                ]
+            rename_connection = self.local_filesystem.configuration_steps.get(selected_file, {}).get("rename_connection")
+            if rename_connection is not None:
+                variables["new_connection_prefix"] = rename_connection
             else:
                 variables.pop("new_connection_prefix", None)
 

@@ -4,6 +4,7 @@
   "properties": {
     "steps": {
       "type": "object",
+      "additionalProperties": { "type": "object" },
       "patternProperties": {
         "^[0-9]+_.+\\.param$": {
           "type": "object",
@@ -202,30 +203,26 @@
               "description": "ArduPilot log messages related to this configuration step"
             },
             "download_file": {
-              "type": "object",
-              "required": ["source_url", "dest_local"],
-              "properties": {
-                "source_url": {
-                  "type": "string",
-                  "pattern": "^https://"
-                },
-                "dest_local": {
-                  "type": "string"
+              "description": "One download object (legacy) or a non-empty array of download objects; normalized to an array when loaded.",
+              "oneOf": [
+                { "$ref": "#/$defs/download_file" },
+                {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": { "$ref": "#/$defs/download_file" }
                 }
-              }
+              ]
             },
             "upload_file": {
-              "type": "object",
-              "required": ["source_local", "dest_on_fc"],
-              "properties": {
-                "source_local": {
-                  "type": "string"
-                },
-                "dest_on_fc": {
-                  "type": "string",
-                  "pattern": "^/APM/"
+              "description": "One upload object (legacy) or a non-empty array of upload objects; normalized to an array when loaded.",
+              "oneOf": [
+                { "$ref": "#/$defs/upload_file" },
+                {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": { "$ref": "#/$defs/upload_file" }
                 }
-              }
+              ]
             },
             "plugin": {
               "type": "object",
@@ -295,5 +292,23 @@
       "description": "Phases of the configuration process"
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$defs": {
+    "download_file": {
+      "type": "object",
+      "required": ["source_url", "dest_local"],
+      "properties": {
+        "source_url": { "type": "string", "pattern": "^https://" },
+        "dest_local": { "type": "string" }
+      }
+    },
+    "upload_file": {
+      "type": "object",
+      "required": ["source_local", "dest_on_fc"],
+      "properties": {
+        "source_local": { "type": "string" },
+        "dest_on_fc": { "type": "string", "pattern": "^/APM/" }
+      }
+    }
+  }
 }

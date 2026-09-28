@@ -25,6 +25,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from collections.abc import Callable, Sequence
+from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, TypeAlias
 
@@ -32,6 +33,26 @@ import serial.tools.list_ports_common
 
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
+
+
+class FileUploadCheckStatus(Enum):
+    """Outcomes from checking whether a local file needs to be uploaded."""
+
+    ALREADY_CURRENT = auto()
+    NEEDS_UPLOAD = auto()
+    VERIFICATION_FAILED = auto()
+
+
+class FileUploadResult(Enum):
+    """Outcomes from an attempted file upload operation."""
+
+    ALREADY_CURRENT = auto()
+    VERIFICATION_FAILED = auto()
+    LOCAL_FILE_MISSING = auto()
+    EMPTY_LOCAL_FILE = auto()
+    UPLOADED = auto()
+    UPLOAD_FAILED = auto()
+
 
 if TYPE_CHECKING:
     from ardupilot_methodic_configurator.backend_flightcontroller_commands import CompassCalibrationUpdate
@@ -326,6 +347,15 @@ class FlightControllerFilesProtocol(Protocol):
     ) -> bool: ...
 
     def verify_remote_file(self, remote_path: str, local_filename: str) -> bool | None: ...
+
+    def check_file_upload(self, remote_path: str, local_filename: str) -> FileUploadCheckStatus: ...
+
+    def upload_file_if_needed(
+        self,
+        local_filename: str,
+        remote_filename: str,
+        progress_callback: Callable[[int, int], None] | None,
+    ) -> FileUploadResult: ...
 
     def make_remote_directory(self, remote_directory: str) -> bool: ...
 
