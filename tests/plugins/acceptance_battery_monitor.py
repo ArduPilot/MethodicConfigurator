@@ -872,10 +872,8 @@ class TestBatteryMonitorParameterUpload:
                 )
 
                 # Simulate some progress updates
-                if restart_cb:
-                    restart_cb(10, 100)
-                if download_cb:
-                    download_cb(50, 100)
+                restart_cb(10, 100)
+                download_cb(50, 100)
             finally:
                 # Simulate cleanup in finally block
                 if restart_window is not None:
