@@ -153,7 +153,7 @@ class TestFileBrowserWindow:
         window = FileBrowserWindow(tk_root, parameter_editor, MagicMock(), task_runner=runner)
         try:
             assert window._task_runner is runner
-            assert not window.verify_transfers_var.get()
+            assert window.verify_transfers_var.get()
             assert window.verify_checkbox.winfo_exists()
         finally:
             with contextlib.suppress(tk.TclError):
