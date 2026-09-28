@@ -56,6 +56,13 @@ def _local_directory_entries(
     return entries
 
 
+def _read_local_directory(directory: Path) -> list[LocalFileEntry]:
+    """Validate and enumerate a directory without touching Tk widgets."""
+    if not directory.is_dir():
+        raise FileNotFoundError(directory)
+    return _local_directory_entries(directory)
+
+
 @dataclass(frozen=True)
 class RemoteDownloadPlan:
     """Preflight plan for a recursive remote download."""
@@ -224,11 +231,6 @@ def _retry_local_upload_plan(plan: LocalUploadPlan, failed: Sequence[str]) -> Lo
     return LocalUploadPlan(plan.directories, tuple(item for item in plan.files if item[1] in failed_paths))
 
 
-def _safe_remote_entry_name(name: str) -> bool:
-    """Return whether a remote listing name is safe as one path component."""
-    return is_safe_local_entry_name(name)
-
-
 def _remote_download_plan(
     entry: FlightControllerLogFile,
     local_target: Path,
@@ -237,7 +239,7 @@ def _remote_download_plan(
 ) -> tuple[list[Path], list[tuple[FlightControllerLogFile, Path]]]:
     """Recursively expand one remote entry without retaining a Tk window."""
     if not entry.is_directory:
-        if not _safe_remote_entry_name(entry.name):
+        if not is_safe_local_entry_name(entry.name):
             if failures is not None:
                 failures.append(entry.remote_path)
             return [], []
@@ -258,7 +260,7 @@ def _remote_download_plan(
     for child in children:
         if child.name == "..":
             continue
-        if not _safe_remote_entry_name(child.name):
+        if not is_safe_local_entry_name(child.name):
             if failures is not None:
                 failures.append(child.remote_path)
             continue
@@ -283,7 +285,7 @@ def _build_remote_download_plan(
     files: list[tuple[FlightControllerLogFile, Path]] = []
     failed: list[str] = []
     for entry in selected:
-        if not _safe_remote_entry_name(entry.name):
+        if not is_safe_local_entry_name(entry.name):
             failed.append(entry.remote_path)
             continue
         child_dirs, child_files = _remote_download_plan(
