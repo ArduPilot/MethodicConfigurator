@@ -148,7 +148,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         )
         self._local_refresh_request: Path | None = None
         self._all_controls_locked = False
-        self.verify_transfers_var = tk.BooleanVar(master=self.root, value=False)
+        self.verify_transfers_var = tk.BooleanVar(master=self.root, value=True)
         self._panel_navigation_enabled = True
         self._closed_callback: Callable[[], None] | None = None
         self.remote_directory_var = tk.StringVar(master=self.root, value=self.DEFAULT_REMOTE_DIRECTORY)
