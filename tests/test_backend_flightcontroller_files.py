@@ -58,7 +58,7 @@ class TestFlightControllerFilesInitialization:
         for remote_name in ("CON", "NUL.txt", "log.", "log "):
             assert is_safe_remote_entry_name(remote_name)
             assert not is_safe_local_entry_name(remote_name)
-        for invalid_name in ("", ".", "..", "nested/file", "nested\\file", "C:file"):
+        for invalid_name in ("", ".", "..", "nested/file", "nested\\file", "C:file", "calf\u00e9", "bad\x00name"):
             assert not is_safe_remote_entry_name(invalid_name)
 
     def test_user_can_create_files_manager(self) -> None:

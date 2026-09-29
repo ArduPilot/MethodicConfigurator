@@ -34,7 +34,12 @@ from ardupilot_methodic_configurator.frontend_tkinter_file_browser_operations im
     TransferBatchResults,
     _local_target_conflicts,
 )
-from ardupilot_methodic_configurator.frontend_tkinter_file_browser_tasks import BackgroundTaskRunner
+from ardupilot_methodic_configurator.frontend_tkinter_file_browser_tasks import (
+    BackgroundTaskRunner,
+    ProgressCallback,
+    Task,
+    TaskCompletion,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 
 # pylint: disable=too-many-lines, too-few-public-methods, too-many-public-methods, protected-access
@@ -59,7 +64,7 @@ class ImmediateTaskRunner:
 
     active = False
 
-    def start(self, task, on_progress, on_done) -> bool:
+    def start(self, task: Task, on_progress: ProgressCallback | None, on_done: TaskCompletion) -> bool:
         """Deliver a result or failure and permit follow-up work from completion."""
         if self.active:
             return False
@@ -71,6 +76,35 @@ class ImmediateTaskRunner:
         self.active = False
         on_done(result, error)
         return True
+
+
+class DeferredTaskRunner:
+    """Hold a task until a test explicitly delivers its completion."""
+
+    def __init__(self) -> None:
+        self.active = False
+        self.task: Task | None = None
+        self.on_done: TaskCompletion | None = None
+
+    def start(self, task: Task, _on_progress: ProgressCallback | None, on_done: TaskCompletion) -> bool:
+        if self.active:
+            return False
+        self.active = True
+        self.task = task
+        self.on_done = on_done
+        return True
+
+    def finish(self) -> None:
+        task, on_done = self.task, self.on_done
+        if task is None or on_done is None:
+            error_message = "No deferred task is pending"
+            raise RuntimeError(error_message)
+        try:
+            result, error = task(lambda _current, _total: None), None
+        except Exception as exception:  # pylint: disable=broad-exception-caught
+            result, error = None, exception
+        self.active = False
+        on_done(result, error)
 
 
 def _bare_window() -> FileBrowserWindow:
@@ -658,6 +692,32 @@ class TestFileBrowserWindow:
         window._populate_local_tree.assert_called_once_with()
         window.local_directory_label.configure.assert_called_once_with(text=f"Local files in {tmp_path}")
 
+    def test_pending_local_listing_cannot_delete_an_entry_from_previous_directory(self, tmp_path: Path) -> None:
+        """A navigation must invalidate the old selection before the new listing arrives."""
+        old_directory = tmp_path / "old"
+        new_directory = tmp_path / "new"
+        old_directory.mkdir()
+        new_directory.mkdir()
+        old_file = old_directory / "flight.bin"
+        old_file.write_bytes(b"keep")
+        window = _bare_window()
+        window._local_task_runner = DeferredTaskRunner()
+        window.local_entries = [LocalFileEntry(old_file.name, old_file, 4)]
+        window.local_tree = MagicMock()
+        window.local_tree.selection.return_value = ("0",)
+        window.local_directory_var = MagicMock()
+        window.local_directory_var.get.return_value = str(new_directory)
+        window.local_directory_label = MagicMock()
+        window.ui = MagicMock()
+        window.ui.ask_yesno.return_value = True
+        window._delete_local_entry = MagicMock()
+
+        window.refresh_local_panel()
+        window.delete_selected_local_entries()
+
+        window._delete_local_entry.assert_not_called()
+        assert window._selected_local_entries() == []
+
     def test_local_refresh_discards_superseded_listing(self, tmp_path: Path) -> None:
         """Navigating while a listing runs displays only the latest directory."""
         first, second = tmp_path / "first", tmp_path / "second"
@@ -706,6 +766,46 @@ class TestFileBrowserWindow:
         assert window.local_entries == [new_entry]
         window._populate_local_tree.assert_called_once_with()
         window.local_directory_label.configure.assert_called_once_with(text=f"Local files in {second}")
+
+    def test_same_directory_refresh_relists_and_preserves_pending_selection(self, tmp_path: Path) -> None:
+        """A refresh during a listing must discard its snapshot, even without navigation."""
+        window = _bare_window()
+        window._local_task_runner = DeferredTaskRunner()
+        window.local_directory_var = MagicMock()
+        window.local_directory_var.get.return_value = str(tmp_path)
+        window.local_directory_label = MagicMock()
+        window.local_tree = MagicMock()
+        window._populate_local_tree = MagicMock()
+        window._update_parent_navigation_buttons = MagicMock()
+        window._update_transfer_buttons = MagicMock()
+        window.ui = MagicMock()
+        old_entry = LocalFileEntry("old.bin", tmp_path / "old.bin", 1)
+        new_entry = LocalFileEntry("new.bin", tmp_path / "new.bin", 1)
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_file_browser._read_local_directory",
+            side_effect=[[old_entry], [new_entry]],
+        ) as read_directory:
+            window.refresh_local_panel()
+            window._select_entry_after_refresh("local", "new.bin")
+            window.refresh_local_panel()
+            window.refresh_local_panel()
+            window._local_task_runner.finish()
+
+            assert window._local_task_runner.active
+            assert window.local_entries == []
+            assert window._panel_states["local"].pending_entry == "new.bin"
+            window._populate_local_tree.assert_not_called()
+            window.local_tree.selection_set.assert_not_called()
+
+            window._local_task_runner.finish()
+
+        assert read_directory.call_args_list == [call(tmp_path), call(tmp_path)]
+        assert window.local_entries == [new_entry]
+        assert window._panel_states["local"].pending_entry is None
+        window.local_tree.selection_set.assert_called_once_with("0")
+        window._populate_local_tree.assert_called_once_with()
+        window.local_directory_label.configure.assert_called_once_with(text=f"Local files in {tmp_path}")
 
     def test_failed_remote_task_reconciles_transfer_buttons(self) -> None:
         """A failed remote listing restores buttons based on the current local selection."""
@@ -1057,7 +1157,10 @@ class TestFileBrowserWindow:
         window.remote_parent_button.configure.assert_not_called()
         window.local_parent_button.configure.assert_called_once_with(state="normal")
         window.download_button.configure.assert_not_called()
-        window.upload_button.configure.assert_not_called()
+        assert window.upload_button.configure.call_args_list == [
+            call(state="disabled"),
+            call(state="disabled"),
+        ]
         assert local_entries.call_args_list == [call(tmp_path), call(tmp_path)]
         window.remote_directory_var.set.assert_not_called()
         window.local_directory_var.set.assert_called_once_with(str(tmp_path.parent))
@@ -1576,6 +1679,35 @@ class TestFileBrowserWindow:
 
         window.parameter_editor.verify_remote_file.assert_called_once_with(entry.remote_path, str(tmp_path / entry.name))
         assert "Verified: /APM/LOGS/log.bin" in window.ui.show_info.call_args.args[1]
+
+    def test_download_preflight_aborts_if_local_destination_changes(self, tmp_path: Path) -> None:
+        """A confirmation for an old destination must not run after local navigation."""
+        old_directory = tmp_path / "old"
+        new_directory = tmp_path / "new"
+        old_directory.mkdir()
+        new_directory.mkdir()
+        window = _bare_window()
+        window._task_runner = DeferredTaskRunner()
+        window.remote_entries = [FlightControllerLogFile("log.bin", "/APM/LOGS/log.bin", 12)]
+        window.remote_tree = MagicMock()
+        window.remote_tree.selection.return_value = ("0",)
+        current_directory = str(old_directory)
+        window.local_directory_var = MagicMock()
+        window.local_directory_var.get.side_effect = lambda: current_directory
+        window.parameter_editor = MagicMock()
+        window.ui = MagicMock()
+        window.remote_directory_var = MagicMock()
+        window.close_button = MagicMock()
+        window._update_parent_navigation_buttons = MagicMock()
+        window._update_transfer_buttons = MagicMock()
+
+        window.download_selected_remote_entries()
+        current_directory = str(new_directory)
+        window._task_runner.finish()
+
+        window.parameter_editor.download_remote_file.assert_not_called()
+        window.ui.show_error.assert_called()
+        window.ui.ask_yesno.assert_not_called()
 
     def test_retry_replaces_failed_crc_with_successful_verification(self, tmp_path: Path) -> None:
         """A retry presents its new CRC result rather than the first attempt's failure."""

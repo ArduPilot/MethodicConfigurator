@@ -341,15 +341,23 @@ class TestFileBrowserUserWorkflows:
         assert browser.remote_directory_var.get() == "/APM/LOGS"
         assert browser.ui.errors == [("Remote directory error", "Could not list the remote directory.")]
 
-    def test_missing_local_directory_keeps_existing_rows(self, browser: FileBrowserWindow, tmp_path: Path) -> None:
-        """A deleted local destination does not replace cached rows with an empty listing."""
+    def test_missing_local_directory_clears_stale_rows_and_blocks_actions(
+        self, browser: FileBrowserWindow, tmp_path: Path
+    ) -> None:
+        """A missing destination must not leave actionable rows from the previous directory."""
         (tmp_path / "old.bin").write_bytes(b"old")
         browser.refresh_local_panel()
+        browser.local_tree.select_name("old.bin")
+        browser._panel_states["local"].selected_item = "0"
         browser.local_directory_var.set(str(tmp_path / "removed"))
 
         browser.refresh_local_panel()
 
-        assert browser.local_tree.names() == ["old.bin"]
+        assert browser.local_tree.names() == []
+        assert browser.local_entries == []
+        assert browser._panel_states["local"].selected_item is None
+        assert browser._selected_local_entries() == []
+        assert not browser.upload_button.enabled
         assert browser.ui.errors == [("Local directory error", "The selected local directory does not exist.")]
 
     def test_upload_retry_creates_remote_tree_and_clears_directory_failure(

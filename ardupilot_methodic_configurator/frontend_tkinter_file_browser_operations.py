@@ -463,7 +463,7 @@ def _call_remote_bool(callback: Callable[..., bool], *args: object) -> bool:
 
 
 # Transfer callbacks stay explicit so the worker remains independent of Tk and easy to inject in tests.
-def _upload_local_plan_worker(  # pylint: disable=too-many-arguments,too-many-locals
+def _upload_local_plan_worker(  # pylint: disable=too-many-arguments
     plan: LocalUploadPlan,
     total: int,
     make_remote_directory: Callable[..., bool],
