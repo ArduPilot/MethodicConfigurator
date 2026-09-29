@@ -312,10 +312,12 @@ class ConnectionSelectionWindow(BaseWindow):
         flight_controller: FlightController,
         connection_result_string: str,
         default_baudrate: int = 115200,
+        show_skip_connection_option: bool = True,
     ) -> None:
         super().__init__()
         self.root.title(_("AMC {version} - Flight controller connection").format(version=__version__))
-        self.root.geometry(self.calculate_scaled_geometry(520, 380))
+        window_height = 380 if show_skip_connection_option else 253
+        self.root.geometry(self.calculate_scaled_geometry(520, window_height))
         self.center_window_on_screen(self.root)
         self.default_baudrate = default_baudrate
         self.flight_controller = flight_controller
@@ -381,30 +383,24 @@ class ConnectionSelectionWindow(BaseWindow):
         )
         self.connection_selection_widgets.container_frame.pack(expand=False, fill=tk.X, padx=5, pady=6)
 
-        # Option 3 - Skip FC connection, just edit the .param files on disk
-        option3_label = ttk.Label(text=_("No connection"), style="Bold.TLabel")
-        option3_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option3_label)
-        option3_label_frame.pack(expand=False, fill=tk.X, padx=6, pady=6)
-        # option3_label = ttk.Label(option3_label_frame, anchor=tk.CENTER, justify=tk.CENTER,
-        #                          text=_("Skip the flight controller connection,\n")
-        #                          "no default parameter values will be fetched from the FC,\n"
-        #                          "default parameter values from disk will be used instead\n"
-        #                          "(if '00_default.param' file is present)\n"
-        #                          "and just edit the intermediate '.param' files on disk")
-        # option3_label.pack(expand=False, fill=tk.X, padx=6)
-        skip_fc_connection_button = ttk.Button(
-            option3_label_frame,
-            text=_("Skip FC connection, just edit the .param files on disk"),
-            command=lambda fc=flight_controller: self.skip_fc_connection(fc),  # type: ignore[misc]
-        )
-        skip_fc_connection_button.pack(expand=False, fill=tk.X, padx=15, pady=6)
-        show_tooltip(
-            skip_fc_connection_button,
-            _(
-                "No parameter values will be fetched from the FC, default parameter values from disk will be used\n"
-                "instead (if '00_default.param' file is present) and just edit the intermediate '.param' files on disk"
-            ),
-        )
+        if show_skip_connection_option:
+            # Option 3 - Skip FC connection, just edit the .param files on disk
+            option3_label = ttk.Label(text=_("No connection"), style="Bold.TLabel")
+            option3_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option3_label)
+            option3_label_frame.pack(expand=False, fill=tk.X, padx=6, pady=6)
+            skip_fc_connection_button = ttk.Button(
+                option3_label_frame,
+                text=_("Skip FC connection, just edit the .param files on disk"),
+                command=lambda fc=flight_controller: self.skip_fc_connection(fc),  # type: ignore[misc]
+            )
+            skip_fc_connection_button.pack(expand=False, fill=tk.X, padx=15, pady=6)
+            show_tooltip(
+                skip_fc_connection_button,
+                _(
+                    "No parameter values will be fetched from the FC, default parameter values from disk will be used\n"
+                    "instead (if '00_default.param' file is present) and just edit the intermediate '.param' files on disk"
+                ),
+            )
 
         # Bind the close_connection_and_quit function to the window close event
         self.root.protocol("WM_DELETE_WINDOW", self.close_and_quit)
