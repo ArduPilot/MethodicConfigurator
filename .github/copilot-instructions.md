@@ -14,6 +14,11 @@ This is a Python GUI application for configuring ArduPilot flight controller par
 - Use pytest with behavior-driven development (BDD) approach
 - Test structure: Given-When-Then pattern with descriptive names like `test_user_can_select_template_by_double_clicking`
 - Focus on user behavior and business value, not implementation details
+- On Linux, use the repository's local .venv and xvfb-run when running tests, for example:
+
+```bash
+PATH="$PWD/.venv/bin:$PATH" xvfb-run -a python -m pytest -q tests/test_frontend_tkinter_parameter_export.py.
+```
 
 ## Architecture
 
@@ -36,6 +41,12 @@ For changes affecting architecture, module boundaries, dependencies, data flow, 
 - **Parameter files**: Use `.param` extension with numbered prefixes (e.g., `01_first_setup.param`)
 - **Vehicle templates**: Located in `ardupilot_methodic_configurator/vehicle_templates/` with subdirectories for each vehicle type (ArduCopter, ArduPlane, Rover, Heli)
 - **Internationalization**: Wrap all user-facing strings with `_()` for gettext translation
+
+## CodeGraph
+
+- When .codegraph/ exists, use CodeGraph to understand or locate repository code when it is useful for the task.
+  Prefer codegraph_explore (or codegraph explore in a shell) before text search or reading source files.
+- sync the index when necessary.
 
 ## Development Workflow
 
