@@ -40,7 +40,7 @@ def test_user_selects_connection_before_owner_window_is_created(standalone_args:
     """
     events: list[str] = []
     controller = MagicMock()
-    controller.connect.return_value = "No auto-detected ports responded"
+    controller.connect.return_value = "No auto-detected ports responded."
     controller.master = None
     owner = MagicMock()
     owner.mainloop.side_effect = lambda: events.append("owner loop")
@@ -134,7 +134,7 @@ def test_cancelling_connection_selector_does_not_create_owner(standalone_args: N
     THEN: No owner or parameter dialog is created and the controller is released
     """
     controller = MagicMock()
-    controller.connect.return_value = "No auto-detected ports responded"
+    controller.connect.return_value = "No auto-detected ports responded."
     controller.master = None
     selector = MagicMock()
     make_owner = MagicMock()

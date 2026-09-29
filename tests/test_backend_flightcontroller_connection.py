@@ -41,6 +41,8 @@ from ardupilot_methodic_configurator.backend_flightcontroller_factory_serial imp
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from ardupilot_methodic_configurator.backend_flightcontroller_protocols import MavlinkConnection
 
 # pylint: disable=protected-access, too-many-lines
@@ -2892,6 +2894,33 @@ class TestFlightControllerConnectionAutoDetectWithMavlink:
             result = connection._auto_detect_serial()
 
         assert {port.device for port in result} == {"COM3", "COM7"}
+
+    def test_by_id_symlink_is_not_duplicated_with_resolved_tty_path(self, tmp_path: Path) -> None:
+        """A PyMAVLink by-id link and its PySerial tty target are one physical port."""
+        tty_path = tmp_path / "ttyACM0"
+        tty_path.touch()
+        by_id_path = tmp_path / "serial" / "by-id" / "flight-controller"
+        by_id_path.parent.mkdir(parents=True)
+        by_id_path.symlink_to(tty_path)
+
+        discovery = FakeSerialPortDiscovery()
+        fc_port = serial.tools.list_ports_common.ListPortInfo(str(tty_path))
+        fc_port.manufacturer = "CubePilot"
+        discovery._ports.append(fc_port)
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=discovery,
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+        pymavlink_port = mavutil.SerialPort(device=str(by_id_path), description="CubePilot")
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.mavutil.auto_detect_serial",
+            return_value=[pymavlink_port],
+        ):
+            result = connection._auto_detect_serial()
+
+        assert [port.device for port in result] == [str(by_id_path)]
 
     def test_known_vid_pid_is_matched_even_without_recognizable_metadata(self) -> None:
         """Known USB IDs identify FCs even when the OS supplies generic text fields."""

@@ -20,6 +20,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from ardupilot_methodic_configurator import frontend_tkinter_parameter_export as export_module
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
@@ -85,6 +86,7 @@ class TestMavIdExportFiltering:
         result = filter_parameters_for_export(mav_id_parameter_snapshot, filters)
 
         assert set(result) == {"NORMAL"}
+        assert {"MAV_SYSID", "MAV_GCS_SYSID"} <= ID_PARAMETER_NAMES
         assert ID_PARAMETER_NAMES.isdisjoint(result)
         assert all(name not in result for name in ID_PARAMETER_NAMES)
 
@@ -231,8 +233,32 @@ class TestParameterExportLimitClassification:  # pylint: disable=too-few-public-
         assert list(result) == ["UNBOUNDED"]
 
 
-class TestMavIdExportPreview:  # pylint: disable=too-few-public-methods
+class TestMavIdExportPreview:
     """The MAV ID checkbox controls which parameters appear in the live preview."""
+
+    def test_export_variables_are_bound_to_the_export_window(
+        self, mav_id_parameter_snapshot: dict[str, ArduPilotParameter]
+    ) -> None:
+        """Tk state variables use the dialog's root on platforms without a default root."""
+        root = tk.Tk()
+        root.withdraw()
+        editor = MagicMock()
+        editor.filter_parameters_for_export.side_effect = filter_parameters_for_export
+        parent = SimpleNamespace(root=root, parameter_editor=editor, ui=MagicMock())
+        window = None
+        try:
+            with (
+                patch.object(export_module.tk, "BooleanVar", wraps=tk.BooleanVar) as boolean_var,
+                patch.object(export_module.tk, "StringVar", wraps=tk.StringVar) as string_var,
+            ):
+                window = ParameterExportWindow(parent, mav_id_parameter_snapshot)
+
+            assert all(call.kwargs.get("master") is window.root for call in boolean_var.call_args_list)
+            assert all(call.kwargs.get("master") is window.root for call in string_var.call_args_list)
+        finally:
+            if window is not None:
+                window.close()
+            root.destroy()
 
     def test_user_can_toggle_mav_id_checkbox_and_update_preview(
         self, mav_id_parameter_snapshot: dict[str, ArduPilotParameter]
@@ -303,6 +329,35 @@ class TestParameterEditorExportSnapshotMetadata:  # pylint: disable=too-few-publ
         assert parameters["CALIB"].is_readonly is False
         assert parameters["READONLY"].is_calibration is False
         assert parameters["READONLY"].is_readonly is True
+
+
+def test_standalone_export_uses_temporary_download_directory() -> None:
+    """Standalone downloads must not create complete.param in the selected vehicle directory."""
+    editor = MagicMock()
+    initialize = MagicMock(return_value=editor)
+
+    def run_tool(_args, initialize_editor, _open_window, **_kwargs) -> None:
+        initialize_editor(MagicMock(), MagicMock(), MagicMock())
+        download_dir = initialize.call_args.kwargs["parameter_download_dir"]
+        assert download_dir.exists()
+
+    with (
+        patch.object(export_module, "argument_parser", return_value=SimpleNamespace()),
+        patch.object(export_module, "initialize_standalone_parameter_editor", new=initialize),
+        patch.object(export_module, "run_standalone_parameter_application", side_effect=run_tool),
+    ):
+        export_module.main()
+
+    download_dir = initialize.call_args.kwargs["parameter_download_dir"]
+    assert not download_dir.exists()
+
+
+def test_manual_does_not_claim_cached_metadata_supports_offline_startup() -> None:
+    """The standalone export manual describes the actual metadata network requirement."""
+    manual = Path("USERMANUAL_fc_parameter_export.md").read_text(encoding="utf-8")
+
+    assert "require internet access during startup" in manual
+    assert "metadata is already cached locally" not in manual
 
 
 class TestParameterExportWindow:
@@ -578,7 +633,8 @@ def test_standalone_export_delegates_connection_and_window_ownership_to_shared_a
         assert initialize(root, controller, ui) is editor
         assert open_dialog(root, editor, ui) is open_export.return_value
 
-    create_editor.assert_called_once_with(args, controller, ui)
+    assert create_editor.call_args.args == (args, controller, ui)
+    assert isinstance(create_editor.call_args.kwargs["parameter_download_dir"], Path)
     assert open_export.call_args.args == (root, editor, ui)
     open_export.call_args.kwargs["on_close"]()
     root.quit.assert_called_once_with()

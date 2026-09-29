@@ -85,6 +85,35 @@ def test_screenshot_generator_can_select_individual_targets(tmp_path) -> None:
     assert capture.call_args.args[0].action == "parameter_export"
 
 
+def test_screenshot_alias_uses_png_suffix_for_new_captures(tmp_path) -> None:
+    """The historical screenshot alias is copied from the correctly named new image."""
+    args = argparse.Namespace(
+        images_dir=tmp_path,
+        vehicle_dir=tmp_path,
+        delay=0.0,
+        padding=0,
+        overwrite=False,
+        log_level="WARNING",
+        screenshots=["App_screenshot_Parameter_file_editor_and_uploader4.png"],
+    )
+
+    def capture(_target: object, output_path: Path, _args: argparse.Namespace) -> None:
+        output_path.write_bytes(b"screenshot")
+
+    with (
+        patch.object(screenshot_generator, "parse_args", return_value=args),
+        patch.object(screenshot_generator, "configure_logging"),
+        patch.object(screenshot_generator, "register_plugins"),
+        patch.object(screenshot_generator, "capture_target", side_effect=capture),
+    ):
+        assert screenshot_generator.main() == 0
+
+    source = tmp_path / "App_screenshot_Parameter_file_editor_and_uploader4.png.new.png"
+    alias = tmp_path / "App_screenshot1.png.new.png"
+    assert source.read_bytes() == b"screenshot"
+    assert alias.read_bytes() == b"screenshot"
+
+
 def test_screenshot_generator_registers_application_plugins_before_capture(tmp_path) -> None:
     """Screenshot generation initializes plugins just like normal application startup."""
     args = argparse.Namespace(

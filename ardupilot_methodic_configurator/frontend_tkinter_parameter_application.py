@@ -14,6 +14,7 @@ from collections.abc import Callable
 from contextlib import suppress
 from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from ardupilot_methodic_configurator import _
@@ -73,13 +74,17 @@ def initialize_standalone_parameter_editor(
     args: Namespace,
     flight_controller: FlightController,
     ui: "ParameterEditorUiServices",
+    *,
+    parameter_download_dir: Path | None = None,
 ) -> ParameterEditor | None:
     """Create the connected-controller parameter model and report setup errors in the UI."""
     try:
+        editor_options = {"parameter_download_dir": parameter_download_dir} if parameter_download_dir is not None else {}
         return ParameterEditor.for_connected_flight_controller(
             flight_controller,
             args.vehicle_dir,
             args.vehicle_type,
+            **editor_options,
         )
     except (OSError, ValueError, SystemExit) as exc:
         ui.show_error(_("Flight-controller parameter setup error"), str(exc))
@@ -97,7 +102,7 @@ def connect_standalone_flight_controller(
     connection_error = flight_controller.connect(args.device)
     if not connection_error:
         return True
-    if args.device or _("No auto-detected ports responded") not in connection_error:
+    if args.device or _("No auto-detected ports responded.") not in connection_error:
         error_popup(_("Flight-controller connection error"), connection_error)
         return False
 

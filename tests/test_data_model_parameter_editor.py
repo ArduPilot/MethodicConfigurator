@@ -219,6 +219,23 @@ class TestExternalParameterFiles:
 class TestExternalParameterUploadWorkflow:
     """Protect the boundary between one-off FC uploads and AMC project progress."""
 
+    def test_external_editor_keeps_followup_downloads_in_private_directory(self, parameter_editor, tmp_path) -> None:
+        """Upload verification downloads must not overwrite the compared file."""
+        private_dir = tmp_path / "private-downloads"
+        parameter_editor._flight_controller.download_params.return_value = ({"P1": 2.0}, ParDict())
+        external_editor = ParameterEditor(
+            "",
+            parameter_editor._flight_controller,
+            parameter_editor._local_filesystem,
+            parameter_download_dir=private_dir,
+        )
+
+        external_editor.download_flight_controller_parameters(persist_project_state=False)
+
+        parameter_editor._flight_controller.download_params.assert_called_once_with(
+            None, private_dir / "complete.param", private_dir / "00_default.param", response_timeout=None
+        )
+
     def test_successful_external_upload_does_not_persist_project_state(self, parameter_editor, tmp_path) -> None:
         """
         Upload external values without persisting AMC project state.
@@ -1317,7 +1334,10 @@ class TestConnectedFlightControllerFactory:
             parameter_editor = ParameterEditor.for_connected_flight_controller(flight_controller, "vehicle")
 
         create_filesystem.assert_called_once_with("vehicle", "ArduPlane", "4.6.3", default_parameters)
-        flight_controller.download_params.assert_called_once_with()
+        flight_controller.download_params.assert_called_once_with(
+            parameter_values_filename=Path("vehicle") / "complete.param",
+            parameter_defaults_filename=Path("vehicle") / "00_default.param",
+        )
         assert parameter_editor._flight_controller is flight_controller
         assert parameter_editor._local_filesystem is filesystem
 

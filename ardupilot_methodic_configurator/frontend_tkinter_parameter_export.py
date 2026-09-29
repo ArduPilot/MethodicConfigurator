@@ -15,6 +15,7 @@ from collections.abc import Callable
 from functools import partial
 from pathlib import Path
 from sys import platform as sys_platform
+from tempfile import TemporaryDirectory
 from tkinter import ttk
 from typing import TYPE_CHECKING, Protocol
 
@@ -91,17 +92,17 @@ class ParameterExportWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if parent_is_visible:
             self.root.transient(parent.root)
 
-        self.include_calibrations = tk.BooleanVar(value=False)
-        self.include_non_calibrations = tk.BooleanVar(value=True)
-        self.include_read_only = tk.BooleanVar(value=False)
-        self.include_non_read_only = tk.BooleanVar(value=True)
-        self.include_default_values = tk.BooleanVar(value=False)
-        self.include_non_default_values = tk.BooleanVar(value=True)
-        self.include_inside_limits = tk.BooleanVar(value=True)
-        self.include_outside_limits = tk.BooleanVar(value=True)
-        self.include_mav_ids = tk.BooleanVar(value=True)
-        self.annotate_documentation = tk.BooleanVar(value=False)
-        self.parameter_count = tk.StringVar()
+        self.include_calibrations = tk.BooleanVar(master=self.root, value=False)
+        self.include_non_calibrations = tk.BooleanVar(master=self.root, value=True)
+        self.include_read_only = tk.BooleanVar(master=self.root, value=False)
+        self.include_non_read_only = tk.BooleanVar(master=self.root, value=True)
+        self.include_default_values = tk.BooleanVar(master=self.root, value=False)
+        self.include_non_default_values = tk.BooleanVar(master=self.root, value=True)
+        self.include_inside_limits = tk.BooleanVar(master=self.root, value=True)
+        self.include_outside_limits = tk.BooleanVar(master=self.root, value=True)
+        self.include_mav_ids = tk.BooleanVar(master=self.root, value=True)
+        self.annotate_documentation = tk.BooleanVar(master=self.root, value=False)
+        self.parameter_count = tk.StringVar(master=self.root)
         self._sort_column: str | None = None
         self._sort_descending = False
         self._hovered_cell: tuple[str, str] | None = None
@@ -402,7 +403,8 @@ class ParameterExportWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         show_tooltip(
             checkbox,
             _(
-                "Include vehicle identity parameters such as SYSID_THISMAV, SYSID_MYGCS, and FOLL_SYSID.\n"
+                "Include vehicle identity parameters such as SYSID_THISMAV, SYSID_MYGCS, FOLL_SYSID, "
+                "MAV_SYSID, and MAV_GCS_SYSID.\n"
                 "Leave unchecked to omit these MAV ID parameters from the preview and exported file."
             ),
         )
@@ -499,31 +501,34 @@ def argument_parser() -> Namespace:  # pragma: no cover
 def main() -> None:  # pragma: no cover
     """Connect to a flight controller and open the standalone export dialog."""
     args = argument_parser()
+    with TemporaryDirectory(prefix="amc-parameter-export-") as scratch_directory:
 
-    def initialize_editor(
-        _root: tk.Tk,
-        flight_controller: FlightController,
-        ui: "ParameterEditorUiServices",
-    ) -> ParameterEditor | None:
-        return initialize_standalone_parameter_editor(args, flight_controller, ui)
+        def initialize_editor(
+            _root: tk.Tk,
+            flight_controller: FlightController,
+            ui: "ParameterEditorUiServices",
+        ) -> ParameterEditor | None:
+            return initialize_standalone_parameter_editor(
+                args, flight_controller, ui, parameter_download_dir=Path(scratch_directory)
+            )
 
-    def open_window(
-        root: tk.Tk,
-        parameter_editor: ParameterEditor,
-        ui: "ParameterEditorUiServices",
-    ) -> ParameterExportWindow:
-        return open_parameter_export_window(root, parameter_editor, ui, on_close=root.quit)
+        def open_window(
+            root: tk.Tk,
+            parameter_editor: ParameterEditor,
+            ui: "ParameterEditorUiServices",
+        ) -> ParameterExportWindow:
+            return open_parameter_export_window(root, parameter_editor, ui, on_close=root.quit)
 
-    # pylint: disable=duplicate-code
-    run_standalone_parameter_application(
-        args,
-        initialize_editor,
-        open_window,
-        root_factory=tk.Tk,
-        flight_controller_factory=FlightController,
-        error_popup=show_error_popup,
-    )
-    # pylint: enable=duplicate-code
+        # pylint: disable=duplicate-code
+        run_standalone_parameter_application(
+            args,
+            initialize_editor,
+            open_window,
+            root_factory=tk.Tk,
+            flight_controller_factory=FlightController,
+            error_popup=show_error_popup,
+        )
+        # pylint: enable=duplicate-code
 
 
 if __name__ == "__main__":  # pragma: no cover

@@ -13,10 +13,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 # pylint: disable=protected-access
 
 from argparse import Namespace
+from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, call, patch
 
 import pytest
 
+from ardupilot_methodic_configurator import frontend_tkinter_parameter_compare_and_upload as compare_module
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload import (
@@ -564,7 +567,11 @@ def test_standalone_main_uses_shared_parameter_application() -> None:
 
     ui.askopenfilename.assert_called_once()
     assert ui.askopenfilename.call_args.kwargs["parent"] is root
-    create_editor.assert_called_once_with(flight_controller, "vehicle", "ArduPlane")
+    create_editor.assert_called_once()
+    assert create_editor.call_args.args == (flight_controller, "vehicle", "ArduPlane")
+    download_dir = create_editor.call_args.kwargs["parameter_download_dir"]
+    assert download_dir.name.startswith("amc-parameter-compare-")
+    assert download_dir != Path("vehicle")
     parameter_editor.load_external_parameter_file.assert_called_once_with("external.param")
     dialog.assert_called_once()
     assert opened_window is dialog.return_value
@@ -677,3 +684,26 @@ def test_invalid_external_file_reports_error_before_opening_dialog(standalone_ca
     assert result is False
     ui.show_error.assert_called_once_with("Parameter file error", "invalid parameter syntax")
     dialog_type.assert_not_called()
+
+
+def test_standalone_compare_keeps_parameter_download_directory_until_window_closes() -> None:
+    """Private FC snapshots stay available for upload validation and resets."""
+    ui = MagicMock()
+    ui.askopenfilename.return_value = "selected.param"
+    editor = MagicMock()
+    initialize = MagicMock(return_value=editor)
+
+    def run_tool(_args, initialize_editor, _open_window, **_kwargs) -> None:
+        initialize_editor(MagicMock(), MagicMock(), ui)
+        download_dir = initialize.call_args.kwargs["parameter_download_dir"]
+        assert download_dir.exists()
+
+    with (
+        patch.object(compare_module, "argument_parser", return_value=SimpleNamespace()),
+        patch.object(compare_module, "initialize_standalone_parameter_editor", new=initialize),
+        patch.object(compare_module, "run_standalone_parameter_application", side_effect=run_tool),
+    ):
+        compare_module.main()
+
+    download_dir = initialize.call_args.kwargs["parameter_download_dir"]
+    assert not download_dir.exists()
