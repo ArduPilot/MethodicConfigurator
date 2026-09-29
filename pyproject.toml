@@ -58,7 +58,7 @@ dependencies = [
     "pyserial==3.5",
     "requests==2.34.2",
     "screeninfo==0.8.1",
-    "simpleeval==1.0.7",
+    "simpleeval==1.0.8",
     "typing_extensions==4.16.0; python_version < '3.11'",
 ]
 
