@@ -44,6 +44,7 @@ class FlightControllerInfo:  # pylint: disable=too-many-instance-attributes
     def __init__(self) -> None:
         self.system_id = ""
         self.component_id = ""
+        self.hw_unique_id = ""
         self.autopilot = ""
         self.vehicle_type = ""
         self.firmware_type = ""
@@ -71,6 +72,7 @@ class FlightControllerInfo:  # pylint: disable=too-many-instance-attributes
         """Reset all cached flight controller metadata."""
         self.system_id = ""
         self.component_id = ""
+        self.hw_unique_id = ""
         self.autopilot = ""
         self.vehicle_type = ""
         self.firmware_type = ""

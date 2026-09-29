@@ -727,6 +727,17 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         self.info.set_board_version(m.board_version)
         self.info.set_flight_custom_version(m.flight_custom_version)
         self.info.set_os_custom_version(m.os_custom_version)
+        uid2_value = getattr(m, "uid2", None)
+        try:
+            uid2 = bytes(uid2_value) if uid2_value is not None else b""
+        except (TypeError, ValueError):
+            uid2 = b""
+        uid = getattr(m, "uid", 0)
+        self.info.hw_unique_id = ""
+        if any(uid2):
+            self.info.hw_unique_id = f"0x{uid2.hex().upper()}"
+        elif isinstance(uid, int) and uid:
+            self.info.hw_unique_id = f"0x{uid:016X}"
 
     def _process_autopilot_version(self, m: MAVLink_autopilot_version_message | None, banner_msgs: list[str]) -> str:
         """
