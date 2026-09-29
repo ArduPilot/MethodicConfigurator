@@ -559,7 +559,7 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
                 verify_remote_file=verify,
             )
 
-        assert outcome.files_succeeded == []
+        assert outcome.files_succeeded == []  # pylint: disable=use-implicit-booleaness-not-comparison
         assert outcome.files_failed == [remote]
         verify.assert_not_called()
         progress.assert_called_with(12, 12)

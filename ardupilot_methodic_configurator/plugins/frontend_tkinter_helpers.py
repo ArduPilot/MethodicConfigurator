@@ -45,18 +45,13 @@ def refresh_parameter_editor_after_calibration(
             readback_succeeded = bool(download_result and download_result[0])
 
     parameter_editor = getattr(base_window, "parameter_editor", None)
-    update_parameters = getattr(parameter_editor, "update_parameters_from_fc_values", None)
     stale_files: list[str] = []
     if parameter_names_to_copy and readback_succeeded:
-        fc_parameters = getattr(parameter_editor, "fc_parameters", {})
-        current_step_parameters = getattr(parameter_editor, "current_step_parameters", {}) or {}
-        calibration_values = {name: fc_parameters[name] for name in parameter_names_to_copy if name in fc_parameters}
-        relevant_fc_params = {name: value for name, value in calibration_values.items() if name in current_step_parameters}
-        if callable(update_parameters) and relevant_fc_params:
-            update_parameters(relevant_fc_params)
-        find_stale_steps = getattr(parameter_editor, "find_other_steps_with_stale_calibration_values", None)
-        if check_other_steps and callable(find_stale_steps) and calibration_values:
-            stale_files = find_stale_steps(calibration_values)
+        stale_files = _copy_calibration_values(
+            parameter_editor,
+            parameter_names_to_copy,
+            check_other_steps=check_other_steps,
+        )
 
     repopulate_table = getattr(base_window, "repopulate_parameter_table", None)
     if callable(repopulate_table):
@@ -64,3 +59,25 @@ def refresh_parameter_editor_after_calibration(
     else:
         refresh_parameter_editor_table(base_window)
     return stale_files
+
+
+def _copy_calibration_values(
+    parameter_editor: object,
+    parameter_names_to_copy: Collection[str],
+    *,
+    check_other_steps: bool,
+) -> list[str]:
+    """Stage selected calibration readback values and optionally find stale steps."""
+    fc_parameters = getattr(parameter_editor, "fc_parameters", {})
+    current_step_parameters = getattr(parameter_editor, "current_step_parameters", {}) or {}
+    calibration_values = {name: fc_parameters[name] for name in parameter_names_to_copy if name in fc_parameters}
+    relevant_fc_params = {name: value for name, value in calibration_values.items() if name in current_step_parameters}
+
+    update_parameters = getattr(parameter_editor, "update_parameters_from_fc_values", None)
+    if callable(update_parameters) and relevant_fc_params:
+        update_parameters(relevant_fc_params)
+
+    find_stale_steps = getattr(parameter_editor, "find_other_steps_with_stale_calibration_values", None)
+    if check_other_steps and callable(find_stale_steps) and calibration_values:
+        return find_stale_steps(calibration_values)
+    return []

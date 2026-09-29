@@ -89,6 +89,8 @@ def is_safe_remote_entry_name(name: str) -> bool:
         and "/" not in name
         and "\\" not in name
         and ":" not in name
+        and name.isascii()
+        and "\0" not in name
     )
 
 
