@@ -38,6 +38,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_factory_serial imp
     SerialPortDiscovery,
     SystemSerialPortDiscovery,
 )
+from ardupilot_methodic_configurator.data_model_fc_ids import VID_PID_PRODUCT_DICT, VID_VENDOR_DICT
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
 if TYPE_CHECKING:
@@ -45,6 +46,26 @@ if TYPE_CHECKING:
 
 # pymavlink initializes this dialect module dynamically and types it as optional.
 mavlink = cast("Any", mavutil.mavlink)
+
+_KNOWN_FC_MANUFACTURERS = tuple(
+    manufacturer.casefold() for manufacturers in VID_VENDOR_DICT.values() for manufacturer in manufacturers
+)
+_KNOWN_FC_BOARD_NAMES = tuple(board.casefold() for boards in VID_PID_PRODUCT_DICT.values() for board in boards)
+_KNOWN_FC_USB_IDS = frozenset(VID_PID_PRODUCT_DICT)
+
+
+def _serial_port_matches_fc_identity(port: ListPortInfo) -> bool:
+    """Return whether PySerial metadata or USB IDs identify a known FC."""
+    if port.vid is not None and port.pid is not None and (port.vid, port.pid) in _KNOWN_FC_USB_IDS:
+        return True
+
+    metadata = " ".join(
+        str(value).casefold()
+        for value in (port.description, port.manufacturer, port.product)
+        if value and str(value).casefold() != "n/a"
+    )
+    return any(name in metadata for name in _KNOWN_FC_MANUFACTURERS + _KNOWN_FC_BOARD_NAMES)
+
 
 # pylint: disable=too-many-lines
 
@@ -352,25 +373,24 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         # Try to autodetect serial ports
         if progress_callback:
             progress_callback(10, 100)  # Starting serial detection
-        autodetect_serial = self._auto_detect_serial()
-        if autodetect_serial:
-            # Resolve the soft link if it's a Linux system
+        autodetect_serial = self._auto_detect_serial() or []
+        # Prefer the last endpoint, as dual-interface FCs commonly expose SLCAN
+        # first and MAVLink second. Fall back to the other detected endpoints.
+        for index, comport in enumerate(reversed(autodetect_serial)):
+            # Resolve each Linux symlink separately; only one endpoint may carry MAVLink.
             if os_name == "posix":
                 try:
-                    dev = autodetect_serial[0].device
-                    logging_debug(_("Auto-detected device %s"), dev)
-                    # Get the directory part of the soft link
-                    softlink_dir = os_path.dirname(dev)
-                    # Resolve the soft link and join it with the directory part
-                    resolved_path = os_path.abspath(os_path.join(softlink_dir, os_readlink(dev)))
-                    autodetect_serial[0].device = resolved_path
-                    logging_debug(_("Resolved soft link %s to %s"), dev, resolved_path)
+                    device = comport.device
+                    logging_debug(_("Auto-detected device %s"), device)
+                    softlink_dir = os_path.dirname(device)
+                    comport.device = os_path.abspath(os_path.join(softlink_dir, os_readlink(device)))
+                    logging_debug(_("Resolved soft link %s to %s"), device, comport.device)
                 except OSError:
                     pass  # Not a soft link, proceed with the original device path
             if progress_callback:
-                progress_callback(25, 100)  # Trying serial
+                progress_callback(25 + index * 20 // max(1, len(autodetect_serial)), 100)
             err = self._register_and_try_connect(
-                comport=autodetect_serial[-1],
+                comport=comport,
                 progress_callback=progress_callback,
                 baudrate=connection_baudrate,
                 log_errors=False,
@@ -815,6 +835,8 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             "*PX4*",
             "*Hex_*",
             "*ProfiCNC*",
+            "*Cube*",
+            "*CUAV*",
             "*Holybro_*",
             "*mRo*",
             "*FMU*",
@@ -836,6 +858,18 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             return serial_list
 
         serial_list = mavutil.auto_detect_serial(preferred_list=preferred_ports)
+
+        # PyMAVLink primarily matches port paths on POSIX, which often omit the FC
+        # identity. Add ports recognized from PySerial's richer USB metadata on all OSes.
+        known_fc_ports = [
+            port for port in self._serial_port_discovery.get_available_ports() if _serial_port_matches_fc_identity(port)
+        ]
+        detected_devices = {port.device for port in serial_list}
+        serial_list.extend(
+            mavutil.SerialPort(device=port.device, description=str(port.description))
+            for port in known_fc_ports
+            if port.device not in detected_devices
+        )
         serial_list.sort(key=lambda x: x.device)
 
         if serial_list:

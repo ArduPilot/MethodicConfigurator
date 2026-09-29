@@ -2589,6 +2589,22 @@ class TestFlightControllerConnectionProgressCallbacks:
         # Assert: Serial detection progress received (10%, 25%)
         assert any(current >= 10 for current, _ in progress_updates)
 
+    def test_autodetection_prefers_mavlink_endpoint_then_falls_back(self) -> None:
+        """Prefer the second of two endpoints, then try the first if needed."""
+        connection = FlightControllerConnection(info=FlightControllerInfo(), network_ports=[])
+        endpoints = [
+            mavutil.SerialPort(device="/dev/ttyACM1", description="CubeOrange+"),
+            mavutil.SerialPort(device="/dev/ttyACM2", description="CubeOrange+"),
+        ]
+        with (
+            patch.object(connection, "_auto_detect_serial", return_value=endpoints),
+            patch.object(connection, "_register_and_try_connect", side_effect=["no heartbeat", ""]) as try_connect,
+        ):
+            result = connection.connect(device="")
+
+        assert result == ""
+        assert [call.kwargs["comport"].device for call in try_connect.call_args_list] == ["/dev/ttyACM2", "/dev/ttyACM1"]
+
     def test_connect_reports_progress_during_network_port_attempts(self) -> None:
         """
         Connect reports progress during network port connection attempts.
@@ -2844,6 +2860,62 @@ class TestFlightControllerConnectionAutoDetectWithMavlink:
 
         mock_auto_detect.assert_called_once()
         assert result == mock_ports
+
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("description", "USB Serial Device CubeOrange+"),
+            ("manufacturer", "CubePilot"),
+            ("product", "CubeOrange+"),
+        ],
+    )
+    def test_known_fc_names_in_pyserial_metadata_are_merged_on_any_platform(self, field: str, value: str) -> None:
+        """Known FC metadata should retain devices omitted by path-only PyMAVLink matching."""
+        discovery = FakeSerialPortDiscovery()
+        fc_port = serial.tools.list_ports_common.ListPortInfo("COM7")
+        fc_port.description = "USB Serial Device"
+        fc_port.manufacturer = "Unknown"
+        fc_port.product = "Unknown"
+        setattr(fc_port, field, value)
+        discovery._ports.append(fc_port)
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=discovery,
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+        pymavlink_port = mavutil.SerialPort(device="COM3", description="USB Serial Device")
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.mavutil.auto_detect_serial",
+            return_value=[pymavlink_port],
+        ):
+            result = connection._auto_detect_serial()
+
+        assert {port.device for port in result} == {"COM3", "COM7"}
+
+    def test_known_vid_pid_is_matched_even_without_recognizable_metadata(self) -> None:
+        """Known USB IDs identify FCs even when the OS supplies generic text fields."""
+        discovery = FakeSerialPortDiscovery()
+        fc_port = serial.tools.list_ports_common.ListPortInfo("COM7")
+        fc_port.vid = 0x2DAE
+        fc_port.pid = 0x1058
+        fc_port.description = "USB Serial Device"
+        fc_port.manufacturer = "Unknown"
+        fc_port.product = "Unknown"
+        discovery._ports.append(fc_port)
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=discovery,
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.mavutil.auto_detect_serial",
+            return_value=[],
+        ):
+            result = connection._auto_detect_serial()
+
+        assert [port.device for port in result] == ["COM7"]
 
 
 class TestFlightControllerConnectionChibiOSVersionMatch:
