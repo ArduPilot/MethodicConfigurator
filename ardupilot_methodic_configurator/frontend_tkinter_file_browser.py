@@ -16,11 +16,8 @@ import posixpath
 import subprocess
 import sys
 import tkinter as tk
-from argparse import ArgumentParser, Namespace
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from logging import basicConfig as logging_basicConfig
-from logging import getLevelName as logging_getLevelName
 from pathlib import Path
 from tkinter import filedialog, simpledialog, ttk
 from typing import TYPE_CHECKING, Generic, Literal, Protocol, TypeVar, cast
@@ -36,7 +33,6 @@ from ardupilot_methodic_configurator.backend_flightcontroller_files import (
     normalize_remote_path,
 )
 from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
-from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.formatting import format_filesize
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
@@ -66,10 +62,18 @@ from ardupilot_methodic_configurator.frontend_tkinter_file_browser_operations im
     format_transfer_summary,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_file_browser_tasks import BackgroundTaskRunner, TaskRunner
+from ardupilot_methodic_configurator.frontend_tkinter_parameter_application import (
+    configure_standalone_logging,
+    connect_standalone_flight_controller,
+)
+from ardupilot_methodic_configurator.frontend_tkinter_parameter_application import (
+    create_argument_parser as create_standalone_argument_parser,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 
 if TYPE_CHECKING:
+    from argparse import ArgumentParser, Namespace
     from collections.abc import Callable, Sequence
 
 
@@ -1775,12 +1779,14 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         )
 
 
+def create_argument_parser() -> ArgumentParser:  # pragma: no cover
+    """Create the argument parser for the standalone MAVFTP browser."""
+    return create_standalone_argument_parser(_("Browse and transfer files on an ArduPilot flight controller."))
+
+
 def argument_parser() -> Namespace:  # pragma: no cover
     """Parse arguments for running the MAVFTP browser as a standalone window."""
-    parser = ArgumentParser(description=_("Browse and transfer files on an ArduPilot flight controller."))
-    parser = FlightController.add_argparse_arguments(parser)
-    parser = LocalFilesystem.add_argparse_arguments(parser)
-    return add_common_arguments(parser).parse_args()
+    return create_argument_parser().parse_args()
 
 
 def _standalone_ui_services() -> FileBrowserUiServices:  # pragma: no cover
@@ -1820,7 +1826,7 @@ def _standalone_ui_services() -> FileBrowserUiServices:  # pragma: no cover
 def main() -> None:  # pragma: no cover
     """Open the MAVFTP browser as a standalone window."""
     args = argument_parser()
-    logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
+    configure_standalone_logging(args)
 
     # pylint: disable=duplicate-code
     flight_controller = FlightController(reboot_time=args.reboot_time, baudrate=args.baudrate)
@@ -1833,9 +1839,7 @@ def main() -> None:  # pragma: no cover
     )
     # pylint: enable=duplicate-code
     parameter_editor = ParameterEditor("", flight_controller, filesystem)
-    connection_error = flight_controller.connect(args.device)
-    if connection_error:
-        show_error_popup(_("Flight-controller connection error"), connection_error)
+    if not connect_standalone_flight_controller(args, flight_controller, error_popup=show_error_popup):
         return
 
     window = FileBrowserWindow(None, parameter_editor, _standalone_ui_services())

@@ -57,11 +57,16 @@ class ParameterApplicationHost:
 
 
 def create_argument_parser(description: str) -> ArgumentParser:
-    """Create the common parser used by standalone parameter tools."""
+    """Create the common parser for standalone tools using FC and filesystem options."""
     parser = ArgumentParser(description=description)
     parser = FlightController.add_argparse_arguments(parser)
     parser = LocalFilesystem.add_argparse_arguments(parser)
     return add_common_arguments(parser)
+
+
+def configure_standalone_logging(args: Namespace) -> None:
+    """Configure logging from the shared standalone command-line arguments."""
+    logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
 
 
 def initialize_standalone_parameter_editor(
@@ -79,6 +84,31 @@ def initialize_standalone_parameter_editor(
     except (OSError, ValueError, SystemExit) as exc:
         ui.show_error(_("Flight-controller parameter setup error"), str(exc))
         return None
+
+
+def connect_standalone_flight_controller(
+    args: Namespace,
+    flight_controller: FlightController,
+    *,
+    connection_selection_window_factory: Callable[..., ConnectionSelectionWindow] = ConnectionSelectionWindow,
+    error_popup: Callable[[str, str], None] = show_error_popup,
+) -> bool:
+    """Connect using CLI settings, prompting for a port after failed auto-detection."""
+    connection_error = flight_controller.connect(args.device)
+    if not connection_error:
+        return True
+    if args.device or _("No auto-detected ports responded") not in connection_error:
+        error_popup(_("Flight-controller connection error"), connection_error)
+        return False
+
+    connection_window = connection_selection_window_factory(
+        flight_controller,
+        connection_error,
+        default_baudrate=args.baudrate,
+        show_skip_connection_option=False,
+    )
+    connection_window.root.mainloop()
+    return flight_controller.master is not None
 
 
 def run_standalone_parameter_application(  # pylint: disable=too-many-arguments
@@ -99,27 +129,20 @@ def run_standalone_parameter_application(  # pylint: disable=too-many-arguments
     tool-specific dialog and may return ``False`` when opening it was cancelled.
     Neither callback owns the Tk event loop.
     """
-    logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
+    configure_standalone_logging(args)
     root: tk.Tk | None = None
     flight_controller: FlightController | None = None
     try:
         flight_controller = flight_controller_factory(reboot_time=args.reboot_time, baudrate=args.baudrate)
-        connection_error = flight_controller.connect(args.device)
-        if connection_error:
-            if args.device or _("No auto-detected ports responded") not in connection_error:
-                error_popup(_("Flight-controller connection error"), connection_error)
-                return
-
-            # The connection selector creates its own Tk root. Let it finish
-            # before creating the placeholder root for the parameter dialog.
-            connection_window = connection_selection_window_factory(
-                flight_controller,
-                connection_error,
-                default_baudrate=args.baudrate,
-            )
-            connection_window.root.mainloop()
-            if flight_controller.master is None:
-                return
+        # The connection selector creates its own Tk root. Let it finish before
+        # creating the placeholder root for the parameter dialog.
+        if not connect_standalone_flight_controller(
+            args,
+            flight_controller,
+            connection_selection_window_factory=connection_selection_window_factory,
+            error_popup=error_popup,
+        ):
+            return
 
         # Keep a small visible owner window while parameter data loads.
         root = root_factory(className="ArduPilotMethodicConfigurator")
