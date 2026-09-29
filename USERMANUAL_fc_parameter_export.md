@@ -25,6 +25,9 @@ values staged in the currently selected AMC parameter file.
 The export button is unavailable when no flight controller is connected or when its parameters
 have not been downloaded.
 
+The standalone parameter tools require internet access during startup to download parameter
+metadata for the connected firmware.
+
 ## Choosing Parameters
 
 The window has two groups of selectors. A parameter must match **every selected group**, so the

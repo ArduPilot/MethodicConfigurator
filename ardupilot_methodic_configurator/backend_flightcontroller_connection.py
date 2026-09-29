@@ -864,12 +864,12 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         known_fc_ports = [
             port for port in self._serial_port_discovery.get_available_ports() if _serial_port_matches_fc_identity(port)
         ]
-        detected_devices = {port.device for port in serial_list}
-        serial_list.extend(
-            mavutil.SerialPort(device=port.device, description=str(port.description))
-            for port in known_fc_ports
-            if port.device not in detected_devices
-        )
+        detected_devices = {os_path.realpath(port.device) for port in serial_list}
+        for port in known_fc_ports:
+            resolved_device = os_path.realpath(port.device)
+            if resolved_device not in detected_devices:
+                serial_list.append(mavutil.SerialPort(device=port.device, description=str(port.description)))
+                detected_devices.add(resolved_device)
         serial_list.sort(key=lambda x: x.device)
 
         if serial_list:

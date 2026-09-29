@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import sys
+import tempfile
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
@@ -246,50 +247,59 @@ def main() -> None:  # pragma: no cover
     """Open the external parameter-file comparison and upload window standalone."""
     args = argument_parser()
     selected_filepath: str | None = None
+    with tempfile.TemporaryDirectory(prefix="amc-parameter-compare-") as scratch_directory:
 
-    def initialize_editor(
-        root: tk.Tk,
-        flight_controller: FlightController,
-        ui: "ParameterEditorUiServices",
-    ) -> ParameterEditor | None:
-        nonlocal selected_filepath
-        selected_filepath = ui.askopenfilename(
-            parent=root,
-            title=_("Select an ArduPilot parameter file"),
-            filetypes=[
-                (_("ArduPilot parameter files"), "*.parm *.param"),
-                (_("All files"), "*.*"),
-            ],
+        def initialize_editor(
+            root: tk.Tk,
+            flight_controller: FlightController,
+            ui: "ParameterEditorUiServices",
+        ) -> ParameterEditor | None:
+            nonlocal selected_filepath
+            selected_filepath = ui.askopenfilename(
+                parent=root,
+                title=_("Select an ArduPilot parameter file"),
+                filetypes=[
+                    (_("ArduPilot parameter files"), "*.parm *.param"),
+                    (_("All files"), "*.*"),
+                ],
+            )
+            if not selected_filepath:
+                return None
+            # Keep downloaded FC snapshots away from the user-selected file, which may
+            # itself be vehicle_dir/complete.param. The directory must survive until
+            # the standalone window closes because upload verification downloads again.
+            return initialize_standalone_parameter_editor(
+                args,
+                flight_controller,
+                ui,
+                parameter_download_dir=Path(scratch_directory),
+            )
+
+        def open_window(
+            root: tk.Tk,
+            parameter_editor: ParameterEditor,
+            ui: "ParameterEditorUiServices",
+        ) -> ParameterFileUploadWindow | bool:
+            if selected_filepath is None:
+                return False
+            try:
+                parameters = parameter_editor.load_external_parameter_file(selected_filepath)
+            except (OSError, ValueError) as exc:
+                ui.show_error(_("Parameter file error"), str(exc))
+                return False
+            host = StandaloneUploadHost(root, parameter_editor, ui, on_close=root.quit)
+            return ParameterFileUploadWindow(host, selected_filepath, parameters)
+
+        # pylint: disable=duplicate-code
+        run_standalone_parameter_application(
+            args,
+            initialize_editor,
+            open_window,
+            root_factory=tk.Tk,
+            flight_controller_factory=FlightController,
+            error_popup=show_error_popup,
         )
-        if not selected_filepath:
-            return None
-        return initialize_standalone_parameter_editor(args, flight_controller, ui)
-
-    def open_window(
-        root: tk.Tk,
-        parameter_editor: ParameterEditor,
-        ui: "ParameterEditorUiServices",
-    ) -> ParameterFileUploadWindow | bool:
-        if selected_filepath is None:
-            return False
-        try:
-            parameters = parameter_editor.load_external_parameter_file(selected_filepath)
-        except (OSError, ValueError) as exc:
-            ui.show_error(_("Parameter file error"), str(exc))
-            return False
-        host = StandaloneUploadHost(root, parameter_editor, ui, on_close=root.quit)
-        return ParameterFileUploadWindow(host, selected_filepath, parameters)
-
-    # pylint: disable=duplicate-code
-    run_standalone_parameter_application(
-        args,
-        initialize_editor,
-        open_window,
-        root_factory=tk.Tk,
-        flight_controller_factory=FlightController,
-        error_popup=show_error_popup,
-    )
-    # pylint: enable=duplicate-code
+        # pylint: enable=duplicate-code
 
 
 if __name__ == "__main__":  # pragma: no cover

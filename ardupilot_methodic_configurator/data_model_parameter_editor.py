@@ -158,10 +158,13 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         flight_controller: FlightController,
         filesystem: LocalFilesystem,
         export_fc_params_missing_or_different: bool = False,
+        *,
+        parameter_download_dir: Path | None = None,
     ) -> None:
         self.current_file = current_file
         self._flight_controller = flight_controller
         self._local_filesystem = filesystem
+        self._parameter_download_dir = parameter_download_dir
         self._config_step_processor = ConfigurationStepProcessor(self._local_filesystem)
         self._should_export_fc_params_diff = export_fc_params_missing_or_different
 
@@ -189,9 +192,16 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         flight_controller: FlightController,
         vehicle_dir: str,
         vehicle_type_override: str = "",
+        *,
+        parameter_download_dir: Path | None = None,
     ) -> "ParameterEditor":
         """Create a standalone parameter model with FC values and matching pdef metadata."""
-        fc_parameters, default_parameters = flight_controller.download_params()
+        vehicle_path = Path(vehicle_dir)
+        download_path = parameter_download_dir or vehicle_path
+        fc_parameters, default_parameters = flight_controller.download_params(
+            parameter_values_filename=download_path / "complete.param",
+            parameter_defaults_filename=download_path / "00_default.param",
+        )
         if not fc_parameters:
             msg = _("Could not download parameters from the flight controller.")
             raise ValueError(msg)
@@ -205,7 +215,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             firmware_version,
             default_parameters,
         )
-        return cls("", flight_controller, filesystem)
+        return cls("", flight_controller, filesystem, parameter_download_dir=download_path)
 
     # frontend_tkinter_parameter_editor.py API start
     @property
@@ -806,10 +816,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         progress_callback = get_progress_callback() if get_progress_callback else None
 
         # Download all parameters from the flight controller
+        download_dir = self._parameter_download_dir or Path(self._local_filesystem.vehicle_dir)
         fc_parameters, param_default_values = self._flight_controller.download_params(
             progress_callback,
-            Path(self._local_filesystem.vehicle_dir) / "complete.param",
-            Path(self._local_filesystem.vehicle_dir) / "00_default.param",
+            download_dir / "complete.param",
+            download_dir / "00_default.param",
             response_timeout=response_timeout,
         )
 

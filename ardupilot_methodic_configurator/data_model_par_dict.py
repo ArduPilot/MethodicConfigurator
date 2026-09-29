@@ -31,7 +31,13 @@ PARAM_NAME_MAX_LEN = 16
 # A stable list of known vehicle-instance ID parameters.
 # These parameters are typically specific to each vehicle and should not be reused
 # across different vehicles without intentional review.
-ID_PARAMETER_NAMES = {"SYSID_THISMAV", "SYSID_MYGCS", "FOLL_SYSID"}
+ID_PARAMETER_NAMES = {
+    "SYSID_THISMAV",
+    "SYSID_MYGCS",
+    "FOLL_SYSID",
+    "MAV_SYSID",
+    "MAV_GCS_SYSID",
+}
 
 # Placeholder stored at the start of the change reason to indicate that a forced or derived
 # parameter has been manually overridden by the user. The backend skips re-applying

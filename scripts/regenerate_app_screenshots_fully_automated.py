@@ -1153,8 +1153,8 @@ def main() -> int:
     alias_filenames = {"App_screenshot_Parameter_file_editor_and_uploader4.png", "App_screenshot1.png"}
     if selected_filenames & alias_filenames:
         suffix = "" if args.overwrite else ".new.png"
-        path_4 = args.images_dir / f"App_screenshot_Parameter_file_editor_and_uploader4{suffix}"
-        path_1 = args.images_dir / f"App_screenshot1{suffix}"
+        path_4 = args.images_dir / f"App_screenshot_Parameter_file_editor_and_uploader4.png{suffix}"
+        path_1 = args.images_dir / f"App_screenshot1.png{suffix}"
         if path_4.exists() and not path_1.exists():
             shutil.copy2(path_4, path_1)
         if path_1.exists() and not path_4.exists():
