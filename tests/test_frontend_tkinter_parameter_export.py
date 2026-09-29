@@ -12,6 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from argparse import Namespace
+from collections.abc import Iterator
 from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -22,7 +23,7 @@ import pytest
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
-from ardupilot_methodic_configurator.data_model_par_dict import Par
+from ardupilot_methodic_configurator.data_model_par_dict import ID_PARAMETER_NAMES, Par
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.data_model_parameter_export import (
     ParameterExportFilters,
@@ -36,6 +37,74 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_export import (
     open_parameter_export_window,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_export import main as standalone_main
+
+
+@pytest.fixture(name="mav_id_parameter_snapshot")
+def _mav_id_parameter_snapshot() -> dict[str, ArduPilotParameter]:
+    """Provide one parameter for every known MAV ID plus an ordinary parameter."""
+    parameters = {
+        name: ArduPilotParameter(name, Par(float(index)), fc_value=float(index))
+        for index, name in enumerate(sorted(ID_PARAMETER_NAMES), start=1)
+    }
+    parameters["NORMAL"] = ArduPilotParameter("NORMAL", Par(10.0), fc_value=10.0)
+    return parameters
+
+
+class TestMavIdExportFiltering:
+    """The MAV ID filter includes every known identity parameter only when selected."""
+
+    def test_user_includes_mav_ids_by_default(self, mav_id_parameter_snapshot: dict[str, ArduPilotParameter]) -> None:
+        """
+        Keep vehicle identity parameters in the default export selection.
+
+        GIVEN: A snapshot contains all known MAV IDs and an ordinary parameter
+        WHEN: The default export filters are applied
+        THEN: The default is enabled and every parameter remains selected
+        """
+        filters = ParameterExportFilters()
+
+        result = filter_parameters_for_export(mav_id_parameter_snapshot, filters)
+
+        assert filters.include_mav_ids is True
+        assert set(result) == set(mav_id_parameter_snapshot)
+        assert result.keys() >= ID_PARAMETER_NAMES
+        assert "NORMAL" in result
+
+    def test_user_omits_every_mav_id_when_the_option_is_unchecked(
+        self, mav_id_parameter_snapshot: dict[str, ArduPilotParameter]
+    ) -> None:
+        """
+        Exclude all known MAV ID parameters while retaining ordinary parameters.
+
+        GIVEN: A snapshot contains all known MAV IDs and an ordinary parameter
+        WHEN: The user disables MAV ID inclusion
+        THEN: Only the ordinary parameter remains eligible for export
+        """
+        filters = ParameterExportFilters(include_mav_ids=False)
+
+        result = filter_parameters_for_export(mav_id_parameter_snapshot, filters)
+
+        assert set(result) == {"NORMAL"}
+        assert ID_PARAMETER_NAMES.isdisjoint(result)
+        assert all(name not in result for name in ID_PARAMETER_NAMES)
+
+    def test_user_includes_every_mav_id_when_the_option_is_checked(
+        self, mav_id_parameter_snapshot: dict[str, ArduPilotParameter]
+    ) -> None:
+        """
+        Include every known MAV ID parameter when explicitly selected.
+
+        GIVEN: A snapshot contains all known MAV IDs and an ordinary parameter
+        WHEN: The user enables MAV ID inclusion
+        THEN: Every MAV ID and the ordinary parameter are selected
+        """
+        filters = ParameterExportFilters(include_mav_ids=True)
+
+        result = filter_parameters_for_export(mav_id_parameter_snapshot, filters)
+
+        assert set(result) == set(mav_id_parameter_snapshot)
+        assert result.keys() >= ID_PARAMETER_NAMES
+        assert "NORMAL" in result
 
 
 class TestParameterExportFilename:
@@ -160,6 +229,59 @@ class TestParameterExportLimitClassification:  # pylint: disable=too-few-public-
         result = filter_parameters_for_export({parameter.name: parameter}, filters)
 
         assert list(result) == ["UNBOUNDED"]
+
+
+class TestMavIdExportPreview:  # pylint: disable=too-few-public-methods
+    """The MAV ID checkbox controls which parameters appear in the live preview."""
+
+    def test_user_can_toggle_mav_id_checkbox_and_update_preview(
+        self, mav_id_parameter_snapshot: dict[str, ArduPilotParameter]
+    ) -> None:
+        """
+        Update the preview when the MAV ID checkbox changes.
+
+        GIVEN: The export preview contains every known MAV ID and an ordinary parameter
+        WHEN: The user unchecks and then checks Include MAV IDs
+        THEN: MAV IDs disappear and return in the preview, with the count updated each time
+        """
+        root = tk.Tk()
+        root.withdraw()
+        editor = MagicMock()
+        editor.filter_parameters_for_export.side_effect = filter_parameters_for_export
+        parent = SimpleNamespace(root=root, parameter_editor=editor, ui=MagicMock())
+        window = None
+        try:
+            window = ParameterExportWindow(parent, mav_id_parameter_snapshot)
+
+            def descendants(widget: tk.Misc) -> Iterator[tk.Misc]:
+                for child in widget.winfo_children():
+                    yield child
+                    yield from descendants(child)
+
+            checkbox = next(
+                widget
+                for widget in descendants(window.main_frame)
+                if widget.winfo_class() == "TCheckbutton" and widget.cget("text") == "Include MAV IDs"
+            )
+            assert checkbox.grid_info()["row"] == 2
+            assert window.include_mav_ids.get() is True
+            assert set(window.parameter_tree.get_children()) == set(mav_id_parameter_snapshot)
+            assert window.parameter_count.get() == str(len(mav_id_parameter_snapshot))
+
+            checkbox.invoke()
+            assert window.include_mav_ids.get() is False
+            assert window.parameter_tree.get_children() == ("NORMAL",)
+            assert window.parameter_count.get() == "1"
+            assert ID_PARAMETER_NAMES.isdisjoint(window._selected_parameters)  # pylint: disable=protected-access
+
+            checkbox.invoke()
+            assert window.include_mav_ids.get() is True
+            assert set(window.parameter_tree.get_children()) == set(mav_id_parameter_snapshot)
+            assert window.parameter_count.get() == str(len(mav_id_parameter_snapshot))
+        finally:
+            if window is not None:
+                window.close()
+            root.destroy()
 
 
 class TestParameterEditorExportSnapshotMetadata:  # pylint: disable=too-few-public-methods
@@ -300,7 +422,7 @@ class TestParameterExportWindow:
 
 
 @pytest.fixture(name="export_action_window")
-def _export_action_window(tmp_path: Path) -> tuple[ParameterExportWindow, MagicMock, Path]:
+def _export_action_window(tmp_path: Path, mav_id_parameter_snapshot) -> tuple[ParameterExportWindow, MagicMock, Path]:
     """Provide a dialog callback backed by the real parameter export model."""
     filesystem = LocalFilesystem(None, "ArduCopter", "4.6.3", False, False)  # noqa: FBT003
     controller = MagicMock()
@@ -312,10 +434,13 @@ def _export_action_window(tmp_path: Path) -> tuple[ParameterExportWindow, MagicM
     window = ParameterExportWindow.__new__(ParameterExportWindow)
     window.parent = SimpleNamespace(parameter_editor=editor, ui=ui)
     window.parameters = {
-        "NORMAL": ArduPilotParameter("NORMAL", Par(2.0), fc_value=2.0),
+        **mav_id_parameter_snapshot,
         "CALIB": ArduPilotParameter("CALIB", Par(1.0), metadata={"Calibration": True}, fc_value=1.0),
     }
-    window._get_filters = ParameterExportFilters  # pylint: disable=protected-access
+    window._mav_ids_selected = True  # pylint: disable=protected-access
+    window._get_filters = lambda: ParameterExportFilters(  # pylint: disable=protected-access
+        include_mav_ids=window._mav_ids_selected  # pylint: disable=protected-access
+    )
     window.annotate_documentation = SimpleNamespace(get=lambda: False)
     window.close = MagicMock()
     return window, ui, output
@@ -325,9 +450,9 @@ def test_user_exports_only_the_parameters_shown_by_current_filters(export_action
     """
     Write the current export selection to a parameter file.
 
-    GIVEN: A normal parameter and a calibration parameter in the FC snapshot
-    WHEN: The user exports with the default non-calibration filter
-    THEN: The saved file contains only the selected parameter and the dialog closes
+    GIVEN: A normal parameter, all MAV IDs, and a calibration parameter in the FC snapshot
+    WHEN: The user exports with the default filters
+    THEN: All MAV IDs and the normal parameter are saved, but the calibration parameter is omitted
     """
     window, ui, output = export_action_window
 
@@ -335,8 +460,29 @@ def test_user_exports_only_the_parameters_shown_by_current_filters(export_action
 
     contents = output.read_text()
     assert "NORMAL" in contents
+    assert all(name in contents for name in ID_PARAMETER_NAMES)
     assert "CALIB" not in contents
     assert ui.asksaveasfilename.call_args.kwargs["initialfile"].startswith("ArduCopter_")
+    window.close.assert_called_once_with()
+
+
+def test_user_can_exclude_mav_ids_from_export_file(export_action_window) -> None:
+    """
+    Omit all known MAV IDs from the saved parameter file when unchecked.
+
+    GIVEN: A flight-controller snapshot contains every known MAV ID
+    WHEN: The user disables MAV ID inclusion and exports
+    THEN: No MAV ID is written, while ordinary parameters are still written
+    """
+    window, _ui, output = export_action_window
+    window._mav_ids_selected = False  # pylint: disable=protected-access
+
+    window.export()
+
+    contents = output.read_text()
+    assert "NORMAL" in contents
+    assert "CALIB" not in contents
+    assert all(name not in contents for name in ID_PARAMETER_NAMES)
     window.close.assert_called_once_with()
 
 
