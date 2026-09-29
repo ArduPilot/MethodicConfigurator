@@ -17,7 +17,7 @@ from ardupilot_methodic_configurator.backend_safe_file_io import safe_write
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_configuration_step import ConfigurationStepProcessor
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
-from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
+from ardupilot_methodic_configurator.data_model_par_dict import ID_PARAMETER_NAMES, Par, ParDict
 from ardupilot_methodic_configurator.data_model_parameter_conversion import parameters_as_par_dict
 
 
@@ -53,6 +53,7 @@ class ParameterExportFilters:  # pylint: disable=too-many-instance-attributes
     include_non_default_values: bool = True
     include_inside_limits: bool = True
     include_outside_limits: bool = True
+    include_mav_ids: bool = True
 
     def pairs(self) -> tuple[FilterPair, FilterPair, FilterPair, FilterPair]:
         """Return filter pairs in the order used by filenames and matching."""
@@ -109,6 +110,7 @@ def filter_parameters_for_export(
         and read_only_filter.matches(parameter.is_readonly)
         and default_filter.matches(parameter.fc_value_equals_default_value)
         and limits_filter.matches(not is_outside_limits(parameter))
+        and (filters.include_mav_ids or param_name not in ID_PARAMETER_NAMES)
     }
 
 

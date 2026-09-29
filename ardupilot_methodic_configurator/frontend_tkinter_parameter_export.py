@@ -99,6 +99,7 @@ class ParameterExportWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.include_non_default_values = tk.BooleanVar(value=True)
         self.include_inside_limits = tk.BooleanVar(value=True)
         self.include_outside_limits = tk.BooleanVar(value=True)
+        self.include_mav_ids = tk.BooleanVar(value=True)
         self.annotate_documentation = tk.BooleanVar(value=False)
         self.parameter_count = tk.StringVar()
         self._sort_column: str | None = None
@@ -113,7 +114,7 @@ class ParameterExportWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             parameter_properties_frame,
             _(
                 "These choices describe what a parameter is. Select one or both options in each row.\n"
-                "A parameter is exported only when it matches every selected row."
+                "A parameter is exported only when it matches every selected row and the MAV ID choice."
             ),
             position_below=False,
         )
@@ -152,6 +153,7 @@ class ParameterExportWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 ),
             ),
         )
+        self._create_mav_id_checkbox(parameter_properties_frame)
         parameter_values_frame = ttk.LabelFrame(content, text=_("Parameter values"))
         parameter_values_frame.pack(fill="x")
         show_tooltip(
@@ -388,6 +390,23 @@ class ParameterExportWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             right_checkbox.grid(row=row_index, column=1, sticky=tk.W, pady=2)
             show_tooltip(right_checkbox, right_tooltip)
 
+    def _create_mav_id_checkbox(self, parent: ttk.LabelFrame) -> None:
+        """Add the third properties-row checkbox for vehicle identity parameters."""
+        checkbox = ttk.Checkbutton(
+            parent,
+            text=_("Include MAV IDs"),
+            variable=self.include_mav_ids,
+            command=self._update_parameter_count,
+        )
+        checkbox.grid(row=2, column=0, sticky=tk.W, pady=2)
+        show_tooltip(
+            checkbox,
+            _(
+                "Include vehicle identity parameters such as SYSID_THISMAV, SYSID_MYGCS, and FOLL_SYSID.\n"
+                "Leave unchecked to omit these MAV ID parameters from the preview and exported file."
+            ),
+        )
+
     def _get_filters(self) -> ParameterExportFilters:
         return ParameterExportFilters(
             include_calibrations=self.include_calibrations.get(),
@@ -398,6 +417,7 @@ class ParameterExportWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             include_non_default_values=self.include_non_default_values.get(),
             include_inside_limits=self.include_inside_limits.get(),
             include_outside_limits=self.include_outside_limits.get(),
+            include_mav_ids=self.include_mav_ids.get(),
         )
 
     def _get_selected_parameters(self) -> dict[str, ArduPilotParameter]:
