@@ -265,6 +265,16 @@ class ParameterExportWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         table_frame.pack(fill="both", expand=True, pady=(6, 0))
         columns = ("name", "fc_value", "unit")
         self.parameter_tree = ttk.Treeview(table_frame, columns=columns, show="headings", selectmode="none")
+        # Create status tags first so they take priority over the neutral stripe.
+        for tag, color in (
+            ("read_only", "purple1"),
+            ("calibration", "yellow"),
+            ("default_value", "light blue"),
+            ("below_minimum", "orangered"),
+            ("above_maximum", "red3"),
+            ("striped", "#eeeeee"),
+        ):
+            self.parameter_tree.tag_configure(tag, background=color)
         self._column_labels = {
             "name": _("Parameter name"),
             "fc_value": _("FC value"),
@@ -319,15 +329,38 @@ class ParameterExportWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._apply_sort()
 
     def _apply_sort(self) -> None:
-        if self._sort_column is None:
-            return
-        for column, label in self._column_labels.items():
-            arrow = " ▼" if self._sort_descending else " ▲"
-            self.parameter_tree.heading(column, text=label + arrow if column == self._sort_column else label)
+        if self._sort_column is not None:
+            for column, label in self._column_labels.items():
+                arrow = " ▼" if self._sort_descending else " ▲"
+                self.parameter_tree.heading(column, text=label + arrow if column == self._sort_column else label)
 
-        ordered_names = sorted_export_parameter_names(self._selected_parameters, self._sort_column, self._sort_descending)
-        for index, name in enumerate(ordered_names):
-            self.parameter_tree.move(name, "", index)
+            ordered_names = sorted_export_parameter_names(self._selected_parameters, self._sort_column, self._sort_descending)
+            for index, name in enumerate(ordered_names):
+                self.parameter_tree.move(name, "", index)
+
+        for index, name in enumerate(self.parameter_tree.get_children()):
+            parameter = self._selected_parameters[name]
+            status_tags = self._get_parameter_status_tags(parameter)
+            tags = list(status_tags)
+            if index % 2:
+                tags.append("striped")
+            self.parameter_tree.item(name, tags=tuple(tags))
+
+    @staticmethod
+    def _get_parameter_status_tags(parameter: ArduPilotParameter) -> tuple[str, ...]:
+        """Return all applicable row colors in tag-priority order."""
+        tags: list[str] = []
+        if parameter.is_readonly:
+            tags.append("read_only")
+        if parameter.is_calibration:
+            tags.append("calibration")
+        if parameter.fc_value_equals_default_value:
+            tags.append("default_value")
+        if parameter.fc_value_is_below_limit():
+            tags.append("below_minimum")
+        if parameter.fc_value_is_above_limit() or parameter.fc_value_has_unknown_bits_set():
+            tags.append("above_maximum")
+        return tuple(tags)
 
     def _create_filter_rows(
         self,
