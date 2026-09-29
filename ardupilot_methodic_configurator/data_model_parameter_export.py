@@ -9,11 +9,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
 from ardupilot_methodic_configurator.annotate_params import update_parameter_documentation
+from ardupilot_methodic_configurator.backend_safe_file_io import safe_write
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_configuration_step import ConfigurationStepProcessor
+from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.data_model_parameter_conversion import parameters_as_par_dict
 
@@ -109,18 +112,71 @@ def filter_parameters_for_export(
     }
 
 
+@dataclass(frozen=True)
+class ParameterExportContext:
+    """Documentation and FC identity metadata used for one export."""
+
+    annotate_doc: bool
+    doc_dict: dict[str, Any]
+    param_default_dict: ParDict
+    vehicle_name: str = ""
+    flight_controller_info: FlightControllerInfo | None = None
+
+
 def export_parameters(
     parameters: dict[str, ArduPilotParameter],
     filename: str,
-    annotate_doc: bool,
-    doc_dict: dict[str, Any],
-    param_default_dict: ParDict,
+    context: ParameterExportContext,
 ) -> None:
     """Export selected FC parameters without changing AMC project state."""
     params = parameters_as_par_dict(parameters)
     params.export_to_param(filename)
-    if annotate_doc:
-        update_parameter_documentation(doc_dict, filename, "missionplanner", param_default_dict)
+    if context.annotate_doc:
+        update_parameter_documentation(context.doc_dict, filename, "missionplanner", context.param_default_dict)
+    header = build_export_header(context.vehicle_name, context.flight_controller_info)
+    with open(filename, encoding="utf-8") as exported_file:
+        contents = exported_file.read()
+    safe_write(filename, lambda output_file: output_file.write("\n".join(header) + "\n" + contents))
+
+
+def _format_fc_board_name(info: FlightControllerInfo | None) -> str:
+    """Format the board name with its APJ and hardware revisions when known."""
+    board_name = getattr(info, "firmware_type", "") if info is not None else ""
+    board_id = getattr(info, "apj_board_id", "") if info is not None else ""
+    board_version = getattr(info, "board_version", "") if info is not None else ""
+    details = [f"board ID {board_id}" if board_id else "", f"hardware version {board_version}" if board_version else ""]
+    board_details = ", ".join(part for part in details if part)
+    return f"{board_name or 'N/A'} ({board_details})" if board_details else board_name or "N/A"
+
+
+def _format_fc_type(info: FlightControllerInfo | None, vehicle_type: str) -> str:
+    """Format the MAV type with its ArduPilot vehicle type when known."""
+    fc_type = getattr(info, "mav_type", "") if info is not None else ""
+    if vehicle_type:
+        return f"{fc_type} ({vehicle_type})" if fc_type else vehicle_type
+    return fc_type or "N/A"
+
+
+def build_export_header(
+    vehicle_name: str,
+    flight_controller_info: FlightControllerInfo | None,
+    export_datetime: datetime | None = None,
+) -> list[str]:
+    """Build comment lines identifying the vehicle and connected flight controller."""
+    vehicle_type = getattr(flight_controller_info, "vehicle_type", "") if flight_controller_info is not None else ""
+    firmware_version = getattr(flight_controller_info, "flight_sw_version_and_type", "") if flight_controller_info else ""
+    firmware_hash = getattr(flight_controller_info, "flight_custom_version", "") if flight_controller_info else ""
+    hardware_uid = getattr(flight_controller_info, "hw_unique_id", "") if flight_controller_info else ""
+    timestamp = (export_datetime or datetime.now().astimezone()).isoformat(sep=" ", timespec="seconds")
+    return [
+        "# Vehicle: " + (vehicle_name.strip() or vehicle_type or "N/A"),
+        "# FC board: " + _format_fc_board_name(flight_controller_info),
+        "# FC HW unique ID: " + (hardware_uid or "N/A"),
+        "# FC type: " + _format_fc_type(flight_controller_info, vehicle_type),
+        "# FW version: " + (firmware_version or "N/A"),
+        "# FW git hash: " + (firmware_hash or "N/A"),
+        "# Export date/time: " + timestamp,
+    ]
 
 
 def sorted_export_parameter_names(

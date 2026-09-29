@@ -2193,9 +2193,15 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         data_model_parameter_export.export_parameters(
             parameters,
             filename,
-            annotate_doc,
-            self._local_filesystem.doc_dict,
-            self._local_filesystem.param_default_dict,
+            data_model_parameter_export.ParameterExportContext(
+                annotate_doc=annotate_doc,
+                doc_dict=self._local_filesystem.doc_dict,
+                param_default_dict=self._local_filesystem.param_default_dict,
+                vehicle_name=(
+                    self._local_filesystem.get_vehicle_directory_name() if self._local_filesystem.vehicle_dir else ""
+                ),
+                flight_controller_info=self._flight_controller.info,
+            ),
         )
 
     @staticmethod

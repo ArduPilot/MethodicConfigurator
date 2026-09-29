@@ -2997,5 +2997,30 @@ class TestFlightControllerConnectionRetrieveAutopilotVersion:  # pylint: disable
         assert result == ""
 
 
+def test_populate_flight_controller_info_stores_mavlink_uid2() -> None:
+    """Preserve the 18-byte MAVLink hardware UID in a printable form."""
+    info = FlightControllerInfo()
+    connection = FlightControllerConnection(
+        info=info,
+        serial_port_discovery=Mock(get_available_ports=Mock(return_value=[])),
+        network_ports=[],
+    )
+    message = Mock(
+        capabilities=0,
+        flight_sw_version=0,
+        vendor_id=0,
+        product_id=0,
+        board_version=0,
+        flight_custom_version=bytes(8),
+        os_custom_version=bytes(8),
+        uid=0,
+        uid2=bytes((61, 0, 44, 0, 6, 81, 51, 50, 48, 54, 51, 50, 0, 0, 0, 0, 0, 0)),
+    )
+
+    connection._populate_flight_controller_info(message)
+
+    assert info.hw_unique_id == "0x3D002C000651333230363332000000000000"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

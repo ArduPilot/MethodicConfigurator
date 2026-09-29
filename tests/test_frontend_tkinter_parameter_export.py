@@ -12,6 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from argparse import Namespace
+from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -20,11 +21,13 @@ import pytest
 
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
+from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 from ardupilot_methodic_configurator.data_model_par_dict import Par
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.data_model_parameter_export import (
     ParameterExportFilters,
     build_export_filename,
+    build_export_header,
     filter_parameters_for_export,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_export import (
@@ -180,7 +183,7 @@ class TestParameterEditorExportSnapshotMetadata:  # pylint: disable=too-few-publ
         assert parameters["READONLY"].is_readonly is True
 
 
-class TestParameterExportWindow:  # pylint: disable=too-few-public-methods
+class TestParameterExportWindow:
     """The export preview follows the selected filters and column sort order."""
 
     def test_preview_colors_status_rows_and_keeps_stripes_lower_priority(self) -> None:
@@ -511,3 +514,29 @@ def test_closing_export_dialog_notifies_owner() -> None:
 
     window.root.destroy.assert_called_once_with()
     window._on_close.assert_called_once_with()  # pylint: disable=protected-access
+
+
+def test_export_header_uses_vehicle_name_and_connected_fc_metadata() -> None:
+    """Include identity fields and firmware Git hash in the export header."""
+    info = FlightControllerInfo()
+    info.vehicle_type = "ArduCopter"
+    info.firmware_type = "CubeOrangePlus"
+    info.apj_board_id = "1063"
+    info.board_version = "0"
+    info.autopilot = "ArduPilotMega"
+    info.mav_type = "Quadrotor"
+    info.flight_sw_version_and_type = "4.6.3 beta"
+    info.flight_custom_version = "3fc7011a"
+
+    info.hw_unique_id = "0x1234ABCDEF567890"
+    header = build_export_header("Holybro X500", info, datetime(2026, 9, 29, 12, 34, 56, tzinfo=timezone.utc))
+
+    assert header == [
+        "# Vehicle: Holybro X500",
+        "# FC board: CubeOrangePlus (board ID 1063, hardware version 0)",
+        "# FC HW unique ID: 0x1234ABCDEF567890",
+        "# FC type: Quadrotor (ArduCopter)",
+        "# FW version: 4.6.3 beta",
+        "# FW git hash: 3fc7011a",
+        "# Export date/time: 2026-09-29 12:34:56+00:00",
+    ]
