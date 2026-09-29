@@ -183,6 +183,50 @@ class TestParameterEditorExportSnapshotMetadata:  # pylint: disable=too-few-publ
 class TestParameterExportWindow:  # pylint: disable=too-few-public-methods
     """The export preview follows the selected filters and column sort order."""
 
+    def test_preview_colors_status_rows_and_keeps_stripes_lower_priority(self) -> None:
+        """Status colors take precedence over alternating neutral row backgrounds."""
+        root = tk.Tk()
+        root.withdraw()
+        editor = MagicMock()
+        editor.filter_parameters_for_export.side_effect = filter_parameters_for_export
+        parent = SimpleNamespace(root=root, parameter_editor=editor, ui=MagicMock())
+        parameters = {
+            "READONLY": ArduPilotParameter("READONLY", Par(1.0), metadata={"ReadOnly": True}, fc_value=1.0),
+            "CALIB": ArduPilotParameter("CALIB", Par(2.0), metadata={"Calibration": True}, fc_value=2.0),
+            "MINIMUM": ArduPilotParameter("MINIMUM", Par(1.0), metadata={"min": 2}, fc_value=1.0),
+            "MAXIMUM": ArduPilotParameter("MAXIMUM", Par(3.0), metadata={"max": 2}, fc_value=3.0),
+            "DEFAULT": ArduPilotParameter("DEFAULT", Par(5.0), default_par=Par(5.0), fc_value=5.0),
+            "PLAIN": ArduPilotParameter("PLAIN", Par(4.0), fc_value=4.0),
+        }
+        window = None
+        try:
+            window = ParameterExportWindow(parent, parameters)
+            window.include_calibrations.set(True)
+            window.include_read_only.set(True)
+            window.include_default_values.set(True)
+            window._update_parameter_count()  # pylint: disable=protected-access
+
+            expected_tags = {
+                "READONLY": "read_only",
+                "CALIB": "calibration",
+                "MINIMUM": "below_minimum",
+                "MAXIMUM": "above_maximum",
+                "DEFAULT": "default_value",
+            }
+            for name, status_tag in expected_tags.items():
+                assert status_tag in window.parameter_tree.item(name, "tags")
+            assert "striped" in window.parameter_tree.item("CALIB", "tags")
+            assert str(window.parameter_tree.tag_configure("striped", "background")) == "#eeeeee"
+
+            window._sort_by_column("fc_value")  # pylint: disable=protected-access
+            for row_index, name in enumerate(window.parameter_tree.get_children()):
+                row_tags = window.parameter_tree.item(name, "tags")
+                assert ("striped" in row_tags) == (row_index % 2 == 1)
+        finally:
+            if window is not None:
+                window.close()
+            root.destroy()
+
     def test_preview_updates_and_sorts_numeric_fc_values(self) -> None:
         root = tk.Tk()
         root.withdraw()
