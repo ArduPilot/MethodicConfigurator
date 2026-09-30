@@ -14,13 +14,14 @@ import tkinter as tk
 from argparse import ArgumentParser, Namespace
 from collections.abc import Callable
 from contextlib import suppress
+from dataclasses import dataclass
+from enum import Enum, auto
 
 # from logging import debug as logging_debug
 from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from platform import system as platform_system
-from sys import exit as sys_exit
 from tkinter import messagebox, ttk
 from typing import Any, cast
 from unittest.mock import patch
@@ -63,7 +64,6 @@ def argument_parser() -> Namespace:
         )
     )
     parser = LocalFilesystem.add_argparse_arguments(parser)
-    parser = ComponentEditorWindowBase.add_argparse_arguments(parser)
     return add_common_arguments(parser).parse_args()
     # pylint: enable=duplicate-code
 
@@ -91,6 +91,21 @@ class _EmbeddedScrollFrameStub:  # pylint: disable=too-few-public-methods
 
     def scroll_to_top(self) -> None:
         """No-op: the embedded stub has no canvas to scroll."""
+
+
+class ComponentEditorCloseAction(Enum):
+    """Describe why the standalone component editor's event loop ended."""
+
+    CONTINUE_WORKFLOW = auto()
+    QUIT_WORKFLOW = auto()
+
+
+@dataclass(frozen=True)
+class ComponentEditorCloseResult:
+    """Outcome reported to the application after the component window closes."""
+
+    action: ComponentEditorCloseAction = ComponentEditorCloseAction.CONTINUE_WORKFLOW
+    exit_code: int = 0
 
 
 class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instance-attributes
@@ -129,6 +144,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         """
         self._embedded_parent_frame = embedded_parent_frame
         self._on_component_change = on_component_change
+        self.close_result = ComponentEditorCloseResult()
 
         if embedded_parent_frame is None:
             # Standalone window mode — full BaseWindow initialisation
@@ -701,9 +717,9 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
                     show_error_message(_("Error"), err_msg)
                     ret = True
             logging_info(_("Changes discarded. No data saved."))
-        # Close the window and exit. ret indicates if there was an error earlier (e.g. cleanup failed).
+        # Report this close decision; the application chooses whether to end the workflow.
         self.root.destroy()
-        sys_exit(int(ret))
+        self.close_result = ComponentEditorCloseResult(ComponentEditorCloseAction.QUIT_WORKFLOW, int(ret))
 
     # This function will be overwritten in child classes
     def add_entry_or_combobox(
@@ -717,19 +733,6 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         entry = ttk.Entry(entry_frame)
         entry.insert(0, str(value))
         return entry
-
-    @staticmethod
-    def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
-        """Add component editor specific arguments to the parser."""
-        parser.add_argument(
-            "--skip-component-editor",
-            action="store_true",
-            help=_(
-                "Skip the component editor window. Only use this if all components have been configured. "
-                "Default is %(default)s"
-            ),
-        )
-        return parser
 
     @classmethod
     def create_for_testing(
@@ -775,6 +778,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             instance.version = version
             instance._embedded_parent_frame = None  # noqa: SLF001
             instance._on_component_change = None  # noqa: SLF001
+            instance.close_result = ComponentEditorCloseResult()
             instance._populating = False  # noqa: SLF001
 
             # Create mock UI elements to avoid Tkinter dependencies
@@ -807,9 +811,8 @@ if __name__ == "__main__":  # pragma: no cover
     component_editor_window = ComponentEditorWindowBase(__version__, filesystem, {})
 
     component_editor_window.populate_frames()
-    if args.skip_component_editor:
-        component_editor_window.root.after(10, component_editor_window.root.destroy)
-
     # component_editor_window.validate_data()
 
     component_editor_window.root.mainloop()
+    if component_editor_window.close_result.action is ComponentEditorCloseAction.QUIT_WORKFLOW:
+        raise SystemExit(component_editor_window.close_result.exit_code)

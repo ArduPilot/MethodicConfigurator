@@ -959,6 +959,19 @@ class TestFilesystemStateManagement:
 class TestProjectSettingsProperties:
     """Test project settings property access."""
 
+    def test_project_manager_identifies_project_created_in_current_workflow(self) -> None:
+        """Creation settings distinguish a newly created project from one merely opened."""
+        manager = VehicleProjectManager(MagicMock(spec=LocalFilesystem))
+        manager._settings = MagicMock(spec=NewVehicleProjectSettings)
+
+        assert manager.is_new_project is True
+
+    def test_project_manager_identifies_opened_project_as_existing(self) -> None:
+        """A manager without creation settings represents an existing project."""
+        manager = VehicleProjectManager(MagicMock(spec=LocalFilesystem))
+
+        assert manager.is_new_project is False
+
     def test_user_can_access_reset_fc_parameters_property_when_settings_exist(self) -> None:
         """
         User can access reset FC parameters property when settings exist.

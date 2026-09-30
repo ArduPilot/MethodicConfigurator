@@ -25,6 +25,7 @@ import pytest
 from ardupilot_methodic_configurator.data_model_parameter_editor import LogAnalysisInputs
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (
+    ParameterEditorAction,
     ParameterEditorUiServices,
     ParameterEditorWindow,
 )
@@ -125,6 +126,7 @@ def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:  # noq
     editor.inline_component_editor = None
     editor._inline_component_name = None
     editor._updating_inline_editor = False
+    editor._requested_action = ParameterEditorAction.FINISHED
     editor.inline_component_container = MagicMock()
     return editor
 
@@ -461,9 +463,10 @@ class TestRunLoop:  # pylint: disable=too-few-public-methods
     def test_run_enters_mainloop(self, parameter_editor_window: ParameterEditorWindow) -> None:
         parameter_editor_window.root.mainloop = MagicMock()
 
-        parameter_editor_window.run()
+        result = parameter_editor_window.run()
 
         parameter_editor_window.root.mainloop.assert_called_once_with()
+        assert result is ParameterEditorAction.FINISHED
 
 
 class TestWidgetFactoryMethods:
@@ -493,7 +496,12 @@ class TestWidgetFactoryMethods:
         parameter_editor.get_vehicle_directory.return_value = "vehicle_dir"
 
         directory_widget = MagicMock()
-        button_widgets = [MagicMock() for _ in range(5)]
+        button_widgets: dict[Callable[..., None], MagicMock] = {}
+
+        def create_button(_parent: object, *, command: Callable[..., None], **_kwargs: object) -> MagicMock:
+            button = MagicMock()
+            button_widgets[command] = button
+            return button
 
         with (
             patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Frame", return_value=MagicMock()),
@@ -513,7 +521,7 @@ class TestWidgetFactoryMethods:
             ),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Button",
-                side_effect=button_widgets,
+                side_effect=create_button,
             ),
             patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.show_tooltip"),
             patch.object(
@@ -524,13 +532,8 @@ class TestWidgetFactoryMethods:
         ):
             editor._create_conf_widgets("__VERSION__")
 
-        button_widgets[2].configure.assert_called_once_with(state=expected_state)
-        button_widgets[4].configure.assert_called_once_with(state="normal")
-        button_widgets[0].grid.assert_called_once_with(row=0, column=0, padx=(8, 8), sticky=tk.EW)
-        button_widgets[1].grid.assert_called_once_with(row=1, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
-        button_widgets[2].grid.assert_called_once_with(row=2, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
-        button_widgets[3].grid.assert_called_once_with(row=3, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
-        button_widgets[4].grid.assert_called_once_with(row=4, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
+        button_widgets[editor.on_fc_banner_click].configure.assert_called_once_with(state=expected_state)
+        button_widgets[editor.on_zip_vehicle_for_forum_help_click].configure.assert_called_once_with(state="normal")
 
     def test_user_can_open_the_flight_controller_banner(self, parameter_editor_window: ParameterEditorWindow) -> None:
         """
@@ -2388,6 +2391,33 @@ class TestPersistenceAndExit:
         focus_widget.event_generate.assert_called_once_with("<FocusOut>", when="now")
         mock_write.assert_called_once()
         mock_quit.assert_called_once()
+
+    @pytest.mark.parametrize("save_result", [True, False])
+    def test_user_hands_off_after_being_offered_to_save_changes(
+        self, parameter_editor_window: ParameterEditorWindow, save_result: bool
+    ) -> None:
+        """The handoff proceeds after the user accepts or declines the optional save prompt."""
+        events: list[str] = []
+        focus_widget = MagicMock()
+        focus_widget.event_generate.side_effect = lambda *_args, **_kwargs: events.append("commit focused edit")
+        with (
+            patch.object(parameter_editor_window.parameter_editor_table.view_port, "focus_get", return_value=focus_widget),
+            patch.object(
+                parameter_editor_window.parameter_editor,
+                "handle_write_changes_workflow",
+                side_effect=lambda *_args: (events.append("offer save"), save_result)[1],
+            ),
+            patch.object(parameter_editor_window.root, "destroy", side_effect=lambda: events.append("destroy window")),
+            patch.object(
+                parameter_editor_window.root,
+                "mainloop",
+                side_effect=parameter_editor_window.on_edit_vehicle_components_click,
+            ),
+        ):
+            assert parameter_editor_window.run() is ParameterEditorAction.EDIT_COMPONENTS
+
+        assert events == ["commit focused edit", "offer save", "destroy window"]
+        focus_widget.event_generate.assert_called_once_with("<FocusOut>", when="now")
 
     def test_user_triggers_file_upload_helper_with_progress(self, editor_factory, parameter_editor: MagicMock) -> None:
         """

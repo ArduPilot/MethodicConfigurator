@@ -17,6 +17,7 @@ import tempfile
 import threading
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
+from enum import Enum, auto
 from functools import partial
 
 # from logging import debug as logging_debug
@@ -302,6 +303,13 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
                 download_progress_window.destroy()
 
 
+class ParameterEditorAction(Enum):
+    """Describe the action requested when the parameter editor window closes."""
+
+    FINISHED = auto()
+    EDIT_COMPONENTS = auto()
+
+
 class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes, too-many-public-methods
     """
     Parameter editor and upload graphical user interface (GUI) window.
@@ -339,6 +347,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.inline_component_editor: ComponentEditorWindow | None = None
         self._inline_component_name: str | None = None
         self._updating_inline_editor: bool = False
+        self._requested_action = ParameterEditorAction.FINISHED
 
         self.root.title(
             _("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - Parameter file editor and uploader")
@@ -389,14 +398,19 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if isinstance(self.root, tk.Tk) and UsagePopupWindow.should_display("parameter_editor"):
             self.root.after(100, lambda: display_parameter_editor_usage_popup(cast("tk.Tk", self.root)))
 
-    def run(self) -> None:
+    def run(self) -> ParameterEditorAction:
         """
         Start the GUI main event loop.
 
         This method should be called after instantiation to start the GUI.
         Separated from __init__ to allow for testing and more flexible initialization.
+
+        Returns:
+            The action requested by the user when the event loop ends.
+
         """
         self.root.mainloop()
+        return self._requested_action
 
     def _create_conf_widgets(self, version: str) -> None:  # pylint: disable=too-many-locals
         config_frame = ttk.Frame(self.main_frame)
@@ -506,25 +520,43 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         analyse_log_button.grid(row=3, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
         show_tooltip(analyse_log_button, _("Open a .bin flight log and analyse its availability"))
 
-        zip_vehicle_for_forum_button = ttk.Button(
+        edit_vehicle_components_button = ttk.Button(
             parameter_actions_frame,
-            text=_("Zip vehicle for Forum help"),
-            command=self.on_zip_vehicle_for_forum_help_click,
+            text=_("Edit vehicle components"),
+            command=self.on_edit_vehicle_components_click,
             style=smaller_button_style,
         )
+        edit_vehicle_components_button.grid(row=4, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
+        show_tooltip(
+            edit_vehicle_components_button,
+            _("Close the parameter editor and open the vehicle component editor"),
+        )
+
+        self._create_logo_and_forum_help_widgets(config_frame, version, smaller_button_style)
+
+    def _create_logo_and_forum_help_widgets(self, parent: ttk.Frame, version: str, button_style: str) -> None:
+        """Create the ArduPilot logo and forum-help zip button in the configuration header."""
+        logo_and_forum_frame = ttk.Frame(parent)
+        logo_and_forum_frame.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
+        image_label = self.put_image_in_label(logo_and_forum_frame, LocalFilesystem.application_logo_filepath())
+        image_label.pack(side=tk.TOP, anchor=tk.NE)
+        image_label.bind("<Button-1>", lambda event: AboutWindow(self.root, version))  # noqa: ARG005
+        show_tooltip(image_label, _("User Manual, Support Forum, Report a Bug, Licenses, Source Code"))
+
+        zip_vehicle_for_forum_button = ttk.Button(
+            logo_and_forum_frame,
+            text=_("Zip vehicle for Forum help"),
+            command=self.on_zip_vehicle_for_forum_help_click,
+            style=button_style,
+        )
         zip_vehicle_for_forum_button.configure(state=("normal" if self.parameter_editor.parameter_files() else "disabled"))
-        zip_vehicle_for_forum_button.grid(row=4, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
+        zip_vehicle_for_forum_button.pack(side=tk.TOP, fill="x", pady=(3, 0))
         show_tooltip(
             zip_vehicle_for_forum_button,
             _("Creates a .zip file of the configuration files\nso that they can be easily shared for forum help")
             if self.parameter_editor.parameter_files()
             else _("No intermediate parameter files available"),
         )
-
-        image_label = self.put_image_in_label(config_frame, LocalFilesystem.application_logo_filepath())
-        image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
-        image_label.bind("<Button-1>", lambda event: AboutWindow(self.root, version))  # noqa: ARG005
-        show_tooltip(image_label, _("User Manual, Support Forum, Report a Bug, Licenses, Source Code"))
 
     def legend_frame(self, config_subframe: ttk.Frame) -> None:  # pylint: disable=too-many-locals
         font_family, font_size = get_widget_font_family_and_size(config_subframe)
@@ -1752,11 +1784,22 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         return success
 
     def close_connection_and_quit(self) -> None:
+        self._commit_focused_edit_and_offer_save()
+        self.root.quit()  # Then stop the Tkinter event loop
+
+    def on_edit_vehicle_components_click(self) -> None:
+        """Close this window and request the standalone component editor."""
+        self._commit_focused_edit_and_offer_save()
+        self._requested_action = ParameterEditorAction.EDIT_COMPONENTS
+        self._cleanup_plugin_views()
+        self.root.destroy()
+
+    def _commit_focused_edit_and_offer_save(self) -> None:
+        """Commit the focused widget and offer to save changes in the current step."""
         focused_widget = self.parameter_editor_table.view_port.focus_get()
         if focused_widget is not None:
             focused_widget.event_generate("<FocusOut>", when="now")  # trigger a sync between GUI and data-model values
         self.write_changes_to_intermediate_parameter_file()
-        self.root.quit()  # Then stop the Tkinter event loop
 
     @staticmethod
     def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:

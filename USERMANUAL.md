@@ -49,7 +49,7 @@ flowchart TD
         G -->|Yes| H[Create from Configured FC]
         G -->|No| I[Select Template]
         I --> J[Create New Project]
-        F --> K[Component Editor]
+        F --> N[Parameter Editor]
         H --> K
         J --> K
     end
@@ -292,8 +292,11 @@ For exporting the current flight-controller values, see the [Flight-Controller P
   <ins><b><i>Parameter File Editor and Uploader Window (main application) in normal GUI complexity</i></b></ins>
 </figure>
 
-The GUI complexity (simple or normal) is selected in the vehicle component editor window in the previous step.
+The GUI complexity (simple or normal) is selected in the vehicle component editor window when creating a project.
 The normal layout is explained below, the simple layout is similar but has less elements.
+
+When you open an existing project, AMC goes directly to the parameter editor. Use the **Edit vehicle components** button
+there to review or change the project's component information.
 
 #### Parameter editor and uploader workflow overview
 
@@ -507,7 +510,6 @@ Here is a list of command line options:
   These are the currently supported automatic defaults; for other vehicle and firmware
   combinations, use `--template-dir` to provide a compatible template explicitly.
 - **`--n`**: Start directly on the nth intermediate parameter file (skip previous files). The default is 0.
-- **`--skip-component-editor`**: Skip the component editor window. Only use this if all components have been configured. Default is False
 - **`--loglevel`**: The logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL). The default is INFO.
 - **`-t` or `--vehicle-type`**: The type of the vehicle.
   Choices are 'AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane', 'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'.
@@ -553,17 +555,17 @@ ardupilot_methodic_configurator --bin-log="C:\logs\flight.bin" --template-dir="C
 After the project is created from the log, AMC continues through the normal GUI workflow:
 the Vehicle Component Editor opens first, followed by the parameter editor and uploader.
 
-#### Skip Steps for Faster Workflow
+#### Start with an Existing Project
 
 ```bash
-# Skip component editor (when components already configured)
-ardupilot_methodic_configurator --skip-component-editor --vehicle-dir="C:\MyDrone"
+# Existing projects open directly in the parameter editor
+ardupilot_methodic_configurator --vehicle-dir="C:\MyDrone"
 
 # Start from specific parameter file (skip earlier steps)
 ardupilot_methodic_configurator --n=5 --vehicle-dir="C:\MyDrone"
 
-# Combine multiple options for fastest startup
-ardupilot_methodic_configurator --device="COM3" --vehicle-dir="C:\MyDrone" --skip-component-editor --n=3
+# Combine options when opening an existing project
+ardupilot_methodic_configurator --device="COM3" --vehicle-dir="C:\MyDrone" --n=3
 ```
 
 #### Different Vehicle Types
@@ -628,8 +630,6 @@ Use an empty space to separate each option.
 1. `--device <devicename>` this explicitly connects to \<devicename> skipping the auto-detection process.
 1. `--vehicle-dir <vehicle-directory>` this explicitly looks for project files in \<vehicle-directory> saving you the trouble to
  manually select it in the GUI.
-1. `--skip-component-editor` if you do not need to change the components and connections of your vehicle, this will skip the
- component and connection editor window.
 1. `--n <number>` this will skip directly to step number \<number> so that you do not need to skip the previous steps
 1. `--skip-check-for-updates` this saves very little time on startup, but you can skip it using this.
 

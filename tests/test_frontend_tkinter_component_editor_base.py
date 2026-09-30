@@ -12,7 +12,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 import types
-from argparse import ArgumentParser
 from collections.abc import Generator
 from tkinter import ttk
 from typing import cast, get_args, get_origin
@@ -28,6 +27,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_component_editor_base impo
     VEHICLE_IMAGE_HEIGHT_PIX,
     VEHICLE_IMAGE_WIDTH_PIX,
     WINDOW_WIDTH_PIX,
+    ComponentEditorCloseAction,
+    ComponentEditorCloseResult,
     ComponentEditorWindowBase,
     EntryWidget,
     argument_parser,
@@ -47,6 +48,7 @@ def setup_common_editor_mocks(editor) -> ComponentEditorWindowBase:
     editor.version = "1.0.0"
     editor._embedded_parent_frame = None
     editor._on_component_change = None
+    editor.close_result = ComponentEditorCloseResult()
     editor._populating = False
 
     # Mock filesystem and methods with proper schema loading
@@ -118,16 +120,6 @@ class SharedTestArgumentParser:
 
             assert hasattr(args, "vehicle_dir")
             assert hasattr(args, "vehicle_type")
-            assert hasattr(args, "skip_component_editor")
-
-    def test_argument_parser_with_skip_component_editor(self) -> None:
-        """Test argument_parser with skip-component-editor flag."""
-        with patch(
-            "sys.argv", ["test_script", "--vehicle-dir", "test_dir", "--vehicle-type", "ArduCopter", "--skip-component-editor"]
-        ):
-            args = argument_parser()
-
-            assert args.skip_component_editor is True
 
 
 @pytest.fixture
@@ -153,21 +145,9 @@ class TestArgumentParserBehavior:
             args = argument_parser()
 
             # Verify all expected attributes exist
-            required_attrs = ["vehicle_dir", "vehicle_type", "skip_component_editor", "loglevel"]
+            required_attrs = ["vehicle_dir", "vehicle_type", "loglevel"]
             for attr in required_attrs:
                 assert hasattr(args, attr), f"Missing required attribute: {attr}"
-
-    def test_argument_parser_handles_skip_component_editor_flag(self) -> None:
-        """Test that skip-component-editor flag is properly handled."""
-        with patch(
-            "sys.argv", ["test_script", "--vehicle-dir", "test", "--vehicle-type", "ArduCopter", "--skip-component-editor"]
-        ):
-            args = argument_parser()
-            assert args.skip_component_editor is True
-
-        with patch("sys.argv", ["test_script", "--vehicle-dir", "test", "--vehicle-type", "ArduCopter"]):
-            args = argument_parser()
-            assert args.skip_component_editor is False
 
     def test_argument_parser_handles_different_log_levels(self) -> None:
         """Test that different log levels are properly parsed."""
@@ -241,26 +221,6 @@ class TestUserArgumentParsingWorkflows:
         # Assert: Verify arguments are parsed correctly
         assert args.vehicle_dir == "test_dir"
         assert args.vehicle_type == "ArduCopter"
-        assert args.skip_component_editor is False
-
-    def test_user_can_skip_component_editor_when_needed(self) -> None:
-        """
-        User can skip the component editor interface when components are pre-configured.
-
-        GIVEN: A user has already configured their vehicle components
-        WHEN: They provide the skip-component-editor flag
-        THEN: The skip flag should be properly set to True
-        """
-        # Arrange: Set up command line arguments with skip flag
-        test_args = ["test_script", "--vehicle-dir", "test", "--vehicle-type", "ArduCopter", "--skip-component-editor"]
-
-        # Act: Parse the arguments
-        with patch("sys.argv", test_args):
-            args = argument_parser()
-
-        # Assert: Verify skip flag is enabled
-        assert args.skip_component_editor is True
-
     def test_user_can_configure_different_log_levels_for_debugging(self) -> None:
         """
         User can set different logging levels for troubleshooting purposes.
@@ -688,19 +648,16 @@ class TestWindowClosingWorkflows:
         """
         # Arrange: Mock user choosing to save and a successful save operation
         editor_for_closing_tests.save_component_json = MagicMock(return_value=False)
-        with (
-            patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.messagebox.askyesnocancel",
-                return_value=True,
-            ),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.sys_exit") as mock_exit,
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.messagebox.askyesnocancel",
+            return_value=True,
         ):
             # Act: Trigger window closing
             editor_for_closing_tests.on_closing()
 
-        # Assert: Save should be called and application should exit
+        # Assert: The application receives a successful user-close outcome.
         editor_for_closing_tests.save_component_json.assert_called_once()
-        mock_exit.assert_called_once_with(0)
+        assert editor_for_closing_tests.close_result == ComponentEditorCloseResult(ComponentEditorCloseAction.QUIT_WORKFLOW, 0)
 
     def test_user_stays_in_component_editor_when_closing_save_fails(
         self,
@@ -720,7 +677,6 @@ class TestWindowClosingWorkflows:
                 return_value=True,
             ),
             patch.object(editor_for_closing_tests.root, "destroy"),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.sys_exit") as mock_exit,
         ):
             # Act: Trigger window closing
             editor_for_closing_tests.on_closing()
@@ -728,7 +684,7 @@ class TestWindowClosingWorkflows:
         # Assert: Failed save does not close or exit the application
         editor_for_closing_tests.save_component_json.assert_called_once()
         editor_for_closing_tests.root.destroy.assert_not_called()
-        mock_exit.assert_not_called()
+        assert editor_for_closing_tests.close_result.action is ComponentEditorCloseAction.CONTINUE_WORKFLOW
 
     def test_user_can_close_without_saving_when_prompted(self, editor_for_closing_tests: ComponentEditorWindowBase) -> None:
         """
@@ -739,12 +695,9 @@ class TestWindowClosingWorkflows:
         THEN: The window should close without saving
         """
         # Arrange: Mock user choosing not to save
-        with (
-            patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.messagebox.askyesnocancel",
-                return_value=False,
-            ),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.sys_exit") as mock_exit,
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.messagebox.askyesnocancel",
+            return_value=False,
         ):
             # Act: Trigger window closing
             editor_for_closing_tests.on_closing()
@@ -752,7 +705,7 @@ class TestWindowClosingWorkflows:
         # Assert: Save should not be called but window should close
         editor_for_closing_tests.save_component_json.assert_not_called()
         editor_for_closing_tests.root.destroy.assert_called_once()
-        mock_exit.assert_called_once_with(0)
+        assert editor_for_closing_tests.close_result.action is ComponentEditorCloseAction.QUIT_WORKFLOW
 
     def test_user_can_cancel_closing_operation(self, editor_for_closing_tests: ComponentEditorWindowBase) -> None:
         """
@@ -940,24 +893,6 @@ class TestModuleConstantsAndTypes:
 
         assert origin is types.UnionType
         assert len(args) >= 2  # Should include at least Entry and Combobox
-
-    def test_argparse_arguments_include_component_editor_options(self) -> None:
-        """
-        Argument parser includes options relevant to component editor functionality.
-
-        GIVEN: A user needs to configure component editor behavior
-        WHEN: Command line arguments are defined
-        THEN: Component editor specific options should be available
-        """
-        # Arrange: Create test parser
-        parser = ArgumentParser()
-
-        # Act: Add component editor arguments
-        ComponentEditorWindowBase.add_argparse_arguments(parser)
-
-        # Assert: Component editor arguments should be added
-        # This tests the method exists and can be called
-        assert hasattr(ComponentEditorWindowBase, "add_argparse_arguments")
 
 
 class TestCreateForTestingFactory:
@@ -1669,7 +1604,6 @@ class TestMainScriptExecutionWorkflows:
         mock_args.vehicle_type = "ArduCopter"
         mock_args.allow_editing_template_files = False
         mock_args.save_component_to_system_templates = False
-        mock_args.skip_component_editor = False
 
         mock_parser.return_value = mock_args
         mock_filesystem = MagicMock()
