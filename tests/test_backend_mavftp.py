@@ -25,6 +25,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from pymavlink import mavutil
+from pymavlink.dialects.v20 import ardupilotmega as mavlink_v2
 
 # from ardupilot_methodic_configurator.backend_mavftp import FtpError
 from ardupilot_methodic_configurator.backend_mavftp import (
@@ -34,6 +35,7 @@ from ardupilot_methodic_configurator.backend_mavftp import (
     MAVFTPReturn,
     OP_Ack,
     OP_BurstReadFile,
+    OP_CreateFile,
     OP_ListDirectory,
     OP_Nack,
     OP_OpenFileRO,
@@ -307,7 +309,56 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):  # pylint: disable=too-many-
 
         assert idle is False
         assert self.mav_ftp.terminal_timeout is True
-        terminate.assert_called_once()
+        terminate.assert_not_called()
+        assert self.mav_ftp.request_cancelled is True
+
+    def test_mavlink2_ftp_request_avoids_exact_usb_packet_boundary(self) -> None:
+        """A 37-byte upload/download path must not encode to a 64-byte MAVLink 2 frame."""
+        path = "/APM/Scripts/copter-magfit-helper.lua"
+        self.mock_master.WIRE_PROTOCOL_VERSION = "2.0"
+        mav = mavlink_v2.MAVLink(None, srcSystem=250)
+        captured: list[bytes] = []
+
+        with patch.object(
+            self.mav_ftp,
+            "_MAVFTP__transmit_payload",
+            side_effect=lambda payload, _writer=None: captured.append(bytes(payload)),
+        ):
+            for opcode in (OP_CreateFile, OP_OpenFileRO):
+                self.mav_ftp._MAVFTP__send(  # pylint: disable=protected-access
+                    FTP_OP(1, 0, opcode, len(path), 0, 0, 0, bytearray(path, "ascii"))
+                )
+
+        assert len(captured) == 2
+        for payload in captured:
+            frame = mav.file_transfer_protocol_encode(0, 1, 1, payload).pack(mav)
+            assert len(frame) == 66
+            assert payload[4:5] == bytes([len(path)])
+            assert payload[12 : 12 + len(path)] == path.encode("ascii")
+            assert payload[12 + len(path)] == 0
+            assert payload[12 + len(path) + 1] == 1
+
+    def test_mavlink2_adjacent_paths_and_mavlink1_remain_unmodified(self) -> None:
+        """Unproblematic MAVLink 2 lengths and MAVLink 1 retain zero padding."""
+        captured: list[bytes] = []
+        paths = (
+            ("2.0", "/APM/Scripts/copter-magfit-helpe.txt"),
+            ("2.0", "/APM/Scripts/copter-magfit-helperx.txt"),
+            ("1.0", "/APM/Scripts/copter-magfit-helper.txt"),
+        )
+        with patch.object(
+            self.mav_ftp,
+            "_MAVFTP__transmit_payload",
+            side_effect=lambda payload, _writer=None: captured.append(bytes(payload)),
+        ):
+            for version, path in paths:
+                self.mock_master.WIRE_PROTOCOL_VERSION = version
+                self.mav_ftp._MAVFTP__send(  # pylint: disable=protected-access
+                    FTP_OP(1, 0, OP_CreateFile, len(path), 0, 0, 0, bytearray(path, "ascii"))
+                )
+
+        for payload, (_, path) in zip(captured, paths, strict=True):
+            assert payload[12 + len(path) :] == bytes(251 - 12 - len(path))
 
     def test_read_renews_deadline_when_idle_flush_accepts_delayed_reply(self) -> None:
         """A delayed reply accepted by idle_task must extend read's deadline."""
@@ -564,7 +615,7 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):  # pylint: disable=too-many-
             offset=0,
             payload=None,
         )
-        terminate = Mock(side_effect=lambda: setattr(self.mav_ftp, "fh", None))
+        terminate = Mock(side_effect=lambda **_kwargs: setattr(self.mav_ftp, "fh", None))
 
         with (
             patch.object(self.mav_ftp, "_MAVFTP__send") as send,
