@@ -1643,7 +1643,28 @@ class TestFlightControllerResetWorkflows:
         parameter_editor._flight_controller.reset_all_parameters_to_default_and_reconnect.assert_called_once_with(
             progress_callback,
         )
-        parameter_editor.download_flight_controller_parameters.assert_called_once_with(get_download_progress_callback)
+        parameter_editor.download_flight_controller_parameters.assert_called_once_with(
+            get_download_progress_callback, persist_project_state=True
+        )
+        show_error.assert_not_called()
+
+    def test_project_reset_still_updates_downloaded_defaults(self, parameter_editor, tmp_path: Path) -> None:
+        """
+        Preserve default-value persistence for normal AMC resets.
+
+        GIVEN: An AMC project and a connected controller with new defaults
+        WHEN: The user resets the controller using the default workflow
+        THEN: The downloaded defaults are passed to the project defaults writer.
+        """
+        defaults = ParDict({"ROLL_P": Par(0.1)})
+        parameter_editor._local_filesystem.vehicle_dir = str(tmp_path)
+        parameter_editor._flight_controller.reset_all_parameters_to_default_and_reconnect.return_value = (True, "")
+        parameter_editor._flight_controller.download_params.return_value = ({"ROLL_P": 0.1}, defaults)
+        show_error = MagicMock()
+
+        assert parameter_editor.reset_all_parameters_to_default(show_error) is True
+
+        parameter_editor._local_filesystem.write_param_default_values_to_file.assert_called_once_with(defaults)
         show_error.assert_not_called()
 
     def test_user_is_informed_when_resetting_all_parameters_fails(self, parameter_editor) -> None:

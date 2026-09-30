@@ -12,6 +12,7 @@ import sys
 import tempfile
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
+from functools import partial
 from pathlib import Path
 from sys import platform as sys_platform
 from tkinter import ttk
@@ -224,9 +225,9 @@ class StandaloneUploadHost(ParameterApplicationHost):
             return False
 
     def reset_all_parameters_to_default(self) -> bool:
-        """Reset the FC with the same progress UI used by AMC."""
+        """Reset the FC with shared progress UI without writing AMC project defaults."""
         return self.ui.reset_all_parameters_to_default_with_progress(
-            self.root, self.parameter_editor.reset_all_parameters_to_default
+            self.root, partial(self.parameter_editor.reset_all_parameters_to_default, persist_project_state=False)
         )
 
 
