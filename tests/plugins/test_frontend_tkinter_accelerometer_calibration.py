@@ -191,6 +191,9 @@ def view_with_model(tk_root, mocker) -> Generator[SimpleNamespace, None, None]:
     blocking message boxes are patched so no dialog is ever shown.
     """
     model = MagicMock(spec=AccelerometerCalibrationDataModel)
+    # The common path is disconnected; tests that model a connected controller
+    # opt in explicitly so retry/readback behavior stays intentional.
+    model.is_connected.return_value = False
     parent = ttk.Frame(tk_root)
     base_window = SimpleNamespace(
         root=tk_root,
