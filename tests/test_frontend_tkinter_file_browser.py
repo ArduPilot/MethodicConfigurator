@@ -2061,6 +2061,153 @@ class TestFileBrowserWindow:
         menu.tk_popup.assert_called_once_with(100, 200)
         menu.grab_release.assert_called_once_with()
 
+    def test_single_local_bin_shows_eight_web_log_tools(self, tmp_path: Path) -> None:
+        """GIVEN one .BIN file, WHEN right-clicked, THEN eight web log tools are offered."""
+        window = _bare_window()
+        window.remote_tree = MagicMock()
+        window.local_tree = MagicMock()
+        window.local_tree.identify_row.return_value = "0"
+        window.local_tree.selection.return_value = ("0",)
+        window.local_entries = [LocalFileEntry("Flight.BIN", tmp_path / "Flight.BIN", 12)]
+        window._update_transfer_buttons = MagicMock()
+        menu = MagicMock()
+        dispatched: list[str] = []
+        window.open_selected_log_in_web_tool = dispatched.append
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser.tk.Menu", return_value=menu):
+            window._show_context_menu(SimpleNamespace(y=1, x_root=2, y_root=3), remote=False)
+
+        assert [call_args.kwargs["label"] for call_args in menu.add_command.call_args_list] == [
+            "New directory",
+            "Open",
+            "plotbeta",
+            "plot",
+            "hardware report",
+            "MagFit",
+            "Filter Review",
+            "PID Review",
+            "Stream stats",
+            "System ID",
+        ]
+        for command_call in menu.add_command.call_args_list[2:]:
+            command_call.kwargs["command"]()
+        assert dispatched == [
+            "https://plotbeta.ardupilot.org/",
+            "https://plot.ardupilot.org/",
+            "https://firmware.ardupilot.org/Tools/WebTools/HardwareReport/",
+            "https://firmware.ardupilot.org/Tools/WebTools/MAGFit/",
+            "https://firmware.ardupilot.org/Tools/WebTools/FilterReview/",
+            "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
+            "https://firmware.ardupilot.org/Tools/WebTools/StreamStats/",
+            "https://firmware.ardupilot.org/Tools/WebTools/SysID/",
+        ]
+
+    @pytest.mark.parametrize("name", ["flight.txt", "folder.bin"])
+    def test_web_log_tools_are_hidden_for_other_entries(self, tmp_path: Path, name: str) -> None:
+        """GIVEN a non-log or directory, WHEN right-clicked, THEN web log actions are absent."""
+        window = _bare_window()
+        window.remote_tree = MagicMock()
+        window.local_tree = MagicMock()
+        window.local_tree.identify_row.return_value = "0"
+        window.local_tree.selection.return_value = ("0",)
+        window.local_entries = [LocalFileEntry(name, tmp_path / name, 12, is_directory=name == "folder.bin")]
+        window._update_transfer_buttons = MagicMock()
+        menu = MagicMock()
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser.tk.Menu", return_value=menu):
+            window._show_context_menu(SimpleNamespace(y=1, x_root=2, y_root=3), remote=False)
+
+        assert len(menu.add_command.call_args_list) == 2
+
+    def test_web_log_tool_uses_selected_file_from_context_menu(self, tmp_path: Path) -> None:
+        """GIVEN a selected log, WHEN invoking a web tool, THEN hand its local path to a background worker."""
+        log = tmp_path / "flight.bin"
+        log.write_bytes(b"bin")
+        window = _bare_window()
+        window.local_entries = [LocalFileEntry(log.name, log, 3)]
+        window.local_tree = MagicMock()
+        window.local_tree.selection.return_value = ("0",)
+        window.ui = MagicMock()
+        window._local_task_runner = DeferredTaskRunner()
+
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser.open_log_in_web_tool") as open_log:
+            window.open_selected_log_in_web_tool("https://plot.ardupilot.org/")
+            open_log.assert_not_called()
+            window._local_task_runner.finish()
+            open_log.assert_called_once_with("https://plot.ardupilot.org/", log)
+
+    def test_web_log_tool_refuses_multiple_selected_files(self, tmp_path: Path) -> None:
+        """GIVEN multiple logs, WHEN a stale menu command runs, THEN do not open any file."""
+        window = _bare_window()
+        window.local_tree = MagicMock()
+        window.local_tree.selection.return_value = ("0", "1")
+        window.local_entries = [LocalFileEntry(name, tmp_path / name, 1) for name in ("a.bin", "b.bin")]
+        window._local_task_runner = MagicMock()
+
+        window.open_selected_log_in_web_tool("https://plot.ardupilot.org/")
+
+        window._local_task_runner.start.assert_not_called()
+
+    def test_web_log_tool_reports_browser_failure(self, tmp_path: Path) -> None:
+        """GIVEN Selenium cannot start, WHEN its task completes, THEN report an actionable error."""
+        log = tmp_path / "flight.bin"
+        log.write_bytes(b"bin")
+        window = _bare_window()
+        window.local_entries = [LocalFileEntry(log.name, log, 3)]
+        window.local_tree = MagicMock()
+        window.local_tree.selection.return_value = ("0",)
+        window.ui = MagicMock()
+        window._local_task_runner = DeferredTaskRunner()
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_file_browser.open_log_in_web_tool",
+            side_effect=RuntimeError("Chrome unavailable"),
+        ):
+            window.open_selected_log_in_web_tool("https://plot.ardupilot.org/")
+            window._local_task_runner.finish()
+
+        window.ui.show_error.assert_called_once_with("Open log in web tool failed", "Chrome unavailable")
+
+    def test_local_navigation_during_web_log_open_eventually_lists_new_directory(self, tmp_path: Path) -> None:
+        """GIVEN a pending browser launch, WHEN navigating locally, THEN populate the new directory afterwards."""
+        log = tmp_path / "flight.bin"
+        log.write_bytes(b"bin")
+        destination = tmp_path / "next"
+        destination.mkdir()
+        (destination / "new.txt").write_text("new", encoding="utf-8")
+        window = _bare_window()
+        window.local_entries = [LocalFileEntry(log.name, log, 3)]
+        window.local_tree = MagicMock()
+        window.local_tree.selection.return_value = ("0",)
+        window.local_directory_var = MagicMock()
+        window.local_directory_var.get.return_value = str(tmp_path)
+        window.local_directory_label = MagicMock()
+        window._populate_local_tree = MagicMock()
+        window._update_parent_navigation_buttons = MagicMock()
+        window.ui = MagicMock()
+        window._local_task_runner = DeferredTaskRunner()
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser.open_log_in_web_tool"):
+            window.open_selected_log_in_web_tool("https://plot.ardupilot.org/")
+            window.local_directory_var.get.return_value = str(destination)
+            window.refresh_local_panel()
+            window._local_task_runner.finish()
+            assert window._local_task_runner.active
+            window._local_task_runner.finish()
+        assert [entry.name for entry in window.local_entries] == ["new.txt"]
+
+    def test_second_web_log_action_reports_busy_instead_of_silently_disappearing(self, tmp_path: Path) -> None:
+        """GIVEN an active browser task, WHEN another tool is selected, THEN explain why it cannot start."""
+        log = tmp_path / "flight.bin"
+        window = _bare_window()
+        window.local_entries = [LocalFileEntry(log.name, log, 3)]
+        window.local_tree = MagicMock()
+        window.local_tree.selection.return_value = ("0",)
+        window.ui = MagicMock()
+        window._local_task_runner = DeferredTaskRunner()
+        window.open_selected_log_in_web_tool("https://plot.ardupilot.org/")
+        window.open_selected_log_in_web_tool("https://plotbeta.ardupilot.org/")
+        window.ui.show_error.assert_called_once_with(
+            "Open log in web tool failed", "Another file operation is already in progress."
+        )
+
     def test_context_menu_survives_popup_return_until_it_is_unmapped(self) -> None:
         """The X11 popup remains available after ``tk_popup`` returns."""
 

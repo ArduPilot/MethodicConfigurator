@@ -18,6 +18,7 @@ import sys
 import tkinter as tk
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from functools import partial
 from pathlib import Path
 from tkinter import filedialog, simpledialog, ttk
 from typing import TYPE_CHECKING, Generic, Literal, Protocol, TypeVar, cast
@@ -33,6 +34,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_files import (
     normalize_remote_path,
 )
 from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
+from ardupilot_methodic_configurator.backend_web_log_tools import WEB_LOG_TOOLS, open_log_in_web_tool
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.formatting import format_filesize
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
@@ -1062,10 +1064,8 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         self._update_transfer_buttons()
 
         menu = tk.Menu(tree, tearoff=False)
-        can_open = False
-        if not remote:
-            selected_entries = self._selected_local_entries()
-            can_open = len(selected_entries) == 1 and not selected_entries[0].is_directory
+        selected_entries = self._selected_local_entries() if not remote else []
+        can_open = len(selected_entries) == 1 and not selected_entries[0].is_directory
         menu.add_command(
             label=_("New directory"),
             command=self.create_new_remote_directory if remote else self.create_new_local_directory,
@@ -1076,6 +1076,10 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
                 command=self.open_selected_local_file,
                 state="normal" if can_open else "disabled",
             )
+            if can_open and selected_entries[0].path.suffix.lower() == ".bin":
+                menu.add_separator()
+                for url, tool in WEB_LOG_TOOLS.items():
+                    menu.add_command(label=tool.label, command=partial(self.open_selected_log_in_web_tool, url))
         menu_closed = False
 
         def close_menu(_event: tk.Event | None = None) -> None:
@@ -1102,6 +1106,28 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
             if not menu_closed:
                 menu.grab_release()
         return "break"
+
+    def open_selected_log_in_web_tool(self, url: str) -> None:
+        """Load a single selected local .bin log into a managed browser tab."""
+        if self._all_controls_locked or url not in WEB_LOG_TOOLS:
+            return
+        selected = self._selected_local_entries()
+        if len(selected) != 1 or selected[0].is_directory or selected[0].path.suffix.lower() != ".bin":
+            return
+        path = selected[0].path
+        refresh_request = self._local_refresh_request
+
+        def complete(_result: object | None, error: Exception | None) -> None:
+            if error is not None:
+                self.ui.show_error(_("Open log in web tool failed"), str(error))
+            if self._local_refresh_request is not refresh_request:
+                self.refresh_local_panel()
+
+        if not self._local_task_runner.start(lambda _progress: open_log_in_web_tool(url, path), None, complete):
+            self.ui.show_error(
+                _("Open log in web tool failed"),
+                _("Another file operation is already in progress."),
+            )
 
     def open_selected_local_file(self) -> None:
         """Open one selected local file with the operating system's default application."""
