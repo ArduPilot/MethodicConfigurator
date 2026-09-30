@@ -138,13 +138,11 @@ A: Yes, as long as they run ArduPilot firmware:
 
 ## Workflow Questions
 
-**Q: Can I skip the component editor?**
+**Q: When does the component editor open?**
 
-A: You can skip it with `--skip-component-editor`, but only if:
-
-- **All components configured**: Every component and connection is already set
-- **No changes needed**: Your hardware setup hasn't changed
-- **Experienced user**: You understand the implications of skipping validation
+A: New projects always open the component editor so you can enter and validate component data before configuring parameters.
+Existing projects open directly in the parameter editor. Use its **Edit vehicle components** button to review or change
+component information.
 
 **Q: What if I need to change something after completion?**
 

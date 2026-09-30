@@ -609,6 +609,11 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
         return self._settings is not None and self._settings.reset_fc_parameters_to_their_defaults
 
     @property
+    def is_new_project(self) -> bool:
+        """Whether a new project was created during the current startup workflow."""
+        return self._settings is not None
+
+    @property
     def blank_component_data(self) -> bool:
         """Whether to create blank component data when a project is created."""
         return self._settings is not None and self._settings.blank_component_data

@@ -19,7 +19,6 @@ import pytest
 
 # Import shared test utilities to avoid code duplication
 from test_frontend_tkinter_component_editor_base import (
-    SharedTestArgumentParser,
     add_editor_helper_methods,
     setup_common_editor_mocks,
 )
@@ -569,12 +568,6 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
 
         editor_with_mocked_root.data_model.validate_entry_limits.assert_called_once_with("4.2", path)
         assert result is True
-
-
-class TestArgumentParser(SharedTestArgumentParser):
-    """Test cases for the argument_parser function."""
-
-    # All test methods are inherited from SharedTestArgumentParser to avoid duplication
 
 
 class TestIntegrationScenarios:
