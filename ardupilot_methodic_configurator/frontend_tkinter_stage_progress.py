@@ -46,6 +46,7 @@ from tkinter import ttk
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps, PhaseData
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
+from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_config
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 
 
@@ -65,6 +66,11 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
         self.total_files = total_steps
         self.phase_frames: dict[str, ttk.Frame] = {}
         self.phase_bars: list[dict[str, ttk.Progressbar | int]] = []
+
+        default_font = get_safe_font_config()
+        default_font_size = int(default_font["size"])
+        smaller_font_size = int(default_font_size * 0.9)
+        ttk.Style(self).configure("PhaseProgress.TLabel", font=(default_font["family"], smaller_font_size))
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
@@ -134,6 +140,7 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
             justify=tk.CENTER,
             anchor="center",
             foreground=label_fg,
+            style="PhaseProgress.TLabel",
         )
         label.grid(row=1, column=0, sticky="ew")
 
