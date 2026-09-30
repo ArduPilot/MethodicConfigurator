@@ -42,6 +42,7 @@ from ardupilot_methodic_configurator.backend_mavftp import (
     OP_ReadFile,
     OP_ResetSessions,
     OP_TerminateSession,
+    OP_WriteFile,
     create_argument_parser,
 )
 
@@ -359,6 +360,25 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):  # pylint: disable=too-many-
 
         for payload, (_, path) in zip(captured, paths, strict=True):
             assert payload[12 + len(path) :] == bytes(251 - 12 - len(path))
+
+    def test_mavlink2_padding_does_not_land_on_another_usb_boundary(self) -> None:
+        """Zero-tailed file data can push the padding marker onto a later USB boundary."""
+        self.mock_master.WIRE_PROTOCOL_VERSION = "2.0"
+        mav = mavlink_v2.MAVLink(None, srcSystem=250)
+        for size in (99, 163, 227):
+            with self.subTest(size=size):
+                data = b"x" * 37 + bytes(size - 37)
+                with patch.object(self.mav_ftp, "_MAVFTP__transmit_payload") as transmit:
+                    self.mav_ftp._MAVFTP__send(  # pylint: disable=protected-access
+                        FTP_OP(1, 0, OP_WriteFile, size, 0, 0, 0, bytearray(data))
+                    )
+
+                payload = bytes(transmit.call_args.args[0])
+                frame = mav.file_transfer_protocol_encode(0, 1, 1, payload).pack(mav)
+                assert len(frame) % 64 != 0
+                assert payload[4] == size
+                assert payload[12 : 12 + size] == data
+                assert payload[12 + size] == 0
 
     def test_read_renews_deadline_when_idle_flush_accepts_delayed_reply(self) -> None:
         """A delayed reply accepted by idle_task must extend read's deadline."""

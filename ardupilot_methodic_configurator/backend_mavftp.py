@@ -959,6 +959,11 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         # Preserve a zero byte after the declared FTP data for servers that
         # also interpret path operands as NUL-terminated strings.
         marker_offset = max(meaningful_length + 1, HDR_Len + op.size + 1)
+        # Zero-tailed data may move the marker far beyond the trimmed payload.
+        # Ensure the padded frame does not land on a later USB boundary either.
+        padded_frame_length = MAVLINK2_FRAME_OVERHEAD + MAVLINK_FTP_TARGET_FIELDS + marker_offset + 1
+        if padded_frame_length % USB_FULL_SPEED_PACKET_SIZE == 0:
+            marker_offset += 1
         if marker_offset >= len(payload):
             return
         payload[marker_offset] = 1
