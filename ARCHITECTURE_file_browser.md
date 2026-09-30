@@ -58,6 +58,27 @@ window.
 confirmations, and the standard `ProgressWindow` factory. This permits
 unit-level testing without a live Tk desktop.
 
+Single local `.bin` entries expose eight ArduPilot analysis websites from the
+PC context menu. `backend_web_log_tools.py` validates the destination against
+an allowlist, opens a Selenium-managed Chrome browser (new tab for subsequent
+tools), and sets each site's log-file input directly to the selected local path.
+The task runs on the local background runner so browser startup and uploads do
+not block Tk. It does not attach to the user's existing browser profile; the
+Selenium Manager driver/browser must be available at runtime.
+
+The backend serializes driver access and discards closed sessions before one
+bounded retry. Cleanup forgets the session even if driver shutdown fails.
+Navigation has a 30-second page-load timeout; locating the input has its own
+30-second timeout. The approved origin and exact tool path are checked both
+after navigation and immediately before handing over the file, allowing query
+and fragment state. This is a destination check, not a sandbox for website
+JavaScript or a guarantee about subsequent network use by that website.
+
+The local runner accepts one task at a time. A second web-tool request reports
+that it is busy rather than silently disappearing. Local navigation during
+browser work invalidates the current listing; the completion callback schedules
+the pending refresh after the runner becomes available.
+
 The standalone module creates its own `FlightController`, `LocalFilesystem`,
 and `ParameterEditor`; it connects the controller before opening the window.
 

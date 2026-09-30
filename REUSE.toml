@@ -212,6 +212,11 @@ SPDX-FileCopyrightText = "Copyright (c) 2018 Marcin Kurczewski"
 SPDX-License-Identifier = "MIT"
 
 [[annotations]]
+path = "credits/selenium-LICENSE"
+SPDX-FileCopyrightText = "Software Freedom Conservancy (SFC)"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
 path = "credits/Inno_Setup-license.txt"
 SPDX-FileCopyrightText = "Copyright (C) 1997-2026 Jordan Russell. Portions Copyright (C) 2000-2026 Martijn Laan."
 SPDX-License-Identifier = "LicenseRef-Inno-Setup"

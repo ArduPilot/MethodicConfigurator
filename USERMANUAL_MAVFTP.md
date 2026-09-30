@@ -67,6 +67,17 @@ You can also double-click a local file to open it directly.
 The **Open** action is available for one selected file; it is disabled for
 directories, multiple selections, and when nothing is selected.
 
+For one selected local `.bin` flight log, the same menu offers **plotbeta**,
+**plot**, **hardware report**, **MagFit**, **Filter Review**, **PID Review**,
+**Stream stats**, and **System ID**. Selecting a tool opens its ArduPilot
+website in an automation-controlled Chrome browser tab and loads the log into
+the website's file chooser. A Chrome installation and Internet access may be
+required; Selenium Manager may need to obtain a matching browser driver on the
+first use. Later selections open new tabs in the same managed browser. The log
+remains on your computer unless the website itself transfers it; check each
+tool's privacy policy before sharing sensitive logs. The flight controller is
+not involved, so download a log to the PC panel first.
+
 At the bottom of the window:
 
 - **Verify transfers with CRC32** compares each completed transfer with the

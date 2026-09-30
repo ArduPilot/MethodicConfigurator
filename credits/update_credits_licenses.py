@@ -57,6 +57,7 @@ direct_dependencies = [
     },
     {"name": "certifi", "license_url": "https://raw.githubusercontent.com/certifi/python-certifi/master/LICENSE"},
     {"name": "screeninfo", "license_url": "https://raw.githubusercontent.com/rr-/screeninfo/master/LICENSE.md"},
+    {"name": "selenium", "license_url": "https://raw.githubusercontent.com/SeleniumHQ/selenium/trunk/LICENSE"},
     {"name": "simpleeval", "license_url": "https://raw.githubusercontent.com/danthedeckie/simpleeval/main/LICENCE"},
     {
         "name": "pip-system-certs",

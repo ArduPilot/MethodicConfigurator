@@ -43,6 +43,7 @@ It directly uses:
 | [certifi](https://github.com/certifi/python-certifi) | [Mozilla Public License 2.0](https://github.com/certifi/python-certifi/blob/master/LICENSE) |
 | [screeninfo](https://github.com/rr-/screeninfo) | [MIT License](https://github.com/rr-/screeninfo/blob/master/LICENSE.md) |
 | [simpleeval](https://github.com/danthedeckie/simpleeval) | [MIT License](https://github.com/danthedeckie/simpleeval/blob/main/LICENCE) |
+| [selenium](https://github.com/SeleniumHQ/selenium) | [Apache 2.0 License](https://github.com/SeleniumHQ/selenium/blob/trunk/LICENSE) (also in [LICENSES/Apache-2.0.txt](../LICENSES/Apache-2.0.txt)) |
 | [pip-system-certs](https://gitlab.com/alelec/pip-system-certs) | [BSD 2-Clause "Simplified" License](https://gitlab.com/alelec/pip-system-certs/-/blob/master/LICENSE?ref_type=heads) |
 
 It indirectly uses:
