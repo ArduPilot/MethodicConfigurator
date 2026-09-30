@@ -204,12 +204,12 @@ def test_offline_metadata_seed_rejects_stale_existing_metadata(tmp_path: Path) -
 
 
 def test_offline_metadata_seed_rejects_incompatible_firmware_metadata(tmp_path: Path) -> None:
-    """Offline metadata must not silently come from another ArduPilot patch release."""
+    """Offline metadata must not silently come from another ArduPilot firmware series."""
     template_dir = tmp_path / "empty_template"
     target_dir = tmp_path / "new_vehicle"
     template_dir.mkdir()
     target_dir.mkdir()
-    (template_dir / "apm.pdef.xml").write_text("<!-- Generated from git tag Copter-4.6.0 -->\n<paramfile />", encoding="utf-8")
+    (template_dir / "apm.pdef.xml").write_text("<!-- Generated from git tag Copter-4.5.7 -->\n<paramfile />", encoding="utf-8")
 
     with pytest.raises(ValueError, match=re.escape("incompatible with ArduCopter 4.6.3")):
         _seed_offline_parameter_metadata(template_dir, target_dir, "ArduCopter", "4.6.3")
@@ -229,7 +229,12 @@ def _seed_offline_parameter_metadata(
         metadata_text = metadata_to_validate.read_text(encoding="utf-8")
         metadata_match = re.search(rf"Generated from git tag {metadata_vehicle}-(\d+\.\d+\.\d+)", metadata_text)
         expected_release = firmware_version.split(" ", maxsplit=1)[0]
-        if metadata_match and metadata_match.group(1) != expected_release:
+        # Empty templates are maintained per major/minor series (e.g. empty_4.6.x),
+        # so offline metadata may come from an earlier patch in that series.
+        # Reject a different firmware series while allowing a compatible patch cache.
+        metadata_series = metadata_match.group(1).rsplit(".", maxsplit=1)[0] if metadata_match else ""
+        expected_series = expected_release.rsplit(".", maxsplit=1)[0]
+        if metadata_match and metadata_series != expected_series:
             raise ValueError(
                 f"Offline parameter metadata {metadata_to_validate} is incompatible with {vehicle_type} {firmware_version}"
             )
