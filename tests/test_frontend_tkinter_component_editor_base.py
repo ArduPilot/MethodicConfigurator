@@ -221,6 +221,7 @@ class TestUserArgumentParsingWorkflows:
         # Assert: Verify arguments are parsed correctly
         assert args.vehicle_dir == "test_dir"
         assert args.vehicle_type == "ArduCopter"
+
     def test_user_can_configure_different_log_levels_for_debugging(self) -> None:
         """
         User can set different logging levels for troubleshooting purposes.
