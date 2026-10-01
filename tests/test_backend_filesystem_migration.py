@@ -775,6 +775,88 @@ class TestV0ToV1ObsoleteFileDeletion:
 class TestV1ToV2ParameterExtractions:
     """Tests that consecutive format migrations are persisted as separate steps."""
 
+    def test_v2_destinations_are_seeded_from_empty_template_before_parameter_splits(
+        self, vehicle_dir: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """
+        V2 template values survive while migrated project values override conflicts.
+
+        GIVEN: A format-1 project with a mandatory-hardware file and a v2 empty template
+        WHEN: The project migrates to format 2
+        THEN: Template parameters are present, duplicate migrations reach both steps, and FRAME_CLASS is only in servo outputs
+        """
+        template_dir = vehicle_dir / "templates" / "ArduCopter" / "empty_4.6.x"
+        template_dir.mkdir(parents=True)
+        template_values = {
+            "03_imu_temperature_calibration_results.param": "TEMPLATE_TEMP,1\n",
+            "14_accelerometer_calibration.param": "TEMPLATE_ACCEL,1\nINS_ACCSCAL_X,1\n",
+            "15_accelerometer_level.param": "TEMPLATE_LEVEL,1\n",
+            "16_compass_calibration.param": "TEMPLATE_COMPASS,1\n",
+            "17_flight_modes.param": "INITIAL_MODE,0\n",
+            "18_servo_outputs.param": "TEMPLATE_SERVO,1\nSERVO1_FUNCTION,0\nFRAME_CLASS,0\n",
+        }
+        for filename, content in template_values.items():
+            (template_dir / filename).write_text(content, encoding="utf-8")
+
+        (vehicle_dir / "configuration_steps_ArduCopter.json").write_text(
+            json.dumps({"steps": {filename: {} for filename in template_values} | {"05_board_orientation.param": {}}}),
+            encoding="utf-8",
+        )
+        (vehicle_dir / "vehicle_components.json").write_text(
+            json.dumps(
+                {
+                    "Format version": 1,
+                    "Components": {"Flight Controller": {"Firmware": {"Type": "ArduCopter", "Version": "4.6.3 official"}}},
+                }
+            ),
+            encoding="utf-8",
+        )
+        mandatory_hardware = vehicle_dir / "14_mp_setup_mandatory_hardware.param"
+        mandatory_hardware.write_text(
+            "INS_ACCSCAL_X,0.998941\nINS_ACC1_CALTEMP,45\nAHRS_TRIM_X,0.01\nFLTMODE1,3\nSERVO1_FUNCTION,33\nFRAME_CLASS,1\n",
+            encoding="utf-8",
+        )
+        board_orientation = vehicle_dir / "05_board_orientation.param"
+        board_orientation.write_text("AHRS_ORIENTATION,0\nFRAME_CLASS,1\n", encoding="utf-8")
+        monkeypatch.setattr(
+            migration_module.VehicleProjectCreator,
+            "template_dir_for_bin_import",
+            staticmethod(lambda _vehicle_type, _major, _minor: str(template_dir)),
+        )
+        monkeypatch.setattr(migration_module, "VEHICLE_COMPONENTS_FORMAT_VERSION", 2)
+
+        assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
+
+        accelerometer = (vehicle_dir / "14_accelerometer_calibration.param").read_text(encoding="utf-8")
+        imu_temperature = (vehicle_dir / "03_imu_temperature_calibration_results.param").read_text(encoding="utf-8")
+        accelerometer_level = (vehicle_dir / "15_accelerometer_level.param").read_text(encoding="utf-8")
+        flight_modes = (vehicle_dir / "17_flight_modes.param").read_text(encoding="utf-8")
+        servo_outputs = (vehicle_dir / "18_servo_outputs.param").read_text(encoding="utf-8")
+
+        assert "INS_ACC1_CALTEMP,45" in accelerometer
+        assert "INS_ACC1_CALTEMP,45" in imu_temperature
+        assert "AHRS_TRIM_X,0.01" in accelerometer
+        assert "AHRS_TRIM_X,0.01" in accelerometer_level
+        assert "INS_ACCSCAL_X,0.998941" in accelerometer
+        assert "TEMPLATE_ACCEL,1" in accelerometer
+        assert "TEMPLATE_TEMP,1" in imu_temperature
+        assert "TEMPLATE_LEVEL,1" in accelerometer_level
+        assert "TEMPLATE_COMPASS,1" in (vehicle_dir / "16_compass_calibration.param").read_text(encoding="utf-8")
+        assert "INITIAL_MODE,0" in flight_modes
+        assert "FLTMODE1,3" in flight_modes
+        assert "TEMPLATE_SERVO,1" in servo_outputs
+        assert "SERVO1_FUNCTION,33" in servo_outputs
+        assert "FRAME_CLASS,1" in servo_outputs
+        assert "FRAME_CLASS" not in board_orientation.read_text(encoding="utf-8")
+        assert "FRAME_CLASS" not in accelerometer
+        assert "FRAME_CLASS" not in (vehicle_dir / "05_board_orientation.param").read_text(encoding="utf-8")
+        frame_class_files = [
+            path.name
+            for path in vehicle_dir.glob("*.param")
+            if path.name != "00_default.param" and "FRAME_CLASS" in path.read_text(encoding="utf-8")
+        ]
+        assert frame_class_files == ["18_servo_outputs.param"]
+
     @pytest.mark.parametrize("failed_destination", ["14_accelerometer_calibration.param", "15_accelerometer_level.param"])
     def test_interrupted_split_preserves_source_values_and_can_be_retried(
         self, vehicle_dir: Path, monkeypatch: pytest.MonkeyPatch, failed_destination: str
@@ -812,7 +894,9 @@ class TestV1ToV2ParameterExtractions:
         assert json.loads(components.read_text(encoding="utf-8"))["Format version"] == 1
 
         assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
-        assert (vehicle_dir / "14_accelerometer_calibration.param").read_text(encoding="utf-8") == "INS_ACCSCAL_X,0.998941\n"
+        assert (vehicle_dir / "14_accelerometer_calibration.param").read_text(encoding="utf-8") == (
+            "INS_ACCSCAL_X,0.998941\nAHRS_TRIM_X,0.01\n"
+        )
         assert (vehicle_dir / "15_accelerometer_level.param").read_text(encoding="utf-8") == "AHRS_TRIM_X,0.01\n"
         assert source.read_text(encoding="utf-8") == "UNRELATED_SOURCE,9\n"
         assert json.loads(components.read_text(encoding="utf-8"))["Format version"] == 2
@@ -872,13 +956,13 @@ class TestV1ToV2ParameterExtractions:
         assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
 
         expected = {
-            "14_accelerometer_calibration.param": "INS_ACCSCAL_X,0.998941\n",
+            "14_accelerometer_calibration.param": ("INS_ACCSCAL_X,0.998941\nINS_ACC1_CALTEMP,45\nAHRS_TRIM_X,0.01\n"),
             "03_imu_temperature_calibration_results.param": "INS_ACC1_CALTEMP,45\n",
             "15_accelerometer_level.param": "AHRS_TRIM_X,0.01\n",
             "16_compass_calibration.param": "COMPASS_OFS_X,12\n",
             "17_flight_modes.param": "FLTMODE1,0\n",
             "07_remote_controller_controller.param": "RC1_MIN,1100\n",
-            "18_servo_outputs.param": "SERVO1_FUNCTION,33\n",
+            "18_servo_outputs.param": "SERVO1_FUNCTION,33\nFRAME_CLASS,1\n",
         }
         for filename, line in expected.items():
             assert line in (vehicle_dir / filename).read_text(encoding="utf-8")
