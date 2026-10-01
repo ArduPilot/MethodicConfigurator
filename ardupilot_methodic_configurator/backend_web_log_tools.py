@@ -86,19 +86,36 @@ class _BrowserSession:
                         driver.switch_to.new_window("tab")
                     self._load_log(driver, url, file_path)
                     return
-                except (InvalidSessionIdException, NoSuchWindowException):
-                    # The user may have closed Chrome. Release the stale driver
-                    # and retry once, never retaining a failed replacement.
-                    self._discard_driver()
+                except (InvalidSessionIdException, NoSuchWindowException) as error:
+                    # Losing the active tab does not invalidate other analyses.
+                    # Recover focus before retrying in a new tab; replace only
+                    # sessions with no usable browsing context.
+                    if not isinstance(error, NoSuchWindowException) or not self._switch_to_surviving_tab(driver):
+                        self._discard_driver()
                     if attempt:
                         raise
+
+    @staticmethod
+    def _switch_to_surviving_tab(driver: WebDriver) -> bool:
+        """Recover focus without navigating or closing existing analysis tabs."""
+        try:
+            for handle in driver.window_handles:
+                try:
+                    driver.switch_to.window(handle)
+                    return True
+                except NoSuchWindowException:  # noqa: PERF203 - each remote switch can race with tab closure
+                    # A tab can close between enumeration and switching.
+                    continue
+        except (InvalidSessionIdException, NoSuchWindowException):
+            return False
+        return False
 
     @staticmethod
     def _check_destination(driver: WebDriver, url: str) -> None:
         """Require the approved origin and exact tool path, allowing query/fragment state."""
         expected, actual = urlsplit(url), urlsplit(driver.current_url)
         if (actual.scheme, actual.netloc, actual.path) != (expected.scheme, expected.netloc, expected.path):
-            msg = "Web log tool redirected to an unexpected address"
+            msg = _("Web log tool redirected to an unexpected address")
             raise ValueError(msg)
 
     @staticmethod
@@ -124,7 +141,7 @@ register(_SESSION.close)
 def open_log_in_web_tool(url: str, file_path: Path) -> None:
     """Open a new managed browser tab and set its file input to the selected local log."""
     if url not in WEB_LOG_TOOLS:
-        msg = "Unsupported web log tool"
+        msg = _("Unsupported web log tool")
         raise ValueError(msg)
     if file_path.suffix.lower() != ".bin" or not file_path.is_file() or file_path.is_symlink():
         raise FileNotFoundError(file_path)
