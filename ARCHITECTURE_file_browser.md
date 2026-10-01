@@ -68,6 +68,11 @@ Selenium Manager driver/browser must be available at runtime.
 
 The backend serializes driver access and discards closed sessions before one
 bounded retry. Cleanup forgets the session even if driver shutdown fails.
+If only the active tab closes, recovery switches to a surviving tab and opens
+the requested log in a new tab without closing existing analyses. Tabs that
+close during recovery are skipped. Invalid sessions or sessions without usable
+tabs are replaced; repeated tab closure reports failure after the single retry
+without destroying surviving analyses.
 Navigation has a 30-second page-load timeout; locating the input has its own
 30-second timeout. The approved origin and exact tool path are checked both
 after navigation and immediately before handing over the file, allowing query
