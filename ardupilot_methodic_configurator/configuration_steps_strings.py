@@ -455,6 +455,12 @@ def configuration_steps_descriptions() -> None:
     _config_steps_descriptions = _("Name/description of external tool needed")
     _config_steps_descriptions = _("New value for the parameter")
     _config_steps_descriptions = _(
+        "One download object (legacy) or a non-empty array of download objects; normalized to an array when loaded."
+    )
+    _config_steps_descriptions = _(
+        "One upload object (legacy) or a non-empty array of upload objects; normalized to an array when loaded."
+    )
+    _config_steps_descriptions = _(
         "Optional Python expression; if present, the parameter is only applied when this expression evaluates to true"
     )
     _config_steps_descriptions = _(
