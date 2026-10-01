@@ -20,6 +20,9 @@ from unittest.mock import MagicMock
 import pytest
 from pymavlink import mavutil
 
+from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
+from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.plugins.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_accelerometer_calibration import (
     AccelerometerCalibrationView,
@@ -42,9 +45,19 @@ def test_simple_calibration_copy_set_includes_trim_and_all_imu_naming_schemes() 
         "INS_ACC2SCAL_Y",
         "INS4_ACCOFFS_X",
         "INS5_ACCSCAL_Z",
+        "INS_ACC1_CALTEMP",
+        "INS_ACC2_CALTEMP",
+        "INS_ACC3_CALTEMP",
+        "INS4_ACC_CALTEMP",
+        "INS5_ACC_CALTEMP",
         "AHRS_TRIM_X",
         "AHRS_TRIM_Y",
         "INS_ACCEL_FILTER",
+        "INS_GYR1_CALTEMP",
+        "INS4_GYR_CALTEMP",
+        "INS_TCAL1_ENABLE",
+        "INS4_TCAL_ENABLE",
+        "INS_ACC1_CALTEMP_EXTRA",
         "AHRS_TRIM_LIMIT",
     }
 
@@ -53,9 +66,149 @@ def test_simple_calibration_copy_set_includes_trim_and_all_imu_naming_schemes() 
         "INS_ACC2SCAL_Y",
         "INS4_ACCOFFS_X",
         "INS5_ACCSCAL_Z",
+        "INS_ACC1_CALTEMP",
+        "INS_ACC2_CALTEMP",
+        "INS_ACC3_CALTEMP",
+        "INS4_ACC_CALTEMP",
+        "INS5_ACC_CALTEMP",
         "AHRS_TRIM_X",
         "AHRS_TRIM_Y",
     }
+
+
+@pytest.fixture
+def calibration_readback(mocker) -> SimpleNamespace:
+    """Provide a display-independent view with real staged parameters and stale-step detection."""
+    editor = ParameterEditor.__new__(ParameterEditor)
+    values = {"INS_ACCOFFS_X": 0.1, "INS_ACC1_CALTEMP": 20.0, "INS4_ACC_CALTEMP": 21.0, "INS_ACCEL_FILTER": 42.0}
+    editor._flight_controller = SimpleNamespace(fc_parameters=dict(values))
+    editor.current_file = "14_accelerometer_calibration.param"
+    editor._local_filesystem = SimpleNamespace(
+        file_parameters={"temperature_only.param": ParDict({"INS_ACC1_CALTEMP": Par(20.0)})}
+    )
+    editor.current_step_parameters = {name: ArduPilotParameter(name, Par(value)) for name, value in values.items()}
+    view = object.__new__(AccelerometerCalibrationView)
+    view.model = MagicMock(spec=AccelerometerCalibrationDataModel)
+    view.model.start_simple_calibration.return_value = (True, "Calibration successful")
+    view.model.is_connected.return_value = True
+    view.base_window = SimpleNamespace(
+        parameter_editor=editor,
+        download_flight_controller_parameters=MagicMock(),
+        repopulate_parameter_table=MagicMock(),
+    )
+    mocker.patch.object(view, "_stop_polling")
+    mocker.patch.object(view, "_hide_wizard")
+    return SimpleNamespace(
+        view=view,
+        editor=editor,
+        showinfo=mocker.patch(f"{_FRONTEND}.showinfo"),
+        showerror=mocker.patch(f"{_FRONTEND}.showerror"),
+    )
+
+
+@pytest.mark.parametrize("calibration", ["full", "simple", "failed_ack"])
+def test_calibration_stages_temperatures_and_reports_temperature_only_stale_steps(
+    calibration_readback, calibration: str
+) -> None:
+    """
+    Calibration temperatures stay paired with measured offsets.
+
+    GIVEN: Legacy and newer CALTEMP rows and another step stale only in temperature
+    WHEN: Full, simple, or failed-ACK calibration reads back new temperatures
+    THEN: The measured temperatures are staged and the stale file is reported without changing it
+    """
+    fixture = calibration_readback
+    editor = fixture.editor
+    downloaded_values = dict(editor.fc_parameters, INS_ACC1_CALTEMP=30.0, INS4_ACC_CALTEMP=31.0, INS_ACCEL_FILTER=20.0)
+
+    def download(*, redownload: bool, response_timeout: float | None = None) -> tuple[dict[str, float], dict[str, float]]:
+        assert redownload
+        assert response_timeout == (2.0 if calibration == "failed_ack" else None)
+        editor._flight_controller.fc_parameters = downloaded_values
+        return downloaded_values, {}
+
+    fixture.view.base_window.download_flight_controller_parameters.side_effect = download
+    if calibration == "full":
+        fixture.view._end_full_calibration(success=True)
+    else:
+        fixture.view.model.start_simple_calibration.return_value = (calibration == "simple", "Calibration result")
+        fixture.view._on_simple_calibration()
+
+    assert editor.current_step_parameters["INS_ACC1_CALTEMP"].get_new_value() == 30.0
+    assert editor.current_step_parameters["INS4_ACC_CALTEMP"].get_new_value() == 31.0
+    assert editor.current_step_parameters["INS_ACCEL_FILTER"].get_new_value() == 42.0
+    assert editor._local_filesystem.file_parameters["temperature_only.param"]["INS_ACC1_CALTEMP"].value == 20.0
+    result_dialog = fixture.showerror if calibration == "failed_ack" else fixture.showinfo
+    assert "temperature_only.param" in result_dialog.call_args.args[1]
+    if calibration == "failed_ack":
+        assert "INS_ACC1_CALTEMP" in result_dialog.call_args.args[1]
+
+
+@pytest.mark.parametrize("calibration", ["full", "simple", "failed_ack"])
+@pytest.mark.parametrize("navigation", ["different_step", "reloaded_step", "replaced_editor"])
+def test_calibration_readback_preserves_edits_when_user_switches_steps(
+    calibration_readback, calibration: str, navigation: str
+) -> None:
+    """
+    Reentrant step selection never stages calibration values into the newly selected step.
+
+    GIVEN: An active calibration step and a different step with pending offset and filter edits
+    WHEN: A download callback navigates, reloads the same file, or replaces the editor
+    THEN: The original and newly loaded staged values survive and the active table is refreshed
+    """
+    fixture = calibration_readback
+    editor = fixture.editor
+    original_parameters = editor.current_step_parameters
+    original_values = {name: parameter.get_new_value() for name, parameter in original_parameters.items()}
+    next_step_values = {"INS_ACCOFFS_X": 0.7, "INS_ACCEL_FILTER": 50.0}
+    next_step_parameters = {name: ArduPilotParameter(name, Par(value)) for name, value in next_step_values.items()}
+    selected_file = "15_next_step.param" if navigation == "different_step" else editor.current_file
+
+    def download(*, redownload: bool, response_timeout: float | None = None) -> tuple[dict[str, float], dict[str, float]]:
+        assert redownload
+        assert response_timeout == (2.0 if calibration == "failed_ack" else None)
+        selected_editor = editor
+        if navigation == "replaced_editor":
+            selected_editor = ParameterEditor.__new__(ParameterEditor)
+            selected_editor._flight_controller = editor._flight_controller
+            selected_editor._local_filesystem = editor._local_filesystem
+            fixture.view.base_window.parameter_editor = selected_editor
+        selected_editor.current_file = selected_file
+        selected_editor.current_step_parameters = next_step_parameters
+        selected_editor._flight_controller.fc_parameters = {"INS_ACCOFFS_X": 0.2, "INS_ACCEL_FILTER": 20.0}
+        return selected_editor.fc_parameters, {}
+
+    fixture.view.base_window.download_flight_controller_parameters.side_effect = download
+    if calibration == "full":
+        fixture.view._end_full_calibration(success=True)
+    else:
+        fixture.view.model.start_simple_calibration.return_value = (calibration == "simple", "Calibration result")
+        fixture.view._on_simple_calibration()
+
+    assert fixture.view.base_window.parameter_editor.current_file == selected_file
+    assert {name: parameter.get_new_value() for name, parameter in next_step_parameters.items()} == next_step_values
+    assert {name: parameter.get_new_value() for name, parameter in original_parameters.items()} == original_values
+    fixture.view.base_window.repopulate_parameter_table.assert_called_once_with()
+
+
+def test_disconnected_simple_calibration_reports_failure_without_a_parameter_editor(mocker) -> None:
+    """
+    A standalone disconnected calibration can still report its error.
+
+    GIVEN: A disconnected calibration view with no parameter editor
+    WHEN: The user requests simple calibration
+    THEN: The connection error is displayed without trying to stage or download values
+    """
+    view = object.__new__(AccelerometerCalibrationView)
+    view.model = MagicMock(spec=AccelerometerCalibrationDataModel)
+    view.model.start_simple_calibration.return_value = (False, "Flight controller not connected")
+    view.model.is_connected.return_value = False
+    view.base_window = SimpleNamespace()
+    showerror = mocker.patch(f"{_FRONTEND}.showerror")
+
+    view._on_simple_calibration()
+
+    showerror.assert_called_once_with("Calibration Failed", "Flight controller not connected")
 
 
 def test_failed_simple_ack_reads_back_accel_without_a_display(mocker) -> None:
@@ -372,6 +525,84 @@ class TestFullCalibrationStart:
 
 class TestFullCalibrationPolling:
     """Test the tkinter after() polling loop that drives the wizard."""
+
+    def test_successful_full_calibration_stages_measured_values_for_later_upload(self, view_with_model) -> None:
+        """
+        Completing full calibration preserves the measured results in the staged upload values.
+
+        GIVEN: Old staged offsets, scales, temperatures and trims alongside an unrelated filter edit
+        WHEN: Full calibration completes and fresh flight-controller values are downloaded
+        THEN: Calibration results are staged, the filter edit survives, and other stale steps are reported
+        """
+        fixture = view_with_model
+        editor = ParameterEditor.__new__(ParameterEditor)
+        editor._flight_controller = SimpleNamespace(fc_parameters={"INS_ACCOFFS_X": 0.1})
+        editor.current_file = "14_accelerometer_calibration.param"
+        editor._local_filesystem = SimpleNamespace(
+            file_parameters={
+                "other.param": ParDict({"AHRS_TRIM_X": Par(0)}),
+                "temperature_only.param": ParDict({"INS_ACC1_CALTEMP": Par(20)}),
+            }
+        )
+        staged_values = {
+            "INS_ACCOFFS_X": 0.1,
+            "INS_ACC2SCAL_Y": 1.0,
+            "INS_ACC1_CALTEMP": 20.0,
+            "AHRS_TRIM_X": 0.0,
+            "INS_ACCEL_FILTER": 42.0,
+        }
+        editor.current_step_parameters = {name: ArduPilotParameter(name, Par(value)) for name, value in staged_values.items()}
+        fixture.base_window.parameter_editor = editor
+        downloaded_values = {
+            "INS_ACCOFFS_X": 0.2,
+            "INS_ACC2SCAL_Y": 0.98,
+            "INS_ACC1_CALTEMP": 30.0,
+            "AHRS_TRIM_X": 0.01,
+            "INS_ACCEL_FILTER": 20.0,
+            "INS_ACC3SCAL_Z": 1.02,
+        }
+
+        def download(*, redownload: bool) -> tuple[dict[str, float], dict[str, float]]:
+            assert redownload
+            editor._flight_controller.fc_parameters = downloaded_values
+            return downloaded_values, {}
+
+        fixture.base_window.download_flight_controller_parameters.side_effect = download
+        fixture.model.poll_for_next_position.return_value = mavutil.mavlink.ACCELCAL_VEHICLE_POS_SUCCESS
+        fixture.model.is_calibration_complete.return_value = True
+        fixture.model.is_calibration_successful.return_value = True
+
+        fixture.view._poll_tick()
+
+        for name in ["INS_ACCOFFS_X", "INS_ACC2SCAL_Y", "INS_ACC1_CALTEMP", "AHRS_TRIM_X"]:
+            assert editor.current_step_parameters[name].get_new_value() == downloaded_values[name]
+        assert editor.current_step_parameters["INS_ACCEL_FILTER"].get_new_value() == 42.0
+        assert "INS_ACC3SCAL_Z" not in editor.current_step_parameters
+        assert editor._local_filesystem.file_parameters["other.param"]["AHRS_TRIM_X"].value == 0
+        assert "other.param" in fixture.showinfo.call_args.args[1]
+        assert "temperature_only.param" in fixture.showinfo.call_args.args[1]
+
+    def test_full_calibration_failed_readback_preserves_staged_values(self, view_with_model) -> None:
+        """
+        A failed readback must not replace staged values with the pre-calibration cache.
+
+        GIVEN: A successful calibration followed by an empty parameter download
+        WHEN: The wizard finishes
+        THEN: No cached parameters are copied into staged values or other steps
+        """
+        fixture = view_with_model
+        editor = fixture.base_window.parameter_editor
+        editor.fc_parameters = {"INS_ACCOFFS_X": 0.1}
+        editor.current_step_parameters = {"INS_ACCOFFS_X": ArduPilotParameter("INS_ACCOFFS_X", Par(0.3))}
+        editor.find_other_steps_with_stale_calibration_values = MagicMock()
+        fixture.base_window.download_flight_controller_parameters.return_value = ({}, {})
+
+        fixture.view._end_full_calibration(success=True)
+
+        assert editor.current_step_parameters["INS_ACCOFFS_X"].get_new_value() == 0.3
+        editor.update_parameters_from_fc_values.assert_not_called()
+        editor.find_other_steps_with_stale_calibration_values.assert_not_called()
+        assert "could not download" in fixture.showinfo.call_args.args[1].lower()
 
     def test_poll_tick_reschedules_itself_while_no_position_is_ready(self, view_with_model) -> None:
         """
