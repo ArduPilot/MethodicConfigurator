@@ -158,11 +158,11 @@ changelog = "https://github.com/ArduPilot/MethodicConfigurator/releases"
 required-version = "==0.12.6"
 
 [tool.setuptools]
-# Rely on discovery for just the top-level package and specify data via package-data
+# Discover the application and its subpackages; specify data via package-data.
 include-package-data = false
 
 [tool.setuptools.packages.find]
-include = ["ardupilot_methodic_configurator"]
+include = ["ardupilot_methodic_configurator*"]
 
 [tool.setuptools.package-data]
 ardupilot_methodic_configurator = ["**/*.param", "**/*.png", "**/*.jpg", "**/*.json", "**/*.xml", "**/*.mo"]

@@ -102,9 +102,11 @@ jobs:
         shell: bash
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
-            uv sync --no-install-project --extra dev --extra ci_headless_tests
+            uv sync --no-install-project --extra dev --extra ci_headless_tests --extra linux_dist
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+            uv sync --no-install-project --extra dev --extra win_dist
           else
-            uv sync --no-install-project --extra dev
+            uv sync --no-install-project --extra dev --extra mac_dist
           fi
 
       - name: Install project in editable mode

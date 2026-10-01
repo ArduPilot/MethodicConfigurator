@@ -57,6 +57,7 @@ hidden_imports = (
         "packaging.specifiers",
     ]
     + collect_submodules("ardupilot_methodic_configurator.modules")
+    + collect_submodules("ardupilot_methodic_configurator.plugins")
     + collect_submodules("pymavlink")
 )
 

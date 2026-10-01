@@ -92,6 +92,9 @@ jobs:
           }
           del ardupilot_methodic_configurator.spec
 
+      - name: Verify frozen plugin and log-analysis modules
+        run: python scripts/verify_packaged_modules.py ardupilot_methodic_configurator/build/ardupilot_methodic_configurator/PYZ-00.pyz
+
       - name: Smoke-test the frozen bin-log validator
         shell: pwsh
         run: |
@@ -254,6 +257,9 @@ jobs:
         run: |
           pyinstaller --clean macos/ardupilot_methodic_configurator.spec
 
+      - name: Verify frozen plugin and log-analysis modules
+        run: python scripts/verify_packaged_modules.py build/ardupilot_methodic_configurator/PYZ-00.pyz
+
       - name: Build DMG
         run: |
           set -euo pipefail
@@ -335,6 +341,9 @@ jobs:
       - name: Build Linux app with PyInstaller
         run: |
           pyinstaller --clean linux/ardupilot_methodic_configurator.spec
+
+      - name: Verify frozen plugin and log-analysis modules
+        run: python scripts/verify_packaged_modules.py build/ardupilot_methodic_configurator/PYZ-00.pyz
 
       - name: Build AppImage
         run: |
