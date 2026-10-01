@@ -330,12 +330,12 @@ msgstr "Não foi possível detectar o tipo de veículo. Usando %s como padrão."
 msgid ""
 "The connected flight controller did not report its vehicle type and firmware "
 "version."
-msgstr ""
+msgstr "O controlador de voo ligado não comunicou o seu tipo de veículo nem a versão do firmware."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:211
 msgid ""
 "Could not download parameter metadata for the connected firmware from {url}"
-msgstr ""
+msgstr "Não foi possível transferir os metadados dos parâmetros do firmware ligado a partir de {url}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:255
 msgid "Could not remove cached parameter metadata %s: %s"
@@ -1852,7 +1852,7 @@ msgstr "O caminho remoto não pode conter segmentos de diretório-pai"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:114
 msgid "Remote path contains an invalid name"
-msgstr ""
+msgstr "O caminho remoto contém um nome inválido"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:194
 msgid "No flight controller connection available for file upload"
@@ -5158,7 +5158,7 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:206
 msgid "Could not download parameters from the flight controller."
-msgstr ""
+msgstr "Não foi possível transferir os parâmetros do controlador de voo."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:294
 msgid ""
@@ -7626,7 +7626,7 @@ msgstr "Erro ao descarregar"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1417
 msgid ""
 "The local destination changed while preparing the download. Please try again."
-msgstr ""
+msgstr "O destino local mudou enquanto a transferência estava a ser preparada. Tente novamente."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1421
 msgid "Could not prepare the selected remote entries."
@@ -8277,7 +8277,7 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_application.py:90
 msgid "Flight-controller parameter setup error"
-msgstr ""
+msgstr "Erro na configuração de parâmetros do controlador de voo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_application.py:106
 msgid "Flight-controller connection error"
@@ -8285,7 +8285,7 @@ msgstr "Erro de ligação ao controlador de voo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_application.py:154
 msgid "Preparing parameter data"
-msgstr ""
+msgstr "A preparar os dados dos parâmetros"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:96
 msgid "Compare and upload parameter file - {filename}"
@@ -8342,7 +8342,7 @@ msgstr "Erro de carregamento"
 msgid ""
 "Compare an ArduPilot parameter file with a flight controller and upload "
 "values."
-msgstr ""
+msgstr "Compare um ficheiro de parâmetros do ArduPilot com um controlador de voo e envie os valores."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:261
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1570
@@ -8431,15 +8431,15 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:88
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:444
 msgid "Export parameters"
-msgstr ""
+msgstr "Exportar parâmetros"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:481
 msgid "Select parameter categories and export the current FC values"
-msgstr ""
+msgstr "Selecione categorias de parâmetros e exporte os valores atuais do controlador de voo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:483
 msgid "No flight controller connected, parameter export not available"
-msgstr ""
+msgstr "Nenhum controlador de voo ligado; exportação de parâmetros indisponível"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:488
 msgid "FC banner"
@@ -8977,7 +8977,7 @@ msgstr "Unidade"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:204
 msgid "Parameter name must be ^[A-Z][A-Z_0-9]* and at most 16 characters long"
-msgstr ""
+msgstr "O nome do parâmetro deve corresponder a ^[A-Z][A-Z_0-9]* e ter no máximo 16 caracteres"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:205
 msgid "Current value on the flight controller"
@@ -9285,7 +9285,7 @@ msgstr "Operação não possível"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:112
 msgid "Parameter properties"
-msgstr ""
+msgstr "Propriedades do parâmetro"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:116
 msgid ""
@@ -9293,15 +9293,15 @@ msgid ""
 "each row.\n"
 "A parameter is exported only when it matches every selected row and the MAV "
 "ID choice."
-msgstr ""
+msgstr "Estas opções descrevem o que é um parâmetro. Selecione uma ou ambas as opções em cada linha.\nUm parâmetro só é exportado quando corresponde a cada linha selecionada e à escolha do ID MAV."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:126
 msgid "Calibration"
-msgstr ""
+msgstr "Calibração"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:128
 msgid "Non-calibration"
-msgstr ""
+msgstr "Não de calibração"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:130
 msgid ""
@@ -9310,7 +9310,7 @@ msgid ""
 "such as accelerometer, gyroscope, or compass corrections. They are specific "
 "to\n"
 "this flight controller and must not be copied to another board."
-msgstr ""
+msgstr "Inclua parâmetros de calibração. Estes armazenam a calibração de sensores dependente da placa,\ncomo correções de acelerómetro, giroscópio ou bússola. São específicos deste\ncontrolador de voo e não devem ser copiados para outra placa."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:135
 msgid ""
@@ -9319,33 +9319,33 @@ msgid ""
 "how ArduPilot should operate and are generally more suitable for copying to "
 "another\n"
 "flight controller of the same vehicle and firmware type."
-msgstr ""
+msgstr "Inclua parâmetros que não são valores de calibração de sensores. Estas definições descrevem\ncomo o ArduPilot deve funcionar e, em geral, são mais adequadas para copiar para outro\ncontrolador de voo do mesmo tipo de veículo e firmware."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:142
 msgid "Read-only"
-msgstr ""
+msgstr "Só de leitura"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:144
 msgid "Non-read-only"
-msgstr ""
+msgstr "Editável"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:146
 msgid ""
 "Include read-only parameters. ArduPilot reports these values for "
 "information,\n"
 "status, or detected hardware, and normally does not allow them to be changed."
-msgstr ""
+msgstr "Inclua parâmetros só de leitura. O ArduPilot comunica estes valores para informação,\nestado ou hardware detetado e, normalmente, não permite alterá-los."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:150
 msgid ""
 "Include parameters that are not read-only. These are the parameters that "
 "ArduPilot\n"
 "normally allows you to change and use for vehicle configuration."
-msgstr ""
+msgstr "Inclua parâmetros que não são só de leitura. Estes são os parâmetros que o ArduPilot\nnormalmente lhe permite alterar e utilizar na configuração do veículo."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:158
 msgid "Parameter values"
-msgstr ""
+msgstr "Valores do parâmetro"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:162
 msgid ""
@@ -9353,18 +9353,18 @@ msgid ""
 "Select one or both\n"
 "options in each row. A parameter is exported only when it matches every "
 "selected row."
-msgstr ""
+msgstr "Estas opções descrevem o valor atual lido do controlador de voo. Selecione uma ou ambas as\nopções em cada linha. Um parâmetro só é exportado quando corresponde a cada linha selecionada."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:174
 msgid "Non-default value"
-msgstr ""
+msgstr "Valor diferente do predefinido"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:176
 msgid ""
 "Include parameters whose current flight-controller value is the default "
 "supplied by\n"
 "the ArduPilot firmware. This means no custom value has been applied."
-msgstr ""
+msgstr "Incluir parâmetros cujo valor atual no controlador de voo seja o valor predefinido fornecido pelo\nfirmware ArduPilot. Isto significa que não foi aplicado nenhum valor personalizado."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:180
 msgid ""
@@ -9372,15 +9372,15 @@ msgid ""
 "firmware\n"
 "default. These values represent a customization or a change made during "
 "setup."
-msgstr ""
+msgstr "Incluir parâmetros cujo valor atual no controlador de voo difira do valor predefinido do\nfirmware. Estes valores representam uma personalização ou uma alteração efetuada durante a configuração."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:186
 msgid "Inside or undocumented limits"
-msgstr ""
+msgstr "Dentro dos limites ou sem limites documentados"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:188
 msgid "Outside limits"
-msgstr ""
+msgstr "Fora dos limites"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:190
 msgid ""
@@ -9390,7 +9390,7 @@ msgid ""
 "are not\n"
 "known to be outside a limit. If only one bound is documented, that bound is "
 "checked."
-msgstr ""
+msgstr "Incluir parâmetros cujo valor atual não é conhecido por violar um limite documentado.\nOs parâmetros sem valor mínimo ou máximo documentado são incluídos porque não se\nsabe que estejam fora de um limite. Se apenas um dos limites estiver documentado, esse limite é verificado."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:195
 msgid ""
@@ -9399,28 +9399,28 @@ msgid ""
 "documented by ArduPilot. Such values may be invalid or unsafe; exporting "
 "them is\n"
 "mainly useful for diagnosis or recovery."
-msgstr ""
+msgstr "Incluir parâmetros cujo valor atual esteja abaixo do mínimo ou acima do máximo\ndocumentado pelo ArduPilot. Esses valores podem ser inválidos ou inseguros; exportá-los é\nsobretudo útil para diagnóstico ou recuperação."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:206
 msgid "Parameters selected for export:"
-msgstr ""
+msgstr "Parâmetros selecionados para exportação:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:210
 msgid ""
 "The number of parameters that match every selected filter.\n"
 "The rows are combined with AND logic, so a parameter must\n"
 "satisfy all selected categories to be counted."
-msgstr ""
+msgstr "O número de parâmetros que correspondem a todos os filtros selecionados.\nAs linhas são combinadas com lógica AND, pelo que um parâmetro tem de\nsatisfazer todas as categorias selecionadas para ser contado."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:220
 msgid ""
 "The number of parameters that will be written to the file if you press "
 "Export."
-msgstr ""
+msgstr "O número de parâmetros que serão escritos no ficheiro se premir Exportar."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:229
 msgid "Annotate parameters with documentation"
-msgstr ""
+msgstr "Anotar parâmetros com documentação"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:235
 msgid ""
@@ -9428,39 +9428,39 @@ msgid ""
 "file.\n"
 "This makes the file easier to understand but does not change parameter "
 "values."
-msgstr ""
+msgstr "Adicionar comentários legíveis com a documentação do ArduPilot ao ficheiro exportado.\nIsto torna o ficheiro mais fácil de compreender, mas não altera os valores dos parâmetros."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:242
 msgid ""
 "Close this window and discard this export selection without creating a file."
-msgstr ""
+msgstr "Fechar esta janela e descartar esta seleção de exportação sem criar um ficheiro."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:243
 msgid "Export"
-msgstr ""
+msgstr "Exportar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:247
 msgid ""
 "Choose where to save a .param file containing the selected flight-controller "
 "parameters.\n"
 "The suggested filename describes your selections."
-msgstr ""
+msgstr "Escolha onde guardar um ficheiro .param que contenha os parâmetros selecionados do controlador de voo.\nO nome de ficheiro sugerido descreve as suas seleções."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:282
 msgid "Parameter name"
-msgstr ""
+msgstr "Nome do parâmetro"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:283
 msgid "FC value"
-msgstr ""
+msgstr "Valor do FC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:284
 msgid "Units"
-msgstr ""
+msgstr "Unidades"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:398
 msgid "Include MAV IDs"
-msgstr ""
+msgstr "Incluir IDs MAV"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:405
 msgid ""
@@ -9468,15 +9468,15 @@ msgid ""
 "FOLL_SYSID, MAV_SYSID, and MAV_GCS_SYSID.\n"
 "Leave unchecked to omit these MAV ID parameters from the preview and "
 "exported file."
-msgstr ""
+msgstr "Incluir parâmetros de identidade do veículo, como SYSID_THISMAV, SYSID_MYGCS, FOLL_SYSID, MAV_SYSID e MAV_GCS_SYSID.\nDeixe desmarcado para omitir estes parâmetros de ID MAV da pré-visualização e do ficheiro exportado."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:457
 msgid "Parameter export error"
-msgstr ""
+msgstr "Erro de exportação de parâmetros"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:493
 msgid "Export parameters from an ArduPilot flight controller."
-msgstr ""
+msgstr "Exportar parâmetros de um controlador de voo ArduPilot."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:101
 msgid "Please be patient, {:.1f}% of {}% complete"

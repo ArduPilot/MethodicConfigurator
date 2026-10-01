@@ -302,12 +302,12 @@ msgstr "无法检测载具类型，默认设置为 %s。"
 msgid ""
 "The connected flight controller did not report its vehicle type and firmware "
 "version."
-msgstr ""
+msgstr "已连接的飞控未报告其载具类型和固件版本。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:211
 msgid ""
 "Could not download parameter metadata for the connected firmware from {url}"
-msgstr ""
+msgstr "无法从 {url} 下载已连接固件的参数元数据"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:255
 msgid "Could not remove cached parameter metadata %s: %s"
@@ -1682,7 +1682,7 @@ msgstr "远程路径不得包含父目录段"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:114
 msgid "Remote path contains an invalid name"
-msgstr ""
+msgstr "远程路径包含无效名称"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:194
 msgid "No flight controller connection available for file upload"
@@ -4629,7 +4629,7 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:206
 msgid "Could not download parameters from the flight controller."
-msgstr ""
+msgstr "无法从飞控下载参数。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:294
 msgid ""
@@ -6943,7 +6943,7 @@ msgstr "下载错误"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1417
 msgid ""
 "The local destination changed while preparing the download. Please try again."
-msgstr ""
+msgstr "准备下载时本地目标已更改。请重试。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1421
 msgid "Could not prepare the selected remote entries."
@@ -7581,7 +7581,7 @@ msgstr "此主程序仅用于测试和开发，通常 PairTupleCombobox 是从�
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_application.py:90
 msgid "Flight-controller parameter setup error"
-msgstr ""
+msgstr "飞控参数设置错误"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_application.py:106
 msgid "Flight-controller connection error"
@@ -7589,7 +7589,7 @@ msgstr "飞控连接错误"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_application.py:154
 msgid "Preparing parameter data"
-msgstr ""
+msgstr "正在准备参数数据"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:96
 msgid "Compare and upload parameter file - {filename}"
@@ -7642,7 +7642,7 @@ msgstr "上传错误"
 msgid ""
 "Compare an ArduPilot parameter file with a flight controller and upload "
 "values."
-msgstr ""
+msgstr "比较 ArduPilot 参数文件与飞控，并上传数值。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:261
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1570
@@ -7727,15 +7727,15 @@ msgstr "未连接飞控，外部参数上传不可用"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:88
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:444
 msgid "Export parameters"
-msgstr ""
+msgstr "导出参数"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:481
 msgid "Select parameter categories and export the current FC values"
-msgstr ""
+msgstr "选择参数类别并导出当前 FC 值"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:483
 msgid "No flight controller connected, parameter export not available"
-msgstr ""
+msgstr "未连接飞控，无法导出参数"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:488
 msgid "FC banner"
@@ -8243,7 +8243,7 @@ msgstr "单位"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:204
 msgid "Parameter name must be ^[A-Z][A-Z_0-9]* and at most 16 characters long"
-msgstr ""
+msgstr "参数名称必须匹配 ^[A-Z][A-Z_0-9]* 且长度最多为 16 个字符"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:205
 msgid "Current value on the flight controller"
@@ -8527,7 +8527,7 @@ msgstr "操作不可行"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:112
 msgid "Parameter properties"
-msgstr ""
+msgstr "参数属性"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:116
 msgid ""
@@ -8535,15 +8535,15 @@ msgid ""
 "each row.\n"
 "A parameter is exported only when it matches every selected row and the MAV "
 "ID choice."
-msgstr ""
+msgstr "这些选项描述参数的类型。请在每一行中选择一个或两个选项。\n仅当参数匹配每个已选行以及 MAV ID 选择时，才会被导出。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:126
 msgid "Calibration"
-msgstr ""
+msgstr "校准"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:128
 msgid "Non-calibration"
-msgstr ""
+msgstr "非校准"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:130
 msgid ""
@@ -8552,7 +8552,7 @@ msgid ""
 "such as accelerometer, gyroscope, or compass corrections. They are specific "
 "to\n"
 "this flight controller and must not be copied to another board."
-msgstr ""
+msgstr "包含校准参数。这些参数存储依赖于板卡的传感器校准数据，\n例如加速度计、陀螺仪或罗盘校正。它们特定于\n此飞控，不能复制到另一块板卡。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:135
 msgid ""
@@ -8561,33 +8561,33 @@ msgid ""
 "how ArduPilot should operate and are generally more suitable for copying to "
 "another\n"
 "flight controller of the same vehicle and firmware type."
-msgstr ""
+msgstr "包含不是传感器校准值的参数。这些设置描述\nArduPilot 应如何运行，通常更适合复制到另一台\n具有相同载具和固件类型的飞控。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:142
 msgid "Read-only"
-msgstr ""
+msgstr "只读"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:144
 msgid "Non-read-only"
-msgstr ""
+msgstr "非只读"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:146
 msgid ""
 "Include read-only parameters. ArduPilot reports these values for "
 "information,\n"
 "status, or detected hardware, and normally does not allow them to be changed."
-msgstr ""
+msgstr "包含只读参数。ArduPilot 报告这些值用于信息、\n状态或已检测到的硬件，通常不允许更改它们。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:150
 msgid ""
 "Include parameters that are not read-only. These are the parameters that "
 "ArduPilot\n"
 "normally allows you to change and use for vehicle configuration."
-msgstr ""
+msgstr "包含非只读参数。这些是 ArduPilot\n通常允许你更改并用于载具配置的参数。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:158
 msgid "Parameter values"
-msgstr ""
+msgstr "参数值"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:162
 msgid ""
@@ -8595,18 +8595,18 @@ msgid ""
 "Select one or both\n"
 "options in each row. A parameter is exported only when it matches every "
 "selected row."
-msgstr ""
+msgstr "这些选项描述从飞控读取的当前值。请在每一行中选择一个或两个\n选项。仅当参数匹配每个已选行时，才会被导出。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:174
 msgid "Non-default value"
-msgstr ""
+msgstr "非默认值"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:176
 msgid ""
 "Include parameters whose current flight-controller value is the default "
 "supplied by\n"
 "the ArduPilot firmware. This means no custom value has been applied."
-msgstr ""
+msgstr "包含当前飞控值为 ArduPilot 固件提供的默认值的参数。\n这意味着尚未应用任何自定义值。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:180
 msgid ""
@@ -8614,15 +8614,15 @@ msgid ""
 "firmware\n"
 "default. These values represent a customization or a change made during "
 "setup."
-msgstr ""
+msgstr "包含当前飞控值与固件默认值不同的参数。\n这些值表示自定义设置或在设置过程中所做的更改。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:186
 msgid "Inside or undocumented limits"
-msgstr ""
+msgstr "在限制范围内或无文档限制"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:188
 msgid "Outside limits"
-msgstr ""
+msgstr "超出限制范围"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:190
 msgid ""
@@ -8632,7 +8632,7 @@ msgid ""
 "are not\n"
 "known to be outside a limit. If only one bound is documented, that bound is "
 "checked."
-msgstr ""
+msgstr "包含当前值未确认违反已记录限制的参数。\n没有记录最小值或最大值的参数也会被包含，因为它们并未被确认\n超出限制范围。如果只记录了一个边界，则检查该边界。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:195
 msgid ""
@@ -8641,28 +8641,28 @@ msgid ""
 "documented by ArduPilot. Such values may be invalid or unsafe; exporting "
 "them is\n"
 "mainly useful for diagnosis or recovery."
-msgstr ""
+msgstr "包含当前值低于最小值或高于 ArduPilot 记录的最大值的参数。\n此类值可能无效或不安全；导出它们主要用于\n诊断或恢复。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:206
 msgid "Parameters selected for export:"
-msgstr ""
+msgstr "已选择导出的参数："
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:210
 msgid ""
 "The number of parameters that match every selected filter.\n"
 "The rows are combined with AND logic, so a parameter must\n"
 "satisfy all selected categories to be counted."
-msgstr ""
+msgstr "符合所有已选筛选条件的参数数量。\n各行按 AND 逻辑组合，因此参数必须\n满足所有已选类别才会被计入。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:220
 msgid ""
 "The number of parameters that will be written to the file if you press "
 "Export."
-msgstr ""
+msgstr "如果按下“导出”，将写入文件的参数数量。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:229
 msgid "Annotate parameters with documentation"
-msgstr ""
+msgstr "为参数添加文档注释"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:235
 msgid ""
@@ -8670,39 +8670,39 @@ msgid ""
 "file.\n"
 "This makes the file easier to understand but does not change parameter "
 "values."
-msgstr ""
+msgstr "向导出的文件添加带有 ArduPilot 文档说明的易读注释。\n这会使文件更易于理解，但不会更改参数值。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:242
 msgid ""
 "Close this window and discard this export selection without creating a file."
-msgstr ""
+msgstr "关闭此窗口并放弃此次导出选择，而不创建文件。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:243
 msgid "Export"
-msgstr ""
+msgstr "导出"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:247
 msgid ""
 "Choose where to save a .param file containing the selected flight-controller "
 "parameters.\n"
 "The suggested filename describes your selections."
-msgstr ""
+msgstr "选择保存包含所选飞控参数的 .param 文件的位置。\n建议的文件名会描述你的选择。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:282
 msgid "Parameter name"
-msgstr ""
+msgstr "参数名称"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:283
 msgid "FC value"
-msgstr ""
+msgstr "飞控值"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:284
 msgid "Units"
-msgstr ""
+msgstr "单位"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:398
 msgid "Include MAV IDs"
-msgstr ""
+msgstr "包含 MAV ID"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:405
 msgid ""
@@ -8710,15 +8710,15 @@ msgid ""
 "FOLL_SYSID, MAV_SYSID, and MAV_GCS_SYSID.\n"
 "Leave unchecked to omit these MAV ID parameters from the preview and "
 "exported file."
-msgstr ""
+msgstr "包含诸如 SYSID_THISMAV、SYSID_MYGCS、FOLL_SYSID、MAV_SYSID 和 MAV_GCS_SYSID 等飞行器身份参数。\n取消勾选可在预览和导出文件中省略这些 MAV ID 参数。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:457
 msgid "Parameter export error"
-msgstr ""
+msgstr "参数导出错误"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:493
 msgid "Export parameters from an ArduPilot flight controller."
-msgstr ""
+msgstr "从 ArduPilot 飞控中导出参数。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:101
 msgid "Please be patient, {:.1f}% of {}% complete"
