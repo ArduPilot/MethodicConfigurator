@@ -200,6 +200,15 @@ This systematic approach ensures methodical, traceable, and safe vehicle configu
 
 ### Derived Parameter Awareness Workflow
 
+`run_initial_component_editor()` applies project-creation preferences only for new
+projects. Existing projects open the Parameter Editor directly. The Parameter Editor
+returns an explicit action when the user requests component editing, and its caller
+reopens the editor at the same parameter step after the component window closes. The
+component window reports its close outcome; the application decides whether an initial
+setup close exits startup or an on-demand close returns to parameter editing. Each
+on-demand visit rebuilds the parameter model so evaluator references use the updated
+component data.
+
 After the Component Editor closes and before the Parameter Editor opens,
 `process_component_editor_results()` recalculates forced/derived parameters and notifies
 the user which parameter files will be affected, so they know which steps to revisit.

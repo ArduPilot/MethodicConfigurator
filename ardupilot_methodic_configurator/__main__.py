@@ -8,8 +8,8 @@ Calls five sub-applications in sequence:
   1. Check for software updates
   2. Connect to the flight controller and read the parameters
   3. Select the vehicle directory
-  4. Component and connection editor
-  5. Parameter editor and uploader
+  4. Component and connection editor for newly created projects
+  5. Parameter editor and uploader, with on-demand component editing
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -52,12 +52,16 @@ from ardupilot_methodic_configurator.data_model_software_updates import UpdateMa
 from ardupilot_methodic_configurator.data_model_vehicle_project import VehicleProjectManager
 from ardupilot_methodic_configurator.data_model_vehicle_project_creator import VehicleProjectCreationError
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
+from ardupilot_methodic_configurator.frontend_tkinter_component_editor_base import (
+    ComponentEditorCloseAction,
+    ComponentEditorCloseResult,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_connection_selection import ConnectionSelectionWindow
 from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_connection_progress import (
     FlightControllerConnectionProgress,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_info import FlightControllerInfoWindow
-from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
+from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorAction, ParameterEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_project_opener import VehicleProjectOpenerWindow
 from ardupilot_methodic_configurator.frontend_tkinter_show import (
     show_error_message,
@@ -580,40 +584,52 @@ def open_firmware_documentation(firmware_type: str) -> bool:
     return url_found
 
 
-def component_editor(state: ApplicationState) -> None:
-    """
-    Run the component editor workflow.
+def run_initial_component_editor(state: ApplicationState) -> None:
+    """Run initial component setup with the project-creation preferences."""
+    project_manager = state.vehicle_project_manager
+    if project_manager is None or not project_manager.is_new_project:
+        process_component_editor_results(state.flight_controller, state.local_filesystem)
+        return
 
-    Args:
-        state: Application state containing all necessary objects
-
-    Raises:
-        SystemExit: If there's an error in derived parameters
-
-    """
     # Create and configure the component editor window
     component_editor_window = create_and_configure_component_editor(
         __version__,
         state.local_filesystem,
         state.flight_controller,
         state.local_filesystem.vehicle_type,
-        state.vehicle_project_manager,
+        project_manager,
     )
 
-    # Handle skip component editor option
-    should_skip_editor = state.args.skip_component_editor and not (
-        state.vehicle_project_manager is not None and state.vehicle_project_manager.blank_component_data
-    )
-    if should_skip_editor:
-        component_editor_window.root.after(10, component_editor_window.root.destroy)
-    elif should_open_firmware_documentation(state.flight_controller):
+    if should_open_firmware_documentation(state.flight_controller):
         open_firmware_documentation(state.flight_controller.info.firmware_type)
 
         # Set up startup notification for the component editor window
         FreeDesktop.setup_startup_notification(component_editor_window.root)  # type: ignore[arg-type]
 
-    # Run the GUI
-    component_editor_window.root.mainloop()
+    close_result = _run_component_editor(component_editor_window)
+    if close_result.action is ComponentEditorCloseAction.QUIT_WORKFLOW:
+        sys_exit(close_result.exit_code)
+        return  # pylint: disable=unreachable
+    process_component_editor_results(state.flight_controller, state.local_filesystem)
+
+
+def edit_vehicle_components(state: ApplicationState) -> None:
+    """Edit existing components and return without applying creation preferences."""
+    window = create_and_configure_component_editor(
+        __version__,
+        state.local_filesystem,
+        state.flight_controller,
+        state.local_filesystem.vehicle_type,
+        None,
+    )
+    _run_component_editor(window)
+    process_component_editor_results(state.flight_controller, state.local_filesystem)
+
+
+def _run_component_editor(window: ComponentEditorWindow) -> ComponentEditorCloseResult:
+    """Run the component editor and return its close outcome to the application."""
+    window.root.mainloop()
+    return window.close_result
 
 
 def process_component_editor_results(
@@ -738,18 +754,25 @@ def parameter_editor_and_uploader(state: ApplicationState) -> None:
     simple_gui: bool = ProgramSettings.get_setting("gui_complexity") == "simple"
     start_file = state.local_filesystem.get_start_file(state.args.n, imu_tcal_available and not simple_gui)
 
-    # Call the GUI function with the starting intermediate parameter file
-    parameter_editor = ParameterEditor(
-        start_file,
-        state.flight_controller,
-        state.local_filesystem,
-        export_fc_params_missing_or_different=state.args.export_fc_params_missing_or_different,
-    )
-    window = ParameterEditorWindow(parameter_editor)
-    window.run()
+    # Recreate the parameter data model after each component-editor visit so all
+    # component-derived values and evaluator references use the freshly saved data.
+    current_file = start_file
+    while True:
+        parameter_editor = ParameterEditor(
+            current_file,
+            state.flight_controller,
+            state.local_filesystem,
+            export_fc_params_missing_or_different=state.args.export_fc_params_missing_or_different,
+        )
+        window = ParameterEditorWindow(parameter_editor)
+        if window.run() is ParameterEditorAction.FINISHED:
+            return
+
+        current_file = parameter_editor.current_file
+        edit_vehicle_components(state)
 
 
-def main() -> None:
+def main() -> None:  # noqa: PLR0915 # pylint: disable=too-many-branches,too-many-statements
     """
     Main application entry point.
 
@@ -812,6 +835,23 @@ def main() -> None:
     parameter_files_version_str = state.local_filesystem.get_fc_fw_version_from_vehicle_components_json()
     logging_info(_("Parameter files firmware version from vehicle_components.json: %s"), parameter_files_version_str)
 
+    # Keep existing projects' component metadata aligned with the connected FC. A missing
+    # project manager means the project was opened directly; retain the old version above
+    # for this startup's parameter-file upgrade comparison.
+    project_manager = state.vehicle_project_manager
+    fc_info = state.flight_controller.info
+    if (
+        (project_manager is None or not project_manager.is_new_project)
+        and fc_info is not None
+        and fc_info.flight_sw_version
+        and fc_info.vehicle_type
+    ):
+        state.local_filesystem.set_fc_fw_version_and_type_in_components_json(
+            fc_info.flight_sw_version,
+            fc_info.vehicle_type,
+            state.local_filesystem.vehicle_dir,
+        )
+
     if (
         state.flight_controller.fc_parameters
         and state.flight_controller.info.flight_sw_version.startswith("4.6.")
@@ -832,11 +872,7 @@ def main() -> None:
             os.remove(file_path)
         sys_exit(1)
 
-    # Run component editor workflow
-    component_editor(state)
-
-    # Process results after component editor GUI closes
-    process_component_editor_results(state.flight_controller, state.local_filesystem)
+    run_initial_component_editor(state)
 
     # Write parameter default values to file if they have been modified
     if state.param_default_values_dirty:
