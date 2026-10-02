@@ -83,13 +83,13 @@ def test_archive_requirements_reject_incomplete_source_trees(tmp_path: Path, sub
         required_modules(tmp_path)
 
 
-def test_plugin_validation_registers_all_nine_plugins_without_creating_windows() -> None:
+def test_plugin_validation_registers_expected_plugins_without_creating_windows() -> None:
     """
     Packaging smoke tests must not create GUI windows.
 
     GIVEN the real plugin implementations are importable.
     WHEN the validation-only application entry point runs.
-    THEN all nine plugins register without creating a window or starting normal startup.
+    THEN the expected plugins register without creating a window or starting normal startup.
     """
     with (
         # Isolate and restore the shared factory, including references held by imported plugins.
@@ -102,7 +102,18 @@ def test_plugin_validation_registers_all_nine_plugins_without_creating_windows()
         patch.object(amc_main, "create_argument_parser", side_effect=AssertionError("Must not start normal startup")),
     ):
         amc_main.main()
-        assert len(amc_main.plugin_factory.available_plugins()) == 9
+        assert set(amc_main.plugin_factory.available_plugins()) == {
+            "accelerometer_calibration",
+            "ahrs_orientation",
+            "autotune_gain_backoff",
+            "battery_monitor",
+            "compass_calibration",
+            "esc_rpm_scale",
+            "level_calibration",
+            "motor_test",
+            "rc_calibration",
+            "servo_out",
+        }
 
 
 def test_plugin_validation_exits_nonzero_when_registration_fails() -> None:
