@@ -1135,7 +1135,8 @@ def main() -> int:
         logging.error("Vehicle dir does not exist: %s", args.vehicle_dir)
         return 1
 
-    requested_screenshots = cast("list[str] | None", getattr(args, "screenshots", None))
+    screenshots = getattr(args, "screenshots", None)
+    requested_screenshots = list(screenshots) if screenshots is not None else None
     targets = [target for target in TARGETS if requested_screenshots is None or target.filename in requested_screenshots]
     selected_filenames = {target.filename for target in targets}
 
