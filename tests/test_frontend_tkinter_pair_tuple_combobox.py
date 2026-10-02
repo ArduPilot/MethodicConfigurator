@@ -24,7 +24,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import
     setup_combobox_mousewheel_handling,
 )
 
-# pylint: disable=protected-access
+# pylint: disable=protected-access, too-many-lines
 
 
 class TestPairTupleComboboxTooltip(unittest.TestCase):
