@@ -87,6 +87,7 @@ def register_plugins() -> None:
     registrations = (
         ("frontend_tkinter_accelerometer_calibration", "register_accelerometer_calibration_plugin"),
         ("frontend_tkinter_ahrs_orientation", "register_ahrs_orientation_plugin"),
+        ("frontend_tkinter_autotune_gain_backoff", "register_autotune_gain_backoff_plugin"),
         ("frontend_tkinter_battery_monitor", "register_battery_monitor_plugin"),
         ("frontend_tkinter_compass_calibration", "register_compass_calibration_plugin"),
         ("frontend_tkinter_esc_rpm_scale", "register_esc_rpm_scale_plugin"),
