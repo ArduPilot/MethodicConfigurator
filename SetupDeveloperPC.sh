@@ -35,10 +35,18 @@ if command -v brew &> /dev/null; then
     fi
 
     echo "Found Python $PY_VER, installing python-tk..."
-    brew install uv@0.10.9 python-tk@"$PY_VER"
+    brew install python-tk@"$PY_VER"
+
+    if command -v uv &> /dev/null; then
+        echo "uv is already installed. Using existing uv installation."
+    else
+        echo "uv not found. Installing uv with Homebrew..."
+        brew install uv
+    fi
 
     echo "Creating Python virtual environment with uv..."
     uv venv --python "$PY_VER"
+
 else
     # Create a local virtual environment if it doesn't exist
     if [ ! -d ".venv" ]; then

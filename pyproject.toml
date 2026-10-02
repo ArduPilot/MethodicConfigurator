@@ -156,7 +156,7 @@ download = "https://github.com/ArduPilot/MethodicConfigurator/releases"
 changelog = "https://github.com/ArduPilot/MethodicConfigurator/releases"
 
 [tool.uv]
-required-version = "==0.12.6"
+required-version = ">=0.12.6"
 
 [tool.setuptools]
 # Discover the application and its subpackages; specify data via package-data.
