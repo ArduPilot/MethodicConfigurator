@@ -213,6 +213,7 @@ class _DummyTkRoot:  # pylint: disable=too-many-instance-attributes, too-few-pub
         self.deiconify = MagicMock()
         self.update_idletasks = MagicMock()
         self.after = MagicMock()
+        self.after_idle = MagicMock()
         self.winfo_fpixels = MagicMock(return_value=96.0)
         self.winfo_reqheight = MagicMock(return_value=630)
         self.winfo_width = MagicMock(return_value=1)

@@ -580,9 +580,12 @@ class TestWindowManagementBehavior:
 
         mock_window.update_idletasks.assert_not_called()
         mock_window.update.assert_not_called()
+        mock_window.geometry.assert_not_called()
         mock_window.after_idle.assert_called_once()
         mock_window.after_idle.call_args.args[0]()
         mock_window.geometry.assert_called_once_with("+300+250")
+        mock_window.update_idletasks.assert_not_called()
+        mock_window.update.assert_not_called()
 
     def test_user_can_safely_close_windows_without_memory_leaks(self, tk_root) -> None:
         """
@@ -1864,6 +1867,12 @@ class TestMonitorTrackingBehavior:
 class TestCenterWindowOnScreenBehavior:
     """Test screen-centered window positioning with multi-monitor support."""
 
+    @pytest.fixture(autouse=True)
+    def non_darwin_by_default(self) -> Generator[None, None, None]:
+        """Exercise synchronous positioning unless a test explicitly selects Darwin."""
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.platform_system", return_value="Linux"):
+            yield
+
     def test_centers_window_on_single_monitor(self) -> None:
         """
         Centers window on single monitor setup.
@@ -2195,9 +2204,12 @@ class TestCenterWindowOnScreenBehavior:
             mock_window.update_idletasks.assert_not_called()
             mock_window.update.assert_not_called()
             mock_window.geometry.assert_not_called()
+            mock_window.after_idle.assert_called_once()
             mock_window.after_idle.call_args.args[0]()
 
         mock_window.geometry.assert_called_once_with("+810+440")
+        mock_window.update_idletasks.assert_not_called()
+        mock_window.update.assert_not_called()
 
 
 if __name__ == "__main__":
