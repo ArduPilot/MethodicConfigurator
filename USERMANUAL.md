@@ -134,6 +134,86 @@ Manually specify your connection details.
   - Serial: `COM3` (Windows) or `/dev/ttyUSB0` (Linux)
   - Network: `tcp:192.168.1.100:5760`
 
+##### Connecting AMC through Mission Planner MAVLink forwarding
+
+Use this setup to keep Mission Planner connected to the vehicle while AMC reads and changes
+parameters through Mission Planner. Mission Planner sends UDP traffic **outbound**;
+AMC listens for that traffic.
+
+1. Open **Mission Planner**.
+2. **Connect** to your vehicle and wait for telemetry to appear.
+3. Press **Ctrl-F** to open Mission Planner's auxiliary tools window (titled **temp**).
+
+   ![Mission Planner Ctrl-F auxiliary tools window with the Mavlink button](images/MissionPlanner_Ctrl_F_Mavlink.png)
+
+4. Click **Mavlink**, described as "mirrors the mavlink stream received by mp".
+5. In the forwarding window, configure an outbound UDP connection:
+
+   ![Mission Planner Mavlink port forwarding window](images/MissionPlanner_Port_forwarding.png)
+
+   | Setting | Value when both applications run on the same PC |
+   | --- | --- |
+   | Type / Protocol | **UDP** |
+   | Direction | **Outbound** |
+   | Port | `14600` |
+   | Extra / Destination IP | `127.0.0.1` |
+   | Write | **Enabled / True** |
+
+   If your Mission Planner version uses a connection dropdown instead of a table,
+   select **UDP Client**, enable **Write**, and enter the same destination IP and port
+   when prompted.
+6. Start forwarding using the row's **Go** control or the **Connect** button.
+7. Open **AMC** normally using its desktop shortcut or application launcher.
+   If AMC connects to another flight controller automatically, use the connection selector
+   in the parameter editor to change the connection.
+8. In AMC's **Manual connection** section, open the **Port** dropdown and select **Add another**.
+
+   ![AMC connection selector with Add another highlighted](images/App_screenshot_FC_connection_add_another.png)
+
+9. Enter `udpin:0.0.0.0:14600` in the **Flight Controller Connection** dialog, then click **OK**.
+   AMC will connect and retrieve the flight controller information and parameters.
+
+   ![AMC custom connection dialog containing the UDP forwarding listener address](images/App_screenshot_FC_connection_udp_forwarding.png)
+
+10. Leave Mission Planner connected and forwarding while using AMC.
+
+For advanced users, AMC can also be started from a terminal with an explicit listening connection,
+if its command is available on `PATH`:
+
+```powershell
+ardupilot_methodic_configurator --device="udpin:0.0.0.0:14600"
+```
+
+**Save this connection in a desktop shortcut:** On Windows, right-click the AMC desktop shortcut,
+select **Properties**, and open the **Shortcut** tab. In **Target**, keep the existing executable
+path (including its quotes), then append a space followed by `--device="udpin:0.0.0.0:14600"`.
+Click **Apply**, then **OK**. AMC will use this connection every time you launch that shortcut;
+Mission Planner must still be connected and forwarding.
+
+You can also copy the shortcut and name it **AMC - Mission Planner**, leaving the original
+unchanged for other connections. Each shortcut can have different connection, project and startup
+settings. See [Pro Tip: Desktop Shortcuts](#pro-tip-desktop-shortcuts) for more examples.
+
+**Important:**
+
+- `127.0.0.1` is Mission Planner's destination when both applications run on the same PC.
+  `0.0.0.0` tells AMC to listen on all local IPv4 interfaces; it is not a destination address.
+  For same-PC-only listening, use `udpin:127.0.0.1:14600` instead.
+- **Write must be enabled** for AMC's parameter requests and changes to reach the vehicle.
+  Do not change the same parameters in both applications simultaneously.
+- If the applications run on different PCs, set Mission Planner's destination to the AMC PC's
+  IPv4 address and allow inbound UDP traffic on the selected port in that PC's firewall.
+- Use port `14600` for this forwarding connection to avoid conflicts with port `14550`,
+  which may already be used by Mission Planner or another MAVLink application.
+  If port `14600` is already in use, select another free port in **both** applications.
+  The baudrate setting does not affect UDP connections.
+- `--device` selects the supplied endpoint directly without requiring auto-discovery.
+  If connection fails, that endpoint remains available in AMC's connection selector for retrying.
+- If AMC times out, check the vehicle connection, forwarding status, destination, matching ports,
+  firewall and **Write** setting. A missing entry in the default port list does not mean a custom
+  UDP listening endpoint is invalid.
+- Bootloader firmware flashing requires a direct serial connection, not MAVLink forwarding.
+
 #### Option 3: No flight controller connection 📝 **For offline editing**
 
 Work with parameter files without connecting to hardware.
@@ -594,7 +674,17 @@ ardupilot_methodic_configurator --loglevel=DEBUG --skip-check-for-updates --devi
 
 #### Pro Tip: Desktop Shortcuts
 
-Create multiple desktop shortcuts for different projects:
+Create multiple desktop shortcuts for different projects or connection settings.
+On Windows, copy an existing AMC shortcut, rename it, then right-click it and select
+**Properties → Shortcut**. Append the desired options to **Target**, after the existing
+executable path and a separating space. Keep any quotes around the executable path.
+Click **Apply**, then **OK** to save the options for every launch of that shortcut.
+If an option such as `--device` is already present, replace its value rather than adding it twice.
+
+For example, a shortcut named **AMC - Mission Planner** can append
+`--device="udpin:0.0.0.0:14600"` to use the
+[Mission Planner forwarding connection](#connecting-amc-through-mission-planner-mavlink-forwarding).
+Keep a separate shortcut without this option for automatic connection detection.
 
 **Shortcut 1** (MyQuadcopter):
 
