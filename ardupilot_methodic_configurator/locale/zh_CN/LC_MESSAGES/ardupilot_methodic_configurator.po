@@ -526,7 +526,7 @@ msgstr "配置步骤验证错误：%s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:186
 msgid "Invalid configuration steps schema '%s': %s"
-msgstr ""
+msgstr "无效的配置步骤架构“%s”：%s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:188
 msgid "Error in schema file '%s': %s"
@@ -2163,31 +2163,31 @@ msgstr "在浏览器中打开 URL 失败：%s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_web_log_tools.py:39
 msgid "plotbeta"
-msgstr ""
+msgstr "plotbeta"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_web_log_tools.py:40
 msgid "plot"
-msgstr ""
+msgstr "绘图"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_web_log_tools.py:41
 msgid "hardware report"
-msgstr ""
+msgstr "硬件报告"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_web_log_tools.py:42
 msgid "MagFit"
-msgstr ""
+msgstr "MagFit"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_web_log_tools.py:43
 msgid "Filter Review"
-msgstr ""
+msgstr "滤波器审查"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_web_log_tools.py:44
 msgid "PID Review"
-msgstr ""
+msgstr "PID审查"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_web_log_tools.py:45
 msgid "Stream stats"
-msgstr ""
+msgstr "流统计"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_web_log_tools.py:46
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:113
@@ -2196,11 +2196,11 @@ msgstr "系统 ID"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_web_log_tools.py:118
 msgid "Web log tool redirected to an unexpected address"
-msgstr ""
+msgstr "Web日志工具被重定向到了意外的地址"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_web_log_tools.py:144
 msgid "Unsupported web log tool"
-msgstr ""
+msgstr "不支持的Web日志工具"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/common_arguments.py:23
 msgid "Logging level. Default is %(default)s."
@@ -4137,13 +4137,13 @@ msgstr "参数的新值"
 msgid ""
 "One download object (legacy) or a non-empty array of download objects; "
 "normalized to an array when loaded."
-msgstr ""
+msgstr "单个下载对象（旧版）或非空的下载对象数组；加载时会规范化为数组。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:460
 msgid ""
 "One upload object (legacy) or a non-empty array of upload objects; "
 "normalized to an array when loaded."
-msgstr ""
+msgstr "单个上传对象（旧版）或非空的上传对象数组；加载时会规范化为数组。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:463
 msgid ""
@@ -4845,7 +4845,7 @@ msgstr "从 URL 下载文件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:716
 msgid "Download declined for %s"
-msgstr ""
+msgstr "%s 的下载已被拒绝"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:725
 msgid ""
@@ -4877,7 +4877,7 @@ msgstr "没有飞控连接"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:794
 msgid "Could not verify remote file %s"
-msgstr ""
+msgstr "无法验证远程文件 %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:794
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:797
@@ -4892,7 +4892,7 @@ msgstr "本地文件 {local_filename} 不存在"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:799
 msgid "Local file {local_filename} is empty; it cannot be uploaded"
-msgstr ""
+msgstr "本地文件 {local_filename} 为空；无法上传"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:804
 msgid ""
@@ -6991,7 +6991,7 @@ msgstr "打开"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1122
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1128
 msgid "Open log in web tool failed"
-msgstr ""
+msgstr "在Web工具中打开日志失败"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1151
 msgid "Open file error"
