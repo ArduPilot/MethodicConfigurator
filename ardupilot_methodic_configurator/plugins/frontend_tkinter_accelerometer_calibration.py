@@ -42,7 +42,7 @@ _IMU_POLL_INTERVAL_MS = 200  # tkinter polling interval for live IMU monitor
 
 
 def _accel_calibration_names(parameters: Collection[str]) -> set[str]:
-    """Select offsets, scales, and trims written by simple accelerometer calibration."""
+    """Select offsets, scales, and trims written by accelerometer calibration."""
     return {name for name in parameters if re.fullmatch(r"INS\d*_ACC\d*(?:OFFS|SCAL)_[XYZ]|AHRS_TRIM_[XYZ]", name)}
 
 
@@ -329,8 +329,28 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
         self._stop_polling()
         self._hide_wizard()
         if success:
-            refresh_parameter_editor_after_calibration(self.base_window)
-            showinfo(_("Calibration Result"), _("Full accelerometer calibration successful!"))
+            download_parameters = getattr(self.base_window, "download_flight_controller_parameters", None)
+            downloaded = False
+            if callable(download_parameters):
+                download_result = download_parameters(redownload=True)
+                downloaded = not (isinstance(download_result, tuple) and not download_result[0])
+            editor = getattr(self.base_window, "parameter_editor", None)
+            stale_files = refresh_parameter_editor_after_calibration(
+                self.base_window,
+                parameter_names_to_copy=(
+                    _accel_calibration_names(getattr(editor, "fc_parameters", {})) if downloaded else set()
+                ),
+                check_other_steps=True,
+                redownload=False,
+            )
+            message = _("Full accelerometer calibration successful!")
+            if not downloaded:
+                message += "\n" + _("Could not download the new calibration values.")
+            if stale_files:
+                message += "\n" + _("Review stale accelerometer calibration values in: %(filenames)s") % {
+                    "filenames": ", ".join(stale_files)
+                }
+            showinfo(_("Calibration Result"), message)
         else:
             showerror(_("Calibration Failed"), _("Full accelerometer calibration failed."))
 
