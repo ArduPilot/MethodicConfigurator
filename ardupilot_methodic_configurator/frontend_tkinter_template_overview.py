@@ -250,6 +250,9 @@ class TemplateOverviewWindow(BaseWindow):  # pylint: disable=too-many-instance-a
 
         """
         for key, template_overview in self.vehicle_components_provider.get_vehicle_components_overviews().items():
+            template_name = key.replace("\\", "/").rsplit("/", maxsplit=1)[-1]
+            if template_name.endswith("_mig"):
+                continue
             attribute_names = template_overview.attributes()
             values = (key, *(getattr(template_overview, attr, "") for attr in attribute_names))
             if connected_fc_vehicle_type and not key.startswith(connected_fc_vehicle_type):
