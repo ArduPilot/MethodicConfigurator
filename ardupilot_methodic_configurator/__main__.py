@@ -65,6 +65,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_show import (
 )
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import PopupWindow
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import display_workflow_explanation
+from ardupilot_methodic_configurator.plugins import plugin_constants
 from ardupilot_methodic_configurator.plugins.plugin_factory import plugin_factory
 
 
@@ -104,6 +105,19 @@ def register_plugins() -> None:
             logging_error("Failed to register plugin %s: %s", module_name, error)
 
     # Add more plugin registrations here in the future
+
+
+def validate_plugin_registration() -> None:
+    """Verify all declared plugins register, without creating windows or connecting to a vehicle."""
+    register_plugins()
+    expected = {
+        value for name, value in vars(plugin_constants).items() if name.startswith("PLUGIN_") and isinstance(value, str)
+    }
+    missing = expected - set(plugin_factory.available_plugins())
+    if not expected or missing:
+        logging_error("Plugin registration validation failed. Missing plugins: %s", ", ".join(sorted(missing)))
+        sys_exit(1)
+    logging_info("Validated registration of all %d plugins", len(expected))
 
 
 class ApplicationState:  # pylint: disable=too-few-public-methods
@@ -749,6 +763,17 @@ def parameter_editor_and_uploader(state: ApplicationState) -> None:
     window.run()
 
 
+def _run_validation_command() -> bool:
+    """Handle headless validation modes before normal application startup."""
+    if sys.argv[1:] == ["--validate-plugins"]:
+        validate_plugin_registration()
+        return True
+    if len(sys.argv) == 3 and sys.argv[1] == "--validate-bin-log":
+        _run_bin_log_validation(sys.argv[2])
+        return True
+    return False
+
+
 def main() -> None:
     """
     Main application entry point.
@@ -756,8 +781,7 @@ def main() -> None:
     Orchestrates the entire application startup process by calling specialized functions
     for each major step.
     """
-    if len(sys.argv) == 3 and sys.argv[1] == "--validate-bin-log":
-        _run_bin_log_validation(sys.argv[2])
+    if _run_validation_command():
         return
 
     parser = create_argument_parser()

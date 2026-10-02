@@ -9,17 +9,26 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import argparse
+import importlib
 from pathlib import Path
 from zipfile import ZipFile
 
 
-def required_modules() -> set[str]:
+def required_modules(project_root: Path | None = None) -> set[str]:
     """Return every plugin and log-analysis module from the source checkout."""
-    project_root = Path(__file__).resolve().parents[1]
+    project_root = project_root or Path(__file__).resolve().parents[1]
     package_root = project_root / "ardupilot_methodic_configurator"
     modules = set()
     for subpackage in ("plugins", "log_analysis"):
-        for source in (package_root / subpackage).rglob("*.py"):
+        directory = package_root / subpackage
+        if not directory.is_dir():
+            message = f"Required source directory is missing: {directory}"
+            raise ValueError(message)
+        sources = list(directory.rglob("*.py"))
+        if not any(source.name != "__init__.py" for source in sources):
+            message = f"Required source directory has no modules: {directory}"
+            raise ValueError(message)
+        for source in sources:
             parts = source.relative_to(project_root).with_suffix("").parts
             if parts[-1] == "__init__":
                 parts = parts[:-1]
@@ -38,10 +47,8 @@ def verify_archive(archive: Path) -> None:
             }
     elif archive.suffix == ".pyz":
         # PyInstaller is needed only in frozen-build jobs, not wheel-build jobs.
-        # pylint: disable-next=import-outside-toplevel
-        from PyInstaller.archive.readers import ZlibArchiveReader  # noqa: PLC0415
-
-        modules = set(ZlibArchiveReader(str(archive)).toc)
+        reader_module = importlib.import_module("PyInstaller.archive.readers")
+        modules = set(reader_module.ZlibArchiveReader(str(archive)).toc)
     else:
         message = f"Unsupported archive type: {archive}"
         raise ValueError(message)

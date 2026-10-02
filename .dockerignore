@@ -26,5 +26,6 @@ htmlcov/
 Thumbs.db
 
 # Project-specific
+.packaging-check/
 sitl-cache/
 *.log
