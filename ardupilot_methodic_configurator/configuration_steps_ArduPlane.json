@@ -979,6 +979,7 @@
             "old_filenames": ["28_autotune_roll_setup.param", "30_autotune_roll_setup.param"]
         },
         "36_autotune_roll_results.param": {
+            "plugin": {"name": "autotune_gain_backoff", "placement": "top", "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7.0')"},
             "why": "To record autotune results after roll step response optimization",
             "why_now": "Because roll is usually the axis that has the highest dynamic, and we start with the highest dynamic axis",
             "blog_text": "Record the results of the roll axis autotuning, providing data for analysis and adjustment.",
@@ -1008,6 +1009,7 @@
             "old_filenames": ["30_autotune_pitch_setup.param", "32_autotune_pitch_setup.param"]
         },
         "38_autotune_pitch_results.param": {
+            "plugin": {"name": "autotune_gain_backoff", "placement": "top", "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7.0')"},
             "why": "To record autotune results after pitch step response optimization",
             "why_now": "Because pitch is usually the axis that has the second highest dynamic, and we continue with the second highest dynamic axis",
             "blog_text": "Record the results of the pitch axis autotuning",
@@ -1040,6 +1042,7 @@
             "old_filenames": ["32_autotune_yaw_setup.param", "34_autotune_yaw_setup.param"]
         },
         "40_autotune_yaw_results.param": {
+            "plugin": {"name": "autotune_gain_backoff", "placement": "top", "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7.0')"},
             "why": "To record autotune results after yaw step response optimization",
             "why_now": "Because yaw is usually the axis that has the third highest dynamic, and we continue with the third highest dynamic axis",
             "blog_text": "Record the results of the yaw axis autotuning, providing data for analysis and adjustment.",
@@ -1069,6 +1072,7 @@
             "old_filenames": ["34_autotune_yawd_setup.param", "36_autotune_yawd_setup.param"]
         },
         "42_autotune_yawd_results.param": {
+            "plugin": {"name": "autotune_gain_backoff", "placement": "top", "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7.0')"},
             "why": "To record autotune results after yaw D step response optimization",
             "why_now": "Because yaw D can only be done after yaw",
             "blog_text": "Record the results of the yaw rate autotuning",
@@ -1098,6 +1102,7 @@
             "old_filenames": ["36_autotune_roll_pitch_retune_setup.param", "38_autotune_roll_pitch_retune_setup.param"]
         },
         "44_autotune_roll_pitch_retune_results.param": {
+            "plugin": {"name": "autotune_gain_backoff", "placement": "top", "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7.0')"},
             "why": "To record autotune roll-pitch results",
             "why_now": "Because it can only be done after the respective autotune flight",
             "blog_text": "Record the results of the roll and pitch axis retuning, providing data for analysis and adjustment.",
