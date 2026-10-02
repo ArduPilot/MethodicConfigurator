@@ -675,6 +675,9 @@ class TestPairTupleComboboxMissingCoverage:
 
         # Mock the current method to raise ValueError then work normally
         with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.platform_system", return_value="Linux"
+            ),
             patch.object(combobox, "current") as mock_current,
             patch.object(combobox, "update_idletasks") as mock_update,
             patch.object(combobox, "event_generate") as mock_event_gen,
@@ -704,6 +707,9 @@ class TestPairTupleComboboxMissingCoverage:
 
         # Mock the current method to raise IndexError then work normally
         with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.platform_system", return_value="Linux"
+            ),
             patch.object(combobox, "current") as mock_current,
             patch.object(combobox, "update_idletasks") as mock_update,
             patch.object(combobox, "event_generate") as mock_event_gen,
@@ -719,6 +725,38 @@ class TestPairTupleComboboxMissingCoverage:
             mock_current.assert_called_with(0)  # Code selects first item on error
             mock_update.assert_called_once()
             mock_event_gen.assert_called_once_with("<<ComboboxSelected>>")
+
+    @pytest.mark.parametrize(
+        ("direction", "initial_index", "invalid_selection", "expected_index"),
+        [("up", 1, False, 0), ("down", 0, False, 1), ("up", 0, True, 0), ("down", 0, True, 0)],
+    )
+    def test_macos_key_navigation_selects_and_emits_event_without_idle_update(
+        self, direction: str, initial_index: int, invalid_selection: bool, expected_index: int
+    ) -> None:
+        """Arrow navigation on macOS changes selection and emits its event without processing idle tasks."""
+        combobox = PairTupleCombobox(self.root, self.test_data, "key1", "test_combo")
+        handler = combobox._on_key_up if direction == "up" else combobox._on_key_down
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.platform_system", return_value="Darwin"
+            ),
+            patch.object(combobox, "current") as mock_current,
+            patch.object(combobox, "update_idletasks") as mock_update,
+            patch.object(combobox, "event_generate") as mock_event_gen,
+            patch.object(combobox, "selection_range") as mock_selection,
+        ):
+            mock_current.side_effect = [ValueError("Invalid selection"), None] if invalid_selection else None
+            mock_current.return_value = initial_index
+
+            result = handler(None)
+
+            assert result == "break"
+            assert mock_current.call_args_list[-1].args == (expected_index,)
+            if not invalid_selection or direction == "down":
+                mock_selection.assert_called_once_with(0, tk.END)
+            mock_event_gen.assert_called_once_with("<<ComboboxSelected>>")
+            mock_update.assert_not_called()
 
     def test_navigation_at_boundaries_handles_edge_cases(self) -> None:
         """
