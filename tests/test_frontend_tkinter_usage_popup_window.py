@@ -494,7 +494,7 @@ def test_macos_popup_keeps_explicit_size_without_forcing_tk_events() -> None:
     popup.root.geometry.assert_not_called()
     popup.root.update_idletasks.assert_not_called()
     popup.root.update.assert_not_called()
-    center_window.assert_not_called()
+    center_window.assert_called_once_with(popup.root, parent)
     popup.root.deiconify.assert_called_once()
 
 

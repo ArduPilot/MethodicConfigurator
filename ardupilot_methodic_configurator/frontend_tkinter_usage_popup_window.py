@@ -104,7 +104,7 @@ class PopupWindow:
             req_width = popup_window.root.winfo_reqwidth()
             popup_window.root.geometry(f"{req_width}x{req_height}")
 
-        if parent and not is_macos:  # center_window forces Tk updates
+        if parent:  # macOS centering is deferred without forcing Tk updates
             BaseWindow.center_window(popup_window.root, parent)
 
         try:

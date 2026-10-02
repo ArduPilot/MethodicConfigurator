@@ -20,9 +20,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # https://wiki.tcl-lang.org/page/Changing+Widget+Colors
 
+import contextlib
 import io
 import os
 import tkinter as tk
+from collections.abc import Callable
 from logging import debug as logging_debug
 from logging import error as logging_error
 from platform import system as platform_system
@@ -380,7 +382,7 @@ class BaseWindow:
             window.geometry(f"+{x}+{y}")
 
         if platform_system() == "Darwin":
-            window.after_idle(position)
+            BaseWindow._run_when_idle(window, position)
         else:
             window.update_idletasks()
             position()
@@ -408,11 +410,35 @@ class BaseWindow:
 
         """
         if platform_system() == "Darwin":
-            window.after_idle(lambda: BaseWindow._position_window_on_screen(window))
+            BaseWindow._run_when_idle(window, lambda: BaseWindow._position_window_on_screen(window))
         else:
             window.update_idletasks()
             BaseWindow._position_window_on_screen(window)
             window.update()
+
+    @staticmethod
+    def _run_when_idle(window: tk.Toplevel | tk.Tk, callback: Callable[[], None]) -> None:
+        """Run deferred window work, cancelling it if the window is destroyed."""
+        timer_id: str | None = None
+        destroy_binding: str | None = None
+
+        def cancel_on_destroy(event: tk.Event) -> None:
+            if event.widget is window and timer_id is not None:
+                with contextlib.suppress(tk.TclError):
+                    window.after_cancel(timer_id)
+
+        def run() -> None:
+            nonlocal timer_id
+            timer_id = None
+            with contextlib.suppress(tk.TclError):
+                if destroy_binding is not None:
+                    window.unbind("<Destroy>", destroy_binding)
+                if window.winfo_exists():
+                    callback()
+
+        with contextlib.suppress(tk.TclError):
+            destroy_binding = window.bind("<Destroy>", cancel_on_destroy, add="+")
+            timer_id = window.after_idle(run)
 
     @staticmethod
     def _position_window_on_screen(window: tk.Toplevel | tk.Tk) -> None:
