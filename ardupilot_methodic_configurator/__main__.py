@@ -26,7 +26,6 @@ import tempfile
 from logging import basicConfig as logging_basicConfig
 from logging import debug as logging_debug
 from logging import error as logging_error
-from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from logging import warning as logging_warning
 from pathlib import Path
@@ -199,7 +198,7 @@ def setup_logging(state: ApplicationState) -> None:
         state: Application state containing parsed arguments
 
     """
-    logging_basicConfig(level=logging_getLevelName(state.args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
+    logging_basicConfig(level=state.args.loglevel, format="%(asctime)s - %(levelname)s - %(message)s")
 
 
 def check_updates(state: ApplicationState) -> bool:

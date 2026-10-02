@@ -16,7 +16,6 @@ from collections.abc import Callable, Sequence
 from enum import Enum
 from functools import partial
 from logging import basicConfig as logging_basicConfig
-from logging import getLevelName as logging_getLevelName
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 from typing import Any
@@ -431,7 +430,7 @@ def argument_parser() -> Namespace:  # pragma: no cover
 def main() -> None:  # pragma: no cover
     """Open the detailed log-analysis report without starting the full application."""
     args = argument_parser()
-    logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
+    logging_basicConfig(level=args.loglevel, format="%(asctime)s - %(levelname)s - %(message)s")
 
     logfile = args.logfile
     if not logfile:

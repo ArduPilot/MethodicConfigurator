@@ -15,7 +15,6 @@ from argparse import ArgumentParser, Namespace
 from logging import basicConfig as logging_basicConfig
 from logging import debug as logging_debug
 from logging import error as logging_error
-from logging import getLevelName as logging_getLevelName
 from logging import warning as logging_warning
 from os import path as os_path
 from sys import exit as sys_exit
@@ -303,7 +302,7 @@ def argument_parser() -> Namespace:  # pragma: no cover
 def main() -> None:  # pragma: no cover
     args = argument_parser()
 
-    logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
+    logging_basicConfig(level=args.loglevel, format="%(asctime)s - %(levelname)s - %(message)s")
 
     logging_warning(
         _(

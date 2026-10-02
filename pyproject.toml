@@ -83,7 +83,7 @@ dev = [
     "ruff==0.16.3",
     "tomli==2.2.1; python_version < '3.11'",
     "types-requests==2.33.0.20260906",
-    "ty==0.0.75",
+    "ty==0.0.84",
     "typing_extensions==4.16.0",
 ]
 
