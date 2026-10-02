@@ -16,6 +16,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ardupilot_methodic_configurator.backend_flightcontroller import SUPPORTED_BAUDRATES
+from ardupilot_methodic_configurator.backend_flightcontroller_connection import FlightControllerConnection
+from ardupilot_methodic_configurator.backend_flightcontroller_factory_serial import FakeSerialPortDiscovery
+from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 from ardupilot_methodic_configurator.frontend_tkinter_connection_selection import (
     ConnectionSelectionWidgets,
     ConnectionSelectionWindow,
@@ -149,6 +152,48 @@ def connection_window(mock_fc: MagicMock):  # noqa: ANN201  # yields; complex re
 
 class TestConnectionSelectionWidgets:
     """ConnectionSelectionWidgets test class."""
+
+    @pytest.mark.parametrize("device", ["udpin:0.0.0.0:14550", "tcp:127.0.0.1:5761", "COM9"])
+    def test_explicit_device_survives_initial_discovery_and_refresh(self, mock_parent: MagicMock, device: str) -> None:
+        """
+        A command-line endpoint remains selectable after an unsuccessful connection.
+
+        GIVEN: An explicit device not present in discovery or saved history
+        WHEN: The selector opens and refreshes its available ports
+        THEN: The device remains in the list without being saved to settings
+        """
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            network_ports=[],
+            serial_port_discovery=FakeSerialPortDiscovery(),
+        )
+        with patch.object(connection, "create_connection_with_retry", return_value="No heartbeat"):
+            assert connection.connect(device) == "No heartbeat"
+        mock_fc = MagicMock()
+        mock_fc.comport = connection.comport
+        mock_fc.master = None
+        mock_fc.discover_connections.side_effect = connection.discover_connections
+        mock_fc.get_connection_tuples.side_effect = connection.get_connection_tuples
+        with (
+            patch("tkinter.ttk.Frame"),
+            patch("tkinter.ttk.Label"),
+            patch("tkinter.ttk.Combobox"),
+            patch("tkinter.StringVar"),
+            patch(f"{_MOD}.PairTupleCombobox") as combobox,
+            patch(f"{_MOD}.show_tooltip"),
+            patch(f"{_MOD}.ProgramSettings.get_connection_history", return_value=[]),
+            patch(f"{_MOD}.ProgramSettings.store_connection") as store_connection,
+        ):
+            combobox.return_value.get_selected_key.return_value = device
+            widget = ConnectionSelectionWidgets(
+                mock_parent, MagicMock(), mock_fc, destroy_parent_on_connect=True, download_params_on_connect=False
+            )
+            assert (device, device) in combobox.call_args.args[1]
+            assert combobox.call_args.args[2] == device
+            widget._refresh_ports()
+        assert (device, device) in connection.get_connection_tuples()
+        assert widget._connection_history_cache == []
+        store_connection.assert_not_called()
 
     def test_init_with_no_comport(self, basic_widget: tuple[ConnectionSelectionWidgets, MagicMock, MagicMock]) -> None:
         """Test the initialization of ConnectionSelectionWidgets when comport is None."""
