@@ -1,214 +1,129 @@
 ---
 name: add-new-plugin
-description: 'Add a new plugin to ArduPilot Methodic Configurator (AMC). Use when implementing a new calibration, monitoring, or configuration plugin — e.g., "add a radio calibration plugin". Covers all five mandatory touch-points: plugin_constants.py, __main__.py, data_model_parameter_editor.py, frontend_tkinter_*.py, and configuration_steps_schema.json, plus the optional configuration_steps_*.json wiring and an optional renderer module.'
+description: 'Create or extend an AMC parameter-editor plugin. Covers plugin-local model/view factories, startup registration, schema and step wiring, lifecycle, offline operation, conditional visibility, architecture documentation and tests.'
 argument-hint: 'plugin name (e.g. radio_calibration)'
 ---
 
-# Add a New Plugin to AMC
+# Add or Extend an AMC Plugin
 
-## When to Use
+Read `.github/copilot-instructions.md` and relevant architecture guidance.
+Use CodeGraph when available to inspect `PluginFactory`, `PluginModelContext`,
+`ParameterEditor.create_plugin_data_model()` and a similar existing plugin.
 
-- Implementing a new GUI panel that appears alongside parameter editing (calibration,
-  monitoring, testing, …).
-- Extending an existing configuration step with a plugin widget.
+## Integration points
 
-## Background
+Plugin-specific Python modules belong in
+`ardupilot_methodic_configurator/plugins/`, not the package root.
 
-AMC uses a **plugin factory** pattern.  Every plugin consists of:
+1. Add `PLUGIN_<NAME>` in `plugins/plugin_constants.py`.
+2. Create `plugins/data_model_<name>.py` with typed business logic dependencies.
+3. Create `plugins/frontend_tkinter_<name>.py` with the view and both factories.
+4. Add `(module_name, registration_function_name)` to the lazy `registrations`
+   tuple in `__main__.py:register_plugins()`. Preserve independent import/error
+   handling so one broken plugin does not prevent others from registering.
+5. Append the name to `configuration_steps_schema.json` at
+   `plugin > properties > name > enum`.
+6. Wire relevant `configuration_steps_<VehicleType>.json` entries.
+7. Document architecture in `ARCHITECTURE_<name>.md` in the project root.
 
-| Layer | File(s) |
-| ------- | --------- |
-| Constant | `plugin_constants.py` |
-| Data model | `data_model_<plugin>.py` |
-| Frontend | `frontend_tkinter_<plugin>.py` |
-| Registration | `__main__.py → register_plugins()` |
-| Data-model wiring | `data_model_parameter_editor.py → create_plugin_data_model()` |
-| Schema | `configuration_steps_schema.json` |
-| Step wiring | `configuration_steps_<VehicleType>.json` |
-| Architecture doc | `ARCHITECTURE_<plugin_name>.md` in the project root |
-| Renderer (optional) | `renderer_<name>.py` — for plugins needing a dedicated visualisation helper |
+Do **not** add plugin-specific imports or branches to
+`ParameterEditor.create_plugin_data_model()`. It delegates to registered model
+factories using `PluginModelContext`. The four shared source integration points
+are the constant, startup registration, plugin-local registration and schema;
+step wiring and documentation complete the feature.
 
-The inline docs in `plugin_constants.py`, `__main__.py:register_plugins()`, and
-`data_model_parameter_editor.py:create_plugin_data_model()` should be kept in sync
-with this skill (schema path: `plugin > properties > name > enum`).
+## Factory pattern
 
----
-
-## Step-by-Step Procedure
-
-### 1. Add the constant — `plugin_constants.py`
-
-Add a `PLUGIN_<NAME>` constant at the bottom of the file:
+Use actual plugin types for view constructors. Factory adapters accept shared
+interfaces; follow existing narrowly scoped typing adaptations.
 
 ```python
-PLUGIN_<NAME> = "<snake_case_name>"
+from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_EXAMPLE
+from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
+
+
+def _create_model(context: PluginModelContext) -> ExampleDataModel:
+    return ExampleDataModel(context.parameter_editor)
+
+
+def _create_view(parent: tk.Frame | ttk.Frame, model: object, base_window: object) -> ExampleView:
+    return ExampleView(parent, model, base_window)  # type: ignore[arg-type]
+
+
+def register_example_plugin() -> None:
+    plugin_factory.register(
+        PLUGIN_EXAMPLE,
+        _create_view,
+        _create_model,
+        requires_flight_controller=False,
+    )
 ```
 
-Example (RC calibration):
+The context provides `flight_controller`, `local_filesystem` and
+`parameter_editor`; inject only needed dependencies. FC-required plugins use
+`requires_flight_controller=True` (the default). Explicitly opt out for plugins
+that transform staged parameters and should work offline.
 
-```python
-PLUGIN_RC_CALIBRATION = "rc_calibration"
-```
+## Step wiring and conditions
 
-### 2. Create the data model — `data_model_<plugin>.py`
-
-Create `ardupilot_methodic_configurator/data_model_<plugin>.py`.
-
-- Accept `flight_controller: FlightController` (and optionally
-  `local_filesystem: LocalFilesystem`) in `__init__`.
-- Expose only business logic; **no tkinter imports**.
-- Follow the same structure as `data_model_accelerometer_calibration.py` or
-  `data_model_battery_monitor.py` for inspiration.
-
-### 3. Create the frontend — `frontend_tkinter_<plugin>.py`
-
-Create `ardupilot_methodic_configurator/frontend_tkinter_<plugin>.py`.
-
-Mandatory elements:
-
-```python
-from ardupilot_methodic_configurator.plugin_constants import PLUGIN_<NAME>
-from ardupilot_methodic_configurator.plugin_factory import plugin_factory
-
-def _create_<plugin>_view(parent: object, model: object, base_window: object) -> <PluginView>:
-    # Type checker verifies correct types are provided by the caller
-    return <PluginView>(parent, model, base_window)  # type: ignore[arg-type]
-
-def register_<plugin>_plugin() -> None:
-    """Register the <plugin> plugin with the factory."""
-    plugin_factory.register(PLUGIN_<NAME>, _create_<plugin>_view)
-```
-
-Optionally add a standalone `<PluginName>Window(BaseWindow)` class for
-development/testing (mark it `# pragma: no cover`).
-
-### 4. Register the plugin — `__main__.py → register_plugins()`
-
-Inside `register_plugins()` add a deferred import and a registration call:
-
-```python
-from ardupilot_methodic_configurator.frontend_tkinter_<plugin> import (  # noqa: PLC0415
-    register_<plugin>_plugin,
-)
-# ...
-register_<plugin>_plugin()
-```
-
-Keep imports inside the function body to avoid circular-import issues (the
-`frontend_tkinter_*` modules import `plugin_factory` at module level).
-
-### 5. Wire the data model — `data_model_parameter_editor.py → create_plugin_data_model()`
-
-Add an `if` branch **before** the `raise ValueError` at the end:
-
-```python
-from ardupilot_methodic_configurator.data_model_<plugin> import <PluginDataModel>
-from ardupilot_methodic_configurator.plugin_constants import PLUGIN_<NAME>
-
-# inside create_plugin_data_model():
-if plugin_name == PLUGIN_<NAME>:
-    return <PluginDataModel>(self._flight_controller) if self.is_fc_connected else None
-```
-
-Add the import with the other data-model imports near the top of the file, maintaining
-**alphabetical order** within the `data_model_*` import block (ruff enforces sorted
-imports and will flag violations during `ruff check`).
-
-### 6. Update the schema — `configuration_steps_schema.json`
-
-Find the `plugin > properties > name > enum` array and append the new plugin
-name string:
+`placement` is `"left"` or `"top"`. Use existing JSON `"if"` support for
+firmware/component-dependent visibility instead of duplicating rules in views.
+For example, a plugin restricted to firmware below 4.7.0:
 
 ```json
-"enum": [
-    "motor_test",
-    "battery_monitor",
-    "compass_calibration",
-    "accelerometer_calibration",
-    "<snake_case_name>"
-]
-```
-
-### 7. (Optional) Wire to a configuration step — `configuration_steps_<VehicleType>.json`
-
-To show the plugin in a specific parameter-editing step, add a `"plugin"` key
-to the relevant step object:
-
-```json
-"<param_file>.param": {
-    "why": "...",
-    "plugin": {
-        "name": "<snake_case_name>",
-        "placement": "left"
-    }
+"plugin": {
+    "name": "example",
+    "placement": "top",
+    "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7.0')"
 }
 ```
 
-`placement` is either `"left"` (beside the scrollable frame) or `"top"` (above
-the parameter list).  Repeat for each vehicle-type JSON that should display the
-plugin (`configuration_steps_ArduCopter.json`, `configuration_steps_ArduPlane.json`,
-`configuration_steps_Heli.json`, `configuration_steps_Rover.json`).
+`ParameterEditor.get_plugin()` evaluates conditions and hides plugins when
+false or evaluation fails. Test thresholds and unresolved versions as relevant.
+Use existing version sources consistently; do not assume a connected FC.
+Respect requested comparison semantics, including prereleases.
 
-### 8. Create the architecture document — `ARCHITECTURE_<plugin_name>.md`
+Update every applicable bundled vehicle-type JSON. Customized project JSON
+can override bundled configuration: document required custom-project wiring.
 
-Every plugin must have a corresponding architecture document in the project root.
-Follow the same structure as `ARCHITECTURE_accelerometer_calibration.md` or
-`ARCHITECTURE_rc_calibration.md`:
+## Views, lifecycle and staged values
 
-- Overview paragraph + key features list
-- Component layers ASCII diagram
-- File map table
-- Requirements Analysis (functional + non-functional) with ✅ / 🟡 / ❌ status
-- Data flow section (sequence diagrams in code blocks)
-- Any plugin-specific design notes (e.g., popup window, renderer module)
-- External reference links (MAVLink docs, ArduPilot wiki)
+- Keep domain rules in models, without Tkinter or external I/O in pure domain
+  calculations. Use existing backend adapters for external operations.
+- Implement `PluginView` behavior, including activation, deactivation and
+  destruction. Cancel timers, callbacks and resources when hidden or removed.
+  Simple views can have no-op lifecycle hooks.
+- Wrap user-facing text in `_()` and provide tooltips for interactive controls.
+- Use `BaseWindow` for standalone windows; follow existing embedded-view patterns.
+- Distinguish editing New values from saving or uploading to the FC.
+- Respect read-only, forced/derived and metadata constraints. Validate bulk
+  edits before mutation or explicitly report partial outcomes.
+- Preserve change reasons where appropriate. Refresh with existing helpers in
+  `plugins/frontend_tkinter_helpers.py`.
+- Define whether repeated clicks compound, replace or are idempotent. Test this
+  behavior and disclose potentially surprising effects in the UI.
 
-### 9. (Optional) Create a renderer module — `renderer_<name>.py`
+Optional renderer modules also belong under `plugins/`; keep them independent
+of Tkinter. Do not add a renderer if ordinary widgets suffice.
 
-If the plugin needs a dedicated visualisation helper (e.g., a 3D attitude renderer),
-create `ardupilot_methodic_configurator/renderer_<name>.py`.
+## Documentation and verification
 
-- **No tkinter dependency** — return a `PIL.Image.Image` that the frontend displays
-  via a `ttk.Label`.
-- Avoid wildcard imports (`from SomeLib import *`) — ruff enforces explicit imports.
-  Use `# noqa: ARG002` on the method signature if arguments are unused in a stub.
-- See `renderer_3d_quadcopter.py` for the established pattern.
+Architecture documentation should explain components, file map, requirements,
+data flow, external operations and lifecycle. Link domain research separately
+when useful; verify firmware claims against source.
 
----
+Follow `.github/skills/pytest-testing/SKILL.md`. Test:
 
-## Verification Checklist
+- Real domain objects, boundary inputs and unrelated parameter preservation.
+- View/button behavior, invalid input, table refresh and lifecycle cleanup.
+- Model/view factory registration, startup and FC requirements.
+- Configuration/schema coverage and conditional visibility.
+- Repeated-action semantics and bulk-edit failure behavior.
 
-After completing all steps, verify:
+Run focused and affected regression tests, Ruff formatting/checks, type checks
+and Pylint. Use markdownlint for Markdown, not Ruff. Distinguish pre-existing
+or environment errors from regressions. Sync CodeGraph when appropriate.
 
-- [ ] `PLUGIN_<NAME>` constant exists in `plugin_constants.py`
-- [ ] `data_model_<plugin>.py` is importable and has no tkinter dependency
-- [ ] `frontend_tkinter_<plugin>.py` exports `register_<plugin>_plugin()`
-- [ ] `register_plugins()` in `__main__.py` imports and calls the register function
-- [ ] `create_plugin_data_model()` handles the new plugin name
-- [ ] New `data_model_*` import in `data_model_parameter_editor.py` is in alphabetical order
-- [ ] `configuration_steps_schema.json` enum includes the new name
-- [ ] Relevant `configuration_steps_*.json` files reference the plugin
-- [ ] (If renderer) `renderer_<name>.py` has no wildcard imports; unused stub args use `# noqa: ARG002`
-- [ ] `ARCHITECTURE_<plugin_name>.md` exists in the project root
-- [ ] `pytest tests/ -v` passes
-- [ ] `ruff check .` and `ruff format` pass
-- [ ] `mypy` / `pyright` / `pylint` pass
-
----
-
-## Reference: Touch-Point Summary
-
-The same five mandatory touch-points are documented inline in the source:
-
-- `plugin_constants.py` — top-of-file comment block
-- `__main__.py → register_plugins()` — docstring
-- `data_model_parameter_editor.py → create_plugin_data_model()` — docstring
-
-## Lessons Learned
-
-### Deferred imports inside functions avoid circular imports
-
-The `frontend_tkinter_*` modules import `plugin_factory` at module level.  Importing
-them at the top of `__main__.py` would create a circular import.  Always place the
-`from frontend_tkinter_<plugin> import register_<plugin>_plugin` call **inside** the
-`register_plugins()` function body, annotated with `# noqa: PLC0415`.
+Verify importability, registration, schema, eligible steps, tests and architecture
+documentation before finishing. Keep inline guidance in `plugin_constants.py`
+and `__main__.py` consistent with the factory design.
