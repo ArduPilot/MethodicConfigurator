@@ -89,23 +89,23 @@ class PopupWindow:
         parent: tk.Tk | None,
         close_callback: Callable[[], None],
     ) -> None:
-        """Finalize window setup: center, show, make modal on non-macOS, set close handler."""
+        """Show the popup, set its close handler, and make it modal where supported."""
+        is_macos = _is_macos()
         # Only set transient on non-macOS
-        if parent and not _is_macos():
+        if parent and not is_macos:
             popup_window.root.transient(parent)
 
-        # Resize window height to ensure all widgets are fully visible
-        # as some Linux Window managers like KDE, like to change font sizes and padding.
-        # So we need to dynamically accommodate for that after placing the widgets
-        popup_window.root.update_idletasks()
-        req_height = popup_window.root.winfo_reqheight()
-        req_width = popup_window.root.winfo_reqwidth()
+        # Some Linux window managers change font sizes and padding, so measure
+        # the finished layout there. On macOS, keep the explicit size supplied
+        # by setup_popupwindow and let Tk process layout in its normal event loop.
+        if not is_macos:
+            popup_window.root.update_idletasks()
+            req_height = popup_window.root.winfo_reqheight()
+            req_width = popup_window.root.winfo_reqwidth()
+            popup_window.root.geometry(f"{req_width}x{req_height}")
 
-        popup_window.root.geometry(f"{req_width}x{req_height}")
-
-        if parent:  # If parent exists center on parent
+        if parent:  # macOS centering is deferred without forcing Tk updates
             BaseWindow.center_window(popup_window.root, parent)
-        # For parent-less, center on screen
 
         try:
             # Show the window now that it's positioned. Calls may fail if the
@@ -113,7 +113,8 @@ class PopupWindow:
             # - guard against tk.TclError so the caller doesn't crash the app.
             popup_window.root.deiconify()
             popup_window.root.lift()
-            popup_window.root.update()  # Ensure the window is fully rendered before setting focus
+            if not is_macos:
+                popup_window.root.update()  # Ensure the window is rendered before setting focus
             # Use focus_set() instead of focus_force(): focus_force() calls XSetInputFocus
             # directly via X11, which causes a segfault in Python 3.9 on Linux in headless
             # environments. focus_set() only updates Tk's internal focus state, avoiding the crash.
@@ -122,7 +123,7 @@ class PopupWindow:
 
             # On macOS, grab_set() causes UI freeze (issue #1264), so skip it
             # On Windows/Linux, make the popup modal and give it focus
-            if not _is_macos():
+            if not is_macos:
                 popup_window.root.grab_set()  # Make the popup modal
 
             popup_window.root.protocol("WM_DELETE_WINDOW", close_callback)

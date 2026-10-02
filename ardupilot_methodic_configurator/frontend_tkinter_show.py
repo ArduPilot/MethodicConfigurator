@@ -120,7 +120,8 @@ def _monitor_bounds_tk(widget: tk.Misc) -> MonitorBounds:
 
     """
     toplevel = widget.winfo_toplevel()
-    toplevel.update_idletasks()
+    if platform_system() != "Darwin":
+        toplevel.update_idletasks()
 
     # Get virtual root position (top-left corner of the screen)
     vroot_x = toplevel.winfo_vrootx()
@@ -630,12 +631,21 @@ class Tooltip:
             self.tooltip, text=self.text, background="#ffffe0", relief="solid", borderwidth=1, justify=tk.LEFT
         )
         tooltip_label.pack()
-        self.position_tooltip()
+        if self._is_aqua:
+
+            def position_when_idle() -> None:
+                self.timers.pop("position", None)
+                self.position_tooltip()
+
+            self.timers["position"] = self.widget.after_idle(position_when_idle)
+        else:
+            self.position_tooltip()
 
         if self.tooltip.winfo_exists():
             Tooltip._active_tooltip = self
 
-            self.tooltip.update_idletasks()  # Force macOS to finish rendering text and colors
+            if not self._is_aqua:
+                self.tooltip.update_idletasks()
             self.tooltip.deiconify()  # still invisible on Mac
 
             if self._is_aqua:
@@ -656,7 +666,8 @@ class Tooltip:
 
         try:
             # Ensure tooltip geometry is calculated
-            self.tooltip.update_idletasks()
+            if not self._is_aqua:
+                self.tooltip.update_idletasks()
             tooltip_width = self.tooltip.winfo_reqwidth()
             tooltip_height = self.tooltip.winfo_reqheight()
 
@@ -688,6 +699,7 @@ class Tooltip:
     def force_hide(self) -> None:
         """Immediately destroy the tooltip globally across all OSs."""
         self._cancel_show()
+        self._cancel_timer("position")
         self._cancel_timer("alpha")
         if self.tooltip:
             with contextlib.suppress(tk.TclError):

@@ -20,9 +20,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # https://wiki.tcl-lang.org/page/Changing+Widget+Colors
 
+import contextlib
 import io
 import os
 import tkinter as tk
+from collections.abc import Callable
 from logging import debug as logging_debug
 from logging import error as logging_error
 from platform import system as platform_system
@@ -357,8 +359,7 @@ class BaseWindow:
             parent (Union[tk.Toplevel, tk.Tk]): The parent window to center on
 
         Note:
-            This method calls update_idletasks() to ensure accurate dimension
-            calculations before positioning the window.
+            On macOS, positioning runs when Tk next processes idle tasks.
 
         Example:
             >>> main_window = BaseWindow()
@@ -366,20 +367,25 @@ class BaseWindow:
             >>> BaseWindow.center_window(dialog.root, main_window.root)
 
         """
-        window.update_idletasks()
-        parent_width = parent.winfo_width()
-        parent_height = parent.winfo_height()
-        window_width = window.winfo_width()
-        window_height = window.winfo_height()
-        # logging_error(_("Parent position: %d,%d"), parent.winfo_x(), parent.winfo_y())
-        # logging_error(_("Parent size: %dx%d"), parent_width, parent_height)
-        # logging_error(_("Window size: %dx%d"), window_width, window_height)
-        x = parent.winfo_x() + (parent_width // 2) - (window_width // 2)
-        y = parent.winfo_y() + (parent_height // 2) - (window_height // 2)
-        window.geometry(f"+{x}+{y}")
+
+        def position() -> None:
+            parent_width = parent.winfo_width()
+            parent_height = parent.winfo_height()
+            window_width = window.winfo_width()
+            window_height = window.winfo_height()
+            if window_width <= 1:
+                window_width = window.winfo_reqwidth()
+            if window_height <= 1:
+                window_height = window.winfo_reqheight()
+            x = parent.winfo_x() + (parent_width // 2) - (window_width // 2)
+            y = parent.winfo_y() + (parent_height // 2) - (window_height // 2)
+            window.geometry(f"+{x}+{y}")
+
         if platform_system() == "Darwin":
-            window.update_idletasks()
+            BaseWindow._run_when_idle(window, position)
         else:
+            window.update_idletasks()
+            position()
             window.update()
 
     @staticmethod
@@ -395,16 +401,48 @@ class BaseWindow:
             window (Union[tk.Toplevel, tk.Tk]): The window to center on screen
 
         Note:
-            This method calls update_idletasks() to ensure accurate dimension
-            calculations before positioning the window. Requires screeninfo library.
+            On macOS, positioning runs when Tk next processes idle tasks.
+            Requires screeninfo library.
 
         Example:
             >>> progress_window = tk.Toplevel()
             >>> BaseWindow.center_window_on_screen(progress_window)
 
         """
-        window.update_idletasks()
+        if platform_system() == "Darwin":
+            BaseWindow._run_when_idle(window, lambda: BaseWindow._position_window_on_screen(window))
+        else:
+            window.update_idletasks()
+            BaseWindow._position_window_on_screen(window)
+            window.update()
 
+    @staticmethod
+    def _run_when_idle(window: tk.Toplevel | tk.Tk, callback: Callable[[], None]) -> None:
+        """Run deferred window work, cancelling it if the window is destroyed."""
+        timer_id: str | None = None
+        destroy_binding: str | None = None
+
+        def cancel_on_destroy(event: tk.Event) -> None:
+            if event.widget is window and timer_id is not None:
+                with contextlib.suppress(tk.TclError):
+                    window.after_cancel(timer_id)
+
+        def run() -> None:
+            nonlocal timer_id
+            timer_id = None
+            with contextlib.suppress(tk.TclError):
+                if destroy_binding is not None:
+                    window.unbind("<Destroy>", destroy_binding)
+                if window.winfo_exists():
+                    callback()
+
+        with contextlib.suppress(tk.TclError):
+            destroy_binding = window.bind("<Destroy>", cancel_on_destroy, add="+")
+            timer_id = window.after_idle(run)
+
+    @staticmethod
+    def _position_window_on_screen(window: tk.Toplevel | tk.Tk) -> None:
+        """Position a window using its settled geometry without pumping Tk events."""
         # Get the window dimensions
         # Use winfo_width/height (actual rendered size) like center_window() does.
         # Fall back to winfo_reqwidth/height for windows not yet mapped (returns 1).
@@ -455,7 +493,6 @@ class BaseWindow:
 
         # Set the position
         window.geometry(f"+{x}+{y}")
-        window.update()
 
     def put_image_in_label(  # pylint: disable=too-many-locals
         self,

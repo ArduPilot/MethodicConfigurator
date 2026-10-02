@@ -483,5 +483,20 @@ def test_finalize_setup_popupwindow_handles_destroyed_tk() -> None:
     assert not fake.root.protocol.called
 
 
+def test_macos_popup_keeps_explicit_size_without_forcing_tk_events() -> None:
+    """A macOS popup keeps its configured size until Tk's normal event loop runs."""
+    popup = Mock()
+    parent = Mock()
+
+    with patch(_IS_MACOS_PATH, return_value=True), patch.object(BaseWindow, "center_window") as center_window:
+        PopupWindow.finalize_setup_popupwindow(popup, parent, lambda: None)
+
+    popup.root.geometry.assert_not_called()
+    popup.root.update_idletasks.assert_not_called()
+    popup.root.update.assert_not_called()
+    center_window.assert_called_once_with(popup.root, parent)
+    popup.root.deiconify.assert_called_once()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
