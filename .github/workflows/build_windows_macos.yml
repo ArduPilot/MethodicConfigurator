@@ -119,6 +119,20 @@ jobs:
           }
           exit 0
 
+      - name: Smoke-test frozen plugin registration without GUI
+        shell: pwsh
+        run: |
+          $app = Join-Path $PWD "ardupilot_methodic_configurator/dist/ardupilot_methodic_configurator/ardupilot_methodic_configurator.exe"
+          Push-Location $env:RUNNER_TEMP
+          try {
+            & $app --validate-plugins
+            if ($LASTEXITCODE -ne 0) {
+              throw "Frozen plugin registration failed with exit code $LASTEXITCODE."
+            }
+          } finally {
+            Pop-Location
+          }
+
       - name: Write the git commit hash to file
         run: |
           $hash = git rev-parse HEAD
@@ -260,6 +274,12 @@ jobs:
       - name: Verify frozen plugin and log-analysis modules
         run: python scripts/verify_packaged_modules.py build/ardupilot_methodic_configurator/PYZ-00.pyz
 
+      - name: Smoke-test frozen plugin registration without GUI
+        run: |
+          APP="$PWD/dist/ArduPilot Methodic Configurator.app/Contents/MacOS/ardupilot_methodic_configurator"
+          cd "$RUNNER_TEMP"
+          "$APP" --validate-plugins
+
       - name: Build DMG
         run: |
           set -euo pipefail
@@ -344,6 +364,12 @@ jobs:
 
       - name: Verify frozen plugin and log-analysis modules
         run: python scripts/verify_packaged_modules.py build/ardupilot_methodic_configurator/PYZ-00.pyz
+
+      - name: Smoke-test frozen plugin registration without GUI
+        run: |
+          APP="$PWD/dist/ardupilot_methodic_configurator/ardupilot_methodic_configurator"
+          cd "$RUNNER_TEMP"
+          env -u DISPLAY "$APP" --validate-plugins
 
       - name: Build AppImage
         run: |

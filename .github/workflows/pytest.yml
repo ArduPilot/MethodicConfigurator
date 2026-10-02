@@ -114,6 +114,13 @@ jobs:
         # without --editable, the coverage report is not generated correctly
         run: uv pip install --editable "." --no-deps
 
+      - name: Verify clean non-editable wheel installation
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.10'
+        run: |
+          PKGS="$(python scripts/list_pypi_build_dependencies.py)"
+          uv pip install $PKGS
+          python scripts/verify_wheel_install.py
+
       - name: Compute SITL cache key
         if: matrix.os == 'ubuntu-latest'
         run: |

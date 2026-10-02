@@ -28,7 +28,10 @@ COPY ardupilot_methodic_configurator/ ./ardupilot_methodic_configurator/
 COPY tests/ ./tests/
 COPY scripts/ ./scripts/
 
-RUN pip install -e ".[dev]"
+# Bootstrap uv, then install test and frozen-archive dependencies using project pins.
+RUN pip install "uv==0.12.6" && \
+    uv pip install --system -e ".[dev,linux_dist]" && \
+    python -c "from PyInstaller.archive.readers import ZlibArchiveReader; from PyInstaller.archive.writers import ZlibArchiveWriter"
 
 RUN chmod +x scripts/*.sh && \
     mkdir -p sitl sitl-cache && \

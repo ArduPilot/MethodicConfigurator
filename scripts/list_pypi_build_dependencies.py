@@ -9,12 +9,13 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import importlib
 import sys
 
-# This library is part of python 3.11+
-# so this line fails when pylint runs with python 3.10,
-# but that can be ignored, because pypi is packaged with python 3.13
-import tomllib  # pylint: disable=import-error, useless-suppression # ty: ignore[unresolved-import]
+try:
+    import tomllib  # ty: ignore[unresolved-import]
+except ModuleNotFoundError:  # Python 3.10
+    tomllib = importlib.import_module("tomli")
 
 with open("pyproject.toml", "rb") as f:
     data = tomllib.load(f)

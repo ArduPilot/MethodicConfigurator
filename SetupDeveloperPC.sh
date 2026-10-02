@@ -73,7 +73,11 @@ InstallDependencies() {
 
     # Install the project dependencies
     echo "Installing project dependencies..."
-    uv pip install -e .[dev]
+    if [[ "$OSTYPE" == darwin* ]]; then
+        uv pip install -e ".[dev,mac_dist]"
+    else
+        uv pip install -e ".[dev,linux_dist]"
+    fi
 }
 
 ConfigureGit() {

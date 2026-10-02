@@ -265,5 +265,5 @@ if %ERRORLEVEL% EQU 0 (
 )
 
 python -m pip install uv
-uv pip install -e .[dev]
+uv pip install -e ".[dev,win_dist]"
 goto :eof

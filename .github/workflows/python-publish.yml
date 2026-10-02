@@ -57,6 +57,9 @@ jobs:
     - name: Verify wheel plugin and log-analysis modules
       run: python scripts/verify_packaged_modules.py dist/*.whl
 
+    - name: Verify release wheel installation and SHA256
+      run: python scripts/verify_wheel_install.py --build-report build-report.json
+
     - name: Verify package build report
       run: |
         python - <<'PY'
