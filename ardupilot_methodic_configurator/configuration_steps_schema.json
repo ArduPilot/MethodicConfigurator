@@ -234,7 +234,7 @@
                 },
                 "name": {
                   "type": "string",
-                  "enum": ["motor_test", "battery_monitor", "compass_calibration", "accelerometer_calibration", "level_calibration", "servo_out", "ahrs_orientation", "esc_rpm_scale", "rc_calibration"],
+                  "enum": ["motor_test", "battery_monitor", "compass_calibration", "accelerometer_calibration", "level_calibration", "servo_out", "ahrs_orientation", "esc_rpm_scale", "rc_calibration", "autotune_gain_backoff"],
                   "description": "The name of the plugin to load"
                 },
                 "placement": {

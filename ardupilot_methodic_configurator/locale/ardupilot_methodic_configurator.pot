@@ -13723,3 +13723,11 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:134
 msgid "Web link to the product page or documentation"
 msgstr ""
+
+#: ardupilot_methodic_configurator/plugins/data_model_autotune_gain_backoff.py
+msgid "{old_value} backed-off by {percent:g}%"
+msgstr ""
+
+#: ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py
+msgid "Enter a number between {minimum:.1f} and {maximum:.1f}."
+msgstr ""

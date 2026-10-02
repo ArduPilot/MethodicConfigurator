@@ -13385,3 +13385,11 @@ msgstr "产品页面或文档的网页链接"
 
 #~ msgid "Open Last Used Vehicle Configuration Directory"
 #~ msgstr "打开上次使用的载具配置目录"
+
+#: ardupilot_methodic_configurator/plugins/data_model_autotune_gain_backoff.py
+msgid "{old_value} backed-off by {percent:g}%"
+msgstr "{old_value}已降低{percent:g}%"
+
+#: ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py
+msgid "Enter a number between {minimum:.1f} and {maximum:.1f}."
+msgstr "请输入介于 {minimum:.1f} 和 {maximum:.1f} 之间的数字。"

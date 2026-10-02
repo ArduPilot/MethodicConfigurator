@@ -14555,3 +14555,11 @@ msgstr "Ligação web para a página do produto ou documentação"
 
 #~ msgid "Open Last Used Vehicle Configuration Directory"
 #~ msgstr "Abrir o Último Diretório de Configuração de Veículo Usado"
+
+#: ardupilot_methodic_configurator/plugins/data_model_autotune_gain_backoff.py
+msgid "{old_value} backed-off by {percent:g}%"
+msgstr "{old_value} reduzido em {percent:g}%"
+
+#: ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py
+msgid "Enter a number between {minimum:.1f} and {maximum:.1f}."
+msgstr "Introduza um número entre {minimum:.1f} e {maximum:.1f}."

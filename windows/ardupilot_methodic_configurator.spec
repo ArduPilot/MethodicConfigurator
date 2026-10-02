@@ -36,7 +36,6 @@ ardupilot_methodic_configuratorAny = Analysis(['__main__.py'],
              # for some unknown reason these hidden imports don't pull in
              # all the needed pieces, so we also import them in __main__.py
              hiddenimports=['packaging', 'packaging.version', 'packaging.specifiers'] +
-                            collect_submodules('ardupilot_methodic_configurator.modules') +
                             collect_submodules('ardupilot_methodic_configurator.plugins') +
                             collect_submodules('pymavlink'),
              datas=datas,
