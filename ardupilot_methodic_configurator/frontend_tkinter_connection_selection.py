@@ -81,7 +81,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         self._connection_history_cache: list[str] = ProgramSettings.get_connection_history()
         # Perform an initial connection discovery using the cached history so the
         # combobox starts from the same source-of-truth list that refresh uses.
-        self.flight_controller.discover_connections(preserved_connections=self._connection_history_cache)
+        self.flight_controller.discover_connections(preserved_connections=self._connections_to_preserve())
 
         # Create a read-only combobox for flight controller connection selection
         self.conn_selection_combobox = PairTupleCombobox(
@@ -122,6 +122,14 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         # Start periodic port refresh
         self.start_periodic_refresh()
 
+    def _connections_to_preserve(self, current_selection: str | None = None) -> list[str]:
+        """Keep explicit device selections available without persisting failed connections."""
+        connections = self._connection_history_cache[:]
+        for connection in (self.previous_selection, current_selection):
+            if connection and connection != _("Add another") and connection not in connections:
+                connections.append(connection)
+        return connections
+
     def _persist_and_cache_connection(self, connection_string: str) -> str:
         """
         Persist a connection string to settings and update the in-memory history cache.
@@ -154,7 +162,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             current_selection = self.conn_selection_combobox.get_selected_key()
             self.flight_controller.discover_connections(
                 progress_callback=None,
-                preserved_connections=self._connection_history_cache,
+                preserved_connections=self._connections_to_preserve(current_selection),
             )
             new_connection_tuples = self.flight_controller.get_connection_tuples()
 

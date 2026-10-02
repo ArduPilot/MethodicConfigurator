@@ -28,6 +28,7 @@ import tkinter.font as tk_font
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
+from tkinter import simpledialog
 from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock, patch
 
@@ -81,6 +82,8 @@ class CaptureTarget:
 TARGETS: tuple[CaptureTarget, ...] = (
     CaptureTarget("App_screenshot_about.png", "about"),
     CaptureTarget("App_screenshot_FC_connection.png", "connection"),
+    CaptureTarget("App_screenshot_FC_connection_add_another.png", "connection_add_another"),
+    CaptureTarget("App_screenshot_FC_connection_udp_forwarding.png", "connection_udp_forwarding"),
     CaptureTarget("App_screenshot_FC_info_and_param_download.png", "fc_info"),
     CaptureTarget("App_screenshot_instructions.png", "instructions"),
     CaptureTarget("App_screenshot_motor_test.png", "motor_test"),
@@ -498,6 +501,7 @@ def capture_widget(  # pylint: disable=too-many-arguments, too-many-positional-a
     padding: int = 0,
     scale: float = 1.0,
     highlight_boxes: list[tuple[int, int, int, int]] | None = None,
+    trim_windows_frame: bool = True,
 ) -> None:
     """Capture screenshot of a Tk widget region."""
     _set_windows_application_icon(widget)
@@ -519,7 +523,7 @@ def capture_widget(  # pylint: disable=too-many-arguments, too-many-positional-a
                 draw.rectangle((rel_left, rel_top, rel_right, rel_bottom), outline="red", width=3)
 
     # Crop superfluous pixels on Windows before resizing
-    if platform.system() == "Windows":
+    if platform.system() == "Windows" and trim_windows_frame:
         crop_left = 15
         crop_right = 15
         crop_bottom = 20
@@ -565,6 +569,68 @@ def _capture_connection(output_path: Path, delay: float, padding: int) -> None:
     finally:
         if hasattr(window, "connection_selection_widgets"):
             window.connection_selection_widgets.stop_periodic_refresh()
+        if window.root.winfo_exists():
+            window.root.destroy()
+
+
+def _capture_connection_forwarding(output_path: Path, delay: float, padding: int, show_dialog: bool) -> None:
+    """Capture the real custom-connection workflow without connecting or saving settings."""
+    window = ConnectionSelectionWindow(
+        cast("FlightController", FakeConnectionFlightController()),
+        "No ArduPilot flight controller was auto-detected yet.",
+    )
+    widgets = window.connection_selection_widgets
+    window.root.attributes("-topmost", 1)
+    window.root.geometry("+100+100")
+    window.root.lift()
+    widgets.stop_periodic_refresh()
+    widgets.conn_selection_combobox.set("Add another")
+    settle_tk(window.root)
+    try:
+        if not show_dialog:
+            capture_widget(
+                window.root,
+                output_path,
+                delay,
+                padding,
+                highlight_boxes=[_widget_screen_box(widgets.conn_selection_combobox)],
+            )
+            return
+
+        capture_error: Exception | None = None
+
+        def capture_dialog() -> None:
+            """Capture and cancel the real Tk dialog before any external side effects."""
+            nonlocal capture_error
+            dialog: simpledialog.Dialog | None = None
+            try:
+                dialog = next(child for child in window.root.winfo_children() if isinstance(child, simpledialog.Dialog))
+                dialog.attributes("-topmost", 1)
+                dialog.geometry("+150+150")
+                dialog.lift()
+                capture_widget(dialog, output_path, delay, padding)
+            except Exception as error:  # Tk callbacks otherwise swallow these exceptions.
+                capture_error = error
+            finally:
+                if dialog is not None:
+                    dialog.cancel()
+
+        askstring = simpledialog.askstring
+
+        def ask_forwarding_connection(title: str, prompt: str) -> str | None:
+            """Supply documentation text to the production dialog."""
+            window.root.after(250, capture_dialog)
+            return askstring(title, prompt, parent=window.root, initialvalue="udpin:0.0.0.0:14600")
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_connection_selection.simpledialog.askstring",
+            side_effect=ask_forwarding_connection,
+        ):
+            widgets.add_connection()
+        if capture_error is not None:
+            raise capture_error
+    finally:
+        widgets.stop_periodic_refresh()
         if window.root.winfo_exists():
             window.root.destroy()
 
@@ -1041,6 +1107,10 @@ def capture_target(target: CaptureTarget, output_path: Path, args: argparse.Name
         _capture_about(output_path, args.delay, args.padding)
     elif action == "connection":
         _capture_connection(output_path, args.delay, args.padding)
+    elif action in ("connection_add_another", "connection_udp_forwarding"):
+        _capture_connection_forwarding(
+            output_path, args.delay, args.padding, show_dialog=action == "connection_udp_forwarding"
+        )
     elif action == "fc_info":
         _capture_fc_info(output_path, args.delay, args.padding, args.vehicle_dir)
     elif action == "instructions":
