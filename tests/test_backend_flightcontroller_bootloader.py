@@ -365,6 +365,67 @@ def test_discovery_recovers_from_old_bootloader_rejecting_extf_query_on_a_used_d
     assert info.extf_size == 0
 
 
+def test_discovery_does_not_continue_after_legacy_fallback_exceeds_global_deadline() -> None:
+    """
+    Legacy-query recovery must not allow a late bootloader into the upload path.
+
+    GIVEN: Discovery has only one second left when a legacy bootloader is opened
+        and its rejected external-flash query consumes that remaining second
+    WHEN: The fallback identity queries finish after the global discovery deadline
+    THEN: The held bootloader is rebooted and the upload is rejected
+    """
+    now = [0.0]
+    attempts = 0
+
+    class SlowLegacyBootloaderTransport(FakeBootloaderTransport):
+        """Reject the optional query and answer the remaining identity queries slowly."""
+
+        def write(self, data: bytes) -> int:
+            command, body = data[:1], data[1:-1]
+            if command == bl.GET_DEVICE and body == bl.INFO_EXTF_SIZE:
+                self.commands.append(command)
+                self.requests.append(data)
+                self._reply.extend(bl.INSYNC + bl.INVALID)
+                return len(data)
+            return super().write(data)
+
+        def read(self, size: int = 1) -> bytes:
+            if self.requests and self.requests[-1][:1] == bl.GET_DEVICE:
+                body = self.requests[-1][1:-1]
+                if body in {bl.INFO_BOARD_ID, bl.INFO_BOARD_REV, bl.INFO_FLASH_SIZE} and self._reply:
+                    now[0] += 0.1
+            return super().read(size)
+
+    transport = SlowLegacyBootloaderTransport(revision=5, extf_size=0)
+
+    def open_transport(*_args: object) -> bl.BootloaderTransport:
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            msg = "bootloader port has not appeared yet"
+            raise OSError(msg)
+        return transport
+
+    backend = bl.FlightControllerBootloaderBackend(
+        "COM7",
+        115200,
+        serial_factory=open_transport,
+        open_retries=2,
+        timeout=2.0,
+        retry_delay=14.0,
+        clock=lambda: now[0],
+        sleep=lambda delay: now.__setitem__(0, now[0] + delay),
+    )
+
+    with pytest.raises(fw.BootloaderProtocolError, match="discovery deadline"):
+        backend.upload(fw.parse_apj(apj(b"abcd")), confirmation_requested=lambda *_args: True)
+
+    assert attempts == 2
+    assert now[0] > bl.BOOTLOADER_ENUMERATION_TIMEOUT
+    assert transport.rebooted
+    assert transport.flash == b""
+
+
 def test_uploads_and_verifies_external_flash() -> None:
     """
     External-flash erase accepts progress bytes that overlap protocol markers.
