@@ -380,6 +380,9 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name,
         window.only_show_when_update_progress_called = True
         window.auto_close_on_complete = False
         window._shown = False  # pylint: disable=protected-access
+        # Exercise the legacy Aqua condition too: restoring its update() calls
+        # must fail this regression test, even though production no longer uses it.
+        window._is_aqua = True  # pylint: disable=protected-access
         window._center_progress_window = MagicMock()  # pylint: disable=protected-access
 
         window.update_progress_bar(25, 100)

@@ -2212,5 +2212,37 @@ class TestCenterWindowOnScreenBehavior:
         mock_window.update.assert_not_called()
 
 
+@pytest.mark.parametrize("on_screen", [False, True])
+def test_macos_centering_is_cancelled_when_window_closes_before_idle(tk_root: tk.Tk, on_screen: bool) -> None:
+    """Closing a window before deferred centering produces no Tcl background error."""
+    child = tk.Toplevel(tk_root)
+    with (
+        patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.platform_system", return_value="Darwin"),
+        patch.object(child, "geometry") as geometry,
+        patch.object(child, "after_cancel", wraps=child.after_cancel) as cancel,
+    ):
+        if on_screen:
+            BaseWindow.center_window_on_screen(child)
+        else:
+            BaseWindow.center_window(child, tk_root)
+        child.destroy()
+        cancel.assert_called_once()
+        tk_root.update_idletasks()
+        geometry.assert_not_called()
+
+
+def test_deferred_window_work_removes_destroy_binding_after_running(tk_root: tk.Tk) -> None:
+    """Completed idle work does not accumulate destruction handlers."""
+    child = tk.Toplevel(tk_root)
+    try:
+        callback = MagicMock()
+        BaseWindow._run_when_idle(child, callback)  # pylint: disable=protected-access
+        tk_root.update_idletasks()
+        callback.assert_called_once()
+        assert not child.bind("<Destroy>")
+    finally:
+        child.destroy()
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
