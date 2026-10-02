@@ -98,6 +98,8 @@ class FakeSerialForTests:
 
 
 DEFAULT_BAUDRATE: int = 115200
+# Retry serial connection at the 57600 baudrate if no heartbeat was received at DEFAULT_BAUDRATE.
+DEFAULT_FALLBACK_BAUDRATE: int = 57600
 DEVICE_FC_PARAM_FROM_FILE: str = "file"  # Special device name to simulate FC parameters from params.param file
 # https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_SerialManager/AP_SerialManager.cpp#L741C1-L757C32
 SUPPORTED_BAUDRATES: list[str] = [
@@ -324,7 +326,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             retries=retries,
         )
 
-    def connect(
+    def connect(  # pylint: disable=too-many-branches
         self,
         device: str,
         progress_callback: Callable[[int, int], None] | None = None,
@@ -398,6 +400,28 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             if err == "":
                 return ""
 
+            if (
+                err == _("No MAVLink heartbeat received, connection failed.")
+                and not autodetect_serial[-1].device.startswith(("tcp:", "udp:"))
+                and connection_baudrate == DEFAULT_BAUDRATE
+            ):
+                logging_debug(
+                    _("Retrying %s at %s baud"),
+                    autodetect_serial[-1].device,
+                    DEFAULT_FALLBACK_BAUDRATE,
+                )
+
+                err = self._register_and_try_connect(
+                    comport=autodetect_serial[-1],
+                    progress_callback=progress_callback,
+                    baudrate=int(DEFAULT_FALLBACK_BAUDRATE),
+                    log_errors=False,
+                    retries=1,
+                )
+
+                if err == "":
+                    self._baudrate = int(DEFAULT_FALLBACK_BAUDRATE)
+                    return ""
         # Try to autodetect network ports
         if progress_callback:
             progress_callback(50, 100)  # Starting network detection
