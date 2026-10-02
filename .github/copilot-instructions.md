@@ -31,6 +31,12 @@ Clean architecture with separation of concerns:
 When reviewing code, always apply the repository guidelines in `/COMPLIANCE.md` and `/CONTRIBUTING.md`.
 For changes affecting architecture, module boundaries, dependencies, data flow, generated files, or repository tooling such as repo graphing, also consult `/ARCHITECTURE.md`.
 
+When adding or moving files, check their exact path against `REUSE.toml`; root-level globs such as `*.md` do not cover nested directories.
+Add an SPDX header or a matching annotation for new files.
+
+For modules loaded dynamically (including plugin registrations), check all three platform PyInstaller specs and ensure the package, submodules and required data are collected.
+Static import checks alone do not verify frozen builds.
+
 ## Dependencies and Tools
 
 - **Dependency management**: Use `uv`, not `pip` directly. Update `pyproject.toml` and `credits/CREDITS.md` when adding dependencies
@@ -62,6 +68,12 @@ For changes affecting architecture, module boundaries, dependencies, data flow, 
 
 - **Error Handling**: Use the project's logging system (5 verbosity levels); catch specific exceptions; provide user-friendly GUI messages
 - **Parameter Management**: Validate parameter values before applying to flight controller
+- **Parameter edits**: Use `ArduPilotParameter.change_reason` for the editable reason;
+  `change_reason_for_file` is the serialized form and may add markers such as `@manual_override`.
+  Use the parameter APIs to preserve these markers without duplication.
+- **Numeric GUI input**: Handle conversion failures and range failures separately, and show translated, stable guidance rather than raw Python exception text.
+- **Firmware support**: Verify parameter groups and version availability for each vehicle type before wiring a plugin into its configuration steps.
+  Cite upstream source with a stable tag or commit permalink in research documentation, and state the release that introduced the feature when it explains a version gate.
 - **Backend Communication**: Use `backend_flightcontroller.py` facade; implement progress callbacks for long operations
 
 ## Security
@@ -83,4 +95,5 @@ When needed for specific tasks, refer to:
 - Architecture details: ARCHITECTURE*.md files in project root
 - Testing guidelines: .github/skills/pytest-testing/SKILL.md
 - Translation workflow: .github/skills/update-gui-translations/SKILL.md
+- Plugin creation: .github/skills/add-new-plugin/SKILL.md
 - Other specialized skills: .github/skills/ directory

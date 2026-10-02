@@ -81,7 +81,7 @@ def register_plugins() -> None:
       2. Here (``register_plugins``)                      - import and call its register function.
       3. The plugin's ``frontend_tkinter_*.py`` module    - register its view and data-model factories.
       4. On ``ardupilot_methodic_configurator\configuration_steps_schema.json`` - add the plugin name to
-         ``plugin > properties > enum`` in the configuration steps schema.
+         ``plugin > properties > name > enum`` in the configuration steps schema.
     """
     # Import each plugin lazily and independently. A missing optional dependency or a broken plugin
     # must not prevent the remaining plugins from being registered.
