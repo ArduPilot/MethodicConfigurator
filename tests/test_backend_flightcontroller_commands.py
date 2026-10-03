@@ -417,11 +417,15 @@ class TestFlightControllerCommandsSendCommandAndWaitAck:
         with (
             patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time", side_effect=[0.0, 2.0]),
             patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_sleep"),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.logging_error") as mock_err,
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.logging_debug") as mock_dbg,
         ):
             success, error = commands_mgr.send_command_and_wait_ack(command=999, timeout=1.0)
-        # Then: Timeout error
-        assert success is False
-        assert "timeout" in error.lower()
+            # Then: Timeout error
+            assert success is False
+            assert "timeout" in error.lower()
+            mock_err.assert_not_called()
+            mock_dbg.assert_called_once()
 
 
 class TestFlightControllerCommandsPropertyDelegation:  # pylint: disable=too-few-public-methods
@@ -1600,11 +1604,74 @@ class TestFlightControllerCommandsBatteryEdgeCases:
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
 
         # When
-        success, error = commands_mgr.send_command_and_wait_ack(command=999, timeout=0.5)
+        with (
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.logging_error") as mock_err,
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.logging_debug") as mock_dbg,
+        ):
+            success, error = commands_mgr.send_command_and_wait_ack(command=999, timeout=0.5)
 
-        # Then
-        assert success is False
-        assert "failed to send command" in error.lower()
+            # Then
+            assert success is False
+            assert "failed to send command" in error.lower()
+            mock_err.assert_not_called()
+            mock_dbg.assert_called_once()
+
+    def test_send_command_without_connection_logs_debug(self) -> None:
+        """
+        send_command_and_wait_ack logs debug (not error) when connection is not available.
+
+        GIVEN: No flight controller connection (master is None)
+        WHEN: send_command_and_wait_ack is called
+        THEN: Should return False with connection error message
+        AND: Should log at debug level rather than error level
+        """
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = None
+        mock_params_mgr = Mock()
+
+        commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.logging_error") as mock_err,
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.logging_debug") as mock_dbg,
+        ):
+            success, error = commands_mgr.send_command_and_wait_ack(command=999, timeout=0.5)
+
+            assert success is False
+            assert "no flight controller connection" in error.lower()
+            mock_err.assert_not_called()
+            mock_dbg.assert_called_once()
+
+    def test_request_periodic_battery_status_ack_timeout_logs_debug_not_error(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """
+        request_periodic_battery_status logs debug without error spam when link is silent.
+
+        GIVEN: Flight controller connected but silent (ACK timeout on all attempts)
+        WHEN: request_periodic_battery_status is called
+        THEN: Should return False
+        AND: Should not call logging_error on any retry attempt
+        AND: Should log attempts at debug level
+        """
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_master.recv_match.return_value = None
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        # 3 attempts, each attempt evaluates time_time() twice (start and timeout check)
+        time_seq = [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
+        with (
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time", side_effect=time_seq),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_sleep"),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.logging_error") as mock_err,
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.logging_debug") as mock_dbg,
+        ):
+            success, error = commands_mgr.request_periodic_battery_status()
+
+            assert success is False
+            assert "timeout" in error.lower()
+            mock_err.assert_not_called()
+            assert mock_dbg.call_count >= commands_mgr.BATTERY_STATUS_REQUEST_ATTEMPTS
 
 
 class TestFlightControllerCommandsAccelCalibrationCancel:  # pylint: disable=too-few-public-methods

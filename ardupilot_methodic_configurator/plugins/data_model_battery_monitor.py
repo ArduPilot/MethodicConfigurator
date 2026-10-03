@@ -74,7 +74,7 @@ class BatteryMonitorDataModel:
 
         """
         if self.flight_controller.master is None:
-            logging_warning(_("Flight controller not connected, cannot check battery monitoring status."))
+            logging_debug(_("Flight controller not connected, cannot check battery monitoring status."))
             return False
         return self.flight_controller.is_battery_monitoring_enabled()
 
@@ -108,7 +108,7 @@ class BatteryMonitorDataModel:
 
         """
         if self.flight_controller.master is None:
-            logging_warning(_("Flight controller not connected, cannot get battery status."))
+            logging_debug(_("Flight controller not connected, cannot get battery status."))
             return None
 
         if not self.is_battery_monitoring_enabled():
@@ -120,9 +120,11 @@ class BatteryMonitorDataModel:
 
         battery_status, message = self.flight_controller.get_battery_status()
         if message:
-            logging_warning(message)
-            # Reset flag to trigger re-request on next call (automatic recovery)
-            self._got_battery_status = False
+            if self._got_battery_status:
+                logging_warning(message)
+                self._got_battery_status = False
+            else:
+                logging_debug(message)
         elif battery_status is not None:
             # Only mark stream as established when we receive actual data
             self._got_battery_status = True
