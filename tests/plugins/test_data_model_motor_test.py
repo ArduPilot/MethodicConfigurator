@@ -1257,25 +1257,29 @@ class TestErrorHandlingAndEdgeCases:
         # Assert: Returns None when monitoring disabled
         assert result is None
 
-    def test_battery_status_logs_warning_when_fc_disconnected(self, motor_test_model) -> None:
+    def test_battery_status_logs_debug_when_fc_disconnected(self, motor_test_model) -> None:
         """
-        Battery status logs a warning when the flight controller is disconnected.
+        Battery status logs debug (not warning) when the flight controller is disconnected.
 
         GIVEN: A motor test model with battery monitoring enabled
         WHEN: The flight controller is disconnected and battery status is requested
-        THEN: A warning should be logged and the status should be None
+        THEN: A debug message should be logged and the status should be None
         """
         # Arrange: Enable monitoring but disconnect FC
         motor_test_model.flight_controller.is_battery_monitoring_enabled.return_value = True
         motor_test_model.flight_controller.master = None
 
         # Act
-        with patch("ardupilot_methodic_configurator.plugins.data_model_battery_monitor.logging_warning") as mock_warning:
+        with (
+            patch("ardupilot_methodic_configurator.plugins.data_model_battery_monitor.logging_warning") as mock_warning,
+            patch("ardupilot_methodic_configurator.plugins.data_model_battery_monitor.logging_debug") as mock_debug,
+        ):
             result = motor_test_model.get_battery_status()
 
             # Assert
             assert result is None
-            mock_warning.assert_called_once_with(_("Flight controller not connected, cannot get battery status."))
+            mock_warning.assert_not_called()
+            mock_debug.assert_called_once_with(_("Flight controller not connected, cannot get battery status."))
 
     def test_battery_status_with_debug_logging(self, motor_test_model) -> None:
         """

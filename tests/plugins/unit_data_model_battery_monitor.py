@@ -14,7 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from math import isnan, nan
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -193,20 +193,47 @@ class TestBatteryMonitorWithDisconnectedFlightController:
 
     def test_battery_monitoring_check_returns_false_when_disconnected(self, disconnected_flight_controller: MagicMock) -> None:
         """
-        Battery monitoring check returns False when flight controller is disconnected.
+        Battery monitoring check returns False and logs debug when flight controller is disconnected.
 
         GIVEN: Flight controller is not connected (master is None)
         WHEN: is_battery_monitoring_enabled() is called
         THEN: Should return False
+        AND: Should log at debug level rather than warning level
         """
         # Arrange: Disconnected FC
         model = BatteryMonitorDataModel(disconnected_flight_controller)
 
-        # Act: Check battery monitoring status
-        result = model.is_battery_monitoring_enabled()
+        # Act & Assert: Check battery monitoring status logs debug not warning
+        with (
+            patch("ardupilot_methodic_configurator.plugins.data_model_battery_monitor.logging_warning") as mock_warn,
+            patch("ardupilot_methodic_configurator.plugins.data_model_battery_monitor.logging_debug") as mock_dbg,
+        ):
+            result = model.is_battery_monitoring_enabled()
 
-        # Assert: Returns False when disconnected
-        assert result is False, "Should return False when flight controller disconnected"
+            assert result is False, "Should return False when flight controller disconnected"
+            mock_warn.assert_not_called()
+            mock_dbg.assert_called_once()
+
+    def test_get_battery_status_returns_none_when_disconnected(self, disconnected_flight_controller: MagicMock) -> None:
+        """
+        get_battery_status returns None and logs debug when flight controller is disconnected.
+
+        GIVEN: Flight controller is not connected (master is None)
+        WHEN: get_battery_status() is called
+        THEN: Should return None
+        AND: Should log at debug level rather than warning level
+        """
+        model = BatteryMonitorDataModel(disconnected_flight_controller)
+
+        with (
+            patch("ardupilot_methodic_configurator.plugins.data_model_battery_monitor.logging_warning") as mock_warn,
+            patch("ardupilot_methodic_configurator.plugins.data_model_battery_monitor.logging_debug") as mock_dbg,
+        ):
+            result = model.get_battery_status()
+
+            assert result is None
+            mock_warn.assert_not_called()
+            mock_dbg.assert_called_once()
 
     def test_connection_status_reflects_disconnected_state(self, disconnected_flight_controller: MagicMock) -> None:
         """
@@ -441,3 +468,70 @@ class TestBatteryMonitorDataModelEdgeCases:
 
         # Assert: Returns unavailable
         assert status == "unavailable"
+
+    def test_warning_logged_once_on_stream_loss_and_debug_thereafter(
+        self, connected_flight_controller_with_battery_enabled: MagicMock
+    ) -> None:
+        """
+        Warning is logged once when stream is lost, subsequent calls log at debug level.
+
+        GIVEN: Battery monitor has established a stream (_got_battery_status is True)
+        WHEN: get_battery_status encounters error messages across multiple calls
+        THEN: logging_warning should be called only once (on transition)
+        AND: logging_debug should be called on subsequent errors without spamming warnings
+        """
+        fc = connected_flight_controller_with_battery_enabled
+        model = BatteryMonitorDataModel(fc)
+        # Establish stream first
+        model._got_battery_status = True
+
+        fc.get_battery_status.return_value = (None, "Battery status not available from telemetry")
+
+        with (
+            patch("ardupilot_methodic_configurator.plugins.data_model_battery_monitor.logging_warning") as mock_warn,
+            patch("ardupilot_methodic_configurator.plugins.data_model_battery_monitor.logging_debug") as mock_dbg,
+        ):
+            # First poll after stream loss
+            res1 = model.get_battery_status()
+            assert res1 is None
+            assert model._got_battery_status is False
+            mock_warn.assert_called_once_with("Battery status not available from telemetry")
+
+            # Second poll while still lost - should NOT call warning again
+            res2 = model.get_battery_status()
+            assert res2 is None
+            assert mock_warn.call_count == 1
+            mock_dbg.assert_called_with("Battery status not available from telemetry")
+
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
+    def test_silent_connection_drives_model_through_backend_without_error_logs(self, mock_discover: MagicMock) -> None:
+        """
+        Model driven through real FlightController backend logs at debug without error spam on silent link.
+
+        GIVEN: FlightController with silent connection (commands time out, no telemetry)
+        WHEN: BatteryMonitorDataModel.get_battery_status is called
+        THEN: Returns None
+        AND: Neither logging_error nor logging_warning is called
+        """
+        mock_discover.return_value = None
+        fc = FlightController(reboot_time=2, baudrate=115200)
+        mock_master = MagicMock()
+        mock_master.recv_match.return_value = None
+        fc.set_master_for_testing(mock_master)
+        fc.fc_parameters["BATT_MONITOR"] = 4.0
+
+        model = BatteryMonitorDataModel(fc)
+
+        # 3 retry attempts, each evaluating start time and timeout
+        time_seq = [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
+        with (
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time", side_effect=time_seq),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_sleep"),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.logging_error") as mock_backend_err,
+            patch("ardupilot_methodic_configurator.plugins.data_model_battery_monitor.logging_warning") as mock_model_warn,
+        ):
+            status = model.get_battery_status()
+
+            assert status is None
+            mock_backend_err.assert_not_called()
+            mock_model_warn.assert_not_called()
