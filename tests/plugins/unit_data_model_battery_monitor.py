@@ -14,7 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from math import isnan, nan
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -441,3 +441,37 @@ class TestBatteryMonitorDataModelEdgeCases:
 
         # Assert: Returns unavailable
         assert status == "unavailable"
+
+    def test_warning_logged_once_on_stream_loss_and_debug_thereafter(
+        self, connected_flight_controller_with_battery_enabled: MagicMock
+    ) -> None:
+        """
+        Warning is logged once when stream is lost, subsequent calls log at debug level.
+
+        GIVEN: Battery monitor has established a stream (_got_battery_status is True)
+        WHEN: get_battery_status encounters error messages across multiple calls
+        THEN: logging_warning should be called only once (on transition)
+        AND: logging_debug should be called on subsequent errors without spamming warnings
+        """
+        fc = connected_flight_controller_with_battery_enabled
+        model = BatteryMonitorDataModel(fc)
+        # Establish stream first
+        model._got_battery_status = True
+
+        fc.get_battery_status.return_value = (None, "Battery status not available from telemetry")
+
+        with (
+            patch("ardupilot_methodic_configurator.plugins.data_model_battery_monitor.logging_warning") as mock_warn,
+            patch("ardupilot_methodic_configurator.plugins.data_model_battery_monitor.logging_debug") as mock_dbg,
+        ):
+            # First poll after stream loss
+            res1 = model.get_battery_status()
+            assert res1 is None
+            assert model._got_battery_status is False
+            mock_warn.assert_called_once_with("Battery status not available from telemetry")
+
+            # Second poll while still lost - should NOT call warning again
+            res2 = model.get_battery_status()
+            assert res2 is None
+            assert mock_warn.call_count == 1
+            mock_dbg.assert_called_with("Battery status not available from telemetry")

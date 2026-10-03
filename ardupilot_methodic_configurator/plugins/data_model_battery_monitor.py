@@ -120,9 +120,11 @@ class BatteryMonitorDataModel:
 
         battery_status, message = self.flight_controller.get_battery_status()
         if message:
-            logging_warning(message)
-            # Reset flag to trigger re-request on next call (automatic recovery)
-            self._got_battery_status = False
+            if self._got_battery_status:
+                logging_warning(message)
+                self._got_battery_status = False
+            else:
+                logging_debug(message)
         elif battery_status is not None:
             # Only mark stream as established when we receive actual data
             self._got_battery_status = True

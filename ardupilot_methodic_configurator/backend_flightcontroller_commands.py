@@ -197,7 +197,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         """Send a command and also return its MAV_RESULT for behavior-specific decisions."""
         if self.master is None:
             error_msg = _("No flight controller connection available for command")
-            logging_error(error_msg)
+            logging_debug(error_msg)
             return False, error_msg, None
 
         try:
@@ -295,7 +295,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             return False, error_msg, None
         except Exception as e:  # pylint: disable=broad-exception-caught
             error_msg = _("Failed to send command: %(error)s") % {"error": str(e)}
-            logging_error(error_msg)
+            logging_debug(error_msg)
             return False, error_msg, None
 
     @staticmethod
