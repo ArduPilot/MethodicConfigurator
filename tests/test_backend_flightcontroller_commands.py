@@ -1600,11 +1600,43 @@ class TestFlightControllerCommandsBatteryEdgeCases:
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
 
         # When
-        success, error = commands_mgr.send_command_and_wait_ack(command=999, timeout=0.5)
+        with (
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.logging_error") as mock_err,
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.logging_debug") as mock_dbg,
+        ):
+            success, error = commands_mgr.send_command_and_wait_ack(command=999, timeout=0.5)
 
-        # Then
-        assert success is False
-        assert "failed to send command" in error.lower()
+            # Then
+            assert success is False
+            assert "failed to send command" in error.lower()
+            mock_err.assert_not_called()
+            mock_dbg.assert_called_once()
+
+    def test_send_command_without_connection_logs_debug(self) -> None:
+        """
+        send_command_and_wait_ack logs debug (not error) when connection is not available.
+
+        GIVEN: No flight controller connection (master is None)
+        WHEN: send_command_and_wait_ack is called
+        THEN: Should return False with connection error message
+        AND: Should log at debug level rather than error level
+        """
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = None
+        mock_params_mgr = Mock()
+
+        commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.logging_error") as mock_err,
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.logging_debug") as mock_dbg,
+        ):
+            success, error = commands_mgr.send_command_and_wait_ack(command=999, timeout=0.5)
+
+            assert success is False
+            assert "no flight controller connection" in error.lower()
+            mock_err.assert_not_called()
+            mock_dbg.assert_called_once()
 
 
 class TestFlightControllerCommandsAccelCalibrationCancel:  # pylint: disable=too-few-public-methods
