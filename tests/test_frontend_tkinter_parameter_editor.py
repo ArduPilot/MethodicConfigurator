@@ -22,9 +22,11 @@ from unittest.mock import call as mock_call
 
 import pytest
 
+import ardupilot_methodic_configurator.frontend_tkinter_parameter_editor as parameter_editor_module
 from ardupilot_methodic_configurator.data_model_parameter_editor import LogAnalysisInputs
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (
+    ParameterEditorAction,
     ParameterEditorUiServices,
     ParameterEditorWindow,
 )
@@ -125,6 +127,7 @@ def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:  # noq
     editor.inline_component_editor = None
     editor._inline_component_name = None
     editor._updating_inline_editor = False
+    editor._requested_action = ParameterEditorAction.FINISHED
     editor.inline_component_container = MagicMock()
     return editor
 
@@ -455,15 +458,52 @@ class TestUsagePopupScheduling:
             mock_display.assert_not_called()
 
 
-class TestRunLoop:  # pylint: disable=too-few-public-methods
+class TestRunLoop:
     """Ensure the run helper starts Tk's event loop."""
 
     def test_run_enters_mainloop(self, parameter_editor_window: ParameterEditorWindow) -> None:
         parameter_editor_window.root.mainloop = MagicMock()
 
-        parameter_editor_window.run()
+        result = parameter_editor_window.run()
 
         parameter_editor_window.root.mainloop.assert_called_once_with()
+        assert result is ParameterEditorAction.FINISHED
+
+    def test_standalone_harness_handles_edit_components_action(self) -> None:
+        """The standalone module reopens the component editor and rebuilds its parameter model."""
+        events: list[str] = []
+        models = [MagicMock(current_file="04_board_orientation.param"), MagicMock(current_file="12_battery.param")]
+        model_iterator = iter(models)
+        windows = [MagicMock(), MagicMock()]
+        windows[0].run.side_effect = lambda: (
+            setattr(models[0], "current_file", "12_battery.param") or ParameterEditorAction.EDIT_COMPONENTS
+        )
+        windows[1].run.return_value = ParameterEditorAction.FINISHED
+        component_window = MagicMock()
+        component_window.root.mainloop.side_effect = lambda: events.append("component editor")
+        flight_controller = MagicMock()
+        filesystem = MagicMock(vehicle_type="ArduCopter")
+
+        with (
+            patch.object(
+                parameter_editor_module,
+                "ParameterEditor",
+                side_effect=lambda *_args: next(model_iterator),
+            ) as make_model,
+            patch.object(parameter_editor_module, "ParameterEditorWindow", side_effect=windows),
+            patch.object(parameter_editor_module, "ComponentEditorWindow", return_value=component_window),
+        ):
+            parameter_editor_module.run_standalone_parameter_editor(flight_controller, filesystem)
+
+        assert [call.args[0] for call in make_model.call_args_list] == [
+            "04_board_orientation.param",
+            "12_battery.param",
+        ]
+        component_window.set_vehicle_type_and_version.assert_called_once_with(
+            "ArduCopter", flight_controller.info.flight_sw_version_and_type
+        )
+        component_window.populate_frames.assert_called_once_with()
+        assert events == ["component editor"]
 
 
 class TestWidgetFactoryMethods:
@@ -493,7 +533,12 @@ class TestWidgetFactoryMethods:
         parameter_editor.get_vehicle_directory.return_value = "vehicle_dir"
 
         directory_widget = MagicMock()
-        button_widgets = [MagicMock() for _ in range(5)]
+        button_widgets: dict[Callable[..., None], MagicMock] = {}
+
+        def create_button(_parent: object, *, command: Callable[..., None], **_kwargs: object) -> MagicMock:
+            button = MagicMock()
+            button_widgets[command] = button
+            return button
 
         with (
             patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Frame", return_value=MagicMock()),
@@ -513,7 +558,7 @@ class TestWidgetFactoryMethods:
             ),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Button",
-                side_effect=button_widgets,
+                side_effect=create_button,
             ),
             patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.show_tooltip"),
             patch.object(
@@ -524,13 +569,8 @@ class TestWidgetFactoryMethods:
         ):
             editor._create_conf_widgets("__VERSION__")
 
-        button_widgets[2].configure.assert_called_once_with(state=expected_state)
-        button_widgets[4].configure.assert_called_once_with(state="normal")
-        button_widgets[0].grid.assert_called_once_with(row=0, column=0, padx=(8, 8), sticky=tk.EW)
-        button_widgets[1].grid.assert_called_once_with(row=1, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
-        button_widgets[2].grid.assert_called_once_with(row=2, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
-        button_widgets[3].grid.assert_called_once_with(row=3, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
-        button_widgets[4].grid.assert_called_once_with(row=4, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
+        button_widgets[editor.on_fc_banner_click].configure.assert_called_once_with(state=expected_state)
+        button_widgets[editor.on_zip_vehicle_for_forum_help_click].configure.assert_called_once_with(state="normal")
 
     def test_user_can_open_the_flight_controller_banner(self, parameter_editor_window: ParameterEditorWindow) -> None:
         """
@@ -2388,6 +2428,83 @@ class TestPersistenceAndExit:
         focus_widget.event_generate.assert_called_once_with("<FocusOut>", when="now")
         mock_write.assert_called_once()
         mock_quit.assert_called_once()
+
+    @pytest.mark.parametrize("save_result", [True, False])
+    def test_user_hands_off_after_being_offered_to_save_changes(
+        self, parameter_editor_window: ParameterEditorWindow, save_result: bool
+    ) -> None:
+        """The handoff proceeds after the user accepts or declines the optional save prompt."""
+        events: list[str] = []
+        focus_widget = MagicMock()
+        focus_widget.event_generate.side_effect = lambda *_args, **_kwargs: events.append("commit focused edit")
+        with (
+            patch.object(parameter_editor_window.parameter_editor_table.view_port, "focus_get", return_value=focus_widget),
+            patch.object(
+                parameter_editor_window.parameter_editor,
+                "handle_write_changes_workflow",
+                side_effect=lambda *_args: (events.append("offer save"), save_result)[1],
+            ),
+            patch.object(parameter_editor_window.root, "destroy", side_effect=lambda: events.append("destroy window")),
+            patch.object(
+                parameter_editor_window.root,
+                "mainloop",
+                side_effect=parameter_editor_window.on_edit_vehicle_components_click,
+            ),
+        ):
+            assert parameter_editor_window.run() is ParameterEditorAction.EDIT_COMPONENTS
+
+        assert events == ["commit focused edit", "offer save", "destroy window"]
+        focus_widget.event_generate.assert_called_once_with("<FocusOut>", when="now")
+
+    def test_component_editor_handoff_is_refused_while_file_browser_is_open(
+        self, parameter_editor_window: ParameterEditorWindow
+    ) -> None:
+        """The parameter editor remains alive while its non-modal browser is displayed."""
+        browser_window = MagicMock()
+        browser_window.root.winfo_exists.return_value = True
+        parameter_editor_window._file_browser_window = browser_window
+
+        parameter_editor_window.on_edit_vehicle_components_click()
+
+        assert parameter_editor_window._requested_action is ParameterEditorAction.FINISHED
+        parameter_editor_window.root.destroy.assert_not_called()
+        parameter_editor_window.ui.show_error.assert_called_once_with(
+            "File browser is open",
+            "Close the flight-controller file browser before editing vehicle components.",
+        )
+        browser_window.root.destroy.assert_not_called()
+
+    def test_component_editor_handoff_is_refused_while_log_analysis_is_running(
+        self, parameter_editor_window: ParameterEditorWindow
+    ) -> None:
+        """Keep the editor open until the pending log analysis can deliver its result."""
+        worker = MagicMock()
+        worker.is_alive.return_value = True
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.threading.Thread",
+            return_value=worker,
+        ):
+            parameter_editor_window._analyse_log_file("/fake/log.bin")
+
+        parameter_editor_window.on_edit_vehicle_components_click()
+
+        assert parameter_editor_window._requested_action is ParameterEditorAction.FINISHED
+        parameter_editor_window.root.destroy.assert_not_called()
+        parameter_editor_window._test_progress_windows[0].destroy.assert_not_called()  # type: ignore[attr-defined]
+        parameter_editor_window.ui.show_error.assert_called_once_with(
+            "Log analysis is running",
+            "Wait for the flight log analysis to finish before editing vehicle components.",
+        )
+
+        worker.is_alive.return_value = False
+        check_done = parameter_editor_window.root.after.call_args_list[-1].args[1]
+        check_done()
+        parameter_editor_window.on_edit_vehicle_components_click()
+
+        parameter_editor_window._test_progress_windows[0].destroy.assert_called_once()  # type: ignore[attr-defined]
+        assert parameter_editor_window._requested_action is ParameterEditorAction.EDIT_COMPONENTS
+        parameter_editor_window.root.destroy.assert_called_once()
 
     def test_user_triggers_file_upload_helper_with_progress(self, editor_factory, parameter_editor: MagicMock) -> None:
         """
