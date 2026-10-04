@@ -6502,6 +6502,25 @@ class TestBulkAddFeedback:
 class TestUnsavedComponentChangesPrompt:
     """Test how unsaved component-data edits are handled when writing changes."""
 
+    def test_recent_save_prompt_suppresses_a_second_prompt_during_handoff(self, parameter_editor: ParameterEditor) -> None:
+        """A save prompt shown moments earlier is not repeated during the window handoff."""
+        parameter_editor._last_time_asked_to_save = 100.0
+        ask = MagicMock()
+
+        with (
+            patch.object(parameter_editor, "_has_unsaved_changes", return_value=True),
+            patch.object(parameter_editor, "_export_current_file") as mock_export,
+            patch("ardupilot_methodic_configurator.data_model_parameter_editor.time", return_value=100.5),
+        ):
+            result = parameter_editor.handle_write_changes_workflow(
+                annotate_params_into_files=False,
+                ask_user_confirmation=ask,
+            )
+
+        assert result is False
+        ask.assert_not_called()
+        mock_export.assert_not_called()
+
     def test_user_saving_parameters_also_saves_pending_component_edits(self, parameter_editor: ParameterEditor) -> None:
         """
         Confirming the save prompt writes both the parameter file and the component data.

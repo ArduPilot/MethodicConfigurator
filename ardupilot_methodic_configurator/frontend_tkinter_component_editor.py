@@ -55,7 +55,6 @@ def argument_parser() -> Namespace:
         )
     )
     parser = LocalFilesystem.add_argparse_arguments(parser)
-    parser = ComponentEditorWindow.add_argparse_arguments(parser)
     return add_common_arguments(parser).parse_args()
     # pylint: enable=duplicate-code
 
@@ -522,9 +521,6 @@ if __name__ == "__main__":  # pragma: no cover
     component_editor_window = ComponentEditorWindow(__version__, filesystem, {})
 
     component_editor_window.populate_frames()
-    if args.skip_component_editor:
-        component_editor_window.root.after(10, component_editor_window.root.destroy)
-
     component_editor_window.validate_data_and_highlight_errors_in_red()
 
     component_editor_window.root.mainloop()

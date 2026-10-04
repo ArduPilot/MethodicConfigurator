@@ -31,7 +31,6 @@
             "args": [
                 "--allow-editing-template-files",
                 "--skip-check-for-updates",
-                "--skip-component-editor",
                 "--vehicle-dir=/home/amilcar/iav/CUSTOMERS/CubeBlackDefaults",
                 "--loglevel=DEBUG",
                 "--device=none",
