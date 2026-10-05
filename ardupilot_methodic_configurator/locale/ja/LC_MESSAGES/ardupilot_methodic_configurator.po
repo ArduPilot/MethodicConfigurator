@@ -2671,25 +2671,25 @@ msgstr "ヨーステップ応答を最適化するため。"
 msgid ""
 "To record and review the pitch rate P and D gains from the staged helicopter "
 "autotune sequence"
-msgstr ""
+msgstr "段階的なヘリコプターのオートチューンシーケンスでのピッチレートPおよびDゲインを記録して確認するため"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:71
 msgid ""
 "To record and review the roll and pitch angle P gains and acceleration "
 "limits from the staged helicopter autotune sequence"
-msgstr ""
+msgstr "段階的なヘリコプターのオートチューンシーケンスでのロールおよびピッチ角度Pゲインと加速度制限を記録して確認するため"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:72
 msgid ""
 "To record and review the roll rate P and D gains from the staged helicopter "
 "autotune sequence"
-msgstr ""
+msgstr "段階的なヘリコプターのオートチューンシーケンスでのロールレートPおよびDゲインを記録して確認するため"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:73
 msgid ""
 "To record and review the yaw angle P gain and acceleration limit from the "
 "staged helicopter autotune sequence"
-msgstr ""
+msgstr "段階的なヘリコプターのオートチューンシーケンスでのヨー角度Pゲインと加速度制限を記録して確認するため"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:74
 msgid "To record autotune results after pitch step response optimization"
@@ -2782,25 +2782,25 @@ msgstr ""
 msgid ""
 "After the pitch rate P and D autotune stage (AUTOTUNE_SEQ=2), before "
 "proceeding to roll rate tuning"
-msgstr ""
+msgstr "ピッチレートPおよびDのオートチューン段階（AUTOTUNE_SEQ=2）の後、ロールレートのチューニングに進む前"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:91
 msgid ""
 "After the roll and pitch angle P autotune stage (AUTOTUNE_SEQ=4), once the "
 "rate P and D stages are complete"
-msgstr ""
+msgstr "ロールおよびピッチ角度Pのオートチューン段階（AUTOTUNE_SEQ=4）の後、レートPおよびDの段階が完了した時点で"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:92
 msgid ""
 "After the roll rate P and D autotune stage (AUTOTUNE_SEQ=2), before "
 "proceeding to roll and pitch angle tuning"
-msgstr ""
+msgstr "ロールレートPおよびDのオートチューン段階（AUTOTUNE_SEQ=2）の後、ロールおよびピッチ角度のチューニングに進む前"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:93
 msgid ""
 "After the yaw angle P autotune stage (AUTOTUNE_SEQ=4), before evaluating the "
 "completed tune"
-msgstr ""
+msgstr "ヨー角度Pのオートチューン段階（AUTOTUNE_SEQ=4）の後、完了したチューンを評価する前"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:94
 msgid ""
@@ -3406,11 +3406,11 @@ msgstr "MAGFit飛行前の飛行中VTOL-quicktuneルアスクリプトPIDの結�
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:190
 msgid "Review staged helicopter angle P autotune results"
-msgstr ""
+msgstr "段階的なヘリコプターの角度Pオートチューン結果を確認"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:191
 msgid "Review staged helicopter rate P and D autotune results"
-msgstr ""
+msgstr "段階的なヘリコプターのレートPおよびDオートチューン結果を確認"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:192
 msgid ""
