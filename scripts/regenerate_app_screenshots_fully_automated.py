@@ -609,7 +609,8 @@ def _capture_connection_forwarding(output_path: Path, delay: float, padding: int
                 dialog.geometry("+150+150")
                 dialog.lift()
                 capture_widget(dialog, output_path, delay, padding)
-            except Exception as error:  # Tk callbacks otherwise swallow these exceptions.
+            # Tk callbacks otherwise swallow exceptions, so capture and re-raise the callback error.
+            except Exception as error:  # pylint: disable=broad-exception-caught
                 capture_error = error
             finally:
                 if dialog is not None:
