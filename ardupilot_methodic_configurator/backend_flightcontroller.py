@@ -65,7 +65,9 @@ from ardupilot_methodic_configurator.data_model_firmware_upload import (
     FirmwareBootloaderRecoveryError,
     FirmwareConfirmationError,
     FirmwareConnectionError,
+    FirmwareIdentityError,
     FirmwareReconnectError,
+    FirmwareUploadCancelledError,
     UploadStage,
     verify_expected_firmware_digest,
     verify_reconnected_firmware,
@@ -394,11 +396,13 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
             extra_sleep_time (int, optional): The time in seconds to wait before reconnecting.
 
         """
-        if self.master is None:
+        master = self.master
+        if master is None:
             logging_warning(_("Cannot reset flight controller: not connected"))
             return ""
         # Issue a reset
-        self.master.reboot_autopilot()
+        reboot_autopilot = cast("Callable[[], None]", getattr(master, "reboot_autopilot"))  # noqa: B009
+        reboot_autopilot()
         logging_info(_("Reset command sent to ArduPilot."))
         self._sleep(0.3)  # Short delay for command to be sent
 
@@ -515,6 +519,7 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         if not has_stable_bootloader_device_identity(device, device_identity):
             msg = _("firmware upload requires a stable USB serial number or USB location")
             raise FirmwareConnectionError(msg)
+        previous_parameters = self.fc_parameters.copy()
         report_progress_safely(progress_callback, UploadStage.ENTERING_BOOTLOADER, 0, 1)
         try:
             info = backend.upload(
@@ -526,15 +531,13 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
                 connected_board_id=connected_board_id,
             )
         except Exception as exc:
-            if isinstance(exc, FirmwareBootloaderRecoveryError):
-                # ``hold_in_bootloader`` disables the normal boot timeout.  If
-                # no bootloader transport could be opened, no in-band reboot is
-                # possible and a MAVLink reconnect cannot succeed.
-                raise
-            if entry.entered and getattr(exc, "bootloader_rebooted", False):
-                recovery_error = reconnector()
-                if recovery_error:
-                    logging_warning(_("Unable to reconnect after safe firmware-upload abort: %s"), recovery_error)
+            self._recover_after_firmware_upload_abort(
+                exc,
+                bootloader_entered=entry.entered,
+                reconnect=reconnector,
+                connected_board_id=connected_board_id,
+                previous_parameters=previous_parameters,
+            )
             raise
         # A flashed image invalidates every cached parameter.  The reconnect is a
         # required part of success, rather than an optimistic best-effort step.
@@ -553,6 +556,39 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         )
         report_progress_safely(progress_callback, UploadStage.RECONNECTING, 1, 1)
         return info
+
+    def _recover_after_firmware_upload_abort(
+        self,
+        error: Exception,
+        *,
+        bootloader_entered: bool,
+        reconnect: Callable[[], str],
+        connected_board_id: int,
+        previous_parameters: dict[str, float],
+    ) -> None:
+        """Recover only a safely rebooted board; restore cached parameters only after safe cancellation."""
+        if isinstance(error, FirmwareBootloaderRecoveryError):
+            # A held bootloader without a successful reboot cannot return to MAVLink.
+            return
+        if not bootloader_entered or not getattr(error, "bootloader_rebooted", False):
+            return
+        recovery_error = reconnect()
+        if recovery_error:
+            logging_warning(_("Unable to reconnect after safe firmware-upload abort: %s"), recovery_error)
+            if isinstance(error, FirmwareUploadCancelledError):
+                msg = _("Firmware upload was cancelled, but reconnection failed: {error}. Restart AMC to reconnect.").format(
+                    error=recovery_error
+                )
+                raise FirmwareConnectionError(msg) from error
+            return
+        if not isinstance(error, FirmwareUploadCancelledError):
+            return
+        # No erase occurred. The supplied reconnector is bound to the original
+        # USB identity; the returned board ID must also match before reusing state.
+        if self.info.apj_board_id != str(connected_board_id):
+            msg = _("The reconnected board does not match the controller before cancellation. Restart AMC.")
+            raise FirmwareIdentityError(msg) from error
+        self.fc_parameters.update(previous_parameters)
 
     @property
     def banner_text_buffer(self) -> list[str]:

@@ -40,12 +40,16 @@ from ardupilot_methodic_configurator import __version__
 from ardupilot_methodic_configurator.__main__ import register_plugins
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
+from ardupilot_methodic_configurator.backend_firmware_upload import FirmwareBoardInfo, FirmwareUploadService
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.data_model_firmware_catalog import FirmwareRelease
+from ardupilot_methodic_configurator.data_model_firmware_upload import UploadStage
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.frontend_tkinter_about_popup_window import AboutWindow
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_connection_selection import ConnectionSelectionWindow
+from ardupilot_methodic_configurator.frontend_tkinter_firmware_upload import FirmwareUploadWindow
 from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_info import FlightControllerInfoWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_project_creator import VehicleProjectCreatorWindow
@@ -88,6 +92,8 @@ TARGETS: tuple[CaptureTarget, ...] = (
     CaptureTarget("App_screenshot_instructions.png", "instructions"),
     CaptureTarget("App_screenshot_motor_test.png", "motor_test"),
     CaptureTarget("App_screenshot_Parameter_export.png", "parameter_export"),
+    CaptureTarget("App_screenshot_Firmware_upload.png", "firmware_upload"),
+    CaptureTarget("App_screenshot_Firmware_upload_progress.png", "firmware_upload_progress"),
     CaptureTarget(
         "App_screenshot_Parameter_file_editor_and_uploader4_4_simple.png",
         "param_04_simple",
@@ -1050,6 +1056,40 @@ def _capture_parameter_export(output_path: Path, delay: float, padding: int, veh
             flight_controller.disconnect()
 
 
+def _capture_firmware_upload(output_path: Path, delay: float, padding: int, show_progress: bool) -> None:
+    """Capture the real firmware UI with sample catalog data and no hardware or downloads."""
+    controller = MagicMock(spec=FlightController)
+    board = FirmwareBoardInfo(9, "CubeBlack", "/dev/ttyACM0", "Copter")
+    release = FirmwareRelease(
+        "Copter", "4.6.0", "OFFICIAL", "CubeBlack", "https://firmware.ardupilot.org/Copter/stable/CubeBlack/arducopter.apj", 9
+    )
+    with (
+        patch.object(FirmwareUploadService, "connected_board_info", return_value=board),
+        patch.object(FirmwareUploadWindow, "refresh_versions"),
+    ):
+        window = FirmwareUploadWindow(controller)
+        try:
+            window.events.put(("catalog", window.catalog_request_id, [release]))
+            settle_tk(window.root)
+            window.version.set(release.label)
+            window.version_combo.event_generate("<<ComboboxSelected>>")
+            if show_progress:
+                window.busy = True
+                window.uploading = True
+                for button in (window.refresh_button, window.upload_button, window.custom_button):
+                    button.configure(state="disabled")
+                window.events.put(("progress", UploadStage.ERASING, 1, 1))
+                window.events.put(("progress", UploadStage.PROGRAMMING, 65, 100))
+            # Expand to the requested height so every action button is visible at this display's DPI.
+            window.root.update_idletasks()
+            window.root.geometry(f"{window.root.winfo_width()}x{window.root.winfo_reqheight()}")
+            pyautogui.moveTo(20, 20)  # Keep hover tooltips out of the documentation screenshots.
+            capture_widget(window.root, output_path, delay, padding)
+        finally:
+            window.uploading = False
+            window.close()
+
+
 def _capture_motor_test(output_path: Path, delay: float, padding: int, vehicle_dir: Path) -> None:
     fc_params = _load_fc_params_from_file(vehicle_dir)
     fc_params["FRAME_CLASS"] = 1.0
@@ -1120,6 +1160,8 @@ def capture_target(target: CaptureTarget, output_path: Path, args: argparse.Name
         _capture_motor_test(output_path, args.delay, args.padding, args.vehicle_dir)
     elif action == "parameter_export":
         _capture_parameter_export(output_path, args.delay, args.padding, args.vehicle_dir)
+    elif action in ("firmware_upload", "firmware_upload_progress"):
+        _capture_firmware_upload(output_path, args.delay, args.padding, show_progress=action == "firmware_upload_progress")
     elif action.startswith("param_"):
         if target.gui_complexity is None:
             msg = f"gui_complexity required for {action}"

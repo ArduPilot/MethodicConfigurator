@@ -4,11 +4,16 @@ Firmware upload flashes an ArduPilot APJ image through the board bootloader and
 reconnects to the flight controller. It is separate from parameter configuration
 because entering the bootloader interrupts the active MAVLink connection.
 
+For startup commands, firmware selection, upload procedures, progress, and recovery
+instructions, see the [firmware upload user manual](USERMANUAL_firmware_upload.md).
+
 ## Responsibilities
 
 ```mermaid
 flowchart TD
-    CALLER[Upload caller] --> FACADE[backend_flightcontroller.py]
+    WINDOW[Firmware upload window] --> UPLOAD[backend_firmware_upload.py]
+    UPLOAD --> CATALOG[Official firmware manifest]
+    UPLOAD --> FACADE[backend_flightcontroller.py]
     FACADE --> MAV[MAVLink connection]
     FACADE --> BOOT[backend_flightcontroller_bootloader.py]
     BOOT --> MODEL[data_model_firmware_upload.py]
@@ -23,29 +28,64 @@ flowchart TD
 - `data_model_firmware_upload.py` contains APJ parsing, image normalization,
   compatibility rules, upload stages, and typed errors. It does not access files,
   serial ports, MAVLink, or Tkinter.
+- `frontend_tkinter_firmware_upload.py` provides the embedded and standalone
+  upload window. It presents the available releases, gathers confirmation and
+  displays upload progress without implementing catalog or flashing rules.
+  Standalone startup reuses the shared connection bootstrap. Embedded callers pass
+  their Tk parent and connected controller.
+  Callers may inject the upload service and worker launcher; production defaults
+  use `FirmwareUploadService` and daemon threads. Deferred launchers let tests run
+  catalog and upload tasks explicitly without threads or network access.
+  Queue polling only drains events and reschedules itself. Single-event dispatch,
+  final confirmation, and upload-result presentation are separate handlers, so
+  presentation tests do not depend on timers. Confirmation always releases its
+  waiting worker, including when the dialog fails.
+  Board identity and connection controls share a rendering helper that only uses
+  loaded board information. Catalog refresh remains an explicit operation;
+  finishing an upload preserves its result status and never downloads a catalog.
+  A missing or changed board ID clears stale selections before rendering.
+  The project opener obtains that shared controller through `VehicleProjectManager`
+  and waits for the modal child without destroying or hiding its own window.
+  On Windows the owner is also disabled until the child closes. The upload window
+  has 30% more height on Windows, before DPI scaling.
+  A successful or failed upload, or removal of a previously detected board while idle,
+  sets a sticky restart-required flag; reconnecting or a later safe cancellation cannot
+  clear it. Worker errors retain their exception type until rendered on the Tk thread.
+  Safe cancellation before erase does not set this flag on its own.
+  When the child closes with restart required, the project opener disconnects the
+  controller, destroys its window, and exits AMC. The user restarts AMC to load the
+  current firmware state. No post-upload parameter/default download, project refresh,
+  or persistence is performed. Closing without an upload attempt or after safe
+  cancellation returns to project selection when no restart requirement was recorded.
+  Closing during an upload is refused.
+- `backend_firmware_upload.py` loads the official manifest, filters APJ releases
+  by board ID, downloads and validates the selected image, then invokes the upload
+  facade. Its progress and confirmation callbacks keep the service independent of Tk.
+  It checks serial-port presence without reading MAVLink traffic and disconnects a
+  retained connection when its USB port disappears. The frontend schedules this check
+  once per second, invalidates pending catalog results on disconnect, and enables
+  **Connect**. Monitoring is suspended while connecting or uploading so bootloader
+  re-enumeration is not mistaken for an unexpected disconnect.
+- `data_model_firmware_catalog.py` validates manifest descriptors and accepts only
+  HTTPS APJ URLs on the official firmware host for the connected board ID.
+  Pure selection helpers supply firmware types, targets, version labels, preferred
+  choices, and exact release resolution. The frontend renders these choices and
+  resets version selection after a type or target change.
 
 The connection manager remains the source of truth for MAVLink state. The bootloader
 adapter may close and recreate that connection, but does not keep a second long-lived
 connection state.
 
-## Upload workflow and safety rules
+## Upload invariants
 
-1. Require a directly addressable serial connection, a valid connected board ID,
-   stable USB identity, explicit confirmation, and a trusted SHA-256 for the exact
-   APJ descriptor.
-2. Parse and validate the APJ input before rebooting the controller. APJ is the only
-   supported input format; raw BIN images are rejected.
-3. Enter bootloader mode through MAVLink, release the MAVLink connection, and
-   rediscover the bootloader serial port after re-enumeration.
-4. Identify the bootloader and validate protocol revision, board ID, flash capacity,
-   and image compatibility.
-5. After final confirmation, erase, program, and verify the internal and optional
-   external image regions, then reboot.
-6. Reconnect through the normal connection manager and require the returned board
-   identity before reporting success.
+The user-facing workflows for
+[official releases](USERMANUAL_firmware_upload.md#installing-an-official-release) and
+[local APJ files](USERMANUAL_firmware_upload.md#uploading-a-local-apj-file) share the
+following implementation constraints:
 
-The following invariants apply throughout the workflow:
-
+- The upload service binds the SHA-256 of the downloaded or local APJ descriptor
+  to the exact file passed to the upload facade.
+- APJ parsing and validation precede the MAVLink bootloader-entry command.
 - Never erase or program before APJ validation, board matching, capacity checks,
   trusted-digest verification, and final confirmation pass.
 - Reconnection is bound to the captured USB serial number and/or physical location.
@@ -53,21 +93,19 @@ The following invariants apply throughout the workflow:
   application and bootloader can expose different CDC interfaces; interface suffixes
   such as Linux `1-2.3:1.2` are ignored for physical matching. Ambiguous matches fail
   closed.
-- Network MAVLink connections and force flashing are unsupported.
 - Cancellation is checked at safe boundaries and never interrupts a bootloader
   packet. Before erase, the held bootloader is rebooted only after an explicit
   successful reboot acknowledgement, except for protocol revision 2 which does
-  not send one; otherwise the error requires a power cycle.
+  not send one; otherwise bootloader recovery fails.
 - Bootloader discovery has a 15-second wall-clock budget. Serial response timeouts
   and retry delays are capped by the remaining budget, so a port that opens but
   does not answer cannot extend discovery indefinitely.
 - After erase begins, any erase, programming, verification, or reboot failure
-  reports that the flash may be incomplete and instructs the user to power-cycle
-  before reconnecting. The facade does not attempt a normal MAVLink reconnect
-  unless a safe bootloader abort has confirmed a reboot.
+  prevents a normal MAVLink reconnect unless a safe bootloader abort has confirmed
+  a reboot. User recovery instructions are documented in
+  [Troubleshooting](USERMANUAL_firmware_upload.md#troubleshooting).
 - Serial transports are closed on successful uploads and handled protocol/error
-  paths, and cleanup cannot mask the original upload failure. The source APJ is not
-  modified, and a failed verify or reconnect is never reported as success.
+  paths, and cleanup cannot mask the original upload failure.
 - Full-chip erase is refused because the client cannot yet determine target MCU
   capability safely; normal erase remains supported.
 
@@ -84,25 +122,27 @@ owns serial-open retries and their wall-clock budget. Discovery resolves the cap
 USB identity before each open, fails closed on zero or multiple matches, and shares
 injected clock and sleep functions with the client for bounded, testable timing.
 
-### `data_model_firmware_upload.py`
-
-The model provides `FirmwareImage`, `BootloaderInfo`, `UploadStage`, APJ parsing,
-image padding, CRC helpers, compatibility checks, and typed upload errors. Its
-functions are usable without serial or GUI dependencies.
-
 ### `backend_flightcontroller.py`
 
 `FlightController.upload_apj_firmware()` validates the active connection, trusted
 digest, and pre-reboot board identity; delegates bootloader entry and post-reboot
 reconnection to dedicated collaborators; and verifies the returned
-`AUTOPILOT_VERSION` board ID. A successful flash also invalidates cached parameters.
+`AUTOPILOT_VERSION` board ID.
+After cancellation before erase, a successful identity-bound reconnect and board-ID
+check restore the unchanged parameter cache in place, preserving shared references.
+Cancellation before bootloader entry leaves the existing connection and cache alone.
+Failed cancellation recovery is reported as an upload failure, requiring an AMC
+restart rather than returning to an invalid configuration session.
+`_recover_after_firmware_upload_abort()` isolates that recovery boundary, accepting
+the identity-bound reconnect callback and the pre-upload board ID and parameter
+snapshot. It refuses reconnection without bootloader entry and a confirmed safe
+reboot, and never restores parameters for a non-cancellation failure.
 
 ## Domain and error model
 
-`data_model_firmware_upload.py` provides the immutable image and bootloader data
-objects, APJ validation, compatibility checks, upload-stage state machine, CRC
-helpers, and typed errors. Compatibility comes from APJ metadata and bootloader
-identification, never from a filename.
+`data_model_firmware_upload.py` provides the immutable `FirmwareImage` and
+`BootloaderInfo` objects, the `UploadStage` state machine, image padding, CRC helpers,
+and typed errors. Its functions are usable without serial or GUI dependencies.
 
 Errors identify the failed stage and are translated by the caller into user-facing
 messages. They cover invalid APJ, digest or identity mismatch, unsupported protocol,

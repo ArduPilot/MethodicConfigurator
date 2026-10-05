@@ -18,6 +18,7 @@ import sys
 import zlib
 from collections.abc import Callable
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 import serial
@@ -252,6 +253,251 @@ def test_encoder_emits_the_bootloader_wire_format(encode: Callable[[], bytes], e
     THEN: Its bytes match the independent bootloader wire specification
     """
     assert encode() == expected
+
+
+def test_bootloader_helpers_preserve_recovery_guidance_and_ignore_display_failures() -> None:
+    """
+    Recovery formatting handles OS and ordinary exceptions without breaking progress reporting.
+
+    GIVEN: OS and ordinary exceptions plus a callback that raises during progress reporting.
+    WHEN: Recovery text is appended and progress is reported.
+    THEN: Guidance is preserved and callback failures do not escape.
+    """
+    os_error = OSError(5, "input/output error")
+    bl._append_recovery_message(os_error, "power-cycle the board")
+    assert "power-cycle the board" in str(os_error)
+
+    ordinary_error = RuntimeError()
+    bl._append_recovery_message(ordinary_error, "retry the connection")
+    assert ordinary_error.args == ("retry the connection",)
+
+    failing_callback = MagicMock(side_effect=RuntimeError("window was closed"))
+    bl.report_progress_safely(failing_callback, fw.UploadStage.PROGRAMMING, 1, 2)
+    failing_callback.assert_called_once_with(fw.UploadStage.PROGRAMMING, 1, 2)
+    bl.report_progress_safely(None, fw.UploadStage.PROGRAMMING, 1, 2)
+
+
+@pytest.mark.parametrize(
+    ("reply", "message"),
+    [
+        (b"\x12", "short reply"),
+        (b"??", "expected INSYNC"),
+        (bl.INSYNC + bl.FAILED, "OPERATION FAILED"),
+        (bl.INSYNC + b"x", "unexpected status"),
+    ],
+)
+def test_sync_decoder_rejects_malformed_replies(reply: bytes, message: str) -> None:
+    """
+    Malformed bootloader synchronization replies fail with a protocol error.
+
+    GIVEN: A reply that is short, has the wrong INSYNC byte, or reports failure.
+    WHEN: The reply is decoded.
+    THEN: A protocol error explains why the reply is invalid.
+    """
+    with pytest.raises(bl.BootloaderProtocolError, match=message):
+        bl.decode_sync(reply)
+
+
+@pytest.mark.parametrize(
+    ("chunk", "message"),
+    [
+        (b"", "PROG_MULTI chunk"),
+        (b"123", "PROG_MULTI chunk"),
+        (b"x" * (bl.PROG_MULTI_MAX + 4), "PROG_MULTI chunk"),
+    ],
+)
+def test_program_multi_encoder_rejects_invalid_chunk_sizes(chunk: bytes, message: str) -> None:
+    """
+    Program commands reject image chunks outside the supported sizes.
+
+    GIVEN: An empty, misaligned, or oversized image chunk.
+    WHEN: A PROG_MULTI command is encoded.
+    THEN: The encoder raises a size validation error.
+    """
+    with pytest.raises(ValueError, match=message):
+        bl.encode_prog_multi(chunk)
+
+
+@pytest.mark.parametrize("length", [0, bl.READ_MULTI_MAX + 1])
+def test_read_multi_encoder_rejects_invalid_lengths(length: int) -> None:
+    """
+    Read commands reject lengths outside the supported range.
+
+    GIVEN: A zero or greater-than-maximum read length.
+    WHEN: A READ_MULTI command is encoded.
+    THEN: The encoder raises a size validation error.
+    """
+    with pytest.raises(ValueError, match="READ_MULTI length"):
+        bl.encode_read_multi(length)
+
+
+def test_uint32_decoder_rejects_incomplete_words() -> None:
+    """
+    A 32-bit response must contain a complete word.
+
+    GIVEN: A response containing fewer than four bytes.
+    WHEN: It is decoded as a 32-bit integer.
+    THEN: The decoder raises a protocol error.
+    """
+    with pytest.raises(bl.BootloaderProtocolError, match="4 bytes"):
+        bl.decode_uint32(b"\x01")
+
+
+def test_external_flash_erase_encoder_rejects_invalid_size() -> None:
+    """
+    External flash erase commands require a valid size.
+
+    GIVEN: An external flash erase request with a zero size.
+    WHEN: The command is encoded.
+    THEN: The encoder raises a value error.
+    """
+    with pytest.raises(ValueError, match="external flash size"):
+        bl.encode_extf_erase(0)
+
+
+def test_serial_identity_capture_and_resolution_require_a_unique_device(monkeypatch: pytest.MonkeyPatch) -> None:
+    """
+    A serial identity can be captured, but unavailable or ambiguous matches fail closed.
+
+    GIVEN: A serial port with stable USB attributes and then an absent port.
+    WHEN: Identity is captured and a bootloader port is resolved.
+    THEN: Stable metadata is returned and a missing match raises OSError.
+    """
+    port = MagicMock()
+    port.device = "COM7"
+    port.location = "1-2.3:1.0"
+    port.serial_number = "ABC123"
+    port.interface = "0"
+    monkeypatch.setattr(bl.serial.tools.list_ports, "comports", lambda: [port])
+
+    identity = bl.capture_serial_device_identity("COM7")
+    assert identity == bl.SerialDeviceIdentity("1-2.3:1.0", "ABC123", "0")
+    assert bl.has_stable_bootloader_device_identity("COM7", identity)
+    assert bl._physical_usb_location("1-2.3:1.0") == "1-2.3"
+
+    monkeypatch.setattr(bl.serial.tools.list_ports, "comports", list)
+    assert bl.capture_serial_device_identity("not-present") is None
+    with pytest.raises(OSError, match="cannot uniquely locate"):
+        bl.resolve_bootloader_device("COM7", bl.SerialDeviceIdentity())
+
+
+def test_restore_transport_timeout_ignores_read_only_transport_properties() -> None:
+    """
+    A third-party transport with read-only timeout properties remains usable.
+
+    GIVEN: A transport whose timeout properties reject assignments.
+    WHEN: The normal timeout values are restored.
+    THEN: The helper tolerates the unsupported properties.
+    """
+
+    class ReadOnlyTimeoutTransport:
+        """Transport whose timeout attributes reject updates."""
+
+        @property
+        def timeout(self) -> float:
+            return 0.0
+
+        @timeout.setter
+        def timeout(self, _value: float) -> None:
+            message = "read-only timeout"
+            raise OSError(message)
+
+        @property
+        def write_timeout(self) -> float:
+            return 0.0
+
+        @write_timeout.setter
+        def write_timeout(self, _value: float) -> None:
+            message = "read-only write timeout"
+            raise ValueError(message)
+
+    bl._restore_transport_timeout(ReadOnlyTimeoutTransport(), 2.0)
+
+
+def test_apj_reader_rejects_oversized_and_unreadable_descriptors(tmp_path: Path) -> None:
+    """
+    APJ loading bounds descriptor reads and turns filesystem errors into typed failures.
+
+    GIVEN: Oversized metadata, an unreadable file, or an oversized read result.
+    WHEN: The APJ reader loads each descriptor.
+    THEN: It raises FirmwareFileError without parsing unbounded input.
+    """
+    oversized = MagicMock()
+    oversized.suffix = ".apj"
+    oversized.stat.return_value.st_size = bl.MAX_APJ_DESCRIPTOR_SIZE + 1
+    with pytest.raises(fw.FirmwareFileError, match="exceeds"):
+        bl.load_apj(oversized)
+
+    missing = tmp_path / "missing.apj"
+    with pytest.raises(fw.FirmwareFileError, match="cannot read"):
+        bl.load_apj(missing)
+
+    oversized.stat.return_value.st_size = 0
+    oversized.open.return_value.__enter__.return_value.read.return_value = b"12345"
+    with patch.object(bl, "MAX_APJ_DESCRIPTOR_SIZE", 4), pytest.raises(fw.FirmwareFileError, match="exceeds"):
+        bl.load_apj(oversized)
+
+
+def test_backend_requires_confirmation_and_valid_retry_count() -> None:
+    """
+    The serial adapter refuses an unconfirmed write or a zero-attempt retry policy.
+
+    GIVEN: An upload without a confirmation callback and a backend with no open attempts.
+    WHEN: The upload or discovery policy is validated.
+    THEN: The backend raises the appropriate typed or value error.
+    """
+    image = fw.parse_apj(apj(b"abcd"))
+    backend = bl.FlightControllerBootloaderBackend("COM7", 115200, serial_factory=MagicMock())
+    with pytest.raises(fw.FirmwareConfirmationError, match="explicit confirmation"):
+        backend.upload(image)
+
+    no_retries = bl.FlightControllerBootloaderBackend("COM7", 115200, open_retries=0)
+    with pytest.raises(ValueError, match="retries must be at least one"):
+        no_retries._wait_for_bootloader()
+
+
+def test_real_serial_transport_uses_bounded_read_and_write_timeouts() -> None:
+    """
+    The hardware transport applies the same finite timeout to reads and writes.
+
+    GIVEN: A serial device, baudrate, and finite transport timeout.
+    WHEN: The transport factory opens the device.
+    THEN: Both read and write timeouts use the supplied bound.
+    """
+    transport = MagicMock()
+    with patch.object(bl.serial, "Serial", return_value=transport) as serial_open:
+        assert bl.open_serial_transport("COM7", 115200, 1.5) is transport
+    serial_open.assert_called_once_with("COM7", 115200, timeout=1.5, write_timeout=1.5, exclusive=True)
+
+
+def test_revision_two_readback_mismatch_and_post_confirmation_cancellation_stop_the_upload() -> None:
+    """
+    A failed readback or cancellation before erase prevents the flash from proceeding.
+
+    GIVEN: A mismatched readback and a user cancellation after confirmation.
+    WHEN: The revision two verifier or upload client handles those events.
+    THEN: The upload fails before programming and the transport is closed safely.
+    """
+    image = fw.parse_apj(apj(b"expected"))
+    readback_client = bl.BootloaderClient(FakeBootloaderTransport())
+    with (
+        patch.object(readback_client, "_command", return_value=b"mismatch"),
+        pytest.raises(bl.BootloaderProtocolError, match="read-back verification failed"),
+    ):
+        readback_client._verify_v2(image)
+
+    transport = FakeBootloaderTransport(revision=2)
+    client = bl.BootloaderClient(transport)
+    cancellation_states = iter((False, True))
+    with pytest.raises(fw.FirmwareUploadCancelledError, match="cancelled before erase"):
+        client.upload(
+            image,
+            bootloader=fw.BootloaderInfo(2, 9, 0, 2048),
+            cancellation_requested=lambda: next(cancellation_states),
+            confirmation_requested=lambda *_args: True,
+        )
+    assert transport.closed
+    assert not transport.flash
 
 
 def test_v2_verification_uses_the_read_chunk_limit(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -622,7 +868,7 @@ def test_upload_reports_each_external_and_internal_region_in_order() -> None:
 
     GIVEN: An APJ contains both external and internal firmware regions
     WHEN: The bootloader uploads and verifies the APJ
-    THEN: Progress reports each region in protocol order without merging stages
+    THEN: Measured erase progress and completed regions accumulate across both regions
     """
     events: list[tuple[bl.UploadStage, int, int]] = []
     transport = FakeBootloaderTransport()
@@ -638,19 +884,42 @@ def test_upload_reports_each_external_and_internal_region_in_order() -> None:
         (fw.UploadStage.IDENTIFYING, 1, 1),
         (fw.UploadStage.AWAITING_CONFIRMATION, 0, 1),
         (fw.UploadStage.AWAITING_CONFIRMATION, 1, 1),
-        (fw.UploadStage.ERASING, 0, 1),
-        (fw.UploadStage.ERASING, 1, 1),
-        (fw.UploadStage.PROGRAMMING, 1, 1),
-        (fw.UploadStage.VERIFYING, 0, 1),
-        (fw.UploadStage.VERIFYING, 1, 1),
-        (fw.UploadStage.ERASING, 0, 1),
-        (fw.UploadStage.ERASING, 1, 1),
-        (fw.UploadStage.PROGRAMMING, 1, 1),
-        (fw.UploadStage.VERIFYING, 0, 1),
-        (fw.UploadStage.VERIFYING, 1, 1),
+        *[
+            (fw.UploadStage.ERASING, completed, 101)
+            for completed in (0, 6, 12, 18, 25, 31, 37, 43, 50, 56, 62, 68, 75, 81, 87, 93, 99, 100)
+        ],
+        (fw.UploadStage.PROGRAMMING, 0, 2),
+        (fw.UploadStage.PROGRAMMING, 1, 2),
+        (fw.UploadStage.VERIFYING, 0, 0),
+        (fw.UploadStage.VERIFYING, 1, 2),
+        (fw.UploadStage.ERASING, 100, 0),
+        (fw.UploadStage.ERASING, 101, 101),
+        (fw.UploadStage.PROGRAMMING, 1, 2),
+        (fw.UploadStage.PROGRAMMING, 2, 2),
+        (fw.UploadStage.VERIFYING, 1, 0),
+        (fw.UploadStage.VERIFYING, 2, 2),
         (fw.UploadStage.REBOOTING, 0, 1),
         (fw.UploadStage.REBOOTING, 1, 1),
     ]
+    assert transport.flash == b"abcd"
+    assert transport.extf == b"ext\xff"
+    assert transport.rebooted
+    assert transport.closed
+
+
+def test_revision_two_verification_reports_each_checked_readback_chunk() -> None:
+    """Verified READ_MULTI replies move the verify bar only after bytes match."""
+    events: list[tuple[bl.UploadStage, int, int]] = []
+    image = fw.parse_apj(apj(bytes(range(256)) * 2))
+
+    bl.BootloaderClient(FakeBootloaderTransport(revision=2)).upload(
+        image,
+        confirmation_requested=lambda *_args: True,
+        progress_callback=lambda stage, done, total: events.append((stage, done, total)),
+    )
+
+    verify = [(done, total) for stage, done, total in events if stage == fw.UploadStage.VERIFYING]
+    assert verify == [(0, 3), (1, 3), (2, 3), (3, 3), (3, 3)]
 
 
 def test_upload_survives_progress_callback_failures() -> None:
@@ -1280,9 +1549,11 @@ class _Connection:
 class _Params:
     def __init__(self) -> None:
         self.cleared = 0
+        self.fc_parameters: dict[str, float] = {}
 
     def clear_parameters(self) -> None:
         self.cleared += 1
+        self.fc_parameters.clear()
 
 
 class _Commands:
@@ -2137,10 +2408,11 @@ def test_upload_reports_protocol_stages_and_confirmation_boundary() -> None:
         (fw.UploadStage.IDENTIFYING, 1, 1),
         (fw.UploadStage.AWAITING_CONFIRMATION, 0, 1),
         (fw.UploadStage.AWAITING_CONFIRMATION, 1, 1),
-        (fw.UploadStage.ERASING, 0, 1),
+        (fw.UploadStage.ERASING, 0, 0),
         (fw.UploadStage.ERASING, 1, 1),
+        (fw.UploadStage.PROGRAMMING, 0, 1),
         (fw.UploadStage.PROGRAMMING, 1, 1),
-        (fw.UploadStage.VERIFYING, 0, 1),
+        (fw.UploadStage.VERIFYING, 0, 0),
         (fw.UploadStage.VERIFYING, 1, 1),
         (fw.UploadStage.REBOOTING, 0, 1),
         (fw.UploadStage.REBOOTING, 1, 1),
@@ -2195,11 +2467,21 @@ def test_facade_requires_explicit_confirmation(tmp_path: Path) -> None:
 
 
 def test_facade_recovers_connection_after_declined_confirmation(tmp_path: Path) -> None:
+    """
+    Safe cancellation preserves the existing configuration session.
+
+    GIVEN: A connected controller with cached parameters shared by AMC.
+    WHEN: The user declines final confirmation and the controller safely reconnects.
+    THEN: No flash is written and the original parameter dictionary is restored in place.
+    """
     connection = _Connection()
     transport = FakeBootloaderTransport()
+    params = _Params()
+    params.fc_parameters = {"ROLL_P": 0.2}
+    shared_parameters = params.fc_parameters
     controller = FlightController(
         connection_manager=connection,  # type: ignore[arg-type]
-        params_manager=_Params(),  # type: ignore[arg-type]
+        params_manager=params,  # type: ignore[arg-type]
         commands_manager=_Commands(),  # type: ignore[arg-type]
         files_manager=object(),  # type: ignore[arg-type]
     )
@@ -2216,6 +2498,262 @@ def test_facade_recovers_connection_after_declined_confirmation(tmp_path: Path) 
 
     assert transport.rebooted
     assert connection.reconnected
+    assert transport.flash == b""
+    assert controller.fc_parameters is shared_parameters
+    assert shared_parameters == {"ROLL_P": 0.2}
+
+
+@pytest.fixture(name="recovery_controller")
+def recovery_controller_fixture() -> FlightController:
+    """Construct the recovery boundary around in-memory connection and parameter managers."""
+    return FlightController(
+        connection_manager=_Connection(),  # type: ignore[arg-type]
+        params_manager=_Params(),  # type: ignore[arg-type]
+        commands_manager=_Commands(),  # type: ignore[arg-type]
+        files_manager=object(),  # type: ignore[arg-type]
+    )
+
+
+@pytest.mark.parametrize(
+    ("entered", "rebooted", "recovery_failed"),
+    [(False, True, False), (True, False, False), (True, True, True)],
+)
+def test_abort_recovery_requires_bootloader_entry_and_confirmed_safe_reboot(
+    recovery_controller: FlightController, entered: bool, rebooted: bool, recovery_failed: bool
+) -> None:
+    """
+    Recovery cannot reconnect an unentered or unsafe bootloader.
+
+    GIVEN: Missing bootloader entry, an unconfirmed reboot, or a bootloader recovery failure.
+    WHEN: Recovery is requested directly without flashing.
+    THEN: No reconnect is attempted and no cached parameters are restored.
+    """
+    error = (
+        fw.FirmwareBootloaderRecoveryError("unsafe reboot")
+        if recovery_failed
+        else fw.FirmwareUploadCancelledError("cancelled")
+    )
+    error.bootloader_rebooted = rebooted  # type: ignore[attr-defined]
+    reconnect = MagicMock(return_value="")
+    if not entered:
+        recovery_controller.fc_parameters.update({"ROLL_P": 0.1})
+    unchanged_parameters = recovery_controller.fc_parameters.copy()
+
+    recovery_controller._recover_after_firmware_upload_abort(
+        error,
+        bootloader_entered=entered,
+        reconnect=reconnect,
+        connected_board_id=9,
+        previous_parameters={"ROLL_P": 0.2},
+    )
+
+    reconnect.assert_not_called()
+    assert recovery_controller.fc_parameters == unchanged_parameters
+
+
+def test_safe_cancel_recovery_restores_the_shared_parameter_cache_without_flashing(
+    recovery_controller: FlightController,
+) -> None:
+    """
+    Safe cancellation recovery is independently testable without APJ or serial I/O.
+
+    GIVEN: An unchanged controller after an acknowledged safe reboot.
+    WHEN: Identity-bound reconnection succeeds after cancellation.
+    THEN: The original parameters are restored in the existing shared dictionary.
+    """
+    error = fw.FirmwareUploadCancelledError("cancelled")
+    error.bootloader_rebooted = True  # type: ignore[attr-defined]
+    shared_parameters = recovery_controller.fc_parameters
+    previous_parameters = {"ROLL_P": 0.2}
+    reconnect = MagicMock(return_value="")
+
+    recovery_controller._recover_after_firmware_upload_abort(
+        error,
+        bootloader_entered=True,
+        reconnect=reconnect,
+        connected_board_id=9,
+        previous_parameters=previous_parameters,
+    )
+
+    reconnect.assert_called_once_with()
+    assert recovery_controller.fc_parameters is shared_parameters
+    assert shared_parameters == previous_parameters
+    assert previous_parameters == {"ROLL_P": 0.2}
+
+
+@pytest.mark.parametrize(("reconnect_error", "board_id"), [("no USB", "9"), ("", "42"), ("", "")])
+def test_cancel_recovery_reports_failure_without_reusing_parameters(
+    recovery_controller: FlightController, reconnect_error: str, board_id: str
+) -> None:
+    """
+    Failed reconnection or missing/mismatched identity prevents cache restoration.
+
+    GIVEN: An acknowledged safe abort followed by reconnect failure or an invalid board ID.
+    WHEN: Cancellation recovery runs directly.
+    THEN: A typed failure retains the cancellation cause and the cache remains empty.
+    """
+    error = fw.FirmwareUploadCancelledError("cancelled")
+    error.bootloader_rebooted = True  # type: ignore[attr-defined]
+    recovery_controller.info.apj_board_id = board_id
+    reconnect = MagicMock(return_value=reconnect_error)
+    failure_type = fw.FirmwareConnectionError if reconnect_error else fw.FirmwareIdentityError
+
+    with pytest.raises(failure_type, match="Restart AMC") as failure:
+        recovery_controller._recover_after_firmware_upload_abort(
+            error,
+            bootloader_entered=True,
+            reconnect=reconnect,
+            connected_board_id=9,
+            previous_parameters={"ROLL_P": 0.2},
+        )
+
+    reconnect.assert_called_once_with()
+    assert failure.value.__cause__ is error
+    assert not recovery_controller.fc_parameters
+
+
+@pytest.mark.parametrize("reconnect_error", ["", "no USB"])
+def test_non_cancellation_abort_reconnects_safely_without_restoring_cached_parameters(
+    recovery_controller: FlightController, reconnect_error: str
+) -> None:
+    """
+    Recovery after a rejected upload never treats the application state as reusable.
+
+    GIVEN: A non-cancellation error following an acknowledged safe bootloader reboot.
+    WHEN: Recovery attempts reconnection.
+    THEN: The cache remains empty and the caller can re-raise the original upload failure.
+    """
+    error = fw.FirmwareCompatibilityError("wrong image")
+    error.bootloader_rebooted = True  # type: ignore[attr-defined]
+    reconnect = MagicMock(return_value=reconnect_error)
+
+    recovery_controller._recover_after_firmware_upload_abort(
+        error,
+        bootloader_entered=True,
+        reconnect=reconnect,
+        connected_board_id=9,
+        previous_parameters={"ROLL_P": 0.2},
+    )
+
+    reconnect.assert_called_once_with()
+    assert not recovery_controller.fc_parameters
+    assert str(error) == "wrong image"
+
+
+def test_cancelling_before_bootloader_entry_preserves_connection_and_parameters(tmp_path: Path) -> None:
+    """
+    Immediate cancellation makes no changes to the controller session.
+
+    GIVEN: A connected controller and cached parameters.
+    WHEN: Cancellation is requested before bootloader entry.
+    THEN: The connection and parameter cache remain unchanged.
+    """
+    connection = _Connection()
+    params = _Params()
+    params.fc_parameters = {"ROLL_P": 0.2}
+    commands = _Commands()
+    controller = FlightController(
+        connection_manager=connection,  # type: ignore[arg-type]
+        params_manager=params,  # type: ignore[arg-type]
+        commands_manager=commands,  # type: ignore[arg-type]
+        files_manager=object(),  # type: ignore[arg-type]
+    )
+    path = tmp_path / "firmware.apj"
+    path.write_bytes(apj(b"abcd"))
+
+    with pytest.raises(fw.FirmwareUploadCancelledError, match="before entering"):
+        controller.upload_apj_firmware(
+            path,
+            expected_firmware_sha256=trusted_digest(b"abcd"),
+            cancellation_requested=lambda: True,
+            confirmation_requested=lambda *_args: True,
+        )
+
+    assert not connection.disconnected
+    assert not connection.reconnected
+    assert controller.fc_parameters == {"ROLL_P": 0.2}
+    assert not commands.calls
+
+
+def test_failed_cancellation_reconnect_is_a_failure_without_restoring_parameters(tmp_path: Path) -> None:
+    """
+    Failed recovery cannot be treated as a safe return to AMC.
+
+    GIVEN: An upload cancelled before erase and an unsuccessful controller reconnect.
+    WHEN: The cancellation recovery finishes.
+    THEN: A failure requests restart and the invalid parameter cache stays empty.
+    """
+    connection = _Connection()
+    params = _Params()
+    params.fc_parameters = {"ROLL_P": 0.2}
+    controller = FlightController(
+        connection_manager=connection,  # type: ignore[arg-type]
+        params_manager=params,  # type: ignore[arg-type]
+        commands_manager=_Commands(),  # type: ignore[arg-type]
+        files_manager=object(),  # type: ignore[arg-type]
+    )
+    path = tmp_path / "firmware.apj"
+    path.write_bytes(apj(b"abcd"))
+    transport = FakeBootloaderTransport()
+    with (
+        patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller._BootloaderReconnector.__call__", return_value="no USB"
+        ),
+        pytest.raises(fw.FirmwareConnectionError, match="Restart AMC") as error,
+    ):
+        controller.upload_apj_firmware(
+            path,
+            expected_firmware_sha256=trusted_digest(b"abcd"),
+            serial_factory=lambda *_args: transport,
+            confirmation_requested=lambda *_args: False,
+        )
+
+    assert isinstance(error.value.__cause__, fw.FirmwareUploadCancelledError)
+    assert not controller.fc_parameters
+    assert transport.rebooted
+    assert transport.flash == b""
+
+
+def test_cancellation_does_not_restore_parameters_for_a_different_reconnected_board(tmp_path: Path) -> None:
+    """
+    Cached parameters must never be transferred to another controller.
+
+    GIVEN: An upload cancelled before erase.
+    WHEN: The reconnected controller reports a different board ID.
+    THEN: AMC reports an identity failure and leaves cached parameters empty.
+    """
+    connection = _Connection()
+    params = _Params()
+    params.fc_parameters = {"ROLL_P": 0.2}
+    controller = FlightController(
+        connection_manager=connection,  # type: ignore[arg-type]
+        params_manager=params,  # type: ignore[arg-type]
+        commands_manager=_Commands(),  # type: ignore[arg-type]
+        files_manager=object(),  # type: ignore[arg-type]
+    )
+    path = tmp_path / "firmware.apj"
+    path.write_bytes(apj(b"abcd"))
+    transport = FakeBootloaderTransport()
+
+    def reconnect() -> str:
+        connection.info.apj_board_id = "42"
+        return ""
+
+    with (
+        patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller._BootloaderReconnector.__call__", side_effect=reconnect
+        ),
+        pytest.raises(fw.FirmwareIdentityError, match="Restart AMC"),
+    ):
+        controller.upload_apj_firmware(
+            path,
+            expected_firmware_sha256=trusted_digest(b"abcd"),
+            serial_factory=lambda *_args: transport,
+            confirmation_requested=lambda *_args: False,
+        )
+
+    assert not controller.fc_parameters
+    assert transport.flash == b""
 
 
 def test_facade_refuses_a_different_bootloader_and_recovers(tmp_path: Path) -> None:

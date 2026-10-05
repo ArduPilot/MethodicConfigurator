@@ -14,8 +14,9 @@ import argparse
 import importlib.util
 import sys
 from pathlib import Path
+from queue import SimpleQueue
 from types import ModuleType, SimpleNamespace
-from unittest.mock import ANY, MagicMock, patch
+from unittest.mock import ANY, MagicMock, call, patch
 
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_MOTOR_TEST
 
@@ -36,6 +37,81 @@ def _load_screenshot_generator() -> ModuleType:
 
 
 screenshot_generator = _load_screenshot_generator()
+
+
+def test_firmware_screenshot_capture_uses_sample_catalog_and_optional_progress(tmp_path) -> None:
+    """
+    Firmware screenshots use sample events without hardware, downloads, or a real display.
+
+    GIVEN: A mocked firmware window and screenshot capture dependencies.
+    WHEN: Normal and progress screenshots are prepared.
+    THEN: Catalog and optional progress events are queued and the window is closed.
+    """
+    window = MagicMock()
+    window.events = SimpleQueue()
+    window.catalog_request_id = 4
+    window.root.winfo_width.return_value = 750
+    window.root.winfo_reqheight.return_value = 500
+
+    with (
+        patch.object(screenshot_generator, "FirmwareUploadWindow", return_value=window),
+        patch.object(screenshot_generator, "settle_tk"),
+        patch.object(screenshot_generator, "capture_widget") as capture,
+        patch.object(screenshot_generator.pyautogui, "moveTo") as move_mouse,
+    ):
+        screenshot_generator._capture_firmware_upload(tmp_path / "firmware.png", 0, 0, show_progress=False)
+        catalog_event = window.events.get_nowait()
+
+        screenshot_generator._capture_firmware_upload(tmp_path / "firmware-progress.png", 0, 0, show_progress=True)
+        progress_events = [window.events.get_nowait() for _ in range(3)]
+
+    assert catalog_event[0:2] == ("catalog", 4)
+    assert len(catalog_event[2]) == 1
+    assert catalog_event[2][0].label == "4.6.0 (OFFICIAL, stable) — CubeBlack / arducopter.apj"
+    assert [event[0] for event in progress_events] == ["catalog", "progress", "progress"]
+    assert progress_events[1][1:] == (screenshot_generator.UploadStage.ERASING, 1, 1)
+    assert progress_events[2][1:] == (screenshot_generator.UploadStage.PROGRAMMING, 65, 100)
+    assert window.close.call_count == 2
+    assert [call.args[1] for call in capture.call_args_list] == [
+        tmp_path / "firmware.png",
+        tmp_path / "firmware-progress.png",
+    ]
+    assert capture.call_count == 2
+    assert move_mouse.call_args_list == [call(20, 20), call(20, 20)]
+
+
+def test_capture_target_routes_both_firmware_screenshot_actions(tmp_path) -> None:
+    """
+    Both firmware screenshot targets use the firmware-specific capture routine.
+
+    GIVEN: Normal and progress firmware screenshot targets.
+    WHEN: The screenshot dispatcher handles both targets.
+    THEN: The firmware capture receives the matching progress setting.
+    """
+    args = argparse.Namespace(delay=0.0, padding=0, vehicle_dir=tmp_path)
+
+    with patch.object(screenshot_generator, "_capture_firmware_upload") as capture:
+        screenshot_generator.capture_target(
+            screenshot_generator.CaptureTarget("firmware.png", "firmware_upload"), tmp_path / "firmware.png", args
+        )
+        screenshot_generator.capture_target(
+            screenshot_generator.CaptureTarget("progress.png", "firmware_upload_progress"), tmp_path / "progress.png", args
+        )
+
+    assert capture.call_args_list == [
+        call(
+            tmp_path / "firmware.png",
+            0.0,
+            0,
+            show_progress=False,
+        ),
+        call(
+            tmp_path / "progress.png",
+            0.0,
+            0,
+            show_progress=True,
+        ),
+    ]
 
 
 def test_cleanup_plugin_view_ignores_non_callable_optional_hook() -> None:

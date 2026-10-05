@@ -23,6 +23,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_connection_selection impor
     ConnectionSelectionWidgets,
     ConnectionSelectionWindow,
 )
+from ardupilot_methodic_configurator.frontend_tkinter_firmware_upload import FirmwareUploadWindow, _FirmwareConnectionSelector
 
 # pylint: disable=too-many-lines, protected-access, redefined-outer-name
 
@@ -439,6 +440,64 @@ class TestConnectionSelectionWidgets:
 
 class TestConnectionSelectionWindow:
     """ConnectionSelectionWindow test class."""
+
+    def test_firmware_window_opens_selector_under_its_root(self) -> None:
+        """The connection button reuses the firmware window's Tk interpreter."""
+        firmware_window = FirmwareUploadWindow.__new__(FirmwareUploadWindow)
+        firmware_window.root = MagicMock()
+        firmware_window.flight_controller = MagicMock()
+        firmware_window.connect_button = MagicMock()
+        firmware_window.uploading = False
+        firmware_window.connecting = False
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_firmware_upload._FirmwareConnectionSelector"
+            ) as selector_class,
+            patch.object(FirmwareUploadWindow, "_refresh_board") as refresh_board,
+        ):
+            firmware_window.connect()
+
+        selector_class.assert_called_once_with(
+            firmware_window.root,
+            firmware_window.flight_controller,
+        )
+        firmware_window.root.wait_window.assert_called_once_with(selector_class.return_value.root)
+        refresh_board.assert_called_once()
+
+    def test_embedded_close_keeps_firmware_window_and_connection(self, mock_fc: MagicMock) -> None:
+        """Dismissing the child selector leaves the firmware window running."""
+        window = _FirmwareConnectionSelector.__new__(_FirmwareConnectionSelector)
+        window.root = MagicMock()
+        window.connection_selection_widgets = MagicMock()
+        window.connection_selection_widgets.flight_controller = mock_fc
+        window.close()
+
+        window.connection_selection_widgets.stop_periodic_refresh.assert_called_once()
+        window.root.destroy.assert_called_once()
+        mock_fc.disconnect.assert_not_called()
+
+    def test_embedded_selector_uses_parent_tk_and_returns_on_close(self, mock_fc: MagicMock) -> None:
+        """A firmware window can open and dismiss the selector without losing its Tk root."""
+        try:
+            parent = tk.Tk()
+        except tk.TclError:
+            pytest.skip("Tk display is unavailable")
+        parent.withdraw()
+        try:
+            with (
+                patch("ardupilot_methodic_configurator.frontend_tkinter_firmware_upload.ConnectionSelectionWidgets"),
+                patch("ardupilot_methodic_configurator.frontend_tkinter_firmware_upload.show_tooltip"),
+                patch(f"{_MOD}.sys_exit") as mock_exit,
+            ):
+                window = _FirmwareConnectionSelector(parent, mock_fc)
+                assert isinstance(window.root, tk.Toplevel)
+                assert window.root.tk is parent.tk
+                window.close()
+                assert parent.winfo_exists()
+                mock_fc.disconnect.assert_not_called()
+                mock_exit.assert_not_called()
+        finally:
+            parent.destroy()
 
     def test_window_has_connection_selection_widgets(
         self, connection_window: tuple[ConnectionSelectionWindow, MagicMock]

@@ -110,6 +110,203 @@ def _build_flight_controller_with_mocks(
     return fc, mock_conn_mgr, mock_params_mgr, mock_commands_mgr, mock_files_mgr, mock_master
 
 
+def test_flight_controller_forwards_connection_and_parameter_operations() -> None:
+    """
+    The facade forwards connection and parameter operations to their managers.
+
+    GIVEN: A facade with injected connection and parameter managers.
+    WHEN: Callers access facade properties and connection helper methods.
+    THEN: The corresponding managers expose the same values and receive the arguments.
+    """
+    fc, connection, parameters, commands, _files, _master = _build_flight_controller_with_mocks()
+    connection.reset_mock()
+    parameters.reset_mock()
+    connection.banner_text_buffer = "ArduPilot version banner"
+    connection._detect_vehicles_from_heartbeats.return_value = {"vehicle": "copter"}
+    connection._extract_firmware_type_from_banner.return_value = "ArduCopter"
+    connection._extract_chibios_version_from_banner.return_value = ("ChibiOS", "1.0")
+    connection._retrieve_autopilot_version_and_banner.return_value = "4.6.0"
+
+    assert fc.PARAM_FETCH_POLL_DELAY == parameters.PARAM_FETCH_POLL_DELAY
+    assert fc.BATTERY_STATUS_CACHE_TIME == commands.BATTERY_STATUS_CACHE_TIME
+    assert fc.BATTERY_STATUS_TIMEOUT == commands.BATTERY_STATUS_TIMEOUT
+    assert fc.COMMAND_ACK_TIMEOUT == commands.COMMAND_ACK_TIMEOUT
+    fc.fc_parameters = {"TEST": 1.0}
+    assert parameters.fc_parameters == {"TEST": 1.0}
+    assert fc.banner_text_buffer == "ArduPilot version banner"
+    assert fc.add_connection("COM4") == connection.add_connection.return_value
+    assert fc._detect_vehicles_from_heartbeats(2) == {"vehicle": "copter"}
+    assert fc._extract_firmware_type_from_banner(["banner"], None) == "ArduCopter"
+    assert fc._extract_chibios_version_from_banner(["banner"]) == ("ChibiOS", "1.0")
+    assert fc._retrieve_autopilot_version_and_banner(3) == "4.6.0"
+    assert connection.add_connection.call_args_list == [call("COM4")]
+    assert connection._detect_vehicles_from_heartbeats.call_args_list == [call(2)]
+    assert connection._extract_firmware_type_from_banner.call_args_list == [call(["banner"], None)]
+    assert connection._extract_chibios_version_from_banner.call_args_list == [call(["banner"])]
+    assert connection._retrieve_autopilot_version_and_banner.call_args_list == [call(3)]
+
+
+def test_flight_controller_forwards_command_manager_operations() -> None:
+    """
+    The facade forwards vehicle commands to the command manager.
+
+    GIVEN: A facade with an injected command manager.
+    WHEN: Callers use motor, calibration, sensor, battery, and compass methods.
+    THEN: Every manager method receives the facade call's arguments.
+    """
+    fc, _connection, _parameters, commands, _files, _master = _build_flight_controller_with_mocks()
+    commands.reset_mock()
+    expected_results = {
+        "test_motors_in_sequence": (True, "motor test"),
+        "start_accel_calibration_simple": (True, "simple calibration"),
+        "start_accel_calibration_level": (True, "level calibration"),
+        "poll_accel_calibration_level": (True, "calibration ready"),
+        "send_accel_calibration_full_start": (True, "full calibration"),
+        "poll_accel_cal_vehicle_pos": 3,
+        "confirm_accel_vehicle_pos": (True, "position confirmed"),
+        "poll_scaled_imu": (1.0, 2.0, 3.0),
+        "request_scaled_imu_messages": (True, "stream requested"),
+        "get_battery_status": ((12.0, 3.0), ""),
+        "get_voltage_thresholds": (10.5, 11.0),
+        "get_frame_info": (1, 2),
+        "start_compass_calibration": (True, "compass calibration"),
+        "cancel_compass_calibration": (True, "compass calibration cancelled"),
+        "get_compass_calibration_progress": [],
+    }
+    for method_name, result in expected_results.items():
+        getattr(commands, method_name).return_value = result
+
+    actual_results = [
+        fc.test_motors_in_sequence(1, 4, 20, 10),
+        fc.start_accel_calibration_simple(),
+        fc.start_accel_calibration_level(),
+        fc.poll_accel_calibration_level(),
+    ]
+    fc.abort_accel_calibration_level()
+    actual_results.extend(
+        [
+            fc.send_accel_calibration_full_start(),
+            fc.poll_accel_cal_vehicle_pos(),
+            fc.confirm_accel_vehicle_pos(3),
+            fc.poll_scaled_imu(),
+            fc.request_scaled_imu_messages(200_000),
+            fc.get_battery_status(),
+            fc.get_voltage_thresholds(),
+            fc.get_frame_info(),
+            fc.start_compass_calibration(),
+            fc.cancel_compass_calibration(),
+            fc.get_compass_calibration_progress(),
+        ]
+    )
+
+    assert actual_results == list(expected_results.values())
+
+    assert commands.mock_calls == [
+        call.test_motors_in_sequence(1, 4, 20, 10),
+        call.start_accel_calibration_simple(),
+        call.start_accel_calibration_level(),
+        call.poll_accel_calibration_level(),
+        call.abort_level_calibration(),
+        call.send_accel_calibration_full_start(),
+        call.poll_accel_cal_vehicle_pos(),
+        call.confirm_accel_vehicle_pos(3),
+        call.poll_scaled_imu(),
+        call.request_scaled_imu_messages(200_000),
+        call.get_battery_status(),
+        call.get_voltage_thresholds(),
+        call.get_frame_info(),
+        call.start_compass_calibration(),
+        call.cancel_compass_calibration(),
+        call.get_compass_calibration_progress(),
+    ]
+
+
+def test_flight_controller_forwards_file_manager_operations() -> None:
+    """
+    The facade forwards remote file operations to the file manager.
+
+    GIVEN: A facade with an injected file manager.
+    WHEN: Callers list, transfer, verify, create, delete, and rename remote paths.
+    THEN: Each operation reaches the file manager with the requested paths.
+    """
+    fc, _connection, _parameters, _commands, files, _master = _build_flight_controller_with_mocks()
+    files.reset_mock()
+    expected_results = [[], True, False, True, False, True]
+    files.list_remote_files.return_value = expected_results[0]
+    files.download_remote_file.return_value = expected_results[1]
+    files.verify_remote_file.return_value = expected_results[2]
+    files.make_remote_directory.return_value = expected_results[3]
+    files.delete_remote_path.return_value = expected_results[4]
+    files.rename_remote_path.return_value = expected_results[5]
+    actual_results = [
+        fc.list_remote_files("/APM/LOGS/"),
+        fc.download_remote_file("/APM/log.bin", "log.bin"),
+        fc.verify_remote_file("/APM/log.bin", "log.bin"),
+        fc.make_remote_directory("/APM/new"),
+        fc.delete_remote_path("/APM/new"),
+        fc.rename_remote_path("/APM/old", "/APM/new"),
+    ]
+    assert actual_results == expected_results
+
+    assert files.mock_calls[:4] == [
+        call.list_remote_files("/APM/LOGS/"),
+        call.download_remote_file("/APM/log.bin", "log.bin", None),
+        call.verify_remote_file("/APM/log.bin", "log.bin"),
+        call.make_remote_directory("/APM/new"),
+    ]
+    assert len(files.mock_calls) == 6
+    delete_call = files.mock_calls[4]
+    assert delete_call[0] == "delete_remote_path"
+    assert delete_call.args == ("/APM/new", False)
+    assert files.mock_calls[5:] == [call.rename_remote_path("/APM/old", "/APM/new")]
+
+
+def test_reset_and_reconnect_reboots_disconnects_and_reconnects() -> None:
+    """A connected controller is rebooted before the facade reconnects it."""
+    events: list[object] = []
+
+    def sleep(delay: float) -> None:
+        events.append(("sleep", delay))
+
+    def reconnect(*_args: object, **_kwargs: object) -> str:
+        events.append("reconnect")
+        return "RECONNECTED"
+
+    fc, connection, _parameters, _commands, _files, master = _build_flight_controller_with_mocks(sleep=sleep)
+    master.reboot_autopilot.side_effect = lambda: events.append("reboot")
+    connection.disconnect.side_effect = lambda: events.append("disconnect")
+    connection.create_connection_with_retry.side_effect = reconnect
+
+    assert fc.reset_and_reconnect(extra_sleep_time=0) == "RECONNECTED"
+
+    master.reboot_autopilot.assert_called_once_with()
+    connection.disconnect.assert_called_once_with()
+    connection.create_connection_with_retry.assert_called_once_with(
+        progress_callback=None,
+        retries=3,
+        timeout=5,
+        baudrate=115200,
+        log_errors=True,
+        reconnect_progress_callback=None,
+        is_reconnect=True,
+    )
+    assert events == ["reboot", ("sleep", 0.3), "disconnect", ("sleep", 1), ("sleep", 1), "reconnect"]
+
+
+def test_reset_and_reconnect_returns_without_reboot_when_disconnected() -> None:
+    """A missing MAVLink connection does not trigger sleeps or reconnect attempts."""
+    sleeps: list[float] = []
+    fc, connection, _parameters, _commands, _files, master = _build_flight_controller_with_mocks(sleep=sleeps.append)
+    connection.master = None
+
+    assert fc.reset_and_reconnect() == ""
+
+    master.reboot_autopilot.assert_not_called()
+    connection.disconnect.assert_not_called()
+    connection.create_connection_with_retry.assert_not_called()
+    assert sleeps == []  # pylint: disable=use-implicit-booleaness-not-comparison
+
+
 class TestFlightControllerConnectionLifecycle:
     """Test complete flight controller connection lifecycle from user perspective."""
 
