@@ -14,6 +14,28 @@ from typing import Any
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_par_dict import MANUAL_OVERRIDE_PREFIX, Par, is_within_tolerance
 
+MULTIPLE_CHOICE_BLACKLIST = frozenset(
+    {
+        "MOT_SPIN_ARM",
+        "MOT_SPIN_MAX",
+        "MOT_SPIN_MIN",
+        "MOT_THST_EXPO",
+        "ACRO_RP_EXPO",
+        "ACRO_RP_RATE_TC",
+        "ACRO_Y_EXPO",
+        "ACRO_Y_RATE_TC",
+        "PILOT_Y_EXPO",
+        "PILOT_Y_RATE_TC",
+        "ATC_ACCEL_P_MAX",
+        "ATC_ACCEL_R_MAX",
+        "ATC_ACCEL_Y_MAX",
+        "ATC_RATE_P_MAX",
+        "ATC_RATE_R_MAX",
+        "ATC_RATE_Y_MAX",
+        "ATC_INPUT_TC",
+    }
+)
+
 
 class ParameterUnchangedError(Exception):
     """
@@ -147,30 +169,11 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
         """Return True if this parameter uses a multiple choice representation."""
         # these parameters do have choices defined in their metadata, the handful of discrete choices
         #  is limitative and most usecases require the use of a continuous range instead
-        multiple_choice_blacklist = {
-            "MOT_SPIN_ARM",
-            "MOT_SPIN_MAX",
-            "MOT_SPIN_MIN",
-            "MOT_THST_EXPO",
-            "ACRO_RP_EXPO",
-            "ACRO_RP_RATE_TC",
-            "ACRO_Y_EXPO",
-            "ACRO_Y_RATE_TC",
-            "PILOT_Y_EXPO",
-            "PILOT_Y_RATE_TC",
-            "ATC_ACCEL_P_MAX",
-            "ATC_ACCEL_R_MAX",
-            "ATC_ACCEL_Y_MAX",
-            "ATC_RATE_P_MAX",
-            "ATC_RATE_R_MAX",
-            "ATC_RATE_Y_MAX",
-            "ATC_INPUT_TC",
-        }
         return (
             self.choices_dict is not None
             and len(self.choices_dict) > 0
             and self.is_in_values_dict
-            and self._name not in multiple_choice_blacklist
+            and self._name not in MULTIPLE_CHOICE_BLACKLIST
         )
 
     @property

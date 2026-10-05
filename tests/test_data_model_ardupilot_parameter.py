@@ -16,6 +16,7 @@ from typing import Any
 import pytest
 
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
+    MULTIPLE_CHOICE_BLACKLIST,
     ArduPilotParameter,
     BitmaskHelper,
     ParameterForcedOrDerivedError,
@@ -260,21 +261,7 @@ def test_value_dictionary_operations(param_fixture) -> None:
 
 @pytest.mark.parametrize(
     "parameter_name",
-    [
-        "ACRO_RP_EXPO",
-        "ACRO_RP_RATE_TC",
-        "ACRO_Y_EXPO",
-        "ACRO_Y_RATE_TC",
-        "PILOT_Y_EXPO",
-        "PILOT_Y_RATE_TC",
-        "ATC_ACCEL_Y_MAX",
-        "ATC_ACCEL_R_MAX",
-        "ATC_ACCEL_P_MAX",
-        "ATC_RATE_R_MAX",
-        "ATC_RATE_P_MAX",
-        "ATC_RATE_Y_MAX",
-        "ATC_INPUT_TC",
-    ],
+    sorted(MULTIPLE_CHOICE_BLACKLIST),
 )
 def test_continuous_tuning_parameters_do_not_use_multiple_choice(parameter_name: str) -> None:
     """Parameters with continuous ranges stay editable even when metadata lists sample values."""
@@ -283,6 +270,7 @@ def test_continuous_tuning_parameters_do_not_use_multiple_choice(parameter_name:
 
     assert parameter.is_in_values_dict
     assert not parameter.is_multiple_choice
+    assert parameter.is_editable
 
 
 def test_regular_enum_parameter_uses_multiple_choice() -> None:
