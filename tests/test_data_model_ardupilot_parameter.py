@@ -258,6 +258,41 @@ def test_value_dictionary_operations(param_fixture) -> None:
     assert param_fixture["basic_param"].get_selected_value_from_dict() is None
 
 
+@pytest.mark.parametrize(
+    "parameter_name",
+    [
+        "ACRO_RP_EXPO",
+        "ACRO_RP_RATE_TC",
+        "ACRO_Y_EXPO",
+        "ACRO_Y_RATE_TC",
+        "PILOT_Y_EXPO",
+        "PILOT_Y_RATE_TC",
+        "ATC_ACCEL_Y_MAX",
+        "ATC_ACCEL_R_MAX",
+        "ATC_ACCEL_P_MAX",
+        "ATC_RATE_R_MAX",
+        "ATC_RATE_P_MAX",
+        "ATC_RATE_Y_MAX",
+        "ATC_INPUT_TC",
+    ],
+)
+def test_continuous_tuning_parameters_do_not_use_multiple_choice(parameter_name: str) -> None:
+    """Parameters with continuous ranges stay editable even when metadata lists sample values."""
+    metadata = {"values": {"0.5": "Sample value", "1.0": "Another sample value"}}
+    parameter = ArduPilotParameter(parameter_name, Par(0.5, ""), metadata)
+
+    assert parameter.is_in_values_dict
+    assert not parameter.is_multiple_choice
+
+
+def test_regular_enum_parameter_uses_multiple_choice() -> None:
+    """Parameters outside the continuous-range exception list retain their choices."""
+    metadata = {"values": {"0.5": "First option", "1.0": "Second option"}}
+    parameter = ArduPilotParameter("TEST_ENUM", Par(0.5, ""), metadata)
+
+    assert parameter.is_multiple_choice
+
+
 def test_set_new_value(param_fixture) -> None:
     """
     User can update parameter values with validation.
