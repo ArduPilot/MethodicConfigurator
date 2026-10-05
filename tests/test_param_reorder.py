@@ -10,7 +10,6 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import importlib.util
 import json
 import shutil
 import subprocess
@@ -19,17 +18,13 @@ from textwrap import dedent
 from types import ModuleType
 
 import pytest
+from script_loading_helper import load_script_module
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / ".github/skills/configuration-steps-reorder/scripts/param_reorder.py"
 
 
 def _load_reorder_script() -> ModuleType:
-    spec = importlib.util.spec_from_file_location("param_reorder", SCRIPT_PATH)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    return load_script_module(SCRIPT_PATH)
 
 
 @pytest.fixture(name="reorder_script")
@@ -38,6 +33,24 @@ def fixture_reorder_script() -> ModuleType:
     script = _load_reorder_script()
     script.file_renames.clear()
     return script
+
+
+def test_reloading_the_script_preserves_isolated_rename_plans(reorder_script: ModuleType) -> None:
+    """
+    Loading a standalone script does not reuse another test's mutable rename plan.
+
+    GIVEN: A loaded reorder script with a custom rename
+    WHEN: The same script is loaded again
+    THEN: The fresh module has an independent rename dictionary and cannot change the previous plan
+    """
+    reorder_script.file_renames["02_setup.param"] = "19_setup.param"
+
+    fresh_script = _load_reorder_script()
+    fresh_script.file_renames.clear()
+
+    assert fresh_script is not reorder_script
+    assert fresh_script.file_renames is not reorder_script.file_renames
+    assert reorder_script.file_renames == {"02_setup.param": "19_setup.param"}
 
 
 def test_sparse_explicit_renames_keep_the_original_numbering(reorder_script: ModuleType) -> None:

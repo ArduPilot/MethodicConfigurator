@@ -10,11 +10,11 @@ SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import importlib.util
 from pathlib import Path
 from types import ModuleType
 
 import pytest
+from script_loading_helper import load_script_module
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts/create_empty_template_from_normal_template.py"
 
@@ -22,12 +22,7 @@ SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts/create_empty_templa
 @pytest.fixture(name="template_script")
 def fixture_template_script() -> ModuleType:
     """Load the standalone script by file path without requiring a scripts package."""
-    spec = importlib.util.spec_from_file_location("create_empty_template_from_normal_template", SCRIPT_PATH)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    return load_script_module(SCRIPT_PATH)
 
 
 def test_vehicle_copy_uses_known_defaults_and_explains_parameters_without_defaults(
