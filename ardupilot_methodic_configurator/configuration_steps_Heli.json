@@ -1027,16 +1027,56 @@
             "old_filenames": ["37_autotune_roll_pitch_retune_results.param", "39_autotune_roll_pitch_retune_results.param"]
         },
         "27_autotune_pitch_RatePD_results.param": {
-            "plugin": {"name": "autotune_gain_backoff", "placement": "top"}
+            "plugin": {"name": "autotune_gain_backoff", "placement": "top"},
+            "why": "To record and review the pitch rate P and D gains from the staged helicopter autotune sequence",
+            "why_now": "After the pitch rate P and D autotune stage (AUTOTUNE_SEQ=2), before proceeding to roll rate tuning",
+            "blog_text": "Review staged helicopter rate P and D autotune results",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli#template-specific-staged-autotune-results",
+            "wiki_text": "AutoTune",
+            "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
+            "external_tool_text": "ArduPilot PID Review Tool",
+            "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
+            "mandatory_text": "80% mandatory (20% optional)",
+            "auto_changed_by": "ArduPilot autotune"
         },
         "29_autotune_roll_RatePD_results.param": {
-            "plugin": {"name": "autotune_gain_backoff", "placement": "top"}
+            "plugin": {"name": "autotune_gain_backoff", "placement": "top"},
+            "why": "To record and review the roll rate P and D gains from the staged helicopter autotune sequence",
+            "why_now": "After the roll rate P and D autotune stage (AUTOTUNE_SEQ=2), before proceeding to roll and pitch angle tuning",
+            "blog_text": "Review staged helicopter rate P and D autotune results",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli#template-specific-staged-autotune-results",
+            "wiki_text": "AutoTune",
+            "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
+            "external_tool_text": "ArduPilot PID Review Tool",
+            "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
+            "mandatory_text": "80% mandatory (20% optional)",
+            "auto_changed_by": "ArduPilot autotune"
         },
         "31_autotune_roll_pitch_AngleP_results.param": {
-            "plugin": {"name": "autotune_gain_backoff", "placement": "top"}
+            "plugin": {"name": "autotune_gain_backoff", "placement": "top"},
+            "why": "To record and review the roll and pitch angle P gains and acceleration limits from the staged helicopter autotune sequence",
+            "why_now": "After the roll and pitch angle P autotune stage (AUTOTUNE_SEQ=4), once the rate P and D stages are complete",
+            "blog_text": "Review staged helicopter angle P autotune results",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli#template-specific-staged-autotune-results",
+            "wiki_text": "AutoTune",
+            "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
+            "external_tool_text": "ArduPilot PID Review Tool",
+            "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
+            "mandatory_text": "80% mandatory (20% optional)",
+            "auto_changed_by": "ArduPilot autotune"
         },
         "35_autotune_yaw_AngleP_results.param": {
-            "plugin": {"name": "autotune_gain_backoff", "placement": "top"}
+            "plugin": {"name": "autotune_gain_backoff", "placement": "top"},
+            "why": "To record and review the yaw angle P gain and acceleration limit from the staged helicopter autotune sequence",
+            "why_now": "After the yaw angle P autotune stage (AUTOTUNE_SEQ=4), before evaluating the completed tune",
+            "blog_text": "Review staged helicopter angle P autotune results",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli#template-specific-staged-autotune-results",
+            "wiki_text": "AutoTune",
+            "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
+            "external_tool_text": "ArduPilot PID Review Tool",
+            "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
+            "mandatory_text": "80% mandatory (20% optional)",
+            "auto_changed_by": "ArduPilot autotune"
         },
         "45_autotune_finish.param": {
             "why": "ATC_THR_MIX_MAX should be increased after autotune to maximize attitude control authority at high throttle",

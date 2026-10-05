@@ -1125,6 +1125,31 @@ We set up the autotune as a flight mode, and as such it will use the underlying 
 If you want to use the `LOITER` flight mode as the underlying mode during autotune you need to [set an RC channel function switch to autotune](https://ardupilot.org/copter/docs/autotune.html#setup-before-flying-in-autotune-mode).
 Follow the sequence below for tuning each axis as that particular order improves the results.
 
+### Template-specific staged AutoTune results
+
+The `Heli/OMP_M4` template separates rate P/D tuning from angle P tuning.
+Its setup files select the following stages; use the matching results file rather than
+the general roll, pitch and yaw results filenames described in the following sections.
+
+| Stage | Setup file | Results file |
+| --- | --- | --- |
+| Pitch rate P/D (`AUTOTUNE_SEQ=2`) | `26_autotune_pitch_RatePD_setup.param` | `27_autotune_pitch_RatePD_results.param` |
+| Roll rate P/D (`AUTOTUNE_SEQ=2`) | `28_autotune_roll_RatePD_setup.param` | `29_autotune_roll_RatePD_results.param` |
+| Roll/pitch angle P (`AUTOTUNE_SEQ=4`) | `30_autotune_roll_pitch_AngleP_setup.param` | `31_autotune_roll_pitch_AngleP_results.param` |
+| Yaw angle P (`AUTOTUNE_SEQ=4`) | `34_autotune_yaw_AngleP_setup.param` | `35_autotune_yaw_AngleP_results.param` |
+
+Follow the template's intervening steps as well; this table lists only the four stages above.
+The roll/pitch angle P stage is not the general roll/pitch re-autotune described in Section 9.5.5.
+Its results file records angle P gains and acceleration limits, not a new set of rate P/D gains.
+
+After completing and saving each AutoTune stage on the flight controller, reconnect to the configurator
+and open the matching results file.
+When asked **Update file with values from FC?**, choose **Yes** only if that stage has been completed.
+Review the imported values and flight logs before proceeding.
+The gain back-off plugin changes only the staged New values and records a change reason;
+applying back-off does not itself upload values or save the parameter file.
+For the angle P results files, acceleration limits are recorded but are not reduced by the back-off plugin.
+
 ### 9.5.1 Roll axis autotune
 
 1. On *ArduPilot Methodic Configurator* select `35_autotune_roll_setup.param` and upload it to the FC. It will activate the roll axis Autotune.
