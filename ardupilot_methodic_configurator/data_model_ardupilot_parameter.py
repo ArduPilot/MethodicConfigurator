@@ -152,9 +152,19 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
             "MOT_SPIN_MAX",
             "MOT_SPIN_MIN",
             "MOT_THST_EXPO",
+            "ACRO_RP_EXPO",
+            "ACRO_RP_RATE_TC",
+            "ACRO_Y_EXPO",
+            "ACRO_Y_RATE_TC",
+            "PILOT_Y_EXPO",
+            "PILOT_Y_RATE_TC",
             "ATC_ACCEL_P_MAX",
             "ATC_ACCEL_R_MAX",
             "ATC_ACCEL_Y_MAX",
+            "ATC_RATE_P_MAX",
+            "ATC_RATE_R_MAX",
+            "ATC_RATE_Y_MAX",
+            "ATC_INPUT_TC",
         }
         return (
             self.choices_dict is not None
