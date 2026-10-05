@@ -8539,11 +8539,11 @@ msgstr "Abrir um registo de voo .bin e analisar a sua disponibilidade"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:526
 msgid "Edit vehicle components"
-msgstr ""
+msgstr "Editar componentes do veículo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:533
 msgid "Close the parameter editor and open the vehicle component editor"
-msgstr ""
+msgstr "Feche o editor de parâmetros e abra o editor de componentes do veículo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:545
 msgid "User Manual, Support Forum, Report a Bug, Licenses, Source Code"
@@ -8949,21 +8949,21 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1797
 msgid "Log analysis is running"
-msgstr ""
+msgstr "A análise do registo de voo está em execução"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1798
 msgid ""
 "Wait for the flight log analysis to finish before editing vehicle components."
-msgstr ""
+msgstr "Aguarde que a análise do registo de voo termine antes de editar os componentes do veículo."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1807
 msgid "File browser is open"
-msgstr ""
+msgstr "O navegador de ficheiros está aberto"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1808
 msgid ""
 "Close the flight-controller file browser before editing vehicle components."
-msgstr ""
+msgstr "Feche o navegador de ficheiros do controlador de voo antes de editar os componentes do veículo."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1832
 msgid ""
@@ -11646,15 +11646,15 @@ msgstr "Estimativa concluída"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_autotune_gain_backoff.py:74
 msgid "Gain margin back-off must be a finite number between 0.0 and 0.5."
-msgstr ""
+msgstr "A redução da margem de ganho tem de ser um número finito entre 0.0 e 0.5."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_autotune_gain_backoff.py:83
 msgid "Parameter {name} is not editable; no gains were changed."
-msgstr ""
+msgstr "O parâmetro {name} não é editável; não foram alterados quaisquer ganhos."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_autotune_gain_backoff.py:90
 msgid "Parameter {name} must have a finite non-negative gain."
-msgstr ""
+msgstr "O parâmetro {name} tem de ter um ganho finito não negativo."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_autotune_gain_backoff.py:104
 msgid "{old_value} backed-off by {percent:g}%"
@@ -12599,36 +12599,36 @@ msgstr "Passo %(current)d/%(total)d: %(name)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:36
 msgid "Gain margin back-off (0.0-0.5):"
-msgstr ""
+msgstr "Redução da margem de ganho (0.0-0.5):"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:42
 msgid ""
 "Fraction to subtract from the current New values: 0.25 reduces the affected "
 "gains by 25%."
-msgstr ""
+msgstr "Fração a subtrair aos valores Novos atuais: 0.25 reduz os ganhos afetados em 25%."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:45
 msgid "Apply back-off"
-msgstr ""
+msgstr "Aplicar redução"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:47
 msgid ""
 "Apply one additional reduction to this step's gains. Repeated clicks "
 "compound."
-msgstr ""
+msgstr "Aplicar uma redução adicional aos ganhos deste passo. Cliques repetidos acumulam-se."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:50
 msgid ""
 "Changes only New values, not the flight controller. Firmware AutoTune "
 "results may already include back-off; each click applies an additional "
 "reduction."
-msgstr ""
+msgstr "Altera apenas os valores Novos, não o controlador de voo. Os resultados do AutoTune do firmware podem já incluir uma redução; cada clique aplica uma redução adicional."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:65
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:75
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:80
 msgid "Gain margin back-off"
-msgstr ""
+msgstr "Redução da margem de ganho"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:66
 msgid "Enter a number between {minimum:.1f} and {maximum:.1f}."
@@ -12636,17 +12636,17 @@ msgstr "Introduza um número entre {minimum:.1f} e {maximum:.1f}."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:77
 msgid "No gains changed."
-msgstr ""
+msgstr "Nenhum ganho foi alterado."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:77
 msgid "Updated gains: {names}"
-msgstr ""
+msgstr "Ganhos atualizados: {names}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:81
 msgid ""
 "The New values were changed, but some gains are outside their recommended "
 "ranges:"
-msgstr ""
+msgstr "Os valores Novos foram alterados, mas alguns ganhos estão fora dos respetivos intervalos recomendados:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:93
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:21

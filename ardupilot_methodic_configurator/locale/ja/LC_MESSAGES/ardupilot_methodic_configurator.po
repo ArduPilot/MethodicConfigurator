@@ -8314,11 +8314,11 @@ msgstr ".bin フライトログを開いて、その利用可能性を解析す�
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:526
 msgid "Edit vehicle components"
-msgstr ""
+msgstr "機体コンポーネントを編集"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:533
 msgid "Close the parameter editor and open the vehicle component editor"
-msgstr ""
+msgstr "パラメータエディタを閉じて、機体コンポーネントエディタを開いてください"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:545
 msgid "User Manual, Support Forum, Report a Bug, Licenses, Source Code"
@@ -8719,21 +8719,21 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1797
 msgid "Log analysis is running"
-msgstr ""
+msgstr "ログ解析を実行中です"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1798
 msgid ""
 "Wait for the flight log analysis to finish before editing vehicle components."
-msgstr ""
+msgstr "機体コンポーネントを編集する前に、フライトログ解析が完了するまで待ってください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1807
 msgid "File browser is open"
-msgstr ""
+msgstr "ファイルブラウザが開いています"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1808
 msgid ""
 "Close the flight-controller file browser before editing vehicle components."
-msgstr ""
+msgstr "機体コンポーネントを編集する前に、フライトコントローラのファイルブラウザを閉じてください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1832
 msgid ""
@@ -11348,15 +11348,15 @@ msgstr "推定が完了しました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_autotune_gain_backoff.py:74
 msgid "Gain margin back-off must be a finite number between 0.0 and 0.5."
-msgstr ""
+msgstr "ゲインマージンのバックオフは、0.0 から 0.5 の間の有限数でなければなりません。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_autotune_gain_backoff.py:83
 msgid "Parameter {name} is not editable; no gains were changed."
-msgstr ""
+msgstr "パラメータ {name} は編集できないため、ゲインは変更されませんでした。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_autotune_gain_backoff.py:90
 msgid "Parameter {name} must have a finite non-negative gain."
-msgstr ""
+msgstr "パラメータ {name} には、有限の非負ゲインが必要です。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_autotune_gain_backoff.py:104
 msgid "{old_value} backed-off by {percent:g}%"
@@ -12258,36 +12258,36 @@ msgstr "ステップ %(current)d/%(total)d: %(name)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:36
 msgid "Gain margin back-off (0.0-0.5):"
-msgstr ""
+msgstr "ゲインマージンのバックオフ (0.0-0.5):"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:42
 msgid ""
 "Fraction to subtract from the current New values: 0.25 reduces the affected "
 "gains by 25%."
-msgstr ""
+msgstr "現在の新しい値から差し引く割合: 0.25 なら対象のゲインを 25% 減らします。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:45
 msgid "Apply back-off"
-msgstr ""
+msgstr "バックオフを適用"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:47
 msgid ""
 "Apply one additional reduction to this step's gains. Repeated clicks "
 "compound."
-msgstr ""
+msgstr "このステップのゲインに追加の低減を 1 回適用します。繰り返しクリックすると効果は累積します。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:50
 msgid ""
 "Changes only New values, not the flight controller. Firmware AutoTune "
 "results may already include back-off; each click applies an additional "
 "reduction."
-msgstr ""
+msgstr "フライトコントローラではなく、新しい値のみを変更します。ファームウェアの AutoTune 結果には既にバックオフが含まれている場合があり、クリックするたびに追加の低減が適用されます。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:65
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:75
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:80
 msgid "Gain margin back-off"
-msgstr ""
+msgstr "ゲインマージンのバックオフ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:66
 msgid "Enter a number between {minimum:.1f} and {maximum:.1f}."
@@ -12295,17 +12295,17 @@ msgstr "{minimum:.1f}から{maximum:.1f}までの数値を入力してくださ�
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:77
 msgid "No gains changed."
-msgstr ""
+msgstr "ゲインは変更されませんでした。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:77
 msgid "Updated gains: {names}"
-msgstr ""
+msgstr "更新されたゲイン: {names}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:81
 msgid ""
 "The New values were changed, but some gains are outside their recommended "
 "ranges:"
-msgstr ""
+msgstr "新しい値は変更されましたが、一部のゲインが推奨範囲外です:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:93
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:21
