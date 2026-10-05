@@ -82,8 +82,7 @@ class AutotuneGainBackoffDataModel:
             if not parameter.is_editable:
                 raise ValueError(_("Parameter {name} is not editable; no gains were changed.").format(name=name))
             current_value = parameter.get_new_value()
-            old_value = repr(current_value)
-            old_value = old_value.removesuffix(".0")
+            old_value = parameter.value_as_string
             value = current_value * (1.0 - fraction)
             if not isfinite(value) or value < 0:
                 raise ValueError(_("Parameter {name} must have a finite non-negative gain.").format(name=name))

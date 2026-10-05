@@ -477,6 +477,33 @@ def test_bundled_autotune_results_steps_only_enable_the_plugin_for_supported_veh
     assert all(heli_steps[name]["plugin"]["name"] == PLUGIN_AUTOTUNE_GAIN_BACKOFF for name in heli_template_results)
 
 
+def test_heli_staged_results_document_the_matching_autotune_stage() -> None:
+    """
+    Users receive stage-specific guidance when reviewing helicopter results.
+
+    GIVEN: The OMP_M4 template separates rate P/D and angle P tuning.
+    WHEN: The user opens a corresponding results step.
+    THEN: Its documentation identifies the stage and enables importing completed FC results.
+    """
+    root = Path(__file__).resolve().parents[2]
+    package = root / "ardupilot_methodic_configurator"
+    steps = json.loads((package / "configuration_steps_Heli.json").read_text(encoding="utf-8"))["steps"]
+    guide = (root / "TUNING_GUIDE_Heli.md").read_text(encoding="utf-8")
+    assert "### Template-specific staged AutoTune results" in guide
+    for stem, sequence in (
+        ("27_autotune_pitch_RatePD", 2),
+        ("29_autotune_roll_RatePD", 2),
+        ("31_autotune_roll_pitch_AngleP", 4),
+        ("35_autotune_yaw_AngleP", 4),
+    ):
+        filename = f"{stem}_results.param"
+        step = steps[filename]
+        assert f"AUTOTUNE_SEQ={sequence}" in step["why_now"]
+        assert step["blog_url"].endswith("#template-specific-staged-autotune-results")
+        assert step["auto_changed_by"] == "ArduPilot autotune"
+        assert filename in guide
+
+
 def test_plugin_can_be_created_without_a_connected_flight_controller(model_factory) -> None:
     """
     Staged back-off respects the user workflow.
