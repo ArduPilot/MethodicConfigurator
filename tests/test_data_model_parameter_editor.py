@@ -7065,6 +7065,19 @@ class TestProjectAccessors:
         parameter_editor._local_filesystem.doc_dict = {}
         assert parameter_editor.parameter_documentation_available() is False
 
+    def test_gui_reads_enum_choices_from_parameter_documentation(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Plugin controls can populate choices without exposing filesystem internals.
+
+        GIVEN: RC channel option values in the loaded parameter documentation
+        WHEN: The parameter editor's public enum-choice accessor is queried
+        THEN: The numeric choice labels are returned without changing the metadata
+        """
+        parameter_editor._local_filesystem.doc_dict = {"RC6_OPTION": {"values": {"0": "Disabled", "300": "QuickTune"}}}
+
+        assert parameter_editor.get_parameter_choices("RC6_OPTION") == {"0": "Disabled", "300": "QuickTune"}
+        assert parameter_editor.get_parameter_choices("UNKNOWN_PARAMETER") == {}
+
     def test_gui_reads_the_configuration_phases_from_the_project(self, parameter_editor: ParameterEditor) -> None:
         """
         Configuration phases come from the loaded project.
