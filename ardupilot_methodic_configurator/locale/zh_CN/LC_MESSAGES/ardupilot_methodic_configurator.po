@@ -7822,11 +7822,11 @@ msgstr "打开 .bin 飞行日志并分析其可用性"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:526
 msgid "Edit vehicle components"
-msgstr ""
+msgstr "编辑载具组件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:533
 msgid "Close the parameter editor and open the vehicle component editor"
-msgstr ""
+msgstr "关闭参数编辑器并打开载具组件编辑器"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:545
 msgid "User Manual, Support Forum, Report a Bug, Licenses, Source Code"
@@ -8209,21 +8209,21 @@ msgstr "参数已上传。返回日志可用性报告以继续吗？"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1797
 msgid "Log analysis is running"
-msgstr ""
+msgstr "日志分析正在运行"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1798
 msgid ""
 "Wait for the flight log analysis to finish before editing vehicle components."
-msgstr ""
+msgstr "请等待飞行日志分析完成后再编辑载具组件。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1807
 msgid "File browser is open"
-msgstr ""
+msgstr "文件浏览器已打开"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1808
 msgid ""
 "Close the flight-controller file browser before editing vehicle components."
-msgstr ""
+msgstr "在编辑载具组件之前，请先关闭飞控文件浏览器。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1832
 msgid ""
@@ -10712,15 +10712,15 @@ msgstr "估算完成"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_autotune_gain_backoff.py:74
 msgid "Gain margin back-off must be a finite number between 0.0 and 0.5."
-msgstr ""
+msgstr "增益裕度回退必须是介于 0.0 和 0.5 之间的有限数值。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_autotune_gain_backoff.py:83
 msgid "Parameter {name} is not editable; no gains were changed."
-msgstr ""
+msgstr "参数 {name} 不可编辑；未更改任何增益。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_autotune_gain_backoff.py:90
 msgid "Parameter {name} must have a finite non-negative gain."
-msgstr ""
+msgstr "参数 {name} 必须具有有限的非负增益。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_autotune_gain_backoff.py:104
 msgid "{old_value} backed-off by {percent:g}%"
@@ -11567,36 +11567,36 @@ msgstr "步骤 %(current)d/%(total)d：%(name)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:36
 msgid "Gain margin back-off (0.0-0.5):"
-msgstr ""
+msgstr "增益裕度回退（0.0-0.5）："
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:42
 msgid ""
 "Fraction to subtract from the current New values: 0.25 reduces the affected "
 "gains by 25%."
-msgstr ""
+msgstr "要从当前“新值”中减去的比例：0.25 会将受影响的增益降低 25%。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:45
 msgid "Apply back-off"
-msgstr ""
+msgstr "应用回退"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:47
 msgid ""
 "Apply one additional reduction to this step's gains. Repeated clicks "
 "compound."
-msgstr ""
+msgstr "对此步骤的增益再应用一次额外降低。重复单击会叠加效果。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:50
 msgid ""
 "Changes only New values, not the flight controller. Firmware AutoTune "
 "results may already include back-off; each click applies an additional "
 "reduction."
-msgstr ""
+msgstr "仅更改“新值”，不更改飞控。固件 AutoTune 结果可能已包含回退；每次单击都会额外应用一次降低。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:65
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:75
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:80
 msgid "Gain margin back-off"
-msgstr ""
+msgstr "增益裕度回退"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:66
 msgid "Enter a number between {minimum:.1f} and {maximum:.1f}."
@@ -11604,17 +11604,17 @@ msgstr "请输入介于 {minimum:.1f} 和 {maximum:.1f} 之间的数字。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:77
 msgid "No gains changed."
-msgstr ""
+msgstr "未更改任何增益。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:77
 msgid "Updated gains: {names}"
-msgstr ""
+msgstr "已更新的增益：{names}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:81
 msgid ""
 "The New values were changed, but some gains are outside their recommended "
 "ranges:"
-msgstr ""
+msgstr "“新值”已更改，但某些增益超出了其建议范围："
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:93
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:21
