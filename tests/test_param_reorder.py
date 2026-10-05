@@ -11,9 +11,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import importlib.util
+import json
 import shutil
 import subprocess
 from pathlib import Path
+from textwrap import dedent
 from types import ModuleType
 
 import pytest
@@ -28,6 +30,162 @@ def _load_reorder_script() -> ModuleType:
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+@pytest.fixture(name="reorder_script")
+def fixture_reorder_script() -> ModuleType:
+    """Load an isolated reorder script with no predefined renames."""
+    script = _load_reorder_script()
+    script.file_renames.clear()
+    return script
+
+
+def test_sparse_explicit_renames_keep_the_original_numbering(reorder_script: ModuleType) -> None:
+    """
+    Two explicit anchors replace the full list of fifty renames.
+
+    GIVEN: Steps numbered 02-57 and 60-66 with explicit destinations 19 and 64.
+    WHEN: The user generates the rename plan.
+    THEN: Every step from 15 onward shifts by four, preserving the later gap.
+    """
+    numbers = [*range(2, 58), *range(60, 67)]
+    steps: dict[str, dict] = {f"{number:02d}_step.param": {} for number in numbers}
+    reorder_script.file_renames.update({"15_step.param": "19_step.param", "60_step.param": "64_step.param"})
+    expected = {f"{number if number < 15 else number + 4:02d}_step.param": f"{number:02d}_step.param" for number in numbers}
+
+    renames = reorder_script.reorder_param_files(steps)
+
+    assert renames == expected
+    assert reorder_script.file_renames == {
+        old_name: new_name for new_name, old_name in expected.items() if new_name != old_name
+    }
+
+
+def test_automatic_numbering_starts_at_two_and_records_only_changes(reorder_script: ModuleType) -> None:
+    """
+    Automatically renumbered files are available to downstream updates.
+
+    GIVEN: A sequence with gaps and no explicit renames.
+    WHEN: The user generates the rename plan.
+    THEN: Numbering starts at two and unchanged filenames are not recorded as renames.
+    """
+    steps: dict[str, dict] = {"02_setup.param": {}, "04_safety.param": {}, "09_finish.param": {}}
+
+    renames = reorder_script.reorder_param_files(steps)
+
+    assert renames == {
+        "02_setup.param": "02_setup.param",
+        "03_safety.param": "04_safety.param",
+        "04_finish.param": "09_finish.param",
+    }
+    assert reorder_script.file_renames == {"04_safety.param": "03_safety.param", "09_finish.param": "04_finish.param"}
+
+
+def test_explicit_filename_change_advances_the_following_number(reorder_script: ModuleType) -> None:
+    """
+    An explicit rename can change both the number and descriptive suffix.
+
+    GIVEN: An explicit rename to step 19 with a new descriptive suffix.
+    WHEN: The user generates the rename plan.
+    THEN: The explicit name is preserved and the following step receives number 20.
+    """
+    reorder_script.file_renames["02_setup.param"] = "19_general_configuration.param"
+    steps: dict[str, dict] = {"02_setup.param": {}, "03_safety.param": {}}
+
+    renames = reorder_script.reorder_param_files(steps)
+
+    assert renames == {"19_general_configuration.param": "02_setup.param", "20_safety.param": "03_safety.param"}
+    assert reorder_script.file_renames["03_safety.param"] == "20_safety.param"
+
+
+@pytest.mark.parametrize("destination", ["01_finish.param", "02_finish.param", "03_finish.param", "03_safety.param"])
+def test_explicit_rename_cannot_reuse_an_earlier_step_number(reorder_script: ModuleType, destination: str) -> None:
+    """
+    Invalid anchors cannot produce duplicate or descending step numbers.
+
+    GIVEN: Two planned steps followed by an explicit destination below the next free number.
+    WHEN: The user generates the rename plan.
+    THEN: The invalid anchor is rejected without recording any automatic renames.
+    """
+    reorder_script.file_renames["09_finish.param"] = destination
+    steps: dict[str, dict] = {"02_setup.param": {}, "04_safety.param": {}, "09_finish.param": {}}
+
+    with pytest.raises(ValueError, match="next available step number is 04"):
+        reorder_script.reorder_param_files(steps)
+
+    assert reorder_script.file_renames == {"09_finish.param": destination}
+
+
+def test_generating_the_same_plan_twice_preserves_the_results(reorder_script: ModuleType) -> None:
+    """
+    Generated renames remain stable when planning the same sequence again.
+
+    GIVEN: An explicit anchor and a following automatically numbered step.
+    WHEN: The user generates the same plan twice.
+    THEN: Both the plan and the recorded renames remain identical.
+    """
+    reorder_script.file_renames["02_setup.param"] = "19_setup.param"
+    steps: dict[str, dict] = {"02_setup.param": {}, "03_safety.param": {}}
+    first_plan = reorder_script.reorder_param_files(steps)
+    first_renames = reorder_script.file_renames.copy()
+
+    second_plan = reorder_script.reorder_param_files(steps)
+
+    assert second_plan == first_plan
+    assert reorder_script.file_renames == first_renames
+
+
+def test_automatic_renames_update_files_references_and_migration_aliases(
+    reorder_script: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """
+    Automatically generated renames propagate through the complete workflow.
+
+    GIVEN: An explicit anchor, a following parameter file, its definition and references.
+    WHEN: The user applies the generated plan and records migration aliases.
+    THEN: All filenames and references agree and historical aliases are preserved.
+    """
+    json_content = dedent(
+        """\
+        {
+            "steps": {
+                "02_setup.param": {
+                    "old_filenames": []
+                },
+                "03_safety.param": {
+                    "old_filenames": ["01_legacy_safety.param"]
+                }
+            }
+        }
+        """
+    )
+    steps = json.loads(json_content)["steps"]
+    json_path = tmp_path / "configuration_steps_ArduCopter.json"
+    json_path.write_text(json_content, encoding="utf-8")
+    guide_path = tmp_path / "TUNING_GUIDE_ArduCopter.md"
+    guide_path.write_text("02_setup.param\n03_safety.param\n", encoding="utf-8")
+    for name, contents in {"02_setup.param": "setup", "03_safety.param": "safety", "03_safety.pdef.xml": "definition"}.items():
+        (tmp_path / name).write_text(contents, encoding="utf-8")
+    reorder_script.file_renames["02_setup.param"] = "19_setup.param"
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(reorder_script, "_git_executable", lambda: None)
+
+    renames = reorder_script.reorder_param_files(steps)
+    param_dirs = reorder_script.loop_relevant_files(renames)
+    reorder_script.reorder_actual_files(renames, param_dirs)
+    reorder_script.update_old_filenames_in_json_file(str(json_path))
+
+    assert (tmp_path / "19_setup.param").read_text(encoding="utf-8") == "setup"
+    assert (tmp_path / "20_safety.param").read_text(encoding="utf-8") == "safety"
+    assert (tmp_path / "20_safety.pdef.xml").read_text(encoding="utf-8") == "definition"
+    assert not (tmp_path / "02_setup.param").exists()
+    assert not (tmp_path / "03_safety.param").exists()
+    assert not (tmp_path / "03_safety.pdef.xml").exists()
+    assert guide_path.read_text(encoding="utf-8") == "19_setup.param\n20_safety.param\n"
+    updated_steps = json.loads(json_path.read_text(encoding="utf-8"))["steps"]
+    assert list(updated_steps) == ["19_setup.param", "20_safety.param"]
+    assert updated_steps["19_setup.param"]["old_filenames"] == ["02_setup.param"]
+    assert updated_steps["20_safety.param"]["old_filenames"] == ["01_legacy_safety.param", "03_safety.param"]
 
 
 def test_tracked_parameter_files_survive_a_rename_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
