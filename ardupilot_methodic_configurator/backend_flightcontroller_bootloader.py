@@ -99,6 +99,7 @@ class BootloaderTransport(Protocol):
     def close(self) -> None: ...
 
 
+# A total of zero means the bootloader has not exposed measurable progress for the current command.
 ProgressCallback = Callable[[UploadStage, int, int], None]
 ConfirmationRequested = Callable[[FirmwareImage, BootloaderInfo], bool]
 CancellationRequested = Callable[[], bool]
@@ -525,7 +526,7 @@ class BootloaderClient:
             extf_size=extf_size,
         )
 
-    def _erase_external(self, size: int) -> None:
+    def _erase_external(self, size: int, progress_callback: Callable[[int], None] | None = None) -> None:
         self._write(encode_extf_erase(size))
         self._sync()
         # The bootloader emits percentage bytes until it is almost done, then the
@@ -549,15 +550,20 @@ class BootloaderClient:
             if progress > last_pct:
                 last_pct = progress
                 deadline = self._clock() + ERASE_TIMEOUT
+                if progress_callback is not None:
+                    # The final acknowledgement can still fail after the 100% byte.
+                    progress_callback(min(progress, 99))
 
-    def _verify_v2(self, image: FirmwareImage) -> None:
+    def _verify_v2(self, image: FirmwareImage, progress_callback: Callable[[int], None] | None = None) -> None:
         self._command(encode_chip_verify())
-        for offset in range(0, len(image.image), READ_MULTI_MAX):
+        for index, offset in enumerate(range(0, len(image.image), READ_MULTI_MAX), start=1):
             expected = image.image[offset : offset + READ_MULTI_MAX]
             programmed = self._command(encode_read_multi(len(expected)), len(expected))
             if programmed != expected:
                 msg = _("firmware read-back verification failed")
                 raise BootloaderProtocolError(msg)
+            if progress_callback is not None:
+                progress_callback(index)
 
     def _verify_v3(self, image: FirmwareImage, flash_size: int) -> None:
         actual = decode_uint32(self._command(encode_get_crc(), 4))
@@ -622,38 +628,71 @@ class BootloaderClient:
             if cancellation_requested is not None and cancellation_requested():
                 msg = _("firmware upload cancelled before erase")
                 raise FirmwareUploadCancelledError(msg, stage=stage.value)
+            internal_image_present = bool(image.metadata.image_size)
+            external_image_present = bool(image.metadata.extf_image_size)
+            erase_total = int(internal_image_present) + 100 * int(external_image_present)
+            program_total = sum(
+                (size + PROG_MULTI_MAX - 1) // PROG_MULTI_MAX
+                for size, present in (
+                    (len(image.extf_image), external_image_present),
+                    (len(image.image), internal_image_present),
+                )
+                if present
+            )
+            internal_verify_total = (
+                (len(image.image) + READ_MULTI_MAX - 1) // READ_MULTI_MAX
+                if internal_image_present and info.protocol_revision == 2
+                else int(internal_image_present)
+            )
+            verify_total = int(external_image_present) + internal_verify_total
+            erase_completed = 0
+            program_completed = 0
+            verify_completed = 0
             if image.metadata.extf_image_size:
                 stage = UploadStage.ERASING
-                self._report(progress_callback, stage, 0, 1)
-                self._erase_external(image.metadata.extf_image_size)
-                self._report(progress_callback, stage, 1, 1)
+                self._report(progress_callback, stage, erase_completed, erase_total)
+                self._erase_external(
+                    image.metadata.extf_image_size,
+                    lambda percent: self._report(progress_callback, stage, erase_completed + percent, erase_total),
+                )
+                erase_completed += 100
+                self._report(progress_callback, stage, erase_completed, erase_total)
                 stage = UploadStage.PROGRAMMING
-                chunk_count = (len(image.extf_image) + PROG_MULTI_MAX - 1) // PROG_MULTI_MAX
-                for index, chunk in enumerate(program_chunks(image.extf_image), start=1):
+                self._report(progress_callback, stage, program_completed, program_total)
+                for chunk in program_chunks(image.extf_image):
                     self._command(encode_extf_prog_multi(chunk))
-                    self._report(progress_callback, stage, index, chunk_count)
+                    program_completed += 1
+                    self._report(progress_callback, stage, program_completed, program_total)
                 stage = UploadStage.VERIFYING
-                self._report(progress_callback, stage, 0, 1)
+                self._report(progress_callback, stage, verify_completed, 0)
                 self._verify_external(image)
-                self._report(progress_callback, stage, 1, 1)
+                verify_completed += 1
+                self._report(progress_callback, stage, verify_completed, verify_total)
             if image.metadata.image_size:
                 stage = UploadStage.ERASING
-                self._report(progress_callback, stage, 0, 1)
+                self._report(progress_callback, stage, erase_completed, 0)
                 self._write(encode_chip_erase(full=full_erase))
                 self._sync(timeout=ERASE_TIMEOUT)
-                self._report(progress_callback, stage, 1, 1)
+                erase_completed += 1
+                self._report(progress_callback, stage, erase_completed, erase_total)
                 stage = UploadStage.PROGRAMMING
-                chunk_count = (len(image.image) + PROG_MULTI_MAX - 1) // PROG_MULTI_MAX
-                for index, chunk in enumerate(program_chunks(image.image), start=1):
+                self._report(progress_callback, stage, program_completed, program_total)
+                for chunk in program_chunks(image.image):
                     self._command(encode_prog_multi(chunk))
-                    self._report(progress_callback, stage, index, chunk_count)
+                    program_completed += 1
+                    self._report(progress_callback, stage, program_completed, program_total)
                 stage = UploadStage.VERIFYING
-                self._report(progress_callback, stage, 0, 1)
                 if info.protocol_revision == 2:
-                    self._verify_v2(image)
+                    self._report(progress_callback, stage, verify_completed, verify_total)
+                    self._verify_v2(
+                        image,
+                        lambda chunks: self._report(progress_callback, stage, verify_completed + chunks, verify_total),
+                    )
                 else:
+                    self._report(progress_callback, stage, verify_completed, 0)
                     self._verify_v3(image, info.flash_size)
-                self._report(progress_callback, stage, 1, 1)
+                verify_completed += internal_verify_total
+                self._report(progress_callback, stage, verify_completed, verify_total)
             stage = UploadStage.REBOOTING
             self._report(progress_callback, stage, 0, 1)
             if info.protocol_revision == 2:

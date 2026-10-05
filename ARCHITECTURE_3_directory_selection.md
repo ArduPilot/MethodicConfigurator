@@ -122,6 +122,11 @@ This architecture ensures:
   - Launch VehicleProjectCreatorWindow for new project creation
   - Delegate business logic to VehicleProjectManager
   - Manage UI state and user feedback for project opening operations
+  - Launch the firmware upload window as a modal child while keeping project selection
+    visible but inactive; share the controller exposed by VehicleProjectManager
+  - Exit AMC when the modal closes after a successful or failed firmware upload;
+    return to project selection after safe cancellation or without an upload attempt
+  - Leave firmware-dependent state loading to normal application startup after restart
 - **Dependencies**: Depends only on VehicleProjectManager interface
 
 #### Project Creator Window

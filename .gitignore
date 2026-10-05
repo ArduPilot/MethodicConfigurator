@@ -5,6 +5,7 @@ __target__/
 .codegraph/
 /.packaging-check/
 .codex-pytest-*/
+.cache/
 ardupilot_methodic_configurator.egg-info/
 ardupilot_methodic_configurator/test.xml
 ardupilot_methodic_configurator_*_macos_setup.dmg

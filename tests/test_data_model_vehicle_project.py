@@ -70,6 +70,7 @@ class TestVehicleProjectManagerInitialization:
         # Assert: Manager is properly initialized
         assert manager._local_filesystem is mock_filesystem
         assert manager._flight_controller is None
+        assert manager.flight_controller is None
         assert manager._creator is not None
         assert manager._opener is not None
         assert manager._settings is None
@@ -93,6 +94,7 @@ class TestVehicleProjectManagerInitialization:
         # Assert: Manager is properly initialized with flight controller
         assert manager._local_filesystem is mock_filesystem
         assert manager._flight_controller is mock_flight_controller
+        assert manager.flight_controller is mock_flight_controller
         assert manager._creator is not None
         assert manager._opener is not None
 

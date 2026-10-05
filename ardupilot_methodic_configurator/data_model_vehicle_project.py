@@ -629,6 +629,11 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
         return self._settings is not None and self._settings.use_fc_params
 
     # Flight controller operations
+    @property
+    def flight_controller(self) -> Optional["FlightController"]:
+        """Expose the shared controller for embedded flight-controller tools."""
+        return self._flight_controller
+
     def is_flight_controller_connected(self) -> bool:
         """
         Check if a flight controller is currently connected.

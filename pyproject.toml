@@ -134,6 +134,7 @@ mavftp = "ardupilot_methodic_configurator.backend_mavftp:main"
 amc_mavftp = "ardupilot_methodic_configurator.frontend_tkinter_file_browser:main"
 amc_parameter_compare_and_upload = "ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload:main"
 amc_parameter_export = "ardupilot_methodic_configurator.frontend_tkinter_parameter_export:main"
+amc_firmware_upload = "ardupilot_methodic_configurator.frontend_tkinter_firmware_upload:main"
 
 [project.entry-points."argcomplete.completers"]
 ardupilot_methodic_configurator = "ardupilot_methodic_configurator.__main__:create_argument_parser"
@@ -144,6 +145,7 @@ mavftp = "ardupilot_methodic_configurator.backend_mavftp:create_argument_parser"
 amc_mavftp = "ardupilot_methodic_configurator.frontend_tkinter_file_browser:create_argument_parser"
 amc_parameter_compare_and_upload = "ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload:create_argument_parser"
 amc_parameter_export = "ardupilot_methodic_configurator.frontend_tkinter_parameter_export:create_argument_parser"
+amc_firmware_upload = "ardupilot_methodic_configurator.frontend_tkinter_firmware_upload:create_argument_parser"
 
 [project.urls]
 homepage = "https://ardupilot.github.io/MethodicConfigurator/"

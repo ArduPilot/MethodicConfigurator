@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Regression tests for bounded bootloader reads.
 
@@ -7,8 +8,6 @@ SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
-
-# ruff: noqa: INP001
 
 import pytest
 
