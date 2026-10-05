@@ -2744,25 +2744,25 @@ msgstr "Para otimizar a resposta ao degrau da guinada."
 msgid ""
 "To record and review the pitch rate P and D gains from the staged helicopter "
 "autotune sequence"
-msgstr ""
+msgstr "Para registar e rever os ganhos P e D da taxa de inclinação da sequência faseada de autotune do helicóptero"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:71
 msgid ""
 "To record and review the roll and pitch angle P gains and acceleration "
 "limits from the staged helicopter autotune sequence"
-msgstr ""
+msgstr "Para registar e rever os ganhos P do ângulo de rolamento e inclinação e os limites de aceleração da sequência faseada de autotune do helicóptero"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:72
 msgid ""
 "To record and review the roll rate P and D gains from the staged helicopter "
 "autotune sequence"
-msgstr ""
+msgstr "Para registar e rever os ganhos P e D da taxa de rolamento da sequência faseada de autotune do helicóptero"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:73
 msgid ""
 "To record and review the yaw angle P gain and acceleration limit from the "
 "staged helicopter autotune sequence"
-msgstr ""
+msgstr "Para registar e rever o ganho P do ângulo de guinada e o limite de aceleração da sequência faseada de autotune do helicóptero"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:74
 msgid "To record autotune results after pitch step response optimization"
@@ -2866,25 +2866,25 @@ msgstr ""
 msgid ""
 "After the pitch rate P and D autotune stage (AUTOTUNE_SEQ=2), before "
 "proceeding to roll rate tuning"
-msgstr ""
+msgstr "Após a etapa de autotune P e D da taxa de inclinação (AUTOTUNE_SEQ=2), antes de prosseguir para a afinação da taxa de rolamento"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:91
 msgid ""
 "After the roll and pitch angle P autotune stage (AUTOTUNE_SEQ=4), once the "
 "rate P and D stages are complete"
-msgstr ""
+msgstr "Após a etapa de autotune P do ângulo de rolamento e inclinação (AUTOTUNE_SEQ=4), assim que as etapas P e D da taxa estiverem concluídas"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:92
 msgid ""
 "After the roll rate P and D autotune stage (AUTOTUNE_SEQ=2), before "
 "proceeding to roll and pitch angle tuning"
-msgstr ""
+msgstr "Após a etapa de autotune P e D da taxa de rolamento (AUTOTUNE_SEQ=2), antes de prosseguir para a afinação do ângulo de rolamento e inclinação"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:93
 msgid ""
 "After the yaw angle P autotune stage (AUTOTUNE_SEQ=4), before evaluating the "
 "completed tune"
-msgstr ""
+msgstr "Após a etapa de autotune P do ângulo de guinada (AUTOTUNE_SEQ=4), antes de avaliar a afinação concluída"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:94
 msgid ""
@@ -3527,11 +3527,11 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:190
 msgid "Review staged helicopter angle P autotune results"
-msgstr ""
+msgstr "Rever os resultados do autotune faseado do ganho P do ângulo do helicóptero"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:191
 msgid "Review staged helicopter rate P and D autotune results"
-msgstr ""
+msgstr "Rever os resultados do autotune faseado dos ganhos P e D da taxa do helicóptero"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:192
 msgid ""

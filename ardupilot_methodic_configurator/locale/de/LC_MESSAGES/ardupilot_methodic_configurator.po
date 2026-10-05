@@ -2756,25 +2756,25 @@ msgstr "Zur Optimierung der Yaw-Sprungantwort."
 msgid ""
 "To record and review the pitch rate P and D gains from the staged helicopter "
 "autotune sequence"
-msgstr ""
+msgstr "Zum Aufzeichnen und Überprüfen der P- und D-Verstärkungen der Nickratenregelung aus der gestuften Helikopter-Autotune-Sequenz"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:71
 msgid ""
 "To record and review the roll and pitch angle P gains and acceleration "
 "limits from the staged helicopter autotune sequence"
-msgstr ""
+msgstr "Zum Aufzeichnen und Überprüfen der P-Verstärkungen der Roll- und Nickwinkelregelung sowie der Beschleunigungsgrenzen aus der gestuften Helikopter-Autotune-Sequenz"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:72
 msgid ""
 "To record and review the roll rate P and D gains from the staged helicopter "
 "autotune sequence"
-msgstr ""
+msgstr "Zum Aufzeichnen und Überprüfen der P- und D-Verstärkungen der Rollratenregelung aus der gestuften Helikopter-Autotune-Sequenz"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:73
 msgid ""
 "To record and review the yaw angle P gain and acceleration limit from the "
 "staged helicopter autotune sequence"
-msgstr ""
+msgstr "Zum Aufzeichnen und Überprüfen der P-Verstärkung der Gierwinkelregelung sowie der Beschleunigungsgrenze aus der gestuften Helikopter-Autotune-Sequenz"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:74
 msgid "To record autotune results after pitch step response optimization"
@@ -2878,25 +2878,25 @@ msgstr ""
 msgid ""
 "After the pitch rate P and D autotune stage (AUTOTUNE_SEQ=2), before "
 "proceeding to roll rate tuning"
-msgstr ""
+msgstr "Nach der Autotune-Stufe für die P- und D-Verstärkungen der Nickratenregelung (AUTOTUNE_SEQ=2), bevor mit der Abstimmung der Rollratenregelung fortgefahren wird"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:91
 msgid ""
 "After the roll and pitch angle P autotune stage (AUTOTUNE_SEQ=4), once the "
 "rate P and D stages are complete"
-msgstr ""
+msgstr "Nach der Autotune-Stufe für die P-Verstärkungen der Roll- und Nickwinkelregelung (AUTOTUNE_SEQ=4), sobald die Stufen für Rate-P und -D abgeschlossen sind"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:92
 msgid ""
 "After the roll rate P and D autotune stage (AUTOTUNE_SEQ=2), before "
 "proceeding to roll and pitch angle tuning"
-msgstr ""
+msgstr "Nach der Autotune-Stufe für die P- und D-Verstärkungen der Rollratenregelung (AUTOTUNE_SEQ=2), bevor mit der Abstimmung der Roll- und Nickwinkelregelung fortgefahren wird"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:93
 msgid ""
 "After the yaw angle P autotune stage (AUTOTUNE_SEQ=4), before evaluating the "
 "completed tune"
-msgstr ""
+msgstr "Nach der Autotune-Stufe für die P-Verstärkung der Gierwinkelregelung (AUTOTUNE_SEQ=4), bevor die abgeschlossene Abstimmung ausgewertet wird"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:94
 msgid ""
@@ -3549,11 +3549,11 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:190
 msgid "Review staged helicopter angle P autotune results"
-msgstr ""
+msgstr "Ergebnisse der gestuften Helikopter-Autotune für Winkel-P überprüfen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:191
 msgid "Review staged helicopter rate P and D autotune results"
-msgstr ""
+msgstr "Ergebnisse der gestuften Helikopter-Autotune für Rate-P und -D überprüfen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:192
 msgid ""

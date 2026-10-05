@@ -2770,25 +2770,25 @@ msgstr "Per ottimizzare la risposta ai gradini di imbardata."
 msgid ""
 "To record and review the pitch rate P and D gains from the staged helicopter "
 "autotune sequence"
-msgstr ""
+msgstr "Per registrare e rivedere i guadagni P e D della velocità di beccheggio dalla sequenza di autotune a fasi dell'elicottero"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:71
 msgid ""
 "To record and review the roll and pitch angle P gains and acceleration "
 "limits from the staged helicopter autotune sequence"
-msgstr ""
+msgstr "Per registrare e rivedere i guadagni P dell'angolo di rollio e beccheggio e i limiti di accelerazione dalla sequenza di autotune a fasi dell'elicottero"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:72
 msgid ""
 "To record and review the roll rate P and D gains from the staged helicopter "
 "autotune sequence"
-msgstr ""
+msgstr "Per registrare e rivedere i guadagni P e D della velocità di rollio dalla sequenza di autotune a fasi dell'elicottero"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:73
 msgid ""
 "To record and review the yaw angle P gain and acceleration limit from the "
 "staged helicopter autotune sequence"
-msgstr ""
+msgstr "Per registrare e rivedere il guadagno P dell'angolo di imbardata e il limite di accelerazione dalla sequenza di autotune a fasi dell'elicottero"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:74
 msgid "To record autotune results after pitch step response optimization"
@@ -2894,25 +2894,25 @@ msgstr ""
 msgid ""
 "After the pitch rate P and D autotune stage (AUTOTUNE_SEQ=2), before "
 "proceeding to roll rate tuning"
-msgstr ""
+msgstr "Dopo la fase di autotune P e D della velocità di beccheggio (AUTOTUNE_SEQ=2), prima di procedere alla regolazione della velocità di rollio"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:91
 msgid ""
 "After the roll and pitch angle P autotune stage (AUTOTUNE_SEQ=4), once the "
 "rate P and D stages are complete"
-msgstr ""
+msgstr "Dopo la fase di autotune P dell'angolo di rollio e beccheggio (AUTOTUNE_SEQ=4), una volta completate le fasi P e D della velocità"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:92
 msgid ""
 "After the roll rate P and D autotune stage (AUTOTUNE_SEQ=2), before "
 "proceeding to roll and pitch angle tuning"
-msgstr ""
+msgstr "Dopo la fase di autotune P e D della velocità di rollio (AUTOTUNE_SEQ=2), prima di procedere alla regolazione dell'angolo di rollio e beccheggio"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:93
 msgid ""
 "After the yaw angle P autotune stage (AUTOTUNE_SEQ=4), before evaluating the "
 "completed tune"
-msgstr ""
+msgstr "Dopo la fase di autotune P dell'angolo di imbardata (AUTOTUNE_SEQ=4), prima di valutare la regolazione completata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:94
 msgid ""
@@ -3571,11 +3571,11 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:190
 msgid "Review staged helicopter angle P autotune results"
-msgstr ""
+msgstr "Rivedere i risultati dell'autotune P dell'angolo dell'elicottero a fasi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:191
 msgid "Review staged helicopter rate P and D autotune results"
-msgstr ""
+msgstr "Rivedere i risultati dell'autotune P e D della velocità dell'elicottero a fasi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:192
 msgid ""
