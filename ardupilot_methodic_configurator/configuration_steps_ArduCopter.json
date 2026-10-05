@@ -222,6 +222,16 @@
             "mandatory_text": "100% mandatory (0% optional)",
             "component": "RC Controller",
             "auto_changed_by": "",
+            "plugin": {
+                "name": "rc_calibration",
+                "placement": "left"
+            },
+            "add_parameters": {
+                "RCMAP_ROLL": { "if": "'RCMAP_ROLL' in fc_parameters", "Change Reason": "Current RC roll channel mapping; editable in the RC calibration plugin" },
+                "RCMAP_PITCH": { "if": "'RCMAP_PITCH' in fc_parameters", "Change Reason": "Current RC pitch channel mapping; editable in the RC calibration plugin" },
+                "RCMAP_THROTTLE": { "if": "'RCMAP_THROTTLE' in fc_parameters", "Change Reason": "Current RC throttle channel mapping; editable in the RC calibration plugin" },
+                "RCMAP_YAW": { "if": "'RCMAP_YAW' in fc_parameters", "Change Reason": "Current RC yaw channel mapping; editable in the RC calibration plugin" }
+            },
             "derived_parameters": {
                 "RC5_OPTION": { "if": "vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'ExpressLRS'", "New Value": "1", "Change Reason": "ExpressLRS requires RC5 to be used for arming (Arm/Disarm function)" }
             },

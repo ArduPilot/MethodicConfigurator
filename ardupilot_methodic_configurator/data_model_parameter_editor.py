@@ -610,7 +610,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         return False
 
-    def handle_param_file_change_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals # noqa: PLR0913, PLR0917
+    def handle_param_file_change_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals # noqa: PLR0913, PLR0917, RUF100
         self,
         selected_file: str,
         forced: bool,
@@ -2546,6 +2546,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
     def parameter_documentation_available(self) -> bool:
         return bool(self._local_filesystem.doc_dict)
+
+    def get_parameter_choices(self, parameter_name: str) -> dict[str, str]:
+        """Return loaded enum choices without exposing filesystem internals."""
+        metadata = self._local_filesystem.doc_dict.get(parameter_name, {})
+        return dict(metadata.get("values", {}))
 
     def configuration_phases(self) -> dict[str, PhaseData]:
         return self._local_filesystem.configuration_phases
