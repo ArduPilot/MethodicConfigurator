@@ -1,0 +1,3 @@
+FLOW_FXSCALER,0  # the FlowCal results
+FLOW_FYSCALER,0  # the FlowCal results
+FLOW_ORIENT_YAW,0  # change this if needed
