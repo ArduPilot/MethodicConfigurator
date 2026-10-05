@@ -1,0 +1,194 @@
+{
+    "Format version": 2,
+    "Components": {
+        "Flight Controller": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "Pixhawk4",
+                "Version": "1.0",
+                "URL": "https://holybro.com/products/pixhawk-4?srsltid=AfmBOooNvEAR2_85PybTqRHhojmQW-aMW8TY-iQfI1v2qUU50AfxmCYg"
+            },
+            "Firmware": {
+                "Type": "ArduCopter",
+                "Version": "4.6.3 official"
+            },
+            "Specifications": {
+                "MCU Series": "STM32F7xx"
+            },
+            "Notes": ""
+        },
+        "Frame": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "X500",
+                "Version": "Payload: 1500g (without Battery, 70% Throttle)",
+                "URL": "https://holybro.com/products/x500-v2-kits?srsltid=AfmBOor9p_QpA5CNDhM99OCZ4DMVM1eUJ8H_dLW4FpDZgz0VR01YJ_M8"
+            },
+            "Specifications": {
+                "TOW min Kg": 1.09,
+                "TOW max Kg": 2.11,
+                "Frame class": "Quad"
+            },
+            "Notes": "Frame is X500 type. Look on holybro site for more specifications"
+        },
+        "Battery Monitor": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "PM02 Power Module (12S)",
+                "Version": "V3",
+                "URL": "https://holybro.com/collections/power-modules-pdbs/products/pm02-v3-12s-power-module"
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "Analog",
+                "Protocol": "Analog Voltage and Current"
+            },
+            "Notes": "Supplies 5.2V to FC, providing current consumption and battery voltage measurements"
+        },
+        "Battery": {
+            "Product": {
+                "Manufacturer": "Gens Ace",
+                "Model": "4S1P 5000mAh",
+                "Version": "B-45C-5000-4S1P",
+                "URL": "https://www.rccorner.ae/gens-ace-5000mah-14-8v-45c-4s1p-lipo-battery"
+            },
+            "Specifications": {
+                "Chemistry": "Lipo",
+                "Volt per cell max": 4.0,
+                "Volt per cell arm": 3.675,
+                "Volt per cell low": 3.4,
+                "Volt per cell crit": 3.3,
+                "Volt per cell min": 3.3,
+                "Number of cells": 4,
+                "Capacity mAh": 5000
+            },
+            "Notes": "Normal battery 0.5 kg."
+        },
+        "ESC": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "X500 V2-BLHeli S 20A",
+                "Version": "1",
+                "URL": "https://www.mybotshop.de/Holybro-X500-V2-BLHeli-S-20A-ESC_1"
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC->ESC Connection": {
+                "Type": "Main Out",
+                "Protocol": "Normal"
+            },
+            "ESC->FC Telemetry": {
+                "Type": "None",
+                "Protocol": "None"
+            },
+            "Notes": ""
+        },
+        "Motors": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "2216-880KV",
+                "Version": "",
+                "URL": "https://www.mybotshop.de/Holybro-Brushless-S500-V2-Motor"
+            },
+            "Specifications": {
+                "Poles": 14
+            },
+            "Notes": ""
+        },
+        "Propellers": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "Propeller 1045",
+                "Version": "",
+                "URL": "https://holybro.com/collections/multicopter-kit/products/spare-parts-x500-v2-kit?variant=41591073669309"
+            },
+            "Specifications": {
+                "Diameter_inches": 10
+            },
+            "Notes": ""
+        },
+        "GNSS Receiver": {
+            "Product": {
+                "Manufacturer": "CubePilot",
+                "Model": "Here+",
+                "Version": "",
+                "URL": "https://ardupilot.org/copter/docs/common-here-plus-gps.html"
+            },
+            "Firmware": {
+                "Type": "uBlox",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL3",
+                "Protocol": "uBlox"
+            },
+            "Notes": ""
+        },
+        "RC Controller": {
+            "Product": {
+                "Manufacturer": "FrSky",
+                "Model": "Taranis Q X7",
+                "Version": "EU LBT",
+                "URL": "https://www.frsky-rc.com/product/taranis-q-x7-2/"
+            },
+            "Firmware": {
+                "Type": "OpenTx",
+                "Version": "2.3.10-otx (7ac1ecb6)"
+            },
+            "Notes": "With yappu 2.9.5"
+        },
+        "RC Transmitter": {
+            "Product": {
+                "Manufacturer": "FrSky",
+                "Model": "ISRM-N 1.1.1/2.1.0EU",
+                "Version": "1.1.1",
+                "URL": "https://www.frsky-rc.com/product/taranis-q-x7-2/"
+            },
+            "Firmware": {
+                "Type": "ISRM-M",
+                "Version": "2.1.10EU"
+            },
+            "Notes": "integrated in RC controller"
+        },
+        "RC Receiver": {
+            "Product": {
+                "Manufacturer": "FrSky",
+                "Model": "Archer R6",
+                "Version": "1.2.0",
+                "URL": "https://www.frsky-rc.com/archer-r6/"
+            },
+            "Firmware": {
+                "Type": "Archer-X",
+                "Version": "2.1.14"
+            },
+            "FC Connection": {
+                "Type": "RCin/SBUS",
+                "Protocol": "SBUS"
+            },
+            "Notes": ""
+        },
+        "Telemetry": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "SiK Telemetry Radio",
+                "Version": "V3.0",
+                "URL": "https://holybro.com/products/sik-telemetry-radio-v3?variant=41562952270013"
+            },
+            "Firmware": {
+                "Type": "Open-source SIK firmware",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "MAVLink2"
+            },
+            "Notes": "100mW at 433MHz, 13.6g without antenna + \n7.4g for 433MHz antenna"
+        }
+    },
+    "Program version": "4.4.3"
+}

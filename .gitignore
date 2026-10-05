@@ -17,6 +17,7 @@ macos/*.icns
 macos/*.iconset
 macos/Output/
 macos/dmg-staging/
+node_modules/
 
 /.coverage
 venv/

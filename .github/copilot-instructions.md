@@ -17,7 +17,7 @@ This is a Python GUI application for configuring ArduPilot flight controller par
 - On Linux, use the repository's local .venv and xvfb-run when running tests, for example:
 
 ```bash
-PATH="$PWD/.venv/bin:$PATH" xvfb-run -a python -m pytest -q tests/test_frontend_tkinter_parameter_export.py.
+PATH="$PWD/.venv/bin:$PATH" xvfb-run -a python -m pytest -q tests/test_frontend_tkinter_parameter_export.py
 ```
 
 ## Architecture

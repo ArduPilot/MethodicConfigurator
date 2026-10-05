@@ -1,0 +1,14 @@
+INS_GYRO_FILTER,42
+INS_HNTCH_ATT,6  # just enough to filter the noise created by the motors/propellers
+INS_HNTCH_BW,25  # just enough to filter the noise created by the motors/propellers
+INS_HNTCH_ENABLE,1
+INS_HNTCH_FM_RAT,0.75  # Allowed undercutting of the base frequency of the first notch filter
+INS_HNTCH_FREQ,97  # the minimum frequency that the motors are expected to operate at
+INS_HNTCH_HMNCS,3
+INS_HNTCH_OPTS,2
+INS_HNTCH_REF,0.35
+ATC_RAT_PIT_FLTD,21  # INS_GYRO_FILTER / 2
+ATC_RAT_PIT_FLTT,21  # INS_GYRO_FILTER / 2
+ATC_RAT_RLL_FLTD,21  # INS_GYRO_FILTER / 2
+ATC_RAT_RLL_FLTT,21  # INS_GYRO_FILTER / 2
+ATC_RAT_YAW_FLTT,21  # INS_GYRO_FILTER / 2
