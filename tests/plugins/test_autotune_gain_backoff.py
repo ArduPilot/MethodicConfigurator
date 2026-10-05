@@ -461,10 +461,7 @@ def test_bundled_autotune_results_steps_only_enable_the_plugin_for_supported_veh
                             "Frame": {"Specifications": {"Frame class": frame_class}},
                         }
                     }
-                    if "if" in step["plugin"]:
-                        visible = bool(safe_evaluate(step["plugin"]["if"], variables))
-                    else:
-                        visible = True
+                    visible = bool(safe_evaluate(step["plugin"]["if"], variables)) if "if" in step["plugin"] else True
                     expected_visible = (vehicle == "Heli" or version_visible) and (
                         vehicle != "ArduPlane" or frame_class != "Undefined"
                     )
