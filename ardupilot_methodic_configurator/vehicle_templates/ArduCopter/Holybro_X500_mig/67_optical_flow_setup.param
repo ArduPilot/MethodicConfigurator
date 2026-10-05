@@ -1,0 +1,19 @@
+EK3_FLOW_DELAY,10  # the optical flow sensor delay
+EK3_SRC_OPTIONS,1  # Disable FuseAllVelocities during the calibration flight
+EK3_SRC1_POSXY,3  # Use GNSS as a reference during the calibration flight
+EK3_SRC1_POSZ,1  # Baro, we will not use GNSS here
+EK3_SRC1_VELXY,3  # Use GNSS as a reference during the calibration flight
+EK3_SRC1_VELZ,3  # Use GNSS as a reference during the calibration flight
+EK3_SRC1_YAW,1  # Use magnetometer as a yaw reference during the calibration flight
+EK3_SRC2_POSXY,0  # 0 for optical flow only
+EK3_SRC2_POSZ,1  # Baro, we will not use GNSS here
+EK3_SRC2_VELXY,0  # Optical flow velocity
+EK3_SRC2_VELZ,0  # None, optical flow will not provide Z velocity
+EK3_SRC2_YAW,0  # Use magnetometer as a yaw reference during the calibration flight
+FLOW_ORIENT_YAW,0  # change this if needed
+FLOW_POS_X,0
+FLOW_POS_Y,0
+FLOW_POS_Z,0
+FLOW_TYPE,0  # we have a dronecan flow sensor
+RC8_OPTION,0  # Use RC8 channel to enable optical flow calibration
+RC9_OPTION,0  # Use RC9 channel to select EKF Pos Source: low is GPS, middle is OpticalFlow, high is unused
