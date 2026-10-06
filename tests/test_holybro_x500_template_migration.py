@@ -87,10 +87,55 @@ def fixture_x500_templates(tmp_path: Path, request: pytest.FixtureRequest) -> Pa
     return isolated_templates
 
 
+@pytest.mark.parametrize("template_name", ["empty_4.6.x_mig", "Holybro_X500_mig"])
+def test_draft_v2_sequence_keeps_aliases_for_every_reordered_v1_step(template_name: str) -> None:
+    """
+    Every V1 step can reach its reordered V2 filename.
+
+    GIVEN: The production V1 definition and a draft V2 template
+    WHEN: Their filenames are matched by the descriptive suffix
+    THEN: V2 is in numeric order and each renamed V1 file is a declared migration alias
+    """
+    package = Path(__file__).parents[1] / "ardupilot_methodic_configurator"
+    v1_steps = json.loads((package / "configuration_steps_ArduCopter.json").read_bytes())["steps"]
+    v2_path = package / "vehicle_templates" / "ArduCopter" / template_name / "configuration_steps_ArduCopter.json"
+    v2_steps = json.loads(v2_path.read_bytes())["steps"]
+    assert list(v2_steps) == sorted(v2_steps)
+    assert "14_mp_setup_mandatory_hardware.param" not in v2_steps
+    by_suffix = {filename.split("_", maxsplit=1)[1]: filename for filename in v2_steps}
+    for old_filename in v1_steps:
+        suffix = old_filename.split("_", maxsplit=1)[1]
+        if suffix in by_suffix and old_filename != by_suffix[suffix]:
+            assert old_filename in v2_steps[by_suffix[suffix]]["old_filenames"], old_filename
+
+
+def test_opening_v1_x500_does_not_enable_draft_v2_migration(x500_templates: Path) -> None:
+    """
+    Draft V2 remains opt-in until the production migration version changes.
+
+    GIVEN: An unmodified V1 X500 project and the current production version
+    WHEN: The project migration entry point runs
+    THEN: No parameter files or component data change and V1 remains the current version
+    """
+    project_dir = x500_templates / "Holybro_X500"
+    before = {path.name: path.read_bytes() for path in project_dir.iterdir()}
+
+    assert migration_module.VEHICLE_COMPONENTS_FORMAT_VERSION == 1
+    assert migration_module.migrate_vehicle_project_if_needed(str(project_dir)) is False
+
+    assert {path.name: path.read_bytes() for path in project_dir.iterdir()} == before
+
+
 def test_existing_holybro_x500_migrates_to_x500_mig_parameter_files(  # pylint: disable=too-many-locals
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, x500_templates: Path
 ) -> None:
-    """Migrate the old template with v2 step files and compare every .param file."""
+    """
+    Preserve the X500's settings in the reordered V2 sequence.
+
+    GIVEN: A V1 X500 project and the draft V2 configuration and empty template
+    WHEN: V2 migration is explicitly enabled and the usual filename aliases run
+    THEN: Every parameter file matches the reordered X500 fixture
+    """
     old_template = x500_templates / "Holybro_X500"
     migrated_template = x500_templates / "Holybro_X500_mig"
     empty_v2_template = x500_templates / "empty_4.6.x_mig"
@@ -139,7 +184,7 @@ def test_existing_holybro_x500_migrates_to_x500_mig_parameter_files(  # pylint: 
     # RCMAP rows are new configuration inputs, not historical format-migration
     # output. The step's add_parameters copies live mappings when it is opened;
     # filename migration must not fabricate values or overwrite custom mappings.
-    controller_file = "07_remote_controller_controller.param"
+    controller_file = "06_remote_controller_controller.param"
     mapping_names = {"RCMAP_ROLL", "RCMAP_PITCH", "RCMAP_THROTTLE", "RCMAP_YAW"}
     expected[controller_file] = b"".join(
         line
@@ -168,3 +213,8 @@ def test_existing_holybro_x500_migrates_to_x500_mig_parameter_files(  # pylint: 
         )
 
     assert not mismatched_files, "Migrated Holybro_X500 .param files differ:\n" + "".join(file_diffs)
+    assert set(actual) - {"00_default.param"} == set(filesystem.configuration_steps)
+    before_retry = {path.name: path.read_bytes() for path in project_dir.iterdir() if path.is_file()}
+    assert migration_module.migrate_vehicle_project_if_needed(str(project_dir)) is False
+    filesystem.rename_parameter_files()
+    assert {path.name: path.read_bytes() for path in project_dir.iterdir() if path.is_file()} == before_retry

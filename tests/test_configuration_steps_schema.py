@@ -55,7 +55,7 @@ def test_optional_fourth_and_fifth_imu_calibration_uses_real_subgroup_names() ->
         "configuration_steps_ArduCopter.json",
     )
     with open(filename, encoding="utf-8") as file:
-        step = json.load(file)["steps"]["14_accelerometer_calibration.param"]
+        step = json.load(file)["steps"]["15_accelerometer_calibration.param"]
     patterns = step["autoimport_nondefault_regexp"]
     for imu in (4, 5):
         for suffix in ("USE", "ACCOFFS_X", "ACCOFFS_Y", "ACCOFFS_Z", "ACCSCAL_X", "ACCSCAL_Y", "ACCSCAL_Z", "ACC_CALTEMP"):
@@ -220,7 +220,7 @@ def test_holybro_x500_template_derives_receiver_and_telemetry_serial_protocols()
         steps = json.load(file)["steps"]
 
     config_steps = ConfigurationSteps("vehicle_dir", "ArduCopter")
-    receiver_file = "06_remote_controller_receiver.param"
+    receiver_file = "05_remote_controller_receiver.param"
     receiver_step = steps[receiver_file]
     for serial_port in range(1, 10):
         serial_name = f"SERIAL{serial_port}"
@@ -231,7 +231,7 @@ def test_holybro_x500_template_derives_receiver_and_telemetry_serial_protocols()
         assert config_steps.compute_parameters(receiver_file, receiver_step, "derived", receiver_variables) == ""
         assert config_steps.derived_parameters[receiver_file][f"{serial_name}_PROTOCOL"].value == 23.0
 
-    telemetry_file = "08_telemetry.param"
+    telemetry_file = "07_telemetry.param"
     telemetry_step = steps[telemetry_file]
     for serial_port in range(1, 10):
         serial_name = f"SERIAL{serial_port}"
@@ -244,7 +244,7 @@ def test_holybro_x500_template_derives_receiver_and_telemetry_serial_protocols()
 
     assert (template_dir / "35_inflight_magnetometer_fit_setup.pdef.xml").is_file()
     assert not (template_dir / "31_inflight_magnetometer_fit_setup.pdef.xml").exists()
-    assert "FRAME_CLASS,1" in (template_dir / "18_servo_outputs.param").read_text(encoding="utf-8")
+    assert "FRAME_CLASS,1" in (template_dir / "11_servo_outputs.param").read_text(encoding="utf-8")
 
 
 def test_arduplane_configuration_steps_do_not_write_copter_only_parameters() -> None:
