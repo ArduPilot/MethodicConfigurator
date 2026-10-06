@@ -17,6 +17,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import errno
 import logging
 import re
 from contextlib import suppress
@@ -27,7 +28,7 @@ from os import link as os_link
 from os import open as os_open
 from pathlib import Path
 from secrets import token_hex
-from shutil import copyfile
+from shutil import copyfile, copyfileobj
 from stat import S_IMODE
 
 from ardupilot_methodic_configurator import _
@@ -664,8 +665,31 @@ def _extract_params(source: Path, patterns: list[str]) -> tuple[list[str], list[
     return _extract_param_lines(_read_param_file_lines(source), patterns)
 
 
+def _copy_configuration_step_file_exclusively(source: Path, destination: Path) -> None:
+    """
+    Copy without overwriting when atomic hard-link publication is unavailable.
+
+    Exclusive creation preserves competing files and normal file permissions.
+    Unlike hard-link publication, readers may see the copy while it is being
+    written. Remove our incomplete destination on failure so migration can retry.
+    """
+    created = False
+    completed = False
+    try:
+        with source.open("rb") as source_file, destination.open("xb") as destination_file:
+            created = True
+            copyfileobj(source_file, destination_file)
+            destination_file.flush()
+            fsync(destination_file.fileno())
+        completed = True
+    finally:
+        if created and not completed:
+            with suppress(OSError):
+                destination.unlink()
+
+
 def _copy_configuration_step_file(source: Path, destination: Path) -> None:
-    """Publish a complete template copy atomically, never overwriting an existing destination."""
+    """Restore a template without overwriting, publishing atomically when hard links are supported."""
     temporary_path = destination.parent / f".migration-{token_hex(16)}.tmp"
     # Match normal file creation: let the OS apply umask and inherited ACLs rather
     # than publishing NamedTemporaryFile's private 0o600 permissions. Exclusive
@@ -676,10 +700,18 @@ def _copy_configuration_step_file(source: Path, destination: Path) -> None:
         copyfile(source, temporary_path)
         with temporary_path.open("r+b") as copied_file:
             fsync(copied_file.fileno())
-        # Linking publishes complete contents atomically and fails if the destination
-        # appeared during copying. Do not fall back to a clobbering rename/replace.
+        # Prefer atomic publication, but writable FAT/exFAT volumes and some
+        # network filesystems cannot create hard links. Their fallback must use
+        # exclusive creation, never a clobbering rename/replace.
         try:
-            os_link(temporary_path, destination)
+            try:
+                os_link(temporary_path, destination)
+            except OSError as exc:
+                if exc.errno not in {errno.EPERM, errno.ENOTSUP, errno.EOPNOTSUPP, errno.ENOSYS, errno.EXDEV} and getattr(
+                    exc, "winerror", None
+                ) not in {1, 50}:  # ERROR_INVALID_FUNCTION, ERROR_NOT_SUPPORTED
+                    raise
+                _copy_configuration_step_file_exclusively(temporary_path, destination)
         except FileExistsError:
             logging.info(_("Preserved configuration file created during template restoration: %s"), destination.name)
     finally:
@@ -700,7 +732,8 @@ def _restore_missing_configuration_step_files(  # pylint: disable=too-many-local
     that exist in both the active configuration-step definition and the matching empty template.
     Existing project files, including empty files, are never overwritten. The v1→v2 migration
     calls this before splitting parameters so its destination files can be seeded from the template.
-    Copies are published atomically so an interrupted restoration can be retried.
+    Copies are published atomically where hard links are available; otherwise
+    exclusive creation preserves existing files and failed copies are removed for retry.
     """
     version_match = re.search(r"(\d+)\.(\d+)", firmware_version)
     if not vehicle_type or not version_match:
