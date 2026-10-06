@@ -39,6 +39,8 @@ from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
 # The versioned, vehicle-specific migration tables intentionally live together.
 # pylint: disable=too-many-lines
 
+# V2 rules target the draft reordered templates, but automatic V2 migration
+# remains disabled until the production configuration sequence is released.
 VEHICLE_COMPONENTS_FORMAT_VERSION = 1
 _VEHICLE_COMPONENTS_JSON_FILENAME = "vehicle_components.json"
 _PACKAGE_DIR = Path(__file__).resolve().parent
@@ -336,7 +338,7 @@ _PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str]]]] = {
     "ArduCopter": [
         (
             "14_mp_setup_mandatory_hardware.param",
-            "14_accelerometer_calibration.param",
+            "15_accelerometer_calibration.param",
             [
                 r"(?:INS_ACC[23]?OFFS|INS[45]_ACCOFFS)_[XYZ]",
                 r"(?:INS_ACC[23]?SCAL|INS[45]_ACCSCAL)_[XYZ]",
@@ -350,47 +352,47 @@ _PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str]]]] = {
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
-            "15_accelerometer_level.param",
+            "16_accelerometer_level.param",
             [r"AHRS_TRIM_[XY]"],
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
-            "16_compass_calibration.param",
+            "18_compass_calibration.param",
             [r"COMPASS_.+"],
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
-            "17_flight_modes.param",
+            "21_flight_modes.param",
             [r"FLTMODE[1-6]", "INITIAL_MODE"],
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
-            "07_remote_controller_controller.param",
+            "06_remote_controller_controller.param",
             [r"RC\d+_(?:MIN|MAX|TRIM)"],
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
-            "18_servo_outputs.param",
+            "11_servo_outputs.param",
             [r"SERVO\d+_FUNCTION", "FRAME_CLASS"],
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
-            "13_initial_atc.param",
+            "24_initial_atc.param",
             [r"ATC_ACC_[PRY]_MAX"],
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
-            "19_general_configuration.param",
+            "22_general_configuration.param",
             [r"RNGFND\d*_.*|FLOW_TYPE"],
         ),
         (
             "05_board_orientation.param",
-            "18_servo_outputs.param",
+            "11_servo_outputs.param",
             ["FRAME_CLASS"],
         ),
         (
             "04_board_orientation.param",
-            "18_servo_outputs.param",
+            "11_servo_outputs.param",
             ["FRAME_CLASS"],
         ),
     ],
@@ -472,13 +474,13 @@ _PARAM_COPIES_V1_TO_V2: dict[str, list[tuple[str, str, str, list[str]]]] = {
         (
             "14_mp_setup_mandatory_hardware.param",
             "03_imu_temperature_calibration_results.param",
-            "14_accelerometer_calibration.param",
+            "15_accelerometer_calibration.param",
             [r"INS_ACC[1-3]_CALTEMP|INS[45]_ACC_CALTEMP"],
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
-            "15_accelerometer_level.param",
-            "14_accelerometer_calibration.param",
+            "16_accelerometer_level.param",
+            "15_accelerometer_calibration.param",
             [r"AHRS_TRIM_[XY]"],
         ),
     ],
@@ -857,7 +859,7 @@ def _surface_unmapped_copter_parameters(remaining_by_source: dict[Path, list[str
         _obsolete, retained = _extract_param_lines(remaining, obsolete_patterns[src_path.name])
         unmapped = [line for line in retained if _param_name_from_line(line)]
         if unmapped:
-            destination = "19_general_configuration.param"
+            destination = "22_general_configuration.param"
             accumulated.setdefault(destination, []).extend(unmapped)
             logging.warning(
                 _("Unmapped parameters from %s copied to mandatory step %s for review: %s"),
@@ -867,11 +869,47 @@ def _surface_unmapped_copter_parameters(remaining_by_source: dict[Path, list[str
             )
 
 
+def _migration_destination_paths(vehicle_path: Path, vehicle_type: str) -> dict[str, Path]:
+    """Overlay migrated values onto existing aliases before the normal filename renames."""
+    configuration_path = vehicle_path / f"configuration_steps_{vehicle_type}.json"
+    if not configuration_path.is_file():
+        configuration_path = _PACKAGE_DIR / f"configuration_steps_{vehicle_type}.json"
+    try:
+        with open(configuration_path, encoding="utf-8-sig") as file:
+            configuration_data = json_load(file)
+    except (OSError, ValueError) as exc:
+        logging.warning(_("Cannot load configuration steps %s: %s"), configuration_path, exc)
+        return {}
+    steps = configuration_data.get("steps", {}) if isinstance(configuration_data, dict) else {}
+    if not isinstance(steps, dict):
+        return {}
+
+    destinations: dict[str, Path] = {}
+    for filename, step_info in steps.items():
+        if not isinstance(filename, str) or Path(filename).name != filename or not isinstance(step_info, dict):
+            continue
+        if (vehicle_path / filename).exists():
+            continue
+        old_filenames = step_info.get("old_filenames", [])
+        if not isinstance(old_filenames, list):
+            continue
+        for old_filename in old_filenames:
+            if (
+                isinstance(old_filename, str)
+                and Path(old_filename).name == old_filename
+                and (vehicle_path / old_filename).is_file()
+            ):
+                destinations[filename] = vehicle_path / old_filename
+                break
+    return destinations
+
+
 def _migrate_v1_to_v2(vehicle_path: Path, vehicle_type: str) -> set[str]:  # noqa: PLR0915  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     """Move hardware settings to the matching vehicle layout, splitting calibration only for ArduCopter."""
     deleted_filenames: set[str] = set()
     accumulated: dict[str, list[str]] = {}
     remaining_by_source: dict[Path, list[str]] = {}
+    destination_paths = _migration_destination_paths(vehicle_path, vehicle_type)
 
     param_move_keys = ["all"] + ([vehicle_type] if vehicle_type in _PARAM_MOVES_V1_TO_V2 else [])
     for key in param_move_keys:
@@ -911,7 +949,7 @@ def _migrate_v1_to_v2(vehicle_path: Path, vehicle_type: str) -> set[str]:  # noq
         _surface_unmapped_copter_parameters(remaining_by_source, accumulated)
 
     for dst_name, lines in accumulated.items():
-        dst_path = vehicle_path / dst_name
+        dst_path = destination_paths.get(dst_name, vehicle_path / dst_name)
         existing = _read_param_file_lines(dst_path) if dst_path.exists() else []
         moved_names = {_param_name_from_line(line) for line in lines if _param_name_from_line(line)}
         # Values from the old project file are authoritative during migration.
