@@ -43,6 +43,10 @@ It allows users to test motor functionality, verify motor order and direction, a
    - ✅ "Test All" button for simultaneous motor testing
    - ✅ "Test in Sequence" button for automated sequential testing
    - ✅ "Stop All Motors" emergency stop button
+   - ✅ Console logging of every nonempty firmware `STATUSTEXT` payload while the plugin is active,
+     including messages received during command ACK and battery/parameter reads
+   - ✅ Periodic non-blocking polling for messages emitted after a test command is acknowledged
+   - ✅ Failed motor-test commands retain queued firmware feedback during the ACK grace period
 
 4. **Battery Status Display**
    - ✅ Current BATT1 voltage and current readings (only when BATT_MONITOR != 0)

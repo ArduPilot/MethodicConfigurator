@@ -37,6 +37,27 @@ from ardupilot_methodic_configurator.plugins.data_model_motor_test import (
 # ==================== FIXTURES ====================
 
 
+def test_motor_test_model_delegates_status_logging_and_polling(
+    motor_test_model: MotorTestDataModel, mock_flight_controller: MagicMock
+) -> None:
+    """
+    Forward firmware status monitoring through the backend facade.
+
+    GIVEN: A connected motor-test model
+    WHEN: Its view enables logging, polls messages and disables logging
+    THEN: The flight controller receives the corresponding lifecycle calls
+    """
+    motor_test_model.set_status_text_logging(True)
+    motor_test_model.poll_status_text()
+    motor_test_model.set_status_text_logging(False)
+
+    assert mock_flight_controller.set_motor_test_status_text_logging.call_args_list == [
+        ((True,),),
+        ((False,),),
+    ]
+    mock_flight_controller.poll_motor_test_status_text.assert_called_once_with()
+
+
 @pytest.fixture
 def mock_flight_controller() -> MagicMock:
     """Fixture providing a mock flight controller with realistic test data."""

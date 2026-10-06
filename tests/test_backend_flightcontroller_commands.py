@@ -14,10 +14,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import itertools
+import logging
 import subprocess
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -25,7 +28,232 @@ from pymavlink import mavutil
 
 from ardupilot_methodic_configurator.backend_flightcontroller_commands import FlightControllerCommands
 
-# pylint: disable=too-many-lines
+if TYPE_CHECKING:
+    from pymavlink.dialects.v20.ardupilotmega import MAVLink_message
+
+StatusEnqueue = Callable[..., None]
+
+# pylint: disable=too-many-lines,redefined-outer-name
+
+
+@pytest.fixture
+def motor_status_connection(
+    monkeypatch: pytest.MonkeyPatch,
+) -> tuple[FlightControllerCommands, mavutil.mavfile, StatusEnqueue]:
+    """Use pymavlink's real parser and receive hooks with an in-memory transport."""
+    # mavfile construction updates pymavlink's global connection; restore it
+    # after the test so this in-memory transport cannot affect other tests.
+    monkeypatch.setattr(mavutil, "mavfile_global", mavutil.mavfile_global)
+    master = mavutil.mavfile(None, "motor-status-test")
+    master.target_system = 1
+    master.target_component = 1
+    pending = bytearray()
+    encoder = mavutil.mavlink.MAVLink(None, srcSystem=1, srcComponent=1)
+
+    def receive(size: int) -> bytes:
+        data = bytes(pending[:size])
+        del pending[:size]
+        return data
+
+    def enqueue(*messages: "MAVLink_message") -> None:
+        for message in messages:
+            pending.extend(message.pack(encoder))
+
+    monkeypatch.setattr(master, "recv", receive)
+    monkeypatch.setattr(master.mav, "command_long_send", Mock())
+    connection = Mock(master=master)
+    commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
+    return commands, master, enqueue
+
+
+@pytest.mark.parametrize("severity", range(8))
+def test_motor_test_logs_any_firmware_status_at_normal_console_verbosity(
+    motor_status_connection: tuple[FlightControllerCommands, mavutil.mavfile, StatusEnqueue],
+    caplog: pytest.LogCaptureFixture,
+    severity: int,
+) -> None:
+    """
+    Display every firmware severity without requiring a motor-test prefix.
+
+    GIVEN: Active motor-test monitoring receives an arbitrary firmware message
+    WHEN: Pending telemetry is polled using the real pymavlink parser
+    THEN: Its payload is logged exactly once at INFO or higher
+    """
+    commands, _master, enqueue = motor_status_connection
+    commands.set_motor_test_status_text_logging(True)
+    enqueue(mavutil.mavlink.MAVLink_statustext_message(severity, b"Unrelated sensor diagnostic"))
+    with caplog.at_level(logging.INFO):
+        commands.poll_motor_test_status_text()
+        commands.poll_motor_test_status_text()
+    records = [record for record in caplog.records if "Unrelated sensor diagnostic" in record.getMessage()]
+    assert len(records) == 1
+    assert records[0].levelno >= logging.INFO
+
+
+@pytest.mark.parametrize("after_ack", [False, True])
+def test_motor_test_logs_rejection_reason_before_or_after_failed_ack(
+    motor_status_connection: tuple[FlightControllerCommands, mavutil.mavfile, StatusEnqueue],
+    caplog: pytest.LogCaptureFixture,
+    after_ack: bool,
+) -> None:
+    """
+    Show firmware rejection reasons regardless of ACK ordering.
+
+    GIVEN: A motor test is rejected with a safety-switch diagnostic
+    WHEN: Firmware sends its status before or after the failed ACK
+    THEN: The console logs the diagnostic and the returned error includes it
+    """
+    commands, _master, enqueue = motor_status_connection
+    commands.set_motor_test_status_text_logging(True)
+    status = mavutil.mavlink.MAVLink_statustext_message(2, b"Motor Test: Safety switch")
+    ack = mavutil.mavlink.MAVLink_command_ack_message(mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST, mavutil.mavlink.MAV_RESULT_FAILED)
+    enqueue(*([ack, status] if after_ack else [status, ack]))
+    success, message = commands.test_motor(0, "A", 1, 10, 2)
+    assert success is False
+    assert "Motor Test: Safety switch" in message
+    assert any("STATUSTEXT" in record.getMessage() and "Safety switch" in record.getMessage() for record in caplog.records)
+
+
+def test_motor_test_logs_status_filtered_by_ack_reads_and_after_success(
+    motor_status_connection: tuple[FlightControllerCommands, mavutil.mavfile, StatusEnqueue],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """
+    Keep firmware messages visible during unrelated reads and after motor tests start.
+
+    GIVEN: Active monitoring receives status during an unrelated command and after a successful test ACK
+    WHEN: ACK filtering and subsequent telemetry polling run
+    THEN: Both status payloads are logged without consuming the expected command results
+    """
+    commands, _master, enqueue = motor_status_connection
+    commands.set_motor_test_status_text_logging(True)
+    other_command = mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL
+    enqueue(
+        mavutil.mavlink.MAVLink_statustext_message(6, b"Sensor diagnostic during battery request"),
+        mavutil.mavlink.MAVLink_command_ack_message(other_command, mavutil.mavlink.MAV_RESULT_ACCEPTED),
+    )
+    with caplog.at_level(logging.INFO):
+        assert commands.send_command_and_wait_ack(other_command) == (True, "")
+        enqueue(
+            mavutil.mavlink.MAVLink_command_ack_message(
+                mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST, mavutil.mavlink.MAV_RESULT_ACCEPTED
+            ),
+            mavutil.mavlink.MAVLink_statustext_message(6, b"finished motor test"),
+        )
+        assert commands.test_motor(0, "A", 1, 10, 2) == (True, "")
+        commands.poll_motor_test_status_text()
+    assert "Sensor diagnostic during battery request" in caplog.text
+    assert "finished motor test" in caplog.text
+
+
+@pytest.mark.parametrize("operation", ["single", "all", "sequence", "stop"])
+def test_all_motor_test_commands_log_firmware_feedback(
+    motor_status_connection: tuple[FlightControllerCommands, mavutil.mavfile, StatusEnqueue],
+    caplog: pytest.LogCaptureFixture,
+    operation: str,
+) -> None:
+    """
+    Observe status during every motor-test command path.
+
+    GIVEN: Monitoring receives firmware feedback and an ACK for a motor operation
+    WHEN: An individual, all-motor, sequence or stop command is sent
+    THEN: The feedback reaches the console while the operation succeeds
+    """
+    commands, _master, enqueue = motor_status_connection
+    commands.set_motor_test_status_text_logging(True)
+    enqueue(
+        mavutil.mavlink.MAVLink_statustext_message(6, b"Motor operation diagnostic"),
+        mavutil.mavlink.MAVLink_command_ack_message(
+            mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST, mavutil.mavlink.MAV_RESULT_ACCEPTED
+        ),
+    )
+    actions = {
+        "single": lambda: commands.test_motor(0, "A", 1, 10, 2),
+        "all": lambda: commands.test_all_motors(1, 10, 2),
+        "sequence": lambda: commands.test_motors_in_sequence(1, 4, 10, 2),
+        "stop": commands.stop_all_motors,
+    }
+    with caplog.at_level(logging.INFO):
+        assert actions[operation]() == (True, "")
+    assert "Motor operation diagnostic" in caplog.text
+
+
+@pytest.mark.parametrize("payload", [b"", b"\x00" * 8, b"  diagnostic \x00\x00", b"invalid UTF-8 \xff"])
+def test_motor_test_console_handles_padded_empty_and_non_utf8_status_payloads(
+    mock_connected_master: tuple[MagicMock, Mock], caplog: pytest.LogCaptureFixture, payload: bytes
+) -> None:
+    """
+    Decode firmware status text safely without logging empty payloads.
+
+    GIVEN: A receive hook sees padded, empty or non-UTF8 firmware text
+    WHEN: The active plugin observes the message
+    THEN: Nonempty text is normalized and logged while empty text is ignored
+    """
+    master, connection = mock_connected_master
+    master.message_hooks = []
+    commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
+    commands.set_motor_test_status_text_logging(True)
+    status = Mock(text=payload, severity=6)
+    status.get_type.return_value = "STATUSTEXT"
+    with caplog.at_level(logging.INFO):
+        master.message_hooks[0](master, status)
+    expected = payload.decode("utf-8", errors="replace").rstrip("\x00").strip()
+    assert len(caplog.records) == int(bool(expected))
+    if expected:
+        assert caplog.records[0].getMessage().endswith(expected)
+
+
+def test_motor_test_status_hook_moves_on_reconnect_and_is_released_on_deactivation(
+    mock_connected_master: tuple[MagicMock, Mock], caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    Preserve other receive hooks and stop logging when the plugin is inactive.
+
+    GIVEN: Motor-test monitoring is enabled repeatedly and the flight controller reconnects
+    WHEN: Monitoring moves to the new connection and is later disabled
+    THEN: Exactly one motor hook is attached, old hooks survive, and inactive messages are not logged
+    """
+    old_master, connection = mock_connected_master
+    unrelated_hook = Mock()
+    old_master.message_hooks = [unrelated_hook]
+    commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
+    commands.set_motor_test_status_text_logging(True)
+    commands.set_motor_test_status_text_logging(True)
+    assert len(old_master.message_hooks) == 2
+    new_master = MagicMock(message_hooks=[])
+    new_master.recv_msg.return_value = None
+    connection.master = new_master
+    commands.poll_motor_test_status_text()
+    assert old_master.message_hooks == [unrelated_hook]
+    assert len(new_master.message_hooks) == 1
+    commands.set_motor_test_status_text_logging(False)
+    commands.poll_motor_test_status_text()
+    assert new_master.message_hooks == []
+    assert not caplog.records
+
+
+def test_motor_test_polling_is_bounded_and_tolerates_a_disconnected_controller(
+    mock_connected_master: tuple[MagicMock, Mock], caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    Keep status polling responsive and safe after a transport failure.
+
+    GIVEN: A controller continuously emits telemetry, then loses its connection
+    WHEN: The active motor-test view polls status
+    THEN: Each poll is bounded and a serial failure is logged without blocking or raising
+    """
+    master, connection = mock_connected_master
+    master.message_hooks = []
+    commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
+    commands.set_motor_test_status_text_logging(True)
+    commands.poll_motor_test_status_text()
+    assert master.recv_msg.call_count == 100
+    master.recv_msg.side_effect = OSError("serial disconnected")
+    commands.poll_motor_test_status_text()
+    assert "serial disconnected" in caplog.text
+    connection.master = None
+    commands.poll_motor_test_status_text()
+    assert master.message_hooks == []
 
 
 def test_command_ack_meets_pylint_statement_and_return_limits() -> None:

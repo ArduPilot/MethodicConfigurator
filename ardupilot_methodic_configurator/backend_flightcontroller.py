@@ -742,6 +742,14 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         """Emergency stop for all motors - delegates to commands manager."""
         return self._commands_manager.stop_all_motors()
 
+    def set_motor_test_status_text_logging(self, enabled: bool) -> None:
+        """Enable or release console logging for the active motor-test plugin."""
+        self._commands_manager.set_motor_test_status_text_logging(enabled)
+
+    def poll_motor_test_status_text(self) -> None:
+        """Read pending firmware status text without blocking the motor-test UI."""
+        self._commands_manager.poll_motor_test_status_text()
+
     # Accelerometer Calibration - Delegated to commands manager
 
     def start_accel_calibration_simple(self) -> tuple[bool, str]:
