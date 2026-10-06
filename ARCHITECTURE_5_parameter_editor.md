@@ -108,6 +108,26 @@ This systematic approach ensures methodical, traceable, and safe vehicle configu
   - Coordinate between documentation, table, and progress components
   - Manage application state and configuration persistence
 
+#### Calibration Navigation Lock
+
+- **File**: `frontend_tkinter_navigation_lock.py`
+- **Purpose**: Keep the active configuration context stable during calibration
+- **Responsibilities**:
+  - Disable registered navigation, upload, file-browser, export, and auxiliary action controls
+  - Preserve each control's existing disabled state and the step selector's readonly state
+  - Restore controls only after every owner releases its lock, tolerating widget teardown
+- **Integration**:
+  - `BaseWindow.navigation_lock` supplies the shared frontend-only service
+  - The parameter editor registers its header and footer controls and guards queued callbacks
+  - Calibration views use `plugins/frontend_tkinter_helpers.py` to acquire before sending commands
+    and release after completion, cancellation, failed startup, or teardown
+  - Accelerometer and level calibration retain their locks through parameter readback and staging
+  - RC calibration retains its lock while collecting and saving channel extremes
+  - Compass calibration retains its lock until its progress popup closes
+  - Future asynchronous calibrations can use `start_calibration_with_navigation_lock()` and
+    `end_calibration_navigation_lock()` without depending on `ParameterEditorWindow`
+  - Calibration continue/cancel controls and application close remain available
+
 #### Documentation Frame
 
 - **File**: `frontend_tkinter_parameter_editor_documentation_frame.py`

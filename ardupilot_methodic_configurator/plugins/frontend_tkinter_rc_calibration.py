@@ -31,7 +31,11 @@ from ardupilot_methodic_configurator.frontend_tkinter_calibration_popup_base imp
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.plugins.data_model_rc_calibration import RC_STICK_MODES, RCCalibrationDataModel
-from ardupilot_methodic_configurator.plugins.frontend_tkinter_helpers import refresh_parameter_editor_table
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_helpers import (
+    end_calibration_navigation_lock,
+    refresh_parameter_editor_table,
+    start_calibration_with_navigation_lock,
+)
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_RC_CALIBRATION
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
 from ardupilot_methodic_configurator.plugins.renderer_3d_quadcopter import QuadcopterRenderer
@@ -536,6 +540,7 @@ class RCCalibrationView(ttk.Frame):  # pylint: disable=too-many-ancestors, too-m
         self.model = model
         self.base_window = base_window
         self._timer_id: str | None = None
+        self._calibration_active = False
         self._polls_without_updates = 0
         self._no_telemetry_warning_emitted = False
         self._setup_style()
@@ -603,8 +608,13 @@ class RCCalibrationView(ttk.Frame):  # pylint: disable=too-many-ancestors, too-m
         self.channel_bars.pack(fill="x", expand=True, pady=(0, _RC_FRAME_PADDING))
 
     def _on_start_calibration(self) -> None:
+        start_calibration_with_navigation_lock(self.base_window, self, self._start_calibration)
+
+    def _start_calibration(self) -> bool:
+        """Start collecting RC extremes with navigation already locked."""
         success, error_msg = self.model.start_calibration()
         if success:
+            self._calibration_active = True
             self.channel_bars.update_calibration(self.model.get_channel_calibration())
             self._start_btn.configure(state="disabled")
             self._finish_btn.configure(state="normal")
@@ -615,12 +625,17 @@ class RCCalibrationView(ttk.Frame):  # pylint: disable=too-many-ancestors, too-m
             )
         else:
             self._status_label.configure(text=error_msg, foreground="red")
+        return success
 
     def _on_finish_calibration(self) -> None:
-        success, message = self.model.finish_calibration()
-        if success:
-            self._refresh_parameters()
-        self.channel_bars.update_calibration(self.model.get_channel_calibration())
+        try:
+            success, message = self.model.finish_calibration()
+            if success:
+                self._refresh_parameters()
+            self.channel_bars.update_calibration(self.model.get_channel_calibration())
+        finally:
+            self._calibration_active = False
+            end_calibration_navigation_lock(self.base_window, self)
         self._start_btn.configure(state="normal")
         self._finish_btn.configure(state="disabled" if success else "normal")
         self._cancel_btn.configure(state="disabled" if success else "normal")
@@ -638,8 +653,12 @@ class RCCalibrationView(ttk.Frame):  # pylint: disable=too-many-ancestors, too-m
         self.channel_bars.update_channels(self.model.get_channel_calibration())
 
     def _on_cancel_calibration(self) -> None:
-        self.model.cancel_calibration()
-        self.channel_bars.update_calibration(self.model.get_channel_calibration())
+        try:
+            self.model.cancel_calibration()
+            self.channel_bars.update_calibration(self.model.get_channel_calibration())
+        finally:
+            self._calibration_active = False
+            end_calibration_navigation_lock(self.base_window, self)
         self._start_btn.configure(state="normal")
         self._finish_btn.configure(state="disabled")
         self._cancel_btn.configure(state="disabled")
@@ -676,8 +695,14 @@ class RCCalibrationView(ttk.Frame):  # pylint: disable=too-many-ancestors, too-m
 
     def destroy(self) -> None:
         """Stop the polling loop before destroying the widget."""
-        self._stop_polling()
-        super().destroy()
+        try:
+            self._stop_polling()
+            if self._calibration_active:
+                self.model.cancel_calibration()
+                self._calibration_active = False
+        finally:
+            end_calibration_navigation_lock(self.base_window, self)
+            super().destroy()
 
 
 def _create_rc_calibration_view(

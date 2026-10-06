@@ -2466,6 +2466,7 @@ class TestFileBrowserWindow:
         THEN: A modal is opened with the editor model and UI services
         """
         editor = ParameterEditorWindow.__new__(ParameterEditorWindow)
+        editor.navigation_lock = MagicMock(locked=False)
         editor.root = MagicMock()
         editor.parameter_editor = MagicMock()
         editor.ui = MagicMock()

@@ -457,6 +457,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             style="readonly.TCombobox",
         )
         self.file_selection_combobox.bind("<<ComboboxSelected>>", self.on_param_file_combobox_change)
+        self.navigation_lock.register(self.file_selection_combobox)
         if self.gui_complexity != "simple":  # only display the combobox when not simple
             self.file_selection_combobox.pack(side=tk.TOP, anchor=tk.NW, pady=(4, 0))
 
@@ -476,6 +477,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             style=smaller_button_style,
         )
         compare_and_upload_button.configure(state="normal" if self.parameter_editor.is_fc_connected else "disabled")
+        self.navigation_lock.register(compare_and_upload_button)
         compare_and_upload_button.grid(row=0, column=0, padx=(8, 8), sticky=tk.EW)
         show_tooltip(
             compare_and_upload_button,
@@ -491,6 +493,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             style=smaller_button_style,
         )
         export_parameters_button.configure(state="normal" if self.parameter_editor.is_fc_connected else "disabled")
+        self.navigation_lock.register(export_parameters_button)
         export_parameters_button.grid(row=1, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
         show_tooltip(
             export_parameters_button,
@@ -506,6 +509,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             style=smaller_button_style,
         )
         fc_banner_button.configure(state="normal" if self.parameter_editor.is_fc_connected else "disabled")
+        self.navigation_lock.register(fc_banner_button)
         fc_banner_button.grid(row=2, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
         show_tooltip(
             fc_banner_button,
@@ -519,6 +523,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             style=smaller_button_style,
         )
         analyse_log_button.grid(row=3, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
+        self.navigation_lock.register(analyse_log_button)
         show_tooltip(analyse_log_button, _("Open a .bin flight log and analyse its availability"))
 
         edit_vehicle_components_button = ttk.Button(
@@ -528,6 +533,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             style=smaller_button_style,
         )
         edit_vehicle_components_button.grid(row=4, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
+        self.navigation_lock.register(edit_vehicle_components_button)
         show_tooltip(
             edit_vehicle_components_button,
             _("Close the parameter editor and open the vehicle component editor"),
@@ -551,6 +557,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             style=button_style,
         )
         zip_vehicle_for_forum_button.configure(state=("normal" if self.parameter_editor.parameter_files() else "disabled"))
+        self.navigation_lock.register(zip_vehicle_for_forum_button)
         zip_vehicle_for_forum_button.pack(side=tk.TOP, fill="x", pady=(3, 0))
         show_tooltip(
             zip_vehicle_for_forum_button,
@@ -673,6 +680,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             command=self.on_upload_selected_and_stay_click,
         )
         upload_selected_and_stay_button.configure(state="normal" if self.parameter_editor.is_fc_connected else "disabled")
+        self.navigation_lock.register(upload_selected_and_stay_button)
         upload_selected_and_stay_button.pack(side=tk.LEFT, padx=(8, 8))
         show_tooltip(
             upload_selected_and_stay_button,
@@ -692,6 +700,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             command=self.on_upload_selected_click,
         )
         upload_selected_button.configure(state="normal" if self.parameter_editor.is_fc_connected else "disabled")
+        self.navigation_lock.register(upload_selected_button)
         upload_selected_button.pack(side=tk.LEFT, padx=(8, 8))  # Add padding on both sides of the upload selected button
         show_tooltip(
             upload_selected_button,
@@ -718,6 +727,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             )
         )
         download_log_button.pack(side=tk.LEFT, padx=(8, 8))  # Add padding on both sides of the download log button
+        self.navigation_lock.register(download_log_button)
         show_tooltip(
             download_log_button,
             _("Browse files in the flight controller log directory and download one or more files")
@@ -736,6 +746,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             )
         )
         self.skip_button.pack(side=tk.RIGHT, padx=(8, 8))  # Add right padding to the skip button
+        self.navigation_lock.register(self.skip_button)
         show_tooltip(
             self.skip_button,
             _(
@@ -747,6 +758,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.previous_button = ttk.Button(buttons_frame, text=_("< Skip"), command=self.on_previous_click)
         self._update_previous_button_state()
         self.previous_button.pack(side=tk.RIGHT, padx=(8, 0))
+        self.navigation_lock.register(self.previous_button)
         show_tooltip(
             self.previous_button,
             _(
@@ -846,6 +858,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def on_analyse_log_click(self) -> None:
         """Handle the analyse log button click."""
+        if self.navigation_lock.locked:
+            return
         filepath = self.ui.askopenfilename(
             title=_("Select a flight log"),
             filetypes=[(_("ArduPilot binary log files"), "*.bin"), (_("All files"), "*.*")],
@@ -855,6 +869,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._analyse_log_file(filepath)
 
     def _navigate_to_config_step(self, step: str) -> None:
+        if self.navigation_lock.locked:
+            return
         if not step or step not in self.file_selection_combobox["values"]:
             return
         self._log_report_return_pending = True
@@ -1428,6 +1444,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         return progress_window.update_progress_bar
 
     def on_param_file_combobox_change(self, _event: Union[tk.Event, None], forced: bool = False) -> None:  # noqa: UP007
+        if self.navigation_lock.locked:
+            self.file_selection_combobox.set(self.parameter_editor.current_file)
+            return
         if not self.file_selection_combobox["values"]:
             return
         selected_file = self.file_selection_combobox.get()
@@ -1601,6 +1620,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def on_compare_and_upload_parameter_file_click(self) -> None:
         """Select an external parameter file and open its upload preview."""
+        if self.navigation_lock.locked:
+            return
         # The same file-picker options are used by the compare and upload dialog.
         # pylint: disable=duplicate-code
         filepath = self.ui.askopenfilename(
@@ -1624,11 +1645,15 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def on_export_parameters_click(self) -> None:
         """Open the parameter export window for the current FC values."""
+        if self.navigation_lock.locked:
+            return
         parameters = self.parameter_editor.get_fc_parameters_for_export()
         ParameterExportWindow(self, parameters)
 
     def on_upload_selected_and_stay_click(self) -> None:
         """Upload selected parameters and remain on the current parameter file."""
+        if self.navigation_lock.locked:
+            return
         if isinstance(self.root, tk.Tk) and UsagePopupWindow.should_display("only_changed_get_uploaded"):
             only_upload_changed_parameters_usage_popup(self.root)
         self.write_changes_to_intermediate_parameter_file()
@@ -1642,6 +1667,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.repopulate_parameter_table()
 
     def on_upload_selected_click(self) -> None:
+        if self.navigation_lock.locked:
+            return
         if isinstance(self.root, tk.Tk) and UsagePopupWindow.should_display("only_changed_get_uploaded"):
             only_upload_changed_parameters_usage_popup(self.root)
         self.write_changes_to_intermediate_parameter_file()
@@ -1679,6 +1706,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def _upload_params(self, selected_params: dict, upload_callback: Callable[..., bool]) -> bool:
         """Run a parameter upload callback with shared progress and error handling."""
+        if self.navigation_lock.locked:
+            return False
         try:
             return self.ui.upload_params_with_progress(
                 self.root,
@@ -1692,6 +1721,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def on_download_bin_logs_click(self) -> None:
         """Open the modal window for browsing and downloading FC log files."""
+        if self.navigation_lock.locked:
+            return
         existing_window = getattr(self, "_file_browser_window", None)
         if existing_window is not None:
             try:
@@ -1708,10 +1739,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def on_fc_banner_click(self) -> None:
         """Display the latest flight-controller banner."""
+        if self.navigation_lock.locked:
+            return
         FlightControllerBannerWindow(self.root, self.parameter_editor.get_fc_banner_text())
 
     def on_zip_vehicle_for_forum_help_click(self) -> None:
         """Handle the zip vehicle for forum help button click."""
+        if self.navigation_lock.locked:
+            return
         self.parameter_editor.create_forum_help_zip_workflow(
             show_error=self.ui.show_error,
             show_info=self.ui.show_info,
@@ -1719,6 +1754,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def _update_skip_button_state(self) -> None:
         """Update the skip button state based on whether the current configuration step is optional."""
+        if self.navigation_lock.locked:
+            return
         if hasattr(self, "skip_button"):
             skip_button_state = (
                 "normal"
@@ -1731,6 +1768,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def _update_previous_button_state(self) -> None:
         """Enable the previous button when an earlier parameter file is available."""
+        if self.navigation_lock.locked:
+            return
         if not hasattr(self, "previous_button"):
             return
         previous_file = self.parameter_editor.get_previous_non_optional_file(
@@ -1740,6 +1779,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def on_previous_click(self, _event: Union[tk.Event, None] = None) -> None:  # noqa: UP007
         """Select the preceding parameter file, saving any pending edits first."""
+        if self.navigation_lock.locked:
+            return
         previous_file = self.parameter_editor.get_previous_non_optional_file(
             current_file=self.file_selection_combobox.get(), gui_complexity=self.gui_complexity
         )
@@ -1751,6 +1792,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.on_param_file_combobox_change(None)
 
     def on_skip_click(self, _event: Union[tk.Event, None] = None) -> None:  # noqa: UP007
+        if self.navigation_lock.locked:
+            return
         self.write_changes_to_intermediate_parameter_file()
 
         # Use ParameterEditor to get the next non-optional file
@@ -1792,6 +1835,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def on_edit_vehicle_components_click(self) -> None:
         """Close this window and request the standalone component editor."""
+        if self.navigation_lock.locked:
+            return
         if getattr(self, "_log_analysis_running", False):
             self.ui.show_error(
                 _("Log analysis is running"),

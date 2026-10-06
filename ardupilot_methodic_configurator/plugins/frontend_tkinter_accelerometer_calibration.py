@@ -28,7 +28,12 @@ from ardupilot_methodic_configurator.__main__ import (
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.plugins.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
-from ardupilot_methodic_configurator.plugins.frontend_tkinter_helpers import refresh_parameter_editor_after_calibration
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_helpers import (
+    begin_calibration_navigation_lock,
+    end_calibration_navigation_lock,
+    refresh_parameter_editor_after_calibration,
+    start_calibration_with_navigation_lock,
+)
 from ardupilot_methodic_configurator.plugins.imu_helpers import (
     ImuPollHandlers,
     poll_imu_periodically,
@@ -211,6 +216,15 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
 
     def _on_simple_calibration(self) -> None:
         """Handle Simple Calibration button."""
+        if not begin_calibration_navigation_lock(self.base_window, self):
+            return
+        try:
+            self._run_simple_calibration()
+        finally:
+            end_calibration_navigation_lock(self.base_window, self)
+
+    def _run_simple_calibration(self) -> None:
+        """Run the command and stage readback while navigation remains locked."""
         base_window = cast("Any", self.base_window)
         editor = getattr(base_window, "parameter_editor", None)
         current_file = getattr(editor, "current_file", None)
@@ -276,10 +290,14 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
 
     def _on_start_full_calibration(self) -> None:
         """Start the full 6-position calibration and show the wizard panel."""
+        start_calibration_with_navigation_lock(self.base_window, self, self._start_full_calibration)
+
+    def _start_full_calibration(self) -> bool:
+        """Start the asynchronous wizard while retaining its navigation lock."""
         success, message = self.model.start_full_calibration()
         if not success:
             showerror(_("Calibration Failed"), message)
-            return
+            return False
 
         # Show wizard, disable the top-level calibration buttons
         self._simple_btn.configure(state="disabled")
@@ -291,6 +309,7 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
         self._wizard_frame.pack(fill="x", padx=(4, 4), pady=(10, 0))
 
         self._start_polling()
+        return True
 
     def _start_polling(self) -> None:
         """Schedule the first poll tick."""
@@ -298,6 +317,14 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
 
     def _poll_tick(self) -> None:
         """Called by tkinter every _POLL_INTERVAL_MS ms to check for FC messages."""
+        try:
+            self._poll_full_calibration()
+        except Exception:
+            self._close_full_calibration_wizard()
+            raise
+
+    def _poll_full_calibration(self) -> None:
+        """Handle a progress tick while preserving cleanup on callback exceptions."""
         self._poll_job = None  # The scheduled callback is now running, so no pending job remains.
         pos = self.model.poll_for_next_position()
 
@@ -321,6 +348,14 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
 
     def _on_continue(self) -> None:
         """User clicked Continue — confirm the current position and resume polling."""
+        try:
+            self._confirm_full_calibration_position()
+        except Exception:
+            self._close_full_calibration_wizard()
+            raise
+
+    def _confirm_full_calibration_position(self) -> None:
+        """Confirm the next orientation without exposing navigation during the command."""
         self._waiting_for_position = False
         self._expected_position_name = ""
         self._continue_btn.configure(state="disabled")
@@ -334,18 +369,34 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
 
     def _on_cancel_full_calibration(self) -> None:
         """User clicked Cancel during full calibration."""
-        success, message = self.model.cancel_full_calibration()
-        self._stop_polling()
-        self._hide_wizard()
-        if not success:
-            showerror(_("Calibration Failed"), message)
-            return
-        showinfo(_("Calibration Wizard Closed"), message)
+        try:
+            success, message = self.model.cancel_full_calibration()
+            if not success:
+                showerror(_("Calibration Failed"), message)
+                return
+            showinfo(_("Calibration Wizard Closed"), message)
+        finally:
+            self._close_full_calibration_wizard()
 
     def _end_full_calibration(self, *, success: bool) -> None:
         """Called when full calibration completes (successfully or not)."""
         self._stop_polling()
-        self._hide_wizard()
+        try:
+            self._finish_full_calibration(success=success)
+        finally:
+            self._close_full_calibration_wizard()
+
+    def _close_full_calibration_wizard(self) -> None:
+        """Restore navigation even if widget cleanup fails during application teardown."""
+        try:
+            self._stop_polling()
+            with suppress(tk.TclError):
+                self._hide_wizard()
+        finally:
+            end_calibration_navigation_lock(self.base_window, self)
+
+    def _finish_full_calibration(self, *, success: bool) -> None:
+        """Keep navigation and calibration buttons locked through readback and staging."""
         if success:
             editor = getattr(self.base_window, "parameter_editor", None)
             current_file = getattr(editor, "current_file", None)
@@ -436,16 +487,20 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
 
     def on_deactivate(self) -> None:
         """Called when the plugin view is hidden (lifecycle method)."""
-        self._stop_polling()
-        self._stop_imu_polling()
-        self.model.stop_imu_monitoring()
-        self._hide_wizard()
+        try:
+            self._stop_imu_polling()
+            self.model.stop_imu_monitoring()
+        finally:
+            self._close_full_calibration_wizard()
 
     def destroy(self) -> None:
         """Cleanup resources when plugin is removed (lifecycle method)."""
-        self._stop_polling()
-        self._stop_imu_polling()
-        super().destroy()
+        try:
+            self._stop_polling()
+            self._stop_imu_polling()
+        finally:
+            end_calibration_navigation_lock(self.base_window, self)
+            super().destroy()
 
 
 def _create_accelerometer_calibration_view(
