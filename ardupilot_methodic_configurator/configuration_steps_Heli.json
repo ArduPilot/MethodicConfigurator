@@ -430,7 +430,7 @@
                 "INS_ACC3SCAL_Y": { "if": "'INS_ACC3SCAL_X' not in fc_parameters" },
                 "INS_ACC3SCAL_Z": { "if": "'INS_ACC3SCAL_X' not in fc_parameters" }
             },
-            "old_filenames": ["11_mp_setup_mandatory_hardware.param", "12_mp_setup_mandatory_hardware.param"]
+            "old_filenames": ["11_mp_setup_mandatory_hardware.param", "12_mp_setup_mandatory_hardware.param", "15_mp_setup_mandatory_hardware.param"]
         },
         "15_general_configuration.param": {
             "why": "The parameter defaults of some parameters are not suitable for the flight tests that will follow",

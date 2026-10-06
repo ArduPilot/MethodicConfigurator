@@ -35,6 +35,9 @@ from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
     VehicleProjectCreator,
 )
 
+# The versioned, vehicle-specific migration tables intentionally live together.
+# pylint: disable=too-many-lines
+
 VEHICLE_COMPONENTS_FORMAT_VERSION = 1
 _VEHICLE_COMPONENTS_JSON_FILENAME = "vehicle_components.json"
 _PACKAGE_DIR = Path(__file__).resolve().parent
@@ -322,8 +325,12 @@ _FILES_TO_DELETE_V0_TO_V1: dict[str, list[str]] = {
 # Format version 1 → 2
 # ---------------------------------------------------------------------------
 
+# Destinations belong to each vehicle's own layout. Only ArduCopter has the
+# split calibration/mode/servo layout used by the v2 migration fixture; the
+# other vehicles retain their combined mandatory-hardware calibration step.
 _PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str]]]] = {
-    "all": [
+    "all": [],
+    "ArduCopter": [
         (
             "14_mp_setup_mandatory_hardware.param",
             "14_accelerometer_calibration.param",
@@ -354,8 +361,6 @@ _PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str]]]] = {
             "07_remote_controller_controller.param",
             [r"RC\d+_(?:MIN|MAX|TRIM)"],
         ),
-    ],
-    "ArduCopter": [
         (
             "14_mp_setup_mandatory_hardware.param",
             "18_servo_outputs.param",
@@ -372,15 +377,81 @@ _PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str]]]] = {
             ["FRAME_CLASS"],
         ),
     ],
-    "ArduPlane": [],
-    "Heli": [],
-    "Rover": [],
+    "ArduPlane": [
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "03_imu_temperature_calibration_results.param",
+            [r"INS_ACC[1-3]_CALTEMP"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "07_remote_controller_controller.param",
+            [r"RC\d+_(?:MIN|MAX|TRIM|REVERSED)"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "15_general_configuration.param",
+            [r"FLTMODE[1-6]", "INITIAL_MODE"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "16_safety_setup.param",
+            ["FENCE_ACTION", "FENCE_ALT_MAX", "FENCE_ENABLE", "FENCE_RADIUS"],
+        ),
+    ],
+    "Heli": [
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "03_imu_temperature_calibration_results.param",
+            [r"INS_ACC[1-3]_CALTEMP"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "07_remote_controller_controller.param",
+            [r"RC\d+_(?:MIN|MAX|TRIM|REVERSED)"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "15_general_configuration.param",
+            [r"FLTMODE[1-6]", "INITIAL_MODE"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "16_safety_setup.param",
+            ["FENCE_ACTION", "FENCE_ALT_MAX", "FENCE_ENABLE", "FENCE_RADIUS"],
+        ),
+    ],
+    "Rover": [
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "03_imu_temperature_calibration_results.param",
+            [r"INS_ACC[1-3]_CALTEMP"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "07_remote_controller_controller.param",
+            [r"RC\d+_(?:MIN|MAX|TRIM|REVERSED)"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "15_general_configuration.param",
+            [r"MODE[1-6]", "INITIAL_MODE"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "16_safety_setup.param",
+            # Rover has no altitude fence; preserve any legacy FENCE_ALT_MAX
+            # line in the source rather than applying a Copter deletion rule.
+            ["FENCE_ACTION", "FENCE_ENABLE", "FENCE_RADIUS"],
+        ),
+    ],
 }
 
 # Some values remain in their historical step while also becoming part of the
 # accelerometer calibration step in the v2 configuration.
 _PARAM_COPIES_V1_TO_V2: dict[str, list[tuple[str, str, str, list[str]]]] = {
-    "all": [
+    "all": [],
+    "ArduCopter": [
         (
             "14_mp_setup_mandatory_hardware.param",
             "03_imu_temperature_calibration_results.param",
@@ -394,14 +465,16 @@ _PARAM_COPIES_V1_TO_V2: dict[str, list[tuple[str, str, str, list[str]]]] = {
             [r"AHRS_TRIM_[XY]"],
         ),
     ],
-    "ArduCopter": [],
+    # These vehicles keep calibration and level values together in the
+    # mandatory-hardware step, so no duplicate calibration destinations exist.
     "ArduPlane": [],
     "Heli": [],
     "Rover": [],
 }
 
 _PARAM_DELETES_V1_TO_V2: dict[str, list[tuple[str, list[str]]]] = {
-    "all": [
+    "all": [],
+    "ArduCopter": [
         (
             "14_mp_setup_mandatory_hardware.param",
             [
@@ -430,7 +503,7 @@ _PARAM_DELETES_V1_TO_V2: dict[str, list[tuple[str, list[str]]]] = {
             ],
         ),
     ],
-    "ArduCopter": [],
+    # No corresponding obsolete hardware settings in the other layouts.
     "ArduPlane": [],
     "Heli": [],
     "Rover": [],
@@ -438,12 +511,20 @@ _PARAM_DELETES_V1_TO_V2: dict[str, list[tuple[str, list[str]]]] = {
 
 # Splits run before LocalFilesystem applies old_filenames renames. Include every
 # historical mandatory-hardware filename declared by the configuration steps.
-_MANDATORY_HARDWARE_OLD_FILENAMES = (
-    "11_mp_setup_mandatory_hardware.param",
-    "12_mp_setup_mandatory_hardware.param",
-)
-for _old_filename in _MANDATORY_HARDWARE_OLD_FILENAMES:
-    for _migration_key, _migration_moves in _PARAM_MOVES_V1_TO_V2.items():
+_MANDATORY_HARDWARE_OLD_FILENAMES = {
+    "ArduCopter": ("11_mp_setup_mandatory_hardware.param", "12_mp_setup_mandatory_hardware.param"),
+    "ArduPlane": ("11_mp_setup_mandatory_hardware.param", "12_mp_setup_mandatory_hardware.param"),
+    "Heli": (
+        "11_mp_setup_mandatory_hardware.param",
+        "12_mp_setup_mandatory_hardware.param",
+        # The OMP_M4 template predates the current Heli numbering.
+        "15_mp_setup_mandatory_hardware.param",
+    ),
+    "Rover": ("11_mp_setup_mandatory_hardware.param", "12_mp_setup_mandatory_hardware.param"),
+}
+for _migration_key, _old_filenames in _MANDATORY_HARDWARE_OLD_FILENAMES.items():
+    _migration_moves = _PARAM_MOVES_V1_TO_V2[_migration_key]
+    for _old_filename in _old_filenames:
         _migration_moves.extend(
             (_old_filename, destination, patterns)
             for source, destination, patterns in tuple(_migration_moves)
@@ -747,7 +828,7 @@ def _migrate_v0_to_v1(vehicle_path: Path, vehicle_type: str) -> set[str]:  # pyl
 
 
 def _migrate_v1_to_v2(vehicle_path: Path, vehicle_type: str) -> set[str]:  # noqa: PLR0915  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
-    """Split mandatory hardware calibration results into dedicated ArduCopter files."""
+    """Move hardware settings to the matching vehicle layout, splitting calibration only for ArduCopter."""
     deleted_filenames: set[str] = set()
     accumulated: dict[str, list[str]] = {}
     remaining_by_source: dict[Path, list[str]] = {}
