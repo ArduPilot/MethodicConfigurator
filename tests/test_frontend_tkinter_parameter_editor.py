@@ -25,6 +25,7 @@ import pytest
 import ardupilot_methodic_configurator.frontend_tkinter_parameter_editor as parameter_editor_module
 from ardupilot_methodic_configurator.data_model_parameter_editor import LogAnalysisInputs
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (
     ParameterEditorAction,
     ParameterEditorUiServices,
@@ -60,6 +61,7 @@ def _build_parameter_area_container() -> MagicMock:
 
 def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:  # noqa: PLR0915, RUF100 # pylint: disable=too-many-statements
     editor = ParameterEditorWindow.__new__(ParameterEditorWindow)
+    editor.navigation_lock = NavigationLock()
     editor.parameter_editor = parameter_editor
     editor.root = MagicMock()
     _configure_root_stubs(editor.root)

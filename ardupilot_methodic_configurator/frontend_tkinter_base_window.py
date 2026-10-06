@@ -34,6 +34,7 @@ from screeninfo import get_monitors
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_size
+from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
 from ardupilot_methodic_configurator.frontend_tkinter_show import get_last_known_monitor_bounds, remember_monitor_bounds
 
 
@@ -110,6 +111,7 @@ class BaseWindow:
             When root_tk is provided, this creates a child dialog or sub-window.
 
         """
+        self.navigation_lock = NavigationLock()
         self.root: tk.Toplevel | tk.Tk
         if root_tk:
             self.root = tk.Toplevel(root_tk)

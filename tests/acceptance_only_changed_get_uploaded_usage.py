@@ -38,6 +38,7 @@ class _FakeTk:  # pylint: disable=too-few-public-methods
 def _build_parameter_editor_window(root: object) -> tuple[ParameterEditorWindow, dict[str, MagicMock]]:
     """Create a ParameterEditorWindow instance without running the heavy __init__."""
     window = ParameterEditorWindow.__new__(ParameterEditorWindow)
+    window.navigation_lock = MagicMock(locked=False)
     window.root = cast("tk.Tk", root)
     window.gui_complexity = "normal"
 

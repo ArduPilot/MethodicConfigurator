@@ -9,7 +9,39 @@ SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from collections.abc import Collection
+from collections.abc import Callable, Collection
+from typing import cast
+
+from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
+
+
+def begin_calibration_navigation_lock(base_window: object, owner: object) -> bool:
+    """Prevent competing calibrations and acquire the host's shared navigation lock."""
+    navigation_lock = getattr(base_window, "navigation_lock", None)
+    if isinstance(navigation_lock, NavigationLock):
+        if navigation_lock.locked:
+            return False
+        navigation_lock.acquire(owner)
+    return True
+
+
+def end_calibration_navigation_lock(base_window: object, owner: object) -> None:
+    """Release only this calibration's lock, also when a plugin is torn down."""
+    navigation_lock = getattr(base_window, "navigation_lock", None)
+    if isinstance(navigation_lock, NavigationLock):
+        navigation_lock.release(owner)
+
+
+def start_calibration_with_navigation_lock(base_window: object, owner: object, start: Callable[[], bool]) -> None:
+    """Retain navigation for an asynchronous calibration, but release on failed startup."""
+    if not begin_calibration_navigation_lock(base_window, owner):
+        return
+    started = False
+    try:
+        started = start()
+    finally:
+        if not started:
+            end_calibration_navigation_lock(base_window, owner)
 
 
 def refresh_parameter_editor_table(base_window: object) -> None:
@@ -79,5 +111,5 @@ def _copy_calibration_values(
 
     find_stale_steps = getattr(parameter_editor, "find_other_steps_with_stale_calibration_values", None)
     if check_other_steps and callable(find_stale_steps) and calibration_values:
-        return find_stale_steps(calibration_values)
+        return cast("Callable[[dict[str, float]], list[str]]", find_stale_steps)(calibration_values)
     return []

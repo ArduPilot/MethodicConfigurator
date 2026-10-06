@@ -74,6 +74,8 @@ def calibration_view() -> CompassCalibrationView:
     """Fixture providing a lightweight calibration view shell."""
     view = object.__new__(CompassCalibrationView)
     view.model = MagicMock()
+    view.base_window = MagicMock(spec=BaseWindow)
+    view._calibration_active = False
     view.winfo_toplevel = MagicMock(return_value=MagicMock())
     view._instructions_popup = None
     view._calibration_popup = None
