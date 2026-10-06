@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import errno
 import json
 import logging
 import os
@@ -19,11 +20,13 @@ from collections.abc import Iterable
 from pathlib import Path
 from shutil import copyfile
 from stat import S_IMODE
-from typing import IO
+from typing import IO, BinaryIO
 
 import pytest
 
+import ardupilot_methodic_configurator.backend_filesystem as filesystem_module
 import ardupilot_methodic_configurator.backend_filesystem_migration as migration_module
+from ardupilot_methodic_configurator.annotate_params import parse_parameter_metadata
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_migration import (
     VEHICLE_COMPONENTS_FORMAT_VERSION,
@@ -899,6 +902,211 @@ class TestV0ToV1ObsoleteFileDeletion:
 # ---------------------------------------------------------------------------
 
 
+class TestParameterFileDocumentationRenames:
+    """Step-specific parameter documentation follows filename aliases without losing user files."""
+
+    @pytest.fixture(
+        params=[
+            "22_inflight_magnetometer_fit_setup.param",
+            "24_inflight_magnetometer_fit_setup.param",
+            "31_inflight_magnetometer_fit_setup.param",
+        ]
+    )
+    def magfit_alias_project(self, vehicle_dir: Path, request: pytest.FixtureRequest) -> tuple[LocalFilesystem, Path, Path]:
+        """Provide a legacy MagFit step and real documentation with the V2 template's aliases."""
+        template_dir = (
+            Path(__file__).parents[1] / "ardupilot_methodic_configurator/vehicle_templates/ArduCopter/Holybro_X500_mig"
+        )
+        new_filename = "35_inflight_magnetometer_fit_setup.param"
+        step = json.loads((template_dir / "configuration_steps_ArduCopter.json").read_text(encoding="utf-8"))["steps"][
+            new_filename
+        ]
+        old_filename: str = request.param
+        assert old_filename in step["old_filenames"]
+        old_step = vehicle_dir / old_filename
+        new_step = vehicle_dir / new_filename
+        old_step.write_bytes((template_dir / new_filename).read_bytes())
+        old_step.with_suffix(".pdef.xml").write_bytes((template_dir / new_step.with_suffix(".pdef.xml").name).read_bytes())
+        filesystem = LocalFilesystem.__new__(LocalFilesystem)
+        filesystem.vehicle_dir = str(vehicle_dir)
+        filesystem.configuration_steps = {new_filename: step}
+        return filesystem, old_step, new_step
+
+    def test_user_keeps_magfit_parameter_documentation_after_step_rename(
+        self, magfit_alias_project: tuple[LocalFilesystem, Path, Path]
+    ) -> None:
+        """
+        MagFit documentation remains discoverable after a legacy step is renamed.
+
+        GIVEN: A legacy MagFit step with its Lua parameter documentation
+        WHEN: Filename aliases are applied and then applied again on reopening
+        THEN: Both files use the V2 name, their bytes are unchanged, and the metadata can be loaded
+        """
+        filesystem, old_step, new_step = magfit_alias_project
+        old_documentation = old_step.with_suffix(".pdef.xml")
+        new_documentation = new_step.with_suffix(".pdef.xml")
+        original_parameters = old_step.read_bytes()
+        original_documentation = old_documentation.read_bytes()
+
+        filesystem.rename_parameter_files()
+        filesystem.rename_parameter_files()
+
+        assert not old_step.exists()
+        assert not old_documentation.exists()
+        assert new_step.read_bytes() == original_parameters
+        assert new_documentation.read_bytes() == original_documentation
+        metadata = parse_parameter_metadata("", str(new_step.parent), new_documentation.name, "ArduCopter", 105)
+        assert metadata["MAGH_LOG_ENABLE"]["humanName"] == "Enable MAGH.Active logging"
+        assert metadata["MAGH_LOG_ENABLE"]["documentation"]
+
+    def test_user_recovers_documentation_left_behind_by_an_earlier_step_rename(
+        self, magfit_alias_project: tuple[LocalFilesystem, Path, Path]
+    ) -> None:
+        """
+        Opening an already-renamed project repairs its orphaned documentation.
+
+        GIVEN: The parameter file already has the V2 name but its sidecar still has the legacy name
+        WHEN: The project's filename aliases are checked again
+        THEN: The sidecar follows the existing step without changing parameter values
+        """
+        filesystem, old_step, new_step = magfit_alias_project
+        old_documentation = old_step.with_suffix(".pdef.xml")
+        original_documentation = old_documentation.read_bytes()
+        old_step.rename(new_step)
+        original_parameters = new_step.read_bytes()
+
+        filesystem.rename_parameter_files()
+
+        assert not old_documentation.exists()
+        assert new_step.with_suffix(".pdef.xml").read_bytes() == original_documentation
+        assert new_step.read_bytes() == original_parameters
+
+    @pytest.mark.parametrize("existing_content", [b"", b"<paramfile>user documentation</paramfile>\n"])
+    def test_user_documentation_at_the_new_name_is_never_overwritten(
+        self, magfit_alias_project: tuple[LocalFilesystem, Path, Path], existing_content: bytes
+    ) -> None:
+        """
+        Destination documentation, including empty files, is preserved.
+
+        GIVEN: Both legacy documentation and a destination sidecar already exist
+        WHEN: The parameter step is renamed
+        THEN: The parameters move but both documentation files retain their original contents
+        """
+        filesystem, old_step, new_step = magfit_alias_project
+        old_documentation = old_step.with_suffix(".pdef.xml")
+        new_documentation = new_step.with_suffix(".pdef.xml")
+        original_documentation = old_documentation.read_bytes()
+        original_parameters = old_step.read_bytes()
+        new_documentation.write_bytes(existing_content)
+
+        filesystem.rename_parameter_files()
+
+        assert not old_step.exists()
+        assert new_step.read_bytes() == original_parameters
+        assert old_documentation.read_bytes() == original_documentation
+        assert new_documentation.read_bytes() == existing_content
+
+    def test_documentation_stays_with_a_legacy_step_when_parameter_rename_is_blocked(
+        self, magfit_alias_project: tuple[LocalFilesystem, Path, Path]
+    ) -> None:
+        """
+        A conflicting parameter destination does not detach the old step's documentation.
+
+        GIVEN: Both the legacy and V2 parameter files exist
+        WHEN: Filename alias renaming refuses to overwrite the V2 step
+        THEN: Both parameter files and the legacy sidecar are unchanged
+        """
+        filesystem, old_step, new_step = magfit_alias_project
+        old_documentation = old_step.with_suffix(".pdef.xml")
+        original_parameters = old_step.read_bytes()
+        original_documentation = old_documentation.read_bytes()
+        new_step.write_bytes(b"MAGH_LOG_ENABLE,0\n")
+
+        filesystem.rename_parameter_files()
+
+        assert old_step.read_bytes() == original_parameters
+        assert new_step.read_bytes() == b"MAGH_LOG_ENABLE,0\n"
+        assert old_documentation.read_bytes() == original_documentation
+        assert not new_step.with_suffix(".pdef.xml").exists()
+
+    def test_step_without_optional_documentation_can_still_be_renamed(
+        self, magfit_alias_project: tuple[LocalFilesystem, Path, Path]
+    ) -> None:
+        """
+        Documentation is optional when renaming a step.
+
+        GIVEN: A legacy parameter step has no sidecar
+        WHEN: The step is renamed
+        THEN: The parameters move successfully without creating a documentation file
+        """
+        filesystem, old_step, new_step = magfit_alias_project
+        original_parameters = old_step.read_bytes()
+        old_step.with_suffix(".pdef.xml").unlink()
+
+        filesystem.rename_parameter_files()
+
+        assert not old_step.exists()
+        assert new_step.read_bytes() == original_parameters
+        assert not new_step.with_suffix(".pdef.xml").exists()
+
+    def test_orphaned_documentation_without_either_parameter_file_is_not_moved(
+        self, magfit_alias_project: tuple[LocalFilesystem, Path, Path]
+    ) -> None:
+        """
+        A standalone sidecar is not attached to a nonexistent configuration step.
+
+        GIVEN: Legacy documentation exists but neither parameter filename exists
+        WHEN: Filename aliases are checked
+        THEN: The sidecar stays at its original path
+        """
+        filesystem, old_step, new_step = magfit_alias_project
+        old_documentation = old_step.with_suffix(".pdef.xml")
+        original_documentation = old_documentation.read_bytes()
+        old_step.unlink()
+
+        filesystem.rename_parameter_files()
+
+        assert old_documentation.read_bytes() == original_documentation
+        assert not new_step.exists()
+        assert not new_step.with_suffix(".pdef.xml").exists()
+
+    def test_user_can_retry_a_failed_documentation_rename_without_losing_parameters(
+        self, magfit_alias_project: tuple[LocalFilesystem, Path, Path], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """
+        A sidecar rename failure remains recoverable after the parameter rename completes.
+
+        GIVEN: Storage rejects the documentation rename after the parameter file has moved
+        WHEN: The user retries after the storage failure is resolved
+        THEN: The retained documentation moves to the V2 name without changing the parameter file
+        """
+        filesystem, old_step, new_step = magfit_alias_project
+        old_documentation = old_step.with_suffix(".pdef.xml")
+        original_parameters = old_step.read_bytes()
+        original_documentation = old_documentation.read_bytes()
+        original_rename = filesystem_module.os_rename
+        message = "Simulated sidecar rename failure"
+
+        def interrupted_rename(source: str, destination: str) -> None:
+            if Path(source) == old_documentation:
+                raise OSError(message)
+            original_rename(source, destination)
+
+        with monkeypatch.context() as failure_patch:
+            failure_patch.setattr(filesystem_module, "os_rename", interrupted_rename)
+            with pytest.raises(OSError, match=message):
+                filesystem.rename_parameter_files()
+
+        assert not old_step.exists()
+        assert new_step.read_bytes() == original_parameters
+        assert old_documentation.read_bytes() == original_documentation
+        assert not new_step.with_suffix(".pdef.xml").exists()
+        filesystem.rename_parameter_files()
+        assert not old_documentation.exists()
+        assert new_step.with_suffix(".pdef.xml").read_bytes() == original_documentation
+        assert new_step.read_bytes() == original_parameters
+
+
 class TestV1ToV2ParameterExtractions:
     """Tests that consecutive format migrations are persisted as separate steps."""
 
@@ -1611,6 +1819,22 @@ class TestDeletedConfigurationStepFiles:  # pylint: disable=too-few-public-metho
 class TestMissingConfigurationStepFileRestore:
     """Tests restoration of configuration-step files absent from old projects."""
 
+    @pytest.fixture(
+        params=[(number, None) for number in sorted({errno.EPERM, errno.ENOTSUP, errno.EOPNOTSUPP, errno.ENOSYS, errno.EXDEV})]
+        + [(errno.EINVAL, 1), (errno.EINVAL, 50)]
+    )
+    def filesystem_without_hard_links(self, monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest) -> None:
+        """Simulate a writable filesystem that cannot publish hard links."""
+        error_number, windows_error = request.param
+
+        def unavailable_link(_source: Path, _destination: Path) -> None:
+            error = OSError(error_number, "Hard links unavailable on this filesystem")
+            if windows_error is not None:
+                error.winerror = windows_error
+            raise error
+
+        monkeypatch.setattr(migration_module, "os_link", unavailable_link)
+
     @pytest.fixture
     def project_with_missing_step(self, vehicle_dir: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
         """Provide an old project with one missing step and an isolated matching template."""
@@ -1637,6 +1861,108 @@ class TestMissingConfigurationStepFileRestore:
             staticmethod(lambda *_args: str(template_dir)),
         )
         return template_dir / "99_restored.param"
+
+    @pytest.mark.usefixtures("filesystem_without_hard_links")
+    def test_user_can_open_and_reopen_project_without_hard_link_support(
+        self, vehicle_dir: Path, project_with_missing_step: Path
+    ) -> None:
+        """
+        Migration succeeds on filesystems without hard-link support.
+
+        GIVEN: A writable project filesystem rejects hard links and one configuration step is missing
+        WHEN: The user opens the project and then opens it again
+        THEN: The complete step is restored once, migration is finalized, and no temporary files remain
+        """
+        destination = vehicle_dir / project_with_missing_step.name
+        original_template = project_with_missing_step.read_bytes()
+        components = vehicle_dir / "vehicle_components.json"
+
+        assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
+        assert destination.read_bytes() == original_template
+        assert project_with_missing_step.read_bytes() == original_template
+        migrated_components = components.read_bytes()
+        assert json.loads(migrated_components)["Format version"] == VEHICLE_COMPONENTS_FORMAT_VERSION
+        assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is False
+        assert components.read_bytes() == migrated_components
+        assert destination.read_bytes() == original_template
+        assert not list(vehicle_dir.glob("*.tmp"))
+
+    @pytest.mark.parametrize("content", [b"", b"USER_VALUE,17\n"])
+    @pytest.mark.usefixtures("filesystem_without_hard_links")
+    def test_restore_without_hard_links_preserves_competing_project_file(
+        self,
+        vehicle_dir: Path,
+        project_with_missing_step: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        content: bytes,
+    ) -> None:
+        """
+        A fallback restoration cannot overwrite a file another writer creates.
+
+        GIVEN: Hard links are unavailable and a step is initially missing
+        WHEN: Another writer creates that step before the fallback copy starts
+        THEN: Its contents, including an empty file, are preserved and migration completes
+        """
+        destination = vehicle_dir / project_with_missing_step.name
+        unavailable_link = migration_module.os_link
+
+        def competing_link(source: Path, target: Path) -> None:
+            target.write_bytes(content)
+            unavailable_link(source, target)
+
+        monkeypatch.setattr(migration_module, "os_link", competing_link)
+
+        assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
+        assert destination.read_bytes() == content
+        assert not list(vehicle_dir.glob("*.tmp"))
+
+    @pytest.mark.parametrize("failure_stage", ["copy", "fsync"])
+    @pytest.mark.usefixtures("filesystem_without_hard_links")
+    def test_user_can_retry_interrupted_restore_without_hard_links(
+        self,
+        vehicle_dir: Path,
+        project_with_missing_step: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        failure_stage: str,
+    ) -> None:
+        """
+        A failed fallback copy leaves the project ready for a complete retry.
+
+        GIVEN: Hard links are unavailable and the fallback copy or flush fails
+        WHEN: The user opens the project again after the storage failure is resolved
+        THEN: No partial step survives the failure and every template byte is restored on retry
+        """
+        destination = vehicle_dir / project_with_missing_step.name
+        components = vehicle_dir / "vehicle_components.json"
+        original_components = components.read_bytes()
+        original_template = project_with_missing_step.read_bytes()
+        original_fsync = migration_module.fsync
+        message = f"Simulated fallback {failure_stage} failure"
+
+        def interrupted_copy(source: BinaryIO, target: BinaryIO) -> None:
+            target.write(source.read(10))
+            raise OSError(message)
+
+        def interrupted_fsync(descriptor: int) -> None:
+            if destination.exists():
+                raise OSError(message)
+            original_fsync(descriptor)
+
+        with monkeypatch.context() as failure_patch:
+            if failure_stage == "copy":
+                failure_patch.setattr(migration_module, "copyfileobj", interrupted_copy)
+            else:
+                failure_patch.setattr(migration_module, "fsync", interrupted_fsync)
+            with pytest.raises(OSError, match=message):
+                migrate_vehicle_project_if_needed(str(vehicle_dir))
+
+        assert components.read_bytes() == original_components
+        assert not destination.exists()
+        assert not list(vehicle_dir.glob("*.tmp"))
+        assert project_with_missing_step.read_bytes() == original_template
+        assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
+        assert destination.read_bytes() == original_template
+        assert not list(vehicle_dir.glob("*.tmp"))
 
     def test_restored_step_requests_normal_project_file_permissions(
         self, vehicle_dir: Path, project_with_missing_step: Path, monkeypatch: pytest.MonkeyPatch

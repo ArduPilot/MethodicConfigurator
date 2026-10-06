@@ -284,12 +284,15 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return self.vehicle_components_fs.json_filename in file_set and any(pattern.match(f) for f in file_set)
 
     def rename_parameter_files(self) -> None:
+        """Apply filename aliases to parameter files and their step-specific documentation."""
         if self.vehicle_dir is None or self.configuration_steps is None:
             return
         # Rename parameter files if some new files got added to the vehicle directory
         for new_filename, file_info in self.configuration_steps.items():
             for old_filename in file_info.get("old_filenames", []):
-                if self.vehicle_configuration_file_exists(old_filename) and old_filename != new_filename:
+                if old_filename == new_filename:
+                    continue
+                if self.vehicle_configuration_file_exists(old_filename):
                     if self.vehicle_configuration_file_exists(new_filename):
                         logging_error(
                             _("File %s already exists. Will not rename file %s to %s."),
@@ -302,6 +305,34 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                     old_filename_path = os_path.join(self.vehicle_dir, old_filename)
                     os_rename(old_filename_path, new_filename_path)
                     logging_info("Renamed %s to %s", old_filename, new_filename)
+                    self._rename_parameter_documentation_file(old_filename, new_filename)
+                elif (
+                    self.vehicle_configuration_file_size(old_filename) is None
+                    and self.vehicle_configuration_file_size(new_filename) is not None
+                ):
+                    # Repair sidecars orphaned by earlier versions or an interrupted
+                    # rename, but never detach documentation from an existing old step.
+                    self._rename_parameter_documentation_file(old_filename, new_filename)
+
+    def _rename_parameter_documentation_file(self, old_filename: str, new_filename: str) -> None:
+        """Move a matching .pdef.xml sidecar without replacing destination documentation."""
+        old_documentation = old_filename.replace(".param", ".pdef.xml")
+        new_documentation = new_filename.replace(".param", ".pdef.xml")
+        old_path = os_path.join(self.vehicle_dir, old_documentation)
+        new_path = os_path.join(self.vehicle_dir, new_documentation)
+        if not os_path.isfile(old_path):
+            return
+        # Empty files, directories and dangling symlinks must also be preserved.
+        if os_path.lexists(new_path):
+            logging_error(
+                _("File %s already exists. Will not rename file %s to %s."),
+                new_documentation,
+                old_documentation,
+                new_documentation,
+            )
+            return
+        os_rename(old_path, new_path)
+        logging_info("Renamed %s to %s", old_documentation, new_documentation)
 
     def _format_columns_sorted_numerically(  # pylint: disable=too-many-locals
         self, values: dict[str, Any], max_width: int = 105, max_columns: int = 4
