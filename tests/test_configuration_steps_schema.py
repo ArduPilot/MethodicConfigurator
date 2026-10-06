@@ -16,6 +16,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import fnmatch
 import json
 import os
+import re
 import subprocess
 from pathlib import Path
 from unittest.mock import patch
@@ -36,6 +37,34 @@ with open(SCHEMA_FILE_PATH, encoding="utf-8") as schema_file:
 # The template values are six-decimal exports of these gains applied to this learned hover-thrust
 # fixture: 0.2 * 0.200263 -> 0.040053 and 0.1 * 0.200263 -> 0.020026.
 PLANE_47_TEMPLATE_HOVER_THRUST = 0.200263
+
+
+def test_optional_fourth_and_fifth_imu_calibration_uses_real_subgroup_names() -> None:
+    """
+    Import optional IMU calibration only under real parameter names.
+
+    GIVEN: Copter-4.6.3 exposes its fourth and fifth IMUs as INS4_/INS5_ subgroups
+    WHEN: The migrated template imports calibration values
+    THEN: Every real name matches and has an availability guard, and fictitious names do not match
+    """
+    filename = os.path.join(
+        "ardupilot_methodic_configurator",
+        "vehicle_templates",
+        "ArduCopter",
+        "Holybro_X500_mig",
+        "configuration_steps_ArduCopter.json",
+    )
+    with open(filename, encoding="utf-8") as file:
+        step = json.load(file)["steps"]["14_accelerometer_calibration.param"]
+    patterns = step["autoimport_nondefault_regexp"]
+    for imu in (4, 5):
+        for suffix in ("USE", "ACCOFFS_X", "ACCOFFS_Y", "ACCOFFS_Z", "ACCSCAL_X", "ACCSCAL_Y", "ACCSCAL_Z", "ACC_CALTEMP"):
+            name = f"INS{imu}_{suffix}"
+            assert any(re.fullmatch(pattern, name) for pattern in patterns)
+            assert step["add_parameters"][name]["if"] == f"'{name}' in fc_parameters"
+        for name in (f"INS_USE{imu}", f"INS_ACC{imu}SCAL_X", f"INS_ACC{imu}OFFS_X", f"INS_ACC{imu}_CALTEMP"):
+            assert not any(re.fullmatch(pattern, name) for pattern in patterns)
+            assert name not in step["add_parameters"]
 
 
 def test_schema_validity() -> None:

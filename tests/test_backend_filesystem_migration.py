@@ -1036,6 +1036,7 @@ class TestV1ToV2ParameterExtractions:
         [
             "14_accelerometer_calibration.param",
             "15_accelerometer_level.param",
+            "19_general_configuration.param",
             "14_mp_setup_mandatory_hardware.param",
             "vehicle_components.json",
         ],
@@ -1058,10 +1059,12 @@ class TestV1ToV2ParameterExtractions:
         source = vehicle_dir / "14_mp_setup_mandatory_hardware.param"
         accelerometer = vehicle_dir / "14_accelerometer_calibration.param"
         level = vehicle_dir / "15_accelerometer_level.param"
+        general = vehicle_dir / "19_general_configuration.param"
         source.write_bytes(b"INS_ACCSCAL_X,0.998941\r\nAHRS_TRIM_X,0.01\r\nUNRELATED_SOURCE,9\r\n")
         accelerometer.write_bytes(b"# measured calibration\r\nUNRELATED_ACCEL,17\r\nINS_ACCSCAL_X,1\r\n")
         level.write_bytes(b"# keep level settings\r\nUNRELATED_LEVEL,23\r\nAHRS_TRIM_X,0\r\n")
-        originals = {path.name: path.read_bytes() for path in (components, source, accelerometer, level)}
+        general.write_bytes(b"UNRELATED_GENERAL,31\r\n")
+        originals = {path.name: path.read_bytes() for path in (components, source, accelerometer, level, general)}
         monkeypatch.setattr(migration_module, "VEHICLE_COMPONENTS_FORMAT_VERSION", 2)
         failed_file = vehicle_dir / failed_filename
 
@@ -1072,7 +1075,7 @@ class TestV1ToV2ParameterExtractions:
 
         assert failed_file.read_bytes() == originals[failed_filename]
         assert components.read_bytes() == originals[components.name]
-        if failed_file in (accelerometer, level):
+        if failed_file in (accelerometer, level, general):
             assert source.read_bytes() == originals[source.name]
         assert not list(vehicle_dir.glob("*.tmp"))
 
@@ -1083,6 +1086,7 @@ class TestV1ToV2ParameterExtractions:
         )
         assert level.read_bytes() == b"# keep level settings\nUNRELATED_LEVEL,23\nAHRS_TRIM_X,0.01\n"
         assert source.read_bytes() == b"UNRELATED_SOURCE,9\n"
+        assert general.read_bytes() == b"UNRELATED_GENERAL,31\nUNRELATED_SOURCE,9\n"
         assert json.loads(components.read_bytes())["Format version"] == 2
         assert components.read_bytes().endswith(b"\n")
         assert b"\r" not in components.read_bytes()
@@ -1452,6 +1456,17 @@ class TestVehicleSpecificV1ToV2Migration:
             for line in (templates / template_name / "00_default.param").read_text(encoding="utf-8-sig").splitlines()
             if _param_name_from_line(line)
         }
+        if vehicle_type == "ArduCopter":
+            # Firmware 4.7 renames and optional IMU subgroups are not present in
+            # the X500's three-IMU 4.6 default export.
+            defaults.update(
+                _param_name_from_line(line)
+                for line in (templates / "empty_4.7.x" / "00_default.param").read_text(encoding="utf-8-sig").splitlines()
+                if _param_name_from_line(line)
+            )
+            defaults.update(
+                f"INS{imu}_{suffix}" for imu in (4, 5) for suffix in ("USE", "ACC_CALTEMP", "ACCOFFS_X", "ACCSCAL_X")
+            )
         configuration = (
             templates / layout_template if layout_template else package
         ) / f"configuration_steps_{vehicle_type}.json"
@@ -1716,11 +1731,8 @@ _copy_configuration_step_file(Path(sys.argv[1]), Path(sys.argv[2]))
         components = vehicle_dir / "vehicle_components.json"
         original_components = components.read_bytes()
         original_template = project_with_missing_step.read_bytes()
-        original_replace = Path.replace
 
-        def failed_replace(temporary: Path, target: Path) -> Path:
-            if target != destination:
-                return original_replace(temporary, target)
+        def failed_publish(temporary: Path, target: Path) -> None:
             assert temporary.parent == destination.parent
             assert temporary.read_bytes() == original_template
             assert target == destination
@@ -1729,7 +1741,7 @@ _copy_configuration_step_file(Path(sys.argv[1]), Path(sys.argv[2]))
             raise OSError(message)
 
         with monkeypatch.context() as failure_patch:
-            failure_patch.setattr(Path, "replace", failed_replace)
+            failure_patch.setattr(migration_module, "os_link", failed_publish)
             with pytest.raises(OSError, match="Simulated publication failure"):
                 migrate_vehicle_project_if_needed(str(vehicle_dir))
 
@@ -1762,6 +1774,28 @@ _copy_configuration_step_file(Path(sys.argv[1]), Path(sys.argv[2]))
         assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
 
         assert destination.read_bytes() == project_with_missing_step.read_bytes()
+        assert not list(vehicle_dir.glob("*.tmp"))
+
+    @pytest.mark.parametrize("content", [b"", b"USER_VALUE,17\n"])
+    def test_restore_preserves_file_created_while_template_is_being_copied(
+        self, vehicle_dir: Path, project_with_missing_step: Path, monkeypatch: pytest.MonkeyPatch, content: bytes
+    ) -> None:
+        """
+        Preserve competing writes during restoration.
+
+        GIVEN: Another writer creates a previously missing step during restoration
+        WHEN: The complete template copy is published
+        THEN: Even an empty competing file is preserved and temporary files are removed
+        """
+        destination = vehicle_dir / project_with_missing_step.name
+
+        def competing_copy(source: Path, target: Path) -> None:
+            copyfile(source, target)
+            destination.write_bytes(content)
+
+        monkeypatch.setattr(migration_module, "copyfile", competing_copy)
+        assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
+        assert destination.read_bytes() == content
         assert not list(vehicle_dir.glob("*.tmp"))
 
     @pytest.mark.parametrize("existing_content", ["", "PROJECT_VALUE,17\n"])
@@ -1833,6 +1867,107 @@ _copy_configuration_step_file(Path(sys.argv[1]), Path(sys.argv[2]))
 # ---------------------------------------------------------------------------
 # Pattern-matching edge cases
 # ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("hardware_filename", ["14_mp_setup_mandatory_hardware.param", "11_mp_setup_mandatory_hardware.param"])
+def test_user_can_review_unmapped_hardware_settings_in_simple_mode(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture, hardware_filename: str
+) -> None:
+    """
+    Keep hardware settings visible after migration.
+
+    GIVEN: Hardware settings include rangefinder, flow, 4.7 acceleration and unknown parameters
+    WHEN: The Copter hardware step is split
+    THEN: Known values reach active steps and unknown values remain recoverable and visible with a warning
+    """
+    source = tmp_path / hardware_filename
+    source.write_text(
+        "FLOW_TYPE,1\nRNGFND1_TYPE,10\nATC_ACC_P_MAX,72\nATC_ACC_R_MAX,73\nATC_ACC_Y_MAX,74\n"
+        "UNMAPPED_SETTING,17 # user reason\n",
+        encoding="utf-8",
+    )
+    general = tmp_path / "19_general_configuration.param"
+    general.write_text("UNRELATED_GENERAL,23\nFLOW_TYPE,0\n", encoding="utf-8")
+
+    migration_module._migrate_v1_to_v2(tmp_path, "ArduCopter")  # pylint: disable=protected-access
+    assert source.read_text(encoding="utf-8") == "UNMAPPED_SETTING,17 # user reason\n"
+    contents = general.read_text(encoding="utf-8")
+    assert "FLOW_TYPE,1\n" in contents
+    assert "RNGFND1_TYPE,10\n" in contents
+    assert "UNRELATED_GENERAL,23\n" in contents
+    assert "UNMAPPED_SETTING,17 # user reason\n" in contents
+    assert "UNMAPPED_SETTING" in caplog.text
+    atc = ParDict.load_param_file_into_dict(str(tmp_path / "13_initial_atc.param"))
+    assert {name: param.value for name, param in atc.items()} == {
+        "ATC_ACC_P_MAX": 72,
+        "ATC_ACC_R_MAX": 73,
+        "ATC_ACC_Y_MAX": 74,
+    }
+    layout = Path(__file__).parents[1] / (
+        "ardupilot_methodic_configurator/vehicle_templates/ArduCopter/Holybro_X500_mig/configuration_steps_ArduCopter.json"
+    )
+    step = json.loads(layout.read_text(encoding="utf-8"))["steps"][general.name]
+    assert int(step["mandatory_text"].split("%")[0]) > 20
+    migration_module._migrate_v1_to_v2(tmp_path, "ArduCopter")  # pylint: disable=protected-access
+    assert general.read_text(encoding="utf-8") == contents
+
+
+def test_user_keeps_fourth_and_fifth_imu_calibration_values(tmp_path: Path) -> None:
+    """
+    Preserve calibration of optional IMU subgroups.
+
+    GIVEN: Calibration values use the Copter-4.6.3 IMU 4_/5_ subgroup names
+    WHEN: The hardware step is split
+    THEN: Offsets, scales and use flags reach calibration, with temperatures also retained in the temperature step
+    """
+    values = {
+        f"INS{imu}_{suffix}": index + 1
+        for imu in (4, 5)
+        for index, suffix in enumerate(
+            ("USE", "ACCOFFS_X", "ACCOFFS_Y", "ACCOFFS_Z", "ACCSCAL_X", "ACCSCAL_Y", "ACCSCAL_Z", "ACC_CALTEMP")
+        )
+    }
+    (tmp_path / "14_mp_setup_mandatory_hardware.param").write_text(
+        "".join(f"{name},{value}\n" for name, value in values.items()), encoding="utf-8"
+    )
+    migration_module._migrate_v1_to_v2(tmp_path, "ArduCopter")  # pylint: disable=protected-access
+    calibration = ParDict.load_param_file_into_dict(str(tmp_path / "14_accelerometer_calibration.param"))
+    temperatures = ParDict.load_param_file_into_dict(str(tmp_path / "03_imu_temperature_calibration_results.param"))
+    assert {name: param.value for name, param in calibration.items()} == values
+    assert {name: param.value for name, param in temperatures.items()} == {
+        name: value for name, value in values.items() if name.endswith("CALTEMP")
+    }
+    assert not (tmp_path / "14_mp_setup_mandatory_hardware.param").exists()
+
+
+@pytest.mark.parametrize("template_name", ["TarotFY680Hexacopter", "empty_4.7.x"])
+def test_existing_copter_projects_keep_extra_hardware_values_in_active_steps(tmp_path: Path, template_name: str) -> None:
+    """
+    Preserve hardware settings from real projects with additional sensors or newer firmware.
+
+    GIVEN: A Tarot or Copter 4.7 template has hardware values outside the original split rules
+    WHEN: Its mandatory-hardware file is converted to the split layout
+    THEN: Rangefinder, optical flow and renamed acceleration values survive in active configuration steps
+    """
+    package = Path(__file__).parents[1] / "ardupilot_methodic_configurator"
+    template = package / "vehicle_templates" / "ArduCopter" / template_name
+    hardware = next(template.glob("*_mp_setup_mandatory_hardware.param"))
+    copyfile(hardware, tmp_path / hardware.name)
+    original = ParDict.load_param_file_into_dict(str(hardware))
+    expected = {
+        name: param.value for name, param in original.items() if name.startswith(("RNGFND", "ATC_ACC_")) or name == "FLOW_TYPE"
+    }
+    assert expected
+    migration_module._migrate_v1_to_v2(tmp_path, "ArduCopter")  # pylint: disable=protected-access
+    layout = package / "vehicle_templates/ArduCopter/Holybro_X500_mig/configuration_steps_ArduCopter.json"
+    steps = json.loads(layout.read_text(encoding="utf-8"))["steps"]
+    visible_values = {
+        name: param.value
+        for filename in steps
+        if (tmp_path / filename).is_file() and int(steps[filename]["mandatory_text"].split("%")[0]) > 20
+        for name, param in ParDict.load_param_file_into_dict(str(tmp_path / filename)).items()
+    }
+    assert {name: visible_values[name] for name in expected} == expected
 
 
 class TestPatternMatchingEdgeCases:

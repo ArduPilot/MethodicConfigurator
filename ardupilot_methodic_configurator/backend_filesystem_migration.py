@@ -23,6 +23,7 @@ from contextlib import suppress
 from json import dumps as json_dumps
 from json import load as json_load
 from os import O_CREAT, O_EXCL, O_WRONLY, close, fsync
+from os import link as os_link
 from os import open as os_open
 from pathlib import Path
 from secrets import token_hex
@@ -328,18 +329,24 @@ _FILES_TO_DELETE_V0_TO_V1: dict[str, list[str]] = {
 # Destinations belong to each vehicle's own layout. Only ArduCopter has the
 # split calibration/mode/servo layout used by the v2 migration fixture; the
 # other vehicles retain their combined mandatory-hardware calibration step.
+# IMUs 4/5 use INS4_/INS5_ subgroups, not suffixes on INS_ACC or INS_USE:
+# https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/libraries/AP_InertialSensor/AP_InertialSensor.cpp
 _PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str]]]] = {
     "all": [],
     "ArduCopter": [
         (
             "14_mp_setup_mandatory_hardware.param",
             "14_accelerometer_calibration.param",
-            [r"INS_ACC(?:[2-5])?OFFS_[XYZ]", r"INS_ACC(?:[2-3])?SCAL_[XYZ]", r"INS_USE[2-3]?"],
+            [
+                r"(?:INS_ACC[23]?OFFS|INS[45]_ACCOFFS)_[XYZ]",
+                r"(?:INS_ACC[23]?SCAL|INS[45]_ACCSCAL)_[XYZ]",
+                r"INS_USE[23]?|INS[45]_USE",
+            ],
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
             "03_imu_temperature_calibration_results.param",
-            [r"INS_ACC[1-3]_CALTEMP"],
+            [r"INS_ACC[1-3]_CALTEMP|INS[45]_ACC_CALTEMP"],
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
@@ -365,6 +372,16 @@ _PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str]]]] = {
             "14_mp_setup_mandatory_hardware.param",
             "18_servo_outputs.param",
             [r"SERVO\d+_FUNCTION", "FRAME_CLASS"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "13_initial_atc.param",
+            [r"ATC_ACC_[PRY]_MAX"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "19_general_configuration.param",
+            [r"RNGFND\d*_.*|FLOW_TYPE"],
         ),
         (
             "05_board_orientation.param",
@@ -456,7 +473,7 @@ _PARAM_COPIES_V1_TO_V2: dict[str, list[tuple[str, str, str, list[str]]]] = {
             "14_mp_setup_mandatory_hardware.param",
             "03_imu_temperature_calibration_results.param",
             "14_accelerometer_calibration.param",
-            [r"INS_ACC[1-3]_CALTEMP"],
+            [r"INS_ACC[1-3]_CALTEMP|INS[45]_ACC_CALTEMP"],
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
@@ -646,7 +663,7 @@ def _extract_params(source: Path, patterns: list[str]) -> tuple[list[str], list[
 
 
 def _copy_configuration_step_file(source: Path, destination: Path) -> None:
-    """Publish a complete, byte-preserving template copy without exposing partial contents."""
+    """Publish a complete template copy atomically, never overwriting an existing destination."""
     temporary_path = destination.parent / f".migration-{token_hex(16)}.tmp"
     # Match normal file creation: let the OS apply umask and inherited ACLs rather
     # than publishing NamedTemporaryFile's private 0o600 permissions. Exclusive
@@ -657,8 +674,12 @@ def _copy_configuration_step_file(source: Path, destination: Path) -> None:
         copyfile(source, temporary_path)
         with temporary_path.open("r+b") as copied_file:
             fsync(copied_file.fileno())
-        # Close every handle before replacing the destination, including on Windows.
-        temporary_path.replace(destination)
+        # Linking publishes complete contents atomically and fails if the destination
+        # appeared during copying. Do not fall back to a clobbering rename/replace.
+        try:
+            os_link(temporary_path, destination)
+        except FileExistsError:
+            logging.info(_("Preserved configuration file created during template restoration: %s"), destination.name)
     finally:
         with suppress(OSError):
             temporary_path.unlink(missing_ok=True)
@@ -827,6 +848,25 @@ def _migrate_v0_to_v1(vehicle_path: Path, vehicle_type: str) -> set[str]:  # pyl
     return deleted_filenames
 
 
+def _surface_unmapped_copter_parameters(remaining_by_source: dict[Path, list[str]], accumulated: dict[str, list[str]]) -> None:
+    """Keep unrecognized hardware values recoverable and visible in a mandatory step."""
+    obsolete_patterns = dict(_PARAM_DELETES_V1_TO_V2["ArduCopter"])
+    for src_path, remaining in remaining_by_source.items():
+        if src_path.name not in obsolete_patterns:
+            continue
+        _obsolete, retained = _extract_param_lines(remaining, obsolete_patterns[src_path.name])
+        unmapped = [line for line in retained if _param_name_from_line(line)]
+        if unmapped:
+            destination = "19_general_configuration.param"
+            accumulated.setdefault(destination, []).extend(unmapped)
+            logging.warning(
+                _("Unmapped parameters from %s copied to mandatory step %s for review: %s"),
+                src_path.name,
+                destination,
+                [_param_name_from_line(line) for line in unmapped],
+            )
+
+
 def _migrate_v1_to_v2(vehicle_path: Path, vehicle_type: str) -> set[str]:  # noqa: PLR0915  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     """Move hardware settings to the matching vehicle layout, splitting calibration only for ArduCopter."""
     deleted_filenames: set[str] = set()
@@ -863,6 +903,12 @@ def _migrate_v1_to_v2(vehicle_path: Path, vehicle_type: str) -> set[str]:  # noq
             ]
             if copied:
                 accumulated.setdefault(dst_name, []).extend(copied)
+
+    if vehicle_type == "ArduCopter":
+        # The split layout no longer lists the combined hardware step. Preserve
+        # unknown values there for recovery, but also surface them in a mandatory
+        # step so simple-mode users can review them. Publish before trimming sources.
+        _surface_unmapped_copter_parameters(remaining_by_source, accumulated)
 
     for dst_name, lines in accumulated.items():
         dst_path = vehicle_path / dst_name
