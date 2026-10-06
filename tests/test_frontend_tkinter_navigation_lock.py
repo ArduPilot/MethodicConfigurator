@@ -269,6 +269,7 @@ def calibration_view(navigation_controls, mocker) -> SimpleNamespace:
             view.stick_preview = MagicMock()
             view.craft_preview = MagicMock()
         view._calibration_in_progress = False
+        view._calibration_active = False
         view._poll_job = None
         view.after = MagicMock(return_value="after-id")
         view.after_cancel = MagicMock()
@@ -341,6 +342,46 @@ def test_full_accelerometer_wizard_keeps_navigation_locked_until_finished(calibr
 
     assert not fixture.host.navigation_lock.locked
     assert not fixture.controls.button.instate(("disabled",))
+
+
+def test_full_accelerometer_wizard_is_hidden_before_readback(calibration_view) -> None:
+    """The cancelable wizard is gone while successful readback still owns navigation."""
+    fixture = calibration_view
+    view = fixture.create(AccelerometerCalibrationView)
+    view.model.start_full_calibration.return_value = True, ""
+    view._on_start_full_calibration()
+
+    def download(**_kwargs) -> tuple[dict, dict]:
+        view._wizard_frame.pack_forget.assert_called_once()
+        assert view._simple_btn.configure.call_args_list[-1].kwargs["state"] == "disabled"
+        assert view._full_btn.configure.call_args_list[-1].kwargs["state"] == "disabled"
+        assert view._cancel_btn.configure.call_args_list[-1].kwargs["state"] == "disabled"
+        assert fixture.host.navigation_lock.locked
+        return {}, {}
+
+    fixture.host.download_flight_controller_parameters.side_effect = download
+    view._end_full_calibration(success=True)
+
+    assert not fixture.host.navigation_lock.locked
+
+    view._start_full_calibration()
+
+    assert view._cancel_btn.configure.call_args_list[-1].kwargs["state"] == "normal"
+
+
+def test_full_accelerometer_cancel_stops_polling_before_showing_result(calibration_view, mocker) -> None:
+    """A nested modal event loop cannot run a queued calibration poll after Cancel."""
+    fixture = calibration_view
+    view = fixture.create(AccelerometerCalibrationView)
+    view._poll_job = "pending-poll"
+    view.model.cancel_full_calibration.return_value = True, "cancelled"
+    showinfo = mocker.patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_accelerometer_calibration.showinfo")
+    showinfo.side_effect = lambda *_args: view.after_cancel.assert_called_once_with("pending-poll")
+
+    view._on_cancel_full_calibration()
+
+    view.after_cancel.assert_called_once_with("pending-poll")
+    showinfo.assert_called_once()
 
 
 @pytest.mark.parametrize(
@@ -533,6 +574,7 @@ def test_calibration_callback_errors_restore_navigation(
     fixture = calibration_view
     view = fixture.create(view_type)
     view._calibration_in_progress = True
+    view._calibration_active = True
     fixture.host.navigation_lock.acquire(view)
     getattr(view.model, backend_method).side_effect = OSError("controller unavailable")
 

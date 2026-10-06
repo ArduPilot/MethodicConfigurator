@@ -67,6 +67,7 @@ def progress_popup(attach_basewindow_shell) -> CompassCalibrationPopup:
     root.winfo_reqwidth = MagicMock(return_value=640)
     root.winfo_reqheight = MagicMock(return_value=360)
     popup.destroy = MagicMock()
+    popup.abandon_button = MagicMock()
     popup.progress_bars = {0: MagicMock(), 1: MagicMock()}
     popup.completion_status = {0: False, 1: False}
     popup.rows_container = MagicMock()
@@ -243,6 +244,7 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         title_label = MagicMock()
         hint_label = MagicMock()
         cancel_button = MagicMock()
+        abandon_button = MagicMock()
 
         with (
             patch(
@@ -263,7 +265,7 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
             ),
             patch(
                 "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.ttk.Button",
-                return_value=cancel_button,
+                side_effect=[cancel_button, abandon_button],
             ),
         ):
             popup._setup_ui()
@@ -274,9 +276,11 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         content_frame.pack.assert_called_once_with(fill="both", expand=True, padx=20, pady=20)
         hint_label.pack.assert_called_once_with(pady=(0, 10))
         cancel_button.pack.assert_called_once_with(pady=(15, 0))
+        abandon_button.pack.assert_called_once_with(pady=(5, 0))
         assert popup.hint_label is hint_label
         assert popup.rows_container is rows_container
         assert popup.cancel_button is cancel_button
+        assert popup.abandon_button is abandon_button
 
     def test_user_can_cancel_calibration_from_the_popup(self, attach_basewindow_shell) -> None:
         """
@@ -292,6 +296,7 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         root.after_cancel = MagicMock()
         root.after = MagicMock(return_value="new-after-id")
         popup.destroy = MagicMock()
+        popup.abandon_button = MagicMock()
         popup.model = MagicMock()
         popup.model.cancel_calibration = MagicMock(return_value=(True, ""))
         popup.model.finish_calibration = MagicMock()
@@ -321,6 +326,7 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         root.after_cancel = MagicMock()
         root.after = MagicMock(return_value="new-after-id")
         popup.destroy = MagicMock()
+        popup.abandon_button = MagicMock()
         popup.model = MagicMock()
         popup.model.cancel_calibration = MagicMock(return_value=(False, "Cancel rejected"))
         popup.model.finish_calibration = MagicMock()
@@ -333,7 +339,28 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         mock_error.assert_called_once_with("Failed to Cancel", "Cancel rejected", parent=root)
         root.after_cancel.assert_called_once_with("after-id")
         root.after.assert_called_once_with(100, popup._check_progress)
+        popup.abandon_button.configure.assert_called_once_with(state="normal")
         popup.destroy.assert_not_called()
+
+    def test_user_can_abandon_local_monitoring_after_cancel_is_unconfirmed(self, progress_popup) -> None:
+        """A failed FC cancel still has an explicit, warned path to release the popup lock."""
+        popup = progress_popup
+
+        def ask_effect(*_args, **_kwargs) -> bool:
+            popup._stop_polling.assert_called_once()
+            return True
+
+        with patch(
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.messagebox.askyesno",
+            return_value=True,
+        ) as ask_yes_no:
+            ask_yes_no.side_effect = ask_effect
+            popup._on_abandon_calibration()
+
+        ask_yes_no.assert_called_once()
+        assert "not confirmed" in ask_yes_no.call_args.args[1]
+        popup.model.finish_calibration.assert_called_once()
+        popup.destroy.assert_called_once()
 
     def test_user_sees_progress_updates_when_telemetry_arrives(self, progress_popup: CompassCalibrationPopup) -> None:
         """

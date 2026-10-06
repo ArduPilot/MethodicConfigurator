@@ -181,6 +181,14 @@ class CompassCalibrationPopup(CalibrationPopupBase["CompassCalibrationDataModel"
         self.cancel_button = ttk.Button(content_frame, text=_("Cancel Calibration"), command=self._on_cancel)
         self.cancel_button.pack(pady=(15, 0))
 
+        self.abandon_button = ttk.Button(
+            content_frame,
+            text=_("Abandon Monitoring"),
+            state="disabled",
+            command=self._on_abandon_calibration,
+        )
+        self.abandon_button.pack(pady=(5, 0))
+
     def _load_expected_compass_ids(self) -> list[int]:
         """Ask the data model which compasses are expected before telemetry starts arriving."""
         try:
@@ -377,7 +385,28 @@ class CompassCalibrationPopup(CalibrationPopupBase["CompassCalibrationDataModel"
 
         messagebox.showerror(_("Failed to Cancel"), error_msg, parent=self.root)
         logging_debug(_("Compass calibration cancel rejected: %(error)s"), {"error": error_msg})
+        self.abandon_button.configure(state="normal")
         self._timer_id = self.root.after(100, self._check_progress)
+
+    def _on_abandon_calibration(self) -> None:
+        """Close local monitoring after warning that FC cancellation was not confirmed."""
+        self._stop_polling()
+        should_abandon = messagebox.askyesno(
+            _("Abandon Monitoring"),
+            _(
+                "Cancellation was not confirmed by the flight controller. Abandon local monitoring and unlock navigation? "
+                "Compass calibration may still be running on the flight controller."
+            ),
+            parent=self.root,
+        )
+        if not should_abandon:
+            self._timer_id = self.root.after(100, self._check_progress)
+            return
+
+        try:
+            self.model.finish_calibration()
+        finally:
+            self.destroy()
 
 
 # pylint: disable=too-many-ancestors

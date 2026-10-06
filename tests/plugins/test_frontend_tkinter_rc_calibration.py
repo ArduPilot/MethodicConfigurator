@@ -12,16 +12,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import tkinter as tk
 from collections.abc import Generator
 from tkinter import ttk
+from types import SimpleNamespace
 from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
+from pytest_mock import MockerFixture
 
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_par_dict import Par
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_calibration_popup_base import CalibrationPopupBase
+from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
 from ardupilot_methodic_configurator.plugins.data_model_rc_calibration import RCCalibrationDataModel
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_rc_calibration import (
     RCCalibrationPopup,
@@ -50,6 +53,28 @@ def rc_channel_bars(tk_root: tk.Tk) -> Generator[RCChannelBars, None, None]:
     tk_root.update_idletasks()
     yield channel_bars
     channel_bars.destroy()
+
+
+@pytest.fixture
+def rc_navigation_view(
+    tk_root: tk.Tk, rc_staging_context: tuple[MagicMock, ParameterEditor]
+) -> Generator[SimpleNamespace, None, None]:
+    """Provide real RC widgets, staging, and navigation; mock only controller I/O and the host table."""
+    controller, editor = rc_staging_context
+    parent = ttk.Frame(tk_root)
+    navigation_button = ttk.Button(parent)
+    host = MagicMock(spec=BaseWindow)
+    host.navigation_lock = NavigationLock()
+    host.navigation_lock.register(navigation_button)
+    host.parameter_editor_table = MagicMock()
+    host.show_only_differences = None
+    host.gui_complexity = "simple"
+    view = RCCalibrationView(parent, RCCalibrationDataModel(controller, editor), host)
+    try:
+        yield SimpleNamespace(view=view, navigation_button=navigation_button, host=host, controller=controller, editor=editor)
+    finally:
+        view.destroy()
+        parent.destroy()
 
 
 class TestRCChannelBars:
@@ -760,6 +785,117 @@ def test_finish_button_only_stages_calibration_until_parameter_upload(
     finally:
         view.destroy()
         parent.destroy()
+
+
+def test_user_can_retry_rc_finish_with_navigation_locked_through_staging_and_refresh(
+    rc_navigation_view: SimpleNamespace, mocker: MockerFixture
+) -> None:
+    """
+    Retrying retained measurements keeps navigation disabled until staging and previews finish.
+
+    GIVEN: RC staging failed because a calibration parameter was protected
+    WHEN: The user enables its manual override and retries Finish
+    THEN: Staging and table refresh hold navigation, and the measurements are staged without an upload
+    """
+    context = rc_navigation_view
+    view = context.view
+    parameter = ArduPilotParameter("RC1_MIN", Par(1000, "Existing"), fc_value=1000, forced_par=Par(1000, "Required"))
+    context.editor.current_step_parameters["RC1_MIN"] = parameter
+    view._on_start_calibration()
+    view.model._channel_min = {0: 1100}
+    view.model._channel_max = {0: 1900}
+    view._on_finish_calibration()
+    assert not context.host.navigation_lock.locked
+    assert view._finish_btn.instate(("!disabled",))
+    assert view.model._channel_min == {0: 1100}
+    parameter.set_manual_override(True)
+
+    locked_during_staging: list[bool] = []
+    locked_during_refresh: list[bool] = []
+    finish = view.model.finish_calibration
+
+    def observe_finish() -> tuple[bool, str]:
+        locked_during_staging.append(context.navigation_button.instate(("disabled",)))
+        return finish()
+
+    def observe_refresh(**_kwargs: object) -> None:
+        locked_during_refresh.append(context.navigation_button.instate(("disabled",)))
+
+    mocker.patch.object(view.model, "finish_calibration", side_effect=observe_finish)
+    context.host.parameter_editor_table.repopulate_table.side_effect = observe_refresh
+    view._on_finish_calibration()
+
+    assert locked_during_staging == [True]
+    assert locked_during_refresh == [True]
+    assert parameter.get_new_value() == 1100
+    assert view.channel_bars._channel_values[1]["min"] == 1100
+    assert view._finish_btn.instate(("disabled",))
+    assert not context.host.navigation_lock.locked
+    assert context.navigation_button.instate(("!disabled",))
+    context.controller.set_param.assert_not_called()
+
+
+def test_rc_finish_retry_waits_for_a_competing_operation(rc_navigation_view: SimpleNamespace, mocker: MockerFixture) -> None:
+    """
+    Retrying an unsuccessful finish cannot bypass another operation's navigation ownership.
+
+    GIVEN: Finish failed without observations and another operation now owns navigation
+    WHEN: The user retries Finish
+    THEN: No staging occurs and the other operation's lock stays held
+    """
+    context = rc_navigation_view
+    view = context.view
+    view._on_start_calibration()
+    view._on_finish_calibration()
+    assert view._finish_btn.instate(("!disabled",))
+    finish = mocker.spy(view.model, "finish_calibration")
+    owner = object()
+    context.host.navigation_lock.acquire(owner)
+    try:
+        view._on_finish_calibration()
+
+        finish.assert_not_called()
+        assert context.host.navigation_lock.locked
+        assert context.navigation_button.instate(("disabled",))
+    finally:
+        context.host.navigation_lock.release(owner)
+
+
+@pytest.mark.parametrize("failed_widget", ["channel_bars", "_start_btn", "_finish_btn", "_cancel_btn", "_status_label"])
+def test_rc_startup_ui_failure_cancels_collection_and_allows_a_fresh_start(
+    rc_navigation_view: SimpleNamespace, mocker: MockerFixture, failed_widget: str
+) -> None:
+    """
+    A UI error after successful startup stops collecting and leaves usable calibration controls.
+
+    GIVEN: The RC model starts successfully but a preview or control update raises a Tk error
+    WHEN: The user starts calibration
+    THEN: Collection stops, navigation and buttons recover, and a later start succeeds
+    """
+    context = rc_navigation_view
+    view = context.view
+    error = tk.TclError("startup UI unavailable")
+    method = "update_calibration" if failed_widget == "channel_bars" else "configure"
+    failing_update = mocker.patch.object(getattr(view, failed_widget), method, side_effect=error)
+
+    with pytest.raises(tk.TclError, match="startup UI unavailable") as raised:
+        view._on_start_calibration()
+
+    assert raised.value is error
+    assert not view.model._is_calibrating
+    assert not view._calibration_active
+    assert not context.host.navigation_lock.locked
+    assert context.navigation_button.instate(("!disabled",))
+    assert view._start_btn.instate(("!disabled",))
+    assert view._finish_btn.instate(("disabled",))
+    assert view._cancel_btn.instate(("disabled",))
+    mocker.stop(failing_update)
+    view._on_start_calibration()
+    assert view.model._is_calibrating
+    assert context.host.navigation_lock.locked
+    view._on_cancel_calibration()
+    assert not context.host.navigation_lock.locked
+    context.controller.set_param.assert_not_called()
 
 
 def test_custom_mapping_and_failed_mode_change_do_not_silently_replace_parameters(
