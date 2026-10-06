@@ -302,6 +302,7 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
         # Show wizard, disable the top-level calibration buttons
         self._simple_btn.configure(state="disabled")
         self._full_btn.configure(state="disabled")
+        self._cancel_btn.configure(state="normal")
         self._position_label.configure(text=_("Waiting for flight controller..."))
         self._continue_btn.configure(state="disabled")
         self._waiting_for_position = False
@@ -369,6 +370,8 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
 
     def _on_cancel_full_calibration(self) -> None:
         """User clicked Cancel during full calibration."""
+        # Stop a queued callback before any modal dialog enters a nested event loop.
+        self._stop_polling()
         try:
             success, message = self.model.cancel_full_calibration()
             if not success:
@@ -382,6 +385,8 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
         """Called when full calibration completes (successfully or not)."""
         self._stop_polling()
         try:
+            # Remove the cancelable controls while readback and staging still own navigation.
+            self._hide_wizard(enable_calibration_buttons=False)
             self._finish_full_calibration(success=success)
         finally:
             self._close_full_calibration_wizard()
@@ -436,13 +441,15 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
         stop_periodic_polling(self.after_cancel, self._poll_job)
         self._poll_job = None
 
-    def _hide_wizard(self) -> None:
-        """Hide the wizard panel and re-enable the top-level buttons."""
+    def _hide_wizard(self, *, enable_calibration_buttons: bool = True) -> None:
+        """Hide the wizard panel, optionally restoring the top-level buttons."""
         self._waiting_for_position = False
         self._expected_position_name = ""
         self._wizard_frame.pack_forget()
-        self._simple_btn.configure(state="normal")
-        self._full_btn.configure(state="normal")
+        self._cancel_btn.configure(state="disabled")
+        if enable_calibration_buttons:
+            self._simple_btn.configure(state="normal")
+            self._full_btn.configure(state="normal")
 
     # ------------------------------------------------------------------
     # IMU live monitor

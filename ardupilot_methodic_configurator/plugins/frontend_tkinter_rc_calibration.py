@@ -32,6 +32,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import Scroll
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.plugins.data_model_rc_calibration import RC_STICK_MODES, RCCalibrationDataModel
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_helpers import (
+    begin_calibration_navigation_lock,
     end_calibration_navigation_lock,
     refresh_parameter_editor_table,
     start_calibration_with_navigation_lock,
@@ -615,19 +616,36 @@ class RCCalibrationView(ttk.Frame):  # pylint: disable=too-many-ancestors, too-m
         success, error_msg = self.model.start_calibration()
         if success:
             self._calibration_active = True
-            self.channel_bars.update_calibration(self.model.get_channel_calibration())
-            self._start_btn.configure(state="disabled")
-            self._finish_btn.configure(state="normal")
-            self._cancel_btn.configure(state="normal")
-            self._status_label.configure(
-                text=_("Calibrating — move all sticks and switches to their extremes, then click Finish."),
-                foreground="blue",
-            )
+            try:
+                self.channel_bars.update_calibration(self.model.get_channel_calibration())
+                self._start_btn.configure(state="disabled")
+                self._finish_btn.configure(state="normal")
+                self._cancel_btn.configure(state="normal")
+                self._status_label.configure(
+                    text=_("Calibrating — move all sticks and switches to their extremes, then click Finish."),
+                    foreground="blue",
+                )
+            except Exception:
+                try:
+                    self.model.cancel_calibration()
+                finally:
+                    self._calibration_active = False
+                    for button, state in (
+                        (self._start_btn, "normal"),
+                        (self._finish_btn, "disabled"),
+                        (self._cancel_btn, "disabled"),
+                    ):
+                        with suppress(tk.TclError):
+                            button.configure(state=state)
+                raise
         else:
             self._status_label.configure(text=error_msg, foreground="red")
         return success
 
     def _on_finish_calibration(self) -> None:
+        # Failed staging stops collection but retains measurements for a locked retry.
+        if not self._calibration_active and not begin_calibration_navigation_lock(self.base_window, self):
+            return
         try:
             success, message = self.model.finish_calibration()
             if success:
