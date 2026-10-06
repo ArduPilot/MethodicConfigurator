@@ -82,9 +82,17 @@ class FakeMotorTestModel:  # pylint: disable=too-many-instance-attributes, too-m
         self.emergency_runs = 0
         self.stop_calls = 0
         self.battery_issue = True
+        self.status_text_logging = False
+        self.status_text_polls = 0
 
     def refresh_from_flight_controller(self) -> bool:
         return self.refresh_returns
+
+    def set_status_text_logging(self, enabled: bool) -> None:
+        self.status_text_logging = enabled
+
+    def poll_status_text(self) -> None:
+        self.status_text_polls += 1
 
     def get_frame_type_pairs(self) -> list[tuple[str, str]]:
         return self.frame_pairs
@@ -307,7 +315,7 @@ class TestDelayedProgressCallback:
         assert recorded == [(1, 5)]
 
 
-class TestMotorTestView:
+class TestMotorTestView:  # pylint: disable=too-many-public-methods
     """Covers the Tkinter view widget behavior for the motor test UI."""
 
     def test_initialization_populates_widgets(self, motor_view: MotorTestView, fake_model: FakeMotorTestModel) -> None:
@@ -321,6 +329,29 @@ class TestMotorTestView:
         assert len(motor_view.motor_buttons) == fake_model.motor_count
         assert motor_view.throttle_spinbox.get() == str(fake_model.get_test_throttle_pct())
         assert motor_view.duration_spinbox.get() == str(fake_model.get_test_duration_s())
+        assert fake_model.status_text_logging is True
+        assert fake_model.status_text_polls == 1
+
+    def test_visible_motor_test_view_polls_firmware_messages_without_duplicate_timers(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, mocker
+    ) -> None:
+        """
+        Poll firmware status throughout motor testing.
+
+        GIVEN: An active motor-test view with a pending refresh
+        WHEN: The view is refreshed twice
+        THEN: Firmware messages are polled and the previous timer is replaced
+        """
+        schedule = mocker.patch.object(motor_view, "after", return_value="status-refresh")
+        cancel = mocker.patch.object(motor_view, "after_cancel")
+        motor_view._timer_id = None
+
+        motor_view._update_view()
+        motor_view._update_view()
+
+        assert fake_model.status_text_polls == 3
+        assert schedule.call_count == 2
+        cancel.assert_called_once_with("status-refresh")
 
     def test_user_adjusts_throttle_and_duration_values(
         self,
@@ -705,13 +736,16 @@ class TestMotorTestView:
         assert bind_spy.call_count == 4
         focus_spy.assert_called_once()
 
-    def test_destroy_unbinds_keyboard_shortcuts(self, motor_view: MotorTestView, mocker) -> None:
+    def test_destroy_unbinds_keyboard_shortcuts(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, mocker
+    ) -> None:
         """Destroying the view must remove its app-wide actuator shortcuts."""
         unbind_spy = mocker.patch.object(motor_view.root_window, "unbind")
 
         motor_view.destroy()
 
         assert unbind_spy.call_count == 4
+        assert fake_model.status_text_logging is False
 
     def test_destroy_preserves_preexisting_root_binding(self, motor_view: MotorTestView, mocker) -> None:
         """Destroying the view must not erase a shortcut owned by another view."""
@@ -760,9 +794,11 @@ class TestMotorTestView:
         fake_model.refresh_returns = False
         motor_view.on_activate()
         assert update_view_spy.called
+        assert fake_model.status_text_logging is True
 
         fake_model.raise_stop_error = MotorTestExecutionError("stop")
         motor_view.on_deactivate()
+        assert fake_model.status_text_logging is False
 
         fake_model.raise_stop_error = ParameterError("stop")
         motor_view.on_deactivate()
@@ -770,6 +806,7 @@ class TestMotorTestView:
         fake_model.raise_stop_error = RuntimeError("boom")
         with pytest.raises(RuntimeError):
             motor_view.on_deactivate()
+        assert fake_model.status_text_logging is False
 
     def test_first_test_confirmation_flow(
         self,
