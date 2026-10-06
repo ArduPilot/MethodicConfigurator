@@ -159,27 +159,7 @@
             },
             "old_filenames": []
         },
-        "05_board_orientation.param": {
-            "why": "Correct orientation ensures that the flight controller accurately interprets the vehicle's movements and orientation, which is fundamental for stable flight and navigation.",
-            "why_now": "The following steps require that the orientation is correctly set",
-            "blog_text": "Define the orientation of the flight controller board relative to the vehicle's body frame",
-            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter_mig#61-configure-flight-controller-orientation",
-            "wiki_text": "Mounting the Autopilot - AHRS_ORIENTATION parameter",
-            "wiki_url": "https://ardupilot.org/copter/docs/common-mounting-the-flight-controller.html",
-            "external_tool_text": "",
-            "external_tool_url": "",
-            "mandatory_text": "100% mandatory (0% optional)",
-            "plugin": {
-                "name": "ahrs_orientation",
-                "placement": "top"
-            },
-            "auto_changed_by": "",
-            "delete_parameters": {
-                "FRAME_CLASS": {}
-            },
-            "old_filenames": ["04_board_orientation.param"]
-        },
-        "06_remote_controller_receiver.param": {
+        "05_remote_controller_receiver.param": {
             "why": "Remote controller is mandatory in the initial configuration and tuning phases. Later might be required for operation and/or safety",
             "why_now": "It is a pre-requirement for configuring some telemetry systems and ESCs",
             "blog_text": "Configure remote controller connection, protocol and settings, including channel mapping and flight modes",
@@ -206,9 +186,9 @@
                 "SERIAL9_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL9'", "New Value": "23", "Change Reason": "RC receiver on SERIAL9 requires RCIN" }
             },
             "rename_connection": "vehicle_components['RC Receiver']['FC Connection']['Type']",
-            "old_filenames": ["05_remote_controller.param"]
+            "old_filenames": ["05_remote_controller.param", "06_remote_controller_receiver.param"]
         },
-        "07_remote_controller_controller.param": {
+        "06_remote_controller_controller.param": {
             "why": "Configuring RC controller options ensures correct arming behavior and channel function assignments for the specific RC system in use",
             "why_now": "After the RC receiver protocol is configured, the controller-specific options such as arming method and channel function can be set",
             "autoimport_nondefault_regexp": ["ARMING_RUDDER", "PILOT_THR_BHV", "RC[0-9]+_.+", "RCMAP_(ROLL|PITCH|THROTTLE|YAW)"],
@@ -234,9 +214,9 @@
             "derived_parameters": {
                 "RC5_OPTION": { "if": "vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'ExpressLRS'", "New Value": "1", "Change Reason": "ExpressLRS requires RC5 to be used for arming (Arm/Disarm function)" }
             },
-            "old_filenames": []
+            "old_filenames": ["07_remote_controller_controller.param"]
         },
-        "08_telemetry.param": {
+        "07_telemetry.param": {
             "why": "Telemetry allows the ground control station to monitor the vehicle's status in real-time, providing flight information for safe and efficient operation.",
             "why_now": "Sometimes it depends on the remote controller. Configuring telemetry early allows vehicle configuration and sensor calibration in later steps without requiring a USB cable connection to the autopilot",
             "blog_text": "Configure telemetry connection, data protocol and settings between the autopilot and the ground control station(s)",
@@ -260,9 +240,9 @@
                 "SERIAL9_PROTOCOL": { "if": "vehicle_components['Telemetry']['FC Connection']['Type'] == 'SERIAL9'", "New Value": "vehicle_components['Telemetry']['FC Connection']['Protocol']", "Change Reason": "Telemetry on SERIAL9 protocol defined in component editor" }
             },
             "rename_connection": "vehicle_components['Telemetry']['FC Connection']['Type']",
-            "old_filenames": ["06_telemetry.param"]
+            "old_filenames": ["06_telemetry.param", "08_telemetry.param"]
         },
-        "09_esc_telemetry.param": {
+        "08_esc_telemetry.param": {
             "why": "Proper ESC configuration is crucial for accurate motor control, affecting vehicle performance and safety. It ensures motors respond correctly to control signals and fail safely in various flight conditions.",
             "why_now": "Pre-requires remote control configuration. Uses GCS telemetry if available. Setting up ESCs early allows for initial motor tests and ensures a stable base for further tuning and flight testing without risking damage to the vehicle.",
             "blog_text": "Configure settings for the Electronic Speed Controllers (ESCs), including PWM range and failsafe behavior",
@@ -295,7 +275,7 @@
                 "SERVO_FTW_POLES": {}
             },
             "rename_connection": "vehicle_components['ESC']['ESC->FC Telemetry']['Type']",
-            "old_filenames": ["07_esc.param"],
+            "old_filenames": ["07_esc.param", "09_esc_telemetry.param"],
             "plugin": {
                 "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'Scripting'",
                 "name": "esc_rpm_scale",
@@ -307,7 +287,7 @@
                 "EDT2": { "name": "Extended DShot telemetry", "required": false }
             }
         },
-        "10_battery_monitor.param": {
+        "09_battery_monitor.param": {
             "why": "The battery monitor must be configured to match the hardware connection type so that the autopilot correctly reads battery voltage and current",
             "why_now": "After the battery voltage and failsafe thresholds are set, the monitor hardware connection parameters can be configured",
             "blog_text": "Configure the battery monitor hardware connection type, protocol and calibration values",
@@ -330,7 +310,7 @@
                 "BATT_AMP_PERVLT": { "if": "vehicle_components['Battery Monitor']['FC Connection']['Type'] != 'Analog' or vehicle_components['Battery Monitor']['FC Connection']['Protocol'] in ['Analog Voltage Only', 'FuelLevelAnalog']" },
                 "BATT_VOLT_MULT": { "if": "vehicle_components['Battery Monitor']['FC Connection']['Type'] != 'Analog'" }
             },
-            "old_filenames": [],
+            "old_filenames": ["10_battery_monitor.param"],
             "plugin": {
                 "name": "battery_monitor",
                 "placement": "left"
@@ -341,7 +321,7 @@
                 "POWR": { "name": "Power monitor", "required": false }
             }
         },
-        "11_battery.param": {
+        "10_battery.param": {
             "why": "Ensures the vehicle operates within safe voltage limits and can trigger appropriate failsafe actions to protect the vehicle and its surroundings. It also helps by scaling the PIDs to provide a constant flight behavior, independent of the battery state-of-charge",
             "why_now": "The failsafe configuration step requires this. During flight tests PID scaling depends on the battery voltage",
             "blog_text": "Configure parameters for the first battery, including health monitoring thresholds and failsafe behavior",
@@ -385,87 +365,113 @@
                 "BATT2_VOLT_PIN": {}
             },
             "rename_connection": "vehicle_components['Battery Monitor']['FC Connection']['Type']",
-            "old_filenames": ["08_batt1.param"]
+            "old_filenames": ["08_batt1.param", "11_battery.param"]
         },
-        "12_gnss.param": {
-            "why": "GNSS positioning is required to compensate for the IMU drift. This is required by the configuration and tuning steps. After configuration and tuning are complete the GNSS can be replaced by other positioning system",
-            "why_now": "Needs to be done before compass calibration",
-            "blog_text": "Configure the GNSS (Global Navigation Satellite System) connection and settings, including antenna phase center location and constellation selection for optimal update rates",
-            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter_mig#66-configure-the-gnss-receivers",
-            "wiki_text": "GPS/Compass (landing page) - GPS* parameters",
-            "wiki_url": "https://ardupilot.org/copter/docs/common-positioning-landing-page.html",
+        "11_servo_outputs.param": {
+            "why": "Servo output functions define how the flight controller drives the vehicle outputs.",
+            "why_now": "Output functions are assigned after the connected hardware and vehicle type are known.",
+            "blog_text": "Configure servo output functions.",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter_mig#685-servo-outputs-18_servo_outputsparam",
+            "wiki_text": "Servo Output Functions",
+            "wiki_url": "https://ardupilot.org/copter/docs/common-servo.html",
             "external_tool_text": "",
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
-            "component": "GNSS Receiver",
-            "auto_changed_by": "",
-            "autoimport_nondefault_regexp": ["BRD_BOOT_DELAY", "BRD_SAFETY_DEFLT", "CAN_.*", "GPS.*", "GNSS.*", "NTF_LED_TYPES", "SERIAL[34]_PROTOCOL", "(WPNAV_RADIUS|WP_RADIUS_M)$"],
-            "derived_parameters": {
-                "GPS_TYPE": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.6')", "New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" },
-                "GPS1_TYPE": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.6')","New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" }
+            "component": "Frame",
+            "plugin": {
+                "name": "servo_out",
+                "placement": "left"
             },
-            "rename_connection": "vehicle_components['GNSS Receiver']['FC Connection']['Type']",
-            "old_filenames": ["10_gnss.param"],
-            "related_bin_messages": {
-                "GPS": {
-                    "name": "GPS",
-                    "required": true
-                },
-                "GPA": {
-                    "name": "GPS accuracy",
-                    "required": false
-                },
-                "GRAW": {
-                    "name": "Raw GPS data",
-                    "required": false
-                }
+            "autoimport_nondefault_regexp": [
+                "SERVO[0-9]+_FUNCTION"
+            ],
+            "derived_parameters": {
+                "FRAME_CLASS": { "New Value": "vehicle_components['Frame']['Specifications']['Frame class']", "Change Reason": "Selected in the component editor" }
+            },
+            "old_filenames": []
+        },
+        "12_motor.param": {
+            "why": "To determine motor RPM the number of electrical poles must be known",
+            "why_now": "Needs to be done after setting ESC telemetry, but before testing the motor",
+            "blog_text": "Motor specifications",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter_mig#motor-thrust-scaling-mot_thst_expo-mot_spin_min-and-mot_spin_max",
+            "wiki_text": "",
+            "wiki_url": "",
+            "external_tool_text": "",
+            "external_tool_url": "",
+            "mandatory_text": "40% mandatory (60% optional)",
+            "component": "Motors",
+            "auto_changed_by": "",
+            "derived_parameters": {
+                "ESC_HW_POLES": { "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'Scripting'", "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" },
+                "SERVO_BLH_POLES": { "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] in ['ESC Telemetry', 'BDShotOnly']", "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" },
+                "SERVO_FTW_POLES": { "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'FETtecOneWire'", "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" }
+            },
+            "old_filenames": ["19_motor.param"]
+        },
+        "13_esc.param": {
+            "why": "The motor thrust linearization is crucial for the throttle controller tuning, and throttle-based notch filter operation",
+            "why_now": "The notch filter setup step requires this, and the safety of the vehicle depends on the ESC and motor configuration",
+            "blog_text": "ESC, Motor and propeller configurations",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter_mig#motor-thrust-scaling-mot_thst_expo-mot_spin_min-and-mot_spin_max",
+            "wiki_text": "Motor Thrust Scaling",
+            "wiki_url": "https://ardupilot.org/copter/docs/motor-thrust-scaling.html",
+            "external_tool_text": "ArduPilot Thrust Expo",
+            "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/ThrustExpo/",
+            "mandatory_text": "100% mandatory (0% optional)",
+            "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["BRD_IO_DSHOT", "BRD_IO_ENABLE", "MOT_(PWM_(MAX|MIN)|SPIN_(ARM|MAX|MIN)|THST_EXPO)", "NTF_.*", "SERVO[0-9]+_.+", "SERVO_.*"],
+            "derived_parameters": {
+                "MOT_PWM_MAX": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] not in ['Normal', 'Brushed', 'PWMAngle', 'PWMRange']", "New Value": "2000", "Change Reason": "Digital ESC protocol maximum is per definition 2000" },
+                "MOT_PWM_MIN": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] not in ['Normal', 'Brushed', 'PWMAngle', 'PWMRange']", "New Value": "1000", "Change Reason": "Digital ESC protocol minimum is per definition 1000" }
+            },
+            "add_parameters": {
+                "BRD_IO_DSHOT": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] in ['DShot150', 'DShot300', 'DShot600', 'DShot1200'] and 'BRD_IO_DSHOT' in fc_parameters" },
+                "BRD_IO_ENABLE": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] in ['DShot150', 'DShot300', 'DShot600', 'DShot1200'] and 'BRD_IO_ENABLE' in fc_parameters" },
+                "MOT_SPIN_ARM": { "Change Reason": "The minimum value at which the motors start spinning reliably" },
+                "MOT_SPIN_MAX": { "Change Reason": "The maximum value at which the motors spin" },
+                "MOT_SPIN_MIN": { "Change Reason": "MOT_SPIN_ARM plus at least 0.03" },
+                "MOT_THST_EXPO": { "Change Reason": "Throttle exponential curve from datasheet or from motor thrust stand" },
+                "SERVO_BLH_AUTO": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] in ['DShot150', 'DShot300', 'DShot600', 'DShot1200']" },
+                "SERVO_BLH_BDMASK": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] in ['DShot150', 'DShot300', 'DShot600', 'DShot1200'] and 'SERVO_BLH_BDMASK' in fc_parameters" },
+                "SERVO_DSHOT_ESC": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] in ['DShot150', 'DShot300', 'DShot600', 'DShot1200']" },
+                "SERVO_DSHOT_RATE": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] in ['DShot150', 'DShot300', 'DShot600', 'DShot1200']" },
+                "TKOFF_RPM_MIN": { "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Type'] != 'None'", "Change Reason": "For safety reasons, only start takeoff if all motors spin above this RPM" }
+            },
+            "delete_parameters": {
+                "ESC_HW_POLES": {},
+                "KDE_NPOLE": {},
+                "SERVO_BLH_POLES": {},
+                "SERVO_BLH_TRATE": {},
+                "SERVO_FTW_POLES": {}
+            },
+            "old_filenames": ["14_motor.param", "15_motor.param", "20_esc.param"],
+            "plugin": {
+                "name": "motor_test",
+                "placement": "left"
             }
         },
-        "13_initial_atc.param": {
-            "instructions_popup": {
-                "type": "warning",
-                "msg": "Only do this step once. It sets initial values that later steps will improve."
-            },
-            "why": "Propeller size has a big influence on the vehicle dynamics, this adapts the attitude controller response to it",
-            "why_now": "Done before sensor calibration in Mission Planner to minimize the changes the user has to do in mission planner",
-            "blog_text": "Initial attitude controller configuration depends on the vehicle's propeller size defined in the component editor window",
-            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter_mig#67-initial-attitude-pid-gains-vehicle-size-dependent",
-            "wiki_text": "Initial parameters calculator",
-            "wiki_url": "https://discuss.ardupilot.org/t/initial-parameters-calculator-plugin/56909/61",
+        "14_board_orientation.param": {
+            "why": "Correct orientation ensures that the flight controller accurately interprets the vehicle's movements and orientation, which is fundamental for stable flight and navigation.",
+            "why_now": "The following steps require that the orientation is correctly set",
+            "blog_text": "Define the orientation of the flight controller board relative to the vehicle's body frame",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter_mig#61-configure-flight-controller-orientation",
+            "wiki_text": "Mounting the Autopilot - AHRS_ORIENTATION parameter",
+            "wiki_url": "https://ardupilot.org/copter/docs/common-mounting-the-flight-controller.html",
             "external_tool_text": "",
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
-            "component": "Propellers",
+            "plugin": {
+                "name": "ahrs_orientation",
+                "placement": "top"
+            },
             "auto_changed_by": "",
-            "autoimport_nondefault_regexp": ["ATC_ACC(EL)?_[PRY]_MAX$", "ATC_ANG_YAW_P$", "ATC_RAT_(PIT|RLL|YAW)_FLT[DET]$", "INS_ACCEL_FILTER$", "MOT_THST_(EXPO|HOVER)$"],
-            "forced_parameters": {
-                "ATC_RAT_PIT_FLTE": { "New Value": "0", "Change Reason": "Initial value, will be improved at a later step" },
-                "ATC_RAT_RLL_FLTE": { "New Value": "0", "Change Reason": "Initial value, will be improved at a later step" },
-                "ATC_RAT_YAW_FLTD": { "New Value": "0", "Change Reason": "Initial value, will be improved at a later step" },
-                "ATC_RAT_YAW_FLTE": { "New Value": "2", "Change Reason": "Initial value, will be improved at a later step" },
-                "ATC_THR_MIX_MAN":  { "New Value": "0.1", "Change Reason": "Value for the first couple of flights will be changed later once MOT_THST_HOVER is learned" },
-                "INS_ACCEL_FILTER": { "New Value": "10", "Change Reason": "The default is 20Hz but that is too high in most situations" },
-                "MOT_THST_HOVER":   { "New Value": "0.2", "Change Reason": "Hover learn will improve this initial guess" }
+            "delete_parameters": {
+                "FRAME_CLASS": {}
             },
-            "derived_parameters": {
-                "ATC_ANG_YAW_P":    { "New Value": "round(0.5*max(8000, round(-900*vehicle_components['Propellers']['Specifications']['Diameter_inches']+36000, -2))/3000, 1)", "Change Reason": "Derived from vehicle component editor propeller size" },
-                "ATC_ACCEL_P_MAX":  { "if": "'ATC_ACCEL_P_MAX' in fc_parameters", "New Value": "max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))", "Change Reason": "Derived from vehicle component editor propeller size" },
-                "ATC_ACCEL_R_MAX":  { "if": "'ATC_ACCEL_R_MAX' in fc_parameters", "New Value": "max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))", "Change Reason": "Derived from vehicle component editor propeller size" },
-                "ATC_ACCEL_Y_MAX":  { "if": "'ATC_ACCEL_Y_MAX' in fc_parameters", "New Value": "max(8000, round(-900*vehicle_components['Propellers']['Specifications']['Diameter_inches']+36000, -2))", "Change Reason": "Derived from vehicle component editor propeller size" },
-                "ATC_ACC_P_MAX":    { "if": "'ATC_ACC_P_MAX' in fc_parameters", "New Value": "max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))/100", "Change Reason": "Derived from vehicle component editor propeller size" },
-                "ATC_ACC_R_MAX":    { "if": "'ATC_ACC_R_MAX' in fc_parameters", "New Value": "max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))/100", "Change Reason": "Derived from vehicle component editor propeller size" },
-                "ATC_ACC_Y_MAX":    { "if": "'ATC_ACC_Y_MAX' in fc_parameters", "New Value": "max(8000, round(-900*vehicle_components['Propellers']['Specifications']['Diameter_inches']+36000, -2))/100", "Change Reason": "Derived from vehicle component editor propeller size" },
-                "ATC_RAT_PIT_FLTD": { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0))) / 2", "Change Reason": "INS_GYRO_FILTER / 2" },
-                "ATC_RAT_PIT_FLTT": { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0))) / 2", "Change Reason": "INS_GYRO_FILTER / 2" },
-                "ATC_RAT_RLL_FLTD": { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0))) / 2", "Change Reason": "INS_GYRO_FILTER / 2" },
-                "ATC_RAT_RLL_FLTT": { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0))) / 2", "Change Reason": "INS_GYRO_FILTER / 2" },
-                "ATC_RAT_YAW_FLTT": { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0))) / 2", "Change Reason": "INS_GYRO_FILTER / 2" },
-                "INS_GYRO_FILTER":  { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0)))", "Change Reason": "Derived from vehicle component editor propeller size" },
-                "MOT_THST_EXPO":    { "New Value": "min(0.8, round(0.15686*log(vehicle_components['Propellers']['Specifications']['Diameter_inches'])+0.23693, 2))", "Change Reason": "Derived from vehicle component editor propeller size" }
-            },
-            "old_filenames": ["11_initial_atc.param"]
+            "old_filenames": ["04_board_orientation.param", "05_board_orientation.param"]
         },
-        "14_accelerometer_calibration.param": {
+        "15_accelerometer_calibration.param": {
             "why": "Accelerometer calibration values and the accelerometers to use must be configured before the vehicle can be flown.",
             "why_now": "The flight controller and sensors have been configured in the preceding steps.",
             "blog_text": "Calibrate the accelerometers and configure the accelerometer sensors.",
@@ -536,7 +542,7 @@
             },
             "old_filenames": []
         },
-        "15_accelerometer_level.param": {
+        "16_accelerometer_level.param": {
             "why": "Accelerometer level trim values compensate for the vehicle attitude when it is stationary.",
             "why_now": "The accelerometers must be calibrated before their level can be checked and corrected.",
             "blog_text": "Level the accelerometers.",
@@ -559,7 +565,41 @@
             },
              "old_filenames": []
         },
-        "16_compass_calibration.param": {
+        "17_gnss.param": {
+            "why": "GNSS positioning is required to compensate for the IMU drift. This is required by the configuration and tuning steps. After configuration and tuning are complete the GNSS can be replaced by other positioning system",
+            "why_now": "Needs to be done before compass calibration",
+            "blog_text": "Configure the GNSS (Global Navigation Satellite System) connection and settings, including antenna phase center location and constellation selection for optimal update rates",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter_mig#66-configure-the-gnss-receivers",
+            "wiki_text": "GPS/Compass (landing page) - GPS* parameters",
+            "wiki_url": "https://ardupilot.org/copter/docs/common-positioning-landing-page.html",
+            "external_tool_text": "",
+            "external_tool_url": "",
+            "mandatory_text": "100% mandatory (0% optional)",
+            "component": "GNSS Receiver",
+            "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["BRD_BOOT_DELAY", "BRD_SAFETY_DEFLT", "CAN_.*", "GPS.*", "GNSS.*", "NTF_LED_TYPES", "SERIAL[34]_PROTOCOL", "(WPNAV_RADIUS|WP_RADIUS_M)$"],
+            "derived_parameters": {
+                "GPS_TYPE": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.6')", "New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" },
+                "GPS1_TYPE": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.6')","New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" }
+            },
+            "rename_connection": "vehicle_components['GNSS Receiver']['FC Connection']['Type']",
+            "old_filenames": ["10_gnss.param", "12_gnss.param"],
+            "related_bin_messages": {
+                "GPS": {
+                    "name": "GPS",
+                    "required": true
+                },
+                "GPA": {
+                    "name": "GPS accuracy",
+                    "required": false
+                },
+                "GRAW": {
+                    "name": "Raw GPS data",
+                    "required": false
+                }
+            }
+        },
+        "18_compass_calibration.param": {
             "why": "Compass calibration and ordering are required for reliable heading estimation.",
             "why_now": "The compass hardware and vehicle orientation are configured in the preceding steps.",
             "blog_text": "Calibrate and configure the compasses.",
@@ -578,7 +618,35 @@
             ],
             "old_filenames": []
         },
-        "17_flight_modes.param": {
+        "19_remote_id.param": {
+            "why": "Some countries require a remote ID for drones to be flown legally.",
+            "why_now": "Remote ID requires GNSS and air pressure to be configured before, and it must be set up before the first flight",
+            "autoimport_nondefault_regexp": ["ADSB_.*", "DID_.*"],
+            "blog_text": "Set the remote ID for the vehicle, to comply with local laws if applicable",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter_mig#692-remote-id-aka-drone-id-optional",
+            "wiki_text": "Remote ID (aka Drone ID)",
+            "wiki_url": "https://ardupilot.org/copter/docs/common-remoteid.html",
+            "external_tool_text": "Dronetag BS user manual",
+            "external_tool_url": "https://help.dronetag.cz/dronetag-bs",
+            "mandatory_text": "0% mandatory (100% optional)",
+            "auto_changed_by": "",
+            "old_filenames": ["16_remote_id.param", "17_remote_id.param"]
+        },
+        "20_osd.param": {
+            "why": "An OSD (On Screen Display) overlays flight data on the FPV video feed, giving the pilot situational awareness without looking away from the aircraft",
+            "why_now": "OSD configuration depends on the telemetry and battery monitor being configured in the preceding steps, and it must be set up before the first flight",
+            "blog_text": "Configure the On Screen Display (OSD) to show relevant flight data on the FPV video feed",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter_mig#693-on-screen-display-optional",
+            "wiki_text": "OSD (On Screen Display)",
+            "wiki_url": "https://ardupilot.org/copter/docs/common-osd-overview.html",
+            "external_tool_text": "",
+            "external_tool_url": "",
+            "mandatory_text": "0% mandatory (100% optional)",
+            "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["OSD[0-9]*_.*"],
+            "old_filenames": ["18_osd.param"]
+        },
+        "21_flight_modes.param": {
             "why": "Flight modes determine how the vehicle responds to pilot and ground-control inputs.",
             "why_now": "The radio and flight controller inputs have been configured in the preceding steps.",
             "blog_text": "Configure the vehicle flight modes.",
@@ -593,30 +661,7 @@
             ],
             "old_filenames": []
         },
-        "18_servo_outputs.param": {
-            "why": "Servo output functions define how the flight controller drives the vehicle outputs.",
-            "why_now": "Output functions are assigned after the connected hardware and vehicle type are known.",
-            "blog_text": "Configure servo output functions.",
-            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter_mig#685-servo-outputs-18_servo_outputsparam",
-            "wiki_text": "Servo Output Functions",
-            "wiki_url": "https://ardupilot.org/copter/docs/common-servo.html",
-            "external_tool_text": "",
-            "external_tool_url": "",
-            "mandatory_text": "100% mandatory (0% optional)",
-            "component": "Frame",
-            "plugin": {
-                "name": "servo_out",
-                "placement": "left"
-            },
-            "autoimport_nondefault_regexp": [
-                "SERVO[0-9]+_FUNCTION"
-            ],
-            "derived_parameters": {
-                "FRAME_CLASS": { "New Value": "vehicle_components['Frame']['Specifications']['Frame class']", "Change Reason": "Selected in the component editor" }
-            },
-            "old_filenames": []
-        },
-        "19_general_configuration.param": {
+        "22_general_configuration.param": {
             "why": "The parameter defaults of some parameters are not suitable for the flight tests that will follow",
             "why_now": "Most parameters have been configured in previous steps. These are parameters that did not fit in any of the categories of the previous steps.",
             "autoimport_nondefault_regexp": ["(ATC_)?ANGLE_MAX$", "AUTO_OPTIONS$", "BRD_RTC_TZ_MIN$", "EK3_.*", "INITIAL_MODE$", "INS_ACCEL_FILTER$", "INS_POS[12]_X$", "RTL_.*", "SCHED_LOOP_RATE$", "SERIAL[5-9]_.*"],
@@ -633,7 +678,7 @@
             },
             "old_filenames": ["12_general_configuration.param", "13_general_configuration.param", "15_general_configuration.param"]
         },
-        "20_safety_setup.param": {
+        "23_safety_setup.param": {
             "why": "Safety parameters protect the vehicle and its surroundings by enabling arming checks, geofencing and failsafe actions. ESC slew rate limits protect the ESCs from desync events.",
             "why_now": "Before the first flight so that arming checks are enforced and the vehicle responds safely to abnormal conditions",
             "autoimport_nondefault_regexp": ["ARMING_.*", "ATC_RATE_[PRY]_MAX", "ATC_RAT_(PIT|RLL|YAW)_(PDMX|SMAX)", "ATC_(SLEW_YAW|RATE_WPY_MAX)$", "BRD_SAFETYOPTION$", "FENCE_.*", "FS_.*", "RTL_ALT(_M)?$"],
@@ -651,94 +696,49 @@
             },
             "old_filenames": ["16_safety_setup.param"]
         },
-        "21_remote_id.param": {
-            "why": "Some countries require a remote ID for drones to be flown legally.",
-            "why_now": "Remote ID requires GNSS and air pressure to be configured before, and it must be set up before the first flight",
-            "autoimport_nondefault_regexp": ["ADSB_.*", "DID_.*"],
-            "blog_text": "Set the remote ID for the vehicle, to comply with local laws if applicable",
-            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter_mig#692-remote-id-aka-drone-id-optional",
-            "wiki_text": "Remote ID (aka Drone ID)",
-            "wiki_url": "https://ardupilot.org/copter/docs/common-remoteid.html",
-            "external_tool_text": "Dronetag BS user manual",
-            "external_tool_url": "https://help.dronetag.cz/dronetag-bs",
-            "mandatory_text": "0% mandatory (100% optional)",
-            "auto_changed_by": "",
-            "old_filenames": ["16_remote_id.param", "17_remote_id.param"]
-        },
-        "22_osd.param": {
-            "why": "An OSD (On Screen Display) overlays flight data on the FPV video feed, giving the pilot situational awareness without looking away from the aircraft",
-            "why_now": "OSD configuration depends on the telemetry and battery monitor being configured in the preceding steps, and it must be set up before the first flight",
-            "blog_text": "Configure the On Screen Display (OSD) to show relevant flight data on the FPV video feed",
-            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter_mig#693-on-screen-display-optional",
-            "wiki_text": "OSD (On Screen Display)",
-            "wiki_url": "https://ardupilot.org/copter/docs/common-osd-overview.html",
-            "external_tool_text": "",
-            "external_tool_url": "",
-            "mandatory_text": "0% mandatory (100% optional)",
-            "auto_changed_by": "",
-            "autoimport_nondefault_regexp": ["OSD[0-9]*_.*"],
-            "old_filenames": ["18_osd.param"]
-        },
-        "23_motor.param": {
-            "why": "To determine motor RPM the number of electrical poles must be known",
-            "why_now": "Needs to be done after setting ESC telemetry, but before testing the motor",
-            "blog_text": "Motor specifications",
-            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter_mig#motor-thrust-scaling-mot_thst_expo-mot_spin_min-and-mot_spin_max",
-            "wiki_text": "",
-            "wiki_url": "",
-            "external_tool_text": "",
-            "external_tool_url": "",
-            "mandatory_text": "40% mandatory (60% optional)",
-            "component": "Motors",
-            "auto_changed_by": "",
-            "derived_parameters": {
-                "ESC_HW_POLES": { "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'Scripting'", "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" },
-                "SERVO_BLH_POLES": { "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] in ['ESC Telemetry', 'BDShotOnly']", "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" },
-                "SERVO_FTW_POLES": { "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'FETtecOneWire'", "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" }
+        "24_initial_atc.param": {
+            "instructions_popup": {
+                "type": "warning",
+                "msg": "Only do this step once. It sets initial values that later steps will improve."
             },
-            "old_filenames": ["19_motor.param"]
-        },
-        "24_esc.param": {
-            "why": "The motor thrust linearization is crucial for the throttle controller tuning, and throttle-based notch filter operation",
-            "why_now": "The notch filter setup step requires this, and the safety of the vehicle depends on the ESC and motor configuration",
-            "blog_text": "ESC, Motor and propeller configurations",
-            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter_mig#motor-thrust-scaling-mot_thst_expo-mot_spin_min-and-mot_spin_max",
-            "wiki_text": "Motor Thrust Scaling",
-            "wiki_url": "https://ardupilot.org/copter/docs/motor-thrust-scaling.html",
-            "external_tool_text": "ArduPilot Thrust Expo",
-            "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/ThrustExpo/",
+            "why": "Propeller size has a big influence on the vehicle dynamics, this adapts the attitude controller response to it",
+            "why_now": "Done before sensor calibration in Mission Planner to minimize the changes the user has to do in mission planner",
+            "blog_text": "Initial attitude controller configuration depends on the vehicle's propeller size defined in the component editor window",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter_mig#67-initial-attitude-pid-gains-vehicle-size-dependent",
+            "wiki_text": "Initial parameters calculator",
+            "wiki_url": "https://discuss.ardupilot.org/t/initial-parameters-calculator-plugin/56909/61",
+            "external_tool_text": "",
+            "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
+            "component": "Propellers",
             "auto_changed_by": "",
-            "autoimport_nondefault_regexp": ["BRD_IO_DSHOT", "BRD_IO_ENABLE", "MOT_(PWM_(MAX|MIN)|SPIN_(ARM|MAX|MIN)|THST_EXPO)", "NTF_.*", "SERVO[0-9]+_.+", "SERVO_.*"],
+            "autoimport_nondefault_regexp": ["ATC_ACC(EL)?_[PRY]_MAX$", "ATC_ANG_YAW_P$", "ATC_RAT_(PIT|RLL|YAW)_FLT[DET]$", "INS_ACCEL_FILTER$", "MOT_THST_(EXPO|HOVER)$"],
+            "forced_parameters": {
+                "ATC_RAT_PIT_FLTE": { "New Value": "0", "Change Reason": "Initial value, will be improved at a later step" },
+                "ATC_RAT_RLL_FLTE": { "New Value": "0", "Change Reason": "Initial value, will be improved at a later step" },
+                "ATC_RAT_YAW_FLTD": { "New Value": "0", "Change Reason": "Initial value, will be improved at a later step" },
+                "ATC_RAT_YAW_FLTE": { "New Value": "2", "Change Reason": "Initial value, will be improved at a later step" },
+                "ATC_THR_MIX_MAN":  { "New Value": "0.1", "Change Reason": "Value for the first couple of flights will be changed later once MOT_THST_HOVER is learned" },
+                "INS_ACCEL_FILTER": { "New Value": "10", "Change Reason": "The default is 20Hz but that is too high in most situations" },
+                "MOT_THST_HOVER":   { "New Value": "0.2", "Change Reason": "Hover learn will improve this initial guess" }
+            },
             "derived_parameters": {
-                "MOT_PWM_MAX": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] not in ['Normal', 'Brushed', 'PWMAngle', 'PWMRange']", "New Value": "2000", "Change Reason": "Digital ESC protocol maximum is per definition 2000" },
-                "MOT_PWM_MIN": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] not in ['Normal', 'Brushed', 'PWMAngle', 'PWMRange']", "New Value": "1000", "Change Reason": "Digital ESC protocol minimum is per definition 1000" }
+                "ATC_ANG_YAW_P":    { "New Value": "round(0.5*max(8000, round(-900*vehicle_components['Propellers']['Specifications']['Diameter_inches']+36000, -2))/3000, 1)", "Change Reason": "Derived from vehicle component editor propeller size" },
+                "ATC_ACCEL_P_MAX":  { "if": "'ATC_ACCEL_P_MAX' in fc_parameters", "New Value": "max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))", "Change Reason": "Derived from vehicle component editor propeller size" },
+                "ATC_ACCEL_R_MAX":  { "if": "'ATC_ACCEL_R_MAX' in fc_parameters", "New Value": "max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))", "Change Reason": "Derived from vehicle component editor propeller size" },
+                "ATC_ACCEL_Y_MAX":  { "if": "'ATC_ACCEL_Y_MAX' in fc_parameters", "New Value": "max(8000, round(-900*vehicle_components['Propellers']['Specifications']['Diameter_inches']+36000, -2))", "Change Reason": "Derived from vehicle component editor propeller size" },
+                "ATC_ACC_P_MAX":    { "if": "'ATC_ACC_P_MAX' in fc_parameters", "New Value": "max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))/100", "Change Reason": "Derived from vehicle component editor propeller size" },
+                "ATC_ACC_R_MAX":    { "if": "'ATC_ACC_R_MAX' in fc_parameters", "New Value": "max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))/100", "Change Reason": "Derived from vehicle component editor propeller size" },
+                "ATC_ACC_Y_MAX":    { "if": "'ATC_ACC_Y_MAX' in fc_parameters", "New Value": "max(8000, round(-900*vehicle_components['Propellers']['Specifications']['Diameter_inches']+36000, -2))/100", "Change Reason": "Derived from vehicle component editor propeller size" },
+                "ATC_RAT_PIT_FLTD": { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0))) / 2", "Change Reason": "INS_GYRO_FILTER / 2" },
+                "ATC_RAT_PIT_FLTT": { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0))) / 2", "Change Reason": "INS_GYRO_FILTER / 2" },
+                "ATC_RAT_RLL_FLTD": { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0))) / 2", "Change Reason": "INS_GYRO_FILTER / 2" },
+                "ATC_RAT_RLL_FLTT": { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0))) / 2", "Change Reason": "INS_GYRO_FILTER / 2" },
+                "ATC_RAT_YAW_FLTT": { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0))) / 2", "Change Reason": "INS_GYRO_FILTER / 2" },
+                "INS_GYRO_FILTER":  { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0)))", "Change Reason": "Derived from vehicle component editor propeller size" },
+                "MOT_THST_EXPO":    { "New Value": "min(0.8, round(0.15686*log(vehicle_components['Propellers']['Specifications']['Diameter_inches'])+0.23693, 2))", "Change Reason": "Derived from vehicle component editor propeller size" }
             },
-            "add_parameters": {
-                "BRD_IO_DSHOT": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] in ['DShot150', 'DShot300', 'DShot600', 'DShot1200'] and 'BRD_IO_DSHOT' in fc_parameters" },
-                "BRD_IO_ENABLE": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] in ['DShot150', 'DShot300', 'DShot600', 'DShot1200'] and 'BRD_IO_ENABLE' in fc_parameters" },
-                "MOT_SPIN_ARM": { "Change Reason": "The minimum value at which the motors start spinning reliably" },
-                "MOT_SPIN_MAX": { "Change Reason": "The maximum value at which the motors spin" },
-                "MOT_SPIN_MIN": { "Change Reason": "MOT_SPIN_ARM plus at least 0.03" },
-                "MOT_THST_EXPO": { "Change Reason": "Throttle exponential curve from datasheet or from motor thrust stand" },
-                "SERVO_BLH_AUTO": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] in ['DShot150', 'DShot300', 'DShot600', 'DShot1200']" },
-                "SERVO_BLH_BDMASK": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] in ['DShot150', 'DShot300', 'DShot600', 'DShot1200'] and 'SERVO_BLH_BDMASK' in fc_parameters" },
-                "SERVO_DSHOT_ESC": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] in ['DShot150', 'DShot300', 'DShot600', 'DShot1200']" },
-                "SERVO_DSHOT_RATE": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] in ['DShot150', 'DShot300', 'DShot600', 'DShot1200']" },
-                "TKOFF_RPM_MIN": { "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Type'] != 'None'", "Change Reason": "For safety reasons, only start takeoff if all motors spin above this RPM" }
-            },
-            "delete_parameters": {
-                "ESC_HW_POLES": {},
-                "KDE_NPOLE": {},
-                "SERVO_BLH_POLES": {},
-                "SERVO_BLH_TRATE": {},
-                "SERVO_FTW_POLES": {}
-            },
-            "old_filenames": ["14_motor.param", "15_motor.param", "20_esc.param"],
-            "plugin": {
-                "name": "motor_test",
-                "placement": "left"
-            }
+            "old_filenames": ["11_initial_atc.param", "13_initial_atc.param"]
         },
         "25_motor_notch_filter_setup.param": {
             "why": "When the gyroscope signal is less noisy the PID gains can be higher without causing motor output oscillations",
