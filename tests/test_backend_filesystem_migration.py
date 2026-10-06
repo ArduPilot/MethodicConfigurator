@@ -1274,6 +1274,228 @@ class TestV1ToV2ParameterExtractions:
         assert (vehicle_dir / "05_board_orientation.param").read_text(encoding="utf-8") == "AHRS_ORIENTATION,2\n"
 
 
+class TestVehicleSpecificV1ToV2Migration:
+    """Each vehicle keeps calibration values and moves settings within its own layout."""
+
+    @pytest.mark.parametrize(
+        ("vehicle_type", "source_name"),
+        [
+            (vehicle, source)
+            for vehicle in ("ArduPlane", "Heli", "Rover")
+            for source in (
+                "11_mp_setup_mandatory_hardware.param",
+                "12_mp_setup_mandatory_hardware.param",
+                "14_mp_setup_mandatory_hardware.param",
+            )
+        ]
+        + [("Heli", "15_mp_setup_mandatory_hardware.param")],
+    )
+    def test_user_keeps_calibration_and_safety_values_in_vehicle_specific_steps(
+        self, vehicle_dir: Path, monkeypatch: pytest.MonkeyPatch, vehicle_type: str, source_name: str
+    ) -> None:
+        """
+        Non-Copter conversions retain calibration and preserve settings in existing steps.
+
+        GIVEN: A format-1 vehicle with measured calibration, RC, mode and fence values
+        WHEN: It migrates to format 2 and migration is retried
+        THEN: Valid settings move to that vehicle's steps without creating Copter-only files or losing values
+        """
+        mode_name = "MODE1" if vehicle_type == "Rover" else "FLTMODE1"
+        retained_lines = [
+            "AHRS_TRIM_X,0.012 # measured level\n",
+            "INS_ACCSCAL_X,0.998 # measured accelerometer\n",
+            "COMPASS_OFS_X,12 # measured compass\n",
+            "SERVO1_FUNCTION,73 # configured output\n",
+            "INS_GYRO_FILTER,20\n",
+            f"{'FLTMODE1' if vehicle_type == 'Rover' else 'MODE1'},99 # unrelated legacy value\n",
+        ]
+        if vehicle_type == "Rover":
+            retained_lines.append("FENCE_ALT_MAX,80 # legacy altitude setting\n")
+        elif vehicle_type == "ArduPlane":
+            retained_lines.append("Q_M_THST_HOVER,0.32 # quadplane setting\n")
+        else:
+            retained_lines.append("H_RSC_MODE,3 # helicopter rotor control\n")
+        moved = {
+            "03_imu_temperature_calibration_results.param": "INS_ACC1_CALTEMP,45 # measured temperature\n",
+            "07_remote_controller_controller.param": "RC1_MIN,1100 # measured RC\nRC2_REVERSED,1\n",
+            "15_general_configuration.param": f"{mode_name},3 # selected mode\nINITIAL_MODE,1\n",
+            "16_safety_setup.param": "FENCE_ACTION,1\nFENCE_ENABLE,1\nFENCE_RADIUS,150 # project fence\n",
+        }
+        if vehicle_type != "Rover":
+            moved["16_safety_setup.param"] += "FENCE_ALT_MAX,80 # altitude fence\n"
+        source = vehicle_dir / source_name
+        source.write_text("".join(retained_lines) + "".join(moved.values()), encoding="utf-8")
+        (vehicle_dir / "16_safety_setup.param").write_text(
+            "# retained safety comment\nFENCE_RADIUS,300\nARMING_CHECK,1\n", encoding="utf-8"
+        )
+        components = vehicle_dir / "vehicle_components.json"
+        components.write_text(
+            json.dumps({"Format version": 1, "Components": {"Flight Controller": {"Firmware": {"Type": vehicle_type}}}}),
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(migration_module, "VEHICLE_COMPONENTS_FORMAT_VERSION", 2)
+
+        assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
+
+        assert source.read_text(encoding="utf-8") == "".join(retained_lines)
+        for filename, content in moved.items():
+            expected = "# retained safety comment\nARMING_CHECK,1\n" if filename == "16_safety_setup.param" else ""
+            assert (vehicle_dir / filename).read_text(encoding="utf-8") == expected + content
+        layout_path = (
+            Path(__file__).parents[1] / "ardupilot_methodic_configurator" / f"configuration_steps_{vehicle_type}.json"
+        )
+        assert {path.name for path in vehicle_dir.glob("*.param")} - {source_name} <= set(
+            json.loads(layout_path.read_text(encoding="utf-8"))["steps"]
+        )
+        assert json.loads(components.read_bytes())["Format version"] == 2
+        before_retry = {path.name: path.read_bytes() for path in vehicle_dir.iterdir()}
+        assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is False
+        assert {path.name: path.read_bytes() for path in vehicle_dir.iterdir()} == before_retry
+
+    def test_user_can_open_retained_calibration_from_historical_heli_step(self, vehicle_dir: Path) -> None:
+        """
+        Heli's historical hardware step remains reachable after the conversion and filename rename.
+
+        GIVEN: The OMP_M4 hardware filename with measured calibration and fence settings
+        WHEN: Heli conversion runs before the usual project filename renames
+        THEN: Calibration reaches the active hardware step and the fence reaches the safety step
+        """
+        source = vehicle_dir / "15_mp_setup_mandatory_hardware.param"
+        source.write_text("INS_ACCSCAL_X,0.998\nFENCE_RADIUS,150\n", encoding="utf-8")
+
+        migration_module._migrate_v1_to_v2(vehicle_dir, "Heli")  # pylint: disable=protected-access
+        filesystem = LocalFilesystem.__new__(LocalFilesystem)
+        filesystem.vehicle_dir = str(vehicle_dir)
+        configuration = Path(__file__).parents[1] / "ardupilot_methodic_configurator" / "configuration_steps_Heli.json"
+        filesystem.configuration_steps = json.loads(configuration.read_text(encoding="utf-8"))["steps"]
+        filesystem.rename_parameter_files()
+
+        assert not source.exists()
+        assert (vehicle_dir / "14_mp_setup_mandatory_hardware.param").read_text(encoding="utf-8") == "INS_ACCSCAL_X,0.998\n"
+        assert (vehicle_dir / "16_safety_setup.param").read_text(encoding="utf-8") == "FENCE_RADIUS,150\n"
+
+    @pytest.mark.parametrize(
+        ("vehicle_type", "template_name"),
+        [
+            ("ArduPlane", "normal_plane"),
+            ("Rover", "AION_R1"),
+            ("Rover", "Carisma_SCA-1E"),
+            ("Heli", "OMP_M4"),
+        ],
+    )
+    def test_existing_vehicle_templates_keep_all_parameter_values_in_their_layout(
+        self, vehicle_dir: Path, monkeypatch: pytest.MonkeyPatch, vehicle_type: str, template_name: str
+    ) -> None:
+        """
+        Real Plane, Rover and Heli projects do not acquire Copter-only calibration files.
+
+        GIVEN: Numbered parameter files from an existing vehicle template at format 1
+        WHEN: Migration to format 2 runs against the vehicle's own configuration steps
+        THEN: Every original parameter line survives and every newly created file is an active step
+        """
+        package = Path(__file__).parents[1] / "ardupilot_methodic_configurator"
+        template = package / "vehicle_templates" / vehicle_type / template_name
+        for source in template.glob("[0-9][0-9]_*.param"):
+            copyfile(source, vehicle_dir / source.name)
+        copyfile(template / "vehicle_components.json", vehicle_dir / "vehicle_components.json")
+        originals = {path.name for path in vehicle_dir.glob("*.param")}
+        original_lines = {
+            line
+            for path in vehicle_dir.glob("*.param")
+            if path.name != "00_default.param"
+            for line in path.read_text(encoding="utf-8-sig").splitlines()
+            if _param_name_from_line(line)
+        }
+        monkeypatch.setattr(migration_module, "VEHICLE_COMPONENTS_FORMAT_VERSION", 2)
+
+        assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
+
+        resulting_files = {path.name for path in vehicle_dir.glob("*.param")}
+        steps = json.loads((package / f"configuration_steps_{vehicle_type}.json").read_text(encoding="utf-8"))["steps"]
+        assert resulting_files - originals <= set(steps)
+        resulting_lines = {
+            line
+            for path in vehicle_dir.glob("*.param")
+            if path.name != "00_default.param"
+            for line in path.read_text(encoding="utf-8-sig").splitlines()
+            if _param_name_from_line(line)
+        }
+        assert original_lines <= resulting_lines
+        safety = (vehicle_dir / "16_safety_setup.param").read_text(encoding="utf-8")
+        assert "FENCE_ACTION,1" in safety
+        assert "FENCE_RADIUS,300" in safety
+        assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is False
+
+    @pytest.mark.parametrize(
+        ("vehicle_type", "template_name", "layout_template"),
+        [
+            ("ArduCopter", "Holybro_X500", "Holybro_X500_mig"),
+            ("ArduPlane", "normal_plane", ""),
+            ("Heli", "OMP_M4", ""),
+            ("Rover", "AION_R1", ""),
+        ],
+    )
+    def test_conversion_rules_target_existing_steps_and_vehicle_parameter_names(  # pylint: disable=too-many-locals
+        self, vehicle_type: str, template_name: str, layout_template: str
+    ) -> None:
+        """
+        Migration rules refer to supported parameter names and the matching vehicle layout.
+
+        GIVEN: Each vehicle's default parameter set and destination configuration steps
+        WHEN: Its move, copy and deletion rules are inspected
+        THEN: Every destination is an active step and every pattern matches a parameter for that vehicle
+        """
+        package = Path(__file__).parents[1] / "ardupilot_methodic_configurator"
+        templates = package / "vehicle_templates" / vehicle_type
+        defaults = {
+            _param_name_from_line(line)
+            for line in (templates / template_name / "00_default.param").read_text(encoding="utf-8-sig").splitlines()
+            if _param_name_from_line(line)
+        }
+        configuration = (
+            templates / layout_template if layout_template else package
+        ) / f"configuration_steps_{vehicle_type}.json"
+        steps = json.loads(configuration.read_text(encoding="utf-8"))["steps"]
+        moves = migration_module._PARAM_MOVES_V1_TO_V2  # pylint: disable=protected-access
+        copies = migration_module._PARAM_COPIES_V1_TO_V2  # pylint: disable=protected-access
+        deletes = migration_module._PARAM_DELETES_V1_TO_V2  # pylint: disable=protected-access
+        assert not moves["all"]
+        assert not copies["all"]
+        assert not deletes["all"]
+        assert moves[vehicle_type]
+        for _source, destination, patterns in moves[vehicle_type]:
+            assert destination in steps
+            for pattern in patterns:
+                assert any(_line_matches_any(name, [pattern]) for name in defaults), pattern
+        for _source, moved_destination, destination, patterns in copies[vehicle_type]:
+            assert moved_destination in steps
+            assert destination in steps
+            for pattern in patterns:
+                assert any(_line_matches_any(name, [pattern]) for name in defaults), pattern
+        for _source, patterns in deletes[vehicle_type]:
+            for pattern in patterns:
+                assert any(_line_matches_any(name, [pattern]) for name in defaults), pattern
+
+    @pytest.mark.parametrize("vehicle_type", ["", "UnknownVehicle"])
+    def test_unknown_vehicle_does_not_apply_another_vehicles_conversion(self, vehicle_dir: Path, vehicle_type: str) -> None:
+        """
+        Unknown vehicle types cannot silently receive Copter-specific conversions.
+
+        GIVEN: An unrecognized vehicle with calibration, mode and fence parameters
+        WHEN: The v1-to-v2 conversion is requested
+        THEN: Its parameter file is byte-for-byte unchanged and no new files appear
+        """
+        source = vehicle_dir / "14_mp_setup_mandatory_hardware.param"
+        original = b"INS_ACCSCAL_X,0.998\r\nFLTMODE1,3\r\nFENCE_ACTION,1\r\n"
+        source.write_bytes(original)
+
+        deleted = migration_module._migrate_v1_to_v2(vehicle_dir, vehicle_type)  # pylint: disable=protected-access
+
+        assert deleted == set()
+        assert source.read_bytes() == original
+        assert list(vehicle_dir.iterdir()) == [source]
+
+
 class TestDeletedConfigurationStepFiles:  # pylint: disable=too-few-public-methods
     """Tests that restoration does not undo an intentional migration deletion."""
 
