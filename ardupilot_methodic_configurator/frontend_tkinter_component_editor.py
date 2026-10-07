@@ -35,6 +35,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import
 
 # from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_error_message, show_warning_message
+from ardupilot_methodic_configurator.macos_utilites import is_macos_sequoia_or_older
 
 
 def argument_parser() -> Namespace:
@@ -180,7 +181,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         widget = self.entry_widgets.get(telem_protocol_path)
         if isinstance(widget, PairTupleCombobox):
             self.set_combobox_entries_preserving_width(widget, [(new_protocol, new_protocol)], new_protocol)
-            if sys.platform != "darwin":
+            if not is_macos_sequoia_or_older():
                 widget.update_idletasks()
         self._set_esc_telemetry_combobox_mirror_state()
 

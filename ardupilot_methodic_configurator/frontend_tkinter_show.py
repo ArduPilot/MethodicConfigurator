@@ -18,6 +18,7 @@ from typing import Any, ClassVar, NamedTuple, Optional, cast
 from weakref import WeakKeyDictionary
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.macos_utilites import is_macos_sequoia_or_older
 
 # Tooltip positioning constants
 TOOLTIP_MAX_OFFSET = 100  # Maximum horizontal offset from widget edge
@@ -120,7 +121,7 @@ def _monitor_bounds_tk(widget: tk.Misc) -> MonitorBounds:
 
     """
     toplevel = widget.winfo_toplevel()
-    if platform_system() != "Darwin":
+    if not is_macos_sequoia_or_older():
         toplevel.update_idletasks()
 
     # Get virtual root position (top-left corner of the screen)
@@ -411,7 +412,7 @@ def get_monitor_bounds(widget: tk.Misc) -> MonitorBounds:
     bounds = None
     if platform_system() == "Windows":
         bounds = _get_validated_bounds(_monitor_bounds_windows(widget))
-    elif platform_system() == "Darwin":
+    elif is_macos_sequoia_or_older():
         bounds = _get_validated_bounds(_monitor_bounds_macos(widget))
     else:
         # Linux: use screeninfo + pointer position to find the correct monitor

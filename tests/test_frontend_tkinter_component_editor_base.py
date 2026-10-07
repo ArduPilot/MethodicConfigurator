@@ -804,8 +804,8 @@ class TestWidgetCreationWorkflows:
         editor_with_realistic_data.data_model.get_all_components.return_value = components
 
         with patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.platform_system",
-            return_value="Linux",
+            "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.is_macos_sequoia_or_older",
+            return_value=False,
         ):
             editor_with_realistic_data.populate_frames()
 
@@ -818,8 +818,8 @@ class TestWidgetCreationWorkflows:
         editor_with_realistic_data.data_model.get_all_components.return_value = components
 
         with patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.platform_system",
-            return_value="Darwin",
+            "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.is_macos_sequoia_or_older",
+            return_value=True,
         ):
             editor_with_realistic_data.populate_frames()
 
@@ -878,8 +878,8 @@ class TestComplexityComboboxWorkflows:
         """
         # Act: Trigger interface refresh
         with patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.platform_system",
-            return_value="Linux",
+            "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.is_macos_sequoia_or_older",
+            return_value=False,
         ):
             editor_for_complexity_tests._refresh_component_display()
 
@@ -892,8 +892,8 @@ class TestComplexityComboboxWorkflows:
     ) -> None:
         """Changing complexity on macOS still refreshes widgets without processing idle events."""
         with patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.platform_system",
-            return_value="Darwin",
+            "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.is_macos_sequoia_or_older",
+            return_value=True,
         ):
             editor_for_complexity_tests._refresh_component_display()
 

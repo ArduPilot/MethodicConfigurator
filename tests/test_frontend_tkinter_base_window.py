@@ -573,8 +573,7 @@ class TestWindowManagementBehavior:
         mock_parent.winfo_height.return_value = 600
 
         with patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_base_window.platform_system",
-            return_value="Darwin",
+            "ardupilot_methodic_configurator.frontend_tkinter_base_window.is_macos_sequoia_or_older", return_value=True
         ):
             BaseWindow.center_window(mock_window, mock_parent)
 
@@ -2197,7 +2196,7 @@ class TestCenterWindowOnScreenBehavior:
         monitor = MagicMock(x=0, y=0, width=1920, height=1080)
 
         with (
-            patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.platform_system", return_value="Darwin"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.is_macos_sequoia_or_older", return_value=True),
             patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.get_monitors", return_value=[monitor]),
         ):
             BaseWindow.center_window_on_screen(mock_window)
@@ -2217,7 +2216,7 @@ def test_macos_centering_is_cancelled_when_window_closes_before_idle(tk_root: tk
     """Closing a window before deferred centering produces no Tcl background error."""
     child = tk.Toplevel(tk_root)
     with (
-        patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.platform_system", return_value="Darwin"),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.is_macos_sequoia_or_older", return_value=True),
         patch.object(child, "geometry") as geometry,
         patch.object(child, "after_cancel", wraps=child.after_cancel) as cancel,
     ):

@@ -676,7 +676,8 @@ class TestPairTupleComboboxMissingCoverage:
         # Mock the current method to raise ValueError then work normally
         with (
             patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.platform_system", return_value="Linux"
+                "ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.is_macos_sequoia_or_older",
+                return_value=False,
             ),
             patch.object(combobox, "current") as mock_current,
             patch.object(combobox, "update_idletasks") as mock_update,
@@ -984,7 +985,9 @@ def test_macos_key_navigation_selects_and_emits_event_without_idle_update(
     handler = combobox._on_key_up if direction == "up" else combobox._on_key_down
 
     with (
-        patch("ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.platform_system", return_value="Darwin"),
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.is_macos_sequoia_or_older", return_value=True
+        ),
         patch.object(combobox, "current") as mock_current,
         patch.object(combobox, "update_idletasks") as mock_update,
         patch.object(combobox, "event_generate") as mock_event_gen,

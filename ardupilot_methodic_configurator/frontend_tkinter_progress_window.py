@@ -16,6 +16,7 @@ from tkinter import ttk
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.macos_utilites import is_macos_sequoia_or_older
 
 
 class ProgressWindow:  # pylint: disable=too-many-instance-attributes
@@ -81,6 +82,8 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
             # windows) and can re-enter user-event handlers while the caller
             # is still in the middle of a blocking I/O operation.
             self.progress_bar.update_idletasks()
+            if not is_macos_sequoia_or_older():
+                self.progress_window.update()
 
     def _center_progress_window(self) -> None:
         """
@@ -123,6 +126,8 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
                 self._center_progress_window()
                 self.progress_window.lift()
                 self._shown = True
+                if not is_macos_sequoia_or_older():
+                    self.progress_window.update()
             elif not self.only_show_when_update_progress_called:
                 self.progress_window.lift()
 
@@ -144,6 +149,8 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
                 # user events (clicks, keypresses) which can fire callbacks on
                 # other windows while a blocking upload/download is in flight.
                 self.progress_bar.update_idletasks()
+                if not is_macos_sequoia_or_older():
+                    self.progress_window.update()
 
                 # Close the progress window when the process is complete
                 if current_value == max_value and self.auto_close_on_complete:

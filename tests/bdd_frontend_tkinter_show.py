@@ -438,7 +438,7 @@ class TestMonitorBoundsDetection:
         toplevel.winfo_vrootwidth.return_value = 1920
         toplevel.winfo_vrootheight.return_value = 1080
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"):
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_show.is_macos_sequoia_or_older", return_value=True):
             bounds = _monitor_bounds_tk(widget)
 
         assert bounds == MonitorBounds(0, 0, 1920, 1080)
@@ -472,18 +472,16 @@ class TestMonitorBoundsDetection:
         fallback_returns: MonitorBounds,
         expected_bounds: MonitorBounds,
     ) -> None:
-        """
-        System returns accurate monitor bounds appropriate for the platform.
-
-        GIVEN: A widget on a specific operating system platform
-        WHEN: The system queries for monitor bounds
-        THEN: Platform-native APIs are preferred, with graceful fallback to Tk
-        """
+        """System returns accurate monitor bounds appropriate for the platform."""
         # Arrange: Configure platform and API responses
         with (
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_show.platform_system",
                 return_value=platform,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_show.is_macos_sequoia_or_older",
+                return_value=(platform == "Darwin"),
             ),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_show._monitor_bounds_windows",
@@ -1167,7 +1165,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
         WHEN: Tooltip is created
         THEN: Tooltip is not created immediately, only bindings are set
         """
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"):
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_show.is_macos_sequoia_or_older", return_value=True):
             tooltip = Tooltip(mock_widget, "Test text")
 
         # Check that tooltip is None initially
@@ -1186,6 +1184,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
         """
         with (
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_show.is_macos_sequoia_or_older", return_value=True),
             patch("tkinter.Toplevel", return_value=mock_toplevel),
             patch("tkinter.ttk.Label") as mock_label,
             patch(
@@ -1325,7 +1324,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
         WHEN: Mouse leaves widget
         THEN: Tooltip is destroyed
         """
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"):
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_show.is_macos_sequoia_or_older", return_value=True):
             tooltip = Tooltip(mock_widget, "Test text")
             tooltip.tooltip = mock_toplevel  # Set the mock window while in "Mac mode"
 
@@ -1342,7 +1341,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
         WHEN: Mouse enters widget
         THEN: Tooltip creation is delayed slightly
         """
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"):
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_show.is_macos_sequoia_or_older", return_value=True):
             tooltip = Tooltip(mock_widget, "Test text")
             tooltip.schedule_show()
 
@@ -1360,6 +1359,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
 
         with (
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_show.is_macos_sequoia_or_older", return_value=True),
             patch("tkinter.Toplevel", return_value=mock_toplevel),
             patch("tkinter.ttk.Label"),
             patch(
@@ -1406,7 +1406,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
         WHEN: position_tooltip is called
         THEN: Method returns early without error
         """
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"):
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_show.is_macos_sequoia_or_older", return_value=True):
             tooltip = Tooltip(mock_widget, "Test text")
 
         # tooltip.tooltip is None on macOS before creation
@@ -1474,6 +1474,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
         """
         with (
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_show.is_macos_sequoia_or_older", return_value=True),
             patch("tkinter.Toplevel", return_value=mock_toplevel) as mock_toplevel_class,
             patch("tkinter.ttk.Label"),
             patch(
@@ -1504,7 +1505,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
         mock_text.tk = MagicMock()
         mock_text.tk.call.return_value = "aqua"
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"):
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_show.is_macos_sequoia_or_older", return_value=True):
             Tooltip(mock_text, "Test text", tag_name="test_tag")
 
         # Assert: tag_bind called instead of widget.bind
@@ -1567,6 +1568,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
         """
         with (
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_show.is_macos_sequoia_or_older", return_value=True),
             patch("tkinter.Toplevel", return_value=mock_toplevel),
             patch("tkinter.ttk.Label"),
             patch(
@@ -1601,6 +1603,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
         """
         with (
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_show.is_macos_sequoia_or_older", return_value=True),
             patch("tkinter.Toplevel", return_value=mock_toplevel),
             patch("tkinter.ttk.Label"),
             patch(
@@ -1710,6 +1713,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
         """
         with (
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_show.is_macos_sequoia_or_older", return_value=True),
             patch("tkinter.Toplevel", return_value=mock_toplevel),
             patch("tkinter.ttk.Label"),
             patch(

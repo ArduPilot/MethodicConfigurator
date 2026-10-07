@@ -385,10 +385,12 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name,
         window._is_aqua = True  # pylint: disable=protected-access
         window._center_progress_window = MagicMock()  # pylint: disable=protected-access
 
-        window.update_progress_bar(25, 100)
-        window.update_progress_bar(50, 100)
-
-        window.progress_window.update.assert_not_called()
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_progress_window.is_macos_sequoia_or_older", return_value=True
+        ):
+            window.update_progress_bar(25, 100)
+            window.update_progress_bar(50, 100)
+            window.progress_window.update.assert_not_called()
         window.progress_bar.update_idletasks.assert_called()
         window.progress_window.deiconify.assert_called_once()
 

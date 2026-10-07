@@ -27,7 +27,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import 
 
 # pylint: disable=redefined-outer-name
 
-_IS_MACOS_PATH = "ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window._is_macos"
+_IS_MACOS_PATH = "ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.is_macos_sequoia_or_older"
 
 
 @pytest.fixture

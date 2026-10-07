@@ -38,6 +38,7 @@ from ardupilot_methodic_configurator.backend_filesystem_program_settings import 
 from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_size
 from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
 from ardupilot_methodic_configurator.frontend_tkinter_show import get_last_known_monitor_bounds, remember_monitor_bounds
+from ardupilot_methodic_configurator.macos_utilites import is_macos_sequoia_or_older
 
 
 def is_debugging() -> bool:
@@ -383,7 +384,7 @@ class BaseWindow:
             y = parent.winfo_y() + (parent_height // 2) - (window_height // 2)
             window.geometry(f"+{x}+{y}")
 
-        if platform_system() == "Darwin":
+        if is_macos_sequoia_or_older():
             BaseWindow._run_when_idle(window, position)
         else:
             window.update_idletasks()
@@ -411,7 +412,7 @@ class BaseWindow:
             >>> BaseWindow.center_window_on_screen(progress_window)
 
         """
-        if platform_system() == "Darwin":
+        if is_macos_sequoia_or_older():
             BaseWindow._run_when_idle(window, lambda: BaseWindow._position_window_on_screen(window))
         else:
             window.update_idletasks()
