@@ -1646,16 +1646,16 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         # Categorize parameters using filesystem logic
         categorized = self._local_filesystem.categorize_parameters(annotated_fc_parameters)
-        if not categorized or len(categorized) != 4:
-            # Return empty dict if categorization fails or returns empty tuple
+        try:
+            (
+                non_default__read_only_params,
+                non_default__writable_calibrations,
+                non_default__ids,
+                non_default__writable_non_calibrations_non_ids,
+            ) = categorized
+        except (TypeError, ValueError):
+            # Keep summary generation resilient if categorization returns an invalid result at runtime.
             return {}
-
-        (
-            non_default__read_only_params,
-            non_default__writable_calibrations,
-            non_default__ids,
-            non_default__writable_non_calibrations_non_ids,
-        ) = categorized
 
         return {
             "complete": annotated_fc_parameters,

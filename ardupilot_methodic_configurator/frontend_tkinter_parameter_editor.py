@@ -24,7 +24,6 @@ from functools import partial
 from logging import basicConfig as logging_basicConfig
 from logging import error as logging_error
 from logging import exception as logging_exception
-from logging import getLevelName as logging_getLevelName
 from logging import warning as logging_warning
 from sys import exit as sys_exit
 from sys import platform as sys_platform
@@ -1930,7 +1929,7 @@ def run_standalone_parameter_editor(
 if __name__ == "__main__":  # pragma: no cover
     args = argument_parser()
 
-    logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
+    logging_basicConfig(level=args.loglevel, format="%(asctime)s - %(levelname)s - %(message)s")
 
     fc = FlightController(reboot_time=args.reboot_time, baudrate=args.baudrate)
     filesystem = LocalFilesystem(

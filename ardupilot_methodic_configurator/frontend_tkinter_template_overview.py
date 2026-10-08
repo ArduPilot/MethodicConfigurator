@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import tkinter as tk
 from logging import basicConfig as logging_basicConfig
-from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from tkinter import font as tkfont
 from tkinter import messagebox, ttk
@@ -452,7 +451,7 @@ def setup_logging(loglevel: str) -> None:  # pragma: no cover
         loglevel: The log level as a string (e.g. 'DEBUG', 'INFO')
 
     """
-    logging_basicConfig(level=logging_getLevelName(loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
+    logging_basicConfig(level=loglevel, format="%(asctime)s - %(levelname)s - %(message)s")
 
 
 def main() -> None:  # pragma: no cover
@@ -463,8 +462,9 @@ def main() -> None:  # pragma: no cover
     window = TemplateOverviewWindow()
     window.run_app()
 
-    if window and ProgramSettings.get_recently_used_dirs():
-        logging_info(ProgramSettings.get_recently_used_dirs()[0])
+    recent_dirs = ProgramSettings.get_recently_used_dirs()
+    if window and recent_dirs[0]:
+        logging_info(recent_dirs[0])
 
 
 if __name__ == "__main__":  # pragma: no cover
