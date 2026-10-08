@@ -44,6 +44,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import
     confirm_component_properties,
     display_component_editor_usage_popup,
 )
+from ardupilot_methodic_configurator.macos_utilites import is_macos_sequoia_or_older
 
 
 def argument_parser() -> Namespace:
@@ -331,7 +332,8 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         self.populate_frames()
 
         # Update the UI
-        self.scroll_frame.view_port.update_idletasks()
+        if not is_macos_sequoia_or_older():
+            self.scroll_frame.view_port.update_idletasks()
 
     def _add_vehicle_image(self, parent: ttk.Frame) -> None:
         """Add the vehicle image to the parent frame."""
@@ -448,7 +450,10 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             components = self.data_model.get_all_components()
             for i, (key, value) in enumerate(components.items(), 1):
                 self.add_widget(self.scroll_frame.view_port, key, value, [])
-                if i % 5 == 0:  # yield to the event loop periodically to keep the UI responsive
+                if i % 5 == 0 and not is_macos_sequoia_or_older():
+                    # Yield periodically on platforms where Tk can safely process
+                    # idle callbacks while widgets are being built. Tcl/Tk 9 on
+                    # macOS can segfault during this re-entrant rendering path.
                     self.scroll_frame.view_port.update_idletasks()
         finally:
             self._populating = False
@@ -478,7 +483,8 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
                     self._add_widget(self.scroll_frame.view_port, sub_key, sub_value, [component_name])
             else:
                 self.add_widget(self.scroll_frame.view_port, component_name, component_data, [])
-            self.scroll_frame.view_port.update_idletasks()
+            if not is_macos_sequoia_or_older():
+                self.scroll_frame.view_port.update_idletasks()
         finally:
             self._populating = False
         self.scroll_frame.scroll_to_top()

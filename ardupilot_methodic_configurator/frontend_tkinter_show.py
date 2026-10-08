@@ -18,6 +18,7 @@ from typing import Any, ClassVar, NamedTuple, Optional, cast
 from weakref import WeakKeyDictionary
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.macos_utilites import is_macos_sequoia_or_older
 
 # Tooltip positioning constants
 TOOLTIP_MAX_OFFSET = 100  # Maximum horizontal offset from widget edge
@@ -120,7 +121,8 @@ def _monitor_bounds_tk(widget: tk.Misc) -> MonitorBounds:
 
     """
     toplevel = widget.winfo_toplevel()
-    toplevel.update_idletasks()
+    if not is_macos_sequoia_or_older():
+        toplevel.update_idletasks()
 
     # Get virtual root position (top-left corner of the screen)
     vroot_x = toplevel.winfo_vrootx()
@@ -412,7 +414,7 @@ def get_monitor_bounds(widget: tk.Misc) -> MonitorBounds:
         bounds = _get_validated_bounds(_monitor_bounds_windows(widget))
     elif platform_system() == "Darwin":
         bounds = _get_validated_bounds(_monitor_bounds_macos(widget))
-    else:
+    elif platform_system() == "Linux":
         # Linux: use screeninfo + pointer position to find the correct monitor
         bounds = _get_validated_bounds(_monitor_bounds_linux(widget))
 
@@ -630,12 +632,21 @@ class Tooltip:
             self.tooltip, text=self.text, background="#ffffe0", relief="solid", borderwidth=1, justify=tk.LEFT
         )
         tooltip_label.pack()
-        self.position_tooltip()
+        if self._is_aqua:
+
+            def position_when_idle() -> None:
+                self.timers.pop("position", None)
+                self.position_tooltip()
+
+            self.timers["position"] = self.widget.after_idle(position_when_idle)
+        else:
+            self.position_tooltip()
 
         if self.tooltip.winfo_exists():
             Tooltip._active_tooltip = self
 
-            self.tooltip.update_idletasks()  # Force macOS to finish rendering text and colors
+            if not self._is_aqua:
+                self.tooltip.update_idletasks()
             self.tooltip.deiconify()  # still invisible on Mac
 
             if self._is_aqua:
@@ -656,7 +667,8 @@ class Tooltip:
 
         try:
             # Ensure tooltip geometry is calculated
-            self.tooltip.update_idletasks()
+            if not self._is_aqua:
+                self.tooltip.update_idletasks()
             tooltip_width = self.tooltip.winfo_reqwidth()
             tooltip_height = self.tooltip.winfo_reqheight()
 
@@ -688,6 +700,7 @@ class Tooltip:
     def force_hide(self) -> None:
         """Immediately destroy the tooltip globally across all OSs."""
         self._cancel_show()
+        self._cancel_timer("position")
         self._cancel_timer("alpha")
         if self.tooltip:
             with contextlib.suppress(tk.TclError):

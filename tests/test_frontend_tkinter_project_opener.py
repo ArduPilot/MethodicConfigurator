@@ -10,14 +10,18 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import sys
 import tkinter as tk
 from collections.abc import Generator
+from threading import Event, get_ident
+from tkinter import ttk
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpenError
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 from ardupilot_methodic_configurator.frontend_tkinter_project_opener import VehicleProjectOpenerWindow
 
 # pylint: disable=redefined-outer-name, duplicate-code
@@ -123,6 +127,64 @@ def mocked_option1_widget_construction() -> Generator[MagicMock, None, None]:
 # ==================== TEST CLASSES ====================
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="Real event-loop regression runs under Xvfb; Aqua CI cannot render")
+def test_bin_import_displays_progress_before_parsing_finishes(configured_opener_window, tk_root: tk.Tk) -> None:
+    """
+    Importing a log must allow Tk to display progress before parsing finishes.
+
+    GIVEN: A parser waits for its intermediate progress to be displayed
+    WHEN: The user imports a log on older macOS
+    THEN: Parsing runs on a worker and idle rendering runs before parsing completes
+    """
+    window = configured_opener_window
+    window.root = tk_root
+    window.main_frame = ttk.Frame(tk_root)
+    window.create_option1_widgets()
+    rendered = Event()
+    observed: list[bool] = []
+    worker_threads: list[int] = []
+    progress: list[ProgressWindow] = []
+    timer: str | None = None
+
+    def create_progress(*args, **kwargs) -> ProgressWindow:
+        progress.append(ProgressWindow(*args, **kwargs))
+        return progress[-1]
+
+    def parse(_filename: str, progress_callback) -> str:
+        worker_threads.append(get_ident())
+        progress_callback(25, 100)
+        observed.append(rendered.wait(1))
+        return "/created/project"
+
+    def observe() -> None:
+        nonlocal timer
+        if progress and progress[-1].progress_bar["value"] == 25:
+            tk_root.after_idle(rendered.set)
+        else:
+            timer = tk_root.after(10, observe)
+
+    window.project_manager.create_new_vehicle_from_bin_log.side_effect = parse
+    with (
+        patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.is_macos_sequoia_or_older", return_value=True),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_progress_window.is_macos_sequoia_or_older", return_value=True),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.ProgressWindow", side_effect=create_progress),
+        patch.object(tk_root, "destroy") as close_parent,
+    ):
+        timer = tk_root.after(10, observe)
+        try:
+            window.bin_log_selection_widgets.on_select_file_callback("flight.bin")
+            assert observed == [True]
+            assert worker_threads[0] != get_ident()
+            close_parent.assert_called_once()
+            assert not progress[-1].progress_window.winfo_exists()
+        finally:
+            if timer is not None:
+                tk_root.after_cancel(timer)
+            for item in progress:
+                item.destroy()
+            window.main_frame.destroy()
+
+
 class TestVehicleProjectOpenerWindow:
     """Test user workflows for vehicle project opening window."""
 
@@ -151,6 +213,7 @@ class TestVehicleProjectOpenerWindow:
         """Selecting a .bin log creates a progress window and forwards its callback."""
         window = configured_opener_window
         progress_window = MagicMock()
+        progress_window.run_task.side_effect = lambda task: task(progress_window.update_progress_bar)
 
         with patch(
             "ardupilot_methodic_configurator.frontend_tkinter_project_opener.ProgressWindow",

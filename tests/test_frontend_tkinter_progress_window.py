@@ -11,16 +11,176 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import contextlib
+import sys
 import tkinter as tk
-from collections.abc import Generator
+from argparse import Namespace
+from collections.abc import Callable, Generator
+from threading import Event, get_ident
+from tkinter import ttk
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+from ardupilot_methodic_configurator import __main__ as amc_main
+from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_connection_progress import (
+    FlightControllerConnectionProgress,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import (
     ProgressWindow,
     update_flight_controller_restart_progress,
 )
+
+
+@pytest.mark.skipif(sys.platform == "darwin", reason="Real event-loop regression runs under Xvfb; Aqua CI cannot render")
+@pytest.mark.parametrize("parent_visible", [False, True])
+def test_tahoe_progress_creation_does_not_dispatch_pending_callbacks(tk_root: tk.Tk, parent_visible: bool) -> None:
+    """
+    Opening progress must not reenter another user operation.
+
+    GIVEN: Tahoe has a queued callback and a visible or withdrawn parent
+    WHEN: A progress window is constructed with real centering
+    THEN: The callback remains queued until construction has returned
+    """
+    if parent_visible:
+        tk_root.deiconify()
+        tk_root.update_idletasks()
+    dispatched: list[bool] = []
+    timer = tk_root.after(0, lambda: dispatched.append(True))
+    window = None
+    try:
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_base_window.is_macos_sequoia_or_older", return_value=False
+            ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_progress_window.is_macos_sequoia_or_older",
+                return_value=False,
+            ),
+        ):
+            window = ProgressWindow(tk_root, "Connection", "{} / {}")
+        assert not dispatched
+    finally:
+        tk_root.after_cancel(timer)
+        if window is not None:
+            window.destroy()
+        tk_root.withdraw()
+
+
+@pytest.mark.skipif(sys.platform == "darwin", reason="Real event-loop regression runs under Xvfb; Aqua CI cannot render")
+def test_user_sees_progress_before_blocking_connection_completes(tk_root: tk.Tk) -> None:
+    """
+    Older macOS must repaint progress while connection work is still running.
+
+    GIVEN: A connection waits for its intermediate progress to be displayed
+    WHEN: Startup connects to a flight controller on Sequoia
+    THEN: Tk displays that progress before the connection completes
+    """
+    rendered = Event()
+    main_thread = get_ident()
+    connection_threads: list[int] = []
+    observed: list[bool] = []
+    timer: str | None = None
+    progress: ProgressWindow | None = None
+
+    def connect(_device: str, progress_callback: Callable[[int, int], None], **_kwargs: object) -> str:
+        connection_threads.append(get_ident())
+        progress_callback(25, 100)
+        observed.append(rendered.wait(1))
+        return ""
+
+    def observe_progress() -> None:
+        nonlocal timer
+        if progress is not None and progress.progress_window.winfo_exists() and progress.progress_bar["value"] == 40:
+            tk_root.after_idle(rendered.set)
+        else:
+            timer = tk_root.after(10, observe_progress)
+
+    with (
+        patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.is_macos_sequoia_or_older", return_value=True),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_progress_window.is_macos_sequoia_or_older", return_value=True),
+        patch.object(amc_main, "FlightController") as controller,
+        patch.object(amc_main, "FlightControllerConnectionProgress") as connection_ui,
+    ):
+        progress = ProgressWindow(tk_root, "Connecting", "{} / {}", only_show_when_update_progress_called=True)
+        ui = FlightControllerConnectionProgress.__new__(FlightControllerConnectionProgress)
+        ui.temp_root = tk_root
+        ui.progress_window = progress
+        connection_ui.return_value.__enter__.return_value = ui
+        controller.return_value.connect.side_effect = connect
+        timer = tk_root.after(10, observe_progress)
+        try:
+            amc_main.connect_to_fc(Namespace(reboot_time=10, baudrate=115200, device="test"))
+            assert observed == [True], "Connection completed before Tk could display intermediate progress"
+            assert connection_threads[0] != main_thread
+        finally:
+            if timer is not None:
+                tk_root.after_cancel(timer)
+            progress.destroy()
+
+
+@pytest.mark.skipif(sys.platform == "darwin", reason="Real event-loop regression runs under Xvfb; Aqua CI cannot render")
+@pytest.mark.parametrize("failure_type", [ValueError, SystemExit])
+def test_failed_background_work_restores_controls_and_close_handlers(
+    tk_root: tk.Tk, failure_type: type[BaseException]
+) -> None:
+    """
+    A failed task must leave the parent usable without allowing overlapping work.
+
+    GIVEN: Enabled and disabled controls and an existing close handler
+    WHEN: Background work fails while user actions are queued
+    THEN: Actions are blocked during work, the error reaches the caller, and UI state is restored
+    """
+    actions = {"clicked": MagicMock(), "closed": MagicMock()}
+    enabled = ttk.Button(tk_root, text="Start", command=actions["clicked"])
+    disabled = ttk.Button(tk_root, text="Unavailable", state="disabled")
+    previous_close = tk_root.protocol("WM_DELETE_WINDOW")
+    tk_root.protocol("WM_DELETE_WINDOW", actions["closed"])
+    test_close = tk_root.protocol("WM_DELETE_WINDOW")
+    release_worker = Event()
+    blocked: list[bool] = []
+    progress_threads: list[int] = []
+    window = ProgressWindow(tk_root, "Task", "{} / {}", auto_close_on_complete=False)
+
+    def display_progress(current: int, total: int) -> None:
+        progress_threads.append(get_ident())
+        ProgressWindow.update_progress_bar(window, current, total)
+
+    def task(report: Callable[[int, int], None]) -> None:
+        report(50, 100)
+        release_worker.wait(2)
+        message = "worker failed"
+        raise failure_type(message)
+
+    def attempt_another_operation() -> None:
+        blocked.append(enabled.instate(("disabled",)))
+        enabled.invoke()
+        tk_root.tk.call(tk_root.protocol("WM_DELETE_WINDOW"))
+        with pytest.raises(RuntimeError, match="already running"):
+            window.run_task(lambda _report: None)
+        release_worker.set()
+
+    timer = tk_root.after(100, attempt_another_operation)
+    try:
+        with (
+            patch.object(window, "update_progress_bar", side_effect=display_progress),
+            pytest.raises(failure_type, match="worker failed"),
+        ):
+            window.run_task(task)
+        assert blocked == [True]
+        actions["clicked"].assert_not_called()
+        actions["closed"].assert_not_called()
+        assert not enabled.instate(("disabled",))
+        assert disabled.instate(("disabled",))
+        assert tk_root.protocol("WM_DELETE_WINDOW") == test_close
+        assert progress_threads == [get_ident()]
+    finally:
+        release_worker.set()
+        tk_root.after_cancel(timer)
+        window.destroy()
+        enabled.destroy()
+        disabled.destroy()
+        tk_root.protocol("WM_DELETE_WINDOW", previous_close)
+        tk_root.deletecommand(test_close)
 
 
 @pytest.fixture
@@ -85,7 +245,7 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name,
     def test_invalid_master_is_reported_before_centering(self) -> None:
         """Progress windows warn when their parent is not a Tk window."""
         fake_window = MagicMock()
-        fake_window.tk.call.side_effect = ["x11", "1.0"]
+        fake_window.tk.call.return_value = "1.0"
         fake_window.winfo_fpixels.return_value = 96
         fake_frame = MagicMock()
         fake_progress_bar = MagicMock()
@@ -336,8 +496,8 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name,
         WHEN: Progress updates fail due to widget errors
         THEN: Errors are logged but no exceptions are raised
         """
-        # Mock progress_bar.update_idletasks to raise TclError
-        progress_window.progress_bar.update_idletasks = MagicMock(side_effect=tk.TclError("Widget destroyed"))
+        # Mock progress_window.update_idletasks to raise TclError
+        progress_window.progress_window.update_idletasks = MagicMock(side_effect=tk.TclError("Widget destroyed"))
 
         with patch("ardupilot_methodic_configurator.frontend_tkinter_progress_window.logging_error") as mock_logging:
             # This should not raise an exception
@@ -355,19 +515,49 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name,
             running on the main thread and periodically calling
             update_progress_bar to refresh the bar.
         WHEN: The progress window is initialised and then updated.
-        THEN: Only update_idletasks() is called on the progress bar. The
+        THEN: Only update_idletasks() is called on the progress window. The
             full update() variant pumps the entire event queue and would
             re-dispatch user clicks that arrived during the blocking call,
             allowing reentrant button callbacks while the caller is still
             in the middle of upload/connection logic.
         """
-        progress_window.progress_bar.update = MagicMock()
-        progress_window.progress_bar.update_idletasks = MagicMock()
+        progress_window.progress_window.update = MagicMock()
+        progress_window.progress_window.update_idletasks = MagicMock()
 
-        progress_window.update_progress_bar(25, 100)
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_progress_window.is_macos_sequoia_or_older",
+            return_value=False,
+        ):
+            progress_window.update_progress_bar(25, 100)
 
-        progress_window.progress_bar.update.assert_not_called()
-        progress_window.progress_bar.update_idletasks.assert_called_once()
+        progress_window.progress_window.update.assert_not_called()
+        progress_window.progress_window.update_idletasks.assert_called_once()
+
+    def test_lazy_progress_updates_never_run_nested_tk_event_loop(self) -> None:
+        """Showing and updating a progress window must not dispatch other Tk events."""
+        window = ProgressWindow.__new__(ProgressWindow)
+        window.progress_window = MagicMock()
+        window.progress_window.winfo_exists.return_value = True
+        window.progress_bar = MagicMock()
+        window.progress_label = MagicMock()
+        window.message = "Progress: {}/{}"
+        window.only_show_when_update_progress_called = True
+        window.auto_close_on_complete = False
+        window._shown = False  # pylint: disable=protected-access
+        # Exercise the legacy Aqua condition too: restoring its update() calls
+        # must fail this regression test, even though production no longer uses it.
+        window._is_aqua = True  # pylint: disable=protected-access
+        window._center_progress_window = MagicMock()  # pylint: disable=protected-access
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_progress_window.is_macos_sequoia_or_older", return_value=True
+        ):
+            window.update_progress_bar(25, 100)
+            window.update_progress_bar(50, 100)
+            window.progress_window.update.assert_not_called()
+        window.progress_bar.update_idletasks.assert_not_called()
+        window.progress_window.update_idletasks.assert_not_called()
+        window.progress_window.deiconify.assert_called_once()
 
     def test_user_sees_progress_window_handle_lazy_window_relift(self, progress_window) -> None:
         """
@@ -422,10 +612,6 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name,
                 message="Init: {}/{}",
                 only_show_when_update_progress_called=True,
             )
-
-            # Ignore any centering that may have happened during __init__
-            mock_center_screen.reset_mock()
-            mock_center_parent.reset_mock()
 
             # First time the window is actually shown via update_progress_bar
             window.update_progress_bar(10, 100)

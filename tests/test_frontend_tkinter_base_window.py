@@ -553,13 +553,13 @@ class TestWindowManagementBehavior:
 
         child.destroy()
 
-    def test_center_window_calls_update_idletasks_on_macos(self) -> None:
+    def test_center_window_defers_positioning_on_macos(self) -> None:
         """
-        center_window calls update_idletasks (not update) on macOS for correct rendering.
+        center_window schedules positioning without forcing Tk event processing.
 
         GIVEN: Application is running on macOS (Darwin)
         WHEN: center_window() positions a child window relative to a parent
-        THEN: update_idletasks() is used instead of update() to avoid macOS-specific issues
+        THEN: the idle callback positions the window after geometry settles
         """
         mock_window = MagicMock()
         mock_parent = MagicMock()
@@ -573,14 +573,17 @@ class TestWindowManagementBehavior:
         mock_parent.winfo_height.return_value = 600
 
         with patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_base_window.platform_system",
-            return_value="Darwin",
+            "ardupilot_methodic_configurator.frontend_tkinter_base_window.is_macos_sequoia_or_older", return_value=True
         ):
             BaseWindow.center_window(mock_window, mock_parent)
 
-        # On Darwin: update_idletasks() is called (twice: once unconditionally, once in Darwin branch)
-        # The key invariant is that update() is never called on macOS
-        assert mock_window.update_idletasks.call_count == 2
+        mock_window.update_idletasks.assert_not_called()
+        mock_window.update.assert_not_called()
+        mock_window.geometry.assert_not_called()
+        mock_window.after_idle.assert_called_once()
+        mock_window.after_idle.call_args.args[0]()
+        mock_window.geometry.assert_called_once_with("+300+250")
+        mock_window.update_idletasks.assert_not_called()
         mock_window.update.assert_not_called()
 
     def test_user_can_safely_close_windows_without_memory_leaks(self, tk_root) -> None:
@@ -1863,6 +1866,18 @@ class TestMonitorTrackingBehavior:
 class TestCenterWindowOnScreenBehavior:
     """Test screen-centered window positioning with multi-monitor support."""
 
+    @pytest.fixture(autouse=True)
+    def non_darwin_by_default(self) -> Generator[None, None, None]:
+        """Exercise synchronous positioning unless a test explicitly selects Darwin."""
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.platform_system", return_value="Linux"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_base_window.is_macos_sequoia_or_older",
+                return_value=False,
+            ),
+        ):
+            yield
+
     def test_centers_window_on_single_monitor(self) -> None:
         """
         Centers window on single monitor setup.
@@ -1896,7 +1911,7 @@ class TestCenterWindowOnScreenBehavior:
             # Center calculation: x = 0 + (1920 - 300) / 2 = 810
             #                     y = 0 + (1080 - 200) / 2 = 440
             mock_window.geometry.assert_called_once_with("+810+440")
-            mock_window.update.assert_called_once()
+            mock_window.update.assert_not_called()
 
     def test_centers_window_on_monitor_with_pointer(self) -> None:
         """
@@ -1937,7 +1952,7 @@ class TestCenterWindowOnScreenBehavior:
             # Center calculation: x = 1920 + (1920 - 400) / 2 = 2680
             #                     y = 0 + (1080 - 300) / 2 = 390
             mock_window.geometry.assert_called_once_with("+2680+390")
-            mock_window.update.assert_called_once()
+            mock_window.update.assert_not_called()
 
     def test_handles_pointer_outside_any_monitor(self) -> None:
         """
@@ -1972,7 +1987,7 @@ class TestCenterWindowOnScreenBehavior:
             # Center calculation: x = 0 + (1920 - 200) / 2 = 860
             #                     y = 0 + (1080 - 150) / 2 = 465
             mock_window.geometry.assert_called_once_with("+860+465")
-            mock_window.update.assert_called_once()
+            mock_window.update.assert_not_called()
 
     def test_respects_monitor_bounds(self) -> None:
         """
@@ -2007,7 +2022,7 @@ class TestCenterWindowOnScreenBehavior:
             #                     y = 0 + (768 - 400) / 2 = 184
             # Both values are within bounds [0, 1024-500] and [0, 768-400]
             mock_window.geometry.assert_called_once_with("+262+184")
-            mock_window.update.assert_called_once()
+            mock_window.update.assert_not_called()
 
     def test_handles_monitor_with_offset_coordinates(self) -> None:
         """
@@ -2042,7 +2057,7 @@ class TestCenterWindowOnScreenBehavior:
             # Center calculation: x = 100 + (1920 - 300) / 2 = 910
             #                     y = -1080 + (1080 - 200) / 2 = -640
             mock_window.geometry.assert_called_once_with("+910+-640")
-            mock_window.update.assert_called_once()
+            mock_window.update.assert_not_called()
 
     def test_handles_empty_monitor_list_gracefully(self) -> None:
         """
@@ -2072,7 +2087,7 @@ class TestCenterWindowOnScreenBehavior:
             # Fallback calculation: x = (1920 - 200) / 2 = 860
             #                       y = (1080 - 150) / 2 = 465
             mock_window.geometry.assert_called_once_with("+860+465")
-            mock_window.update.assert_called_once()
+            mock_window.update.assert_not_called()
 
     def test_handles_get_monitors_exception_gracefully(self) -> None:
         """
@@ -2102,7 +2117,7 @@ class TestCenterWindowOnScreenBehavior:
             # Fallback calculation: x = (1920 - 300) / 2 = 810
             #                       y = (1080 - 200) / 2 = 440
             mock_window.geometry.assert_called_once_with("+810+440")
-            mock_window.update.assert_called_once()
+            mock_window.update.assert_not_called()
 
     def test_calls_update_idletasks_before_positioning(self) -> None:
         """
@@ -2134,7 +2149,7 @@ class TestCenterWindowOnScreenBehavior:
             # Assert: Calls in correct order
             assert mock_window.update_idletasks.called
             assert mock_window.geometry.called
-            assert mock_window.update.called
+            mock_window.update.assert_not_called()
             # Verify update_idletasks was called before winfo methods
             call_order = [call[0] for call in mock_window.method_calls]
             update_idx = call_order.index("update_idletasks")
@@ -2175,7 +2190,63 @@ class TestCenterWindowOnScreenBehavior:
             # Center calculation using rendered size: x = (1920 - 450) / 2 = 735
             #                                         y = (1080 - 350) / 2 = 365
             mock_window.geometry.assert_called_once_with("+735+365")
-            mock_window.update.assert_called_once()
+            mock_window.update.assert_not_called()
+
+    def test_macos_screen_centering_waits_for_idle_geometry(self) -> None:
+        """Window centering on macOS uses settled dimensions without a nested Tk update."""
+        mock_window = MagicMock()
+        mock_window.winfo_width.return_value = 300
+        mock_window.winfo_height.return_value = 200
+        mock_window.winfo_pointerx.return_value = 960
+        mock_window.winfo_pointery.return_value = 540
+        monitor = MagicMock(x=0, y=0, width=1920, height=1080)
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.is_macos_sequoia_or_older", return_value=True),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.get_monitors", return_value=[monitor]),
+        ):
+            BaseWindow.center_window_on_screen(mock_window)
+            mock_window.update_idletasks.assert_not_called()
+            mock_window.update.assert_not_called()
+            mock_window.geometry.assert_not_called()
+            mock_window.after_idle.assert_called_once()
+            mock_window.after_idle.call_args.args[0]()
+
+        mock_window.geometry.assert_called_once_with("+810+440")
+        mock_window.update_idletasks.assert_not_called()
+        mock_window.update.assert_not_called()
+
+
+@pytest.mark.parametrize("on_screen", [False, True])
+def test_macos_centering_is_cancelled_when_window_closes_before_idle(tk_root: tk.Tk, on_screen: bool) -> None:
+    """Closing a window before deferred centering produces no Tcl background error."""
+    child = tk.Toplevel(tk_root)
+    with (
+        patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.is_macos_sequoia_or_older", return_value=True),
+        patch.object(child, "geometry") as geometry,
+        patch.object(child, "after_cancel", wraps=child.after_cancel) as cancel,
+    ):
+        if on_screen:
+            BaseWindow.center_window_on_screen(child)
+        else:
+            BaseWindow.center_window(child, tk_root)
+        child.destroy()
+        cancel.assert_called_once()
+        tk_root.update_idletasks()
+        geometry.assert_not_called()
+
+
+def test_deferred_window_work_removes_destroy_binding_after_running(tk_root: tk.Tk) -> None:
+    """Completed idle work does not accumulate destruction handlers."""
+    child = tk.Toplevel(tk_root)
+    try:
+        callback = MagicMock()
+        BaseWindow._run_when_idle(child, callback)  # pylint: disable=protected-access
+        tk_root.update_idletasks()
+        callback.assert_called_once()
+        assert not child.bind("<Destroy>")
+    finally:
+        child.destroy()
 
 
 if __name__ == "__main__":

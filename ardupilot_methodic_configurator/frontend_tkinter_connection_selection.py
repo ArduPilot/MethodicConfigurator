@@ -275,15 +275,21 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             self.baudrate_var.set(str(self.default_baudrate))
             current_baudrate = self.default_baudrate
 
-        error_message = self.flight_controller.connect(
-            selected_connection, self.connection_progress_window.update_progress_bar, baudrate=current_baudrate
-        )
+        refresh_was_running = self._refresh_timer_id is not None
+        self.stop_periodic_refresh()
+        connected = False
+        try:
+            error_message = self.connection_progress_window.run_task(
+                lambda report: self.flight_controller.connect(selected_connection, report, baudrate=current_baudrate)
+            )
+            connected = not error_message
+        finally:
+            self.connection_progress_window.destroy()
+            if refresh_was_running and not connected:
+                self.start_periodic_refresh()
         if error_message:
             show_no_connection_error(error_message)
             return True
-        self.connection_progress_window.destroy()
-        # Stop periodic refresh when connection is established
-        self.stop_periodic_refresh()
         # Store the current connection as the previous selection
         if self.flight_controller.comport and hasattr(self.flight_controller.comport, "device"):
             device: str = self.flight_controller.comport.device

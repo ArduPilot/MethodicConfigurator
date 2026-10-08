@@ -1141,6 +1141,7 @@ class TestFlightControllerConnectionLogic:
             patch("ardupilot_methodic_configurator.__main__.logging_info") as mock_log,
         ):
             mock_progress = MagicMock()
+            mock_progress.progress_window.run_task.side_effect = lambda task: task(mock_progress.update_progress_bar)
             mock_progress_class.return_value.__enter__.return_value = mock_progress
 
             mock_fc = MagicMock()
@@ -1181,6 +1182,7 @@ class TestFlightControllerConnectionLogic:
             patch("ardupilot_methodic_configurator.__main__.logging_debug") as mock_log,
         ):
             mock_progress = MagicMock()
+            mock_progress.progress_window.run_task.side_effect = lambda task: task(mock_progress.update_progress_bar)
             mock_progress_class.return_value.__enter__.return_value = mock_progress
 
             mock_fc = MagicMock()

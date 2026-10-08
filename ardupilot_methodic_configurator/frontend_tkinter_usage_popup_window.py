@@ -13,7 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import contextlib
 import tkinter as tk
 from collections.abc import Callable
-from sys import platform as sys_platform
+from platform import system as platform_system
 
 # from logging import debug as logging_debug
 # from logging import info as logging_info
@@ -23,11 +23,7 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText
-
-
-def _is_macos() -> bool:
-    """Return True if the current platform is macOS."""
-    return sys_platform == "darwin"
+from ardupilot_methodic_configurator.macos_utilites import is_macos_sequoia_or_older
 
 
 class PopupWindow:
@@ -89,23 +85,32 @@ class PopupWindow:
         parent: tk.Tk | None,
         close_callback: Callable[[], None],
     ) -> None:
-        """Finalize window setup: center, show, make modal on non-macOS, set close handler."""
+        """Show the popup, set its close handler, and make it modal where supported."""
+        is_macos = platform_system() == "Darwin"
         # Only set transient on non-macOS
-        if parent and not _is_macos():
+        if parent and not is_macos:
             popup_window.root.transient(parent)
 
-        # Resize window height to ensure all widgets are fully visible
-        # as some Linux Window managers like KDE, like to change font sizes and padding.
-        # So we need to dynamically accommodate for that after placing the widgets
-        popup_window.root.update_idletasks()
-        req_height = popup_window.root.winfo_reqheight()
-        req_width = popup_window.root.winfo_reqwidth()
+        def resize_and_center() -> None:
+            """Fit the finished layout, then center using the resized dimensions."""
+            req_height = popup_window.root.winfo_reqheight()
+            req_width = popup_window.root.winfo_reqwidth()
+            popup_window.root.geometry(f"{req_width}x{req_height}")
+            if parent:
+                BaseWindow.center_window(popup_window.root, parent)
 
-        popup_window.root.geometry(f"{req_width}x{req_height}")
-
-        if parent:  # If parent exists center on parent
-            BaseWindow.center_window(popup_window.root, parent)
-        # For parent-less, center on screen
+        # Font metrics and padding differ on every platform. Older macOS must
+        # measure in the normal event loop rather than force a rendering update.
+        if is_macos_sequoia_or_older():
+            # Packed child requests propagate through the frame to the toplevel
+            # over successive idle passes; wait for both before measuring.
+            BaseWindow._run_when_idle(  # noqa: SLF001 # pylint: disable=protected-access
+                popup_window.root,
+                lambda: BaseWindow._run_when_idle(popup_window.root, resize_and_center),  # noqa: SLF001 # pylint: disable=protected-access
+            )
+        else:
+            popup_window.root.update_idletasks()
+            resize_and_center()
 
         try:
             # Show the window now that it's positioned. Calls may fail if the
@@ -113,7 +118,8 @@ class PopupWindow:
             # - guard against tk.TclError so the caller doesn't crash the app.
             popup_window.root.deiconify()
             popup_window.root.lift()
-            popup_window.root.update()  # Ensure the window is fully rendered before setting focus
+            if not is_macos_sequoia_or_older():
+                popup_window.root.update_idletasks()
             # Use focus_set() instead of focus_force(): focus_force() calls XSetInputFocus
             # directly via X11, which causes a segfault in Python 3.9 on Linux in headless
             # environments. focus_set() only updates Tk's internal focus state, avoiding the crash.
@@ -122,7 +128,7 @@ class PopupWindow:
 
             # On macOS, grab_set() causes UI freeze (issue #1264), so skip it
             # On Windows/Linux, make the popup modal and give it focus
-            if not _is_macos():
+            if not is_macos:
                 popup_window.root.grab_set()  # Make the popup modal
 
             popup_window.root.protocol("WM_DELETE_WINDOW", close_callback)
@@ -134,7 +140,7 @@ class PopupWindow:
     @staticmethod
     def close(popup_window: BaseWindow, parent: tk.Tk | None) -> None:
         """Close the popup window and re-enable the parent window."""
-        if not _is_macos():
+        if platform_system() != "Darwin":
             with contextlib.suppress(tk.TclError):
                 popup_window.root.grab_release()
 
