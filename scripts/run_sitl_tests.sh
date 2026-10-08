@@ -49,25 +49,18 @@ check_sitl() {
 setup_sitl() {
     echo "Setting up SITL environment..."
 
-    # Create SITL cache directory if it doesn't exist
-    mkdir -p "$PROJECT_ROOT/sitl-cache"
-
     # Handle downloaded SITL
     if [ -f "$PROJECT_ROOT/sitl/arducopter" ]; then
         export SITL_BINARY="$PROJECT_ROOT/sitl/arducopter"
-        cp "$PROJECT_ROOT/sitl/arducopter" "$PROJECT_ROOT/sitl-cache/"
         # Download default parameters if not already present
         if [ ! -f "$PROJECT_ROOT/sitl/copter.parm" ]; then
             curl -L -o "$PROJECT_ROOT/sitl/copter.parm" https://raw.githubusercontent.com/ArduPilot/ardupilot/master/Tools/autotest/default_params/copter.parm
         fi
-        cp "$PROJECT_ROOT/sitl/copter.parm" "$PROJECT_ROOT/sitl-cache/"
-        echo -e "${GREEN}✓ Downloaded SITL binary and config copied to cache${NC}"
+        echo -e "${GREEN}✓ Downloaded SITL binary and config are ready${NC}"
     # Handle locally built SITL
     elif [ -f "$SITL_BINARY" ]; then
         export SITL_BINARY="$SITL_BINARY"
-        cp "$SITL_BINARY" "$PROJECT_ROOT/sitl-cache/"
-        cp "${ARDUPILOT_DIR}/ardupilot/Tools/autotest/default_params/copter.parm" "$PROJECT_ROOT/sitl-cache/"
-        echo -e "${GREEN}✓ Locally built SITL binary and config copied to cache${NC}"
+        echo -e "${GREEN}✓ Locally built ArduCopter SITL is ready${NC}"
     fi
 }
 
@@ -94,9 +87,6 @@ cleanup_sitl() {
 
     # Kill any running SITL processes
     pkill -f arducopter || true
-
-    # Remove SITL cache
-    rm -rf "$PROJECT_ROOT/sitl-cache"
 
     echo -e "${GREEN}✓ Cleanup completed${NC}"
 }
