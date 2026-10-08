@@ -389,7 +389,6 @@ class BaseWindow:
         else:
             window.update_idletasks()
             position()
-            window.update()
 
     @staticmethod
     def center_window_on_screen(window: tk.Toplevel | tk.Tk) -> None:
@@ -417,7 +416,6 @@ class BaseWindow:
         else:
             window.update_idletasks()
             BaseWindow._position_window_on_screen(window)
-            window.update()
 
     @staticmethod
     def _run_when_idle(window: tk.Toplevel | tk.Tk, callback: Callable[[], None]) -> None:

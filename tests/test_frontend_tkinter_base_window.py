@@ -1911,7 +1911,7 @@ class TestCenterWindowOnScreenBehavior:
             # Center calculation: x = 0 + (1920 - 300) / 2 = 810
             #                     y = 0 + (1080 - 200) / 2 = 440
             mock_window.geometry.assert_called_once_with("+810+440")
-            mock_window.update.assert_called_once()
+            mock_window.update.assert_not_called()
 
     def test_centers_window_on_monitor_with_pointer(self) -> None:
         """
@@ -1952,7 +1952,7 @@ class TestCenterWindowOnScreenBehavior:
             # Center calculation: x = 1920 + (1920 - 400) / 2 = 2680
             #                     y = 0 + (1080 - 300) / 2 = 390
             mock_window.geometry.assert_called_once_with("+2680+390")
-            mock_window.update.assert_called_once()
+            mock_window.update.assert_not_called()
 
     def test_handles_pointer_outside_any_monitor(self) -> None:
         """
@@ -1987,7 +1987,7 @@ class TestCenterWindowOnScreenBehavior:
             # Center calculation: x = 0 + (1920 - 200) / 2 = 860
             #                     y = 0 + (1080 - 150) / 2 = 465
             mock_window.geometry.assert_called_once_with("+860+465")
-            mock_window.update.assert_called_once()
+            mock_window.update.assert_not_called()
 
     def test_respects_monitor_bounds(self) -> None:
         """
@@ -2022,7 +2022,7 @@ class TestCenterWindowOnScreenBehavior:
             #                     y = 0 + (768 - 400) / 2 = 184
             # Both values are within bounds [0, 1024-500] and [0, 768-400]
             mock_window.geometry.assert_called_once_with("+262+184")
-            mock_window.update.assert_called_once()
+            mock_window.update.assert_not_called()
 
     def test_handles_monitor_with_offset_coordinates(self) -> None:
         """
@@ -2057,7 +2057,7 @@ class TestCenterWindowOnScreenBehavior:
             # Center calculation: x = 100 + (1920 - 300) / 2 = 910
             #                     y = -1080 + (1080 - 200) / 2 = -640
             mock_window.geometry.assert_called_once_with("+910+-640")
-            mock_window.update.assert_called_once()
+            mock_window.update.assert_not_called()
 
     def test_handles_empty_monitor_list_gracefully(self) -> None:
         """
@@ -2087,7 +2087,7 @@ class TestCenterWindowOnScreenBehavior:
             # Fallback calculation: x = (1920 - 200) / 2 = 860
             #                       y = (1080 - 150) / 2 = 465
             mock_window.geometry.assert_called_once_with("+860+465")
-            mock_window.update.assert_called_once()
+            mock_window.update.assert_not_called()
 
     def test_handles_get_monitors_exception_gracefully(self) -> None:
         """
@@ -2117,7 +2117,7 @@ class TestCenterWindowOnScreenBehavior:
             # Fallback calculation: x = (1920 - 300) / 2 = 810
             #                       y = (1080 - 200) / 2 = 440
             mock_window.geometry.assert_called_once_with("+810+440")
-            mock_window.update.assert_called_once()
+            mock_window.update.assert_not_called()
 
     def test_calls_update_idletasks_before_positioning(self) -> None:
         """
@@ -2149,7 +2149,7 @@ class TestCenterWindowOnScreenBehavior:
             # Assert: Calls in correct order
             assert mock_window.update_idletasks.called
             assert mock_window.geometry.called
-            assert mock_window.update.called
+            mock_window.update.assert_not_called()
             # Verify update_idletasks was called before winfo methods
             call_order = [call[0] for call in mock_window.method_calls]
             update_idx = call_order.index("update_idletasks")
@@ -2190,7 +2190,7 @@ class TestCenterWindowOnScreenBehavior:
             # Center calculation using rendered size: x = (1920 - 450) / 2 = 735
             #                                         y = (1080 - 350) / 2 = 365
             mock_window.geometry.assert_called_once_with("+735+365")
-            mock_window.update.assert_called_once()
+            mock_window.update.assert_not_called()
 
     def test_macos_screen_centering_waits_for_idle_geometry(self) -> None:
         """Window centering on macOS uses settled dimensions without a nested Tk update."""

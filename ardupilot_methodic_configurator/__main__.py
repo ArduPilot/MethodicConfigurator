@@ -23,6 +23,7 @@ import importlib
 import os
 import sys
 import tempfile
+from collections.abc import Callable
 from logging import basicConfig as logging_basicConfig
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -58,6 +59,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_component_editor_base impo
 )
 from ardupilot_methodic_configurator.frontend_tkinter_connection_selection import ConnectionSelectionWindow
 from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_connection_progress import (
+    PROGRESS_FC_INIT_COMPLETE,
     FlightControllerConnectionProgress,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_info import FlightControllerInfoWindow
@@ -246,23 +248,30 @@ def connect_to_fc(args: argparse.Namespace) -> tuple[FlightController, str]:
     """
     # Create UI components with automatic cleanup via context manager
     with FlightControllerConnectionProgress() as connection_progress:
-        # Update progress for FC initialization start
-        connection_progress.update_init_progress_bar(0, 100)
 
-        flight_controller = FlightController(
-            reboot_time=args.reboot_time,
-            baudrate=args.baudrate,
-            progress_callback=connection_progress.update_init_progress_bar,
-        )
+        def initialize_and_connect(report: Callable[[int, int], None]) -> tuple[FlightController, str]:
+            """Keep blocking FC work off Tk's thread and report normalized progress."""
 
-        # FC init done, starting connect
-        connection_progress.update_init_progress_bar(100, 100)
+            def report_init(value: int, total: int) -> None:
+                if total > 0:
+                    report(value * PROGRESS_FC_INIT_COMPLETE // 100, total)
 
-        error_str = flight_controller.connect(
-            args.device, progress_callback=connection_progress.update_connect_progress_bar, log_errors=False
-        )
+            def report_connect(value: int, total: int) -> None:
+                if total > 0:
+                    report(PROGRESS_FC_INIT_COMPLETE + value * (100 - PROGRESS_FC_INIT_COMPLETE) // 100, total)
 
-        connection_progress.update_connect_progress_bar(100, 100)
+            report_init(0, 100)
+            flight_controller = FlightController(
+                reboot_time=args.reboot_time,
+                baudrate=args.baudrate,
+                progress_callback=report_init,
+            )
+            report_init(100, 100)
+            error_str = flight_controller.connect(args.device, progress_callback=report_connect, log_errors=False)
+            report_connect(100, 100)
+            return flight_controller, error_str
+
+        flight_controller, error_str = connection_progress.progress_window.run_task(initialize_and_connect)
 
     return flight_controller, error_str
 

@@ -124,9 +124,8 @@ class VehicleProjectOpenerWindow(BaseWindow):
                 _("Parsing .bin log file: {}% complete"),
             )
             try:
-                self.project_manager.create_new_vehicle_from_bin_log(
-                    bin_file,
-                    progress_callback=progress_window.update_progress_bar,
+                progress_window.run_task(
+                    lambda report: self.project_manager.create_new_vehicle_from_bin_log(bin_file, progress_callback=report)
                 )
             finally:
                 progress_window.destroy()

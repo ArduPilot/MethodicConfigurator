@@ -10,9 +10,10 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import sys
 import tkinter as tk
 from collections.abc import Generator
-from tkinter import ttk
+from tkinter import font, ttk
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -29,6 +30,39 @@ from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import 
 
 _IS_MACOS_PATH = "ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.is_macos_sequoia_or_older"
 _PLATFORM_SYSTEM_PATH = "ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.platform_system"
+
+
+@pytest.mark.skipif(sys.platform == "darwin", reason="Real layout regression runs under Xvfb; Aqua CI cannot render")
+@pytest.mark.parametrize("defer_updates", [True, False])
+def test_macos_popup_shows_full_dismiss_button_with_large_text(tk_root: tk.Tk, defer_updates: bool) -> None:
+    """
+    Popups must accommodate the user's font metrics on every macOS version.
+
+    GIVEN: A popup's instructions need more space than its initial size
+    WHEN: The popup finishes layout on Sequoia or Tahoe
+    THEN: Its Dismiss button is fully visible and usable
+    """
+    popup = BaseWindow(tk_root)
+    large_font = font.Font(root=tk_root, family="Helvetica", size=24)
+    instructions = RichText(popup.main_frame, height=6, font=large_font)
+    instructions.insert(tk.END, "Instructions\n" * 5)
+    try:
+        with (
+            patch(_IS_MACOS_PATH, return_value=defer_updates),
+            patch(_PLATFORM_SYSTEM_PATH, return_value="Darwin"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_base_window.is_macos_sequoia_or_older",
+                return_value=defer_updates,
+            ),
+        ):
+            UsagePopupWindow.display(tk_root, popup, "Instructions", "test_type", "690x210", instructions)
+            tk_root.update_idletasks()
+        dismiss = next(child for child in popup.main_frame.winfo_children() if isinstance(child, ttk.Button))
+        assert dismiss.winfo_ismapped(), "Dismiss button was clipped out of the popup"
+        assert dismiss.winfo_height() >= dismiss.winfo_reqheight()
+        assert popup.root.winfo_height() >= popup.root.winfo_reqheight()
+    finally:
+        popup.root.destroy()
 
 
 @pytest.fixture
@@ -212,8 +246,9 @@ class TestUsagePopupWindow:
             # Scale the base bounds by the actual DPI factor so the test is
             # valid at any display scaling (100%, 150%, 200%, etc.).
             dpi_factor = popup_window.dpi_scaling_factor
-            assert 520 * dpi_factor <= width <= 870 * dpi_factor, f"Window width {width} outside reasonable range"
-            assert 380 * dpi_factor <= height <= 650 * dpi_factor, f"Window height {height} outside reasonable range"
+            children = popup_window.main_frame.winfo_children()
+            assert max(child.winfo_reqwidth() for child in children) <= width <= 870 * dpi_factor
+            assert sum(child.winfo_reqheight() for child in children) <= height <= 650 * dpi_factor
 
             # Assert: UI elements created for user interaction
             children = popup_window.main_frame.winfo_children()
@@ -487,10 +522,12 @@ def test_finalize_setup_popupwindow_handles_destroyed_tk() -> None:
     assert not fake.root.protocol.called
 
 
-def test_macos_popup_keeps_explicit_size_without_forcing_tk_events() -> None:
-    """A macOS popup keeps its configured size until Tk's normal event loop runs."""
+def test_macos_popup_defers_sizing_and_centering_without_forcing_tk_events() -> None:
+    """A macOS popup fits its layout when Tk's normal event loop runs."""
     popup = Mock()
     parent = Mock()
+    popup.root.winfo_reqwidth.return_value = 700
+    popup.root.winfo_reqheight.return_value = 300
 
     with (
         patch(_IS_MACOS_PATH, return_value=True),
@@ -498,12 +535,17 @@ def test_macos_popup_keeps_explicit_size_without_forcing_tk_events() -> None:
         patch.object(BaseWindow, "center_window") as center_window,
     ):
         PopupWindow.finalize_setup_popupwindow(popup, parent, lambda: None)
+        popup.root.geometry.assert_not_called()
+        center_window.assert_not_called()
+        # Allow packed child requests to propagate before measuring the root.
+        popup.root.after_idle.call_args.args[0]()
+        popup.root.after_idle.call_args.args[0]()
+        popup.root.geometry.assert_called_once_with("700x300")
+        center_window.assert_called_once_with(popup.root, parent)
 
-    popup.root.geometry.assert_not_called()
     popup.root.update_idletasks.assert_not_called()
     popup.root.update.assert_not_called()
     popup.root.grab_set.assert_not_called()
-    center_window.assert_called_once_with(popup.root, parent)
     popup.root.deiconify.assert_called_once()
 
 
@@ -511,6 +553,8 @@ def test_tahoe_popup_keeps_macos_modality_and_runs_idle_rendering() -> None:
     """Tahoe uses macOS modality rules while allowing safe idle rendering."""
     popup = Mock()
     parent = Mock()
+    popup.root.winfo_reqwidth.return_value = 700
+    popup.root.winfo_reqheight.return_value = 300
 
     with (
         patch(_IS_MACOS_PATH, return_value=False),
@@ -520,10 +564,10 @@ def test_tahoe_popup_keeps_macos_modality_and_runs_idle_rendering() -> None:
         PopupWindow.finalize_setup_popupwindow(popup, parent, lambda: None)
 
     popup.root.transient.assert_not_called()
-    popup.root.update_idletasks.assert_called_once()
+    assert popup.root.update_idletasks.call_count == 2
     popup.root.update.assert_not_called()
     popup.root.grab_set.assert_not_called()
-    popup.root.geometry.assert_not_called()
+    popup.root.geometry.assert_called_once_with("700x300")
 
 
 def test_closing_tahoe_popup_does_not_release_a_macos_grab() -> None:

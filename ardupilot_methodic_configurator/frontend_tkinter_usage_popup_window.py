@@ -91,17 +91,26 @@ class PopupWindow:
         if parent and not is_macos:
             popup_window.root.transient(parent)
 
-        # Some Linux window managers change font sizes and padding, so measure
-        # the finished layout there. On macOS, keep the explicit size supplied
-        # by setup_popupwindow and let Tk process layout in its normal event loop.
-        if not is_macos:
-            popup_window.root.update_idletasks()
+        def resize_and_center() -> None:
+            """Fit the finished layout, then center using the resized dimensions."""
             req_height = popup_window.root.winfo_reqheight()
             req_width = popup_window.root.winfo_reqwidth()
             popup_window.root.geometry(f"{req_width}x{req_height}")
+            if parent:
+                BaseWindow.center_window(popup_window.root, parent)
 
-        if parent:  # macOS centering is deferred without forcing Tk updates
-            BaseWindow.center_window(popup_window.root, parent)
+        # Font metrics and padding differ on every platform. Older macOS must
+        # measure in the normal event loop rather than force a rendering update.
+        if is_macos_sequoia_or_older():
+            # Packed child requests propagate through the frame to the toplevel
+            # over successive idle passes; wait for both before measuring.
+            BaseWindow._run_when_idle(  # noqa: SLF001 # pylint: disable=protected-access
+                popup_window.root,
+                lambda: BaseWindow._run_when_idle(popup_window.root, resize_and_center),  # noqa: SLF001 # pylint: disable=protected-access
+            )
+        else:
+            popup_window.root.update_idletasks()
+            resize_and_center()
 
         try:
             # Show the window now that it's positioned. Calls may fail if the
@@ -109,9 +118,7 @@ class PopupWindow:
             # - guard against tk.TclError so the caller doesn't crash the app.
             popup_window.root.deiconify()
             popup_window.root.lift()
-            if not is_macos:
-                popup_window.root.update()  # Ensure the window is rendered before setting focus
-            elif not is_macos_sequoia_or_older():
+            if not is_macos_sequoia_or_older():
                 popup_window.root.update_idletasks()
             # Use focus_set() instead of focus_force(): focus_force() calls XSetInputFocus
             # directly via X11, which causes a segfault in Python 3.9 on Linux in headless
