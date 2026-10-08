@@ -1,162 +1,85 @@
 #!/usr/bin/env python3
 
 """
-Acceptance tests for component-parameter round-trip validation.
+Acceptance tests for isolated, offline template import and parameter regeneration.
 
-This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
+Every non-migration template exercises parameter compounding, file-mode loading and full
+project initialization in separately timed tests. Project creation/regeneration additionally
+covers every ArduCopter and ArduPlane template; Heli/Rover have no corresponding empty
+project template and are explicitly excluded only from those workflows. Direct inference
+still covers all vehicle types. Directories ending in _mig (including descendants) never
+enter the template cases.
+
+Expectations assert complete parameter membership, values and comments rather than output
+existence or aggregate success rates. Inferable component fields start with deliberately
+wrong values; non-inferable context is preserved. Fixtures create each workflow's project,
+so validation tests do not depend on test execution order. Installed templates are never
+modified. Offline metadata is parsed for real; network access is forbidden.
+
+A separate Copter/Plane orchestration fixture runs the production project manager and
+component editor with only rendering/external boundaries replaced. Startup is preview-only;
+the real parameter editor persists a representative battery step only with user permission.
 
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
-
 SPDX-License-Identifier: GPL-3.0-or-later
-
-
-High-Level Concept
-------------------
-This test suite validates the bidirectional relationship between flight controller parameters
-and component specifications by testing a complete round-trip cycle:
-
-1. **Parameters → Component Inference**: Starting with known parameter values from vehicle templates,
-   the system infers component specifications (battery capacity, motor specs, RC protocols, etc.)
-
-2. **Components → Parameter Generation**: Using the inferred component specifications, the system
-   generates new parameter files with values appropriate for those components
-
-3. **Round-Trip Validation**: The generated parameters are compared against the original template
-   parameters to verify consistency and identify any transformation losses or discrepancies
-
-This validates that:
-- Component inference logic correctly extracts specs from parameters
-- Parameter generation logic correctly derives values from component specs
-- The import/export cycle preserves essential configuration information
-- Any differences are documented and can be analyzed for improvement
-
-Test Workflow
--------------
-1. **Compound Template Parameters** (TestTemplateCompounding):
-   - Consolidates all .param files from vehicle templates into single params.param files
-   - Creates baseline parameter sets representing real-world vehicle configurations
-
-2. **File-Based Parameter Loading** (TestFileBasedParameterLoading):
-   - Loads parameters without physical flight controller using file simulation mode
-   - Validates the testing infrastructure for subsequent round-trip validation
-
-3. **Component Inference and Project Generation** (TestTemplateImportWithComponentInference):
-   - Infers component specifications from template parameters
-   - Creates new vehicle projects with inferred components
-   - Generates new parameter files based on component specifications
-   - Compares original template parameters with generated parameters
-   - Documents differences in structured diff files for analysis
-   - Identifies parameter transformation patterns and edge cases
-
-Directory Structure
--------------------
-Both source and target directories maintain the same vehicle_templates structure:
-
-/tmp/amc_test_acceptance1/             Source: Compounded params.param files (mirrors source structure)
-└── vehicle_templates/
-    ├── ArduCopter/
-    │   ├── diatone_taycan_mxc/
-    │   │   ├── 4.6.x-params/params.param
-    │   │   ├── 4.5.x-params/params.param
-    │   │   ├── 4.4.4-params/params.param
-    │   │   └── 4.3.8-params/params.param
-    │   ├── Chimera7/params.param
-    │   ├── Tarot_X4/params.param
-    │   └── ...
-    ├── ArduPlane/
-    │   └── normal_plane/params.param
-    ├── Rover/
-    └── Heli/
-
-/tmp/amc_test_acceptance2/             Target: Generated vehicle projects (mirrors source structure)
-└── vehicle_templates/
-    ├── ArduCopter/
-    │   ├── diatone_taycan_mxc/
-    │   │   ├── 4.6.x-params/        ← New project generated from 4.6.x-params template
-    │   │   │   ├── 00_default.param
-    │   │   │   ├── vehicle_components.json
-    │   │   │   └── ...
-    │   │   └── 4.4.4-params/
-    │   ├── Chimera7/                ← New project from Chimera7 template
-    │   │   ├── 00_default.param
-    │   │   ├── vehicle_components.json
-    │   │   └── ...
-    │   └── ...
-    └── ...
-
-File Simulation Mode
----------------------
-The file simulation mode allows testing without a physical flight controller:
-1. Create or copy a params.param file to the current working directory
-2. Call FlightController.connect(DEVICE_FC_PARAM_FROM_FILE) where DEVICE_FC_PARAM_FROM_FILE="file"
-3. Call FlightController.download_params() to load parameters from the file
-4. Parameters are now available in FlightController.fc_parameters dictionary
-
-This mode is essential for:
-- CI/CD testing without hardware
-- Offline development and testing
-- Template validation and project creation testing
-- Component inference validation with known parameter sets
-
-Test Classes
-------------
-1. TestTemplateCompounding:
-   - Validates parameter compounding from multiple .param files
-   - Ensures all templates can be successfully processed
-
-2. TestFileBasedParameterLoading:
-   - Tests FlightController's file simulation mode
-   - Verifies parameter loading without physical hardware
-
-3. TestTemplateImportWithComponentInference:
-   - Tests complete project creation workflow
-   - Validates component inference from parameters
-   - Tests both single and batch project creation scenarios
-
-Expected Outcomes
------------------
-- Component specifications correctly inferred from parameters
-- Generated parameter files match expected values based on components
-- Round-trip diffs highlight any discrepancies for analysis
-- Tests pass for all supported vehicle types and configurations
-- Some tests may be skipped if empty templates are unavailable for certain vehicle types
-
-Notes
------
-- Cleanup is commented out in fixtures to allow manual inspection of generated files
-- Tests skip gracefully when empty templates are unavailable for certain vehicle types
-- ArduPlane uses its available empty_4.7.x template; Heli and Rover are skipped
-  where an empty template is required because none is currently available
-
 """
 
 import json
-import logging
-import os
 import re
-import shutil
+import tkinter as tk
+from argparse import Namespace
+from collections.abc import Generator
+from copy import deepcopy
 from pathlib import Path
+from tkinter import ttk
+from typing import Any
+from unittest.mock import MagicMock
 
 import pytest
+from template_import_helpers import (
+    TEMPLATES_BASE,
+    ImportedProject,
+    OrchestratedProject,
+    ParameterSnapshot,
+    assert_complete_source_round_trip,
+    assert_inference_result,
+    assert_parameter_snapshot,
+    assert_persisted_components,
+    assert_project_round_trip,
+    assert_uninferred_context,
+    copy_template_inputs,
+    discover_templates,
+    expected_compound,
+    expected_project_copy,
+    expected_regenerated_parameters,
+    inference_expectations,
+    numbered_parameter_files,
+    parameter_snapshot,
+    poisoned_component_input,
+    prepare_orchestration_reference,
+    reference_configuration,
+    reference_metadata,
+    set_component_value,
+    template_id,
+    template_vehicle_type,
+)
+from template_import_helpers import seed_offline_parameter_metadata as _seed_offline_parameter_metadata
 
+# Pytest names fixtures after the injected arguments; small classes group user workflows.
+# pylint: disable=redefined-outer-name,too-few-public-methods
+from ardupilot_methodic_configurator import __main__ as application
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
-from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.backend_flightcontroller import DEVICE_FC_PARAM_FROM_FILE, FlightController
-from ardupilot_methodic_configurator.data_model_par_dict import ParDict
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
+from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
+from ardupilot_methodic_configurator.data_model_safe_evaluator import ConfigurationStepEvalError
 from ardupilot_methodic_configurator.data_model_vehicle_components import ComponentDataModel
-from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import (
-    VehicleComponentsJsonSchema,
-)
-from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
-    NewVehicleProjectSettings,
-    VehicleProjectCreator,
-)
-
-# ruff: noqa: ANN201, ANN205, S108, PLR0915, EM102
-
-# pylint: disable=too-many-lines,too-many-locals,too-many-branches,too-many-statements,redefined-outer-name,too-few-public-methods,unused-argument,broad-exception-caught
-
-logger = logging.getLogger(__name__)
+from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
+from ardupilot_methodic_configurator.data_model_vehicle_project import VehicleProjectManager
+from ardupilot_methodic_configurator.data_model_vehicle_project_creator import NewVehicleProjectSettings, VehicleProjectCreator
+from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
+from ardupilot_methodic_configurator.frontend_tkinter_component_editor_base import ComponentEditorWindowBase
 
 
 def test_offline_metadata_seed_uses_explicit_template_source(tmp_path: Path) -> None:
@@ -215,1311 +138,860 @@ def test_offline_metadata_seed_rejects_incompatible_firmware_metadata(tmp_path: 
         _seed_offline_parameter_metadata(template_dir, target_dir, "ArduCopter", "4.6.3")
 
 
-def _seed_offline_parameter_metadata(
-    metadata_source_dir: Path, new_vehicle_dir: str | Path, vehicle_type: str, firmware_version: str
-) -> None:
-    """Copy cached parameter metadata into a generated project for offline acceptance tests."""
-    metadata_source = metadata_source_dir / "apm.pdef.xml"
-    metadata_target = Path(new_vehicle_dir) / "apm.pdef.xml"
-    metadata_to_validate = metadata_target if metadata_target.exists() else metadata_source
-    if not metadata_to_validate.is_file():
-        raise FileNotFoundError(f"Offline parameter metadata not found: {metadata_to_validate}")
-    metadata_vehicle = {"ArduCopter": "Copter", "ArduPlane": "Plane"}.get(vehicle_type)
-    if metadata_vehicle and firmware_version:
-        metadata_text = metadata_to_validate.read_text(encoding="utf-8")
-        metadata_match = re.search(rf"Generated from git tag {metadata_vehicle}-(\d+\.\d+\.\d+)", metadata_text)
-        expected_release = firmware_version.split(" ", maxsplit=1)[0]
-        if metadata_match and metadata_match.group(1) != expected_release:
-            raise ValueError(
-                f"Offline parameter metadata {metadata_to_validate} is incompatible with {vehicle_type} {firmware_version}"
-            )
-    if metadata_target.exists():
-        return
-    shutil.copy2(metadata_source, metadata_target)
-
-
-def create_test_filesystem(vehicle_dir: Path, vehicle_type: str):
-    """
-    Create LocalFilesystem and schema for testing.
-
-    Args:
-        vehicle_dir: Path to the vehicle template directory
-        vehicle_type: Vehicle type (ArduCopter, ArduPlane, Heli, Rover)
-
-    Returns:
-        tuple: (LocalFilesystem, VehicleComponentsJsonSchema)
-
-    """
-    local_fs = LocalFilesystem(
-        vehicle_dir=str(vehicle_dir),
-        vehicle_type=vehicle_type,
-        fw_version="",
-        allow_editing_template_files=True,
-        save_component_to_system_templates=False,
-    )
-    schema = VehicleComponentsJsonSchema(local_fs.load_schema())
-    return local_fs, schema
-
-
-def perform_component_inference(  # pylint: disable=too-many-arguments,too-many-positional-arguments
-    local_filesystem: LocalFilesystem,
-    new_vehicle_dir: str,
-    vehicle_type: str,
-    fc_parameters: dict,
-    metadata_source_dir: Path,
-    blank_component_data: bool = False,
-) -> tuple[bool, str]:
-    """
-    Perform component inference and update vehicle configuration.
-
-    Args:
-        local_filesystem: LocalFilesystem instance
-        new_vehicle_dir: Path to the new vehicle directory
-        vehicle_type: Vehicle type (ArduCopter, ArduPlane, Heli, Rover)
-        fc_parameters: Flight controller parameters
-        metadata_source_dir: Empty template directory containing cached parameter metadata
-        blank_component_data: Whether component data was blanked
-
-    Returns:
-        tuple: (success: bool, error_message: str)
-
-    """
-    # New projects intentionally omit the cached parameter definition XML so normal project
-    # creation can refresh it.  This acceptance test runs offline, so seed the generated project
-    # from the explicitly selected empty template before reinitializing it.
-    local_filesystem.load_vehicle_components_json_data(new_vehicle_dir)
-    firmware_version = local_filesystem.get_fc_fw_version_from_vehicle_components_json()
-    _seed_offline_parameter_metadata(metadata_source_dir, new_vehicle_dir, vehicle_type, firmware_version)
-
-    # Reload the local_filesystem to get the new vehicle directory's data
-    local_filesystem.re_init(new_vehicle_dir, vehicle_type, blank_component_data)
-
-    # Load the vehicle components data from the new directory
-    comp_data = local_filesystem.load_vehicle_components_json_data(new_vehicle_dir)
-
-    # Create the schema
-    schema = VehicleComponentsJsonSchema(local_filesystem.load_schema())
-
-    # Create a ComponentDataModel to perform inference
-    comp_model = ComponentDataModel(comp_data, local_filesystem.doc_dict, schema)
-
-    # Infer component specifications and connections from FC parameters
-    comp_model.process_fc_parameters(fc_parameters, local_filesystem.doc_dict)
-
-    # Save the updated component data back to the filesystem
-    error, error_msg = local_filesystem.save_vehicle_components_json_data(comp_model.get_component_data(), new_vehicle_dir)
-    if error:
-        return False, f"Failed to save inferred component data: {error_msg}"
-
-    # Reload the vehicle_components_fs so get_eval_variables() uses updated data
-    local_filesystem.load_vehicle_components_json_data(new_vehicle_dir)
-
-    # Regenerate parameter files from the inferred component data
-    fc_param_names = list(fc_parameters.keys())
-    try:
-        pending = local_filesystem.calculate_derived_and_forced_param_changes(fc_param_names=fc_param_names)
-    except ValueError as e:
-        return False, f"Failed to update and export parameters: {e}"
-    local_filesystem.apply_computed_changes(pending)
-    local_filesystem.save_vehicle_params_to_files(list(local_filesystem.file_parameters))
-
-    return True, ""
-
-
-def _sort_key(path: Path) -> str:
-    """Case-insensitive sort key, so directory order does not depend on the filesystem."""
-    return path.name.lower()
-
-
 def get_vehicle_template_directories() -> list[Path]:
-    """
-    Get all vehicle template directories that contain param files.
-
-    Returns:
-        list[Path]: List of paths to vehicle template directories.
-
-    """
-    template_base = Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "vehicle_templates"
-
-    vehicle_dirs = []
-    # Path.iterdir() yields entries in filesystem order, so sort by lower-cased name to keep the
-    # discovery order identical on every platform. Tests below only examine the first few entries.
-    for vehicle_type_dir in sorted(template_base.iterdir(), key=_sort_key):
-        if not vehicle_type_dir.is_dir():
-            continue
-
-        # Iterate through specific vehicle directories (e.g., diatone_taycan_mxc)
-        for vehicle_dir in sorted(vehicle_type_dir.iterdir(), key=_sort_key):
-            if not vehicle_dir.is_dir():
-                continue
-
-            param_subdirs = [d for d in vehicle_dir.iterdir() if d.is_dir()]
-
-            if param_subdirs:
-                vehicle_dirs.extend(sorted(param_subdirs, key=_sort_key))
-            else:
-                # Check if this directory directly contains .param files
-                param_files = list(vehicle_dir.glob("*.param"))
-                if param_files:
-                    vehicle_dirs.append(vehicle_dir)
-
-    return vehicle_dirs
+    """Discover every parameter template while pruning migration directories and their descendants."""
+    return discover_templates()
 
 
 def get_empty_template_dir(vehicle_type: str) -> Path:
-    """
-    Get the corresponding empty template for the supported test firmware.
+    """Select the explicitly supported offline project template, never a migration template."""
+    versions = {"ArduCopter": "4.6.x", "ArduPlane": "4.7.x"}
+    if vehicle_type not in versions:
+        msg = f"No empty project template is available for {vehicle_type}"
+        raise FileNotFoundError(msg)
+    directory = TEMPLATES_BASE / vehicle_type / f"empty_{versions[vehicle_type]}"
+    assert directory.is_dir(), f"Missing supported empty template: {directory}"
+    return directory
 
-    ArduPlane currently has an empty_4.7.x template, but no empty_4.6.x
-    template, so its corresponding test template is empty_4.7.x.
 
-    Args:
-        vehicle_type: Vehicle type (ArduCopter, ArduPlane, Heli, Rover)
+TEMPLATE_DIRECTORIES = get_vehicle_template_directories()
+TEMPLATE_CASES = [pytest.param(directory, id=template_id(directory)) for directory in TEMPLATE_DIRECTORIES]
+PROJECT_CASES = [
+    pytest.param(directory, id=template_id(directory))
+    for directory in TEMPLATE_DIRECTORIES
+    if template_vehicle_type(directory) in {"ArduCopter", "ArduPlane"}
+]
 
-    Returns:
-        Path to the empty template directory
 
-    Raises:
-        FileNotFoundError: If empty template directory doesn't exist
+@pytest.fixture(autouse=True)
+def forbid_template_metadata_downloads(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Fail at the network boundary if any offline workflow tries to replace local metadata."""
 
-    """
-    template_versions = {
-        "ArduCopter": "4.6.x",
-        "ArduPlane": "4.7.x",
-    }
-    version = template_versions.get(vehicle_type)
-    if version is None:
-        raise FileNotFoundError(f"No corresponding empty template is configured for vehicle type: {vehicle_type}")
+    def reject_download(*_args: object, **_kwargs: object) -> bool:
+        pytest.fail("Template acceptance tests must use local XML metadata, not download it")
 
-    templates_base = (
-        Path(__file__).parent.parent
-        / "ardupilot_methodic_configurator"
-        / "vehicle_templates"
-        / vehicle_type
-        / f"empty_{version}"
+    monkeypatch.setattr("ardupilot_methodic_configurator.annotate_params.download_file_from_url", reject_download)
+    monkeypatch.setattr("ardupilot_methodic_configurator.backend_filesystem.download_file_from_url", reject_download)
+
+
+def _compound_template_parameters(template_dir: Path, vehicle_type: str) -> ParDict:
+    """Use real parameter-only filesystem services without parsing metadata or changing the template."""
+    filesystem = LocalFilesystem(
+        str(template_dir),
+        vehicle_type,
+        "",
+        allow_editing_template_files=False,
+        save_component_to_system_templates=False,
+        load_project=False,
     )
-
-    if not templates_base.exists():
-        raise FileNotFoundError(f"Template directory not found: {templates_base}")
-
-    return templates_base
+    filesystem.file_parameters = filesystem.read_params_from_files()
+    compounded, _first_step = filesystem.compound_params(last_filename=None, skip_default=False)
+    return compounded
 
 
-@pytest.fixture(scope="module")
-def tmp_test_dir():
-    """Create and cleanup test directory in /tmp for compounded params.param files."""
-    test_dir = Path("/tmp/amc_test_acceptance1")
-    if test_dir.exists():
-        shutil.rmtree(test_dir)
-    test_dir.mkdir(parents=True, exist_ok=True)
-    return test_dir
-    # Cleanup after all tests (commented out for inspection)
-    # if test_dir.exists():
-    #     shutil.rmtree(test_dir)
-
-
-@pytest.fixture(scope="module")
-def tmp_test_output_dir():
-    """Create and cleanup output directory in /tmp for generated vehicle projects."""
-    test_dir = Path("/tmp/amc_test_acceptance2")
-    if test_dir.exists():
-        shutil.rmtree(test_dir)
-    test_dir.mkdir(parents=True, exist_ok=True)
-    return test_dir
-    # Cleanup after all tests (commented out for inspection)
-    # if test_dir.exists():
-    #     shutil.rmtree(test_dir)
-
-
-@pytest.fixture(scope="module")
-def compounded_params_files(tmp_test_dir):
+@pytest.mark.parametrize("metadata_contents", [None, "invalid XML"])
+def test_user_can_compound_template_parameters_without_metadata(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    metadata_contents: str | None,
+) -> None:
     """
-    Create compounded params.param files from all vehicle templates.
+    Overlapping numbered files, excluded files, and missing or invalid XML.
 
-    This fixture runs once for the module and creates params.param files
-    in /tmp/amc_test_acceptance1/ for all vehicle templates.
-
-    Returns:
-        dict[Path, Path]: Mapping of template_dir -> params_file_path
-
+    GIVEN: Overlapping numbered files, excluded files, and missing or invalid XML
+    WHEN: The user compounds and exports the parameters
+    THEN: Exact membership, last-file precedence and manual-override comments survive without source edits
     """
-    template_dirs = get_vehicle_template_directories()
-    params_files = {}
+    (tmp_path / "20_tuning.param").write_text("SHARED,2 # @manual_override tuned value\nFINAL,3\n", encoding="utf-8")
+    (tmp_path / "10_setup.param").write_text("SHARED,1 # initial value\nINITIAL,4 # retained reason\n", encoding="utf-8")
+    (tmp_path / "00_default.param").write_text("DEFAULT_ONLY,5\n", encoding="utf-8")
+    (tmp_path / "01_ignore_readonly.param").write_text("READONLY_ONLY,6\n", encoding="utf-8")
+    (tmp_path / "complete.param").write_text("UNNUMBERED_ONLY,7\n", encoding="utf-8")
+    if metadata_contents is not None:
+        (tmp_path / "apm.pdef.xml").write_text(metadata_contents, encoding="utf-8")
+    original_files = {path.name: path.read_bytes() for path in tmp_path.iterdir()}
 
-    for template_dir in template_dirs:
-        # Extract vehicle type
-        vehicle_type = template_dir.parts[-3] if "-params" in template_dir.name else template_dir.parts[-2]
-        assert vehicle_type in VehicleComponents.supported_vehicles(), f"Unknown vehicle type: {vehicle_type}"
+    def reject_metadata(*_args: object, **_kwargs: object) -> None:
+        pytest.fail("Parameter compounding must not parse metadata")
 
-        # Create LocalFilesystem instance
-        try:
-            local_fs = LocalFilesystem(
-                vehicle_dir=str(template_dir),
-                vehicle_type=vehicle_type,
-                fw_version="",
-                allow_editing_template_files=False,
-                save_component_to_system_templates=False,
-            )
-        except (ValueError, SystemExit) as e:
-            # Skip templates with invalid configuration
-            logger.debug("Skipping template %s: %s", template_dir.name, e)
-            continue
+    monkeypatch.setattr("ardupilot_methodic_configurator.backend_filesystem.parse_parameter_metadata", reject_metadata)
+    compounded = _compound_template_parameters(tmp_path, "ArduCopter")
+    output = tmp_path / "params.param"
+    compounded.export_to_param(str(output))
+    assert_parameter_snapshot(
+        ParDict.from_file(str(output)),
+        {
+            "SHARED": (2, "@manual_override tuned value"),
+            "INITIAL": (4, "retained reason"),
+            "FINAL": (3, None),
+        },
+    )
+    assert output.read_text(encoding="utf-8").count("@manual_override") == 1
+    assert {name: (tmp_path / name).read_bytes() for name in original_files} == original_files
+    assert {path.name for path in tmp_path.iterdir()} == {*original_files, "params.param"}
 
-        # Verify file_parameters were loaded
-        if len(local_fs.file_parameters) == 0:
-            continue
 
-        # Compound all parameters (including default file)
-        compound_params, _first_config_step = local_fs.compound_params(last_filename=None, skip_default=False)
+def test_template_discovery_prunes_migration_trees_without_losing_parent_templates(tmp_path: Path) -> None:
+    """
+    Direct, nested and migration templates, plus an unrelated child directory.
 
-        # Verify parameters were compounded
-        if len(compound_params) == 0:
-            continue
+    GIVEN: Direct, nested and migration templates, plus an unrelated child directory
+    WHEN: Templates are discovered
+    THEN: All real parameter directories are returned in stable order and no migration subtree is visited
+    """
+    for name in (
+        "ArduCopter/alpha",
+        "ArduCopter/alpha/4.6.x-params",
+        "ArduCopter/alpha/assets",
+        "ArduCopter/alpha_mig/4.6.x-params",
+        "ArduCopter/beta/child_mig",
+        "ArduPlane/plane",
+    ):
+        directory = tmp_path / name
+        directory.mkdir(parents=True)
+        if not name.endswith("assets"):
+            (directory / "10_setup.param").write_text("EXAMPLE,1\n", encoding="utf-8")
+    assert discover_templates(tmp_path) == [
+        tmp_path / "ArduCopter/alpha",
+        tmp_path / "ArduCopter/alpha/4.6.x-params",
+        tmp_path / "ArduPlane/plane",
+    ]
 
-        # Create output directory in /tmp with same structure (starting from vehicle_templates)
-        # Find the vehicle_templates directory in the path
-        vehicle_templates_idx = None
-        for i, part in enumerate(template_dir.parts):
-            if part == "vehicle_templates":
-                vehicle_templates_idx = i
-                break
 
-        if vehicle_templates_idx is None:
-            continue  # Skip if not under vehicle_templates
+def test_acceptance_cases_cover_all_supported_types_without_migration_templates() -> None:
+    """
+    Installed vehicle templates.
 
-        # Get path relative to vehicle_templates parent (ardupilot_methodic_configurator)
-        relative_path = Path(*template_dir.parts[vehicle_templates_idx:])
-        tmp_output_dir = tmp_test_dir / relative_path
-        tmp_output_dir.mkdir(parents=True, exist_ok=True)
+    GIVEN: Installed vehicle templates
+    WHEN: Acceptance cases are collected
+    THEN: All four supported vehicle types are covered and migration directories cannot enter any case
+    """
+    assert TEMPLATE_DIRECTORIES
+    assert {template_vehicle_type(path) for path in TEMPLATE_DIRECTORIES} == {"ArduCopter", "ArduPlane", "Heli", "Rover"}
+    assert all(not part.endswith("_mig") for path in TEMPLATE_DIRECTORIES for part in path.relative_to(TEMPLATES_BASE).parts)
+    assert {case.values[0] for case in PROJECT_CASES} == {
+        path for path in TEMPLATE_DIRECTORIES if template_vehicle_type(path) in {"ArduCopter", "ArduPlane"}
+    }
 
-        # Export compounded parameters to params.param
-        output_file = tmp_output_dir / "params.param"
-        local_fs.export_to_param(compound_params, str(output_file), annotate_doc=False)
 
-        # Verify file was created
-        if output_file.exists() and output_file.stat().st_size > 0:
-            params_files[template_dir] = output_file
+def test_round_trip_expectations_reject_unexpected_invalid_derived_rules() -> None:
+    """
+    Malformed derivation rules cannot turn into silently accepted unchanged parameters.
 
-    return params_files
+    GIVEN: A derived expression with an unexpected missing input
+    WHEN: The independent round-trip oracle interprets the rule
+    THEN: Validation fails rather than accepting the copied FC value as correct output
+    """
+    original = {"10_setup.param": ParDict({"EXAMPLE": Par(1)})}
+    steps = {"10_setup.param": {"derived_parameters": {"EXAMPLE": {"New Value": "unknown_variable"}}}}
+    with pytest.raises(ConfigurationStepEvalError):
+        expected_regenerated_parameters(
+            original,
+            steps,
+            {"vehicle_components": {"Propellers": {"Specifications": {"Diameter_inches": 10}}}},
+            {"EXAMPLE": 1},
+        )
+
+
+def test_round_trip_expectations_cover_overrides_additions_deletions_and_comments() -> None:
+    """
+    The declaration oracle distinguishes intentional changes from preservation requirements.
+
+    GIVEN: Copied values, a manual override, conditional additions/deletions and computed reasons
+    WHEN: Configuration declarations are interpreted independently of application merging
+    THEN: The exact expected parameter set, values and serialized comments match a literal reference
+    """
+    original = {
+        "10_setup.param": ParDict(
+            {
+                "UNCHANGED": Par(1, "original reason"),
+                "OVERRIDE": Par(10, "@manual_override user choice"),
+                "REMOVE": Par(6),
+                "DERIVED": Par(5),
+            }
+        )
+    }
+    steps = {
+        "10_setup.param": {
+            "forced_parameters": {"OVERRIDE": {"New Value": "4", "Change Reason": "forced"}},
+            "derived_parameters": {
+                "DERIVED": {"New Value": "fc_parameters['DERIVED'] * 2", "Change Reason": "'changed' if 1 else 'unused'"}
+            },
+            "add_parameters": {
+                "ADDED": {"if": "1", "Change Reason": "copied FC value"},
+                "NOT_ADDED": {"if": "0", "New Value": "100"},
+            },
+            "delete_parameters": {"REMOVE": {"if": "1"}, "UNCHANGED": {"if": "0"}},
+        }
+    }
+    expected = expected_regenerated_parameters(original, steps, {}, {"OVERRIDE": 10, "DERIVED": 2, "ADDED": 7})
+    assert expected == {
+        "10_setup.param": {
+            "UNCHANGED": (1, "original reason"),
+            "OVERRIDE": (10, "@manual_override user choice"),
+            "DERIVED": (4, "changed"),
+            "ADDED": (7, "copied FC value"),
+        }
+    }
+    assert original["10_setup.param"]["DERIVED"].value == 5
+    assert "REMOVE" in original["10_setup.param"]
+
+
+def test_complete_round_trip_reference_rejects_unaccounted_source_loss() -> None:
+    """
+    Matching subsets must not conceal source loss.
+
+    GIVEN: A source-only battery calibration omitted from the expected project
+    WHEN: Complete source preservation is checked
+    THEN: Even a matching actual/expected subset cannot hide the missing source name
+    """
+    source: ParameterSnapshot = {"BATT_VOLT_MULT": (18.181999, None), "BATT_CAPACITY": (5000, None)}
+    incomplete: dict[str, ParameterSnapshot] = {"10_setup.param": {"BATT_CAPACITY": (5000, None)}}
+    with pytest.raises(AssertionError, match="silently lost source"):
+        assert_complete_source_round_trip(ParDict({"BATT_CAPACITY": Par(5000)}), source, incomplete, {}, {})
+
+
+def test_complete_round_trip_reference_allows_only_declared_deletions() -> None:
+    """
+    Preservation and explicitly declared transformations are checked together.
+
+    GIVEN: One unchanged calibration, one component-derived value and one obsolete source parameter
+    WHEN: Complete output is checked against independently evaluated declarations
+    THEN: Exact preservation and the explicitly enabled deletion pass, but a disabled deletion fails
+    """
+    source: ParameterSnapshot = {"BATT_VOLT_MULT": (18.181999, None), "DERIVED": (2, None), "OBSOLETE": (3, None)}
+    files = {"10_setup.param": {"BATT_VOLT_MULT": (18.181999, None), "DERIVED": (4, "computed")}}
+    actual = ParDict({"BATT_VOLT_MULT": Par(18.181999), "DERIVED": Par(4, "computed")})
+    steps = {"10_setup.param": {"delete_parameters": {"OBSOLETE": {"if": "remove_obsolete"}}}}
+    assert_complete_source_round_trip(actual, source, files, steps, {"remove_obsolete": True})
+    with pytest.raises(AssertionError, match="silently lost source"):
+        assert_complete_source_round_trip(actual, source, files, steps, {"remove_obsolete": False})
+
+
+@pytest.fixture
+def compounded_file(template_dir: Path, tmp_path: Path) -> Path:
+    """Produce one template's export using real compounding and serialization, failing on empty output."""
+    parameters = _compound_template_parameters(template_dir, template_vehicle_type(template_dir))
+    assert parameters, f"No configuration parameters in {template_id(template_dir)}"
+    output = tmp_path / "params.param"
+    parameters.export_to_param(str(output))
+    return output
+
+
+@pytest.fixture
+def initialized_template(template_dir: Path, tmp_path: Path) -> LocalFilesystem:
+    """Fully open an isolated template copy, including configuration loading, migration and XML parsing."""
+    copied_template = tmp_path / "source_template"
+    copy_template_inputs(template_dir, copied_template)
+    assert (copied_template / "apm.pdef.xml").is_file(), template_id(template_dir)
+    return LocalFilesystem(
+        str(copied_template),
+        template_vehicle_type(template_dir),
+        "",
+        allow_editing_template_files=False,
+        save_component_to_system_templates=False,
+    )
 
 
 class TestTemplateCompounding:
-    """Test that vehicle template parameters can be compounded into single files."""
+    """Assert complete compounding and serialization behavior for every discovered template."""
 
-    def test_user_can_compound_all_template_parameters(self, compounded_params_files):
+    @pytest.mark.parametrize("template_dir", TEMPLATE_CASES)
+    def test_user_can_compound_all_template_parameters(self, template_dir: Path, compounded_file: Path) -> None:
         """
-        User can compound all parameters from vehicle templates into single params.param files.
+        Each installed non-migration template's numbered parameter files.
 
-        GIVEN: User has vehicle template directories with multiple .param files
-        WHEN: They compound all parameters into a single params.param file
-        THEN: The compounded file should contain all parameters
-        AND: The file should be properly formatted and readable
+        GIVEN: Each installed non-migration template's numbered parameter files
+        WHEN: Its parameters are compounded and serialized
+        THEN: Every expected name, final value and comment is preserved, with no extra parameters
         """
-        # Then: At least some templates should have been successfully compounded
-        assert len(compounded_params_files) > 0, "No templates were successfully compounded"
+        expected = expected_compound(template_dir)
+        assert expected, template_id(template_dir)
+        assert_parameter_snapshot(ParDict.from_file(str(compounded_file)), expected)
+        names = [line.split(",", 1)[0] for line in compounded_file.read_text(encoding="utf-8").splitlines()]
+        assert len(names) == len(set(names)) == len(expected)
+        assert names == sorted(expected, key=ParDict.missionplanner_sort)
 
-        # And: Each params.param file should contain parameters
-        for template_dir, params_file in compounded_params_files.items():
-            assert params_file.exists(), f"params.param not created for {template_dir}"
-            assert params_file.stat().st_size > 0, f"params.param is empty for {template_dir}"
+    @pytest.mark.parametrize("template_dir", TEMPLATE_CASES)
+    def test_user_can_fully_initialize_each_template(
+        self,
+        template_dir: Path,
+        initialized_template: LocalFilesystem,
+    ) -> None:
+        """
+        A private copy of each template, with real offline metadata.
 
-            # Verify file contains valid parameter lines
-            content = params_file.read_text(encoding="utf-8")
-            param_lines = [line for line in content.split("\n") if line.strip() and not line.strip().startswith("#")]
-            assert len(param_lines) > 0, f"params.param contains no parameters for {template_dir}"
+        GIVEN: A private copy of each template, with real offline metadata
+        WHEN: The user opens it through normal project initialization
+        THEN: Components, configuration steps, phases, migrated files and parameter tooltips are loaded
+        """
+        filesystem = initialized_template
+        assert filesystem.vehicle_type == template_vehicle_type(template_dir)
+        assert filesystem.fw_version == filesystem.get_fc_fw_version_from_vehicle_components_json()
+        assert filesystem.vehicle_components_fs.data
+        valid, message = filesystem.validate_vehicle_components(filesystem.vehicle_components_fs.data)
+        assert valid, message
+        assert filesystem.configuration_steps
+        assert filesystem.configuration_phases
+        configuration = Path(filesystem.vehicle_dir) / filesystem.configuration_steps_filename
+        if not configuration.is_file():
+            configuration = TEMPLATES_BASE.parent / filesystem.configuration_steps_filename
+        declared_configuration = json.loads(configuration.read_text(encoding="utf-8-sig"))
+        assert set(filesystem.configuration_steps) == set(declared_configuration["steps"])
+        assert filesystem.configuration_phases == declared_configuration["phases"]
+        assert set(filesystem.file_parameters) == {
+            path.name for path in numbered_parameter_files(Path(filesystem.vehicle_dir))
+        }
+        expected = expected_compound(template_dir)
+        compound, _ = filesystem.compound_params()
+        assert_parameter_snapshot(compound, expected)
+        assert filesystem.doc_dict
+        documented = set(compound) & set(filesystem.doc_dict)
+        assert documented, "No loaded template parameters have documentation"
+        for name in documented:
+            assert "doc_tooltip" in filesystem.doc_dict[name], name
+            assert "doc_tooltip_sorted_numerically" in filesystem.doc_dict[name], name
 
 
 class TestFileBasedParameterLoading:
-    """Test that FC parameters can be loaded from params.param files using file simulation mode."""
+    """File simulation must load actual names and values, not merely the right parameter count."""
 
-    def test_user_can_load_parameters_from_compounded_file(self, compounded_params_files):
+    @pytest.mark.parametrize("template_dir", TEMPLATE_CASES)
+    def test_user_can_load_parameters_from_compounded_file(
+        self,
+        template_dir: Path,
+        compounded_file: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """
-        User can load FC parameters from compounded params.param file using --device file.
+        Every template's compounded params.param file.
 
-        GIVEN: User has a params.param file from compounded template parameters
-        WHEN: They use --device=file to load parameters
-        THEN: FlightController should successfully read all parameters from the file
-        AND: Parameter count should match the file contents
+        GIVEN: Every template's compounded params.param file
+        WHEN: A file-mode flight controller connects and downloads it
+        THEN: Both returned and stored parameters contain exactly the original final names and values
         """
-        # Given: Use first available params file for testing
-        if not compounded_params_files:
-            pytest.skip("No compounded params files available for testing")
-
-        params_file = next(iter(compounded_params_files.values()))
-        params_dir = params_file.parent
-
-        # Read expected parameter count from file
-        content = params_file.read_text(encoding="utf-8")
-        expected_param_count = len([line for line in content.split("\n") if line.strip() and not line.strip().startswith("#")])
-
-        # When: Load parameters using file simulation mode
-        original_cwd = os.getcwd()
+        monkeypatch.chdir(compounded_file.parent)
+        controller = FlightController(reboot_time=0)
         try:
-            os.chdir(params_dir)
-
-            flight_controller = FlightController(reboot_time=0)
-            error_str = flight_controller.connect(DEVICE_FC_PARAM_FROM_FILE, log_errors=True)
-
-            # Then: Connection should succeed
-            assert error_str == "", f"Failed to connect in file simulation mode: {error_str}"
-
-            # Download parameters (required step after connect in file simulation mode)
-            params, _ = flight_controller.download_params()
-
-            # And: Parameters should be loaded
-            assert params is not None, "download_params returned None"
-            assert len(params) > 0, "No parameters were loaded from file"
-            assert flight_controller.fc_parameters is not None, "fc_parameters is None"
-            assert len(flight_controller.fc_parameters) > 0, "fc_parameters dict is empty"
-
-            # And: Parameter count should match file contents
-            assert len(flight_controller.fc_parameters) == expected_param_count, (
-                f"Expected {expected_param_count} parameters, got {len(flight_controller.fc_parameters)}"
-            )
-
+            assert controller.connect(DEVICE_FC_PARAM_FROM_FILE, log_errors=True) == ""
+            downloaded, _defaults = controller.download_params()
+            expected = {name: value for name, (value, _comment) in expected_compound(template_dir).items()}
+            assert set(downloaded) == set(expected)
+            assert downloaded == pytest.approx(expected, rel=0, abs=0.00000051)
+            assert controller.fc_parameters == pytest.approx(expected, rel=0, abs=0.00000051)
         finally:
-            os.chdir(original_cwd)
+            controller.disconnect()
+
+
+@pytest.fixture
+def imported_project(  # pylint: disable=too-many-locals
+    template_dir: Path,
+    compounded_file: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> ImportedProject:
+    """Create a project for each requesting test, independently of all other test methods."""
+    monkeypatch.chdir(compounded_file.parent)
+    controller = FlightController(reboot_time=0)
+    try:
+        assert controller.connect(DEVICE_FC_PARAM_FROM_FILE, log_errors=True) == ""
+        fc_parameters, _ = controller.download_params()
+        assert fc_parameters
+        # Disconnect clears the controller-owned mapping; the workflow needs its own snapshot.
+        fc_parameters = dict(fc_parameters)
+    finally:
+        controller.disconnect()
+    vehicle_type = template_vehicle_type(template_dir)
+    empty_template = get_empty_template_dir(vehicle_type)
+    # Capture input references before any production project loading or inference.
+    source_parameters = expected_compound(template_dir)
+    reference_steps = reference_configuration(empty_template, vehicle_type)
+    metadata = reference_metadata(empty_template, vehicle_type)
+    copied_parameters = expected_project_copy(empty_template, source_parameters)
+    original_components = json.loads((template_dir / "vehicle_components.json").read_text(encoding="utf-8"))
+    empty_components = json.loads((empty_template / "vehicle_components.json").read_text(encoding="utf-8"))
+    original_components["Components"]["Flight Controller"]["Firmware"] = deepcopy(
+        empty_components["Components"]["Flight Controller"]["Firmware"]
+    )
+    expected_components = inference_expectations(
+        {name: value for name, (value, _comment) in source_parameters.items()}, original_components, metadata
+    )
+    reference_components = deepcopy(original_components)
+    for path, value in expected_components.items():
+        set_component_value(reference_components, path, value)
+    reference_variables = {
+        "vehicle_components": reference_components["Components"],
+        "doc_dict": metadata,
+        "fc_parameters": {name: value for name, (value, _comment) in source_parameters.items()},
+    }
+    expected_files = expected_regenerated_parameters(
+        copied_parameters, reference_steps, reference_variables, reference_variables["fc_parameters"]
+    )
+    isolated_empty = tmp_path / "empty_template"
+    copy_template_inputs(empty_template, isolated_empty)
+    filesystem = LocalFilesystem(
+        str(isolated_empty),
+        vehicle_type,
+        "",
+        allow_editing_template_files=False,
+        save_component_to_system_templates=False,
+    )
+    # Preserve user-supplied, non-inferable vehicle context (chemistry, propeller size,
+    # product information, etc.). Poison every recoverable field below; the source data
+    # must never make disabled inference pass. The project's firmware is the selected
+    # empty template's firmware, even when the FC parameter fixture predates that release.
+    settings = NewVehicleProjectSettings(
+        copy_vehicle_image=False,
+        blank_component_data=False,
+        reset_fc_parameters_to_their_defaults=False,
+        infer_comp_specs_and_conn_from_fc_params=True,
+        use_fc_params=True,
+        blank_change_reason=True,
+    )
+    new_directory = Path(
+        VehicleProjectCreator(filesystem).create_new_vehicle_from_template(
+            str(isolated_empty),
+            str(tmp_path / "projects"),
+            "imported_vehicle",
+            settings,
+            fc_connected=False,
+            fc_parameters=fc_parameters,
+        )
+    )
+    assert new_directory.is_dir()
+    # Validate the copy stage before regeneration can overwrite calibration values.
+    assert {path.name for path in numbered_parameter_files(new_directory)} == set(copied_parameters)
+    for filename, parameters in copied_parameters.items():
+        assert_parameter_snapshot(ParDict.from_file(str(new_directory / filename)), parameter_snapshot(parameters))
+    _seed_offline_parameter_metadata(isolated_empty, new_directory, vehicle_type, filesystem.fw_version)
+    filesystem.re_init(str(new_directory), vehicle_type)
+    poisoned = poisoned_component_input(original_components, expected_components)
+    model = ComponentDataModel(poisoned, filesystem.doc_dict, VehicleComponentsJsonSchema(filesystem.load_schema()))
+    model.process_fc_parameters(fc_parameters, filesystem.doc_dict)
+    inferred = model.get_component_data()
+    assert_inference_result(inferred, expected_components)
+    assert_uninferred_context(inferred, original_components, expected_components)
+    valid, message = filesystem.validate_vehicle_components(inferred)
+    assert valid, message
+    error, message = filesystem.save_vehicle_components_json_data(inferred, str(new_directory))
+    assert not error, message
+    filesystem.load_vehicle_components_json_data(str(new_directory))
+    return ImportedProject(
+        filesystem,
+        new_directory,
+        fc_parameters,
+        copied_parameters,
+        expected_components,
+        original_components,
+        source_parameters,
+        reference_steps,
+        reference_variables,
+        expected_files,
+    )
+
+
+@pytest.fixture
+def regenerated_project(imported_project: ImportedProject) -> ImportedProject:
+    """Apply and persist real forced/derived changes using the actual imported FC values."""
+    return regenerate_project(imported_project)
+
+
+def regenerate_project(project: ImportedProject) -> ImportedProject:
+    """Execute real regeneration separately so regression tests can inject faults at production boundaries."""
+    pending = project.filesystem.calculate_derived_and_forced_param_changes(
+        list(project.fc_parameters),
+        fc_parameters=project.fc_parameters,
+    )
+    project.filesystem.apply_computed_changes(pending)
+    project.filesystem.save_vehicle_params_to_files(list(project.filesystem.file_parameters))
+    return project
+
+
+@pytest.fixture
+def infer_components() -> bool:
+    """Enable production component inference unless a test explicitly declines it."""
+    return True
+
+
+def _reject_workflow_error(title: str, message: str) -> None:
+    """Do not let a mocked error dialog conceal failed validation, saving or calculation."""
+    pytest.fail(f"{title}: {message}")
+
+
+@pytest.fixture
+def headless_component_editor(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, str]]:
+    """Replace rendering/dialogs, not the real editor, validation, inference or save callbacks."""
+    warnings: list[tuple[str, str]] = []
+
+    def initialize_shell(window: ComponentEditorWindow, _root_tk: tk.Tk | None = None) -> None:
+        window.root = MagicMock(spec=tk.Tk)
+        # Simulate the user's Save button through the real application mainloop adapter.
+        window.root.mainloop.side_effect = window.on_save_pressed
+
+    def render_entries(window: ComponentEditorWindow) -> None:
+        # Tk entry doubles expose live model values to the REAL pre-save validation.
+        # An empty entry_widgets mapping would silently bypass field validation.
+        for component, sections in window.data_model.get_component_data()["Components"].items():
+            for section, fields in sections.items():
+                if not isinstance(fields, dict):
+                    continue
+                for field in fields:
+                    path = (component, section, field)
+                    entry = MagicMock(spec=ttk.Entry)
+                    entry.get.side_effect = lambda path=path: str(window.data_model.get_component_value(path))
+                    window.entry_widgets[path] = entry
+
+    monkeypatch.setattr(BaseWindow, "__init__", initialize_shell)
+    monkeypatch.setattr(tk, "StringVar", MagicMock())
+    monkeypatch.setattr(ComponentEditorWindowBase, "_initialize_ui", lambda _window: None)
+    monkeypatch.setattr(ComponentEditorWindow, "populate_frames", render_entries)
+    editor_module = "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base"
+    monkeypatch.setattr(f"{editor_module}.ConfirmationPopupWindow.should_display", lambda _name: True)
+    monkeypatch.setattr(f"{editor_module}.confirm_component_properties", lambda _root: True)
+    monkeypatch.setattr(f"{editor_module}.show_error_message", _reject_workflow_error)
+    monkeypatch.setattr(application, "show_error_message", _reject_workflow_error)
+    monkeypatch.setattr(application, "show_warning_message", lambda title, message: warnings.append((title, message)))
+    monkeypatch.setattr(application, "should_open_firmware_documentation", lambda _controller: False)
+    monkeypatch.setattr(LocalFilesystem, "store_recently_used_template_dirs", lambda _template, _base: None)
+    monkeypatch.setattr(LocalFilesystem, "store_recently_used_vehicle_dir", lambda _directory: None)
+    return warnings
+
+
+@pytest.fixture
+def orchestrated_project(  # pylint: disable=too-many-locals,too-many-arguments
+    template_dir: Path,
+    compounded_file: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    headless_component_editor: list[tuple[str, str]],
+    infer_components: bool,
+) -> Generator[OrchestratedProject, None, None]:
+    """Run production creation, opening, component setup, validation, saving and change preview."""
+    vehicle_type = template_vehicle_type(template_dir)
+    # All references precede the first production initialization.
+    project = prepare_orchestration_reference(
+        template_dir,
+        get_empty_template_dir(vehicle_type),
+        tmp_path / "orchestration_template",
+        infer_components=infer_components,
+    )
+    isolated_empty = project.directory
+    filesystem = project.filesystem
+    original = project.original_components
+    firmware = original["Components"]["Flight Controller"]["Firmware"]
+    real_copy = filesystem.copy_template_files_to_new_vehicle_dir
+
+    def copy_with_offline_metadata(template: str, destination: str, **options: Any) -> str:  # noqa: ANN401
+        error = real_copy(template, destination, **options)
+        assert not error, error
+        # Only replace the unavailable download boundary; manager/open/re_init remain real.
+        _seed_offline_parameter_metadata(Path(template), destination, vehicle_type, firmware["Version"])
+        return error
+
+    monkeypatch.setattr(filesystem, "copy_template_files_to_new_vehicle_dir", copy_with_offline_metadata)
+    monkeypatch.chdir(compounded_file.parent)
+    controller = FlightController(reboot_time=0)
+    try:
+        assert controller.connect(DEVICE_FC_PARAM_FROM_FILE, log_errors=True) == ""
+        parameters, _defaults = controller.download_params()
+        assert parameters == pytest.approx(project.fc_parameters, rel=0, abs=0.00000051)
+        controller.info.flight_sw_version_and_type = firmware["Version"]
+        product = original["Components"]["Flight Controller"]["Product"]
+        controller.info.vendor = product["Manufacturer"]
+        controller.info.firmware_type = product["Model"]
+        controller.info.mcu_series = original["Components"]["Flight Controller"]["Specifications"]["MCU Series"]
+        manager = VehicleProjectManager(filesystem, controller)
+        settings = NewVehicleProjectSettings(
+            infer_comp_specs_and_conn_from_fc_params=infer_components, use_fc_params=True, blank_change_reason=True
+        )
+        directory = Path(
+            manager.create_new_vehicle_from_template(
+                str(isolated_empty), str(tmp_path / "projects"), "orchestrated_vehicle", settings
+            )
+        )
+        project.directory = directory
+        assert directory == Path(filesystem.vehicle_dir)
+        assert manager.is_new_project
+        assert manager.infer_comp_specs_and_conn_from_fc_params is infer_components
+        assert set(filesystem.file_parameters) == set(project.copied_parameters)
+        before = {path.name: path.read_bytes() for path in numbered_parameter_files(directory)}
+        for filename, expected in project.expected_files.items():
+            assert_parameter_snapshot(ParDict.from_file(str(directory / filename)), expected)
+        state = application.ApplicationState(Namespace())
+        state.local_filesystem = filesystem
+        state.flight_controller = controller
+        state.vehicle_project_manager = manager
+        state.vehicle_type = vehicle_type
+        # No direct process_fc_parameters(), JSON save, re_init() or bulk apply calls here.
+        application.run_initial_component_editor(state)
+        assert_persisted_components(project, controller)
+        yield OrchestratedProject(state, project, before, headless_component_editor)
+    finally:
+        controller.disconnect()
+
+
+def _expected_reviewed_battery(project: ImportedProject) -> ParameterSnapshot:
+    """Independently account for non-default auto-imports before declared battery derivation/deletion."""
+    filename = "11_battery.param"
+    inputs = project.copied_parameters[filename].deep_copy()
+    defaults = ParDict.from_file(str(get_empty_template_dir(project.filesystem.vehicle_type) / "00_default.param"))
+    step = project.reference_steps[filename]
+    # Both representative fixtures use Analog: this step has no connection-prefix renames.
+    assert project.reference_variables["vehicle_components"]["Battery Monitor"]["FC Connection"]["Type"] == "Analog"
+    for name, value in project.fc_parameters.items():
+        if (
+            name not in inputs
+            and name in defaults
+            and any(re.match(pattern, name) for pattern in step.get("autoimport_nondefault_regexp", []))
+            and abs(value - defaults[name].value) > 1e-8 + 1e-4 * abs(defaults[name].value)
+        ):
+            inputs[name] = Par(value)
+    return expected_regenerated_parameters(
+        {filename: inputs}, project.reference_steps, project.reference_variables, project.fc_parameters
+    )[filename]
+
+
+@pytest.mark.parametrize(
+    "template_dir",
+    [
+        pytest.param(TEMPLATES_BASE / "ArduCopter" / "Holybro_X500", id="ArduCopter/Holybro_X500"),
+        pytest.param(TEMPLATES_BASE / "ArduPlane" / "normal_plane", id="ArduPlane/normal_plane"),
+    ],
+)
+class TestProductionTemplateImportOrchestration:
+    """Bridge domain acceptance coverage to the real application and parameter-editor orchestration."""
+
+    def test_new_project_setup_previews_changes_without_writing_parameters(
+        self, orchestrated_project: OrchestratedProject
+    ) -> None:
+        """
+        New project setup previews changes without modifying parameter files.
+
+        GIVEN: A project created/opened by the real manager with inference enabled
+        WHEN: The real initial editor validates and saves inferred components
+        THEN: Changes are announced, but every parameter byte and loaded value stays unchanged.
+        """
+        workflow = orchestrated_project
+        project = workflow.project
+        assert project.fc_parameters["BATT_CAPACITY"] > 1200
+        assert any("11_battery.param" in message for _title, message in workflow.warnings)
+        assert {path.name: path.read_bytes() for path in numbered_parameter_files(project.directory)} == (
+            workflow.parameter_bytes_before_setup
+        )
+        assert_project_round_trip(project)
+
+    @pytest.mark.parametrize("infer_components", [False])
+    def test_declining_inference_preserves_user_component_specifications(
+        self, orchestrated_project: OrchestratedProject
+    ) -> None:
+        """
+        Declining inference preserves the user's component specifications.
+
+        GIVEN: Valid user component specifications differing from the source FC
+        WHEN: Project creation disables inference and the real initial editor saves
+        THEN: The saved and evaluation-context capacity stays at the user's value, not the FC value.
+        """
+        project = orchestrated_project.project
+        assert project.fc_parameters["BATT_CAPACITY"] > 1200
+        data = json.loads((project.directory / "vehicle_components.json").read_text(encoding="utf-8"))
+        assert data["Components"]["Battery"]["Specifications"]["Capacity mAh"] == 1200
+        assert_project_round_trip(project)
+
+    @pytest.mark.parametrize("accept_save", [True, False], ids=["save-accepted", "save-declined"])
+    def test_reviewed_parameter_step_is_persisted_only_with_user_permission(
+        self, orchestrated_project: OrchestratedProject, accept_save: bool
+    ) -> None:
+        """
+        Reviewed parameter changes are saved only with user permission.
+
+        GIVEN: A real manager-created project with components saved by the real initial editor
+        WHEN: The parameter editor opens the battery step and the user accepts or declines saving
+        THEN: Complete reviewed values/reasons match declarations, and only accepted changes reach disk.
+        """
+        workflow = orchestrated_project
+        project = workflow.project
+        filename = "11_battery.param"
+        expected = _expected_reviewed_battery(project)
+        editor = ParameterEditor(filename, workflow.state.flight_controller, project.filesystem)
+        selected, proceed = editor.handle_param_file_change_workflow(
+            filename,
+            forced=True,
+            gui_complexity="normal",
+            auto_open_documentation=False,
+            handle_imu_temp_cal=lambda _filename: None,
+            handle_copy_fc_values=lambda _filename: False,
+            handle_upload_file=lambda _filename: False,
+            ask_confirmation=lambda _title, _message: False,
+            show_error=_reject_workflow_error,
+            show_info=lambda _title, _message: None,
+        )
+        assert (selected, proceed) == (filename, True)
+        assert_parameter_snapshot(editor.get_parameters_as_par_dict(), expected)
+        assert (project.directory / filename).read_bytes() == workflow.parameter_bytes_before_setup[filename]
+        confirmations: list[tuple[str, str]] = []
+
+        def confirm_save(title: str, message: str) -> bool:
+            confirmations.append((title, message))
+            return accept_save
+
+        assert (
+            editor.handle_write_changes_workflow(annotate_params_into_files=False, ask_user_confirmation=confirm_save)
+            is accept_save
+        )
+        assert len(confirmations) == 1
+        assert filename in confirmations[0][1]
+        if accept_save:
+            project.expected_files[filename] = expected
+            assert (project.directory / filename).read_bytes() != workflow.parameter_bytes_before_setup[filename]
+            assert all(not parameter.is_dirty for parameter in editor.current_step_parameters.values())
+        else:
+            assert (project.directory / filename).read_bytes() == workflow.parameter_bytes_before_setup[filename]
+            assert any(parameter.is_dirty for parameter in editor.current_step_parameters.values())
+        for path in numbered_parameter_files(project.directory):
+            if path.name != filename:
+                assert path.read_bytes() == workflow.parameter_bytes_before_setup[path.name]
+        assert_project_round_trip(project)
+
+    @pytest.mark.parametrize("missing_operation", ["inference", "component_save"])
+    def test_acceptance_fixture_rejects_missing_production_operations(
+        self,
+        template_dir: Path,
+        request: pytest.FixtureRequest,
+        monkeypatch: pytest.MonkeyPatch,
+        missing_operation: str,
+    ) -> None:
+        """
+        Missing production operations are rejected rather than repaired by fixtures.
+
+        GIVEN: The same isolated inputs used by the production orchestration acceptance fixture
+        WHEN: Production inference or the component Save action is accidentally omitted
+        THEN: The fixture's persisted-state assertions reject that regression rather than repairing it.
+        """
+        assert not template_dir.name.endswith("_mig")
+        if missing_operation == "inference":
+            monkeypatch.setattr(ComponentEditorWindow, "set_values_from_fc_parameters", lambda *_args: None)
+            # With poisoned values, the real validation must refuse to save.
+            with pytest.raises(pytest.fail.Exception):
+                request.getfixturevalue("orchestrated_project")
+        else:
+            monkeypatch.setattr(ComponentEditorWindow, "on_save_pressed", lambda _window: None)
+            with pytest.raises(AssertionError):
+                request.getfixturevalue("orchestrated_project")
+
+
+@pytest.mark.parametrize("template_dir", [TEMPLATES_BASE / "ArduCopter" / "Holybro_X500"])
+@pytest.mark.parametrize("fault", ["evaluation_context", "missing_rules", "missing_source_parameter"])
+def test_round_trip_detects_corrupted_production_state(
+    imported_project: ImportedProject, monkeypatch: pytest.MonkeyPatch, fault: str
+) -> None:
+    """
+    Previously invisible production faults fail complete round-trip validation.
+
+    GIVEN: A complete imported project and an independently captured reference
+    WHEN: Production evaluation context, generation rules or source-only calibration is corrupted
+    THEN: The same round-trip assertion used for all templates rejects each formerly invisible fault
+    """
+    project = imported_project
+    assert project.fc_parameters["BATT_CAPACITY"] == 5000
+    assert project.source_parameters["BATT_VOLT_MULT"][0] == pytest.approx(18.181999)
+    if fault == "evaluation_context":
+        original_get_variables = project.filesystem.get_eval_variables
+
+        def wrong_capacity() -> dict[str, Any]:
+            variables = deepcopy(original_get_variables())
+            variables["vehicle_components"]["Battery"]["Specifications"]["Capacity mAh"] = 1
+            return variables
+
+        monkeypatch.setattr(project.filesystem, "get_eval_variables", wrong_capacity)
+    elif fault == "missing_rules":
+        project.filesystem.configuration_steps = {name: {} for name in project.filesystem.configuration_steps}
+    else:
+        for parameters in project.filesystem.file_parameters.values():
+            parameters.pop("BATT_VOLT_MULT", None)
+    regenerate_project(project)
+    with pytest.raises(AssertionError):
+        assert_project_round_trip(project)
 
 
 class TestTemplateImportWithComponentInference:
-    """Test creating new vehicle projects from templates with component inference from FC parameters."""
+    """Every supported project template must import successfully; no aggregate failure allowance."""
 
-    def test_user_can_create_project_with_component_inference(
-        self, compounded_params_files, tmp_test_dir, tmp_test_output_dir
-    ):
+    @pytest.mark.parametrize("template_dir", PROJECT_CASES)
+    def test_user_can_create_project_with_component_inference(self, imported_project: ImportedProject) -> None:
         """
-        User can create a new vehicle project inferring components from FC parameters.
+        Each ArduCopter or ArduPlane template's FC values and a corresponding empty template.
 
-        GIVEN: User has FC parameters loaded from a compounded params.param file
-        WHEN: They create a new project with infer_comp_specs_and_conn_from_fc_params=True
-        THEN: A new vehicle directory should be created
-        AND: Component specifications should be inferred from FC parameters
-        AND: Parameter files should be generated in the new directory
+        GIVEN: Each ArduCopter or ArduPlane template's FC values and a corresponding empty template
+        WHEN: A private vehicle project is created and components inferred from poisoned input
+        THEN: All configuration files exist and all recoverable components are correct and persisted
         """
-        if not compounded_params_files:
-            pytest.skip("No compounded params files available")
-
-        # Use first available params file for testing
-        template_dir, params_file = next(iter(compounded_params_files.items()))
-
-        # Given: Load parameters from file
-        params_dir = params_file.parent
-        original_cwd = os.getcwd()
-
-        try:
-            os.chdir(params_dir)
-
-            flight_controller = FlightController(reboot_time=0)
-            error_str = flight_controller.connect(DEVICE_FC_PARAM_FROM_FILE, log_errors=True)
-
-            if error_str:
-                pytest.skip(f"Cannot connect to flight controller: {error_str}")
-
-            # Download parameters from file
-            params, _ = flight_controller.download_params()
-
-            if not params or len(params) == 0:
-                pytest.skip(f"No parameters loaded from {params_file}")
-
-            # Extract vehicle type
-            vehicle_type = template_dir.parts[-3] if "-params" in template_dir.name else template_dir.parts[-2]
-            assert vehicle_type in VehicleComponents.supported_vehicles(), f"Unknown vehicle type: {vehicle_type}"
-
-            # Get empty template directory
-            try:
-                empty_template_dir = get_empty_template_dir(vehicle_type)
-            except FileNotFoundError:
-                pytest.skip(f"Empty template not found for vehicle type: {vehicle_type}")
-
-            # Create output path preserving vehicle_templates structure
-            # params_dir is like: /tmp/amc_test_acceptance1/vehicle_templates/ArduCopter/Chimera7
-            relative_path = params_dir.relative_to(tmp_test_dir)
-            # relative_path is like: vehicle_templates/ArduCopter/Chimera7
-            vehicle_name = relative_path.parts[-1]
-            # Create parallel structure in output dir
-            output_vehicle_dir = tmp_test_output_dir / relative_path
-            output_vehicle_dir.parent.mkdir(parents=True, exist_ok=True)
-
-            # Initialize LocalFilesystem with the template
-            local_filesystem = LocalFilesystem(
-                vehicle_dir=str(empty_template_dir),
-                vehicle_type=vehicle_type,
-                fw_version="",
-                allow_editing_template_files=False,
-                save_component_to_system_templates=False,
-            )
-
-            # When: Create project settings with component inference enabled
-            settings = NewVehicleProjectSettings(
-                copy_vehicle_image=False,
-                blank_component_data=False,
-                reset_fc_parameters_to_their_defaults=False,
-                infer_comp_specs_and_conn_from_fc_params=True,
-                use_fc_params=True,
-                blank_change_reason=True,
-            )
-
-            # And: Create the vehicle project
-            project_creator = VehicleProjectCreator(local_filesystem)
-            new_vehicle_dir = project_creator.create_new_vehicle_from_template(
-                template_dir=str(empty_template_dir),
-                new_base_dir=str(output_vehicle_dir.parent),  # e.g., /tmp/amc_test_acceptance2/vehicle_templates/ArduCopter
-                new_vehicle_name=f"{vehicle_name}",
-                settings=settings,
-                fc_connected=False,  # File simulation mode - no physical connection
-                fc_parameters=flight_controller.fc_parameters,
-            )
-
-            # Then: New vehicle directory should be created
-            assert Path(new_vehicle_dir).exists(), f"New vehicle directory not created: {new_vehicle_dir}"
-
-            # And: If component inference was requested, perform it now
-            if settings.infer_comp_specs_and_conn_from_fc_params and flight_controller.fc_parameters:
-                success, error_msg = perform_component_inference(
-                    local_filesystem,
-                    new_vehicle_dir,
-                    vehicle_type,
-                    flight_controller.fc_parameters,
-                    empty_template_dir,
-                    settings.blank_component_data,
-                )
-                assert success, error_msg
-
-            # And: Directory should contain .param files
-            param_files = list(Path(new_vehicle_dir).glob("*.param"))
-            assert len(param_files) > 0, f"No parameter files found in {new_vehicle_dir}"
-
-            # And: vehicle_components.json should exist
-            components_file = Path(new_vehicle_dir) / "vehicle_components.json"
-            assert components_file.exists(), f"vehicle_components.json not found in {new_vehicle_dir}"
-
-        finally:
-            os.chdir(original_cwd)
-
-    def test_component_inference_handles_various_configurations(
-        self, compounded_params_files, tmp_test_dir, tmp_test_output_dir
-    ):
-        """
-        Component inference correctly handles various vehicle configurations.
-
-        GIVEN: User has params files from different vehicle types and configurations
-        WHEN: They create projects with component inference for each
-        THEN: Each project should be created successfully
-        AND: Components should be appropriately inferred for each configuration
-        """
-        if not compounded_params_files:
-            pytest.skip("No compounded params files available")
-
-        successful_creations = 0
-        failed_creations = []
-
-        # Test a subset of templates (first 10 to keep test time reasonable)
-        for template_dir, params_file in list(compounded_params_files.items())[:10]:
-            params_dir = params_file.parent
-            original_cwd = os.getcwd()
-
-            try:
-                os.chdir(params_dir)
-
-                # Load parameters
-                flight_controller = FlightController(reboot_time=0)
-                error_str = flight_controller.connect(DEVICE_FC_PARAM_FROM_FILE, log_errors=False)
-
-                if error_str:
-                    failed_creations.append((template_dir, f"Connection failed: {error_str}"))
-                    continue
-
-                # Download parameters from file
-                params, _ = flight_controller.download_params()
-
-                if not params:
-                    failed_creations.append((template_dir, "Failed to download parameters"))
-                    continue
-
-                if len(params) == 0:
-                    failed_creations.append((template_dir, "No parameters loaded"))
-                    continue
-
-                # Get vehicle type and template
-                vehicle_type = template_dir.parts[-3] if "-params" in template_dir.name else template_dir.parts[-2]
-                assert vehicle_type in VehicleComponents.supported_vehicles(), f"Unknown vehicle type: {vehicle_type}"
-
-                try:
-                    empty_template_dir = get_empty_template_dir(vehicle_type)
-                except FileNotFoundError:
-                    failed_creations.append((template_dir, "Empty template not found"))
-                    continue
-
-                # Create output path preserving vehicle_templates structure
-                relative_path = params_dir.relative_to(tmp_test_dir)
-                vehicle_name = relative_path.parts[-1]
-                # Create parallel structure in output dir
-                output_vehicle_dir = tmp_test_output_dir / relative_path
-                output_vehicle_dir.parent.mkdir(parents=True, exist_ok=True)
-
-                # Initialize filesystem and create project
-                local_filesystem = LocalFilesystem(
-                    vehicle_dir=str(empty_template_dir),
-                    vehicle_type=vehicle_type,
-                    fw_version="",
-                    allow_editing_template_files=True,
-                    save_component_to_system_templates=False,
-                )
-
-                settings = NewVehicleProjectSettings(
-                    infer_comp_specs_and_conn_from_fc_params=True,
-                    use_fc_params=True,
-                    blank_change_reason=True,
-                )
-
-                project_creator = VehicleProjectCreator(local_filesystem)
-                new_vehicle_dir = project_creator.create_new_vehicle_from_template(
-                    template_dir=str(empty_template_dir),
-                    new_base_dir=str(
-                        output_vehicle_dir.parent
-                    ),  # e.g., /tmp/amc_test_acceptance2/vehicle_templates/ArduCopter
-                    new_vehicle_name=f"{vehicle_name}",
-                    settings=settings,
-                    fc_connected=False,
-                    fc_parameters=flight_controller.fc_parameters,
-                )
-
-                # Perform component inference if requested
-                # Note: perform_component_inference already calls calculate_derived_and_forced_param_changes
-                # so FC parameter values are properly merged into the generated parameter files
-                if settings.infer_comp_specs_and_conn_from_fc_params and flight_controller.fc_parameters:
-                    success, error_msg = perform_component_inference(
-                        local_filesystem,
-                        new_vehicle_dir,
-                        vehicle_type,
-                        flight_controller.fc_parameters,
-                        empty_template_dir,
-                        settings.blank_component_data,
-                    )
-                    if not success:
-                        failed_creations.append((template_dir, error_msg))
-                        continue
-
-                # Verify creation
-                if Path(new_vehicle_dir).exists():
-                    successful_creations += 1
-                else:
-                    failed_creations.append((template_dir, "Directory not created"))
-
-            except Exception as e:  # pylint: disable=broad-except
-                logger.debug("Failed to create project for %s: %s", template_dir.name, e)
-                failed_creations.append((template_dir, str(e)))
-            finally:
-                os.chdir(original_cwd)
-
-        # Report results
-        logger.info("Successful creations: %d/10", successful_creations)
-        if failed_creations:
-            logger.info("Failed creations:")
-            for template_dir, reason in failed_creations:
-                logger.info("  - %s: %s", template_dir.name, reason)
-
-        # Then: Most templates should succeed (allow some failures for edge cases)
-        assert successful_creations > 4, f"Too many failures: only {successful_creations}/10 succeeded"
+        project = imported_project
+        data = json.loads((project.directory / "vehicle_components.json").read_text(encoding="utf-8"))
+        assert_inference_result(data, project.expected_components)
+        assert set(project.filesystem.file_parameters) == set(project.copied_parameters)
+        assert project.filesystem.doc_dict
+        assert (project.directory / "apm.pdef.xml").is_file()
 
 
 class TestComponentInferenceValidation:
-    """Test validating component inference by comparing original and generated vehicle_components.json files."""
+    """Require actual reconstruction of every recoverable field, not retention of prefilled expectations."""
 
-    @staticmethod
-    def get_inferable_fields() -> list[tuple[str, str, str]]:
+    @pytest.mark.parametrize("template_dir", TEMPLATE_CASES)
+    def test_component_inference_from_params_file_matches_original(
+        self,
+        template_dir: Path,
+        initialized_template: LocalFilesystem,
+    ) -> None:
         """
-        Get list of component fields that can be inferred from FC parameters.
+        A real template's parameters, metadata and deliberately incorrect inferable component values.
 
-        Returns:
-            List of tuples (component_name, section_name, field_name) for inferable fields
-
+        GIVEN: A real template's parameters, metadata and deliberately incorrect inferable component values
+        WHEN: The model processes the parameters
+        THEN: Every recoverable field matches its independent reference and context is left unchanged
         """
-        return [
-            ("Battery", "Specifications", "Chemistry"),
-            ("Battery", "Specifications", "Volt per cell max"),
-            ("Battery", "Specifications", "Volt per cell low"),
-            ("Battery", "Specifications", "Volt per cell crit"),
-            ("Battery", "Specifications", "Number of cells"),
-            ("Battery", "Specifications", "Capacity mAh"),
-            ("Battery Monitor", "FC Connection", "Type"),
-            ("Battery Monitor", "FC Connection", "Protocol"),
-            ("ESC", "FC->ESC Connection", "Type"),
-            ("ESC", "FC->ESC Connection", "Protocol"),
-            ("GNSS Receiver", "FC Connection", "Type"),
-            ("GNSS Receiver", "FC Connection", "Protocol"),
-            ("RC Receiver", "FC Connection", "Type"),
-            ("RC Receiver", "FC Connection", "Protocol"),
-            ("Motors", "Specifications", "Poles"),
-        ]
+        filesystem = initialized_template
+        original = deepcopy(filesystem.vehicle_components_fs.data)
+        assert original is not None
+        fc_parameters = {name: value for name, (value, _comment) in expected_compound(template_dir).items()}
+        expected = inference_expectations(fc_parameters, original, filesystem.doc_dict)
+        poisoned = poisoned_component_input(original, expected)
+        model = ComponentDataModel(poisoned, filesystem.doc_dict, VehicleComponentsJsonSchema(filesystem.load_schema()))
+        model.process_fc_parameters(fc_parameters, filesystem.doc_dict)
+        actual = model.get_component_data()
+        assert_inference_result(actual, expected)
+        assert poisoned == poisoned_component_input(original, expected), "Inference mutated caller-owned input"
+        assert_uninferred_context(actual, original, expected)
 
-    @staticmethod
-    def get_simple_mode_fields(schema) -> dict[str, list[tuple[str, ...]]]:
+    @pytest.mark.parametrize("template_dir", PROJECT_CASES)
+    def test_inferred_components_match_original_templates(self, regenerated_project: ImportedProject) -> None:
         """
-        Get the component fields that should be checked in simple mode.
+        A fixture-created, independently regenerated project for every supported template.
 
-        Dynamically discovers fields from schema that:
-        - Are marked as non-optional (part of "simple" GUI complexity mode)
-        - Excludes TOW min/max Kg and Diameter_inches as specifically requested
-
-        Args:
-            schema: VehicleComponentsJsonSchema instance
-
-        Returns:
-            dict mapping component names to lists of field paths to check
-
+        GIVEN: A fixture-created, independently regenerated project for every supported template
+        WHEN: Persisted component data is read without relying on any preceding test
+        THEN: All recoverable values survive regeneration and firmware identity remains valid
         """
-        excluded_fields = {
-            ("Frame", "Specifications", "TOW min Kg"),
-            ("Frame", "Specifications", "TOW max Kg"),
-            ("Propellers", "Specifications", "Diameter_inches"),
-        }
-
-        fields_by_component: dict[str, list[tuple[str, ...]]] = {}
-        root_schema = schema.schema
-
-        def resolve_ref(ref: str) -> dict:
-            """
-            Resolve a JSON Schema $ref pointer against the root schema.
-
-            Raises:
-                ValueError: If the ref is not an internal JSON Pointer.
-                KeyError: If any path segment cannot be resolved.
-
-            """
-            if not ref.startswith("#"):
-                raise ValueError(f"Unsupported $ref '{ref}': only internal references are supported")
-
-            # Strip leading '#' and optional leading '/' to get the JSON Pointer
-            pointer = ref[1:]
-            pointer = pointer.removeprefix("/")
-
-            # Empty fragment refers to the root schema
-            if not pointer:
-                return root_schema
-
-            parts = pointer.split("/")
-            current: dict = root_schema
-            for raw_part in parts:
-                # JSON Pointer unescaping: ~1 -> '/', ~0 -> '~'
-                part = raw_part.replace("~1", "/").replace("~0", "~")
-                if not isinstance(current, dict) or part not in current:
-                    raise KeyError(f"Cannot resolve $ref '{ref}': segment '{raw_part}' not found")
-                current = current[part]
-            return current
-
-        def collect_sections(component_def: dict) -> dict:
-            """Collect all section properties from a component, resolving $ref and allOf."""
-            sections: dict = {}
-            # Resolve top-level $ref
-            if "$ref" in component_def:
-                component_def = resolve_ref(component_def["$ref"])
-            # Merge allOf entries (recursively resolving $ref within each)
-            for entry in component_def.get("allOf", []):
-                if "$ref" in entry:
-                    resolved = resolve_ref(entry["$ref"])
-                    sections.update(collect_sections(resolved))
-                sections.update(entry.get("properties", {}))
-            # Merge direct properties
-            sections.update(component_def.get("properties", {}))
-            return sections
-
-        # Get the Components schema
-        components_schema = root_schema.get("properties", {}).get("Components", {})
-        if not components_schema:
-            return fields_by_component
-
-        # Components are listed under "properties", each may use $ref
-        component_properties = components_schema.get("properties", {})
-
-        for component_name, component_schema in component_properties.items():
-            if not isinstance(component_schema, dict):
-                continue
-
-            # Resolve $ref and allOf to get all section schemas
-            all_sections = collect_sections(component_schema)
-
-            for section_name, section_schema in all_sections.items():
-                if not isinstance(section_schema, dict):
-                    continue
-
-                section_props = section_schema.get("properties", {})
-
-                for field_name, field_schema in section_props.items():
-                    if not isinstance(field_schema, dict):
-                        continue
-
-                    is_optional = field_schema.get("x-is-optional", False)
-
-                    if not is_optional:
-                        field_path = (component_name, section_name, field_name)
-
-                        if field_path in excluded_fields:
-                            continue
-
-                        if component_name not in fields_by_component:
-                            fields_by_component[component_name] = []
-                        fields_by_component[component_name].append((section_name, field_name))
-
-        return fields_by_component
-
-    @staticmethod
-    def get_field_value(component_data: dict, field_path: tuple[str, ...]):
-        """
-        Get a field value from nested component data.
-
-        Args:
-            component_data: Component dictionary
-            field_path: Tuple of keys to navigate (e.g., ("Specifications", "Capacity mAh"))
-
-        Returns:
-            Field value or None if path doesn't exist
-
-        """
-        current = component_data
-        for key in field_path:
-            if not isinstance(current, dict) or key not in current:
-                return None
-            current = current[key]
-        return current
-
-    def test_component_inference_from_params_file_matches_original(self, compounded_params_files):
-        """
-        Component inference from params.param files matches original vehicle_components.json.
-
-        GIVEN: Original vehicle templates with vehicle_components.json and params.param
-        WHEN: Loading params.param and inferring components directly
-        THEN: All inferable fields should match original template values with 100% accuracy
-        AND: This validates the core inference logic without project creation overhead
-        """
-        if not compounded_params_files:
-            pytest.skip("No compounded params files available")
-
-        inferable_fields = self.get_inferable_fields()
-        all_comparisons = []
-
-        # Test the first 5 templates that have a corresponding empty template.
-        # The fixture can contain Heli/Rover templates, which currently do not
-        # have empty templates and therefore must not consume the test quota.
-        tested_templates = 0
-        for template_dir, params_file in compounded_params_files.items():
-            # Load original vehicle_components.json
-            original_json = template_dir / "vehicle_components.json"
-            if not original_json.exists():
-                continue
-
-            with open(original_json, encoding="utf-8") as f:
-                original_data = json.load(f)
-
-            # Load parameters from params.param
-            try:
-                params_dict = ParDict.from_file(str(params_file))
-                params = {name: param.value for name, param in params_dict.items()}
-            except Exception as e:
-                logger.debug("Failed to load params from %s: %s", params_file, e)
-                continue
-
-            # Setup filesystem and schema for inference using the corresponding
-            # empty template for this vehicle type.
-            vehicle_type = template_dir.parts[-3] if "-params" in template_dir.name else template_dir.parts[-2]
-            try:
-                empty_template_dir = get_empty_template_dir(vehicle_type)
-                local_fs, schema = create_test_filesystem(empty_template_dir, vehicle_type)
-            except Exception as e:
-                logger.debug("Failed to create filesystem for %s: %s", template_dir.name, e)
-                continue
-
-            # Infer components
-            model = ComponentDataModel(original_data, local_fs.doc_dict, schema)
-            model.process_fc_parameters(params, local_fs.doc_dict)
-            inferred_data = model.get_component_data()
-
-            # Compare inferable fields
-            original_components = original_data.get("Components", {})
-            inferred_components = inferred_data.get("Components", {})
-
-            for component_name, section_name, field_name in inferable_fields:
-                original_value = self.get_field_value(original_components.get(component_name, {}), (section_name, field_name))
-                inferred_value = self.get_field_value(inferred_components.get(component_name, {}), (section_name, field_name))
-
-                field_key = f"{component_name}.{section_name}.{field_name}"
-                comparison = {
-                    "template": template_dir.name,
-                    "field": field_key,
-                    "original": original_value,
-                    "inferred": inferred_value,
-                    "match": original_value == inferred_value,
-                }
-                all_comparisons.append(comparison)
-
-            tested_templates += 1
-            if tested_templates >= 5:
-                break
-
-        if not all_comparisons:
-            pytest.skip("No templates with corresponding empty templates were available")
-
-        # Then: At least some comparisons should have been made
-        assert len(all_comparisons) > 0, "No component comparisons were performed"
-
-        # And: Calculate accuracy
-        total_matches = sum(1 for c in all_comparisons if c["match"])
-        total_comparisons = len(all_comparisons)
-        match_percentage = (total_matches / total_comparisons * 100) if total_comparisons > 0 else 0
-
-        # Report mismatches
-        mismatches = [c for c in all_comparisons if not c["match"]]
-        if mismatches:
-            logger.info("=" * 80)
-            logger.info("COMPONENT INFERENCE VALIDATION (Direct from params.param)")
-            logger.info("=" * 80)
-            logger.info("Total comparisons: %d", total_comparisons)
-            logger.info("Matches: %d (%.1f%%)", total_matches, match_percentage)
-            logger.info("Mismatches: %d", len(mismatches))
-            logger.info("=" * 80)
-            logger.info("MISMATCHES:")
-            logger.info("=" * 80)
-            for mismatch in mismatches:
-                logger.info(
-                    "%s: %s: %s → %s", mismatch["template"], mismatch["field"], mismatch["original"], mismatch["inferred"]
-                )
-
-        # And: Inferable fields should have high accuracy (>90%)
-        # Note: 90% threshold allows for template data quality issues
-        assert match_percentage > 90.0, (
-            f"Component inference accuracy too low: {match_percentage:.1f}% "
-            f"(expected >90%). Found {len(mismatches)} mismatches in {total_comparisons} comparisons. "
-            "This indicates the core inference logic has issues."
+        project = regenerated_project
+        data = json.loads((project.directory / "vehicle_components.json").read_text(encoding="utf-8"))
+        assert_inference_result(data, project.expected_components)
+        assert_uninferred_context(data, project.original_components, project.expected_components)
+        assert (
+            data["Components"]["Flight Controller"]["Firmware"]
+            == project.original_components["Components"]["Flight Controller"]["Firmware"]
         )
-
-    def test_inferred_components_match_original_templates(self, compounded_params_files, tmp_test_dir, tmp_test_output_dir):
-        """
-        Inferred component specifications match original template values for simple mode fields.
-
-        GIVEN: Generated vehicle projects with inferred components exist
-        WHEN: Comparing vehicle_components.json between original and generated
-        THEN: All fields relevant to simple mode should match
-        AND: TOW and propeller diameter are excluded from comparison
-        AND: Product metadata fields can differ (not inferable)
-        """
-        if not compounded_params_files:
-            pytest.skip("No compounded params files available")
-
-        original_base = Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "vehicle_templates"
-        generated_base = tmp_test_output_dir / "vehicle_templates"
-
-        if not generated_base.exists():
-            pytest.skip("No generated projects found")
-
-        # Use any existing template to load the schema
-        template_dir = next(iter(compounded_params_files.keys()))
-        vehicle_type = template_dir.parts[-3] if "-params" in template_dir.name else template_dir.parts[-2]
-        try:
-            empty_template_dir = get_empty_template_dir(vehicle_type)
-            _temp_filesystem, schema = create_test_filesystem(empty_template_dir, vehicle_type)
-        except Exception as e:
-            logger.error("Cannot load schema: %s", e)
-            pytest.skip(f"Cannot load schema: {e}")
-
-        simple_mode_fields = self.get_simple_mode_fields(schema)
-        all_comparisons = []
-        mismatches_by_field = {}
-
-        # Find all generated vehicle_components.json files
-        for generated_json in generated_base.rglob("vehicle_components.json"):
-            # Find matching original
-            relative_path = generated_json.parent.relative_to(generated_base)
-            original_json = original_base / relative_path / "vehicle_components.json"
-
-            if not original_json.exists():
-                continue
-
-            with open(original_json, encoding="utf-8") as f:
-                original_data = json.load(f)
-
-            with open(generated_json, encoding="utf-8") as f:
-                generated_data = json.load(f)
-
-            original_components = original_data.get("Components", {})
-            generated_components = generated_data.get("Components", {})
-
-            # Compare each field
-            for component_name, field_paths in simple_mode_fields.items():
-                if component_name not in original_components or component_name not in generated_components:
-                    continue
-
-                original_comp = original_components[component_name]
-                generated_comp = generated_components[component_name]
-
-                for field_path in field_paths:
-                    original_value = self.get_field_value(original_comp, field_path)
-                    generated_value = self.get_field_value(generated_comp, field_path)
-
-                    field_key = f"{component_name}.{'.'.join(field_path)}"
-                    comparison = {
-                        "template": str(relative_path),
-                        "component": component_name,
-                        "field": field_key,
-                        "original": original_value,
-                        "generated": generated_value,
-                        "match": original_value == generated_value,
-                    }
-                    all_comparisons.append(comparison)
-
-                    if not comparison["match"]:
-                        if field_key not in mismatches_by_field:
-                            mismatches_by_field[field_key] = []
-                        mismatches_by_field[field_key].append(comparison)
-
-        # Then: At least some comparisons should have been made
-        if len(all_comparisons) == 0:
-            pytest.skip("No component comparisons were performed (generated projects may not exist yet)")
-
-        # Report results
-        total_matches = sum(1 for c in all_comparisons if c["match"])
-        total_comparisons = len(all_comparisons)
-        match_percentage = (total_matches / total_comparisons * 100) if total_comparisons > 0 else 0
-
-        logger.info("=" * 80)
-        logger.info("COMPONENT INFERENCE VALIDATION RESULTS")
-        logger.info("=" * 80)
-        logger.info("Total field comparisons: %d", total_comparisons)
-        logger.info("Matching fields: %d (%.1f%%)", total_matches, match_percentage)
-        logger.info("Mismatched fields: %d", total_comparisons - total_matches)
-
-        if mismatches_by_field:
-            logger.info("=" * 80)
-            logger.info("MISMATCHES BY FIELD:")
-            logger.info("=" * 80)
-            for field_key, mismatches in sorted(mismatches_by_field.items()):
-                logger.info("%s: %d mismatches", field_key, len(mismatches))
-                for mismatch in mismatches[:3]:  # Show first 3 examples
-                    logger.info("  %s: %s -> %s", mismatch["template"], mismatch["original"], mismatch["generated"])
-                if len(mismatches) > 3:
-                    logger.info("  ... and %d more", len(mismatches) - 3)
-
-        # And: Fields that CAN be inferred should have high match rate
-        inferable_field_tuples = self.get_inferable_fields()
-        inferable_fields = [f"{comp}.{section}.{field}" for comp, section, field in inferable_field_tuples]
-
-        inferable_comparisons = [c for c in all_comparisons if c["field"] in inferable_fields]
-        if inferable_comparisons:
-            inferable_matches = sum(1 for c in inferable_comparisons if c["match"])
-            inferable_total = len(inferable_comparisons)
-            inferable_percentage = (inferable_matches / inferable_total * 100) if inferable_total > 0 else 0
-
-            logger.info("=" * 80)
-            logger.info("INFERABLE FIELDS ANALYSIS:")
-            logger.info("=" * 80)
-            logger.info("Inferable field comparisons: %d", inferable_total)
-            logger.info("Matching: %d (%.1f%%)", inferable_matches, inferable_percentage)
-
-            # Assert that inferable fields have high accuracy (>80%)
-            assert inferable_percentage > 80.0, (
-                f"Inferable fields match rate too low: {inferable_percentage:.1f}% "
-                f"(expected >80%). This indicates component inference is not working correctly."
-            )
 
 
 class TestParameterDerivationValidation:
-    """Test validating parameter value preservation through the round-trip process."""
+    """Validate every output parameter against source FC values and explicit configuration declarations."""
 
-    @staticmethod
-    def get_whitelisted_parameter_diffs() -> dict[str, set[str]]:
+    @pytest.mark.parametrize("template_dir", PROJECT_CASES)
+    def test_parameter_values_preserved_through_round_trip(self, regenerated_project: ImportedProject) -> None:
         """
-        Get dictionary of known acceptable parameter differences.
+        Every copied configuration file with FC values, followed by real component-driven regeneration.
 
-        These parameters are whitelisted because they appear in multiple .param files
-        with different values, and the compounded params.param only captures the final
-        state after all files are loaded sequentially.
-
-        Returns:
-            dict mapping file patterns to sets of parameter names to ignore
-
+        GIVEN: Every copied configuration file with FC values, followed by real component-driven regeneration
+        WHEN: Persisted files are compared with an independent interpretation of the configuration steps
+        THEN: Exact membership and values match, unchanged calibrations survive, and memory agrees with disk
         """
-        # System ID parameters that evolve across roll/pitch/yaw/thrust test files
-        system_id_params = {
-            "SID_T_REC",
-            "SID_AXIS",
-            "SID_MAGNITUDE",
-            "SID_F_START_HZ",
-            "SID_F_STOP_HZ",
-            "SID_T_FADE_IN",
-            "SID_T_FADE_OUT",
-            "ATC_RATE_FF_ENAB",
-            "ATC_RAT_RLL_I",
-            "ATC_RAT_PIT_I",
-            "ATC_RAT_YAW_I",
-            "PSC_ACCZ_I",
-            "LOG_BITMASK",
-            "ANGLE_MAX",
-            "ARMING_CHECK",
-        }
-
-        # PID tuning parameters that change during autotune and quick tune
-        pid_tuning_params = {
-            "ATC_RAT_RLL_P",
-            "ATC_RAT_RLL_I",
-            "ATC_RAT_RLL_D",
-            "ATC_RAT_RLL_FLTD",
-            "ATC_RAT_RLL_FLTT",
-            "ATC_RAT_RLL_SMAX",
-            "ATC_RAT_PIT_P",
-            "ATC_RAT_PIT_I",
-            "ATC_RAT_PIT_D",
-            "ATC_RAT_PIT_FLTD",
-            "ATC_RAT_PIT_FLTT",
-            "ATC_RAT_PIT_SMAX",
-            "ATC_RAT_YAW_P",
-            "ATC_RAT_YAW_I",
-            "ATC_RAT_YAW_D",
-            "ATC_RAT_YAW_FLTD",
-            "ATC_RAT_YAW_FLTT",
-            "ATC_RAT_YAW_FLTE",
-            "ATC_RAT_YAW_SMAX",
-            "ATC_ANG_RLL_P",
-            "ATC_ANG_PIT_P",
-            "ATC_ANG_YAW_P",
-            "ATC_ACCEL_R_MAX",
-            "ATC_ACCEL_P_MAX",
-            "ATC_ACCEL_Y_MAX",
-        }
-
-        # RC and remote controller parameters that may be configured multiple times
-        rc_params = {
-            "RC1_OPTION",
-            "RC2_OPTION",
-            "RC3_OPTION",
-            "RC4_OPTION",
-            "RC5_OPTION",
-            "RC6_OPTION",
-            "RC7_OPTION",
-            "RC8_OPTION",
-            "RC9_OPTION",
-            "RC10_OPTION",
-            "RC11_OPTION",
-        }
-
-        # Configuration parameters that are set early and may be overridden
-        config_params = {
-            "LAND_ALT_LOW",
-            "RTL_ALT",
-            "LOG_BITMASK",
-        }
-
-        return {
-            # System ID test files evolve these parameters across different axis tests
-            "50_system_id_input_roll.param": system_id_params,
-            "51_system_id_input_pitch.param": system_id_params,
-            "52_system_id_input_yaw.param": system_id_params,
-            "53_system_id_mixer_roll.param": system_id_params,
-            "54_system_id_mixer_pitch.param": system_id_params,
-            "55_system_id_mixer_yaw.param": system_id_params,
-            "56_system_id_mixer_thrust.param": system_id_params | {"PSC_ACCZ_I"},
-            # PID adjustment file has initial values that get refined later
-            "23_optional_pid_adjustment.param": pid_tuning_params,
-            "30_quick_tune_results.param": pid_tuning_params,
-            # Autotune result files progressively improve PIDs
-            "36_autotune_roll_results.param": pid_tuning_params,
-            "38_autotune_pitch_results.param": pid_tuning_params,
-            "40_autotune_yaw_results.param": pid_tuning_params,
-            "42_autotune_yawd_results.param": {"ATC_ANG_YAW_P"},
-            "44_autotune_roll_pitch_retune_results.param": {"ATC_ANG_RLL_P", "ATC_ANG_PIT_P"},
-            # Remote controller option assignments evolve
-            "07_remote_controller_controller.param": rc_params,
-            # Initial configuration files have values that get refined
-            "13_initial_atc.param": config_params | pid_tuning_params | {"MOT_THST_EXPO"},
-            "14_mp_setup_mandatory_hardware.param": config_params
-            | pid_tuning_params
-            | {"FLTMODE5", "FLTMODE6", "MOT_THST_EXPO"},
-            "15_general_configuration.param": config_params,
-            # Quick tune and autotune setup may modify logging
-            "29_quick_tune_setup.param": {"LOG_BITMASK"},
-            # Notch filter setup parameters are tuning-specific
-            "21_motor_notch_filter_setup.param": {"INS_HNTCH_FREQ", "INS_HNTCH_BW", "INS_HNTCH_ATT", "INS_HNTCH_HMNCS"},
-            # Optical flow parameters that may evolve
-            "63_optical_flow_setup.param": {
-                "EK3_SRC1_POSXY",
-                "EK3_SRC1_VELXY",
-                "EK3_SRC1_VELZ",
-                "FLOW_TYPE",
-                "RC8_OPTION",
-                "RC9_OPTION",
-            },
-            # Temperature calibration parameters may vary based on specific calibration runs
-            "02_imu_temperature_calibration_setup.param": {"INS_TCAL1_TMAX", "INS_TCAL2_TMAX", "INS_TCAL3_TMAX"},
-            "03_imu_temperature_calibration_results.param": {"INS_TCAL1_TMAX", "INS_TCAL2_TMAX", "INS_TCAL3_TMAX"},
-            # Precision landing enable status
-            "62_precision_land.param": {"PLND_ENABLED"},
-        }
-
-    @staticmethod
-    def parse_param_file(file_path: Path) -> dict[str, float]:
-        """
-        Parse a .param file and extract parameter name-value pairs.
-
-        Args:
-            file_path: Path to the .param file
-
-        Returns:
-            Dictionary mapping parameter names to their values
-
-        """
-        par_dict = ParDict.load_param_file_into_dict(str(file_path))
-        return {param_name: par.value for param_name, par in par_dict.items()}
-
-    def test_parameter_values_preserved_through_round_trip(self, compounded_params_files, tmp_test_output_dir):
-        """
-        Parameter values are preserved through component inference and regeneration.
-
-        GIVEN: Original vehicle templates and generated vehicle projects
-        WHEN: Comparing parameter values between original and generated .param files
-        THEN: Vehicle-specific calibration data should be preserved from FC parameters
-        AND: Configuration parameters may differ due to template reorganization
-        AND: Parameters that evolve across tuning stages are whitelisted
-
-        KNOWN ISSUE: Currently finding 1600+ differences, mostly vehicle-specific
-        calibration data (INS_TCAL*, COMPASS_*, RC* calibrations, BATT_*, SERVO*)
-        that SHOULD be preserved but aren't. This indicates the project creation
-        with use_fc_params=True is not properly preserving FC parameter values,
-        possibly being overwritten by empty template defaults in files like
-        12_mp_setup_mandatory_hardware.param. This needs investigation.
-        """
-        if not compounded_params_files:
-            pytest.skip("No compounded params files available")
-
-        original_base = Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "vehicle_templates"
-        generated_base = tmp_test_output_dir / "vehicle_templates"
-
-        if not generated_base.exists():
-            pytest.skip("No generated projects found")
-
-        whitelist = self.get_whitelisted_parameter_diffs()
-        all_differences = []
-        files_compared = 0
-
-        # Compare each generated .param file with its original
-        for generated_file in generated_base.rglob("*.param"):
-            # Skip 00_default.param as it's not in original templates
-            if generated_file.name == "00_default.param":
-                continue
-
-            # Find corresponding original file
-            relative_path = generated_file.parent.relative_to(generated_base)
-            original_file = original_base / relative_path / generated_file.name
-
-            if not original_file.exists():
-                continue
-
-            # Parse both files
-            original_params = self.parse_param_file(original_file)
-            generated_params = self.parse_param_file(generated_file)
-
-            # Get whitelist for this file
-            file_whitelist = whitelist.get(generated_file.name, set())
-
-            # Compare parameter values
-            all_param_names = set(original_params.keys()) | set(generated_params.keys())
-
-            for param_name in all_param_names:
-                # Skip whitelisted parameters
-                if param_name in file_whitelist:
-                    continue
-
-                original_value = original_params.get(param_name)
-                generated_value = generated_params.get(param_name)
-
-                # Check if values differ
-                if original_value is None and generated_value is not None:
-                    all_differences.append(
-                        {
-                            "file": str(relative_path / generated_file.name),
-                            "parameter": param_name,
-                            "original": "missing",
-                            "generated": generated_value,
-                            "type": "added",
-                        }
-                    )
-                elif original_value is not None and generated_value is None:
-                    all_differences.append(
-                        {
-                            "file": str(relative_path / generated_file.name),
-                            "parameter": param_name,
-                            "original": original_value,
-                            "generated": "missing",
-                            "type": "removed",
-                        }
-                    )
-                elif (
-                    original_value is not None and generated_value is not None and abs(original_value - generated_value) > 1e-6
-                ):
-                    all_differences.append(
-                        {
-                            "file": str(relative_path / generated_file.name),
-                            "parameter": param_name,
-                            "original": original_value,
-                            "generated": generated_value,
-                            "type": "changed",
-                        }
-                    )
-
-            files_compared += 1
-
-        # Report results
-        logger.info("=" * 100)
-        logger.info("PARAMETER VALUE VALIDATION RESULTS")
-        logger.info("=" * 100)
-        logger.info("Files compared: %d", files_compared)
-        logger.info("Differences found: %d", len(all_differences))
-
-        if all_differences:
-            # Group by type
-            added = [d for d in all_differences if d["type"] == "added"]
-            removed = [d for d in all_differences if d["type"] == "removed"]
-            changed = [d for d in all_differences if d["type"] == "changed"]
-
-            logger.info("  - Parameters added: %d", len(added))
-            logger.info("  - Parameters removed: %d", len(removed))
-            logger.info("  - Parameters changed: %d", len(changed))
-
-            # Show all value changes for analysis
-            if changed:
-                logger.info("\nAll %d value changes:", len(changed))
-                for diff in changed:
-                    logger.info("  %s: %s = %s → %s", diff["file"], diff["parameter"], diff["original"], diff["generated"])
-
-            if removed:
-                logger.info("\nFirst 10 removed parameters:")
-                for diff in removed[:10]:
-                    logger.info("  %s: %s (was %s)", diff["file"], diff["parameter"], diff["original"])
-
-            if added:
-                logger.info("\nFirst 10 added parameters:")
-                for diff in added[:10]:
-                    logger.info("  %s: %s = %s", diff["file"], diff["parameter"], diff["generated"])
-
-        # Assert: Vehicle-specific calibration data should be preserved
-        # Currently FAILING with ~52 differences - mostly calibration data that SHOULD
-        # be preserved from FC parameters but isn't. This indicates:
-        # 1. Empty template defaults (especially in 12_mp_setup_mandatory_hardware.param)
-        #    may be overwriting FC parameter values
-        #
-        # Expected behavior: Calibration parameters (INS_TCAL*, COMPASS_*, RC*, BATT*, SERVO*)
-        # should be copied verbatim from FC parameters to generated files.
-        changed_values = [d for d in all_differences if d["type"] == "changed"]
-
-        # For now, mark this as a known issue requiring investigation
-        if len(changed_values) > 50:
-            pytest.skip(
-                f"KNOWN ISSUE: {len(changed_values)} parameter value changes detected. "
-                "Vehicle-specific calibration data is not being preserved from FC parameters. "
-                "This indicates a bug in project creation with use_fc_params=True where "
-                "empty template defaults are overwriting FC parameter values. "
-                "Investigation needed in VehicleProjectCreator and/or 12_mp_setup_mandatory_hardware.param"
-            )
-
-        assert len(changed_values) < 55, (
-            f"Too many parameter value changes: {len(changed_values)} "
-            f"(expected <55). Vehicle-specific calibration data should be preserved from FC parameters. "
-            "Derived and tuning parameters may differ based on component specifications."
-        )
+        assert_project_round_trip(regenerated_project)
