@@ -77,13 +77,9 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
             # Show the window now that it's properly positioned
             self.progress_window.lift()
             self._shown = True
-            # Use update_idletasks() rather than update(): the latter pumps the
-            # full event queue (including queued mouse clicks against other
-            # windows) and can re-enter user-event handlers while the caller
-            # is still in the middle of a blocking I/O operation.
-            self.progress_bar.update_idletasks()
+            # Idle updates repaint without dispatching queued user events.
             if not is_macos_sequoia_or_older():
-                self.progress_window.update()
+                self.progress_window.update_idletasks()
 
     def _center_progress_window(self) -> None:
         """
@@ -121,13 +117,14 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
                 return
 
             if self.only_show_when_update_progress_called and not self._shown:
-                self.progress_window.update_idletasks()  # Calculate widgets first
+                if not is_macos_sequoia_or_older():
+                    self.progress_window.update_idletasks()
                 self.progress_window.deiconify()
                 self._center_progress_window()
                 self.progress_window.lift()
                 self._shown = True
                 if not is_macos_sequoia_or_older():
-                    self.progress_window.update()
+                    self.progress_window.update_idletasks()
             elif not self.only_show_when_update_progress_called:
                 self.progress_window.lift()
 
@@ -144,13 +141,10 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
                 # Update the progress message
                 self.progress_label.config(text=self.message.format(current_value, max_value))
 
-                # update_idletasks() repaints the bar/label without re-entering
-                # the event loop. The plain update() variant processes pending
-                # user events (clicks, keypresses) which can fire callbacks on
-                # other windows while a blocking upload/download is in flight.
-                self.progress_bar.update_idletasks()
+                # Defer rendering on Sequoia and older; idle updates on other
+                # platforms repaint without dispatching pending user events.
                 if not is_macos_sequoia_or_older():
-                    self.progress_window.update()
+                    self.progress_window.update_idletasks()
 
                 # Close the progress window when the process is complete
                 if current_value == max_value and self.auto_close_on_complete:

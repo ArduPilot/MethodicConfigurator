@@ -1869,7 +1869,13 @@ class TestCenterWindowOnScreenBehavior:
     @pytest.fixture(autouse=True)
     def non_darwin_by_default(self) -> Generator[None, None, None]:
         """Exercise synchronous positioning unless a test explicitly selects Darwin."""
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.platform_system", return_value="Linux"):
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.platform_system", return_value="Linux"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_base_window.is_macos_sequoia_or_older",
+                return_value=False,
+            ),
+        ):
             yield
 
     def test_centers_window_on_single_monitor(self) -> None:

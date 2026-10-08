@@ -10,7 +10,6 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import sys
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
 from collections.abc import Callable
@@ -195,14 +194,14 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         if isinstance(telem_type_widget, PairTupleCombobox):
             type_tuples = get_connection_type_tuples_with_labels(valid_telem_types)
             self.set_combobox_entries_preserving_width(telem_type_widget, type_tuples, "None")
-            if sys.platform != "darwin":
+            if not is_macos_sequoia_or_older():
                 telem_type_widget.update_idletasks()
         telem_protocol_widget = self.entry_widgets.get(telem_protocol_path)
         if isinstance(telem_protocol_widget, PairTupleCombobox):
             valid_telem_protocols = self.data_model.get_combobox_values_for_path(telem_protocol_path)
             protocol_tuples = [(p, p) for p in valid_telem_protocols]
             self.set_combobox_entries_preserving_width(telem_protocol_widget, protocol_tuples, "None")
-            if sys.platform != "darwin":
+            if not is_macos_sequoia_or_older():
                 telem_protocol_widget.update_idletasks()
 
     def _on_esc_fc_protocol_recompute(self, current_telem_type: str) -> None:
@@ -217,7 +216,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         if isinstance(telem_type_widget, PairTupleCombobox):
             type_tuples = get_connection_type_tuples_with_labels(valid_telem_types)
             self.set_combobox_entries_preserving_width(telem_type_widget, type_tuples, current_telem_type)
-            if sys.platform != "darwin":
+            if not is_macos_sequoia_or_older():
                 telem_type_widget.update_idletasks()
         self.data_model.set_component_value(telem_type_path, current_telem_type)
         new_choices = self.data_model.get_combobox_values_for_path(telem_protocol_path)
@@ -247,7 +246,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 current_selection = new_choices[0]
                 self.data_model.set_component_value(telem_protocol_path, current_selection)
             self.set_combobox_entries_preserving_width(widget, protocol_tuples, current_selection)
-        if sys.platform != "darwin":
+        if not is_macos_sequoia_or_older():
             widget.update_idletasks()
 
     def _on_esc_fc_protocol_changed(self, new_protocol: str) -> None:
@@ -323,7 +322,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 if err_msg:
                     show_error_message(_("Error"), err_msg)
                     protocol_combobox.configure(style="comb_input_invalid.TCombobox")
-                if sys.platform != "darwin":  # update_idletasks() segfaults on macOS with Tcl/Tk 9.0
+                if not is_macos_sequoia_or_older():
                     protocol_combobox.update_idletasks()  # re-draw the combobox ASAP
         return err_msg
 

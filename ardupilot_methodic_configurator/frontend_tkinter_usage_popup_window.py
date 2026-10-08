@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import contextlib
 import tkinter as tk
 from collections.abc import Callable
+from platform import system as platform_system
 
 # from logging import debug as logging_debug
 # from logging import info as logging_info
@@ -85,15 +86,15 @@ class PopupWindow:
         close_callback: Callable[[], None],
     ) -> None:
         """Show the popup, set its close handler, and make it modal where supported."""
-        is_mac_version = is_macos_sequoia_or_older()
+        is_macos = platform_system() == "Darwin"
         # Only set transient on non-macOS
-        if parent and not is_mac_version:
+        if parent and not is_macos:
             popup_window.root.transient(parent)
 
         # Some Linux window managers change font sizes and padding, so measure
         # the finished layout there. On macOS, keep the explicit size supplied
         # by setup_popupwindow and let Tk process layout in its normal event loop.
-        if not is_mac_version:
+        if not is_macos:
             popup_window.root.update_idletasks()
             req_height = popup_window.root.winfo_reqheight()
             req_width = popup_window.root.winfo_reqwidth()
@@ -108,8 +109,10 @@ class PopupWindow:
             # - guard against tk.TclError so the caller doesn't crash the app.
             popup_window.root.deiconify()
             popup_window.root.lift()
-            if not is_mac_version:
+            if not is_macos:
                 popup_window.root.update()  # Ensure the window is rendered before setting focus
+            elif not is_macos_sequoia_or_older():
+                popup_window.root.update_idletasks()
             # Use focus_set() instead of focus_force(): focus_force() calls XSetInputFocus
             # directly via X11, which causes a segfault in Python 3.9 on Linux in headless
             # environments. focus_set() only updates Tk's internal focus state, avoiding the crash.
@@ -118,7 +121,7 @@ class PopupWindow:
 
             # On macOS, grab_set() causes UI freeze (issue #1264), so skip it
             # On Windows/Linux, make the popup modal and give it focus
-            if not is_mac_version:
+            if not is_macos:
                 popup_window.root.grab_set()  # Make the popup modal
 
             popup_window.root.protocol("WM_DELETE_WINDOW", close_callback)
@@ -130,7 +133,7 @@ class PopupWindow:
     @staticmethod
     def close(popup_window: BaseWindow, parent: tk.Tk | None) -> None:
         """Close the popup window and re-enable the parent window."""
-        if not is_macos_sequoia_or_older():
+        if platform_system() != "Darwin":
             with contextlib.suppress(tk.TclError):
                 popup_window.root.grab_release()
 

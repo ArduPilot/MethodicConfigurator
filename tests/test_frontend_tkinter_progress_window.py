@@ -336,8 +336,8 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name,
         WHEN: Progress updates fail due to widget errors
         THEN: Errors are logged but no exceptions are raised
         """
-        # Mock progress_bar.update_idletasks to raise TclError
-        progress_window.progress_bar.update_idletasks = MagicMock(side_effect=tk.TclError("Widget destroyed"))
+        # Mock progress_window.update_idletasks to raise TclError
+        progress_window.progress_window.update_idletasks = MagicMock(side_effect=tk.TclError("Widget destroyed"))
 
         with patch("ardupilot_methodic_configurator.frontend_tkinter_progress_window.logging_error") as mock_logging:
             # This should not raise an exception
@@ -355,19 +355,23 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name,
             running on the main thread and periodically calling
             update_progress_bar to refresh the bar.
         WHEN: The progress window is initialised and then updated.
-        THEN: Only update_idletasks() is called on the progress bar. The
+        THEN: Only update_idletasks() is called on the progress window. The
             full update() variant pumps the entire event queue and would
             re-dispatch user clicks that arrived during the blocking call,
             allowing reentrant button callbacks while the caller is still
             in the middle of upload/connection logic.
         """
-        progress_window.progress_bar.update = MagicMock()
-        progress_window.progress_bar.update_idletasks = MagicMock()
+        progress_window.progress_window.update = MagicMock()
+        progress_window.progress_window.update_idletasks = MagicMock()
 
-        progress_window.update_progress_bar(25, 100)
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_progress_window.is_macos_sequoia_or_older",
+            return_value=False,
+        ):
+            progress_window.update_progress_bar(25, 100)
 
-        progress_window.progress_bar.update.assert_not_called()
-        progress_window.progress_bar.update_idletasks.assert_called_once()
+        progress_window.progress_window.update.assert_not_called()
+        progress_window.progress_window.update_idletasks.assert_called_once()
 
     def test_lazy_progress_updates_never_run_nested_tk_event_loop(self) -> None:
         """Showing and updating a progress window must not dispatch other Tk events."""
@@ -391,7 +395,8 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name,
             window.update_progress_bar(25, 100)
             window.update_progress_bar(50, 100)
             window.progress_window.update.assert_not_called()
-        window.progress_bar.update_idletasks.assert_called()
+        window.progress_bar.update_idletasks.assert_not_called()
+        window.progress_window.update_idletasks.assert_not_called()
         window.progress_window.deiconify.assert_called_once()
 
     def test_user_sees_progress_window_handle_lazy_window_relift(self, progress_window) -> None:

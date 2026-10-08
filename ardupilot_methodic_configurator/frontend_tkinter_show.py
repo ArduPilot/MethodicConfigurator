@@ -412,9 +412,9 @@ def get_monitor_bounds(widget: tk.Misc) -> MonitorBounds:
     bounds = None
     if platform_system() == "Windows":
         bounds = _get_validated_bounds(_monitor_bounds_windows(widget))
-    elif is_macos_sequoia_or_older():
+    elif platform_system() == "Darwin":
         bounds = _get_validated_bounds(_monitor_bounds_macos(widget))
-    else:
+    elif platform_system() == "Linux":
         # Linux: use screeninfo + pointer position to find the correct monitor
         bounds = _get_validated_bounds(_monitor_bounds_linux(widget))
 

@@ -28,6 +28,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import 
 # pylint: disable=redefined-outer-name
 
 _IS_MACOS_PATH = "ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.is_macos_sequoia_or_older"
+_PLATFORM_SYSTEM_PATH = "ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.platform_system"
 
 
 @pytest.fixture
@@ -149,6 +150,7 @@ class TestPopupWindowBase:
         # Arrange: Mock window methods
         with (
             patch(_IS_MACOS_PATH, return_value=False),
+            patch(_PLATFORM_SYSTEM_PATH, return_value="Linux"),
             patch.object(popup_window.root, "grab_release") as mock_grab_release,
             patch.object(popup_window.root, "destroy") as mock_destroy,
             patch.object(tk_root, "focus_set") as mock_focus,
@@ -269,6 +271,7 @@ class TestUsagePopupWindow:
         # Mock grab_set and other methods
         with (
             patch(_IS_MACOS_PATH, return_value=False),
+            patch(_PLATFORM_SYSTEM_PATH, return_value="Linux"),
             patch.object(popup_window.root, "grab_set") as mock_grab_set,
             patch.object(popup_window.root, "withdraw"),
             patch.object(popup_window.root, "deiconify"),
@@ -300,6 +303,7 @@ class TestUsagePopupWindow:
         # Mock window methods
         with (
             patch(_IS_MACOS_PATH, return_value=False),
+            patch(_PLATFORM_SYSTEM_PATH, return_value="Linux"),
             patch.object(popup_window.root, "grab_release") as mock_grab_release,
             patch.object(popup_window.root, "destroy") as mock_destroy,
             patch.object(tk_root, "focus_set") as mock_focus,
@@ -488,14 +492,49 @@ def test_macos_popup_keeps_explicit_size_without_forcing_tk_events() -> None:
     popup = Mock()
     parent = Mock()
 
-    with patch(_IS_MACOS_PATH, return_value=True), patch.object(BaseWindow, "center_window") as center_window:
+    with (
+        patch(_IS_MACOS_PATH, return_value=True),
+        patch(_PLATFORM_SYSTEM_PATH, return_value="Darwin"),
+        patch.object(BaseWindow, "center_window") as center_window,
+    ):
         PopupWindow.finalize_setup_popupwindow(popup, parent, lambda: None)
 
     popup.root.geometry.assert_not_called()
     popup.root.update_idletasks.assert_not_called()
     popup.root.update.assert_not_called()
+    popup.root.grab_set.assert_not_called()
     center_window.assert_called_once_with(popup.root, parent)
     popup.root.deiconify.assert_called_once()
+
+
+def test_tahoe_popup_keeps_macos_modality_and_runs_idle_rendering() -> None:
+    """Tahoe uses macOS modality rules while allowing safe idle rendering."""
+    popup = Mock()
+    parent = Mock()
+
+    with (
+        patch(_IS_MACOS_PATH, return_value=False),
+        patch(_PLATFORM_SYSTEM_PATH, return_value="Darwin"),
+        patch.object(BaseWindow, "center_window"),
+    ):
+        PopupWindow.finalize_setup_popupwindow(popup, parent, lambda: None)
+
+    popup.root.transient.assert_not_called()
+    popup.root.update_idletasks.assert_called_once()
+    popup.root.update.assert_not_called()
+    popup.root.grab_set.assert_not_called()
+    popup.root.geometry.assert_not_called()
+
+
+def test_closing_tahoe_popup_does_not_release_a_macos_grab() -> None:
+    """Closing a macOS popup does not use the non-macOS grab cleanup path."""
+    popup = Mock()
+
+    with patch(_PLATFORM_SYSTEM_PATH, return_value="Darwin"), patch(_IS_MACOS_PATH, return_value=False):
+        PopupWindow.close(popup, None)
+
+    popup.root.grab_release.assert_not_called()
+    popup.root.destroy.assert_called_once()
 
 
 if __name__ == "__main__":

@@ -709,7 +709,8 @@ class TestPairTupleComboboxMissingCoverage:
         # Mock the current method to raise IndexError then work normally
         with (
             patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.platform_system", return_value="Linux"
+                "ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.is_macos_sequoia_or_older",
+                return_value=False,
             ),
             patch.object(combobox, "current") as mock_current,
             patch.object(combobox, "update_idletasks") as mock_update,

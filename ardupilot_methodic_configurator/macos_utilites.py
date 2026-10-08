@@ -16,11 +16,12 @@ import platform
 
 def is_macos_sequoia_or_older() -> bool:
     """
-    Check if the current macOS version requires Tkinter updates.
+    Return whether synchronous Tk rendering updates must be deferred.
 
-    macOS Sequoia (Darwin 24) and older crash on synchronous update_idletasks()
-    due to loop renderings. Newer versions (macOS Tahoe 16+) require these updates to
-    prevent windows from rendering completely black.
+    On Darwin 24 (macOS Sequoia) and older, synchronous ``update_idletasks()``
+    can crash, so callers should defer rendering. Darwin 25 (macOS Tahoe 26)
+    and newer need idle updates to avoid black windows. Malformed Darwin
+    releases are treated conservatively as requiring deferred updates.
     """
     if platform.system() != "Darwin":
         return False

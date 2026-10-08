@@ -481,7 +481,7 @@ class TestMonitorBoundsDetection:
             ),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_show.is_macos_sequoia_or_older",
-                return_value=(platform == "Darwin"),
+                return_value=False,
             ),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_show._monitor_bounds_windows",
