@@ -293,6 +293,86 @@ class TestVehicleProjectCreatorValidation:
 class TestVehicleProjectCreationWorkflow:
     """Test complete vehicle project creation workflows."""
 
+    @pytest.mark.parametrize(("use_fc_params", "retain_source_parameters"), [(False, True), (True, True), (True, False)])
+    def test_source_only_calibrations_survive_template_project_creation(
+        self, tmp_path: Path, use_fc_params: bool, retain_source_parameters: bool
+    ) -> None:
+        """
+        Source-only calibration values are retained only when FC import is selected.
+
+        GIVEN: A sparse template, excluded default/read-only snapshots and source-only battery calibration
+        WHEN: A project is created with or without FC values
+        THEN: Template defaults remain unchanged and selected FC values survive in numbered editable files
+        """
+        template = tmp_path / "template"
+        template.mkdir()
+        (template / "10_setup.param").write_text("BATT_CAPACITY,1000\n", encoding="utf-8")
+        (template / "00_default.param").write_text("BATT_VOLT_MULT,10\n", encoding="utf-8")
+        (template / "01_ignore_readonly.param").write_text("IGNORED,1\n", encoding="utf-8")
+        original = {path.name: path.read_bytes() for path in template.iterdir()}
+        filesystem = LocalFilesystem(
+            str(template),
+            "ArduCopter",
+            "",
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
+            load_project=False,
+        )
+        source = {"BATT_CAPACITY": 5000.0, "BATT_VOLT_MULT": 18.181999, "IGNORED": 2.0}
+
+        destination = Path(
+            VehicleProjectCreator(filesystem).create_new_vehicle_from_template(
+                str(template),
+                str(tmp_path),
+                "project",
+                NewVehicleProjectSettings(use_fc_params=use_fc_params),
+                fc_parameters=source,
+                retain_source_parameters=retain_source_parameters,
+            )
+        )
+        actual = ParDict.from_file(str(destination / "10_setup.param"))
+        assert actual["BATT_CAPACITY"].value == (5000 if use_fc_params else 1000)
+        import_files = list(destination.glob("*_imported_flight_controller_parameters.param"))
+        assert len(import_files) == int(use_fc_params and retain_source_parameters)
+        if use_fc_params and retain_source_parameters:
+            assert import_files[0].name == "11_imported_flight_controller_parameters.param"
+            imported = ParDict.from_file(str(import_files[0]))
+            assert {name: par.value for name, par in imported.items()} == {"BATT_VOLT_MULT": 18.181999, "IGNORED": 2}
+            assert all(not par.comment for par in imported.values())
+        assert (destination / "00_default.param").read_bytes() == original["00_default.param"]
+        assert {path.name: path.read_bytes() for path in template.iterdir()} == original
+        assert filesystem.vehicle_dir == str(template)
+
+    def test_failed_source_parameter_retention_cleans_up_new_project(self, tmp_path: Path) -> None:
+        """
+        Failed retention must not leave a seemingly successful incomplete vehicle project.
+
+        GIVEN: A template occupying the last numbered slot and a source-only calibration
+        WHEN: Project creation cannot allocate a final import step
+        THEN: The error is reported and only the newly created destination is removed
+        """
+        template = tmp_path / "template"
+        template.mkdir()
+        (template / "99_setup.param").write_text("BATT_CAPACITY,1000\n", encoding="utf-8")
+        filesystem = LocalFilesystem(
+            str(template),
+            "ArduCopter",
+            "",
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
+            load_project=False,
+        )
+        with pytest.raises(VehicleProjectCreationError, match="no numbered slot"):
+            VehicleProjectCreator(filesystem).create_new_vehicle_from_template(
+                str(template),
+                str(tmp_path),
+                "project",
+                NewVehicleProjectSettings(use_fc_params=True),
+                fc_parameters={"BATT_VOLT_MULT": 18.181999},
+            )
+        assert not (tmp_path / "project").exists()
+        assert (template / "99_setup.param").read_text(encoding="utf-8") == "BATT_CAPACITY,1000\n"
+
     def test_user_can_create_vehicle_project_from_template_successfully(
         self, project_creator, mock_local_filesystem, default_settings
     ) -> None:

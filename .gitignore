@@ -34,3 +34,4 @@ sitl/git-version.txt
 /sitl/terrain/
 
 tuning_report.csv
+node_modules
