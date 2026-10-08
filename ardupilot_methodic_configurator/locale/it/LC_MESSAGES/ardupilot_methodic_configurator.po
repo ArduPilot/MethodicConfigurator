@@ -4059,20 +4059,20 @@ msgstr "Tensione di sicurezza critica x numero di celle"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:302
 msgid "Current RC pitch channel mapping; editable in the RC calibration plugin"
-msgstr ""
+msgstr "Mappatura attuale del canale RC di beccheggio; modificabile nel plugin di calibrazione RC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:303
 msgid "Current RC roll channel mapping; editable in the RC calibration plugin"
-msgstr ""
+msgstr "Mappatura attuale del canale RC di rollio; modificabile nel plugin di calibrazione RC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:304
 msgid ""
 "Current RC throttle channel mapping; editable in the RC calibration plugin"
-msgstr ""
+msgstr "Mappatura attuale del canale RC dell'acceleratore; modificabile nel plugin di calibrazione RC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:305
 msgid "Current RC yaw channel mapping; editable in the RC calibration plugin"
-msgstr ""
+msgstr "Mappatura attuale del canale RC di imbardata; modificabile nel plugin di calibrazione RC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:306
 msgid "Defined in ESC specifications above"
@@ -12355,61 +12355,61 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:87
 msgid "Select an RC mapping mode from 1 to 4."
-msgstr ""
+msgstr "Seleziona una modalità di mappatura RC da 1 a 4."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:89
 msgid "RC mapping preset Mode %(mode)d selected in the RC calibration plugin."
-msgstr ""
+msgstr "Preimpostazione di mappatura RC Modalità %(mode)d selezionata nel plugin di calibrazione RC."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:92
 msgid "RC mapping changes require a flight-controller reboot after upload."
-msgstr ""
+msgstr "Le modifiche alla mappatura RC richiedono un riavvio del controllore di volo dopo il caricamento."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:99
 msgid ""
 "Open RC calibration in the parameter editor to stage changes for upload."
-msgstr ""
+msgstr "Apri la calibrazione RC nell'editor dei parametri per preparare le modifiche da caricare."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:107
 msgid "Could not add parameter %(name)s to this step."
-msgstr ""
+msgstr "Impossibile aggiungere il parametro %(name)s a questo passaggio."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:115
 msgid ""
 "Parameter %(name)s is read-only, forced or derived; no values were changed."
-msgstr ""
+msgstr "Il parametro %(name)s è di sola lettura, forzato o derivato; nessun valore è stato modificato."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:119
 msgid "Invalid value for parameter %(name)s."
-msgstr ""
+msgstr "Valore non valido per il parametro %(name)s."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:130
 msgid ""
 "Changes staged. Press parameter upload to write them to the flight "
 "controller."
-msgstr ""
+msgstr "Modifiche preparate. Premi Carica parametri per scriverle nel controllore di volo."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:257
 msgid "Mode"
-msgstr ""
+msgstr "Modalità"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:264
 msgid "Select an RC channel from 1 to 16."
-msgstr ""
+msgstr "Seleziona un canale RC da 1 a 16."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:266
 msgid ""
 "The primary-control and flight-mode channel functions cannot be changed here."
-msgstr ""
+msgstr "Le funzioni dei canali di controllo primario e della modalità di volo non possono essere modificate qui."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:270
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:274
 msgid "Select a valid RC channel option."
-msgstr ""
+msgstr "Seleziona un'opzione di canale RC valida."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:277
 msgid "RC channel %(channel)d option selected in the RC calibration plugin."
-msgstr ""
+msgstr "Opzione del canale RC %(channel)d selezionata nel plugin di calibrazione RC."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:324
 msgid "RC calibration started — move all sticks and switches to their extremes"
@@ -12428,7 +12428,7 @@ msgstr "Nessun dato di calibrazione RC registrato — niente da salvare"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:352
 msgid "RC%(ch)d did not move; calibration values were not staged"
-msgstr ""
+msgstr "RC%(ch)d non si è mosso; i valori di calibrazione non sono stati preparati"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:359
 msgid "RC%(ch)d: MIN=%(min)d MAX=%(max)d TRIM=%(trim)d"
@@ -12436,11 +12436,11 @@ msgstr "RC%(ch)d: MIN=%(min)d MAX=%(max)d TRIM=%(trim)d"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:365
 msgid "No RC channels moved; no calibration parameters were staged."
-msgstr ""
+msgstr "Nessun canale RC si è mosso; nessun parametro di calibrazione è stato preparato."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:368
 msgid "Measured in the RC calibration plugin."
-msgstr ""
+msgstr "Misurato nel plugin di calibrazione RC."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:442
 msgid "Error reading MAVLink telemetry: %(error)s"
@@ -13014,7 +13014,7 @@ msgstr "Annulla Calibrazione"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_compass_calibration.py:186
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_compass_calibration.py:395
 msgid "Abandon Monitoring"
-msgstr ""
+msgstr "Abbandona il monitoraggio"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_compass_calibration.py:198
 msgid ""
@@ -13160,7 +13160,7 @@ msgid ""
 "Cancellation was not confirmed by the flight controller. Abandon local "
 "monitoring and unlock navigation? Compass calibration may still be running "
 "on the flight controller."
-msgstr ""
+msgstr "L'annullamento non è stato confermato dal controllore di volo. Abbandonare il monitoraggio locale e sbloccare la navigazione? La calibrazione della bussola potrebbe essere ancora in esecuzione sul controllore di volo."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_compass_calibration.py:434
 msgid "Start Compass Calibration"
@@ -13620,41 +13620,41 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:57
 msgid "Live monitor"
-msgstr ""
+msgstr "Monitor in tempo reale"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:64
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:94
 msgid "No RC telemetry"
-msgstr ""
+msgstr "Nessuna telemetria RC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:68
 msgid "RC input preview — not measured attitude."
-msgstr ""
+msgstr "Anteprima dell'ingresso RC — assetto non misurato."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:71
 msgid ""
 "Roll and pitch tilt the example craft; yaw turns it while held; throttle "
 "raises or lowers it. Uses staged RC mapping, calibration and reversal. No "
 "vehicle movement is commanded."
-msgstr ""
+msgstr "Rollio e beccheggio inclinano il velivolo di esempio; l'imbardata lo fa ruotare mentre è mantenuta; il gas lo fa salire o scendere. Usa mappatura RC, calibrazione e inversione in staging. Non viene comandato alcun movimento del veicolo."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:94
 msgid "%(count)d channels live"
-msgstr ""
+msgstr "%(count)d canali attivi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:111
 msgid "Remote controller stick preview"
-msgstr ""
+msgstr "Anteprima degli stick del radiocomando"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:117
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:168
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:184
 msgid "Custom"
-msgstr ""
+msgstr "Personalizzato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:120
 msgid "RC mapping mode:"
-msgstr ""
+msgstr "Modalità di mappatura RC:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:132
 msgid ""
@@ -13663,33 +13663,33 @@ msgid ""
 "vertical CH2, left vertical CH3, left horizontal CH4. Verify the channel "
 "bars against your transmitter before uploading. Reboot after uploading "
 "mapping changes."
-msgstr ""
+msgstr "Prepara RCMAP_ROLL/PITCH/THROTTLE/YAW per le modalità 1-4; solo il caricamento dei parametri scrive sul controller. I preset presuppongono CH1 orizzontale destro, CH2 verticale destro, CH3 verticale sinistro, CH4 orizzontale sinistro. Verifica le barre dei canali con il tuo trasmettitore prima del caricamento. Riavvia dopo aver caricato le modifiche della mappatura."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:141
 msgid "Custom RCMAP mapping retained. Select a preset only to change it."
-msgstr ""
+msgstr "Mappatura RCMAP personalizzata mantenuta. Seleziona un preset solo per modificarla."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:161
 msgid ""
 "The red circle shows the stick position; centered sticks appear in the "
 "square center."
-msgstr ""
+msgstr "Il cerchio rosso mostra la posizione dello stick; gli stick centrati appaiono al centro del quadrato."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:197
 msgid "PITCH"
-msgstr ""
+msgstr "BECCHEGGIO"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:197
 msgid "ROLL"
-msgstr ""
+msgstr "ROLLIO"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:197
 msgid "THROTTLE"
-msgstr ""
+msgstr "GAS"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:197
 msgid "YAW"
-msgstr ""
+msgstr "IMBARDATA"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:235
 msgid "Channels"
@@ -13697,32 +13697,32 @@ msgstr "Canali"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:249
 msgid "Channel"
-msgstr ""
+msgstr "Canale"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:250
 msgid "Function"
-msgstr ""
+msgstr "Funzione"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:251
 msgid "PWM"
-msgstr ""
+msgstr "PWM"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:284
 msgid ""
 "Green MIN, blue TRIM and red MAX markers show calibration. MIN/MAX track "
 "observed extremes during calibration. Missing calibration parameters use "
 "display defaults of 1000/2000/1500 µs."
-msgstr ""
+msgstr "Gli indicatori MIN verdi, TRIM blu e MAX rossi mostrano la calibrazione. MIN/MAX seguono gli estremi osservati durante la calibrazione. I parametri di calibrazione mancanti usano i valori predefiniti di visualizzazione di 1000/2000/1500 µs."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:327
 msgid ""
 "Select this channel's RCx_OPTION function. Changes are staged until "
 "parameter upload."
-msgstr ""
+msgstr "Seleziona la funzione RCx_OPTION di questo canale. Le modifiche restano in staging fino al caricamento dei parametri."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:357
 msgid "Unknown option"
-msgstr ""
+msgstr "Opzione sconosciuta"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:477
 msgid "RC calibration progress popup created and polling scheduled."
