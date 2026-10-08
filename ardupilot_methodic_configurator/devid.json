@@ -1,6 +1,6 @@
 {
     "format_version": 1,
-    "data_version": "sha256:5f74d690e7d01806ec58b44782d8d677dd279367dd37d3e000e90c4895abfebc",
+    "data_version": "sha256:e516c792575926a27175fff2a61e72c241603454fe7910e13864fadd988e837e",
     "bus_types": [
         {"value": 0, "name": "UNKNOWN"},
         {"value": 1, "name": "I2C"},
@@ -37,7 +37,8 @@
             {"value": 23, "name": "DEVTYPE_BMM350"},
             {"value": 24, "name": "DEVTYPE_IIS2MDC"},
             {"value": 25, "name": "DEVTYPE_LIS2MDL", "description": "retired; same sensor as IIS2MDC, only used on pre-release firmware"},
-            {"value": 26, "name": "DEVTYPE_AF9838"}
+            {"value": 26, "name": "DEVTYPE_AF9838"},
+            {"value": 27, "name": "DEVTYPE_AK09940A"}
         ],
         "imu": [
             {"value": 9, "name": "DEVTYPE_BMI160"},
