@@ -210,7 +210,7 @@ def test_user_can_monitor_battery_status_from_real_sitl(sitl_flight_controller: 
     # Use the constant instead of magic number
     time.sleep(sitl_flight_controller.BATTERY_STATUS_CACHE_TIME / 3)  # Wait for battery data
 
-    battery_status, status_error = sitl_flight_controller.get_battery_status()
+    battery_status, status_error = sitl_flight_controller.get_battery_statuses()
     assert battery_status is not None, f"Battery status retrieval failed: {status_error}"
 
 
@@ -1013,18 +1013,18 @@ def test_battery_status_retrieval_with_real_sitl(sitl_flight_controller: FlightC
         # Wait for SITL to start sending battery messages and poll until data arrives
         wait_window = max(5.0, sitl_flight_controller.BATTERY_STATUS_TIMEOUT * 10)
         deadline = time.time() + wait_window
-        battery_status: tuple[float, float] | None = None
+        battery_status: dict[int, tuple[float, float]] | None = None
         error = ""
         while time.time() < deadline and battery_status is None:
-            battery_status, error = sitl_flight_controller.get_battery_status()
+            battery_status, error = sitl_flight_controller.get_battery_statuses()
             if battery_status is None:
                 time.sleep(0.25)
 
         # Then: Battery status should be retrieved
         assert battery_status is not None, f"Battery status should be available from SITL, got error: {error}"
-        assert len(battery_status) == 2, "Battery status should contain voltage and current"
+        assert len(battery_status[0]) == 2, "Battery status should contain voltage and current"
 
-        voltage, current = battery_status
+        voltage, current = battery_status[0]
         assert isinstance(voltage, (int, float)), f"Voltage should be numeric, got {type(voltage)}"
         assert isinstance(current, (int, float)), f"Current should be numeric, got {type(current)}"
 

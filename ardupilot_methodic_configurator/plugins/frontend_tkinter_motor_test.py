@@ -637,7 +637,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
         except MotorTestSafetyError as e:
             # Check if it's a voltage issue and provide specific guidance
-            if self.model.is_battery_related_safety_issue(str(e)):
+            if self.model.is_battery_related_safety_issue(e):
                 showwarning(_("Battery Voltage Warning"), self.model.get_battery_safety_message(str(e)))
             else:
                 showwarning(_("Safety Check Failed"), str(e))

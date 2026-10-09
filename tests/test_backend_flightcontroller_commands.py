@@ -17,11 +17,13 @@ import itertools
 import subprocess
 import sys
 import time
+from math import isnan
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from pymavlink import mavutil
+from pymavlink.dialects.v20 import ardupilotmega as mavlink2
 
 from ardupilot_methodic_configurator.backend_flightcontroller_commands import FlightControllerCommands
 
@@ -329,19 +331,19 @@ class TestFlightControllerCommandsBatteryStatus:
         """
         # Given: FC with battery data
         mock_master, mock_conn_mgr = mock_connected_master
-        mock_battery_msg = MagicMock()
+        mock_battery_msg = MagicMock(id=0, voltages_ext=[0] * 4)
         mock_battery_msg.voltages = [4200, 4180, 4190]
         mock_battery_msg.current_battery = 2500
-        mock_master.recv_match.return_value = mock_battery_msg
+        mock_master.recv_match.side_effect = [mock_battery_msg, None]
         mock_params_mgr = Mock()
         mock_params_mgr.fc_parameters = {"BATT_MONITOR": 4.0}
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
         # When: Get battery status
-        battery_data, message = commands_mgr.get_battery_status()
+        battery_data, message = commands_mgr.get_battery_statuses()
         # Then: Status retrieved
         assert battery_data is not None
         assert message == ""
-        voltage, current = battery_data
+        voltage, current = battery_data[0]
         assert voltage > 0
         assert current >= 0
 
@@ -483,30 +485,30 @@ class TestFlightControllerCommandsEdgeCases:
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
 
         # Inject a recent cached battery reading
-        commands_mgr._last_battery_status = (11.1, 2.2)  # pylint: disable=protected-access
-        commands_mgr._last_battery_message_time = time.time()  # now-ish # pylint: disable=protected-access
+        commands_mgr._last_battery_statuses = {0: (11.1, 2.2, time.time())}  # pylint: disable=protected-access
+        commands_mgr._battery_status_connection = mock_master  # pylint: disable=protected-access
 
-        data, _ = commands_mgr.get_battery_status()
+        data, _ = commands_mgr.get_battery_statuses()
 
-        assert data == (11.1, 2.2)
+        assert data == {0: (11.1, 2.2)}
 
     def test_get_battery_status_handles_invalid_readings(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
-        """BATTERY_STATUS messages with invalid sentinel values (-1) should be converted to zeros."""
+        """Unavailable BATTERY_STATUS readings should remain unknown."""
         mock_master, mock_conn_mgr = mock_connected_master
-        mock_battery_msg = MagicMock()
+        mock_battery_msg = MagicMock(id=0, voltages_ext=[0] * 4)
         mock_battery_msg.voltages = [-1]
         mock_battery_msg.current_battery = -1
-        mock_master.recv_match.return_value = mock_battery_msg
+        mock_master.recv_match.side_effect = [mock_battery_msg, None]
         mock_params_mgr = Mock()
         mock_params_mgr.fc_parameters = {"BATT_MONITOR": 4.0}
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
 
-        battery_data, _ = commands_mgr.get_battery_status()
+        battery_data, _ = commands_mgr.get_battery_statuses()
 
         assert battery_data is not None
-        voltage, current = battery_data
-        assert voltage == 0.0
-        assert current == 0.0
+        voltage, current = battery_data[0]
+        assert isnan(voltage)
+        assert isnan(current)
 
     def test_motor_test_denied_ack(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """Motor test should fail when FC returns a DENIED acknowledgment."""
@@ -1486,7 +1488,7 @@ class TestFlightControllerCommandsBatteryEdgeCases:
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
 
         # When: Get battery status
-        battery_status, error = commands_mgr.get_battery_status()
+        battery_status, error = commands_mgr.get_battery_statuses()
 
         # Then: Should return None
         assert battery_status is None
@@ -1511,7 +1513,7 @@ class TestFlightControllerCommandsBatteryEdgeCases:
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
 
         # When: Get battery status
-        battery_status, error = commands_mgr.get_battery_status()
+        battery_status, error = commands_mgr.get_battery_statuses()
 
         # Then: Should return None
         assert battery_status is None
@@ -1539,7 +1541,7 @@ class TestFlightControllerCommandsBatteryEdgeCases:
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
 
         # When: Get battery status
-        battery_status, error = commands_mgr.get_battery_status()
+        battery_status, error = commands_mgr.get_battery_statuses()
 
         # Then: Should return None
         assert battery_status is None
@@ -1556,10 +1558,10 @@ class TestFlightControllerCommandsBatteryEdgeCases:
         """
         # Given: Setup with working telemetry first
         mock_master = MagicMock()
-        mock_battery_msg = MagicMock()
+        mock_battery_msg = MagicMock(id=0, voltages_ext=[0] * 4)
         mock_battery_msg.voltages = [12000]  # 12V in millivolts
         mock_battery_msg.current_battery = 1050  # 10.5A in centiamps
-        mock_master.recv_match.return_value = mock_battery_msg
+        mock_master.recv_match.side_effect = [mock_battery_msg, None]
 
         mock_params_mgr = Mock()
         mock_params_mgr.fc_parameters = {"BATT_MONITOR": 4}
@@ -1570,7 +1572,7 @@ class TestFlightControllerCommandsBatteryEdgeCases:
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
 
         # When: First call gets data successfully
-        battery_status1, error1 = commands_mgr.get_battery_status()
+        battery_status1, error1 = commands_mgr.get_battery_statuses()
 
         # Then: First call succeeds
         assert battery_status1 is not None
@@ -1578,7 +1580,7 @@ class TestFlightControllerCommandsBatteryEdgeCases:
 
         # When: Second call (telemetry fails but cache is still fresh)
         mock_master.recv_match.side_effect = Exception("Connection lost")
-        battery_status2, error2 = commands_mgr.get_battery_status()
+        battery_status2, error2 = commands_mgr.get_battery_statuses()
 
         # Then: Should use cached data
         assert battery_status2 == battery_status1
@@ -1897,3 +1899,127 @@ class TestFlightControllerCommandsRequestScaledImu:
         assert success is True
         sent_args = mock_master.mav.command_long_send.call_args.args
         assert float(sent_args[5]) == float(200_000)
+
+
+class TestMultipleBatteryTelemetry:
+    """Keep each battery's readings independent through actual MAVLink message handling."""
+
+    @staticmethod
+    def _battery_message(battery_id: int, voltage: int, current: int = 210) -> mavlink2.MAVLink_battery_status_message:
+        return mavlink2.MAVLink_battery_status_message(battery_id, 0, 0, 32767, [voltage] + [65535] * 9, current, -1, -1, -1)
+
+    def test_user_receives_all_batteries_through_real_pymavlink_reader(self) -> None:
+        """Given queued battery messages, reading telemetry returns every ID with the latest values."""
+        master = mavutil.mavfile(None, "battery-test", input=False)
+        master.recv_msg = Mock(
+            side_effect=[
+                self._battery_message(0, 12400),
+                self._battery_message(1, 24800, 350),
+                self._battery_message(0, 12300),
+                None,
+            ]
+        )
+        commands = FlightControllerCommands(
+            params_manager=Mock(fc_parameters={"BATT_MONITOR": 4, "BATT2_MONITOR": 4}),
+            connection_manager=Mock(master=master),
+        )
+
+        readings, error = commands.get_battery_statuses()
+
+        assert error == ""
+        assert readings == {0: (12.3, 2.1), 1: (24.8, 3.5)}
+
+    def test_user_can_monitor_second_battery_with_first_monitor_disabled(self) -> None:
+        """Given only battery 2 is enabled, its telemetry remains available."""
+        master = Mock()
+        master.recv_match.side_effect = [self._battery_message(1, 24800), None]
+        commands = FlightControllerCommands(
+            params_manager=Mock(fc_parameters={"BATT_MONITOR": 0, "BATT2_MONITOR": 4}),
+            connection_manager=Mock(master=master),
+        )
+
+        readings, error = commands.get_battery_statuses()
+
+        assert error == ""
+        assert readings == {1: (24.8, 2.1)}
+
+    def test_stale_battery_expires_while_another_continues_reporting(self) -> None:
+        """Given independent streams, refreshing battery 2 does not extend battery 1's lifetime."""
+        master = Mock()
+        commands = FlightControllerCommands(
+            params_manager=Mock(fc_parameters={"BATT_MONITOR": 4, "BATT2_MONITOR": 4}),
+            connection_manager=Mock(master=master),
+        )
+        master.recv_match.side_effect = [self._battery_message(0, 12400), self._battery_message(1, 24800), None]
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time", return_value=100):
+            commands.get_battery_statuses()
+        master.recv_match.side_effect = [self._battery_message(1, 24700), None]
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time",
+            return_value=100 + commands.BATTERY_STATUS_CACHE_TIME,
+        ):
+            readings, error = commands.get_battery_statuses()
+
+        assert error == ""
+        assert readings == {1: (24.7, 2.1)}
+
+    def test_reconnection_does_not_reuse_previous_vehicle_readings(self) -> None:
+        """Given a new connection without telemetry, cached readings from the previous vehicle disappear."""
+        master = Mock()
+        master.recv_match.side_effect = [self._battery_message(0, 12400), None]
+        connection = Mock(master=master)
+        commands = FlightControllerCommands(
+            params_manager=Mock(fc_parameters={"BATT_MONITOR": 4}),
+            connection_manager=connection,
+        )
+        commands.get_battery_statuses()
+        connection.master = Mock()
+        connection.master.recv_match.return_value = None
+
+        readings, error = commands.get_battery_statuses()
+
+        assert readings is None
+        assert error
+
+    def test_cell_voltages_are_summed_and_unavailable_readings_stay_unknown(self) -> None:
+        """Given cell telemetry or unavailable fields, report pack voltage and retain unknown measurements."""
+        message = self._battery_message(0, 4200, -1)
+        message.voltages = [4200, 4150] + [65535] * 8
+        message.voltages_ext = [4100, 0, 0, 0]
+        master = Mock()
+        master.recv_match.side_effect = [message, self._battery_message(1, 65535), None]
+        commands = FlightControllerCommands(
+            params_manager=Mock(fc_parameters={"BATT_MONITOR": 4, "BATT2_MONITOR": 4}),
+            connection_manager=Mock(master=master),
+        )
+
+        readings, error = commands.get_battery_statuses()
+
+        assert error == ""
+        assert readings is not None
+        assert readings[0][0] == pytest.approx(12.45)
+        assert isnan(readings[0][1])
+        assert isnan(readings[1][0])
+
+    @pytest.mark.parametrize("pack_millivolts", [65534, 65535, 65536])
+    def test_user_can_read_pack_voltage_across_the_cell_sentinel_value(self, pack_millivolts: int) -> None:
+        """
+        Valid pack totals remain readable near the cell sentinel value.
+
+        GIVEN: A pack total encoded across valid voltage fields near 65.535 V.
+        WHEN: The user reads battery telemetry.
+        THEN: The sum remains a valid voltage, even when it equals the cell sentinel.
+        """
+        message = self._battery_message(0, 65534)
+        message.voltages = [65534, pack_millivolts - 65534] + [65535] * 8
+        master = Mock()
+        master.recv_match.side_effect = [message, None]
+        commands = FlightControllerCommands(
+            params_manager=Mock(fc_parameters={"BATT_MONITOR": 4}), connection_manager=Mock(master=master)
+        )
+
+        readings, error = commands.get_battery_statuses()
+
+        assert error == ""
+        assert readings is not None
+        assert readings[0][0] == pytest.approx(pack_millivolts / 1000)

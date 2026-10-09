@@ -14,7 +14,7 @@ from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
 from logging import warning as logging_warning
-from math import nan
+from math import isnan, nan
 from os import path as os_path
 from pathlib import Path
 from typing import Any
@@ -45,6 +45,10 @@ class FlightControllerConnectionError(MotorTestError):
 
 class MotorTestSafetyError(MotorTestError):
     """Raised when motor test conditions are unsafe."""
+
+    def __init__(self, message: str, *, battery_related: bool = False) -> None:
+        super().__init__(message)
+        self.battery_related = battery_related
 
 
 class ParameterError(MotorTestError):
@@ -320,7 +324,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                                          or None if not available
 
         """
-        return self.battery_monitor.get_battery_status()
+        return (self.battery_monitor.get_battery_statuses() or {}).get(0)
 
     def get_voltage_thresholds(self) -> tuple[float, float]:
         """
@@ -330,7 +334,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             tuple[float, float]: (min_voltage, max_voltage) for safe motor testing
 
         """
-        return self.battery_monitor.get_voltage_thresholds()
+        return self.battery_monitor.get_voltage_thresholds(0)
 
     def get_voltage_status(self) -> str:
         """
@@ -340,7 +344,8 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             str: "safe", "unsafe", "disabled", or "unavailable"
 
         """
-        return self.battery_monitor.get_voltage_status()
+        status = self.get_battery_status()
+        return self.battery_monitor.get_voltage_status(0, status[0] if status else None)
 
     def is_motor_test_safe(self) -> None:
         """
@@ -355,27 +360,28 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         if self.flight_controller.master is None:
             raise FlightControllerConnectionError(_("Flight controller not connected."))
 
-        # Check battery monitoring using battery monitor
-        if not self.battery_monitor.is_battery_monitoring_enabled():
+        # Motor voltage thresholds and telemetry apply only to battery 1.
+        if self.flight_controller.fc_parameters.get("BATT_MONITOR", 0) == 0:
             # If battery monitoring is disabled, we still warn but don't fail
             logging_warning(_("Battery monitoring disabled, cannot verify voltage."))
             return
 
         # Check battery voltage status using battery monitor
-        voltage_status = self.battery_monitor.get_voltage_status()
-        if voltage_status == "unavailable":
-            raise MotorTestSafetyError(_("Could not read battery status."))
-        if voltage_status == "critical":
-            battery_status = self.battery_monitor.get_battery_status()
+        voltage_status = self.get_voltage_status()
+        if voltage_status == _("unavailable"):
+            raise MotorTestSafetyError(_("Could not read battery status."), battery_related=True)
+        if voltage_status == _("critical"):
+            battery_status = self.get_battery_status()
             voltage, _current = battery_status or (nan, nan)
-            min_voltage, max_voltage = self.battery_monitor.get_voltage_thresholds()
+            min_voltage, max_voltage = self.get_voltage_thresholds()
             raise MotorTestSafetyError(
                 _("Battery voltage %(voltage).1fV is outside safe range (%(min).1fV - %(max).1fV)")
                 % {
                     "voltage": voltage,
                     "min": min_voltage,
                     "max": max_voltage,
-                }
+                },
+                battery_related=True,
             )
 
     def set_parameter(
@@ -1236,11 +1242,11 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
 
         """
         voltage_status = self.get_voltage_status()
-        if voltage_status == "safe":
+        if voltage_status == _("safe"):
             return "green"
-        if voltage_status == "low":
+        if voltage_status == _("low"):
             return "orange"
-        return "red" if voltage_status == "critical" else "gray"
+        return "red" if voltage_status == _("critical") else "gray"
 
     def get_battery_display_text(self) -> tuple[str, str]:
         """
@@ -1250,14 +1256,14 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             tuple[str, str]: (voltage_text, current_text)
 
         """
-        if not self.is_battery_monitoring_enabled():
+        if self.flight_controller.fc_parameters.get("BATT_MONITOR", 0) == 0:
             return _("Voltage: Disabled"), _("Current: Disabled")
 
         status = self.get_battery_status()
         if status:
             voltage, current = status
-            voltage_text = _("Voltage: %(volt).2fV") % {"volt": voltage}
-            current_text = _("Current: %(curr).2fA") % {"curr": current}
+            voltage_text = _("Voltage: N/A") if isnan(voltage) else _("Voltage: %(volt).2fV") % {"volt": voltage}
+            current_text = _("Current: N/A") if isnan(current) else _("Current: %(curr).2fA") % {"curr": current}
             return voltage_text, current_text
         return _("Voltage: N/A"), _("Current: N/A")
 
@@ -1306,18 +1312,18 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             "Reason: %(reason)s"
         ) % {"reason": reason}
 
-    def is_battery_related_safety_issue(self, reason: str) -> bool:
+    def is_battery_related_safety_issue(self, error: MotorTestSafetyError) -> bool:
         """
         Check if safety issue is battery/voltage related.
 
         Args:
-            reason: Safety check failure reason
+            error: Safety check failure
 
         Returns:
             bool: True if battery/voltage related
 
         """
-        return "voltage" in reason.lower() or "battery" in reason.lower()
+        return error.battery_related
 
     def get_current_frame_selection_text(self) -> str:
         """

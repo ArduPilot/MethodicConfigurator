@@ -12,12 +12,15 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from math import isnan
+
 import pytest
 
 from ardupilot_methodic_configurator.backend_flightcontroller_business_logic import (
     calculate_motor_sequence_number,
     calculate_voltage_thresholds,
     convert_battery_telemetry_units,
+    get_enabled_battery_ids,
     get_frame_info,
     is_battery_monitoring_enabled,
     validate_battery_voltage,
@@ -286,11 +289,11 @@ class TestBatteryTelemetryConversion:
 
         Given -1 values (MAVLink "not available" marker)
         When converting
-        Then 0.0 is returned for both.
+        Then NaN is returned for both.
         """
         voltage, current = convert_battery_telemetry_units(-1, -1)
-        assert voltage == 0.0
-        assert current == 0.0
+        assert isnan(voltage)
+        assert isnan(current)
 
     def test_mixed_validity(self) -> None:
         """
@@ -298,11 +301,11 @@ class TestBatteryTelemetryConversion:
 
         Given valid voltage but invalid current
         When converting
-        Then voltage is converted, current is 0.
+        Then voltage is converted, current is unavailable.
         """
         voltage, current = convert_battery_telemetry_units(11100, -1)
         assert voltage == pytest.approx(11.1)
-        assert current == 0.0
+        assert isnan(current)
 
 
 class TestThrottleValidation:
@@ -413,3 +416,11 @@ class TestMotorSequenceNumber:
         """
         assert calculate_motor_sequence_number(1, zero_based=False) == 1
         assert calculate_motor_sequence_number(4, zero_based=False) == 4
+
+
+@pytest.mark.parametrize(
+    ("parameter_name", "battery_id"), [("BATT_MONITOR", 0), ("BATT2_MONITOR", 1), ("BATTA_MONITOR", 9), ("BATTG_MONITOR", 15)]
+)
+def test_enabled_battery_ids_follow_ardupilot_parameter_groups(parameter_name: str, battery_id: int) -> None:
+    """Given any supported monitor group, its zero-based ID is enabled independently of battery 1."""
+    assert get_enabled_battery_ids({parameter_name: 4}) == [battery_id]
