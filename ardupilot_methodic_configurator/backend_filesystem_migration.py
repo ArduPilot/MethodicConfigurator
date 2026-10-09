@@ -730,8 +730,9 @@ def _restore_missing_configuration_step_files(  # pylint: disable=too-many-local
 
     A project may be missing files introduced by a newer configuration. Restore only step files
     that exist in both the active configuration-step definition and the matching empty template.
-    Existing project files, including empty files, are never overwritten. The v1→v2 migration
-    calls this before splitting parameters so its destination files can be seeded from the template.
+    Existing project files, including empty files, are never overwritten. Matching .pdef.xml
+    sidecars are restored with their step files. The v1→v2 migration calls this before splitting
+    parameters so its destination files can be seeded from the template.
     Copies are published atomically where hard links are available; otherwise
     exclusive creation preserves existing files and failed copies are removed for retry.
     """
@@ -782,6 +783,13 @@ def _restore_missing_configuration_step_files(  # pylint: disable=too-many-local
             # LocalFilesystem.rename_parameter_files() will migrate this project file.
             # Restoring the new template filename here would block that rename.
             continue
+
+        source_documentation = source.with_suffix(".pdef.xml")
+        if source_documentation.is_file():
+            # Publish documentation first so a failed sidecar copy can be retried without
+            # the parameter file's presence causing this restoration to be skipped.
+            _copy_configuration_step_file(source_documentation, destination.with_suffix(".pdef.xml"))
+            logging.info(_("Restored missing configuration documentation from template: %s"), source_documentation.name)
 
         _copy_configuration_step_file(source, destination)
         logging.info(_("Restored missing configuration file from template: %s"), filename)

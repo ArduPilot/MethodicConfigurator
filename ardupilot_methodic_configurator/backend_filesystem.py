@@ -292,8 +292,14 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             for old_filename in file_info.get("old_filenames", []):
                 if old_filename == new_filename:
                     continue
-                if self.vehicle_configuration_file_exists(old_filename):
-                    if self.vehicle_configuration_file_exists(new_filename):
+                old_file_exists = self.vehicle_configuration_file_exists(old_filename) or (
+                    self.vehicle_configuration_file_size(old_filename) == 0
+                )
+                new_file_exists = self.vehicle_configuration_file_exists(new_filename) or (
+                    self.vehicle_configuration_file_size(new_filename) == 0
+                )
+                if old_file_exists:
+                    if new_file_exists:
                         logging_error(
                             _("File %s already exists. Will not rename file %s to %s."),
                             new_filename,
@@ -306,10 +312,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                     os_rename(old_filename_path, new_filename_path)
                     logging_info("Renamed %s to %s", old_filename, new_filename)
                     self._rename_parameter_documentation_file(old_filename, new_filename)
-                elif (
-                    self.vehicle_configuration_file_size(old_filename) is None
-                    and self.vehicle_configuration_file_size(new_filename) is not None
-                ):
+                elif new_file_exists:
                     # Repair sidecars orphaned by earlier versions or an interrupted
                     # rename, but never detach documentation from an existing old step.
                     self._rename_parameter_documentation_file(old_filename, new_filename)
