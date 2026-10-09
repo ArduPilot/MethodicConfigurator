@@ -339,7 +339,7 @@ _PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str]]]] = {
     "ArduCopter": [
         (
             "14_mp_setup_mandatory_hardware.param",
-            "15_accelerometer_calibration.param",
+            "16_accelerometer_calibration.param",
             [
                 r"(?:INS_ACC[23]?OFFS|INS[45]_ACCOFFS)_[XYZ]",
                 r"(?:INS_ACC[23]?SCAL|INS[45]_ACCSCAL)_[XYZ]",
@@ -353,17 +353,17 @@ _PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str]]]] = {
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
-            "16_accelerometer_level.param",
+            "17_accelerometer_level.param",
             [r"AHRS_TRIM_[XY]"],
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
-            "18_compass_calibration.param",
+            "19_compass_calibration.param",
             [r"COMPASS_.+"],
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
-            "21_flight_modes.param",
+            "22_flight_modes.param",
             [r"FLTMODE[1-6]", "INITIAL_MODE"],
         ),
         (
@@ -378,12 +378,12 @@ _PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str]]]] = {
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
-            "24_initial_atc.param",
+            "13_initial_atc.param",
             [r"ATC_ACC_[PRY]_MAX"],
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
-            "22_general_configuration.param",
+            "23_general_configuration.param",
             [r"RNGFND\d*_.*|FLOW_TYPE"],
         ),
         (
@@ -475,13 +475,13 @@ _PARAM_COPIES_V1_TO_V2: dict[str, list[tuple[str, str, str, list[str]]]] = {
         (
             "14_mp_setup_mandatory_hardware.param",
             "03_imu_temperature_calibration_results.param",
-            "15_accelerometer_calibration.param",
+            "16_accelerometer_calibration.param",
             [r"INS_ACC[1-3]_CALTEMP|INS[45]_ACC_CALTEMP"],
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
-            "16_accelerometer_level.param",
-            "15_accelerometer_calibration.param",
+            "17_accelerometer_level.param",
+            "16_accelerometer_calibration.param",
             [r"AHRS_TRIM_[XY]"],
         ),
     ],
@@ -900,7 +900,7 @@ def _surface_unmapped_copter_parameters(remaining_by_source: dict[Path, list[str
         _obsolete, retained = _extract_param_lines(remaining, obsolete_patterns[src_path.name])
         unmapped = [line for line in retained if _param_name_from_line(line)]
         if unmapped:
-            destination = "22_general_configuration.param"
+            destination = "23_general_configuration.param"
             accumulated.setdefault(destination, []).extend(unmapped)
             logging.warning(
                 _("Unmapped parameters from %s copied to mandatory step %s for review: %s"),

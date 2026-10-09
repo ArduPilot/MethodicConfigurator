@@ -628,7 +628,7 @@ when the connection type is **Main Out** or **AIO**.
    mapping in the parameter editor. Configure non-motor functions, such as a payload, landing
    gear, or buzzer, manually; leave genuinely unused outputs disabled.
 1. Upload the file, then perform the later
-   [motor/propeller order and direction test](#693-motorpropeller-order-and-direction-test)
+   [motor/propeller order and direction test](#6103-motorpropeller-order-and-direction-test)
    before fitting propellers or flying.
 
 This step assigns output functions only. Configure the ESC protocol and calibrate the ESCs in
@@ -641,13 +641,25 @@ This is required if use ESC RPM telemetry.
 
 Repeat the steps from [Section 6.1](#61-edit-and-upload-each-intermediate-parameter-file) to edit and upload the `12_motor.param` file to configure motor specifications including the number of electrical poles, which is needed to determine motor RPM from ESC telemetry.
 
-## 6.9 Configure ESC outputs, motor thrust and motor tests
+## 6.9 Initial attitude PID gains (vehicle size dependent)
+
+Propeller size has a big influence on the vehicle dynamics, this adapts controller response to it.
+
+Repeat the steps from [Section 6.1](#61-edit-and-upload-each-intermediate-parameter-file) to edit and upload the `13_initial_atc.param` file.
+
+Apply this initialization only once, before the first flight. Do not repeat it after tuning,
+because it would reset values refined by later steps. Continue with ESC configuration and the
+remaining basic setup.
+If motor thrust was measured earlier, compare the proposed `MOT_THST_EXPO` estimate with that
+measurement and use the *manual override* checkbox to override the estimated value with the measured one.
+
+## 6.10 Configure ESC outputs, motor thrust and motor tests
 
 The frame class and output functions were assigned in `11_servo_outputs.param`.
-Use `13_esc.param` to configure the ESC output settings and motor thrust scaling,
+Use `14_esc.param` to configure the ESC output settings and motor thrust scaling,
 then verify motor order and direction as described below. Keep the propellers removed.
 
-### 6.9.1 DShot and bidirectional DShot
+### 6.10.1 DShot and bidirectional DShot
 
 If you use DShot ESCs, read the [DShot ESC documentation](https://ardupilot.org/copter/docs/common-dshot-escs.html) and
 the [ESC telemetry documentation](https://ardupilot.org/copter/docs/common-esc-telemetry.html) before configuring the outputs.
@@ -679,7 +691,7 @@ Set `SERVO_BLH_BDMASK` for the motor outputs, set `SERVO_DSHOT_ESC` to the insta
 Incorrect firmware, output masks or pole counts can cause unpredictable motor operation or incorrect RPM and harmonic-notch-filter results.
 Test with the propellers removed.
 
-### 6.9.2 Motor thrust scaling
+### 6.10.2 Motor thrust scaling
 
 Follow [motor thrust scaling](https://ardupilot.org/copter/docs/motor-thrust-scaling.html) for
 `MOT_THST_EXPO`, `MOT_SPIN_MIN` and `MOT_SPIN_MAX`.
@@ -690,9 +702,9 @@ If this is set too high we see an increase in gain at the lower end of the thrus
 
 **Therefore when set too high you can see instability at low throttle and if set too low you can see instability at high throttle.**
 
-The initial-attitude step later supplies a propeller-size estimate for `MOT_THST_EXPO`.
+The initial-attitude step supplies a propeller-size estimate for `MOT_THST_EXPO`.
 If you have measured motor-thrust values, keep them documented and review that estimate
-before uploading the initial-attitude file in Section 6.20 so it does not replace your measured value.
+before uploading the initial-attitude file in Section 6.9 so it does not replace your measured value.
 But we recommend using a [Thrust Stand](https://ardupilot.org/copter/docs/motor-thrust-scaling.html#thrust-stands) or [Olliw method](http://www.olliw.eu/2018/thrust-from-motor-data/) or [ArduPilot DIY Thrust Stand](https://discuss.ardupilot.org/t/ardupilot-thrust-stand/68352) to determine their value.
 
 At the time of writing [Automatic `MOT_THST_EXPO` estimation lua script](https://discuss.ardupilot.org/t/automatic-mot-thst-expo-estimation-lua-script/100704/) is not yet ready for production use.
@@ -715,9 +727,9 @@ We imported the data into the spreadsheet and created this graph:
 
 <img width="690" height="389" src="images/blog/motor_thrust_chart.PNG" alt="motor_thrust_chart" />
 
-Repeat the steps from [Section 6.1](#61-edit-and-upload-each-intermediate-parameter-file) to edit and upload the `13_esc.param` file
+Repeat the steps from [Section 6.1](#61-edit-and-upload-each-intermediate-parameter-file) to edit and upload the `14_esc.param` file
 
-### 6.9.3 Motor/propeller order and direction test
+### 6.10.3 Motor/propeller order and direction test
 
 Do this test **without propellers**. The motor-test order is **A, B, C, D**, not the
 motor-function numbering 1, 2, 3, 4.
@@ -739,13 +751,13 @@ Do not fit the propellers yet. Complete the remaining basic configuration first.
 Follow [setting Motor Range](https://ardupilot.org/copter/docs/set-motor-range.html) for the
 ESC protocol you use; any procedure requiring propellers must wait until Section 7.
 
-## 6.10 Configure flight controller orientation
+## 6.11 Configure flight controller orientation
 
 Follow [mounting the autopilot](https://ardupilot.org/copter/docs/common-mounting-the-flight-controller.html) documentation to determine the correct value of the [AHRS_ORIENTATION](https://ardupilot.org/copter/docs/parameters.html#ahrs-orientation) parameter.
 
-Use the procedure in Section 6.1 to edit and upload `14_board_orientation.param`.
+Use the procedure in Section 6.1 to edit and upload `15_board_orientation.param`.
 
-## 6.11 Accelerometer calibration: `15_accelerometer_calibration.param`
+## 6.12 Accelerometer calibration: `16_accelerometer_calibration.param`
 
 Open this parameter file, complete the calibration below, then save and upload the resulting values.
 
@@ -768,7 +780,7 @@ resulting scaling values. The plugin offers two methods. Follow the
 The live **Movement amplitude** should be close to 9.81 m/s² when the vehicle is still. Wait for
 the success message before continuing to the next step.
 
-## 6.12 Accelerometer level: `16_accelerometer_level.param`
+## 6.13 Accelerometer level: `17_accelerometer_level.param`
 
 Open this parameter file if a separate level calibration is needed, then save and upload the resulting trim values.
 
@@ -781,13 +793,13 @@ still. Click **Level Calibration (Trim)** and wait for the result message. The c
 roll and pitch trim (`AHRS_TRIM_X` and `AHRS_TRIM_Y`); it does not adjust yaw. If the result is
 unexpected, correct the physical mounting or surface level before trying again.
 
-## 6.13 Configure the GNSS receivers
+## 6.14 Configure the GNSS receivers
 
 GNSS receivers very often contain a magnetometer (compass) sensor. Configure them before the compass calibration in the next step.
 
-Repeat the steps from [Section 6.1](#61-edit-and-upload-each-intermediate-parameter-file) to edit and upload the `17_gnss.param` file
+Repeat the steps from [Section 6.1](#61-edit-and-upload-each-intermediate-parameter-file) to edit and upload the `18_gnss.param` file
 
-## 6.14 Compass calibration: `18_compass_calibration.param`
+## 6.15 Compass calibration: `19_compass_calibration.param`
 
 Open this parameter file, complete the calibration below, then save and upload the resulting values.
 
@@ -807,17 +819,17 @@ Disable internal compasses if the battery or power wires are close to the flight
 Do not select *Automatically learn offsets* for a multicopter; in-flight MagFit is performed
 later. For large vehicles, consider [large vehicle MagCal](https://ardupilot.org/copter/docs/common-compass-calibration-in-mission-planner.html#large-vehicle-magcal).
 
-## 6.15 Remote ID (aka Drone ID), optional
+## 6.16 Remote ID (aka Drone ID), optional
 
 Read and follow [ArduPilot's Remote ID setup instructions](https://ardupilot.org/copter/docs/common-remoteid.html). You might have to [build OpenDroneID firmware for production](https://ardupilot.org/dev/docs/opendroneid.html).
 
-Repeat the steps from [Section 6.1](#61-edit-and-upload-each-intermediate-parameter-file) to edit and upload the `19_remote_id.param` file
+Repeat the steps from [Section 6.1](#61-edit-and-upload-each-intermediate-parameter-file) to edit and upload the `20_remote_id.param` file
 
-## 6.16 On Screen Display (optional)
+## 6.17 On Screen Display (optional)
 
-Repeat the steps from [Section 6.1](#61-edit-and-upload-each-intermediate-parameter-file) to edit and upload the `20_osd.param` file to configure the *On Screen Display* (OSD) to show relevant flight data on the FPV video feed (optional, only applicable if your vehicle has an OSD).
+Repeat the steps from [Section 6.1](#61-edit-and-upload-each-intermediate-parameter-file) to edit and upload the `21_osd.param` file to configure the *On Screen Display* (OSD) to show relevant flight data on the FPV video feed (optional, only applicable if your vehicle has an OSD).
 
-## 6.17 Flight modes: `21_flight_modes.param`
+## 6.18 Flight modes: `22_flight_modes.param`
 
 Open this parameter file to configure the flight-mode switch assignments.
 
@@ -830,33 +842,22 @@ Do not use [`POSHOLD`](https://ardupilot.org/copter/docs/poshold-mode.html); use
 [`LOITER`](https://ardupilot.org/copter/docs/loiter-mode.html) instead when a good GNSS signal is
 available. Otherwise, [`ALTHOLD`](https://ardupilot.org/copter/docs/altholdmode.html) is recommended.
 
-## 6.18 General configuration
+## 6.19 General configuration
 
 Now do some general configuration
 
 1. Connect the flight controller to the PC.
 1. Start *ArduPilot Methodic Configurator* and select the vehicle directory where you previously stored your *intermediate parameter files*.
-1. Select `22_general_configuration.param` on the *Current intermediate parameter file:* Combobox.
-1. When asked *Update file with values from FC?* select `Yes` to copy current FC values to the `22_general_configuration.param` file.
-1. Read the documentation links inside the `22_general_configuration.param` documentation.
+1. Select `23_general_configuration.param` on the *Current intermediate parameter file:* Combobox.
+1. When asked *Update file with values from FC?* select `Yes` to copy current FC values to the `23_general_configuration.param` file.
+1. Read the documentation links inside the `23_general_configuration.param` documentation.
 1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements.
 1. Press `Upload selected params to FC, and advance to next file` button.
 
-## 6.19 Safety setup
+## 6.20 Safety setup
 
-Repeat the steps from [Section 6.1](#61-edit-and-upload-each-intermediate-parameter-file) to edit and upload the `23_safety_setup.param` file to configure safety parameters including arming checks, geofence, failsafe actions and ESC slew rate limits.
+Repeat the steps from [Section 6.1](#61-edit-and-upload-each-intermediate-parameter-file) to edit and upload the `24_safety_setup.param` file to configure safety parameters including arming checks, geofence, failsafe actions and ESC slew rate limits.
 These protect the vehicle and its surroundings and must be configured before the first flight.
-
-## 6.20 Initial attitude PID gains (vehicle size dependent)
-
-Propeller size has a big influence on the vehicle dynamics, this adapts controller response to it.
-
-Repeat the steps from [Section 6.1](#61-edit-and-upload-each-intermediate-parameter-file) to edit and upload the `24_initial_atc.param` file
-
-Apply this initialization only once, before the first flight. Do not repeat it after tuning,
-because it would reset values refined by later steps. Continue with notch-filter setup and logging.
-If motor thrust was measured earlier, compare the proposed `MOT_THST_EXPO` estimate with that
-measurement and retain the measured value rather than replacing it with the initial estimate.
 
 ## 6.21 Check the ArduPilot Hardware Report
 
@@ -1101,7 +1102,7 @@ The graph shows Motor RC Outputs (RCOU-C1-C4) at hover:
 
 This level of oscillation makes the craft unflyable due to visible shaking. **Tuning cannot proceed until this is corrected.**
 
-Even after applying the [initial tune parameters in Section 6.20](#620-initial-attitude-pid-gains-vehicle-size-dependent):
+Even after applying the [initial tune parameters in Section 6.9](#69-initial-attitude-pid-gains-vehicle-size-dependent):
 
 ![Initial Parameters](images/blog/rcout_oscillations_with_initial_params.jpg)
 

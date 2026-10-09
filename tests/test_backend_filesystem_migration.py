@@ -1114,8 +1114,8 @@ class TestV1ToV2ParameterExtractions:
         "step_migration",
         [
             ("07_remote_controller_controller.param", "06_remote_controller_controller.param", "RC1_MIN"),
-            ("13_initial_atc.param", "24_initial_atc.param", "ATC_ACC_P_MAX"),
-            ("15_general_configuration.param", "22_general_configuration.param", "FLOW_TYPE"),
+            ("11_initial_atc.param", "13_initial_atc.param", "ATC_ACC_P_MAX"),
+            ("15_general_configuration.param", "23_general_configuration.param", "FLOW_TYPE"),
         ],
     )
     @pytest.mark.parametrize("configuration_location", ["project", "package"])
@@ -1175,10 +1175,10 @@ class TestV1ToV2ParameterExtractions:
         template_dir.mkdir(parents=True)
         template_values = {
             "03_imu_temperature_calibration_results.param": "TEMPLATE_TEMP,1\n",
-            "15_accelerometer_calibration.param": "TEMPLATE_ACCEL,1\nINS_ACCSCAL_X,1\n",
-            "16_accelerometer_level.param": "TEMPLATE_LEVEL,1\n",
-            "18_compass_calibration.param": "TEMPLATE_COMPASS,1\n",
-            "21_flight_modes.param": "INITIAL_MODE,0\n",
+            "16_accelerometer_calibration.param": "TEMPLATE_ACCEL,1\nINS_ACCSCAL_X,1\n",
+            "17_accelerometer_level.param": "TEMPLATE_LEVEL,1\n",
+            "19_compass_calibration.param": "TEMPLATE_COMPASS,1\n",
+            "22_flight_modes.param": "INITIAL_MODE,0\n",
             "11_servo_outputs.param": "TEMPLATE_SERVO,1\nSERVO1_FUNCTION,0\nFRAME_CLASS,0\n",
         }
         for filename, content in template_values.items():
@@ -1188,7 +1188,7 @@ class TestV1ToV2ParameterExtractions:
             json.dumps(
                 {
                     "steps": {filename: {} for filename in template_values}
-                    | {"14_board_orientation.param": {"old_filenames": ["05_board_orientation.param"]}}
+                    | {"15_board_orientation.param": {"old_filenames": ["05_board_orientation.param"]}}
                 }
             ),
             encoding="utf-8",
@@ -1219,10 +1219,10 @@ class TestV1ToV2ParameterExtractions:
 
         assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
 
-        accelerometer = (vehicle_dir / "15_accelerometer_calibration.param").read_text(encoding="utf-8")
+        accelerometer = (vehicle_dir / "16_accelerometer_calibration.param").read_text(encoding="utf-8")
         imu_temperature = (vehicle_dir / "03_imu_temperature_calibration_results.param").read_text(encoding="utf-8")
-        accelerometer_level = (vehicle_dir / "16_accelerometer_level.param").read_text(encoding="utf-8")
-        flight_modes = (vehicle_dir / "21_flight_modes.param").read_text(encoding="utf-8")
+        accelerometer_level = (vehicle_dir / "17_accelerometer_level.param").read_text(encoding="utf-8")
+        flight_modes = (vehicle_dir / "22_flight_modes.param").read_text(encoding="utf-8")
         servo_outputs = (vehicle_dir / "11_servo_outputs.param").read_text(encoding="utf-8")
 
         assert "INS_ACC1_CALTEMP,45" in accelerometer
@@ -1233,7 +1233,7 @@ class TestV1ToV2ParameterExtractions:
         assert "TEMPLATE_ACCEL,1" in accelerometer
         assert "TEMPLATE_TEMP,1" in imu_temperature
         assert "TEMPLATE_LEVEL,1" in accelerometer_level
-        assert "TEMPLATE_COMPASS,1" in (vehicle_dir / "18_compass_calibration.param").read_text(encoding="utf-8")
+        assert "TEMPLATE_COMPASS,1" in (vehicle_dir / "19_compass_calibration.param").read_text(encoding="utf-8")
         assert "INITIAL_MODE,1" in flight_modes
         assert flight_modes.count("INITIAL_MODE,") == 1
         assert "FLTMODE1,3" in flight_modes
@@ -1250,7 +1250,7 @@ class TestV1ToV2ParameterExtractions:
         ]
         assert frame_class_files == ["11_servo_outputs.param"]
 
-    @pytest.mark.parametrize("failed_destination", ["15_accelerometer_calibration.param", "16_accelerometer_level.param"])
+    @pytest.mark.parametrize("failed_destination", ["16_accelerometer_calibration.param", "17_accelerometer_level.param"])
     def test_interrupted_split_preserves_source_values_and_can_be_retried(
         self, vehicle_dir: Path, monkeypatch: pytest.MonkeyPatch, failed_destination: str
     ) -> None:
@@ -1287,10 +1287,10 @@ class TestV1ToV2ParameterExtractions:
         assert json.loads(components.read_text(encoding="utf-8"))["Format version"] == 1
 
         assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
-        assert (vehicle_dir / "15_accelerometer_calibration.param").read_text(encoding="utf-8") == (
+        assert (vehicle_dir / "16_accelerometer_calibration.param").read_text(encoding="utf-8") == (
             "INS_ACCSCAL_X,0.998941\nAHRS_TRIM_X,0.01\n"
         )
-        assert (vehicle_dir / "16_accelerometer_level.param").read_text(encoding="utf-8") == "AHRS_TRIM_X,0.01\n"
+        assert (vehicle_dir / "17_accelerometer_level.param").read_text(encoding="utf-8") == "AHRS_TRIM_X,0.01\n"
         assert source.read_text(encoding="utf-8") == "UNRELATED_SOURCE,9\n"
         assert json.loads(components.read_text(encoding="utf-8"))["Format version"] == 2
 
@@ -1298,9 +1298,9 @@ class TestV1ToV2ParameterExtractions:
     @pytest.mark.parametrize(
         "failed_filename",
         [
-            "15_accelerometer_calibration.param",
-            "16_accelerometer_level.param",
-            "22_general_configuration.param",
+            "16_accelerometer_calibration.param",
+            "17_accelerometer_level.param",
+            "23_general_configuration.param",
             "14_mp_setup_mandatory_hardware.param",
             "vehicle_components.json",
         ],
@@ -1321,9 +1321,9 @@ class TestV1ToV2ParameterExtractions:
             encoding="utf-8",
         )
         source = vehicle_dir / "14_mp_setup_mandatory_hardware.param"
-        accelerometer = vehicle_dir / "15_accelerometer_calibration.param"
-        level = vehicle_dir / "16_accelerometer_level.param"
-        general = vehicle_dir / "22_general_configuration.param"
+        accelerometer = vehicle_dir / "16_accelerometer_calibration.param"
+        level = vehicle_dir / "17_accelerometer_level.param"
+        general = vehicle_dir / "23_general_configuration.param"
         source.write_bytes(b"INS_ACCSCAL_X,0.998941\r\nAHRS_TRIM_X,0.01\r\nUNRELATED_SOURCE,9\r\n")
         accelerometer.write_bytes(b"# measured calibration\r\nUNRELATED_ACCEL,17\r\nINS_ACCSCAL_X,1\r\n")
         level.write_bytes(b"# keep level settings\r\nUNRELATED_LEVEL,23\r\nAHRS_TRIM_X,0\r\n")
@@ -1367,7 +1367,7 @@ class TestV1ToV2ParameterExtractions:
         """
         source = vehicle_dir / "14_mp_setup_mandatory_hardware.param"
         source.write_text("INS_ACCSCAL_X,0.998941 # measured\nINS_USE,1\nUNRELATED_SOURCE,9\n", encoding="utf-8")
-        destination = vehicle_dir / "15_accelerometer_calibration.param"
+        destination = vehicle_dir / "16_accelerometer_calibration.param"
         destination.write_text("# keep this comment\nINS_ACCSCAL_X,1\nINS_USE,0\nINS_ACCOFFS_X,0.25\n", encoding="utf-8")
 
         migration_module._migrate_v1_to_v2(vehicle_dir, "ArduCopter")  # pylint: disable=protected-access
@@ -1412,11 +1412,11 @@ class TestV1ToV2ParameterExtractions:
         assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
 
         expected = {
-            "15_accelerometer_calibration.param": ("INS_ACCSCAL_X,0.998941\nINS_ACC1_CALTEMP,45\nAHRS_TRIM_X,0.01\n"),
+            "16_accelerometer_calibration.param": ("INS_ACCSCAL_X,0.998941\nINS_ACC1_CALTEMP,45\nAHRS_TRIM_X,0.01\n"),
             "03_imu_temperature_calibration_results.param": "INS_ACC1_CALTEMP,45\n",
-            "16_accelerometer_level.param": "AHRS_TRIM_X,0.01\n",
-            "18_compass_calibration.param": "COMPASS_OFS_X,12\n",
-            "21_flight_modes.param": "FLTMODE1,0\n",
+            "17_accelerometer_level.param": "AHRS_TRIM_X,0.01\n",
+            "19_compass_calibration.param": "COMPASS_OFS_X,12\n",
+            "22_flight_modes.param": "FLTMODE1,0\n",
             "06_remote_controller_controller.param": "RC1_MIN,1100\n",
             "11_servo_outputs.param": "SERVO1_FUNCTION,33\nFRAME_CLASS,1\n",
         }
@@ -1496,7 +1496,7 @@ class TestV1ToV2ParameterExtractions:
         second_pass_content = source.read_text(encoding="utf-8")
         assert "UNRELATED_TEST,1" in second_pass_content
         assert "INS_ACCSCAL_X,0.998941" not in second_pass_content
-        assert "INS_ACCSCAL_X,0.998941" in (vehicle_dir / "15_accelerometer_calibration.param").read_text(encoding="utf-8")
+        assert "INS_ACCSCAL_X,0.998941" in (vehicle_dir / "16_accelerometer_calibration.param").read_text(encoding="utf-8")
         assert "INS_ACC1_CALTEMP,45" in (vehicle_dir / "03_imu_temperature_calibration_results.param").read_text(
             encoding="utf-8"
         )
@@ -1813,7 +1813,7 @@ class TestDeletedConfigurationStepFiles:  # pylint: disable=too-few-public-metho
         assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
 
         assert not mandatory_hardware.exists()
-        assert "INS_ACCSCAL_X,0.998941" in (vehicle_dir / "15_accelerometer_calibration.param").read_text(encoding="utf-8")
+        assert "INS_ACCSCAL_X,0.998941" in (vehicle_dir / "16_accelerometer_calibration.param").read_text(encoding="utf-8")
 
 
 class TestMissingConfigurationStepFileRestore:
@@ -2269,7 +2269,7 @@ def test_user_can_review_unmapped_hardware_settings_in_simple_mode(
         "UNMAPPED_SETTING,17 # user reason\n",
         encoding="utf-8",
     )
-    general = tmp_path / "22_general_configuration.param"
+    general = tmp_path / "23_general_configuration.param"
     general.write_text("UNRELATED_GENERAL,23\nFLOW_TYPE,0\n", encoding="utf-8")
 
     migration_module._migrate_v1_to_v2(tmp_path, "ArduCopter")  # pylint: disable=protected-access
@@ -2280,7 +2280,7 @@ def test_user_can_review_unmapped_hardware_settings_in_simple_mode(
     assert "UNRELATED_GENERAL,23\n" in contents
     assert "UNMAPPED_SETTING,17 # user reason\n" in contents
     assert "UNMAPPED_SETTING" in caplog.text
-    atc = ParDict.load_param_file_into_dict(str(tmp_path / "24_initial_atc.param"))
+    atc = ParDict.load_param_file_into_dict(str(tmp_path / "13_initial_atc.param"))
     assert {name: param.value for name, param in atc.items()} == {
         "ATC_ACC_P_MAX": 72,
         "ATC_ACC_R_MAX": 73,
@@ -2314,7 +2314,7 @@ def test_user_keeps_fourth_and_fifth_imu_calibration_values(tmp_path: Path) -> N
         "".join(f"{name},{value}\n" for name, value in values.items()), encoding="utf-8"
     )
     migration_module._migrate_v1_to_v2(tmp_path, "ArduCopter")  # pylint: disable=protected-access
-    calibration = ParDict.load_param_file_into_dict(str(tmp_path / "15_accelerometer_calibration.param"))
+    calibration = ParDict.load_param_file_into_dict(str(tmp_path / "16_accelerometer_calibration.param"))
     temperatures = ParDict.load_param_file_into_dict(str(tmp_path / "03_imu_temperature_calibration_results.param"))
     assert {name: param.value for name, param in calibration.items()} == values
     assert {name: param.value for name, param in temperatures.items()} == {

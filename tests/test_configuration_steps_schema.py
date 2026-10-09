@@ -55,7 +55,7 @@ def test_optional_fourth_and_fifth_imu_calibration_uses_real_subgroup_names() ->
         "configuration_steps_ArduCopter.json",
     )
     with open(filename, encoding="utf-8") as file:
-        step = json.load(file)["steps"]["15_accelerometer_calibration.param"]
+        step = json.load(file)["steps"]["16_accelerometer_calibration.param"]
     patterns = step["autoimport_nondefault_regexp"]
     for imu in (4, 5):
         for suffix in ("USE", "ACCOFFS_X", "ACCOFFS_Y", "ACCOFFS_Z", "ACCSCAL_X", "ACCSCAL_Y", "ACCSCAL_Z", "ACC_CALTEMP"):
