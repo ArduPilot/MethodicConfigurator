@@ -14,8 +14,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
 
+import re
 import tkinter as tk
 from contextlib import contextmanager
+from tkinter import font as tkfont
+from tkinter import ttk
 from typing import TYPE_CHECKING, cast
 from unittest.mock import ANY, MagicMock, patch
 from unittest.mock import call as mock_call
@@ -31,6 +34,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (
     ParameterEditorUiServices,
     ParameterEditorWindow,
 )
+from ardupilot_methodic_configurator.frontend_tkinter_show import MonitorBounds
+from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
 from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
 
 if TYPE_CHECKING:
@@ -49,6 +54,12 @@ def _configure_root_stubs(root: MagicMock) -> None:
     root.winfo_rooty = MagicMock(return_value=0)
     root.winfo_width = MagicMock(return_value=800)
     root.winfo_height = MagicMock(return_value=600)
+    root.winfo_x = MagicMock(return_value=0)
+    root.winfo_y = MagicMock(return_value=0)
+    root.geometry = MagicMock(return_value="800x600+0+0")
+    root.state = MagicMock(return_value="normal")
+    root.attributes = MagicMock(return_value=0)
+    root.tk.getboolean.side_effect = lambda value: str(value).lower() in ("1", "true")
 
 
 def _build_parameter_area_container() -> MagicMock:
@@ -56,7 +67,18 @@ def _build_parameter_area_container() -> MagicMock:
     container.destroy = MagicMock()
     container.pack = MagicMock()
     container.winfo_children = MagicMock(return_value=[])
+    container.cget.return_value = 0
     return container
+
+
+def _configure_layout_stubs(editor: ParameterEditorWindow) -> None:
+    """Supply numeric widget dimensions when the widget factory is stubbed out."""
+    if not hasattr(editor, "main_frame"):
+        editor.main_frame = MagicMock()
+    main_frame = cast("MagicMock", editor.main_frame)
+    main_frame.winfo_children = MagicMock(return_value=[])
+    main_frame.winfo_height = MagicMock(return_value=600)
+    editor.parameter_area_container = _build_parameter_area_container()
 
 
 def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:  # noqa: PLR0915, RUF100 # pylint: disable=too-many-statements
@@ -65,6 +87,7 @@ def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:  # noq
     editor.parameter_editor = parameter_editor
     editor.root = MagicMock()
     _configure_root_stubs(editor.root)
+    editor.dpi_scaling_factor = 1.0
     editor.gui_complexity = "normal"
     editor.stage_progress_bar = MagicMock()
     editor.documentation_frame = MagicMock()
@@ -121,16 +144,21 @@ def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:  # noq
     editor._reset_progress_window = None
     editor.file_upload_progress_window = None
     editor._tempcal_imu_progress_window = None
-    editor.main_frame = MagicMock()
+    _configure_layout_stubs(editor)
     parameter_area_container = _build_parameter_area_container()
     editor.parameter_area_container = parameter_area_container
     editor.parameter_container = parameter_area_container
     editor.parameter_area_paned = None
     editor.inline_component_editor = None
+    editor.inline_component_scroll_frame = None
+    editor._inline_component_chrome_height = 0
+    editor._parameter_area_resize_pending = False
     editor._inline_component_name = None
     editor._updating_inline_editor = False
     editor._requested_action = ParameterEditorAction.FINISHED
     editor.inline_component_container = MagicMock()
+    editor.inline_component_container.winfo_reqheight.return_value = 74
+    editor.inline_component_container.cget.return_value = 0
     return editor
 
 
@@ -149,6 +177,7 @@ def parameter_editor() -> MagicMock:
     manager.configuration_phases.return_value = True
     manager.handle_param_file_change_workflow.return_value = ("01_initial.param", True)
     manager.get_plugin.return_value = None
+    manager.get_current_component.return_value = None
     manager.handle_write_changes_workflow = MagicMock()
     manager.handle_copy_fc_values_workflow = MagicMock(return_value="close")
     manager.open_documentation_in_browser = MagicMock()
@@ -212,12 +241,17 @@ class _DummyTkRoot:  # pylint: disable=too-many-instance-attributes, too-few-pub
         self._w = "."
         self.title = MagicMock()
         self.geometry = MagicMock()
+        self.geometry.return_value = "990x630+0+0"
+        self.state = MagicMock(return_value="normal")
+        self.attributes = MagicMock(return_value=0)
+        self.tk.getboolean.side_effect = lambda value: str(value).lower() in ("1", "true")
         self.protocol = MagicMock()
         self.withdraw = MagicMock()
         self.destroy = MagicMock()
         self.deiconify = MagicMock()
         self.update_idletasks = MagicMock()
         self.after = MagicMock()
+        self.after_idle = MagicMock()
         self.winfo_fpixels = MagicMock(return_value=96.0)
         self.winfo_reqheight = MagicMock(return_value=630)
         self.winfo_width = MagicMock(return_value=1)
@@ -227,8 +261,19 @@ class _DummyTkRoot:  # pylint: disable=too-many-instance-attributes, too-few-pub
         self.winfo_pointery = MagicMock(return_value=0)
         self.winfo_screenwidth = MagicMock(return_value=1920)
         self.winfo_screenheight = MagicMock(return_value=1080)
+        self.winfo_rootx = MagicMock(return_value=0)
+        self.winfo_rooty = MagicMock(return_value=0)
+        self.winfo_x = MagicMock(return_value=0)
+        self.winfo_y = MagicMock(return_value=0)
         self.update = MagicMock()
         self.bind = MagicMock()
+
+
+@pytest.fixture(autouse=True)
+def monitor_bounds() -> Iterator[MagicMock]:
+    """Keep monitor detection independent of the host display and mocked Tk handles."""
+    with patch.object(parameter_editor_module, "get_monitor_bounds", return_value=MonitorBounds(0, 0, 1920, 1080)) as bounds:
+        yield bounds
 
 
 @pytest.fixture
@@ -274,6 +319,522 @@ class TestParameterEditorUiServices:  # pylint: disable=too-few-public-methods
 # ============================== PARAMETER FILE FLOW ==============================
 
 
+class TestWindowSizing:
+    """Keep navigation controls visible while respecting the user's window size."""
+
+    @pytest.mark.parametrize("padding", [10, (10,), (10, 10), "10", "10 10", (4, 16), "4 16"])
+    def test_bottom_buttons_keep_their_full_height(
+        self, parameter_editor_window: ParameterEditorWindow, padding: int | tuple[int, ...] | str
+    ) -> None:
+        """
+        Symmetric and asymmetric padding reserve space on both sides of the buttons.
+
+        GIVEN: Fixed controls and two-line buttons with 20 pixels of total padding
+        WHEN: The parameter table is fitted to the window
+        THEN: The table leaves enough room for the full button row and all padding
+        """
+        editor = parameter_editor_window
+        controls = []
+        for height, pady in [(600, 2), (100, (2, 2)), (45, padding)]:
+            widget = MagicMock()
+            widget.winfo_manager.return_value = "pack"
+            widget.winfo_reqheight.return_value = height
+            widget.pack_info.return_value = {"pady": pady}
+            widget.winfo_pixels.side_effect = int
+            controls.append(widget)
+        hidden_editor = MagicMock()
+        hidden_editor.winfo_manager.return_value = ""
+        editor.root.tk.splitlist.side_effect = lambda value: tuple(value.split())
+        editor.main_frame.winfo_children.return_value = [*controls, editor.parameter_area_container, hidden_editor]
+        editor.main_frame.winfo_height.return_value = 854
+
+        editor._resize_parameter_area_to_fit()
+
+        editor.parameter_area_container.configure.assert_called_once_with(height=81)
+
+    @pytest.mark.parametrize(
+        ("screen_height", "root_y", "requested_height", "scaling", "expected_height", "expected_y"),
+        [
+            (768, 69, 854, 1.0, 688, 40),
+            (900, 121, 817, 1.0, 820, 40),
+            (1080, 193, 931, 1.0, 931, 109),
+            (1080, 193, 931, 1.5, 960, 60),
+        ],
+    )
+    # pylint: disable-next=too-many-arguments, too-many-positional-arguments
+    def test_startup_keeps_bottom_controls_on_screen(
+        self,
+        parameter_editor_window: ParameterEditorWindow,
+        monitor_bounds: MagicMock,
+        screen_height: int,
+        root_y: int,
+        requested_height: int,
+        scaling: float,
+        expected_height: int,
+        expected_y: int,
+    ) -> None:
+        """
+        Startup accounts for the window's position as well as the monitor height.
+
+        GIVEN: The initial smaller window has already been centered
+        WHEN: The final startup size is applied
+        THEN: Its bottom remains within the monitor with room for desktop panels
+        """
+        editor = parameter_editor_window
+        editor.dpi_scaling_factor = scaling
+        monitor_bounds.return_value = MonitorBounds(0, 0, 1920, screen_height)
+        editor.root.winfo_reqheight.return_value = requested_height
+        editor.root.winfo_rooty.return_value = root_y
+        editor.root.winfo_y.return_value = root_y
+        editor.root.geometry.return_value = f"800x600+0+{root_y}"
+
+        editor._fit_window_to_screen_height(initialize=True)
+
+        editor.root.geometry.assert_any_call(f"{round(990 * scaling)}x{expected_height}+0+{expected_y}")
+        assert expected_y + expected_height <= screen_height - round(40 * scaling)
+
+    @pytest.mark.parametrize("component_name", [None, "Battery", "Motor"])
+    def test_changing_steps_preserves_user_window_size(
+        self, parameter_editor_window: ParameterEditorWindow, component_name: str | None
+    ) -> None:
+        """
+        Repeated step changes preserve a manually resized window.
+
+        GIVEN: A user resized the window to 1400 by 700 pixels
+        WHEN: Several steps rebuild or hide the inline component editor
+        THEN: The window retains its size even when widgets request more height
+        """
+        editor = parameter_editor_window
+        editor.root.winfo_width.return_value = 1400
+        editor.root.winfo_height.return_value = 700
+        editor.root.winfo_rooty.return_value = 100
+        editor.root.winfo_y.return_value = 100
+        editor.root.winfo_reqheight.return_value = 1200
+
+        with (
+            patch.object(parameter_editor_module, "ComponentEditorWindow"),
+            patch.object(parameter_editor_module, "ScrollFrame") as scroll_frame,
+        ):
+            scroll_frame.return_value.winfo_reqheight.return_value = 50
+            scroll_frame.return_value.view_port.winfo_reqheight.return_value = 272
+            for _ in range(5):
+                editor._update_inline_component_editor(component_name)
+
+        editor.root.geometry.assert_not_called()
+
+    def test_oversized_window_is_clamped_on_an_offset_monitor(
+        self, parameter_editor_window: ParameterEditorWindow, monitor_bounds: MagicMock
+    ) -> None:
+        """
+        Later sizing uses the active monitor, including negative desktop coordinates.
+
+        GIVEN: An oversized user window on a monitor above and right of the primary one
+        WHEN: A step changes
+        THEN: Only the height and vertical position are clamped, preserving width
+        """
+        editor = parameter_editor_window
+        monitor_bounds.return_value = MonitorBounds(1920, -900, 3520, 0)
+        editor.root.winfo_width.return_value = 1400
+        editor.root.winfo_height.return_value = 1200
+        editor.root.winfo_rooty.return_value = -400
+        editor.root.winfo_y.return_value = -400
+        editor.root.winfo_x.return_value = 2000
+        editor.root.geometry.return_value = "1400x1200+2000+-400"
+
+        editor._fit_window_to_screen_height()
+
+        editor.root.geometry.assert_any_call("1400x820+2000+-860")
+
+    @pytest.mark.parametrize("screen_height", [768, 900])
+    def test_decorated_window_settles_after_startup(
+        self, parameter_editor_window: ParameterEditorWindow, monitor_bounds: MagicMock, screen_height: int
+    ) -> None:
+        """
+        Repeated fits keep decorated X11 windows in the same place.
+
+        GIVEN: Client coordinates include a five-pixel border and 23-pixel title bar
+        WHEN: Startup sizes the editor and eight subsequent steps fit it again
+        THEN: Neither axis drifts and the client bottom respects the panel margin
+        """
+        editor = parameter_editor_window
+        monitor_bounds.return_value = MonitorBounds(0, 0, 1600, screen_height)
+        frame = [167, 100, 990, 630]
+        positions = []
+
+        def geometry(value: str | None = None) -> str:
+            if value is not None:
+                match = re.fullmatch(r"(\d+)x(\d+)\+(-?\d+)\+(-?\d+)", value)
+                assert match is not None
+                width, height, x_pos, y_pos = map(int, match.groups())
+                frame[:] = [x_pos, y_pos, width, height]
+                positions.append(tuple(frame))
+            return f"{frame[2]}x{frame[3]}+{frame[0]}+{frame[1]}"
+
+        editor.root.geometry.side_effect = geometry
+        editor.root.winfo_rootx.side_effect = editor.root.winfo_x.side_effect = lambda: frame[0] + 5
+        editor.root.winfo_rooty.side_effect = editor.root.winfo_y.side_effect = lambda: frame[1] + 23
+        editor.root.winfo_width.side_effect = lambda: frame[2]
+        editor.root.winfo_height.side_effect = lambda: frame[3]
+        editor.root.winfo_reqheight.return_value = 900
+
+        editor._fit_window_to_screen_height(initialize=True)
+        for _ in range(8):
+            editor._fit_window_to_screen_height()
+
+        assert positions == [(167, 17, 990, screen_height - 80)]
+        assert editor.root.winfo_rooty() == 40
+        assert editor.root.winfo_rooty() + editor.root.winfo_height() == screen_height - 40
+
+    @pytest.mark.parametrize("height", [600, 730])
+    def test_visible_window_at_top_edge_keeps_user_position(
+        self, parameter_editor_window: ParameterEditorWindow, monitor_bounds: MagicMock, height: int
+    ) -> None:
+        """
+        User positions inside the monitor need no correction.
+
+        GIVEN: A decorated window at frame +100+0, entirely visible on a 768-pixel monitor
+        WHEN: A step changes, even with less than the preferred margin
+        THEN: Its size and position remain unchanged
+        """
+        editor = parameter_editor_window
+        monitor_bounds.return_value = MonitorBounds(0, 0, 1366, 768)
+        editor.root.winfo_rooty.return_value = 23
+        editor.root.winfo_height.return_value = height
+
+        editor._fit_window_to_screen_height()
+
+        editor.root.geometry.assert_not_called()
+
+    @pytest.mark.parametrize("mode", ["state", "-zoomed", "-fullscreen"])
+    def test_step_changes_preserve_window_manager_mode(
+        self, parameter_editor_window: ParameterEditorWindow, mode: str
+    ) -> None:
+        """
+        The window manager retains control of maximised and full-screen windows.
+
+        GIVEN: A window maximised by state, by X11 attributes, or in full screen
+        WHEN: A step changes while its height exceeds the normal sizing limit
+        THEN: Geometry is untouched and the table still fits the available space
+        """
+        editor = parameter_editor_window
+        editor.root.winfo_height.return_value = 1200
+        if mode == "state":
+            editor.root.state.return_value = "zoomed"
+        else:
+            editor.root.attributes.side_effect = lambda attribute: "1" if attribute == mode else "0"
+
+        editor._fit_window_to_screen_height()
+
+        editor.root.geometry.assert_not_called()
+        editor.parameter_area_container.configure.assert_called_once_with(height=600)
+
+    def test_unsupported_zoom_attribute_still_allows_normal_window_fitting(
+        self, parameter_editor_window: ParameterEditorWindow
+    ) -> None:
+        """
+        Windows and macOS can omit the X11 zoom attribute.
+
+        GIVEN: Querying -zoomed raises TclError but full screen is false
+        WHEN: An oversized normal window is fitted
+        THEN: Its height is reduced without an unsupported-attribute error
+        """
+        editor = parameter_editor_window
+        editor.root.attributes.side_effect = [tk.TclError("unsupported attribute"), 0]
+        editor.root.winfo_height.return_value = 1200
+
+        editor._fit_window_to_screen_height()
+
+        editor.root.geometry.assert_any_call("800x1000+0+40")
+
+    def test_clamping_preserves_right_and_bottom_geometry_anchors(
+        self, parameter_editor_window: ParameterEditorWindow
+    ) -> None:
+        """
+        Negative WM geometry offsets retain their screen-edge anchor semantics.
+
+        GIVEN: An oversized decorated window anchored 77 pixels right and 100 pixels bottom
+        WHEN: Its client height and top are clamped to the monitor
+        THEN: The right anchor stays unchanged and the bottom anchor accounts for resizing
+        """
+        editor = parameter_editor_window
+        editor.root.geometry.return_value = "1400x1200-77-100"
+        editor.root.winfo_width.return_value = 1400
+        editor.root.winfo_height.return_value = 1200
+        editor.root.winfo_rooty.return_value = -225
+
+        editor._fit_window_to_screen_height()
+
+        editor.root.geometry.assert_any_call("1400x1000-77-35")
+
+    def test_wrapped_controls_refit_the_table_after_idle(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """
+        Narrowing the window leaves the full button row visible after labels wrap.
+
+        GIVEN: The header initially requests 100 pixels and wraps after Configure
+        WHEN: Several resize events arrive before idle layout completes
+        THEN: A single deferred fit accounts for the new 115-pixel header height
+        """
+        editor = parameter_editor_window
+        header = MagicMock()
+        header.winfo_manager.return_value = "pack"
+        header.winfo_reqheight.return_value = 100
+        header.pack_info.return_value = {"pady": 0}
+        header.winfo_pixels.side_effect = int
+        editor.main_frame.winfo_children.return_value = [header, editor.parameter_area_container]
+
+        editor._on_main_frame_resize(MagicMock())
+        editor._on_main_frame_resize(MagicMock())
+        editor.parameter_area_container.configure.assert_not_called()
+        header.winfo_reqheight.return_value = 115
+        editor.root.after_idle.call_args.args[0]()
+
+        editor.root.after_idle.assert_called_once()
+        editor.parameter_area_container.configure.assert_called_once_with(height=485)
+        assert not editor._parameter_area_resize_pending
+
+    @pytest.mark.parametrize(("frame_height", "component_height", "table_height"), [(600, 172, 120), (854, 304, 242)])
+    def test_component_fields_scroll_to_preserve_a_usable_table(
+        self, parameter_editor_window: ParameterEditorWindow, frame_height: int, component_height: int, table_height: int
+    ) -> None:
+        """
+        Component-heavy steps preserve useful table space on short screens.
+
+        GIVEN: Fixed controls consume 300 pixels beside a 272-pixel component editor
+        WHEN: The remaining space is allocated on small or large windows
+        THEN: The table keeps at least 120 pixels and component fields can scroll
+        """
+        editor = parameter_editor_window
+        fixed_controls = MagicMock()
+        fixed_controls.winfo_manager.return_value = "pack"
+        fixed_controls.winfo_reqheight.return_value = 300
+        fixed_controls.pack_info.return_value = {"pady": 0}
+        fixed_controls.winfo_pixels.side_effect = int
+        editor.inline_component_container.winfo_manager.return_value = "pack"
+        editor.inline_component_container.pack_info.return_value = {"pady": 4}
+        editor.inline_component_container.winfo_pixels.side_effect = int
+        editor.inline_component_scroll_frame = MagicMock()
+        editor.inline_component_scroll_frame.view_port.winfo_reqheight.return_value = 272
+        editor._inline_component_chrome_height = 24
+        editor.main_frame.winfo_height.return_value = frame_height
+        editor.main_frame.winfo_children.return_value = [
+            fixed_controls,
+            editor.inline_component_container,
+            editor.parameter_area_container,
+        ]
+
+        editor._resize_parameter_area_to_fit()
+
+        editor.inline_component_container.configure.assert_called_once_with(height=component_height)
+        editor.inline_component_scroll_frame.canvas.configure.assert_called_once_with(height=280)
+        editor.parameter_area_container.configure.assert_called_once_with(height=table_height)
+
+    @pytest.mark.parametrize("scaling", [1.0, 1.5], ids=["96dpi", "144dpi"])
+    def test_growing_window_never_shrinks_either_scrollable_panel(
+        self, parameter_editor_window: ParameterEditorWindow, scaling: float
+    ) -> None:
+        """
+        Each extra pixel of window height preserves both panels' visible content.
+
+        GIVEN: Component fields overflow the space beside a scrollable parameter table
+        WHEN: The user grows the window through the two panels' minimum-height boundary
+        THEN: Neither panel shrinks or jumps, and together they use the available height
+        """
+        editor = parameter_editor_window
+        editor.dpi_scaling_factor = scaling
+        fixed_controls = MagicMock()
+        fixed_controls.winfo_manager.return_value = "pack"
+        fixed_controls.winfo_reqheight.return_value = 300
+        fixed_controls.pack_info.return_value = {"pady": 0}
+        fixed_controls.winfo_pixels.side_effect = int
+        editor.inline_component_container.winfo_manager.return_value = "pack"
+        editor.inline_component_container.pack_info.return_value = {"pady": 0}
+        editor.inline_component_container.winfo_pixels.side_effect = int
+        editor.inline_component_scroll_frame = MagicMock()
+        editor.inline_component_scroll_frame.view_port.winfo_reqheight.return_value = 600
+        editor._inline_component_chrome_height = round(28 * scaling)
+        editor.main_frame.winfo_children.return_value = [
+            fixed_controls,
+            editor.inline_component_container,
+            editor.parameter_area_container,
+        ]
+
+        boundary = round(80 * scaling) + round(120 * scaling)
+        previous_heights: tuple[int, int] | None = None
+        for available_height in range(boundary - 5, boundary + 6):
+            editor.main_frame.winfo_height.return_value = 300 + available_height
+            editor._resize_parameter_area_to_fit()
+            component_height = editor.inline_component_container.configure.call_args.kwargs["height"]
+            table_height = editor.parameter_area_container.configure.call_args.kwargs["height"]
+            assert component_height + table_height == available_height
+            if previous_heights is not None:
+                assert 0 <= component_height - previous_heights[0] <= 1
+                assert 0 <= table_height - previous_heights[1] <= 1
+            previous_heights = (component_height, table_height)
+
+    def test_fixed_widget_growth_keeps_real_buttons_visible(
+        self, parameter_editor_window: ParameterEditorWindow, root: tk.Tk
+    ) -> None:
+        """
+        Real Tk layout settles after the stage bar wraps at a narrower width.
+
+        GIVEN: Normal mode displays eight labelled phases above the table and buttons
+        WHEN: The window is narrowed in single jumps and Tk processes idle layout
+        THEN: The button row stays fully visible and the table gives space to wrapping
+        """
+        editor = parameter_editor_window
+        editor.root = root
+        editor.main_frame = ttk.Frame(root)
+        editor.main_frame.place(width=1031, height=600)
+        phases = {f"Configuration phase {number}": {"start": number, "end": number + 1} for number in range(8)}
+        stage_bar = StageProgressBar(editor.main_frame, phases, 9, "normal")
+        stage_bar.pack(side="top", fill="x")
+        editor.parameter_area_container = ttk.Frame(editor.main_frame, height=500)
+        editor.parameter_area_container.pack(side="top", fill="both", expand=True)
+        buttons = ttk.Frame(editor.main_frame)
+        buttons.pack(side="bottom", fill="x", pady=10)
+        ttk.Button(buttons, text="Upload parameters\nand advance").pack()
+        editor._bind_parameter_layout_events()
+
+        try:
+            root.update_idletasks()
+            initial_header_height = stage_bar.winfo_reqheight()
+            for width in (950, 800, 400):
+                editor.main_frame.place_configure(width=width)
+                root.update_idletasks()
+                assert buttons.winfo_height() == buttons.winfo_reqheight()
+                assert buttons.winfo_y() + buttons.winfo_height() <= editor.main_frame.winfo_height() - 10
+                assert editor.parameter_area_container.winfo_height() + stage_bar.winfo_reqheight() == (
+                    editor.main_frame.winfo_height() - buttons.winfo_reqheight() - 20
+                )
+            assert stage_bar.winfo_reqheight() > initial_header_height
+        finally:
+            editor.main_frame.destroy()
+
+    @staticmethod
+    def _assert_real_component_fields_visible(editor: ParameterEditorWindow, field_count: int) -> int:
+        """Check settled panel geometry and reach the last field through its real canvas."""
+        scroll_frame = editor.inline_component_scroll_frame
+        assert scroll_frame is not None
+        assert editor._inline_component_chrome_height > 0
+        panel_height = editor.inline_component_container.winfo_height()
+        assert panel_height == int(editor.inline_component_container.cget("height"))
+        assert panel_height == editor.inline_component_container.winfo_reqheight()
+        last_field = scroll_frame.view_port.winfo_children()[-1]
+        assert scroll_frame.canvas.winfo_height() >= last_field.winfo_height() + 8
+        assert editor.parameter_area_container.winfo_height() >= last_field.winfo_height() + 8
+        if field_count == 3:
+            assert panel_height == scroll_frame.view_port.winfo_reqheight() + 8 + editor._inline_component_chrome_height
+            assert scroll_frame.canvas.winfo_height() >= scroll_frame.view_port.winfo_reqheight() + 8
+        else:
+            assert scroll_frame.view_port.winfo_reqheight() > scroll_frame.canvas.winfo_height()
+            scroll_frame.canvas.yview_moveto(1)
+            assert scroll_frame.canvas.yview()[0] > 0
+        field_bottom = (
+            scroll_frame.canvas.coords(scroll_frame.canvas_window)[1] + last_field.winfo_y() + last_field.winfo_height()
+        )
+        assert field_bottom <= scroll_frame.canvas.canvasy(scroll_frame.canvas.winfo_height()) + 1
+        return panel_height
+
+    @staticmethod
+    def _assert_real_panels_grow_continuously(editor: ParameterEditorWindow, root: tk.Tk, fixed_height: int) -> None:
+        """Exercise the actual Configure bindings across the allocation boundary."""
+        boundary = round(80 * editor.dpi_scaling_factor) + round(120 * editor.dpi_scaling_factor)
+        previous_heights: tuple[int, int] | None = None
+        for available_height in range(boundary - 5, boundary + 6):
+            editor.main_frame.place_configure(height=fixed_height + available_height)
+            root.update_idletasks()
+            panel_heights = (
+                editor.inline_component_container.winfo_height(),
+                editor.parameter_area_container.winfo_height(),
+            )
+            assert sum(panel_heights) == available_height
+            if previous_heights is not None:
+                assert all(
+                    0 <= current - previous <= 1 for current, previous in zip(panel_heights, previous_heights, strict=True)
+                )
+            previous_heights = panel_heights
+
+    @pytest.mark.parametrize("field_count", [3, 40], ids=["fitting-fields", "scrolling-fields"])
+    @pytest.mark.parametrize(
+        ("width", "height", "dpi"),
+        [
+            pytest.param(1920, 1000, 96, id="1920x1080"),
+            pytest.param(1366, 688, 96, id="1366x768"),
+            pytest.param(1600, 820, 96, id="1600x900"),
+            pytest.param(1920, 960, 144, id="1920x1080-144dpi"),
+            pytest.param(1100, 500, 96, id="1100x500-window"),
+            pytest.param(1024, 516, 96, id="1024x600"),
+            pytest.param(1280, 636, 96, id="1280x720"),
+        ],
+    )
+    def test_real_component_fields_remain_accessible_after_rebuilding(  # pylint: disable=too-many-locals,too-many-arguments,too-many-positional-arguments
+        self, parameter_editor_window: ParameterEditorWindow, root: tk.Tk, width: int, height: int, dpi: int, field_count: int
+    ) -> None:
+        """
+        A scrolling component editor keeps both fields and parameter rows accessible.
+
+        GIVEN: Real Tk widgets at the reported display widths, client heights and DPI
+        WHEN: Equal-height editors are rebuilt consecutively and across a component-less step
+        THEN: Fitting fields stay fully visible, overflowing fields scroll, and buttons remain visible
+        """
+        editor = parameter_editor_window
+        original_scaling = float(root.tk.call("tk", "scaling"))
+        root.tk.call("tk", "scaling", dpi / 72)
+        field_font = tkfont.Font(root=root, family="Arial", size=10)
+        assert float(root.tk.call("tk", "scaling")) == pytest.approx(dpi / 72, rel=0.01)
+        editor.dpi_scaling_factor = dpi / 96
+        editor.root = root
+        editor.main_frame = ttk.Frame(root)
+        editor.main_frame.place(width=width, height=height)
+        header = ttk.Frame(editor.main_frame, height=round((200 if field_count == 3 else 300) * editor.dpi_scaling_factor))
+        header.pack(side="top", fill="x")
+        header.pack_propagate(flag=False)
+        editor.inline_component_container = ttk.LabelFrame(editor.main_frame)
+        editor.parameter_area_container = ttk.Frame(editor.main_frame, height=500)
+        editor.parameter_area_container.pack(side="top", fill="both", expand=True)
+        buttons = ttk.Frame(editor.main_frame)
+        buttons.pack(side="bottom", fill="x", pady=10)
+        ttk.Button(buttons, text="Upload parameters\nand advance").pack()
+        editor._bind_parameter_layout_events()
+
+        def create_component_editor(*_args: object, embedded_parent_frame: tk.Widget, **_kwargs: object) -> MagicMock:
+            def populate(_name: str) -> None:
+                for _ in range(field_count):
+                    ttk.Entry(embedded_parent_frame, font=field_font).pack(side="top", fill="x")
+                embedded_parent_frame.update_idletasks()
+
+            return MagicMock(populate_single_component=MagicMock(side_effect=populate))
+
+        try:
+            initial_panel_height: int | None = None
+            with patch.object(parameter_editor_module, "ComponentEditorWindow", side_effect=create_component_editor):
+                for name in ("Battery", "Motor", "Battery", None, "Motor", "Battery"):
+                    editor._update_inline_component_editor(name)
+                    root.update_idletasks()
+                    assert editor.main_frame.winfo_width() == width
+                    assert editor.main_frame.winfo_height() == height
+                    assert buttons.winfo_height() == buttons.winfo_reqheight()
+                    assert buttons.winfo_y() + buttons.winfo_height() <= height - 10
+                    if name is None:
+                        assert editor.inline_component_scroll_frame is None
+                        assert editor.inline_component_container.winfo_manager() == ""
+                        assert editor.parameter_area_container.winfo_height() == (
+                            height - header.winfo_reqheight() - buttons.winfo_reqheight() - 20
+                        )
+                        continue
+                    panel_height = self._assert_real_component_fields_visible(editor, field_count)
+                    if initial_panel_height is None:
+                        initial_panel_height = panel_height
+                    assert panel_height == initial_panel_height
+                if field_count == 40:
+                    fixed_height = header.winfo_reqheight() + buttons.winfo_reqheight() + 20
+                    self._assert_real_panels_grow_continuously(editor, root, fixed_height)
+        finally:
+            editor.main_frame.destroy()
+            root.update_idletasks()
+            root.tk.call("tk", "scaling", original_scaling)
+
+
 class TestParameterFileSelection:
     """Exercise the behaviours around selecting and loading parameter files."""
 
@@ -287,7 +848,9 @@ class TestParameterFileSelection:
         with (
             patch("tkinter.Tk", _DummyTkRoot),
             patch.object(ParameterEditorWindow, "_create_conf_widgets"),
-            patch.object(ParameterEditorWindow, "_create_parameter_area_widgets"),
+            patch.object(
+                ParameterEditorWindow, "_create_parameter_area_widgets", autospec=True, side_effect=_configure_layout_stubs
+            ),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.DocumentationFrame",
                 return_value=MagicMock(documentation_frame=MagicMock()),
@@ -321,7 +884,9 @@ class TestParameterFileSelection:
         with (
             patch("tkinter.Tk", _DummyTkRoot),
             patch.object(ParameterEditorWindow, "_create_conf_widgets"),
-            patch.object(ParameterEditorWindow, "_create_parameter_area_widgets"),
+            patch.object(
+                ParameterEditorWindow, "_create_parameter_area_widgets", autospec=True, side_effect=_configure_layout_stubs
+            ),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.DocumentationFrame",
                 return_value=MagicMock(documentation_frame=MagicMock()),
@@ -362,7 +927,9 @@ class TestParameterFileSelection:
         with (
             patch("tkinter.Tk", _DummyTkRoot),
             patch.object(ParameterEditorWindow, "_create_conf_widgets"),
-            patch.object(ParameterEditorWindow, "_create_parameter_area_widgets"),
+            patch.object(
+                ParameterEditorWindow, "_create_parameter_area_widgets", autospec=True, side_effect=_configure_layout_stubs
+            ),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.DocumentationFrame",
                 return_value=MagicMock(documentation_frame=MagicMock()),
@@ -416,7 +983,9 @@ class TestUsagePopupScheduling:
         with (
             patch("tkinter.Tk", _DummyTkRoot),
             patch.object(ParameterEditorWindow, "_create_conf_widgets"),
-            patch.object(ParameterEditorWindow, "_create_parameter_area_widgets"),
+            patch.object(
+                ParameterEditorWindow, "_create_parameter_area_widgets", autospec=True, side_effect=_configure_layout_stubs
+            ),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.DocumentationFrame",
                 return_value=MagicMock(documentation_frame=MagicMock()),
