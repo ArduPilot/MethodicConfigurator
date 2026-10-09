@@ -110,6 +110,22 @@ def _build_flight_controller_with_mocks(
     return fc, mock_conn_mgr, mock_params_mgr, mock_commands_mgr, mock_files_mgr, mock_master
 
 
+def test_motor_status_monitoring_is_delegated_to_the_commands_manager() -> None:
+    """
+    Route motor-test console monitoring through the flight-controller facade.
+
+    GIVEN: A flight controller with an injected command manager
+    WHEN: The plugin enables monitoring, polls and disables monitoring
+    THEN: The command manager receives each operation without frontend access to the transport
+    """
+    controller, _connection, _parameters, commands, _files, _master = _build_flight_controller_with_mocks()
+    controller.set_motor_test_status_text_logging(True)
+    controller.poll_motor_test_status_text()
+    controller.set_motor_test_status_text_logging(False)
+    assert commands.set_motor_test_status_text_logging.call_args_list == [((True,),), ((False,),)]
+    commands.poll_motor_test_status_text.assert_called_once_with()
+
+
 class TestFlightControllerConnectionLifecycle:
     """Test complete flight controller connection lifecycle from user perspective."""
 

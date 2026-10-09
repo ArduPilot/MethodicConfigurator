@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
+from logging import warning as logging_warning
 from time import sleep as time_sleep
 from time import time as time_time
 from typing import Any, ClassVar, Literal, TypedDict, cast  # pylint: disable=unused-import
@@ -74,7 +75,7 @@ class _LevelCalibrationState:
     status_texts: list[str] = field(default_factory=list)
 
 
-class FlightControllerCommands:  # pylint: disable=too-many-public-methods
+class FlightControllerCommands:  # pylint: disable=too-many-public-methods,too-many-instance-attributes
     """
     Handles MAVLink command execution and status queries.
 
@@ -130,6 +131,8 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         self._last_accel_cal_vehicle_pos: int | None = None
         self._level_calibration = _LevelCalibrationState()
         self._abandoned_level_deadline: float | None = None
+        self._motor_test_status_text_enabled = False
+        self._motor_test_status_text_master: MavlinkConnection | None = None
 
     @property
     def master(self) -> MavlinkConnection | None:
@@ -177,6 +180,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             param6=param6,
             param7=param7,
             timeout=timeout,
+            capture_status_text=self._motor_test_status_text_enabled and command == mavlink.MAV_CMD_DO_MOTOR_TEST,
         )
         return success, error_msg
 
@@ -201,6 +205,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             return False, error_msg, None
 
         try:
+            self._sync_motor_test_status_text_logging()
             # Send the command
             self.master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
                 self.master.target_system,  # pyright: ignore[reportAttributeAccessIssue]
@@ -305,6 +310,54 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         if isinstance(raw_text, bytes):
             return raw_text.decode("utf-8", errors="replace").rstrip("\x00").strip()
         return str(raw_text).rstrip("\x00").strip()
+
+    def set_motor_test_status_text_logging(self, enabled: bool) -> None:
+        """Observe all received STATUSTEXT while the motor-test plugin is active."""
+        self._motor_test_status_text_enabled = enabled
+        self._sync_motor_test_status_text_logging()
+
+    def _sync_motor_test_status_text_logging(self) -> None:
+        """Move the receive hook when a controller is disconnected or reconnected."""
+        master = self.master if self._motor_test_status_text_enabled else None
+        if master is self._motor_test_status_text_master:
+            return
+        if self._motor_test_status_text_master is not None:
+            hooks = self._motor_test_status_text_master.message_hooks  # pyright: ignore[reportAttributeAccessIssue]
+            if self._log_motor_test_status_text in hooks:
+                hooks.remove(self._log_motor_test_status_text)
+        self._motor_test_status_text_master = master
+        if master is not None:
+            # pymavlink calls these hooks before recv_match filters messages.
+            # ACK, parameter and battery reads therefore cannot discard status
+            # text without first logging it. No second reader/thread is needed.
+            master.message_hooks.append(self._log_motor_test_status_text)  # pyright: ignore[reportAttributeAccessIssue]
+
+    def _log_motor_test_status_text(self, _master: MavlinkConnection, msg: object) -> None:
+        """Log every nonempty firmware status payload, without a motor-prefix filter."""
+        get_type = getattr(msg, "get_type", None)
+        if not callable(get_type) or get_type() != "STATUSTEXT":
+            return
+        text = self._extract_status_text(msg)
+        if not text:
+            return
+        severity = int(getattr(msg, "severity", 6))
+        # Keep even firmware DEBUG messages visible at normal console verbosity.
+        log = logging_error if severity <= 3 else logging_warning if severity == 4 else logging_info
+        log(_("Flight controller STATUSTEXT (%(severity)d): %(text)s"), {"severity": severity, "text": text})
+
+    def poll_motor_test_status_text(self) -> None:
+        """Pump pending status messages between commands without blocking the UI."""
+        self._sync_motor_test_status_text_logging()
+        master = self._motor_test_status_text_master
+        if master is None:
+            return
+        try:
+            # Bound each tick even if a controller sends status text continuously.
+            for _message in range(100):
+                if master.recv_msg() is None:  # pyright: ignore[reportAttributeAccessIssue]
+                    break
+        except (OSError, ValueError) as exc:
+            logging_warning(_("Could not read motor-test status messages: %(error)s"), {"error": str(exc)})
 
     def reboot_to_bootloader(self) -> tuple[bool, str]:
         """Request reboot into the bootloader and wait for its command acknowledgment."""
@@ -436,6 +489,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             logging_error(error_msg)
             return False, error_msg
 
+        self._sync_motor_test_status_text_logging()
         for i in range(nr_of_motors):
             # MAV_CMD_DO_MOTOR_TEST command for all motors
             self.master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
@@ -453,6 +507,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             )
             time_sleep(self.MOTOR_TEST_COMMAND_DELAY)  # to let the FC parse each command individually
 
+        self.poll_motor_test_status_text()
         return True, ""
 
     def test_motors_in_sequence(

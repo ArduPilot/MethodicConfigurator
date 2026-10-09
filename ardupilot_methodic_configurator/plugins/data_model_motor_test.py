@@ -265,6 +265,14 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         except RuntimeError:
             return False
 
+    def set_status_text_logging(self, enabled: bool) -> None:
+        """Enable firmware console messages only while the motor-test view is active."""
+        self.flight_controller.set_motor_test_status_text_logging(enabled)
+
+    def poll_status_text(self) -> None:
+        """Read firmware messages emitted after a motor command has been acknowledged."""
+        self.flight_controller.poll_motor_test_status_text()
+
     @property
     def frame_class(self) -> int:
         """Get the current frame class."""
