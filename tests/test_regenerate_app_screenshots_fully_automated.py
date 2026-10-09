@@ -263,7 +263,7 @@ def test_motor_test_capture_uses_registered_plugin_with_fake_connection(tmp_path
     assert fake_flight_controller.request_scaled_imu_messages.return_value == (True, "")
     assert fake_flight_controller.poll_scaled_imu.return_value is None
     assert fake_flight_controller.request_periodic_battery_status.return_value == (True, "")
-    assert fake_flight_controller.get_battery_status.return_value == (None, "")
+    assert fake_flight_controller.get_battery_statuses.return_value == (None, "")
     fake_factory.create_model.assert_called_once()
     model_context = fake_factory.create_model.call_args.args[1]
     assert fake_factory.create_model.call_args.args[0] == PLUGIN_MOTOR_TEST

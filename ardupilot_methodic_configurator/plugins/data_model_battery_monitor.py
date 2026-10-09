@@ -10,14 +10,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from logging import debug as logging_debug
 from logging import warning as logging_warning
-from math import isnan, nan
-from typing import TYPE_CHECKING, Optional
+from math import inf, isnan, nan
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
-
-if TYPE_CHECKING:
-    from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
+from ardupilot_methodic_configurator.backend_flightcontroller_business_logic import (
+    get_battery_parameter_prefix,
+    get_enabled_battery_ids,
+)
 
 # Battery update interval in milliseconds (used for periodic status requests)
 BATTERY_UPDATE_INTERVAL_MS = 500
@@ -32,7 +32,7 @@ class BatteryMonitorDataModel:
 
     Streaming Resilience:
         This implementation provides automatic recovery if the battery status stream
-        is lost. The stream is re-requested whenever get_battery_status() indicates
+        is lost. The stream is re-requested whenever get_battery_statuses() indicates
         a lost connection (via message return value). The plugin only marks the stream
         as established when actual data is received, providing resilience against:
         - Initial response delays
@@ -40,34 +40,26 @@ class BatteryMonitorDataModel:
         - Communication glitches
 
     Design:
-        - First call to get_battery_status() requests periodic updates from the FC
+        - First call to get_battery_statuses() requests periodic updates from the FC
         - Stream request is attempted every call until data is actually received
-        - Once data flows, _got_battery_status = True and subsequent calls read cached data
-        - If stream is lost (indicated by message from get_battery_status()), the flag
+        - Once data flows, subsequent calls read cached data unless the monitor count changes
+        - If stream is lost (indicated by message from get_battery_statuses()), the flag
           resets and re-request happens on next call (automatic recovery)
         - Status indicators (safe/critical/disabled/unavailable) guide user about data validity
     """
 
-    def __init__(
-        self,
-        flight_controller: FlightController,
-        parameter_editor: Optional["ParameterEditor"] = None,
-    ) -> None:
-        """
-        Initialize the battery monitor data model.
-
-        Args:
-            flight_controller: Backend flight controller interface
-            parameter_editor: Optional parameter editor for uploading parameters
-
-        """
+    def __init__(self, flight_controller: FlightController) -> None:
         self.flight_controller = flight_controller
-        self.parameter_editor = parameter_editor
         self._got_battery_status = False
+        self._battery_status_interval_microseconds: int | None = None
+
+    def get_enabled_battery_ids(self) -> list[int]:
+        """Return the configured battery IDs, even while telemetry is unavailable."""
+        return get_enabled_battery_ids(self.flight_controller.fc_parameters)
 
     def is_battery_monitoring_enabled(self) -> bool:
         """
-        Check if battery monitoring is enabled (BATT_MONITOR != 0).
+        Check whether any configured battery monitor is enabled.
 
         Returns:
             bool: True if battery monitoring is enabled, False otherwise
@@ -78,60 +70,37 @@ class BatteryMonitorDataModel:
             return False
         return self.flight_controller.is_battery_monitoring_enabled()
 
-    def get_battery_status(self) -> tuple[float, float] | None:
-        """
-        Get the current battery voltage and current.
-
-        This method requests periodic BATTERY_STATUS messages from the flight controller
-        on the first call and caches subsequent reads. The flight controller is assumed
-        to maintain the periodic stream at 500ms intervals after the initial request.
-
-        Returns:
-            Optional[tuple[float, float]]:
-                - (voltage, current) in volts and amps when data is available from the stream
-                - None when flight controller is not connected
-                - None when battery monitoring is disabled (BATT_MONITOR == 0)
-                - None when stream is not yet established or data not yet received
-
-        Assumptions:
-            - The flight controller maintains the periodic BATTERY_STATUS stream after
-              request_periodic_battery_status() succeeds
-            - Battery monitoring must be enabled (BATT_MONITOR != 0) for data to be available
-            - Once a request succeeds AND data is received, subsequent calls will return
-              cached data from the maintained stream
-            - If the stream is lost (indicated by a message on get_battery_status), the
-              plugin will automatically re-request it on the next call
-            - Initial responses may have delays, so success is only confirmed when
-              actual data is returned (message is None)
-            - Duplicate stream requests (if made before _got_battery_status is set to True)
-              are safe and handled gracefully by the backend
-
-        """
+    def get_battery_statuses(self) -> dict[int, tuple[float, float]] | None:
+        """Get recent battery readings keyed by the zero-based MAVLink battery ID."""
         if self.flight_controller.master is None:
+            self._got_battery_status = False
             logging_debug(_("Flight controller not connected, cannot get battery status."))
             return None
-
         if not self.is_battery_monitoring_enabled():
-            logging_debug(_("Battery monitoring disabled, cannot get battery status."))
+            self._got_battery_status = False
             return None
 
-        if not self._got_battery_status:
-            self.flight_controller.request_periodic_battery_status(BATTERY_UPDATE_INTERVAL_MS * 1000)
+        # ArduPilot sends one enabled battery per interval, in round-robin order.
+        monitor_count = max(1, len(self.get_enabled_battery_ids()))
+        interval_microseconds = BATTERY_UPDATE_INTERVAL_MS * 1000 // monitor_count
+        if not self._got_battery_status or interval_microseconds != self._battery_status_interval_microseconds:
+            self.flight_controller.request_periodic_battery_status(interval_microseconds)
+            self._battery_status_interval_microseconds = interval_microseconds
 
-        battery_status, message = self.flight_controller.get_battery_status()
+        battery_statuses, message = self.flight_controller.get_battery_statuses()
+
         if message:
             if self._got_battery_status:
                 logging_warning(message)
                 self._got_battery_status = False
             else:
                 logging_debug(message)
-        elif battery_status is not None:
-            # Only mark stream as established when we receive actual data
+        elif battery_statuses:
             self._got_battery_status = True
 
-        return battery_status
+        return battery_statuses
 
-    def get_voltage_thresholds(self) -> tuple[float, float]:
+    def get_voltage_thresholds(self, battery_id: int) -> tuple[float, float]:
         """
         Get battery voltage thresholds for safety indication.
 
@@ -143,9 +112,12 @@ class BatteryMonitorDataModel:
             logging_warning(_("Flight controller connection required for voltage threshold check"))
             return (nan, nan)
 
-        return self.flight_controller.get_voltage_thresholds()
+        if battery_id == 0:
+            return self.flight_controller.get_voltage_thresholds()
+        min_voltage = self.flight_controller.fc_parameters.get(f"{get_battery_parameter_prefix(battery_id)}_ARM_VOLT", 0.0)
+        return (min_voltage, inf) if min_voltage > 0 else (nan, nan)
 
-    def get_voltage_status(self) -> str:
+    def get_voltage_status(self, battery_id: int, voltage: float | None) -> str:
         """
         Get the battery voltage status as a string.
 
@@ -156,12 +128,9 @@ class BatteryMonitorDataModel:
         if not self.is_battery_monitoring_enabled():
             return _("disabled")
 
-        battery_status = self.get_battery_status()
-        if battery_status is None:
+        if voltage is None or isnan(voltage):
             return _("unavailable")
-
-        voltage, _current = battery_status
-        min_voltage, max_voltage = self.get_voltage_thresholds()
+        min_voltage, max_voltage = self.get_voltage_thresholds(battery_id)
 
         if isnan(min_voltage) or isnan(max_voltage):
             return _("unavailable")
@@ -169,7 +138,7 @@ class BatteryMonitorDataModel:
             return _("safe")
         return _("critical")
 
-    def get_battery_status_color(self) -> str:
+    def get_battery_status_color(self, battery_id: int, voltage: float | None) -> str:
         """
         Get the color code for battery status display.
 
@@ -177,7 +146,7 @@ class BatteryMonitorDataModel:
             str: Color name ("green", "red", or "gray")
 
         """
-        status = self.get_voltage_status()
+        status = self.get_voltage_status(battery_id, voltage)
         if status == _("safe"):
             return "green"
         if status == _("critical"):

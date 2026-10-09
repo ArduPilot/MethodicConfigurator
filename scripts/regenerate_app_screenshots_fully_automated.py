@@ -930,7 +930,7 @@ def _configure_fake_flight_controller(flight_controller: FlightController, fc_pa
     flight_controller.request_scaled_imu_messages = MagicMock(return_value=(True, ""))
     flight_controller.poll_scaled_imu = MagicMock(return_value=None)
     flight_controller.request_periodic_battery_status = MagicMock(return_value=(True, ""))
-    flight_controller.get_battery_status = MagicMock(return_value=(None, ""))
+    flight_controller.get_battery_statuses = MagicMock(return_value=(None, ""))
 
 
 def _cleanup_plugin_view(plugin_view: object) -> None:

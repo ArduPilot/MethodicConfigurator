@@ -21,9 +21,9 @@ from argparse import ArgumentParser, Namespace
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import warning as logging_warning
+from math import isnan
 from tkinter import Frame, ttk
 from tkinter.messagebox import showerror
-from typing import TYPE_CHECKING, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.__main__ import (
@@ -32,20 +32,14 @@ from ardupilot_methodic_configurator.__main__ import (
     setup_logging,
 )
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
-from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
+from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.plugins.data_model_battery_monitor import (
     BATTERY_UPDATE_INTERVAL_MS,
     BatteryMonitorDataModel,
 )
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_BATTERY_MONITOR
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
-
-if TYPE_CHECKING:
-    from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (
-        ParameterEditorUiServices,
-    )
 
 
 class BatteryMonitorView(Frame):
@@ -56,7 +50,6 @@ class BatteryMonitorView(Frame):
         parent: tk.Frame | ttk.Frame,
         model: BatteryMonitorDataModel,
         base_window: BaseWindow,
-        ui_services: Optional["ParameterEditorUiServices"] = None,
     ) -> None:
         """
         Initialize the battery monitor view.
@@ -65,18 +58,13 @@ class BatteryMonitorView(Frame):
             parent: Parent widget
             model: Data model for battery monitoring
             base_window: Parent BaseWindow instance
-            ui_services: Optional UI services for testing. If None, will use base_window.ui.
 
         """
         super().__init__(parent)
         self.model = model
         self.base_window = base_window
-        # Reuse UI services from base window if not explicitly provided
-        self.ui = ui_services if ui_services is not None else getattr(base_window, "ui", None)
         self._timer_id: str | None = None
-        self.voltage_value_label: ttk.Label
-        self.current_value_label: ttk.Label
-        self.upload_button: ttk.Button
+        self._battery_rows: dict[int, tuple[ttk.Label, ttk.Label, ttk.Label]] = {}
 
         # Create UI components (labels initialized in _setup_ui)
         self._setup_ui()
@@ -84,173 +72,86 @@ class BatteryMonitorView(Frame):
     def _setup_ui(self) -> None:
         """Set up the user interface."""
         # Main container
-        main_frame = ttk.Frame(self)
-        main_frame.pack(fill="both", expand=True)
-
-        # Title
-        title_label = ttk.Label(
-            main_frame,
-            text=_("Battery Monitor"),
-            font=("TkDefaultFont", 14, "bold"),
-        )
-        title_label.pack(pady=(0, 20))
+        self.scroll_frame = ScrollFrame(self)
+        self.scroll_frame.pack(fill="both", expand=True)
+        main_frame = self.scroll_frame.view_port
 
         # Info text
         info_text = _(
-            "This monitor displays real-time battery voltage and current readings.\n"
-            "The voltage display is color-coded:\n"
-            "  • Green: Safe voltage range [BATT_ARM_VOLT, MOT_BAT_VOLT_MAX]\n"
+            "Change the parameters to the right and press\n"
+            '"Upload selected params to FC" to see their results.\n'
+            "  • Green: Above this battery's arming voltage\n"
+            "    (Battery 1 must also be below the motor voltage limit)\n"
             "  • Red: Critical voltage (outside safe range)\n"
-            "  • Gray: Battery monitoring disabled or unavailable"
+            "  • Gray: Battery monitoring disabled or unavailable\n"
         )
         info_label = ttk.Label(main_frame, text=info_text, justify="left")
-        info_label.pack(pady=(0, 30))
+        info_label.pack(pady=(0, 10))
 
-        # Container for voltage and current side by side
-        battery_display_container = ttk.Frame(main_frame)
-        battery_display_container.pack(pady=10)
-
-        # Voltage display (left side)
-        voltage_container = ttk.Frame(battery_display_container)
-        voltage_container.pack(side="left", padx=20)
-        ttk.Label(voltage_container, text=_("Voltage:"), font=("TkDefaultFont", 12)).pack(side="left", padx=5)
-        self.voltage_value_label = ttk.Label(
-            voltage_container,
-            text=_("N/A"),
-            font=("TkDefaultFont", 16, "bold"),
-        )
-        self.voltage_value_label.pack(side="left", padx=5)
-
-        # Current display (right side)
-        current_container = ttk.Frame(battery_display_container)
-        current_container.pack(side="right", padx=20)
-        ttk.Label(current_container, text=_("Current:"), font=("TkDefaultFont", 12)).pack(side="left", padx=5)
-        self.current_value_label = ttk.Label(
-            current_container,
-            text=_("N/A"),
-            font=("TkDefaultFont", 16, "bold"),
-        )
-        self.current_value_label.pack(side="left", padx=5)
-
-        # Upload button (only shown if parameter editor is available)
-        if self.model.parameter_editor is not None:
-            button_container = ttk.Frame(main_frame)
-            button_container.pack(pady=20)
-            self.upload_button = ttk.Button(
-                button_container,
-                text=_("Upload selected params to FC"),
-                command=self._on_upload_button_clicked,
+        # Display each battery as its own row, with its number at the left.
+        self.battery_display_container = ttk.Frame(main_frame)
+        self.battery_display_container.pack(pady=10)
+        for column, heading in enumerate((_("Battery"), _("Voltage"), _("Current"))):
+            ttk.Label(self.battery_display_container, text=f"{heading}", font=("TkDefaultFont", 12, "bold")).grid(
+                row=0, column=column, sticky="w", padx=12, pady=(0, 6)
             )
-            self.upload_button.pack()
-            show_tooltip(
-                self.upload_button,
-                _(
-                    "Upload selected parameters to the flight controller and stay on the current "
-                    "intermediate parameter file\nIt will reset the FC if necessary, re-download "
-                    "all parameters and validate their value"
-                ),
-            )
+
+        self._display_battery_rows(
+            {battery_id: (_("N/A"), _("N/A"), "gray") for battery_id in self.model.get_enabled_battery_ids() or [0]}
+        )
 
     def _update_battery_status(self) -> None:
-        """Update battery voltage and current labels."""
-        voltage_text, current_text = self._get_battery_display_text()
+        """Update one display row for each configured battery monitor."""
+        self._display_battery_rows(self._get_battery_display_rows())
 
-        self.voltage_value_label.config(text=voltage_text)
-        self.current_value_label.config(text=current_text)
+    def _display_battery_rows(self, display_rows: dict[int, tuple[str, str, str]]) -> None:
+        """Create, update and remove battery labels to reflect the current configuration."""
+        active_batteries = set(display_rows)
 
-        # Update color based on voltage status
-        color = self.model.get_battery_status_color()
-        self.voltage_value_label.config(foreground=color)
+        for battery_id in set(self._battery_rows) - active_batteries:
+            for label in self._battery_rows.pop(battery_id):
+                label.destroy()
 
-        logging_debug(
-            _("Battery status updated: %(voltage)s, %(current)s"), {"voltage": voltage_text, "current": current_text}
-        )
+        for row, (battery_id, (voltage_text, current_text, color)) in enumerate(sorted(display_rows.items()), start=1):
+            labels = self._battery_rows.get(battery_id)
+            if labels is None:
+                labels = (
+                    ttk.Label(self.battery_display_container, font=("TkDefaultFont", 12, "bold")),
+                    ttk.Label(self.battery_display_container, font=("TkDefaultFont", 16, "bold")),
+                    ttk.Label(self.battery_display_container, font=("TkDefaultFont", 16, "bold")),
+                )
+                self._battery_rows[battery_id] = labels
+            battery_label, voltage_label, current_label = labels
+            battery_label.config(text=_("Battery %(number)d:") % {"number": battery_id + 1})
+            voltage_label.config(text=voltage_text, foreground=color)
+            current_label.config(text=current_text)
+            for column, label in enumerate(labels):
+                label.grid(row=row, column=column, sticky="w", padx=12, pady=4)
 
-    def _get_battery_display_text(self) -> tuple[str, str]:
-        """
-        Get formatted battery status text for display.
+            logging_debug(
+                _("Battery %(number)d status updated: %(voltage)s, %(current)s"),
+                {"number": battery_id + 1, "voltage": voltage_text, "current": current_text},
+            )
 
-        Returns:
-            tuple[str, str]: (voltage_text, current_text)
-
-        """
-        if not self.model.is_battery_monitoring_enabled():
-            return _("Disabled"), _("Disabled")
-
-        status = self.model.get_battery_status()
-        if status:
+    def _get_battery_display_rows(self) -> dict[int, tuple[str, str, str]]:
+        """Return display text and voltage color for each zero-based battery ID."""
+        battery_ids = self.model.get_enabled_battery_ids()
+        statuses = self.model.get_battery_statuses() or {}
+        if not battery_ids:
+            return {0: (_("Disabled"), _("Disabled"), "gray")}
+        rows = {}
+        for battery_id in battery_ids:
+            status = statuses.get(battery_id)
+            if status is None:
+                rows[battery_id] = (_("N/A"), _("N/A"), "gray")
+                continue
             voltage, current = status
-            voltage_text = f"{voltage:.2f} V"
-            current_text = f"{current:.2f} A"
-            return voltage_text, current_text
-        return _("N/A"), _("N/A")
-
-    def _on_upload_button_clicked(self) -> None:
-        """Handle upload button click event."""
-        if self.ui is None:
-            showerror(
-                _("Error"),
-                _("UI services not available. Cannot upload parameters."),
+            rows[battery_id] = (
+                _("N/A") if isnan(voltage) else f"{voltage:.2f} V",
+                _("N/A") if isnan(current) else f"{current:.2f} A",
+                self.model.get_battery_status_color(battery_id, voltage),
             )
-            return
-
-        gui_complexity = getattr(self.base_window, "gui_complexity", "simple")
-        parameter_editor_table = getattr(self.base_window, "parameter_editor_table", None)
-
-        if parameter_editor_table is None or self.model.parameter_editor is None:
-            showerror(_("Error"), _("Parameter editor not available."))
-            return
-
-        # Get selected params through the data model
-        try:
-            selected_params: ParDict = parameter_editor_table.get_upload_selected_params(gui_complexity)
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            showerror(_("Error"), str(e))
-            return
-
-        # Check upload preconditions
-        precondition_payload: dict[str, object] = dict(selected_params)
-        if not self.model.parameter_editor.ensure_upload_preconditions(precondition_payload, self.ui.show_warning):
-            return
-
-        self.upload_selected_params(selected_params)
-
-        # Refresh the parameter editor table to show updated FC values
-        if parameter_editor_table:
-            show_only_differences_var = getattr(self.base_window, "show_only_differences", None)
-            show_only_differences = show_only_differences_var.get() if show_only_differences_var else False
-            parameter_editor_table.repopulate_table(show_only_differences=show_only_differences, gui_complexity=gui_complexity)
-
-    def upload_selected_params(self, selected_params: ParDict) -> None:
-        """
-        Upload selected parameters to flight controller with progress feedback.
-
-        Args:
-            selected_params: Dictionary of parameters to upload
-
-        """
-        if self.ui is None:
-            showerror(
-                _("Error"),
-                _("UI services not available. Cannot upload parameters."),
-            )
-            logging_error("UI services not available for parameter upload")
-            return
-
-        if self.model.parameter_editor is None:
-            showerror(_("Error"), _("Parameter editor not available."))
-            logging_error("Parameter editor not available for parameter upload")
-            return
-
-        try:
-            self.ui.upload_params_with_progress(
-                self.base_window.root,
-                self.model.parameter_editor.upload_selected_params_workflow,
-                selected_params,
-            )
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            self.ui.show_error(_("Upload Error"), f"{_('Failed to upload parameters:')} {e}")
-            logging_error("Parameter upload failed: %(error)s", {"error": e})
+        return rows
 
     def _schedule_next_update(self) -> None:
         """Schedule the next battery status update."""
@@ -258,8 +159,7 @@ class BatteryMonitorView(Frame):
 
     def _periodic_update(self) -> None:
         """Periodic update callback."""
-        if self.model.refresh_connection_status():
-            self._update_battery_status()
+        self._update_battery_status()
         self._schedule_next_update()
 
     def on_activate(self) -> None:
@@ -268,8 +168,7 @@ class BatteryMonitorView(Frame):
 
         Starts periodic updates and refreshes battery status to ensure the display is up-to-date.
         """
-        if self.model.refresh_connection_status():
-            self._update_battery_status()
+        self._update_battery_status()
         # Start periodic updates if not already running
         if self._timer_id is None:
             self._schedule_next_update()
@@ -326,7 +225,7 @@ def _create_battery_monitor_view(
 
 def _create_battery_monitor_model(context: PluginModelContext) -> BatteryMonitorDataModel:
     """Create the plugin data model from registered application dependencies."""
-    return BatteryMonitorDataModel(context.flight_controller, context.parameter_editor)
+    return BatteryMonitorDataModel(context.flight_controller)
 
 
 def register_battery_monitor_plugin() -> None:
@@ -345,8 +244,8 @@ class BatteryMonitorWindow(BaseWindow):  # pragma: no cover
         super().__init__()
         self.model = model  # Store model reference for tests
         self.root.title(_("AMC Battery Monitor plugin test window"))
-        width = 480
-        height = 250
+        width = 540
+        height = 400
         self.root.geometry(self.calculate_scaled_geometry(width, height))
 
         self.view = BatteryMonitorView(self.main_frame, model, self)
@@ -403,7 +302,7 @@ def main() -> None:  # pragma: no cover
     initialize_flight_controller(state)
 
     try:
-        data_model = BatteryMonitorDataModel(state.flight_controller, None)
+        data_model = BatteryMonitorDataModel(state.flight_controller)
         window = BatteryMonitorWindow(data_model)
         window.root.mainloop()
 

@@ -820,9 +820,9 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         """Request periodic BATTERY_STATUS messages - delegates to commands manager."""
         return self._commands_manager.request_periodic_battery_status(interval_microseconds)
 
-    def get_battery_status(self) -> tuple[tuple[float, float] | None, str]:
-        """Get current battery voltage and current - delegates to commands manager."""
-        return self._commands_manager.get_battery_status()
+    def get_battery_statuses(self) -> tuple[dict[int, tuple[float, float]] | None, str]:
+        """Get recent battery voltage and current readings, keyed by MAVLink battery ID."""
+        return self._commands_manager.get_battery_statuses()
 
     def get_voltage_thresholds(self) -> tuple[float, float]:
         """Get battery voltage thresholds - delegates to commands manager."""

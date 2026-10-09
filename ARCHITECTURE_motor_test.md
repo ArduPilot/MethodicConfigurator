@@ -253,7 +253,7 @@ The motor test sub-application backend logic is distributed across three special
 
 - Direct MAVLink communication with flight controller
 - Motor testing command execution
-- Real-time battery monitoring and telemetry with timestamp tracking (`_last_battery_message_time`, `_last_battery_status`)
+- Real-time battery telemetry delegated to the commands manager, with independent timestamps per battery ID
 - Parameter read/write operations
 - Flight controller status monitoring
 
@@ -264,7 +264,7 @@ def test_motor(self, test_sequence_nr: int, motor_letters: str, motor_output_nr:
 def test_all_motors(self, nr_of_motors: int, throttle_percent: int, timeout_seconds: int) -> tuple[bool, str]
 def test_motors_in_sequence(self, start_motor: int, motor_count: int, throttle_percent: int, timeout_seconds: int) -> tuple[bool, str]
 def stop_all_motors(self) -> tuple[bool, str]
-def get_battery_status(self) -> tuple[Union[tuple[float, float], None], str]
+def get_battery_statuses(self) -> tuple[dict[int, tuple[float, float]] | None, str]
 def get_voltage_thresholds(self) -> tuple[float, float]
 def is_battery_monitoring_enabled(self) -> bool
 def get_frame_info(self) -> tuple[int, int]
@@ -273,6 +273,10 @@ def fetch_param(self, param_name: str, timeout: int = 5) -> Optional[float]
 ```
 
 **Motor Test Implementation:**
+
+Motor safety uses only MAVLink battery ID 0 and battery 1's voltage thresholds.
+When `BATT_MONITOR` is disabled, testing proceeds with the voltage verification warning even if secondary monitors are enabled.
+When battery 1 is enabled, missing telemetry or a critical voltage blocks testing in every UI language.
 
 The motor test functionality uses MAVLink parameter handling:
 

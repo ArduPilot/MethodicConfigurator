@@ -90,7 +90,7 @@ def _build_flight_controller_with_mocks(
     mock_commands_mgr.test_motors_in_sequence.return_value = (True, "")
     mock_commands_mgr.stop_all_motors.return_value = (True, "")
     mock_commands_mgr.request_periodic_battery_status.return_value = (True, "")
-    mock_commands_mgr.get_battery_status.return_value = ((12.0, 5.0), "")
+    mock_commands_mgr.get_battery_statuses.return_value = ({0: (12.0, 5.0)}, "")
     mock_commands_mgr.get_voltage_thresholds.return_value = (10.5, 21.0)
     mock_commands_mgr.is_battery_monitoring_enabled.return_value = True
     mock_commands_mgr.get_frame_info.return_value = (1, 2)
@@ -166,7 +166,7 @@ def test_flight_controller_forwards_command_manager_operations() -> None:
         "confirm_accel_vehicle_pos": (True, "position confirmed"),
         "poll_scaled_imu": (1.0, 2.0, 3.0),
         "request_scaled_imu_messages": (True, "stream requested"),
-        "get_battery_status": ((12.0, 3.0), ""),
+        "get_battery_statuses": ({0: (12.0, 3.0)}, ""),
         "get_voltage_thresholds": (10.5, 11.0),
         "get_frame_info": (1, 2),
         "start_compass_calibration": (True, "compass calibration"),
@@ -190,7 +190,7 @@ def test_flight_controller_forwards_command_manager_operations() -> None:
             fc.confirm_accel_vehicle_pos(3),
             fc.poll_scaled_imu(),
             fc.request_scaled_imu_messages(200_000),
-            fc.get_battery_status(),
+            fc.get_battery_statuses(),
             fc.get_voltage_thresholds(),
             fc.get_frame_info(),
             fc.start_compass_calibration(),
@@ -212,7 +212,7 @@ def test_flight_controller_forwards_command_manager_operations() -> None:
         call.confirm_accel_vehicle_pos(3),
         call.poll_scaled_imu(),
         call.request_scaled_imu_messages(200_000),
-        call.get_battery_status(),
+        call.get_battery_statuses(),
         call.get_voltage_thresholds(),
         call.get_frame_info(),
         call.start_compass_calibration(),
