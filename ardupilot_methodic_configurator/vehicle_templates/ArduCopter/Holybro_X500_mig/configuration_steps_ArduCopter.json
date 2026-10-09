@@ -30,7 +30,7 @@
                 "INS_TCAL3_ENABLE": { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
                 "BRD_HEAT_TARG": { "if": "'BRD_HEAT_TARG' not in fc_parameters" }
             },
-            "jump_possible": {"05_board_orientation.param": "IMU temperature calibration reduces the number of possible 'Accel inconsistent' and 'Gyro inconsistent' errors.\nIMU temperature calibration is optional.\n\nDo you want to skip it?"},
+            "jump_possible": {"05_remote_controller_receiver.param": "IMU temperature calibration reduces the number of possible 'Accel inconsistent' and 'Gyro inconsistent' errors.\nIMU temperature calibration is optional.\n\nDo you want to skip it?"},
             "old_filenames": []
         },
         "03_imu_temperature_calibration_results.param": {
