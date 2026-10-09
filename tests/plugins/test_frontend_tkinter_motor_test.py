@@ -160,8 +160,8 @@ class FakeMotorTestModel:  # pylint: disable=too-many-instance-attributes, too-m
     def get_safety_warning_message(self) -> str:
         return "Proceed with caution"
 
-    def is_battery_related_safety_issue(self, reason: str) -> bool:
-        return self.battery_issue and "voltage" in reason.lower()
+    def is_battery_related_safety_issue(self, reason: MotorTestSafetyError) -> bool:
+        return self.battery_issue and reason.battery_related
 
     def run_single_motor_test(
         self,
@@ -573,7 +573,7 @@ class TestMotorTestView:
     @pytest.mark.parametrize(
         ("trigger_exception", "expected_call"),
         [
-            (MotorTestSafetyError("voltage low"), "showwarning"),
+            (MotorTestSafetyError("voltage low", battery_related=True), "showwarning"),
             (ValidationError("bad param"), "showerror"),
             (MotorTestExecutionError("fail"), "showerror"),
             (RuntimeError("unexpected"), "showerror"),

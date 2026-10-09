@@ -15,7 +15,7 @@ from logging import error as logging_error
 from logging import info as logging_info
 from time import sleep as time_sleep
 from time import time as time_time
-from typing import Any, ClassVar, Literal, TypedDict, cast  # pylint: disable=unused-import
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypedDict, cast  # pylint: disable=unused-import
 
 from pymavlink import mavutil
 
@@ -23,6 +23,7 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller_business_logic import (
     calculate_voltage_thresholds,
     convert_battery_telemetry_units,
+    get_enabled_battery_ids,
     get_frame_info,
     is_battery_monitoring_enabled,
 )
@@ -31,6 +32,9 @@ from ardupilot_methodic_configurator.backend_flightcontroller_protocols import (
     FlightControllerParamsProtocol,
     MavlinkConnection,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 # pymavlink initializes this dialect module dynamically and types it as optional.
 mavlink = cast("Any", mavutil.mavlink)
@@ -125,8 +129,8 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             raise ValueError(msg)
         self._params_manager: FlightControllerParamsProtocol = params_manager
         self._connection_manager: FlightControllerConnectionProtocol = connection_manager
-        self._last_battery_status: tuple[float, float] | None = None
-        self._last_battery_message_time: float = 0.0
+        self._battery_status_connection: MavlinkConnection | None = None
+        self._last_battery_statuses: dict[int, tuple[float, float, float]] = {}
         self._last_accel_cal_vehicle_pos: int | None = None
         self._level_calibration = _LevelCalibrationState()
         self._abandoned_level_deadline: float | None = None
@@ -1047,51 +1051,48 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         time_sleep(self.BATTERY_STATUS_ACTIVATION_WAIT)
         return True, ""
 
-    def get_battery_status(self) -> tuple[tuple[float, float] | None, str]:
-        """
-        Get current battery voltage and current.
-
-        Returns:
-            tuple[Union[tuple[float, float], None], str]: ((voltage, current), error_message) -
-                                                         voltage and current in volts and amps,
-                                                         or None if not available with error message
-
-        """
+    def get_battery_statuses(self) -> tuple[dict[int, tuple[float, float]] | None, str]:
+        """Get recent battery voltage and current readings, keyed by MAVLink battery ID."""
+        if self.master is not self._battery_status_connection:
+            self._last_battery_statuses.clear()
+            self._battery_status_connection = self.master
         if not self._params_manager.fc_parameters or self.master is None:
-            error_msg = _("No flight controller connection or parameters available")
-            return None, error_msg
-
-        # Check if battery monitoring is enabled
+            return None, _("No flight controller connection or parameters available")
         if not self.is_battery_monitoring_enabled():
-            error_msg = _("Battery monitoring is not enabled (BATT_MONITOR=0)")
-            return None, error_msg
+            self._last_battery_statuses.clear()
+            return None, _("Battery monitoring is not enabled")
 
         try:
-            # Try to get real telemetry data
-            battery_status = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+            while battery_status := self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
                 type="BATTERY_STATUS", blocking=False, timeout=self.BATTERY_STATUS_TIMEOUT
-            )
-            if battery_status:
-                # Convert from millivolts to volts, and centiamps to amps using pure business logic
+            ):
+                battery_id = int(battery_status.id)
+                voltages = cast("Sequence[int]", battery_status.voltages)
+                # Extension fields are absent from MAVLink 1 messages.
+                voltages_ext = cast("Sequence[int]", getattr(battery_status, "voltages_ext", ()))
                 voltage, current = convert_battery_telemetry_units(
-                    battery_status.voltages[0],
+                    sum(value for value in voltages if value != 65535)
+                    + sum(value for value in voltages_ext if value not in (0, 65535))
+                    if voltages[0] != 65535
+                    else -1,
                     battery_status.current_battery,
                 )
-                self._last_battery_status = (voltage, current)
-                self._last_battery_message_time = time_time()
-                return (voltage, current), ""
+                self._last_battery_statuses[battery_id] = (voltage, current, time_time())
         except Exception as e:  # pylint: disable=broad-exception-caught
-            logging_debug(_("Failed to get battery status from telemetry: %(error)s"), {"error": str(e)})
+            logging_debug(_("Failed to get battery statuses from telemetry: %(error)s"), {"error": str(e)})
 
-        if (
-            self._last_battery_message_time
-            and (time_time() - self._last_battery_message_time) < self.BATTERY_STATUS_CACHE_TIME
-        ):
-            # If we received a battery message recently, don't log an error
-            return self._last_battery_status, ""
-        self._last_battery_status = None
-        error_msg = _("Battery status not available from telemetry")
-        return None, error_msg
+        now = time_time()
+        enabled_battery_ids = get_enabled_battery_ids(self._params_manager.fc_parameters)
+        self._last_battery_statuses = {
+            battery_id: status
+            for battery_id, status in self._last_battery_statuses.items()
+            if battery_id in enabled_battery_ids and now - status[2] < self.BATTERY_STATUS_CACHE_TIME
+        }
+        if self._last_battery_statuses:
+            return {
+                battery_id: (voltage, current) for battery_id, (voltage, current, _time) in self._last_battery_statuses.items()
+            }, ""
+        return None, _("Battery status not available from telemetry")
 
     def get_voltage_thresholds(self) -> tuple[float, float]:
         """
@@ -1108,7 +1109,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         Check if battery monitoring is enabled.
 
         Returns:
-            bool: True if BATT_MONITOR != 0, False otherwise
+            bool: True if any battery monitor is enabled, False otherwise
 
         """
         return is_battery_monitoring_enabled(self._params_manager.fc_parameters)

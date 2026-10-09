@@ -229,7 +229,7 @@ All applications use one or more of the following shared libraries:
 
    3. **Query Operations** - Return `Optional[T]` or raise exceptions:
       - `fetch_param()` - raises `TimeoutError` on timeout
-      - `get_battery_status()` - returns `tuple[Optional[tuple[float, float]], str]`
+      - `get_battery_statuses()` - returns `tuple[dict[int, tuple[float, float]] | None, str]`, keyed by battery ID
       - Rationale: Distinguishes between "not found" (None) and "error" (exception)
 
    4. **Bulk Operations** - Return data structures or tuples:
