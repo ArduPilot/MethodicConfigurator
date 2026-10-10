@@ -25,8 +25,7 @@ jobs:
     runs-on: 'windows-latest'
     strategy:
       matrix:
-        # An exact version keeps the packaged Windows artifact reproducible.
-        python-version: ['3.14.6']
+        python-version: ['3.15']
 
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
@@ -208,7 +207,7 @@ jobs:
     runs-on: 'macos-latest'
     strategy:
       matrix:
-        python-version: ['3.13']
+        python-version: ['3.15']
 
     permissions:
       contents: write
@@ -312,7 +311,7 @@ jobs:
     runs-on: 'ubuntu-22.04'  # Use a consistent Linux environment for building the AppImage
     strategy:
       matrix:
-        python-version: ['3.14']
+        python-version: ['3.15']
 
     permissions:
       contents: write
