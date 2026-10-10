@@ -19,6 +19,7 @@ import logging
 import os
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
@@ -33,87 +34,38 @@ EXTRA_FILES_TO_UPDATE = [
     "copy_magfit_pdef_to_template_dirs.py",
     "update_magfit_pdef.xml.yml",
 ]
-file_renames = {}
+file_renames: dict[str, str] = {}
 
 # Add lines like these to rename files
 # file_renames["old_name"] = "new_name"
-file_renames["00_Default_Parameters.param"] = "00_default.param"
-file_renames["04_board_orientation.param"] = "05_board_orientation.param"
-file_renames["05_remote_controller.param"] = "06_remote_controller_receiver.param"
-file_renames["07_remote_controller_controller.param"] = "07_remote_controller_controller.param"
-file_renames["06_telemetry.param"] = "08_telemetry.param"
-file_renames["07_esc.param"] = "09_esc_telemetry.param"
-file_renames["10_battery_monitor.param"] = "10_battery_monitor.param"
-file_renames["08_batt1.param"] = "11_battery.param"
-file_renames["10_gnss.param"] = "12_gnss.param"
-file_renames["11_initial_atc.param"] = "13_initial_atc.param"
-file_renames["12_mp_setup_mandatory_hardware.param"] = "14_mp_setup_mandatory_hardware.param"
-file_renames["13_general_configuration.param"] = "15_general_configuration.param"
-file_renames["18_safety_setup.param"] = "16_safety_setup.param"
-file_renames["17_remote_id.param"] = "17_remote_id.param"
-file_renames["18_osd.param"] = "18_osd.param"
-file_renames["19_motor.param"] = "19_motor.param"
-file_renames["15_motor.param"] = "20_esc.param"
-file_renames["18_notch_filter_setup.param"] = "21_motor_notch_filter_setup.param"
-file_renames["14_logging.param"] = "22_motor_notch_logging.param"
-file_renames["16_pid_adjustment.param"] = "23_optional_pid_adjustment.param"
-file_renames["20_throttle_controller.param"] = "24_throttle_controller.param"
-file_renames["19_notch_filter_results.param"] = "25_motor_notch_filter_results.param"
-file_renames["21_ekf_config.param"] = "26_ekf_config.param"
-file_renames["26_pid_notch_filter_logging.param"] = "27_pid_notch_filter_logging.param"
-file_renames["27_pid_notch_filter_results.param"] = "28_pid_notch_filter_results.param"
-file_renames["22_quick_tune_setup.param"] = "29_quick_tune_setup.param"
-file_renames["23_quick_tune_results.param"] = "30_quick_tune_results.param"
-file_renames["24_inflight_magnetometer_fit_setup.param"] = "31_inflight_magnetometer_fit_setup.param"
-file_renames["25_inflight_magnetometer_fit_results.param"] = "32_inflight_magnetometer_fit_results.param"
-file_renames["28_evaluate_the_aircraft_tune_ff_disable.param"] = "33_evaluate_the_aircraft_tune_ff_disable.param"
-file_renames["29_evaluate_the_aircraft_tune_ff_enable.param"] = "34_evaluate_the_aircraft_tune_ff_enable.param"
-file_renames["30_autotune_roll_setup.param"] = "35_autotune_roll_setup.param"
-file_renames["31_autotune_roll_results.param"] = "36_autotune_roll_results.param"
-file_renames["32_autotune_pitch_setup.param"] = "37_autotune_pitch_setup.param"
-file_renames["33_autotune_pitch_results.param"] = "38_autotune_pitch_results.param"
-file_renames["34_autotune_yaw_setup.param"] = "39_autotune_yaw_setup.param"
-file_renames["35_autotune_yaw_results.param"] = "40_autotune_yaw_results.param"
-file_renames["36_autotune_yawd_setup.param"] = "41_autotune_yawd_setup.param"
-file_renames["37_autotune_yawd_results.param"] = "42_autotune_yawd_results.param"
-file_renames["38_autotune_roll_pitch_retune_setup.param"] = "43_autotune_roll_pitch_retune_setup.param"
-file_renames["39_autotune_roll_pitch_retune_results.param"] = "44_autotune_roll_pitch_retune_results.param"
-file_renames["45_autotune_finish.param"] = "45_autotune_finish.param"
-file_renames["46_pid_d_ff.param"] = "46_pid_d_ff.param"
-file_renames["40_windspeed_estimation.param"] = "47_windspeed_estimation.param"
-file_renames["41_barometer_compensation.param"] = "48_barometer_compensation.param"
-file_renames["49_windspeed_estimation_finish.param"] = "49_windspeed_estimation_finish.param"
-file_renames["50_system_id_input_roll.param"] = "50_system_id_input_roll.param"
-file_renames["51_system_id_input_pitch.param"] = "51_system_id_input_pitch.param"
-file_renames["52_system_id_input_yaw.param"] = "52_system_id_input_yaw.param"
-file_renames["42_system_id_roll.param"] = "53_system_id_mixer_roll.param"
-file_renames["43_system_id_pitch.param"] = "54_system_id_mixer_pitch.param"
-file_renames["44_system_id_yaw.param"] = "55_system_id_mixer_yaw.param"
-file_renames["45_system_id_thrust.param"] = "56_system_id_mixer_thrust.param"
-file_renames["46_analytical_pid_optimization.param"] = "57_analytical_pid_optimization.param"
-file_renames["47_position_controller.param"] = "60_position_controller.param"
-file_renames["48_guided_operation.param"] = "61_guided_operation.param"
-file_renames["49_precision_land.param"] = "62_precision_land.param"
-file_renames["50_optical_flow_setup.param"] = "63_optical_flow_setup.param"
-file_renames["51_optical_flow_results.param"] = "64_optical_flow_results.param"
-file_renames["52_use_optical_flow_instead_of_gnss.param"] = "65_use_optical_flow_instead_of_gnss.param"
-file_renames["53_everyday_use.param"] = "66_everyday_use.param"
+
+# Explicit numbering anchors; following steps use the next available number.
+file_renames["15_general_configuration.param"] = "19_general_configuration.param"
+file_renames["60_position_controller.param"] = "64_position_controller.param"
 
 
 def reorder_param_files(steps: dict) -> dict[str, str]:
-    """Reorder parameters and prepare renaming rules."""
-    # Iterate over the param_files and rename the keys to be in two-digit prefix ascending order
-    param_files = list(steps)
-    renames = {}
-    for i, old_key in enumerate(param_files, 2):
-        new_key = f"{i:02d}_{old_key.split('_', 1)[1]}"
-        # If the old filename has an explicit rename entry, use its entire new name;
-        # otherwise fall back to the auto-numbered name.
+    """
+    Number steps in sequence order, continuing after each explicit destination.
+
+    Record automatic renames in file_renames so reference and migration updates
+    use the same plan as the actual file moves.
+    """
+    renames: dict[str, str] = {}
+    next_number = 2
+    for old_key in steps:
+        new_key = f"{next_number:02d}_{old_key.split('_', 1)[1]}"
         new_key = file_renames.get(old_key, new_key)
+        new_number = int(new_key.split("_", 1)[0])
+        if new_number < next_number:
+            msg = f"Cannot rename {old_key} to {new_key}: the next available step number is {next_number:02d}"
+            raise ValueError(msg)
+        next_number = new_number + 1
         renames[new_key] = old_key
         if old_key != new_key:
             msg = f"Info: Will rename {old_key} to {new_key}"
             logging.info(msg)
+    file_renames.update({old_name: new_name for new_name, old_name in renames.items() if old_name != new_name})
     return renames
 
 
@@ -274,6 +226,10 @@ def rename_file(old_name: str, new_name: str, param_dir: str) -> None:
         logging.debug("Skipping missing file %s", old_name_path)
         return
 
+    if os.path.lexists(new_name_path):
+        msg = f"Refusing to overwrite {new_name_path} with {old_name_path}"
+        raise FileExistsError(msg)
+
     git_executable = _git_executable()
     if git_executable and _is_git_tracked(old_name_path, git_executable):
         try:
@@ -297,12 +253,40 @@ def rename_file(old_name: str, new_name: str, param_dir: str) -> None:
 
 
 def reorder_actual_files(renames: dict[str, str], param_dirs: list[str]) -> None:
-    # Rename the actual files on disk based on renames re-ordering
+    """Stage each directory's files before moving them to their final names."""
     for param_dir in param_dirs:
+        moves: list[tuple[str, str]] = []
         for new_name, old_name in renames.items():
-            rename_file(old_name, new_name, param_dir)
+            if old_name != new_name and os.path.exists(os.path.join(param_dir, old_name)):
+                moves.append((old_name, new_name))
             if old_name.endswith(".param"):
-                rename_file(old_name[:-6] + ".pdef.xml", new_name[:-6] + ".pdef.xml", param_dir)
+                old_xml, new_xml = old_name[:-6] + ".pdef.xml", new_name[:-6] + ".pdef.xml"
+                if old_xml != new_xml and os.path.exists(os.path.join(param_dir, old_xml)):
+                    moves.append((old_xml, new_xml))
+
+        sources = {os.path.normcase(old_name) for old_name, _ in moves}
+        targets = [os.path.normcase(new_name) for _, new_name in moves]
+        if len(sources) != len(moves) or len(set(targets)) != len(moves):
+            msg = f"Duplicate source or destination in {param_dir}"
+            raise ValueError(msg)
+        for _old_name, new_name in moves:
+            if os.path.normcase(new_name) not in sources and os.path.lexists(os.path.join(param_dir, new_name)):
+                msg = f"Refusing to overwrite {os.path.join(param_dir, new_name)}"
+                raise FileExistsError(msg)
+
+        if not moves:
+            continue
+        staging_dir = tempfile.mkdtemp(prefix=".param-reorder-", dir=param_dir)
+        staging_name = os.path.basename(staging_dir)
+        try:
+            for old_name, _new_name in moves:
+                rename_file(old_name, os.path.join(staging_name, old_name), param_dir)
+            for old_name, new_name in moves:
+                rename_file(os.path.join(staging_name, old_name), new_name, param_dir)
+        except (OSError, subprocess.CalledProcessError):
+            logging.exception("Rename failed; inspect %s for remaining staged files", staging_dir)
+            raise
+        os.rmdir(staging_dir)
 
 
 def main() -> None:

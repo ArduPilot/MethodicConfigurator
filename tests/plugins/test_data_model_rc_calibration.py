@@ -10,11 +10,15 @@ SPDX-FileCopyrightText: 2026 ArduPilot Contributors
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import json
+import re
 from math import nan
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
+from jsonschema import validate
 
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_par_dict import Par
@@ -1122,3 +1126,28 @@ class TestRCChannelOptionProtection:
         assert channels[7]["function_editable"] is True
         assert model.set_channel_option(8, "300")[0] is True
         controller.set_param.assert_not_called()
+
+
+@pytest.mark.parametrize("template_name", ["Holybro_X500_mig", "empty_4.6.x_mig"])
+def test_migration_templates_expose_editable_rc_mapping_in_controller_step(template_name: str) -> None:
+    """
+    Both migration templates place channel mapping and the plugin in the RC controller step.
+
+    GIVEN: A bundled migration template
+    WHEN: Its numbered parameter file and step configuration are loaded
+    THEN: All four mappings are present, imported and editable, and the plugin is registered in schema-valid JSON
+    """
+    package = Path(__file__).parents[2] / "ardupilot_methodic_configurator"
+    template = package / "vehicle_templates" / "ArduCopter" / template_name
+    config = json.loads((template / "configuration_steps_ArduCopter.json").read_text(encoding="utf-8"))
+    validate(config, json.loads((package / "configuration_steps_schema.json").read_text(encoding="utf-8")))
+    filename = "06_remote_controller_controller.param"
+    step = config["steps"][filename]
+    parameters = (template / filename).read_text(encoding="utf-8")
+    assert step["plugin"]["name"] == "rc_calibration"
+    for name, value in (("RCMAP_ROLL", 1), ("RCMAP_PITCH", 2), ("RCMAP_THROTTLE", 3), ("RCMAP_YAW", 4)):
+        assert f"{name},{value}" in parameters
+        assert any(re.fullmatch(pattern, name) for pattern in step["autoimport_nondefault_regexp"])
+        assert name in step["add_parameters"]
+        assert name not in step.get("forced_parameters", {})
+        assert name not in step.get("derived_parameters", {})
