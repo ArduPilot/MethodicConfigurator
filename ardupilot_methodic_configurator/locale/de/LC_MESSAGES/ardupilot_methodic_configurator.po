@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-10-08 09:06+0000\n"
+"POT-Creation-Date: 2026-10-10 12:51+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -1055,75 +1055,146 @@ msgstr "Firmware-Typ {fw_type} in {filename} wird nicht unterstützt"
 msgid "FW version string {version_str} on {filename} is invalid"
 msgstr "FW-Versionsstring {version_str} in {filename} ist ungültig"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:101
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:72
+msgid "The {description} redirected away from the official ArduPilot server"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:80
+msgid "firmware catalog"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:86
+msgid "The ArduPilot firmware catalog is too large"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:91
+msgid "The ArduPilot firmware catalog is invalid"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:103
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:116
+msgid "Firmware download cancelled"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:107
+msgid "firmware download"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:120
+msgid "The firmware image is too large"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:125
+msgid "The firmware download is empty"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:194
+msgid ""
+"Firmware upload requires a direct USB serial connection to the flight "
+"controller"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:197
+msgid "Firmware upload requires explicit confirmation"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:201
+msgid "Firmware upload requires the connected flight-controller board ID"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:216
+msgid ""
+"The selected release does not match the connected flight-controller board"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:222
+msgid "Downloading firmware…"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:226
+msgid "The flight-controller connection changed while downloading firmware"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:230
+msgid "The downloaded firmware does not match the detected board ID"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:236
+msgid "The downloaded firmware build does not match the selected release"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:257
+msgid "Inspecting selected firmware…"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:260
+msgid ""
+"The selected APJ does not match the connected flight-controller board ID"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:103
 msgid "flight-controller connection was lost before bootloader entry"
 msgstr ""
 "Die Verbindung zum Flugcontroller ging verloren, bevor der Bootloader "
 "aufgerufen wurde"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:105
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:107
 msgid "flight controller rejected bootloader entry: {error}"
 msgstr ""
 "Der Flugcontroller hat den Wechsel in den Bootloader abgelehnt: {error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:150
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:152
 msgid "cannot resolve the flight-controller serial device: {error}"
 msgstr ""
 "Das serielle Gerät des Flugcontrollers kann nicht aufgelöst werden: {error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:238
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:240
 msgid "You should uninstall ModemManager as it conflicts with ArduPilot"
 msgstr ""
 "Sie sollten ModemManager deinstallieren, da es mit ArduPilot in Konflikt "
 "steht"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:398
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:401
 msgid "Cannot reset flight controller: not connected"
 msgstr "Flugregler kann nicht zurückgesetzt werden: nicht verbunden"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:402
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:406
 msgid "Reset command sent to ArduPilot."
 msgstr "Zurücksetzungsbefehl an ArduPilot gesendet."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:468
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:472
 msgid ""
 "firmware upload requires an active direct serial flight-controller connection"
 msgstr ""
 "Für den Firmware-Upload ist eine aktive direkte serielle Verbindung zum "
 "Flugcontroller erforderlich"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:471
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:475
 msgid ""
 "firmware upload requires explicit confirmation before entering the bootloader"
 msgstr ""
 "Für den Firmware-Upload ist vor dem Wechsel in den Bootloader eine "
 "ausdrückliche Bestätigung erforderlich"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:478
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:482
 msgid "firmware upload requires the connected flight controller APJ board_id"
 msgstr ""
 "Für den Firmware-Upload ist die APJ-board_id des verbundenen Flugcontrollers "
 "erforderlich"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:512
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:516
 msgid "firmware upload requires a trusted SHA-256 for the selected APJ payload"
 msgstr ""
 "Für den Firmware-Upload ist eine vertrauenswürdige SHA-256-Prüfsumme für die "
 "ausgewählte APJ-Nutzlast erforderlich"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:516
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:520
 msgid "firmware upload requires a stable USB serial number or USB location"
 msgstr ""
 "Für den Firmware-Upload ist eine stabile USB-Seriennummer oder ein stabiler "
 "USB-Standort erforderlich"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:537
-msgid "Unable to reconnect after safe firmware-upload abort: %s"
-msgstr ""
-"Erneute Verbindung nach sicherem Abbruch des Firmware-Uploads nicht möglich: "
-"%s"
-
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:545
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:548
 msgid ""
 "firmware was written and verified, but the flight controller could not be "
 "reconnected automatically: {error}. Reconnect it manually before continuing."
@@ -1132,7 +1203,25 @@ msgstr ""
 "Flugcontroller konnte nicht automatisch wiederhergestellt werden: {error}. "
 "Stellen Sie die Verbindung manuell wieder her, bevor Sie fortfahren."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:870
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:577
+msgid "Unable to reconnect after safe firmware-upload abort: %s"
+msgstr ""
+"Erneute Verbindung nach sicherem Abbruch des Firmware-Uploads nicht möglich: "
+"%s"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:579
+msgid ""
+"Firmware upload was cancelled, but reconnection failed: {error}. Restart AMC "
+"to reconnect."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:589
+msgid ""
+"The reconnected board does not match the controller before cancellation. "
+"Restart AMC."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:906
 msgid ""
 "MAVLink serial connection baudrate to the flight controller. Default is "
 "%(default)s"
@@ -1140,7 +1229,7 @@ msgstr ""
 "MAVLink-Serieller Verbindungs-Baudrate zum Flugcontroller. Standard ist "
 "%(default)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:876
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:912
 msgid ""
 "MAVLink connection string to the flight controller. If set to \"none\" no "
 "connection is made. If set to \"file\" the file params.param is used. "
@@ -1150,141 +1239,141 @@ msgstr ""
 "wird keine Verbindung hergestellt. Wenn auf \"file\" gesetzt, wird die Datei "
 "params.param verwendet. Standard ist Automatische Erkennung"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:891
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:927
 msgid "Flight controller reboot time. Default is %(default)s"
 msgstr "Reboot-Zeit des Flugcontrollers. Standard ist %(default)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:254
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:256
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:255
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:257
 msgid "cannot uniquely locate the bootloader USB device"
 msgstr "Das USB-Bootloader-Gerät kann nicht eindeutig gefunden werden"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:274
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:275
 msgid "unsupported firmware format {suffix}, only .apj is supported"
 msgstr ""
 "Nicht unterstütztes Firmware-Format {suffix}, nur .apj wird unterstützt"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:278
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:283
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:279
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:284
 msgid "APJ descriptor exceeds {limit} bytes"
 msgstr "APJ-Deskriptor überschreitet {limit} Bytes"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:287
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:288
 msgid "cannot read APJ descriptor: {error}"
 msgstr "APJ-Deskriptor kann nicht gelesen werden: {error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:309
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:310
 msgid ""
 "PROG_MULTI chunk must be 4..{limit} bytes and a multiple of 4, got {size}"
 msgstr ""
 "PROG_MULTI-Block muss 4..{limit} Bytes groß und ein Vielfaches von 4 sein, "
 "erhalten: {size}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:326
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:327
 msgid "READ_MULTI length must be 1..{limit}, got {length}"
 msgstr "READ_MULTI-Länge muss 1..{limit} sein, erhalten: {length}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:333
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:334
 msgid "external flash size must be 1..4294967295 bytes, got {size}"
 msgstr ""
 "Die Größe des externen Flash-Speichers muss 1..4294967295 Bytes betragen, "
 "erhalten: {size}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:357
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:358
 msgid "short reply, expected INSYNC and status, got {reply}"
 msgstr "Kurze Antwort, INSYNC und Status erwartet, erhalten: {reply}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:360
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:361
 msgid "expected INSYNC, got {byte}"
 msgstr "INSYNC erwartet, erhalten: {byte}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:366
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:367
 msgid "bootloader reports INVALID OPERATION"
 msgstr "Bootloader meldet INVALID OPERATION"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:367
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:368
 msgid "bootloader reports OPERATION FAILED"
 msgstr "Bootloader meldet OPERATION FAILED"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:368
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:369
 msgid "programming not supported for this silicon revision"
 msgstr "Programmierung wird für diese Silizium-Revision nicht unterstützt"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:370
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:371
 msgid "unexpected status {status} instead of OK"
 msgstr "Unerwarteter Status {status} anstelle von OK"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:376
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:377
 msgid "short reply, expected 4 bytes, got {size}"
 msgstr "Kurze Antwort, 4 Bytes erwartet, erhalten: {size}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:405
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:732
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:406
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:771
 msgid "bootloader response timeout must be positive"
 msgstr "Das Zeitlimit für die Bootloader-Antwort muss positiv sein"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:440
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:441
 msgid "cannot clear bootloader serial input: {error}"
 msgstr "kann die serielle Eingabe des Bootloaders nicht leeren: {error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:452
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:453
 msgid "bootloader transport write failed: {error}"
 msgstr "Schreiben über den Bootloader-Transport fehlgeschlagen: {error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:455
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:456
 msgid "bootloader transport wrote {written} of {expected} bytes"
 msgstr "Bootloader-Transport schrieb {written} von {expected} Bytes"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:464
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:477
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:465
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:478
 msgid "timeout waiting for {expected} bootloader bytes; received {actual}"
 msgstr ""
 "Zeitüberschreitung beim Warten auf {expected} Bootloader-Bytes; {actual} "
 "empfangen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:483
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:484
 msgid "bootloader transport read failed: {error}"
 msgstr "Lesen über den Bootloader-Transport fehlgeschlagen: {error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:501
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:502
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:375
 msgid "unsupported bootloader protocol revision {revision}"
 msgstr "nicht unterstützte Revision {revision} des Bootloader-Protokolls"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:542
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:543
 msgid "invalid external-flash erase progress {progress}"
 msgstr "ungültiger Löschfortschritt des externen Flash-Speichers {progress}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:545
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:546
 msgid "external-flash erase progress regressed from {previous} to {progress}"
 msgstr ""
 "der Löschfortschritt des externen Flash-Speichers ist von {previous} auf "
 "{progress} zurückgegangen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:559
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:563
 msgid "firmware read-back verification failed"
 msgstr "Verifizierung des Rücklesens der Firmware fehlgeschlagen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:565
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:571
 msgid "firmware CRC verification failed"
 msgstr "CRC-Verifizierung der Firmware fehlgeschlagen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:573
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:579
 msgid "external firmware CRC verification failed"
 msgstr "CRC-Verifizierung der externen Firmware fehlgeschlagen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:598
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:760
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:604
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:799
 msgid "firmware upload requires explicit confirmation"
 msgstr "Firmware-Upload erfordert eine ausdrückliche Bestätigung"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:601
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:763
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:607
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:802
 msgid "firmware upload cancelled before entering the bootloader"
 msgstr "Firmware-Upload vor dem Eintritt in den Bootloader abgebrochen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:614
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:770
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:620
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:809
 msgid ""
 "full firmware erase is unavailable because support cannot yet be determined "
 "safely"
@@ -1292,16 +1381,16 @@ msgstr ""
 "vollständiges Löschen der Firmware ist nicht verfügbar, da die Unterstützung "
 "noch nicht sicher bestimmt werden kann"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:619
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:625
 msgid "firmware upload was not confirmed"
 msgstr "Firmware-Upload wurde nicht bestätigt"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:623
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:629
 msgid "firmware upload cancelled before erase"
 msgstr "Firmware-Upload vor dem Löschen abgebrochen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:669
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:686
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:708
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:725
 msgid ""
 "cannot reboot the held bootloader; power-cycle the flight controller before "
 "reconnecting"
@@ -1310,8 +1399,8 @@ msgstr ""
 "Flight Controller aus und wieder ein, bevor Sie die Verbindung erneut "
 "herstellen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:676
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:691
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:715
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:730
 msgid ""
 "firmware upload failed during {stage}; the firmware flash may be incomplete. "
 "power-cycle the flight controller before reconnecting"
@@ -1320,13 +1409,13 @@ msgstr ""
 "könnte unvollständig sein. Schalten Sie den Flight Controller aus und wieder "
 "ein, bevor Sie die Verbindung erneut herstellen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:791
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:830
 msgid "bootloader open retries must be at least one"
 msgstr ""
 "die Anzahl der Versuche zum Öffnen des Bootloaders muss mindestens eins "
 "betragen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:797
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:836
 msgid ""
 "firmware upload was cancelled while waiting for the bootloader; power-cycle "
 "the flight controller before reconnecting"
@@ -1335,7 +1424,7 @@ msgstr ""
 "Sie den Flight Controller aus und wieder ein, bevor Sie die Verbindung "
 "erneut herstellen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:832
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:871
 msgid ""
 "could not confirm reboot of the held bootloader; power-cycle the flight "
 "controller before reconnecting"
@@ -1344,7 +1433,7 @@ msgstr ""
 "schalten Sie den Flight Controller aus und wieder ein, bevor Sie die "
 "Verbindung erneut herstellen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:848
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:887
 msgid ""
 "cannot open the held bootloader on serial port {device}: {error}; power-"
 "cycle the flight controller before reconnecting"
@@ -1901,6 +1990,8 @@ msgstr "Remote-Verzeichnis %(directory)s konnte nicht erstellt werden"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:416
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:736
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1766
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:147
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:340
 msgid "No flight controller connected"
 msgstr "Kein Flugcontroller verbunden"
 
@@ -4034,11 +4125,13 @@ msgstr "Kritische Failsafe-Spannung x Anzahl der Zellen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:302
 msgid "Current RC pitch channel mapping; editable in the RC calibration plugin"
-msgstr "Aktuelle RC-Pitch-Kanalzuordnung; im RC-Kalibrierungs-Plugin bearbeitbar"
+msgstr ""
+"Aktuelle RC-Pitch-Kanalzuordnung; im RC-Kalibrierungs-Plugin bearbeitbar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:303
 msgid "Current RC roll channel mapping; editable in the RC calibration plugin"
-msgstr "Aktuelle RC-Roll-Kanalzuordnung; im RC-Kalibrierungs-Plugin bearbeitbar"
+msgstr ""
+"Aktuelle RC-Roll-Kanalzuordnung; im RC-Kalibrierungs-Plugin bearbeitbar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:304
 msgid ""
@@ -4047,7 +4140,8 @@ msgstr "Aktuelle RC-Gas-Kanalzuordnung; im RC-Kalibrierungs-Plugin bearbeitbar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:305
 msgid "Current RC yaw channel mapping; editable in the RC calibration plugin"
-msgstr "Aktuelle RC-Gier-Kanalzuordnung; im RC-Kalibrierungs-Plugin bearbeitbar"
+msgstr ""
+"Aktuelle RC-Gier-Kanalzuordnung; im RC-Kalibrierungs-Plugin bearbeitbar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:306
 msgid "Defined in ESC specifications above"
@@ -5068,6 +5162,20 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_configuration_step.py:283
 msgid "Parameter Renamed"
 msgstr "Parameter umbenannt"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_catalog.py:56
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_catalog.py:97
+msgid "Copter - heli"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_catalog.py:56
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_catalog.py:97
+msgid "Copter - multicopter"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_catalog.py:123
+msgid "Invalid ArduPilot firmware manifest"
+msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:143
 msgid "bootloader flash size must be a non-negative multiple of four"
@@ -6671,7 +6779,7 @@ msgstr ""
 "die .bin-Logdatei ist jedoch für %(vehicle_type)s. Es wird mit der "
 "expliziten Vorlagenüberschreibung fortgefahren."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:681
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:686
 msgid ""
 "No intermediate parameter files found\n"
 "in current working directory."
@@ -6679,7 +6787,7 @@ msgstr ""
 "Keine Zwischenparameterdateien im\n"
 "aktuellen Arbeitsverzeichnis gefunden."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:682
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:687
 msgid ""
 "No intermediate parameter files found\n"
 "in the --vehicle-dir specified directory."
@@ -6687,7 +6795,7 @@ msgstr ""
 "Keine Zwischenparameterdateien im\n"
 "im --vehicle-dir angegebenen Verzeichnis gefunden."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:702
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:707
 msgid "MyVehicleName"
 msgstr "MeinFahrzeugName"
 
@@ -7150,7 +7258,7 @@ msgstr " - Fahrzeugkomponenten-Editor"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:240
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:354
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:54
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:55
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:57
 msgid "Amilcar Lucas's - ArduPilot methodic configurator "
 msgstr "Amilcar Lucas - ArduPilot methodischer Konfigurator "
 
@@ -7418,6 +7526,7 @@ msgstr ""
 "auf die Schaltfläche Auto-Connect unten, um eine Verbindung herzustellen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:363
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:97
 msgid "Auto-connect"
 msgstr "Automatische Verbindung"
 
@@ -7523,6 +7632,7 @@ msgstr "Wähle eine ArduPilot .bin-Logdatei aus"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:172
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1774
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:504
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:444
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:264
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:865
@@ -7641,6 +7751,7 @@ msgid "Download the last flight-controller .bin log file"
 msgstr "Die letzte .bin-Protokolldatei des Flugcontrollers herunterladen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:271
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:186
 msgid "Help"
 msgstr "Hilfe"
 
@@ -8083,6 +8194,344 @@ msgstr "… %s weitere Einträge ausgelassen."
 msgid "No entries processed."
 msgstr "Keine Einträge verarbeitet."
 
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:81
+msgid "Select a flight controller"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:86
+msgid "Flight controller connection"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:99
+msgid ""
+"Find and connect to a flight controller\n"
+"plugged into your computer by USB."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:137
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:476
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:511
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:638
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:745
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:763
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:80
+msgid "Upload ArduPilot firmware"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:145
+msgid "Connected flight controller"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:150
+msgid "Connect"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:165
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:331
+msgid "Connect a flight controller to detect its board"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:173
+msgid "Upload custom APJ…"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:176
+msgid "Upload firmware"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:178
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:385
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:203
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:240
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:208
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:121
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:584
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:192
+msgid "Open the firmware upload user manual"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:199
+msgid ""
+"The flight controller is the small computer\n"
+"that runs your vehicle.\n"
+"This shows its model and USB connection.\n"
+"The board ID identifies compatible firmware."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:208
+msgid ""
+"Connect your flight controller by USB.\n"
+"Its model is detected so compatible firmware\n"
+"can be offered."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:212
+msgid ""
+"Shows the current step, result, or error\n"
+"while preparing and installing firmware."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:216
+msgid ""
+"Choose an .apj firmware file on your computer.\n"
+"APJ is ArduPilot's firmware file format.\n"
+"The file must match your connected board.\n"
+"You will be asked to confirm before writing."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:225
+msgid ""
+"Download the selected firmware and prepare\n"
+"to install it on your flight controller.\n"
+"Installation replaces its current firmware.\n"
+"You will be asked to confirm before writing.\n"
+"Keep the USB cable connected until it finishes."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:235
+msgid ""
+"Stop before the current firmware is erased.\n"
+"Cancellation is unavailable once erasing starts."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:242
+msgid "Official ArduPilot firmware"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:246
+msgid ""
+"Firmware is the software that runs on your\n"
+"flight controller. These releases come from\n"
+"the official ArduPilot download server."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:252
+msgid "Firmware type:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:258
+msgid "Firmware target:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:264
+msgid "Firmware version:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:271
+msgid "Refresh versions"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:276
+msgid ""
+"Download the latest list of available\n"
+"firmware releases from ArduPilot.\n"
+"An internet connection is required."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:282
+msgid ""
+"Choose the software for your vehicle.\n"
+"Copter - multicopter is for drones with\n"
+"several propellers. Copter - heli is for\n"
+"helicopters. Plane is for airplanes.\n"
+"Rover is for ground vehicles and boats.\n"
+"Sub is for underwater vehicles.\n"
+"Only available builds are listed."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:295
+msgid ""
+"A target is a firmware build for a board model.\n"
+"Only targets matching your connected board\n"
+"are listed. Some boards have several options.\n"
+"The target can change the available features."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:305
+msgid ""
+"Choose which software release to install.\n"
+"OFFICIAL is the current stable release.\n"
+"BETA is a release being tested.\n"
+"DEV is a development build.\n"
+"STABLE-x.y.z is an older stable release.\n"
+"Only versions for your chosen type and target\n"
+"are listed."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:343
+msgid "{board_name} (APJ board ID {board_id}) — {device}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:402
+msgid "Loading available firmware versions…"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:428
+msgid "Select a firmware type, target and version for the detected board"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:435
+msgid "No APJ firmware is listed for this board ID"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:477
+msgid ""
+"Download {release} for board ID {board_id} and prepare to flash it?\n"
+"\n"
+"After a successful or failed upload, closing this window closes AMC. Restart "
+"AMC to continue configuration. Cancelling before erase keeps AMC open unless "
+"a detected board was unplugged while idle."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:503
+msgid "Select APJ firmware file"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:504
+msgid "ArduPilot firmware"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:512
+msgid ""
+"Use local firmware {file} for board ID {board_id} and prepare to flash it?\n"
+"\n"
+"After a successful or failed upload, closing this window closes AMC. Restart "
+"AMC to continue configuration. Cancelling before erase keeps AMC open unless "
+"a detected board was unplugged while idle."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:591
+msgid "Firmware catalog error"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:596
+msgid "Firmware upload: {stage}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:613
+msgid "Confirm firmware flash"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:614
+msgid ""
+"Erase and flash {release}?\n"
+"\n"
+"Bootloader board ID: {board_id}\n"
+"APJ SHA-256: {digest}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:631
+msgid "Firmware upload completed and flight controller reconnected"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:634
+msgid "Firmware upload cancelled"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:636
+msgid "Close this window and restart AMC before continuing configuration."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:640
+msgid "Firmware upload failed"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:660
+msgid "Idle"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:661
+msgid "Inspecting firmware"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:662
+msgid "Awaiting confirmation"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:663
+msgid "Entering bootloader"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:664
+msgid "Identifying board"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:665
+msgid "Erasing firmware"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:666
+msgid "Programming firmware"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:667
+msgid "Verifying firmware"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:668
+msgid "Rebooting board"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:669
+msgid "Reconnecting to board"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:670
+msgid "Completed"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:671
+msgid "Failed"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:672
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_compass_calibration.py:382
+msgid "Cancelled"
+msgstr "Abgebrochen"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:680
+msgid "Erase"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:681
+msgid ""
+"Removing the old firmware from the board\n"
+"before writing the selected firmware.\n"
+"Keep the USB cable connected."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:689
+msgid "Program"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:690
+msgid ""
+"Writing the selected firmware to the board.\n"
+"Keep the USB cable connected."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:694
+msgid "Verify"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:695
+msgid ""
+"Checking that the firmware was written\n"
+"correctly before restarting the board."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:745
+msgid "Wait for the current operation to finish"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:768
+msgid ""
+"Upload this local APJ firmware file after connecting (with confirmation)."
+msgstr ""
+
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_connection_progress.py:47
 msgid "Initializing Flight Controller"
 msgstr "Initialisierung des Flugreglers"
@@ -8246,15 +8695,6 @@ msgstr "Parameteränderungen überprüfen"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:179
 msgid "The following parameter change(s) are proposed:"
 msgstr "Die folgenden Parameteränderung(en) werden vorgeschlagen:"
-
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:385
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:203
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:240
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:208
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:121
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:584
-msgid "Cancel"
-msgstr "Abbrechen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:388
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:207
@@ -9850,7 +10290,7 @@ msgid " - Create a new vehicle project directory"
 msgstr "- Erstelle ein neues Fahrzeugprojekt-Verzeichnis"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:106
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:86
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:135
 msgid "New vehicle"
 msgstr "Neues Fahrzeug"
 
@@ -9887,13 +10327,13 @@ msgid "Destination new vehicle name:"
 msgstr "Neuer Fahrzeugname:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:143
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:103
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:152
 msgid "Create a vehicle project from an already configured flight controller"
 msgstr ""
 "Ein Fahrzeugprojekt aus einem bereits konfigurierten Flugcontroller erstellen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:145
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:92
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:141
 msgid "Create a vehicle project from a template"
 msgstr "Ein Fahrzeugprojekt aus einer Vorlage erstellen"
 
@@ -9963,15 +10403,15 @@ msgstr ""
 "VehicleProjectCreatorWindow von einem anderen Skript aufgerufen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:305
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:326
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:375
 msgid "No intermediate parameter files found in %s."
 msgstr "Keine Zwischenparametern-Dateien in %s gefunden."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:57
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:59
 msgid " - Select vehicle configuration directory"
 msgstr " - Fahrzeugkonfigurationsverzeichnis auswählen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:69
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:71
 msgid ""
 "\n"
 "Choose one of the following options:"
@@ -9979,7 +10419,13 @@ msgstr ""
 "\n"
 "Wählen Sie eine der folgenden Optionen:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:98
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:85
+msgid ""
+"Open the firmware upload window to install ArduPilot on a flight controller "
+"connected by USB."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:147
 msgid ""
 "Create a new vehicle configuration directory, choose this option when using "
 "the software for the first time"
@@ -9987,7 +10433,7 @@ msgstr ""
 "Erstelle ein neues Fahrzeugkonfigurationsverzeichnis, wähle diese Option bei "
 "der ersten Nutzung der Software"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:114
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:163
 msgid ""
 "Create a new vehicle configuration directory using the connected flight "
 "controller's parameters and component information."
@@ -9995,19 +10441,19 @@ msgstr ""
 "Ein neues Fahrzeugkonfigurationsverzeichnis anhand der Parameter und "
 "Komponenteninformationen des verbundenen Flugcontrollers erstellen."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:123
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:172
 msgid "Importing .bin log file"
 msgstr ".bin-Logdatei wird importiert"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:124
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:173
 msgid "Parsing .bin log file: {}% complete"
 msgstr ".bin-Logdatei wird verarbeitet: {}% abgeschlossen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:146
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:195
 msgid "Open vehicle"
 msgstr "Fahrzeug öffnen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:153
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:202
 msgid ""
 "Use an existing vehicle configuration directory with\n"
 "intermediate parameter files, apm.pdef.xml and vehicle_components.json"
@@ -10015,24 +10461,24 @@ msgstr ""
 "Verwenden Sie ein vorhandenes Fahrzeugkonfigurationsverzeichnis mit\n"
 "Zwischenparameterdateien, apm.pdef.xml und vehicle_components.json"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:174
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:223
 msgid "Re-Open vehicle"
 msgstr "Fahrzeug erneut öffnen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:182
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:231
 msgid "Recently opened vehicle directories:"
 msgstr "Kürzlich geöffnete Fahrzeugverzeichnisse:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:184
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:201
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:233
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:250
 msgid "Select from recently opened vehicle configuration directories"
 msgstr "Aus kürzlich geöffneten Fahrzeugkonfigurationsverzeichnissen auswählen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:209
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:258
 msgid "Open selected vehicle configuration directory"
 msgstr "Ausgewähltes Fahrzeugkonfigurationsverzeichnis öffnen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:216
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:265
 msgid ""
 "Open the selected vehicle configuration directory for configuring and tuning "
 "the vehicle"
@@ -10040,20 +10486,20 @@ msgstr ""
 "Das ausgewählte Fahrzeugkonfigurationsverzeichnis zum Konfigurieren und "
 "Abstimmen des Fahrzeugs öffnen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:224
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:273
 msgid "No Directory Selected"
 msgstr "Kein Verzeichnis ausgewählt"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:224
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:273
 msgid "Please select a vehicle configuration directory from the list."
 msgstr ""
 "Bitte wählen Sie ein Fahrzeugkonfigurationsverzeichnis aus der Liste aus."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:232
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:281
 msgid "Directory Not Found"
 msgstr "Verzeichnis nicht gefunden"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:233
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:282
 msgid ""
 "The selected directory no longer exists:\n"
 "\n"
@@ -10067,11 +10513,11 @@ msgstr ""
 "\n"
 "Es wurde möglicherweise verschoben oder gelöscht."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:241
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:290
 msgid "Invalid Directory"
 msgstr "Ungültiges Verzeichnis"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:242
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:291
 msgid ""
 "The selected path is not a directory:\n"
 "\n"
@@ -10081,11 +10527,11 @@ msgstr ""
 "\n"
 "{}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:247
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:296
 msgid "Permission Denied"
 msgstr "Zugriff verweigert"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:248
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:297
 msgid ""
 "You do not have permission to access the selected directory:\n"
 "\n"
@@ -10099,11 +10545,11 @@ msgstr ""
 "\n"
 "Bitte überprüfen Sie Ihre Dateisystemberechtigungen."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:256
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:305
 msgid "File System Error"
 msgstr "Dateisystemfehler"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:257
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:306
 msgid ""
 "An error occurred while accessing the directory:\n"
 "\n"
@@ -10117,7 +10563,7 @@ msgstr ""
 "\n"
 "Fehler: {}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:294
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:343
 msgid ""
 "This main is for testing and development only. Usually, the "
 "VehicleProjectOpenerWindow is called from another script"
@@ -10125,7 +10571,7 @@ msgstr ""
 "Dieses main ist nur für Test und Entwicklung. Normalerweise wird das "
 "VehicleProjectOpenerWindow von einem anderen Skript aufgerufen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:309
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:358
 msgid ""
 "This main is for testing and development only, usually the "
 "VehicleProjectOpenerWindow is called from another script"
@@ -12352,16 +12798,22 @@ msgstr "Wählen Sie einen RC-Zuordnungsmodus von 1 bis 4."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:89
 msgid "RC mapping preset Mode %(mode)d selected in the RC calibration plugin."
-msgstr "RC-Zuordnungsvoreinstellung Modus %(mode)d im RC-Kalibrierungs-Plugin ausgewählt."
+msgstr ""
+"RC-Zuordnungsvoreinstellung Modus %(mode)d im RC-Kalibrierungs-Plugin "
+"ausgewählt."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:92
 msgid "RC mapping changes require a flight-controller reboot after upload."
-msgstr "Änderungen der RC-Zuordnung erfordern nach dem Hochladen einen Neustart des Flugcontrollers."
+msgstr ""
+"Änderungen der RC-Zuordnung erfordern nach dem Hochladen einen Neustart des "
+"Flugcontrollers."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:99
 msgid ""
 "Open RC calibration in the parameter editor to stage changes for upload."
-msgstr "Öffnen Sie die RC-Kalibrierung im Parametereditor, um Änderungen zum Hochladen vorzumerken."
+msgstr ""
+"Öffnen Sie die RC-Kalibrierung im Parametereditor, um Änderungen zum "
+"Hochladen vorzumerken."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:107
 msgid "Could not add parameter %(name)s to this step."
@@ -12370,7 +12822,9 @@ msgstr "Parameter %(name)s konnte diesem Schritt nicht hinzugefügt werden."
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:115
 msgid ""
 "Parameter %(name)s is read-only, forced or derived; no values were changed."
-msgstr "Parameter %(name)s ist schreibgeschützt, erzwungen oder abgeleitet; es wurden keine Werte geändert."
+msgstr ""
+"Parameter %(name)s ist schreibgeschützt, erzwungen oder abgeleitet; es "
+"wurden keine Werte geändert."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:119
 msgid "Invalid value for parameter %(name)s."
@@ -12380,7 +12834,9 @@ msgstr "Ungültiger Wert für Parameter %(name)s."
 msgid ""
 "Changes staged. Press parameter upload to write them to the flight "
 "controller."
-msgstr "Änderungen vorgemerkt. Drücken Sie auf Parameter hochladen, um sie auf den Flugcontroller zu schreiben."
+msgstr ""
+"Änderungen vorgemerkt. Drücken Sie auf Parameter hochladen, um sie auf den "
+"Flugcontroller zu schreiben."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:257
 msgid "Mode"
@@ -12393,7 +12849,9 @@ msgstr "Wählen Sie einen RC-Kanal von 1 bis 16."
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:266
 msgid ""
 "The primary-control and flight-mode channel functions cannot be changed here."
-msgstr "Die Kanalfunktionen für Primärsteuerung und Flugmodus können hier nicht geändert werden."
+msgstr ""
+"Die Kanalfunktionen für Primärsteuerung und Flugmodus können hier nicht "
+"geändert werden."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:270
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:274
@@ -12421,7 +12879,8 @@ msgstr "Keine RC-Kalibrierungsdaten aufgezeichnet — nichts zu speichern"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:352
 msgid "RC%(ch)d did not move; calibration values were not staged"
-msgstr "RC%(ch)d wurde nicht bewegt; Kalibrierungswerte wurden nicht vorgemerkt"
+msgstr ""
+"RC%(ch)d wurde nicht bewegt; Kalibrierungswerte wurden nicht vorgemerkt"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:359
 msgid "RC%(ch)d: MIN=%(min)d MAX=%(max)d TRIM=%(trim)d"
@@ -12429,7 +12888,9 @@ msgstr "RC%(ch)d: MIN=%(min)d MAX=%(max)d TRIM=%(trim)d"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:365
 msgid "No RC channels moved; no calibration parameters were staged."
-msgstr "Es wurden keine RC-Kanäle bewegt; keine Kalibrierungsparameter wurden vorgemerkt."
+msgstr ""
+"Es wurden keine RC-Kanäle bewegt; keine Kalibrierungsparameter wurden "
+"vorgemerkt."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:368
 msgid "Measured in the RC calibration plugin."
@@ -13143,10 +13604,6 @@ msgid "Compass calibration cancel accepted; closing popup."
 msgstr "Kompasskalibrierung-Abbrechen akzeptiert; Popup wird geschlossen."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_compass_calibration.py:382
-msgid "Cancelled"
-msgstr "Abgebrochen"
-
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_compass_calibration.py:382
 msgid "Compass calibration was cancelled."
 msgstr "Kompasskalibrierung wurde abgebrochen."
 
@@ -13155,7 +13612,10 @@ msgid ""
 "Cancellation was not confirmed by the flight controller. Abandon local "
 "monitoring and unlock navigation? Compass calibration may still be running "
 "on the flight controller."
-msgstr "Die Abbruchanfrage wurde vom Flugcontroller nicht bestätigt. Lokale Überwachung beenden und Navigation entsperren? Die Kompasskalibrierung könnte auf dem Flugcontroller noch laufen."
+msgstr ""
+"Die Abbruchanfrage wurde vom Flugcontroller nicht bestätigt. Lokale "
+"Überwachung beenden und Navigation entsperren? Die Kompasskalibrierung "
+"könnte auf dem Flugcontroller noch laufen."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_compass_calibration.py:434
 msgid "Start Compass Calibration"
@@ -13637,7 +14097,11 @@ msgid ""
 "Roll and pitch tilt the example craft; yaw turns it while held; throttle "
 "raises or lowers it. Uses staged RC mapping, calibration and reversal. No "
 "vehicle movement is commanded."
-msgstr "Roll und Nick neigen das Beispielmodell; Gier dreht es, solange der Knüppel gehalten wird; Gas lässt es steigen oder sinken. Verwendet vorgemerkte RC-Zuordnung, Kalibrierung und Umkehrung. Es wird keine Fahrzeugbewegung ausgelöst."
+msgstr ""
+"Roll und Nick neigen das Beispielmodell; Gier dreht es, solange der Knüppel "
+"gehalten wird; Gas lässt es steigen oder sinken. Verwendet vorgemerkte RC-"
+"Zuordnung, Kalibrierung und Umkehrung. Es wird keine Fahrzeugbewegung "
+"ausgelöst."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:94
 msgid "%(count)d channels live"
@@ -13664,17 +14128,26 @@ msgid ""
 "vertical CH2, left vertical CH3, left horizontal CH4. Verify the channel "
 "bars against your transmitter before uploading. Reboot after uploading "
 "mapping changes."
-msgstr "Merkt RCMAP_ROLL/PITCH/THROTTLE/YAW für Modus 1-4 vor; nur der Parameter-Upload schreibt in den Controller. Die Voreinstellungen gehen von rechts horizontal CH1, rechts vertikal CH2, links vertikal CH3, links horizontal CH4 aus. Prüfen Sie die Kanalbalken vor dem Hochladen mit Ihrem Sender. Starten Sie nach dem Hochladen von Zuordnungsänderungen neu."
+msgstr ""
+"Merkt RCMAP_ROLL/PITCH/THROTTLE/YAW für Modus 1-4 vor; nur der Parameter-"
+"Upload schreibt in den Controller. Die Voreinstellungen gehen von rechts "
+"horizontal CH1, rechts vertikal CH2, links vertikal CH3, links horizontal "
+"CH4 aus. Prüfen Sie die Kanalbalken vor dem Hochladen mit Ihrem Sender. "
+"Starten Sie nach dem Hochladen von Zuordnungsänderungen neu."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:141
 msgid "Custom RCMAP mapping retained. Select a preset only to change it."
-msgstr "Benutzerdefinierte RCMAP-Zuordnung beibehalten. Wählen Sie eine Voreinstellung nur, um sie zu ändern."
+msgstr ""
+"Benutzerdefinierte RCMAP-Zuordnung beibehalten. Wählen Sie eine "
+"Voreinstellung nur, um sie zu ändern."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:161
 msgid ""
 "The red circle shows the stick position; centered sticks appear in the "
 "square center."
-msgstr "Der rote Kreis zeigt die Knüppelposition; zentrierte Knüppel erscheinen in der Mitte des Quadrats."
+msgstr ""
+"Der rote Kreis zeigt die Knüppelposition; zentrierte Knüppel erscheinen in "
+"der Mitte des Quadrats."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:197
 msgid "PITCH"
@@ -13713,13 +14186,19 @@ msgid ""
 "Green MIN, blue TRIM and red MAX markers show calibration. MIN/MAX track "
 "observed extremes during calibration. Missing calibration parameters use "
 "display defaults of 1000/2000/1500 µs."
-msgstr "Grüne MIN-, blaue TRIM- und rote MAX-Markierungen zeigen die Kalibrierung. MIN/MAX verfolgen die während der Kalibrierung beobachteten Extremwerte. Fehlende Kalibrierungsparameter verwenden die Anzeigevorgaben 1000/2000/1500 µs."
+msgstr ""
+"Grüne MIN-, blaue TRIM- und rote MAX-Markierungen zeigen die Kalibrierung. "
+"MIN/MAX verfolgen die während der Kalibrierung beobachteten Extremwerte. "
+"Fehlende Kalibrierungsparameter verwenden die Anzeigevorgaben 1000/2000/1500 "
+"µs."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:327
 msgid ""
 "Select this channel's RCx_OPTION function. Changes are staged until "
 "parameter upload."
-msgstr "Wählen Sie die RCx_OPTION-Funktion dieses Kanals aus. Änderungen werden bis zum Parameter-Upload vorgemerkt."
+msgstr ""
+"Wählen Sie die RCx_OPTION-Funktion dieses Kanals aus. Änderungen werden bis "
+"zum Parameter-Upload vorgemerkt."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:357
 msgid "Unknown option"
