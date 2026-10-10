@@ -15,6 +15,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from pathlib import Path
+from shutil import copytree
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -405,6 +406,7 @@ class TestVehicleProjectCreation:
         assert mock_create.call_args.kwargs == {
             "fc_connected": True,
             "fc_parameters": {"IN_TEMPLATE": 1.0, "FC_ONLY": 2.0},
+            "retain_source_parameters": False,
         }
         mock_filesystem.re_init.assert_any_call("/base/ConfiguredVehicle", "ArduCopter")
         mock_filesystem.set_fc_fw_version_and_type_in_components_json.assert_called_once_with(
@@ -572,9 +574,13 @@ class TestVehicleProjectCreation:
         general-configuration auto-import step, so the complete residual import
         file must still retain it for offline reuse.
         """
-        template_dir = (
+        template_source = (
             Path(__file__).parents[1] / "ardupilot_methodic_configurator" / "vehicle_templates" / "ArduCopter" / "empty_4.6.x"
         )
+        # Explicit firmware initialization can invalidate/delete cached XML. Never
+        # run that destructive cache maintenance against the installed template.
+        template_dir = tmp_path / "template"
+        copytree(template_source, template_dir)
         local_filesystem = LocalFilesystem(
             str(template_dir),
             "ArduCopter",
@@ -607,9 +613,11 @@ class TestVehicleProjectCreation:
 
     def test_template_project_with_fc_params_uses_fc_defaults(self, tmp_path) -> None:
         """Creating from a template writes FC defaults when FC values are selected."""
-        template_dir = (
+        template_source = (
             Path(__file__).parents[1] / "ardupilot_methodic_configurator" / "vehicle_templates" / "ArduCopter" / "empty_4.6.x"
         )
+        template_dir = tmp_path / "template"
+        copytree(template_source, template_dir)
         local_filesystem = LocalFilesystem(
             str(template_dir),
             "ArduCopter",
