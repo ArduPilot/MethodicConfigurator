@@ -11,6 +11,8 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from math import nan
+
 
 def calculate_voltage_thresholds(fc_parameters: dict[str, float]) -> tuple[float, float]:
     """
@@ -39,6 +41,20 @@ def calculate_voltage_thresholds(fc_parameters: dict[str, float]) -> tuple[float
     return (min_voltage, max_voltage)
 
 
+def get_battery_parameter_prefix(battery_id: int) -> str:
+    """Map zero-based MAVLink IDs to ArduPilot's BATT, BATT2 ... BATTA ... BATTG groups."""
+    return "BATT" if battery_id == 0 else f"BATT{'23456789ABCDEFG'[battery_id - 1]}"
+
+
+def get_enabled_battery_ids(fc_parameters: dict[str, float]) -> list[int]:
+    """Return zero-based IDs of configured, enabled ArduPilot battery monitors."""
+    return [
+        battery_id
+        for battery_id in range(16)
+        if fc_parameters.get(f"{get_battery_parameter_prefix(battery_id)}_MONITOR", 0) != 0
+    ]
+
+
 def is_battery_monitoring_enabled(fc_parameters: dict[str, float]) -> bool:
     """
     Check if battery monitoring is enabled in flight controller parameters.
@@ -47,7 +63,7 @@ def is_battery_monitoring_enabled(fc_parameters: dict[str, float]) -> bool:
         fc_parameters: Dictionary of flight controller parameters
 
     Returns:
-        bool: True if BATT_MONITOR != 0, False otherwise
+        bool: True if any battery monitor is enabled, False otherwise
 
     Examples:
         >>> is_battery_monitoring_enabled({"BATT_MONITOR": 4.0})
@@ -60,7 +76,7 @@ def is_battery_monitoring_enabled(fc_parameters: dict[str, float]) -> bool:
         False
 
     """
-    return fc_parameters.get("BATT_MONITOR", 0) != 0
+    return bool(get_enabled_battery_ids(fc_parameters))
 
 
 def get_frame_info(fc_parameters: dict[str, float], vehicle_type: str = "") -> tuple[int, int]:
@@ -138,7 +154,7 @@ def convert_battery_telemetry_units(
     Convert battery telemetry from MAVLink units to standard units.
 
     Args:
-        voltage_millivolts: Battery voltage in millivolts (MAVLink BATTERY_STATUS.voltages)
+        voltage_millivolts: Summed pack voltage in millivolts, or -1 if unavailable
         current_centiamps: Battery current in centiamps (MAVLink BATTERY_STATUS.current_battery)
 
     Returns:
@@ -151,11 +167,11 @@ def convert_battery_telemetry_units(
         (12.6, 10.5)
 
         >>> convert_battery_telemetry_units(-1, -1)  # Invalid/unavailable readings
-        (0.0, 0.0)
+        (nan, nan)
 
     """
-    voltage = voltage_millivolts / 1000.0 if voltage_millivolts != -1 else 0.0
-    current = current_centiamps / 100.0 if current_centiamps != -1 else 0.0
+    voltage = voltage_millivolts / 1000.0 if voltage_millivolts != -1 else nan
+    current = current_centiamps / 100.0 if current_centiamps != -1 else nan
     return (voltage, current)
 
 

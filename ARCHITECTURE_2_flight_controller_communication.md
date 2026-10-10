@@ -171,7 +171,7 @@ This architecture provides:
   - `test_motor()`: Tests individual motor
   - `test_all_motors()`: Tests all motors simultaneously
   - `stop_all_motors()`: Emergency stop
-  - `get_battery_status()`: Queries battery telemetry
+  - `get_battery_statuses()`: Queries battery telemetry keyed by zero-based MAVLink battery ID
   - `reset_all_parameters_to_default()`: Resets parameters
 - **Responsibilities**:
   - Motor testing operations
@@ -379,7 +379,7 @@ This architecture provides:
    - `FlightController.test_motor()` delegates to commands manager
    - Commands manager queries params manager for battery parameters
    - `send_command_and_wait_ack()` handles MAVLink command protocol
-   - Battery status retrieved via `get_battery_status()` with caching
+   - Battery readings retrieved via `get_battery_statuses()` with independent caching and expiry per battery ID
    - Voltage thresholds calculated via business logic functions
    - All operations check `master is not None` before execution
 

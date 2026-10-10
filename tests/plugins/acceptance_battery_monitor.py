@@ -14,13 +14,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
-from collections.abc import Callable
 from math import nan
 from unittest.mock import MagicMock
 
 import pytest
 
-from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.plugins.data_model_battery_monitor import BatteryMonitorDataModel
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_battery_monitor import (
     BatteryMonitorView,
@@ -44,7 +42,7 @@ def mock_flight_controller_with_battery() -> MagicMock:
     }
     mock_fc.is_connected.return_value = True
     mock_fc.is_battery_monitoring_enabled.return_value = True
-    mock_fc.get_battery_status.return_value = ((12.4, 2.1), "")  # voltage, current
+    mock_fc.get_battery_statuses.return_value = ({0: (12.4, 2.1)}, "")  # voltage, current
     mock_fc.get_voltage_thresholds.return_value = (11.0, 16.8)  # min, max voltage
     return mock_fc
 
@@ -56,7 +54,7 @@ def mock_flight_controller_disconnected() -> MagicMock:
     mock_fc.fc_parameters = {"BATT_MONITOR": 0}  # Disabled
     mock_fc.is_connected.return_value = False
     mock_fc.is_battery_monitoring_enabled.return_value = False
-    mock_fc.get_battery_status.return_value = (None, "Not connected")
+    mock_fc.get_battery_statuses.return_value = (None, "Not connected")
     return mock_fc
 
 
@@ -131,10 +129,10 @@ class TestBatteryMonitorUserWorkflow:
         tk_root.update()
 
         # Assert: GUI displays correct battery status
-        assert view.voltage_value_label is not None
-        assert view.current_value_label is not None
-        assert "12.4" in view.voltage_value_label.cget("text")
-        assert "2.1" in view.current_value_label.cget("text")
+        assert view._battery_rows[0][1] is not None
+        assert view._battery_rows[0][2] is not None
+        assert "12.4" in view._battery_rows[0][1].cget("text")
+        assert "2.1" in view._battery_rows[0][2].cget("text")
 
     def test_user_sees_battery_status_update_periodically(
         self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
@@ -153,17 +151,17 @@ class TestBatteryMonitorUserWorkflow:
         tk_root.update()
 
         # Act: Simulate battery voltage change
-        mock_flight_controller_with_battery.get_battery_status.return_value = ((12.0, 3.5), "")
+        mock_flight_controller_with_battery.get_battery_statuses.return_value = ({0: (12.0, 3.5)}, "")
 
         # Trigger the periodic update manually
         view._periodic_update()
         tk_root.update()
 
         # Assert: Display shows updated values
-        assert view.voltage_value_label is not None
-        assert view.current_value_label is not None
-        assert "12.0" in view.voltage_value_label.cget("text")
-        assert "3.5" in view.current_value_label.cget("text")
+        assert view._battery_rows[0][1] is not None
+        assert view._battery_rows[0][2] is not None
+        assert "12.0" in view._battery_rows[0][1].cget("text")
+        assert "3.5" in view._battery_rows[0][2].cget("text")
 
     def test_user_sees_critical_voltage_warning_when_battery_low(
         self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
@@ -177,18 +175,18 @@ class TestBatteryMonitorUserWorkflow:
         AND: User should see the low voltage value displayed
         """
         # Arrange: Battery voltage at critical level
-        mock_flight_controller_with_battery.get_battery_status.return_value = ((10.5, 2.1), "")
+        mock_flight_controller_with_battery.get_battery_statuses.return_value = ({0: (10.5, 2.1)}, "")
         model = BatteryMonitorDataModel(mock_flight_controller_with_battery)
         view = BatteryMonitorView(tk_root, model, mock_base_window)
         view.on_activate()  # Start timer and update display
         tk_root.update()
 
         # Act: Get the status color
-        status_color = model.get_battery_status_color()
+        status_color = model.get_battery_status_color(0, (model.get_battery_statuses() or {}).get(0, (None, None))[0])
 
         # Assert: Display shows critical warning
         assert status_color == "red"
-        assert "10.5" in view.voltage_value_label.cget("text")
+        assert "10.5" in view._battery_rows[0][1].cget("text")
 
     def test_user_sees_disabled_status_when_battery_monitoring_off(
         self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
@@ -210,8 +208,8 @@ class TestBatteryMonitorUserWorkflow:
         tk_root.update()
 
         # Assert: Display shows disabled status
-        assert model.get_battery_status_color() == "gray"
-        assert "Disabled" in view.voltage_value_label.cget("text")
+        assert model.get_battery_status_color(0, (model.get_battery_statuses() or {}).get(0, (None, None))[0]) == "gray"
+        assert "Disabled" in view._battery_rows[0][1].cget("text")
 
 
 class TestBatteryMonitorPluginLifecycle:
@@ -236,8 +234,8 @@ class TestBatteryMonitorPluginLifecycle:
 
         # Assert: Timer is scheduled and status is displayed
         assert view._timer_id is not None
-        assert view.voltage_value_label is not None
-        assert "12.4" in view.voltage_value_label.cget("text")
+        assert view._battery_rows[0][1] is not None
+        assert "12.4" in view._battery_rows[0][1].cget("text")
 
     def test_plugin_stops_monitoring_when_destroyed(
         self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
@@ -288,13 +286,13 @@ class TestBatteryMonitorRealTimeUpdates:
         tk_root.update()
 
         # Act: Simulate motor test - high current draw
-        mock_flight_controller_with_battery.get_battery_status.return_value = ((12.1, 15.3), "")
+        mock_flight_controller_with_battery.get_battery_statuses.return_value = ({0: (12.1, 15.3)}, "")
         view._periodic_update()
         tk_root.update()
 
         # Assert: Display shows increased current and voltage drop
-        assert "12.1" in view.voltage_value_label.cget("text")
-        assert "15.3" in view.current_value_label.cget("text")
+        assert "12.1" in view._battery_rows[0][1].cget("text")
+        assert "15.3" in view._battery_rows[0][2].cget("text")
 
     def test_user_sees_immediate_warning_when_voltage_becomes_critical(
         self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
@@ -313,18 +311,18 @@ class TestBatteryMonitorRealTimeUpdates:
         view.on_activate()  # Start timer and update display
         tk_root.update()
 
-        initial_color = model.get_battery_status_color()
+        initial_color = model.get_battery_status_color(0, (model.get_battery_statuses() or {}).get(0, (None, None))[0])
         assert initial_color == "green"
 
         # Act: Voltage drops to critical level
-        mock_flight_controller_with_battery.get_battery_status.return_value = ((10.8, 2.1), "")
+        mock_flight_controller_with_battery.get_battery_statuses.return_value = ({0: (10.8, 2.1)}, "")
         view._periodic_update()
         tk_root.update()
 
         # Assert: Color changes to red
-        new_color = model.get_battery_status_color()
+        new_color = model.get_battery_status_color(0, (model.get_battery_statuses() or {}).get(0, (None, None))[0])
         assert new_color == "red"
-        assert "10.8" in view.voltage_value_label.cget("text")
+        assert "10.8" in view._battery_rows[0][1].cget("text")
 
 
 class TestBatteryMonitorConnectionHandling:
@@ -348,8 +346,8 @@ class TestBatteryMonitorConnectionHandling:
         tk_root.update()
 
         # Assert: Shows disabled status
-        assert model.get_battery_status_color() == "gray"
-        assert "Disabled" in view.voltage_value_label.cget("text")
+        assert model.get_battery_status_color(0, (model.get_battery_statuses() or {}).get(0, (None, None))[0]) == "gray"
+        assert "Disabled" in view._battery_rows[0][1].cget("text")
 
     def test_plugin_continues_attempting_updates_after_connection_loss(
         self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
@@ -392,15 +390,15 @@ class TestBatteryMonitorEdgeCases:
         THEN: User should see "N/A" for both voltage and current
         """
         # Arrange: Battery status unavailable
-        mock_flight_controller_with_battery.get_battery_status.return_value = (None, "Battery data unavailable")
+        mock_flight_controller_with_battery.get_battery_statuses.return_value = (None, "Battery data unavailable")
         model = BatteryMonitorDataModel(mock_flight_controller_with_battery)
         view = BatteryMonitorView(tk_root, model, mock_base_window)
         view.on_activate()  # Start timer and update display
         tk_root.update()
 
         # Assert: Display shows N/A
-        assert "N/A" in view.voltage_value_label.cget("text")
-        assert "N/A" in view.current_value_label.cget("text")
+        assert "N/A" in view._battery_rows[0][1].cget("text")
+        assert "N/A" in view._battery_rows[0][2].cget("text")
 
     def test_periodic_update_handles_disconnection_gracefully(
         self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
@@ -420,13 +418,13 @@ class TestBatteryMonitorEdgeCases:
         tk_root.update()
 
         # Act: Simulate disconnection during periodic update
-        mock_flight_controller_with_battery.is_connected.return_value = False
+        mock_flight_controller_with_battery.master = None
         mock_flight_controller_with_battery.is_battery_monitoring_enabled.return_value = False
         view._periodic_update()
         tk_root.update()
 
-        # Assert: No crash, display shows disabled
-        assert "Disabled" in view.voltage_value_label.cget("text")
+        # Assert: No crash, display shows unavailable
+        assert "N/A" in view._battery_rows[0][1].cget("text")
 
     def test_on_activate_refreshes_battery_when_disconnected(
         self, tk_root: tk.Tk, mock_flight_controller_disconnected: MagicMock, mock_base_window: MagicMock
@@ -450,7 +448,7 @@ class TestBatteryMonitorEdgeCases:
         tk_root.update()
 
         # Assert: No crash, shows disabled
-        assert "Disabled" in view.voltage_value_label.cget("text")
+        assert "Disabled" in view._battery_rows[0][1].cget("text")
 
     def test_on_deactivate_cancels_active_timer(
         self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
@@ -530,21 +528,21 @@ class TestBatteryMonitorStreamReconnection:
         tk_root.update()
 
         # Verify initial data is displayed
-        assert "12.4" in view.voltage_value_label.cget("text")
+        assert "12.4" in view._battery_rows[0][1].cget("text")
 
         # Act: Simulate stream loss (message indicates lost stream)
-        mock_flight_controller_with_battery.get_battery_status.return_value = (None, "Stream lost")
+        mock_flight_controller_with_battery.get_battery_statuses.return_value = (None, "Stream lost")
         view._periodic_update()
         tk_root.update()
 
         # Stream recovery: connection restored with data
-        mock_flight_controller_with_battery.get_battery_status.return_value = ((12.5, 2.2), "")
+        mock_flight_controller_with_battery.get_battery_statuses.return_value = ({0: (12.5, 2.2)}, "")
         view._periodic_update()
         tk_root.update()
 
         # Assert: New data is displayed (automatic recovery worked)
-        assert "12.5" in view.voltage_value_label.cget("text")
-        assert "2.2" in view.current_value_label.cget("text")
+        assert "12.5" in view._battery_rows[0][1].cget("text")
+        assert "2.2" in view._battery_rows[0][2].cget("text")
 
     def test_plugin_handles_multiple_rapid_activate_deactivate_cycles(
         self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
@@ -577,7 +575,7 @@ class TestBatteryMonitorStreamReconnection:
 
         # Assert: Plugin still works correctly
         assert view._timer_id is not None
-        assert "12.4" in view.voltage_value_label.cget("text")
+        assert "12.4" in view._battery_rows[0][1].cget("text")
 
     def test_stream_request_occurs_on_every_call_until_data_received(
         self,
@@ -594,25 +592,25 @@ class TestBatteryMonitorStreamReconnection:
         AND: Once data is received, requests should stop (stream established)
         """
         # Arrange: Configure mock to return no data initially
-        mock_flight_controller_with_battery.get_battery_status.return_value = (None, "Waiting for data")
+        mock_flight_controller_with_battery.get_battery_statuses.return_value = (None, "Waiting for data")
         model = BatteryMonitorDataModel(mock_flight_controller_with_battery)
 
         # Act: Call get_battery_status multiple times without data
         for _ in range(3):
-            result = model.get_battery_status()
+            result = model.get_battery_statuses()
             assert result is None
 
         # Verify stream was requested multiple times (once per call)
         assert mock_flight_controller_with_battery.request_periodic_battery_status.call_count == 3
 
         # Now data arrives
-        mock_flight_controller_with_battery.get_battery_status.return_value = ((12.4, 2.1), "")
-        result = model.get_battery_status()
-        assert result == (12.4, 2.1)
+        mock_flight_controller_with_battery.get_battery_statuses.return_value = ({0: (12.4, 2.1)}, "")
+        result = model.get_battery_statuses()
+        assert result == {0: (12.4, 2.1)}
 
         # Further calls should NOT request stream again (already established)
-        result = model.get_battery_status()
-        assert result == (12.4, 2.1)
+        result = model.get_battery_statuses()
+        assert result == {0: (12.4, 2.1)}
         # Call count should still be 4 (3 initial + 1 when data arrived, not 5)
         assert mock_flight_controller_with_battery.request_periodic_battery_status.call_count == 4
 
@@ -639,8 +637,8 @@ class TestBatteryMonitorInvalidConfiguration:
         tk_root.update()
 
         # Assert: Shows unavailable status
-        assert model.get_voltage_status() == "unavailable"
-        assert model.get_battery_status_color() == "gray"
+        assert model.get_voltage_status(0, (model.get_battery_statuses() or {}).get(0, (None, None))[0]) == "unavailable"
+        assert model.get_battery_status_color(0, (model.get_battery_statuses() or {}).get(0, (None, None))[0]) == "gray"
 
     def test_user_sees_critical_when_voltage_above_maximum(
         self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
@@ -654,16 +652,16 @@ class TestBatteryMonitorInvalidConfiguration:
         AND: User sees high voltage value displayed
         """
         # Arrange: Voltage too high
-        mock_flight_controller_with_battery.get_battery_status.return_value = ((17.5, 0.5), "")
+        mock_flight_controller_with_battery.get_battery_statuses.return_value = ({0: (17.5, 0.5)}, "")
         model = BatteryMonitorDataModel(mock_flight_controller_with_battery)
         view = BatteryMonitorView(tk_root, model, mock_base_window)
         view.on_activate()
         tk_root.update()
 
         # Assert: Shows critical status
-        assert model.get_voltage_status() == "critical"
-        assert model.get_battery_status_color() == "red"
-        assert "17.5" in view.voltage_value_label.cget("text")
+        assert model.get_voltage_status(0, (model.get_battery_statuses() or {}).get(0, (None, None))[0]) == "critical"
+        assert model.get_battery_status_color(0, (model.get_battery_statuses() or {}).get(0, (None, None))[0]) == "red"
+        assert "17.5" in view._battery_rows[0][1].cget("text")
 
 
 class TestBatteryMonitorDataModelCleanup:
@@ -680,7 +678,7 @@ class TestBatteryMonitorDataModelCleanup:
         """
         # Arrange: Establish stream
         model = BatteryMonitorDataModel(mock_flight_controller_with_battery)
-        model.get_battery_status()  # Establishes stream
+        model.get_battery_statuses()  # Establishes stream
         assert model._got_battery_status is True
 
         # Act: Stop monitoring
@@ -744,205 +742,6 @@ class TestBatteryMonitorDataModelCleanup:
         assert model._got_battery_status is False
 
 
-class TestBatteryMonitorParameterUpload:
-    """
-    Test parameter upload functionality integrated into battery monitor plugin.
-
-    NOTE: These tests verify the upload button UI integration at acceptance level.
-    They test button visibility and delegation to UI services. Detailed workflow testing
-    is in test_data_model_parameter_editor.py and test_frontend_tkinter_parameter_editor.py.
-    """
-
-    def test_upload_button_appears_when_parameter_editor_available(
-        self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
-    ) -> None:
-        """
-        Upload button is visible when parameter editor is integrated.
-
-        GIVEN: Battery monitor plugin with parameter editor integration
-        WHEN: The view is created
-        THEN: Upload button should be visible in the UI
-        """
-        # Arrange: Create model with parameter editor
-        mock_param_editor = MagicMock()
-        model = BatteryMonitorDataModel(mock_flight_controller_with_battery, mock_param_editor)
-
-        # Act: Create view
-        view = BatteryMonitorView(tk_root, model, mock_base_window)
-        tk_root.update()
-
-        # Assert: Button exists and is visible
-        assert hasattr(view, "upload_button")
-        assert view.upload_button.winfo_exists()
-
-    def test_upload_button_hidden_when_parameter_editor_unavailable(
-        self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
-    ) -> None:
-        """
-        Upload button is not shown when parameter editor is unavailable.
-
-        GIVEN: Battery monitor plugin without parameter editor integration
-        WHEN: The view is created
-        THEN: Upload button should not be present
-        """
-        # Arrange & Act: Create view without parameter editor
-        model = BatteryMonitorDataModel(mock_flight_controller_with_battery, parameter_editor=None)
-        view = BatteryMonitorView(tk_root, model, mock_base_window)
-        tk_root.update()
-
-        # Assert: Button doesn't exist
-        assert not hasattr(view, "upload_button") or view.upload_button.winfo_exists() == 0
-
-    def test_battery_monitor_integrates_with_parameter_editor_workflow(
-        self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
-    ) -> None:
-        """
-        Battery monitor correctly integrates with parameter editor upload workflow.
-
-        GIVEN: Battery monitor with parameter editor and UI services
-        WHEN: Upload is initiated through the view's upload method
-        THEN: The view should delegate to UI services' upload_params_with_progress
-        AND: Pass the correct workflow callback from parameter editor
-        """
-        # Arrange: Set up integrated environment
-        mock_param_editor = MagicMock()
-        mock_ui_services = MagicMock()
-
-        # Set up base window with minimal required structure
-        mock_base_window.gui_complexity = "normal"
-        mock_base_window.parameter_editor_table = MagicMock()
-        mock_base_window.parameter_editor_table.get_upload_selected_params.return_value = ParDict({"BATT_CAPACITY": Par(5200)})
-
-        model = BatteryMonitorDataModel(mock_flight_controller_with_battery, mock_param_editor)
-        view = BatteryMonitorView(tk_root, model, mock_base_window, ui_services=mock_ui_services)
-
-        # Act: Trigger upload through the view's public interface
-        selected_params = ParDict({"BATT_CAPACITY": Par(5200)})
-        view.upload_selected_params(selected_params)
-
-        # Assert: View delegates to UI services with correct workflow
-        mock_ui_services.upload_params_with_progress.assert_called_once()
-        call_args = mock_ui_services.upload_params_with_progress.call_args
-        assert call_args[0][1] == mock_param_editor.upload_selected_params_workflow  # Workflow callback
-        assert call_args[0][2] == selected_params  # Parameters
-
-    def _setup_upload_progress_mocks(self, mock_ui_services: MagicMock) -> tuple[list, Callable]:
-        """Helper to set up progress window mocks and tracking."""
-        progress_windows_created = []
-
-        def track_progress_window(*_args, **_kwargs) -> MagicMock:
-            mock_window = MagicMock()
-            progress_windows_created.append(mock_window)
-            return mock_window
-
-        mock_ui_services.create_progress_window = MagicMock(side_effect=track_progress_window)
-
-        def simulate_upload_with_progress(parent_window, upload_callback, selected_params_arg) -> None:
-            """Simulate upload_params_with_progress calling workflow with callbacks."""
-            restart_window = None
-            download_window = None
-
-            def restart_callback_getter() -> Callable[[int, int], None]:
-                nonlocal restart_window
-                restart_window = mock_ui_services.create_progress_window(
-                    parent_window, "Restarting Flight Controller", "msg", show_immediately=True
-                )
-                return restart_window.update_progress_bar
-
-            def download_callback_getter() -> Callable[[int, int], None]:
-                nonlocal download_window
-                download_window = mock_ui_services.create_progress_window(
-                    parent_window, "Re-downloading FC parameters", "msg", show_immediately=False
-                )
-                return download_window.update_progress_bar
-
-            try:
-                # Invoke the getters to actually create the windows
-                restart_cb = restart_callback_getter()
-                download_cb = download_callback_getter()
-
-                # Call the workflow with the callbacks
-                upload_callback(
-                    selected_params_arg,
-                    ask_confirmation=MagicMock(return_value=True),
-                    ask_retry_cancel=MagicMock(return_value=True),
-                    show_error=MagicMock(),
-                    get_connection_progress_callback=restart_callback_getter,
-                    get_download_progress_callback=download_callback_getter,
-                )
-
-                # Simulate some progress updates
-                if restart_cb:
-                    restart_cb(10, 100)
-                if download_cb:
-                    download_cb(50, 100)
-            finally:
-                # Simulate cleanup in finally block
-                if restart_window is not None:
-                    restart_window.destroy()
-                if download_window is not None:
-                    download_window.destroy()
-
-        return progress_windows_created, simulate_upload_with_progress
-
-    def test_user_sees_progress_feedback_during_parameter_upload(self, tk_root: tk.Tk, mock_base_window: MagicMock) -> None:  # pylint: disable=too-many-locals
-        """
-        User sees progress feedback while parameters are being uploaded.
-
-        GIVEN: User initiates parameter upload
-        WHEN: Upload is in progress (reset, upload, download)
-        THEN: Progress windows should be displayed with appropriate messages
-        AND: Progress should be cleaned up when complete
-        """
-        # Arrange: Set up complete environment
-        mock_fc = MagicMock()
-        mock_fc.master = MagicMock()
-        mock_fc.fc_parameters = {"BATT_MONITOR": 4}
-
-        mock_param_editor = MagicMock()
-        selected_params = ParDict({"BATT_CAPACITY": Par(5200)})
-        mock_param_editor.ensure_upload_preconditions.return_value = True
-
-        mock_param_table = MagicMock()
-        mock_param_table.get_upload_selected_params.return_value = selected_params
-
-        mock_ui_services = MagicMock()
-        progress_windows_created, simulate_upload_with_progress = self._setup_upload_progress_mocks(mock_ui_services)
-        mock_ui_services.upload_params_with_progress = MagicMock(side_effect=simulate_upload_with_progress)
-
-        mock_base_window.gui_complexity = "normal"
-        mock_base_window.parameter_editor_table = mock_param_table
-        mock_base_window.show_only_differences = MagicMock()
-        mock_base_window.show_only_differences.get.return_value = False
-
-        model = BatteryMonitorDataModel(mock_fc, mock_param_editor)
-        view = BatteryMonitorView(tk_root, model, mock_base_window, ui_services=mock_ui_services)
-        tk_root.update()
-
-        # Act: Upload parameters
-        view._on_upload_button_clicked()
-
-        # Assert: Verify workflow integration
-        mock_ui_services.upload_params_with_progress.assert_called_once()
-
-        # Verify progress windows were created (should create 2: restart/reconnect and download)
-        assert mock_ui_services.create_progress_window.call_count == 2
-
-        # Verify progress window calls have correct titles
-        call_args_list = mock_ui_services.create_progress_window.call_args_list
-        restart_window_call = call_args_list[0]
-        download_window_call = call_args_list[1]
-
-        # Check restart/reconnect progress window was created with correct title
-        assert "Restarting Flight Controller" in str(restart_window_call)
-        # Check download progress window was created with correct title
-        assert "Re-downloading FC parameters" in str(download_window_call)
-
-        # Verify all created progress windows were destroyed
-        for mock_window in progress_windows_created:
-            mock_window.destroy.assert_called_once()
-
-
 class TestBatteryMonitorUIIntegration:
     """
     Test battery monitor UI integration at acceptance level.
@@ -967,7 +766,7 @@ class TestBatteryMonitorUIIntegration:
         tk_root.update()
 
         # Assert: Initial state shows disabled (monitoring is off)
-        voltage_text, current_text = view._get_battery_display_text()
+        voltage_text, current_text = view._get_battery_display_rows()[0][:2]
         assert "Disabled" in voltage_text
         assert "Disabled" in current_text
 
@@ -992,7 +791,7 @@ class TestBatteryMonitorUIIntegration:
         tk_root.update()
 
         # Act: Get display text
-        voltage_text, current_text = view._get_battery_display_text()
+        voltage_text, current_text = view._get_battery_display_rows()[0][:2]
 
         # Assert: Disabled state
         assert "Disabled" in voltage_text
@@ -1009,14 +808,14 @@ class TestBatteryMonitorUIIntegration:
         THEN: Should format voltage as "XX.XX V" and current as "XX.XX A"
         """
         # Arrange: FC with specific values
-        mock_flight_controller_with_battery.get_battery_status.return_value = ((12.456, 3.789), "")
+        mock_flight_controller_with_battery.get_battery_statuses.return_value = ({0: (12.456, 3.789)}, "")
 
         model = BatteryMonitorDataModel(mock_flight_controller_with_battery)
         view = BatteryMonitorView(tk_root, model, mock_base_window)
         tk_root.update()
 
         # Act: Get display text
-        voltage_text, current_text = view._get_battery_display_text()
+        voltage_text, current_text = view._get_battery_display_rows()[0][:2]
 
         # Assert: Correct formatting (2 decimal places)
         assert voltage_text == "12.46 V"
@@ -1039,48 +838,10 @@ class TestBatteryMonitorUIIntegration:
         tk_root.update()
 
         # Assert: Core components exist
-        assert hasattr(view, "voltage_value_label")
-        assert hasattr(view, "current_value_label")
-        assert view.voltage_value_label.winfo_exists()
-        assert view.current_value_label.winfo_exists()
-
-    def test_battery_monitor_without_parameter_editor_has_no_upload_button(
-        self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
-    ) -> None:
-        """
-        Battery monitor without parameter editor doesn't create upload button.
-
-        GIVEN: Battery monitor without parameter editor
-        WHEN: View is created
-        THEN: Upload button should not be created
-        """
-        # Arrange & Act: Create view without parameter editor
-        model = BatteryMonitorDataModel(mock_flight_controller_with_battery, parameter_editor=None)
-        view = BatteryMonitorView(tk_root, model, mock_base_window)
-        tk_root.update()
-
-        # Assert: No upload button
-        assert not hasattr(view, "upload_button") or not view.upload_button.winfo_exists()
-
-    def test_battery_monitor_with_parameter_editor_creates_upload_button(
-        self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
-    ) -> None:
-        """
-        Battery monitor with parameter editor creates upload button.
-
-        GIVEN: Battery monitor with parameter editor
-        WHEN: View is created
-        THEN: Upload button should be created and visible
-        """
-        # Arrange & Act: Create view with parameter editor
-        mock_param_editor = MagicMock()
-        model = BatteryMonitorDataModel(mock_flight_controller_with_battery, mock_param_editor)
-        view = BatteryMonitorView(tk_root, model, mock_base_window)
-        tk_root.update()
-
-        # Assert: Upload button exists
-        assert hasattr(view, "upload_button")
-        assert view.upload_button.winfo_exists()
+        assert view._battery_rows[0][1].winfo_exists()
+        assert view._battery_rows[0][2].winfo_exists()
+        assert view._battery_rows[0][1].winfo_exists()
+        assert view._battery_rows[0][2].winfo_exists()
 
 
 class TestBatteryMonitorColorCoding:
@@ -1109,7 +870,7 @@ class TestBatteryMonitorColorCoding:
         }
         mock_fc.is_battery_monitoring_enabled.return_value = True
         # pylint: enable=duplicate-code
-        mock_fc.get_battery_status.return_value = ((12.5, 2.0), "")
+        mock_fc.get_battery_statuses.return_value = ({0: (12.5, 2.0)}, "")
         mock_fc.get_voltage_thresholds.return_value = (11.0, 16.8)
 
         model = BatteryMonitorDataModel(mock_fc)
@@ -1120,7 +881,7 @@ class TestBatteryMonitorColorCoding:
         view._update_battery_status()
 
         # Assert: Green color
-        color_str = str(view.voltage_value_label.cget("foreground"))
+        color_str = str(view._battery_rows[0][1].cget("foreground"))
         assert "green" in color_str.lower()
 
     def test_voltage_display_shows_red_for_critical_low_voltage(self, tk_root: tk.Tk, mock_base_window: MagicMock) -> None:
@@ -1142,7 +903,7 @@ class TestBatteryMonitorColorCoding:
         }
         mock_fc.is_battery_monitoring_enabled.return_value = True
         # pylint: enable=duplicate-code
-        mock_fc.get_battery_status.return_value = ((10.5, 0.5), "")
+        mock_fc.get_battery_statuses.return_value = ({0: (10.5, 0.5)}, "")
         mock_fc.get_voltage_thresholds.return_value = (11.0, 16.8)
 
         model = BatteryMonitorDataModel(mock_fc)
@@ -1153,7 +914,7 @@ class TestBatteryMonitorColorCoding:
         view._update_battery_status()
 
         # Assert: Red color
-        color_str = str(view.voltage_value_label.cget("foreground"))
+        color_str = str(view._battery_rows[0][1].cget("foreground"))
         assert "red" in color_str.lower()
 
     def test_voltage_display_shows_red_for_critical_high_voltage(self, tk_root: tk.Tk, mock_base_window: MagicMock) -> None:
@@ -1175,7 +936,7 @@ class TestBatteryMonitorColorCoding:
         }
         mock_fc.is_battery_monitoring_enabled.return_value = True
         # pylint: enable=duplicate-code
-        mock_fc.get_battery_status.return_value = ((17.5, 0.1), "")
+        mock_fc.get_battery_statuses.return_value = ({0: (17.5, 0.1)}, "")
         mock_fc.get_voltage_thresholds.return_value = (11.0, 16.8)
 
         model = BatteryMonitorDataModel(mock_fc)
@@ -1186,7 +947,7 @@ class TestBatteryMonitorColorCoding:
         view._update_battery_status()
 
         # Assert: Red color
-        color_str = str(view.voltage_value_label.cget("foreground"))
+        color_str = str(view._battery_rows[0][1].cget("foreground"))
         assert "red" in color_str.lower()
 
     def test_voltage_display_shows_gray_when_monitoring_disabled(self, tk_root: tk.Tk, mock_base_window: MagicMock) -> None:
@@ -1211,5 +972,137 @@ class TestBatteryMonitorColorCoding:
         view._update_battery_status()
 
         # Assert: Gray color
-        color_str = str(view.voltage_value_label.cget("foreground"))
+        color_str = str(view._battery_rows[0][1].cget("foreground"))
         assert "gray" in color_str.lower()
+
+
+class TestMultipleBatteryMonitoring:
+    """Verify numbered rows, independent voltage warnings and telemetry loss."""
+
+    def test_user_monitors_multiple_batteries_without_an_upload_button(
+        self,
+        tk_root: tk.Tk,
+        mock_base_window: MagicMock,
+        mock_flight_controller_with_battery: MagicMock,
+    ) -> None:
+        """Given two different packs, display both with their own arming voltage thresholds."""
+        fc = mock_flight_controller_with_battery
+        fc.fc_parameters.update({"BATT2_MONITOR": 4, "BATT2_ARM_VOLT": 22.0})
+        fc.get_battery_statuses.return_value = ({0: (12.4, 2.1), 1: (24.8, 3.5)}, "")
+        view = BatteryMonitorView(tk_root, BatteryMonitorDataModel(fc), mock_base_window)
+
+        view.on_activate()
+
+        assert view._battery_rows[0][0].cget("text") == "Battery 1:"
+        assert view._battery_rows[1][0].cget("text") == "Battery 2:"
+        assert view._battery_rows[0][1].cget("text") == "12.40 V"
+        assert view._battery_rows[1][1].cget("text") == "24.80 V"
+        assert view._battery_rows[1][2].cget("text") == "3.50 A"
+        assert str(view._battery_rows[1][1].cget("foreground")) == "green"
+        assert not hasattr(view, "upload_button")
+        fc.get_battery_statuses.return_value = ({0: (12.4, 2.1), 1: (21.0, 3.5)}, "")
+
+        view._periodic_update()
+
+        assert str(view._battery_rows[0][1].cget("foreground")) == "green"
+        assert str(view._battery_rows[1][1].cget("foreground")) == "red"
+        view.destroy()
+
+    def test_missing_telemetry_keeps_the_correct_battery_number_visible(
+        self,
+        tk_root: tk.Tk,
+        mock_base_window: MagicMock,
+        mock_flight_controller_with_battery: MagicMock,
+    ) -> None:
+        """Given battery 2 alone, missing data shows Battery 2 as unavailable and recovers on reconnect."""
+        fc = mock_flight_controller_with_battery
+        fc.fc_parameters.update({"BATT_MONITOR": 0, "BATT2_MONITOR": 4, "BATT2_ARM_VOLT": 22.0})
+        fc.get_battery_statuses.return_value = ({1: (24.8, 3.5)}, "")
+        view = BatteryMonitorView(tk_root, BatteryMonitorDataModel(fc), mock_base_window)
+        view.on_activate()
+        fc.get_battery_statuses.return_value = (None, "Waiting for telemetry")
+
+        view._periodic_update()
+
+        assert set(view._battery_rows) == {1}
+        assert view._battery_rows[1][0].cget("text") == "Battery 2:"
+        assert view._battery_rows[1][1].cget("text") == "N/A"
+        assert str(view._battery_rows[1][1].cget("foreground")) == "gray"
+        fc.master = None
+        view._periodic_update()
+        assert not view.model._got_battery_status
+        fc.master = MagicMock()
+        fc.get_battery_statuses.return_value = ({1: (24.7, 3.5)}, "")
+        fc.request_periodic_battery_status.reset_mock()
+
+        view._periodic_update()
+
+        fc.request_periodic_battery_status.assert_called_once()
+        assert view._battery_rows[1][1].cget("text") == "24.70 V"
+        view.destroy()
+
+    def test_disabling_one_battery_removes_its_row_and_preserves_the_other(
+        self,
+        tk_root: tk.Tk,
+        mock_base_window: MagicMock,
+        mock_flight_controller_with_battery: MagicMock,
+    ) -> None:
+        """Given two enabled batteries, disabling one removes only that battery's display."""
+        fc = mock_flight_controller_with_battery
+        fc.fc_parameters.update({"BATT2_MONITOR": 4, "BATT2_ARM_VOLT": 22.0})
+        fc.get_battery_statuses.return_value = ({0: (12.4, 2.1), 1: (24.8, 3.5)}, "")
+        view = BatteryMonitorView(tk_root, BatteryMonitorDataModel(fc), mock_base_window)
+        view.on_activate()
+        removed_labels = view._battery_rows[0]
+        fc.fc_parameters["BATT_MONITOR"] = 0
+
+        view._periodic_update()
+
+        assert set(view._battery_rows) == {1}
+        assert all(not label.winfo_exists() for label in removed_labels)
+        assert view._battery_rows[1][0].grid_info()["row"] == 1
+        view.destroy()
+
+    def test_unavailable_measurements_display_na_instead_of_zero(
+        self,
+        tk_root: tk.Tk,
+        mock_base_window: MagicMock,
+        mock_flight_controller_with_battery: MagicMock,
+    ) -> None:
+        """Given unknown voltage and current, both fields display N/A with a gray voltage indicator."""
+        fc = mock_flight_controller_with_battery
+        fc.get_battery_statuses.return_value = ({0: (nan, nan)}, "")
+        view = BatteryMonitorView(tk_root, BatteryMonitorDataModel(fc), mock_base_window)
+
+        view.on_activate()
+
+        assert view._battery_rows[0][1].cget("text") == "N/A"
+        assert view._battery_rows[0][2].cget("text") == "N/A"
+        assert str(view._battery_rows[0][1].cget("foreground")) == "gray"
+        view.destroy()
+
+
+def test_user_can_scroll_to_every_configured_battery_in_a_small_window(
+    tk_root: tk.Tk,
+    mock_base_window: MagicMock,
+    mock_flight_controller_with_battery: MagicMock,
+) -> None:
+    """Given 16 enabled monitors in a small window, all numbered rows remain accessible by scrolling."""
+    fc = mock_flight_controller_with_battery
+    fc.fc_parameters.update({f"BATT{suffix}_MONITOR": 4 for suffix in "23456789ABCDEFG"})
+    fc.get_battery_statuses.return_value = (dict.fromkeys(range(16), (12.4, 2.1)), "")
+    tk_root.geometry("480x300")
+    tk_root.deiconify()
+    view = BatteryMonitorView(tk_root, BatteryMonitorDataModel(fc), mock_base_window)
+    view.pack(fill="both", expand=True)
+    view.on_activate()
+    tk_root.update_idletasks()
+
+    view.scroll_frame.canvas.yview_moveto(1.0)
+
+    assert len(view._battery_rows) == 16
+    assert view._battery_rows[15][0].cget("text") == "Battery 16:"
+    first_visible_fraction, last_visible_fraction = view.scroll_frame.canvas.yview()
+    assert first_visible_fraction > 0.0
+    assert last_visible_fraction == 1.0
+    view.destroy()

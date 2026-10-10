@@ -55,7 +55,7 @@ def mock_flight_controller() -> MagicMock:
     # Configure frame info and motor count
     fc.get_frame_info.return_value = (1, 1)  # Quad X
     fc.is_battery_monitoring_enabled.return_value = True
-    fc.get_battery_status.return_value = ((12.4, 2.1), "")
+    fc.get_battery_statuses.return_value = ({0: (12.4, 2.1)}, "")
     fc.get_voltage_thresholds.return_value = (11.0, 16.8)
 
     # Configure motor test methods
@@ -649,7 +649,7 @@ class TestMotorTestDataModelBatteryMonitoring:
         THEN: Should return "critical"
         """
         # Arrange: Set voltage outside safe range
-        motor_test_model.flight_controller.get_battery_status.return_value = ((10.0, 2.1), "")
+        motor_test_model.flight_controller.get_battery_statuses.return_value = ({0: (10.0, 2.1)}, "")
 
         # Act: Get voltage status
         status = motor_test_model.get_voltage_status()
@@ -732,6 +732,7 @@ class TestMotorTestDataModelSafetyValidation:
         THEN: Should not raise exceptions but log warning about disabled monitoring
         """
         # Arrange: Disable battery monitoring
+        motor_test_model.flight_controller.fc_parameters["BATT_MONITOR"] = 0
         motor_test_model.flight_controller.is_battery_monitoring_enabled.return_value = False
 
         # Act: Check motor test safety - should not raise exceptions
@@ -748,7 +749,7 @@ class TestMotorTestDataModelSafetyValidation:
         THEN: Should raise MotorTestSafetyError with low voltage warning
         """
         # Arrange: Set voltage below minimum threshold
-        motor_test_model.flight_controller.get_battery_status.return_value = ((10.5, 2.1), "")
+        motor_test_model.flight_controller.get_battery_statuses.return_value = ({0: (10.5, 2.1)}, "")
         _min_voltage, _max_voltage = motor_test_model.get_voltage_thresholds()
 
         # Act & Assert: Check motor test safety should raise exception
@@ -764,7 +765,7 @@ class TestMotorTestDataModelSafetyValidation:
         THEN: Should raise MotorTestSafetyError with high voltage warning
         """
         # Arrange: Set voltage above maximum threshold
-        motor_test_model.flight_controller.get_battery_status.return_value = ((17.0, 2.1), "")
+        motor_test_model.flight_controller.get_battery_statuses.return_value = ({0: (17.0, 2.1)}, "")
         _min_voltage, _max_voltage = motor_test_model.get_voltage_thresholds()
 
         # Act & Assert: Check motor test safety should raise exception
@@ -983,7 +984,7 @@ class TestMotorTestDataModelMotorTesting:
         THEN: Should raise MotorTestSafetyError with safety message
         """
         # Arrange: Set unsafe battery voltage
-        motor_test_model.flight_controller.get_battery_status.return_value = ((10.0, 2.1), "")
+        motor_test_model.flight_controller.get_battery_statuses.return_value = ({0: (10.0, 2.1)}, "")
 
         # Act & Assert: Attempt motor test should raise MotorTestSafetyError
         with pytest.raises(MotorTestSafetyError, match=r"Battery voltage 10\.0V is outside safe range"):
@@ -1291,7 +1292,7 @@ class TestErrorHandlingAndEdgeCases:
         """
         # Arrange: Configure battery status to return error
         motor_test_model.flight_controller.is_battery_monitoring_enabled.return_value = True
-        motor_test_model.flight_controller.get_battery_status.return_value = (None, "Battery error")
+        motor_test_model.flight_controller.get_battery_statuses.return_value = (None, "Battery error")
 
         # Act: Get battery status
         result = motor_test_model.get_battery_status()
@@ -1309,7 +1310,7 @@ class TestErrorHandlingAndEdgeCases:
         """
         # Arrange: Enable monitoring but return no battery data
         motor_test_model.flight_controller.is_battery_monitoring_enabled.return_value = True
-        motor_test_model.flight_controller.get_battery_status.return_value = (None, "")
+        motor_test_model.flight_controller.get_battery_statuses.return_value = (None, "")
 
         # Act: Get voltage status
         result = motor_test_model.get_voltage_status()
@@ -2852,10 +2853,10 @@ class TestMotorTestDataModelBatteryFeedback:
         THEN: It should request streaming twice and reuse cached data afterwards
         """
         motor_test_model.flight_controller.request_periodic_battery_status.reset_mock()
-        motor_test_model.flight_controller.get_battery_status.side_effect = [
-            ((12.3, 2.0), "priming"),
-            ((12.5, 2.1), ""),
-            ((12.5, 2.1), ""),
+        motor_test_model.flight_controller.get_battery_statuses.side_effect = [
+            ({0: (12.3, 2.0)}, "priming"),
+            ({0: (12.5, 2.1)}, ""),
+            ({0: (12.5, 2.1)}, ""),
         ]
 
         motor_test_model.get_battery_status()
@@ -2874,7 +2875,7 @@ class TestMotorTestDataModelBatteryFeedback:
         """
         assert motor_test_model.get_battery_status_color() == "green"
 
-        motor_test_model.flight_controller.get_battery_status.return_value = ((10.0, 2.0), "")
+        motor_test_model.flight_controller.get_battery_statuses.return_value = ({0: (10.0, 2.0)}, "")
         assert motor_test_model.get_battery_status_color() == "red"
 
         motor_test_model.flight_controller.is_battery_monitoring_enabled.return_value = False
@@ -2896,10 +2897,10 @@ class TestMotorTestDataModelBatteryFeedback:
         assert motor_test_model.get_battery_display_text() == (_("Voltage: Disabled"), _("Current: Disabled"))
 
         motor_test_model.flight_controller.is_battery_monitoring_enabled.return_value = True
-        motor_test_model.flight_controller.get_battery_status.return_value = (None, "")
+        motor_test_model.flight_controller.get_battery_statuses.return_value = (None, "")
         assert motor_test_model.get_battery_display_text() == (_("Voltage: N/A"), _("Current: N/A"))
 
-        motor_test_model.flight_controller.get_battery_status.return_value = ((12.34, 1.98), "")
+        motor_test_model.flight_controller.get_battery_statuses.return_value = ({0: (12.34, 1.98)}, "")
         voltage_text, current_text = motor_test_model.get_battery_display_text()
 
         assert "12.34" in voltage_text
@@ -3377,3 +3378,65 @@ class TestMotorTestDataModelMotorSwapping:
             pytest.raises(ParameterError, match="Could not read parameters"),
         ):
             motor_test_model.swap_motor_functions("A", "B")
+
+
+@pytest.mark.parametrize(
+    ("readings", "expected_primary"),
+    [({1: (24.8, 3.5), 0: (12.4, 2.1)}, (12.4, 2.1)), ({1: (24.8, 3.5)}, None)],
+)
+def test_motor_testing_selects_battery_one_from_multi_battery_telemetry(
+    motor_test_model: MotorTestDataModel,
+    readings: dict[int, tuple[float, float]],
+    expected_primary: tuple[float, float] | None,
+) -> None:
+    """Given multiple battery readings, motor testing uses battery 1 and never substitutes another pack."""
+    motor_test_model.flight_controller.get_battery_statuses.return_value = (readings, "")
+
+    assert motor_test_model.get_battery_status() == expected_primary
+    if expected_primary is None:
+        with pytest.raises(MotorTestSafetyError, match="Could not read battery status"):
+            motor_test_model.is_motor_test_safe()
+
+
+def test_user_can_test_motors_with_only_secondary_battery_monitoring(motor_test_model: MotorTestDataModel) -> None:
+    """
+    Motor testing remains available when only a secondary monitor is enabled.
+
+    GIVEN: Battery 1 is disabled and only battery 2 reports telemetry.
+    WHEN: The user tests all motors.
+    THEN: The command is allowed with the existing voltage verification warning.
+    """
+    motor_test_model.flight_controller.fc_parameters.update({"BATT_MONITOR": 0, "BATT2_MONITOR": 4})
+    motor_test_model.flight_controller.get_battery_statuses.return_value = ({1: (24.8, 3.5)}, "")
+
+    motor_test_model.test_all_motors(10, 2)
+
+    motor_test_model.flight_controller.test_all_motors.assert_called_once_with(4, 10, 2)
+
+
+@pytest.mark.parametrize("voltage", [None, 9.0, 18.0])
+def test_user_cannot_test_motors_with_unsafe_battery_in_a_translated_ui(
+    motor_test_model: MotorTestDataModel, voltage: float | None
+) -> None:
+    """
+    Translated status labels preserve motor voltage safety checks.
+
+    GIVEN: A translated UI and missing or out-of-range primary battery voltage.
+    WHEN: The user tests all motors.
+    THEN: The safety error prevents any motor command.
+    """
+    translations = {"unavailable": "nicht verfügbar", "critical": "kritisch"}
+
+    def translate(message: str) -> str:
+        return translations.get(message, message)
+
+    readings = None if voltage is None else {0: (voltage, 2.1)}
+    motor_test_model.flight_controller.get_battery_statuses.return_value = (readings, "")
+    with (
+        patch("ardupilot_methodic_configurator.plugins.data_model_battery_monitor._", side_effect=translate),
+        patch("ardupilot_methodic_configurator.plugins.data_model_motor_test._", side_effect=translate),
+        pytest.raises(MotorTestSafetyError),
+    ):
+        motor_test_model.test_all_motors(10, 2)
+
+    motor_test_model.flight_controller.test_all_motors.assert_not_called()
