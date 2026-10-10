@@ -1142,13 +1142,7 @@ class TestV1ToV2ParameterExtractions:
         """
         (vehicle_dir / "configuration_steps_ArduCopter.json").write_text(
             json.dumps(
-                {
-                    "steps": {
-                        "29_motor_notch_filter_results.param": {
-                            "old_filenames": ["25_motor_notch_filter_results.param"]
-                        }
-                    }
-                }
+                {"steps": {"29_motor_notch_filter_results.param": {"old_filenames": ["25_motor_notch_filter_results.param"]}}}
             ),
             encoding="utf-8",
         )

@@ -1050,9 +1050,7 @@ def _migrate_v1_to_v2(vehicle_path: Path, vehicle_type: str) -> set[str]:  # noq
         # step so simple-mode users can review them. Publish before trimming sources.
         _surface_unmapped_copter_parameters(remaining_by_source, accumulated)
         forced_parameters.setdefault("23_general_configuration.param", set()).update(
-            name
-            for line in accumulated.get("23_general_configuration.param", [])
-            if (name := _param_name_from_line(line))
+            name for line in accumulated.get("23_general_configuration.param", []) if (name := _param_name_from_line(line))
         )
 
     for dst_name, lines in accumulated.items():
