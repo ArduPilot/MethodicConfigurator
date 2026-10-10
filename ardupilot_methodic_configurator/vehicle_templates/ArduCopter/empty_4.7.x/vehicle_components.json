@@ -1,5 +1,5 @@
 {
-    "Format version": 1,
+    "Format version": 2,
     "Components": {
         "Flight Controller": {
             "Product": {
@@ -10,7 +10,7 @@
             },
             "Firmware": {
                 "Type": "ArduCopter",
-                "Version": "4.7.0"
+                "Version": "4.7.1"
             },
             "Specifications": {
                 "MCU Series": ""
