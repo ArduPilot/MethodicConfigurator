@@ -43,16 +43,21 @@ vehicle types (`configuration_steps_ArduPlane.json`, `configuration_steps_Rover.
 1. Review the updated vehicle template directories and commit the results to git.
 1. *(Skip if no files need renumbering or explicit renaming)*
    Edit the `file_renames` dict in [param_reorder.py](./scripts/param_reorder.py) to map each old filename to its new
-   filename. If you only need to auto-renumber files to match their position in the JSON
-   sequence (e.g., after inserting or deleting a step), `file_renames` can remain empty —
-   `param_reorder.py` will renumber based on sequence order automatically.
+   filename. Explicit destinations act as numbering anchors: subsequent steps use the next
+   available number in JSON sequence order. For example, mapping step 15 to 19 automatically
+   numbers the following step 20. Add another anchor to preserve a later gap. Destinations
+   below the next available number are rejected.
+   If no anchors are needed, `file_renames` can remain empty — numbering starts at 02.
+   Automatically generated renames are added to `file_renames` at runtime so file moves,
+   reference updates, and `old_filenames` migration records use the same mappings.
 1. Run the linters locally: `ruff format && ruff check --fix && ty check && mypy && pyright`
 1. Commit the `param_reorder.py` changes to git.
 1. Execute `python .github/skills/configuration-steps-reorder/scripts/param_reorder.py` to rename `.param` and `.pdef.xml` files on disk
    (using `git mv` when tracked), update all filename references in `*.py`, `*.json`, and
    `*.md` files across the repository, and populate `old_filenames` in
    `configuration_steps_ArduCopter.json` automatically. The script also validates that
-   every old filename listed in `file_renames` is referenced in each `TUNING_GUIDE_*.md`
+   every old filename listed in `file_renames`, including automatically generated entries,
+   is referenced in each `TUNING_GUIDE_*.md`
    file — check the output for errors if some references were not updated.
 1. Review the renamed files and updated references, then commit the results to git.
 1. Update `TUNING_GUIDE_ArduCopter.md` — pay special attention to section numbers and
