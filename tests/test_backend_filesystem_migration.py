@@ -981,6 +981,28 @@ class TestParameterFileDocumentationRenames:
         assert new_step.with_suffix(".pdef.xml").read_bytes() == original_documentation
         assert new_step.read_bytes() == original_parameters
 
+    def test_user_legacy_step_replaces_an_empty_new_step_placeholder(
+        self, magfit_alias_project: tuple[LocalFilesystem, Path, Path]
+    ) -> None:
+        """
+        A non-empty legacy step replaces an empty destination placeholder.
+
+        GIVEN: A legacy step with parameters and an empty file under the new name
+        WHEN: Filename aliases are applied
+        THEN: The legacy parameters and documentation move to the new names
+        """
+        filesystem, old_step, new_step = magfit_alias_project
+        original_parameters = old_step.read_bytes()
+        original_documentation = old_step.with_suffix(".pdef.xml").read_bytes()
+        new_step.write_bytes(b"")
+
+        filesystem.rename_parameter_files()
+
+        assert not old_step.exists()
+        assert new_step.read_bytes() == original_parameters
+        assert not old_step.with_suffix(".pdef.xml").exists()
+        assert new_step.with_suffix(".pdef.xml").read_bytes() == original_documentation
+
     @pytest.mark.parametrize("existing_content", [b"", b"<paramfile>user documentation</paramfile>\n"])
     def test_user_documentation_at_the_new_name_is_never_overwritten(
         self, magfit_alias_project: tuple[LocalFilesystem, Path, Path], existing_content: bytes
@@ -1109,6 +1131,61 @@ class TestParameterFileDocumentationRenames:
 
 class TestV1ToV2ParameterExtractions:
     """Tests that consecutive format migrations are persisted as separate steps."""
+
+    def test_user_keeps_manual_rate_filter_values_when_migrating_to_v2(self, vehicle_dir: Path) -> None:
+        """
+        Existing filter settings move unless a destination value already takes precedence.
+
+        GIVEN: A V1 mandatory-hardware file with hand-set gyro and rate-filter values
+        WHEN: The ArduCopter project migrates to V2
+        THEN: Non-conflicting values move, the existing destination value remains, and hardware settings move
+        """
+        (vehicle_dir / "configuration_steps_ArduCopter.json").write_text(
+            json.dumps(
+                {
+                    "steps": {
+                        "29_motor_notch_filter_results.param": {
+                            "old_filenames": ["25_motor_notch_filter_results.param"]
+                        }
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        hardware = vehicle_dir / "14_mp_setup_mandatory_hardware.param"
+        hardware.write_text(
+            "INS_GYRO_FILTER,150 # hand-set\n"
+            "ATC_RAT_PIT_FLTD,60\n"
+            "ATC_RAT_PIT_FLTT,0\n"
+            "ATC_RAT_RLL_FLTD,75\n"
+            "ATC_RAT_RLL_FLTT,0\n"
+            "ATC_RAT_YAW_FLTD,12\n"
+            "ATC_RAT_YAW_FLTT,0\n"
+            "COMPASS_EXTERNAL,1\n",
+            encoding="utf-8",
+        )
+        legacy_results = vehicle_dir / "25_motor_notch_filter_results.param"
+        legacy_results.write_text("INS_GYRO_FILTER,20\nINS_HNTCH_FREQ,42\n", encoding="utf-8")
+
+        migration_module._migrate_v1_to_v2(vehicle_dir, "ArduCopter")  # pylint: disable=protected-access
+
+        filters = legacy_results.read_text(encoding="utf-8")
+        remaining_hardware = hardware.read_text(encoding="utf-8") if hardware.exists() else ""
+        compass = (vehicle_dir / "19_compass_calibration.param").read_text(encoding="utf-8")
+        assert "INS_GYRO_FILTER,20\n" in filters
+        assert "INS_GYRO_FILTER,150 # hand-set\n" not in filters
+        for parameter in (
+            "ATC_RAT_PIT_FLTD,60",
+            "ATC_RAT_PIT_FLTT,0",
+            "ATC_RAT_RLL_FLTD,75",
+            "ATC_RAT_RLL_FLTT,0",
+            "ATC_RAT_YAW_FLTD,12",
+            "ATC_RAT_YAW_FLTT,0",
+        ):
+            assert parameter in filters
+            assert parameter not in remaining_hardware
+        assert "INS_HNTCH_FREQ,42\n" in filters
+        assert "COMPASS_EXTERNAL,1\n" in compass
 
     @pytest.mark.parametrize(
         "step_migration",
@@ -1743,7 +1820,7 @@ class TestVehicleSpecificV1ToV2Migration:
         assert not copies["all"]
         assert not deletes["all"]
         assert moves[vehicle_type]
-        for _source, destination, patterns in moves[vehicle_type]:
+        for _source, destination, patterns, _force in moves[vehicle_type]:
             assert destination in steps
             for pattern in patterns:
                 assert any(_line_matches_any(name, [pattern]) for name in defaults), pattern

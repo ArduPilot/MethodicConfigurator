@@ -300,13 +300,19 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 )
                 if old_file_exists:
                     if new_file_exists:
-                        logging_error(
-                            _("File %s already exists. Will not rename file %s to %s."),
-                            new_filename,
-                            old_filename,
-                            new_filename,
-                        )
-                        continue
+                        new_filename_path = os_path.join(self.vehicle_dir, new_filename)
+                        if self.vehicle_configuration_file_size(new_filename) == 0:
+                            # Preserve the prior behavior of replacing an empty placeholder
+                            # with the user's non-empty legacy step.
+                            os_remove(new_filename_path)
+                        else:
+                            logging_error(
+                                _("File %s already exists. Will not rename file %s to %s."),
+                                new_filename,
+                                old_filename,
+                                new_filename,
+                            )
+                            continue
                     new_filename_path = os_path.join(self.vehicle_dir, new_filename)
                     old_filename_path = os_path.join(self.vehicle_dir, old_filename)
                     os_rename(old_filename_path, new_filename_path)

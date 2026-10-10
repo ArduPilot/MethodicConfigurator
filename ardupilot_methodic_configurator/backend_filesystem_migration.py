@@ -334,7 +334,9 @@ _FILES_TO_DELETE_V0_TO_V1: dict[str, list[str]] = {
 # other vehicles retain their combined mandatory-hardware calibration step.
 # IMUs 4/5 use INS4_/INS5_ subgroups, not suffixes on INS_ACC or INS_USE:
 # https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/libraries/AP_InertialSensor/AP_InertialSensor.cpp
-_PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str]]]] = {
+# The final move flag controls conflicts: forced moves replace destination values;
+# otherwise existing destination values win while the source values are removed.
+_PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str], bool]]] = {
     "all": [],
     "ArduCopter": [
         (
@@ -345,56 +347,73 @@ _PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str]]]] = {
                 r"(?:INS_ACC[23]?SCAL|INS[45]_ACCSCAL)_[XYZ]",
                 r"INS_USE[23]?|INS[45]_USE",
             ],
+            True,
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
             "03_imu_temperature_calibration_results.param",
             [r"INS_ACC[1-3]_CALTEMP|INS[45]_ACC_CALTEMP"],
+            True,
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
             "17_accelerometer_level.param",
             [r"AHRS_TRIM_[XY]"],
+            True,
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
             "19_compass_calibration.param",
             [r"COMPASS_.+"],
+            True,
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
             "22_flight_modes.param",
             [r"FLTMODE[1-6]", "INITIAL_MODE"],
+            True,
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
             "06_remote_controller_controller.param",
             [r"RC\d+_(?:MIN|MAX|TRIM)"],
+            True,
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
             "11_servo_outputs.param",
             [r"SERVO\d+_FUNCTION", "FRAME_CLASS"],
+            True,
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
             "13_initial_atc.param",
             [r"ATC_ACC_[PRY]_MAX"],
+            True,
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "29_motor_notch_filter_results.param",
+            [r"INS_GYRO_FILTER", r"ATC_RAT_(?:PIT|RLL|YAW)_FLT[DT]"],
+            False,
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
             "23_general_configuration.param",
             [r"RNGFND\d*_.*|FLOW_TYPE"],
+            True,
         ),
         (
             "05_board_orientation.param",
             "11_servo_outputs.param",
             ["FRAME_CLASS"],
+            True,
         ),
         (
             "04_board_orientation.param",
             "11_servo_outputs.param",
             ["FRAME_CLASS"],
+            True,
         ),
     ],
     "ArduPlane": [
@@ -402,21 +421,25 @@ _PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str]]]] = {
             "14_mp_setup_mandatory_hardware.param",
             "03_imu_temperature_calibration_results.param",
             [r"INS_ACC[1-3]_CALTEMP"],
+            True,
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
             "07_remote_controller_controller.param",
             [r"RC\d+_(?:MIN|MAX|TRIM|REVERSED)"],
+            True,
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
             "15_general_configuration.param",
             [r"FLTMODE[1-6]", "INITIAL_MODE"],
+            True,
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
             "16_safety_setup.param",
             ["FENCE_ACTION", "FENCE_ALT_MAX", "FENCE_ENABLE", "FENCE_RADIUS"],
+            True,
         ),
     ],
     "Heli": [
@@ -424,21 +447,25 @@ _PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str]]]] = {
             "14_mp_setup_mandatory_hardware.param",
             "03_imu_temperature_calibration_results.param",
             [r"INS_ACC[1-3]_CALTEMP"],
+            True,
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
             "07_remote_controller_controller.param",
             [r"RC\d+_(?:MIN|MAX|TRIM|REVERSED)"],
+            True,
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
             "15_general_configuration.param",
             [r"FLTMODE[1-6]", "INITIAL_MODE"],
+            True,
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
             "16_safety_setup.param",
             ["FENCE_ACTION", "FENCE_ALT_MAX", "FENCE_ENABLE", "FENCE_RADIUS"],
+            True,
         ),
     ],
     "Rover": [
@@ -446,16 +473,19 @@ _PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str]]]] = {
             "14_mp_setup_mandatory_hardware.param",
             "03_imu_temperature_calibration_results.param",
             [r"INS_ACC[1-3]_CALTEMP"],
+            True,
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
             "07_remote_controller_controller.param",
             [r"RC\d+_(?:MIN|MAX|TRIM|REVERSED)"],
+            True,
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
             "15_general_configuration.param",
             [r"MODE[1-6]", "INITIAL_MODE"],
+            True,
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
@@ -463,6 +493,7 @@ _PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str]]]] = {
             # Rover has no altitude fence; preserve any legacy FENCE_ALT_MAX
             # line in the source rather than applying a Copter deletion rule.
             ["FENCE_ACTION", "FENCE_ENABLE", "FENCE_RADIUS"],
+            True,
         ),
     ],
 }
@@ -546,8 +577,8 @@ for _migration_key, _old_filenames in _MANDATORY_HARDWARE_OLD_FILENAMES.items():
     _migration_moves = _PARAM_MOVES_V1_TO_V2[_migration_key]
     for _old_filename in _old_filenames:
         _migration_moves.extend(
-            (_old_filename, destination, patterns)
-            for source, destination, patterns in tuple(_migration_moves)
+            (_old_filename, destination, patterns, force)
+            for source, destination, patterns, force in tuple(_migration_moves)
             if source == "14_mp_setup_mandatory_hardware.param"
         )
         _PARAM_DELETES_V1_TO_V2[_migration_key].extend(
@@ -945,16 +976,39 @@ def _migration_destination_paths(vehicle_path: Path, vehicle_type: str) -> dict[
     return destinations
 
 
+def _merge_migrated_parameter_lines(existing: list[str], moved: list[str], forced_names: set[str]) -> list[str]:
+    """Merge moved values, preserving existing values unless their move is forced."""
+    moved_names = {_param_name_from_line(line) for line in moved if _param_name_from_line(line)}
+    existing_names = {_param_name_from_line(line) for line in existing if _param_name_from_line(line)}
+    names_to_replace = forced_names | {name for name in moved_names if name not in existing_names}
+    retained_existing = [line for line in existing if _param_name_from_line(line) not in names_to_replace]
+
+    unique_moved_lines: list[str] = []
+    seen_moved_names: set[str] = set()
+    for line in reversed(moved):
+        name = _param_name_from_line(line)
+        if name and name in seen_moved_names:
+            continue
+        if name:
+            seen_moved_names.add(name)
+            if name in existing_names and name not in forced_names:
+                continue
+        unique_moved_lines.append(line)
+    unique_moved_lines.reverse()
+    return retained_existing + unique_moved_lines
+
+
 def _migrate_v1_to_v2(vehicle_path: Path, vehicle_type: str) -> set[str]:  # noqa: PLR0915  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     """Move hardware settings to the matching vehicle layout, splitting calibration only for ArduCopter."""
     deleted_filenames: set[str] = set()
     accumulated: dict[str, list[str]] = {}
+    forced_parameters: dict[str, set[str]] = {}
     remaining_by_source: dict[Path, list[str]] = {}
     destination_paths = _migration_destination_paths(vehicle_path, vehicle_type)
 
     param_move_keys = ["all"] + ([vehicle_type] if vehicle_type in _PARAM_MOVES_V1_TO_V2 else [])
     for key in param_move_keys:
-        for src_name, dst_name, patterns in _PARAM_MOVES_V1_TO_V2[key]:
+        for src_name, dst_name, patterns, force in _PARAM_MOVES_V1_TO_V2[key]:
             src_path = vehicle_path / src_name
             if not src_path.exists():
                 logging.warning(_("Migration source file not found, skipping extraction: %s"), src_name)
@@ -969,6 +1023,10 @@ def _migrate_v1_to_v2(vehicle_path: Path, vehicle_type: str) -> set[str]:  # noq
                 continue
 
             accumulated.setdefault(dst_name, []).extend(extracted)
+            if force:
+                forced_parameters.setdefault(dst_name, set()).update(
+                    name for line in extracted if (name := _param_name_from_line(line))
+                )
             remaining_by_source[src_path] = remaining
             logging.info(_("Extracted %d parameter line(s) from %s for %s"), len(extracted), src_name, dst_name)
 
@@ -982,31 +1040,26 @@ def _migrate_v1_to_v2(vehicle_path: Path, vehicle_type: str) -> set[str]:  # noq
             ]
             if copied:
                 accumulated.setdefault(dst_name, []).extend(copied)
+                forced_parameters.setdefault(dst_name, set()).update(
+                    name for line in copied if (name := _param_name_from_line(line))
+                )
 
     if vehicle_type == "ArduCopter":
         # The split layout no longer lists the combined hardware step. Preserve
         # unknown values there for recovery, but also surface them in a mandatory
         # step so simple-mode users can review them. Publish before trimming sources.
         _surface_unmapped_copter_parameters(remaining_by_source, accumulated)
+        forced_parameters.setdefault("23_general_configuration.param", set()).update(
+            name
+            for line in accumulated.get("23_general_configuration.param", [])
+            if (name := _param_name_from_line(line))
+        )
 
     for dst_name, lines in accumulated.items():
         dst_path = destination_paths.get(dst_name, vehicle_path / dst_name)
         existing = _read_param_file_lines(dst_path) if dst_path.exists() else []
-        moved_names = {_param_name_from_line(line) for line in lines if _param_name_from_line(line)}
-        # Values from the old project file are authoritative during migration.
-        # Keep unrelated destination values, but replace conflicting values.
-        retained_existing = [line for line in existing if _param_name_from_line(line) not in moved_names]
-        unique_moved_lines: list[str] = []
-        seen_moved_names: set[str] = set()
-        for line in reversed(lines):
-            name = _param_name_from_line(line)
-            if name and name in seen_moved_names:
-                continue
-            if name:
-                seen_moved_names.add(name)
-            unique_moved_lines.append(line)
-        unique_moved_lines.reverse()
-        _write_param_file_lines(dst_path, retained_existing + unique_moved_lines)
+        merged_lines = _merge_migrated_parameter_lines(existing, lines, forced_parameters.get(dst_name, set()))
+        _write_param_file_lines(dst_path, merged_lines)
         logging.info(_("%s parameter migration file: %s"), _("Updated") if existing else _("Created"), dst_name)
 
     # Commit extracted values to destinations before trimming the source files.
@@ -1103,7 +1156,7 @@ def migrate_vehicle_project_if_needed(vehicle_dir: str) -> bool:  # pylint: disa
             v2_source_filenames = {
                 src_name
                 for migration_key in ["all"] + ([vehicle_type] if vehicle_type in _PARAM_MOVES_V1_TO_V2 else [])
-                for src_name, _dst_name, _patterns in _PARAM_MOVES_V1_TO_V2[migration_key]
+                for src_name, _dst_name, _patterns, _force in _PARAM_MOVES_V1_TO_V2[migration_key]
             }
             _restore_missing_configuration_step_files(
                 vehicle_path,
