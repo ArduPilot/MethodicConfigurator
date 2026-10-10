@@ -204,6 +204,15 @@ def test_level_trim_does_not_warn_about_float32_rounding(parameter_editor, mock_
     mock_local_filesystem.export_to_param.assert_not_called()
 
 
+def test_rebuild_current_step_after_fc_parameter_update_reuses_step_processing(parameter_editor: ParameterEditor) -> None:
+    """Direct FC reads must refresh conditional and derived step data before rendering."""
+    expected = ([("Configuration error", "bad expression")], [("Configuration info", "value refreshed")])
+    with patch.object(parameter_editor, "_repopulate_configuration_step_parameters", return_value=expected) as rebuild:
+        assert parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update() == expected
+
+    rebuild.assert_called_once_with()
+
+
 class TestExternalParameterFiles:
     """Validate loading external files without adding them to the AMC project."""
 

@@ -229,6 +229,26 @@ def test_init_creates_instance_with_correct_attributes(
     assert parameter_editor_table.parameter_editor._has_unsaved_changes() is False
 
 
+def test_table_omits_only_parameters_confirmed_absent_by_flight_controller(
+    parameter_editor_table: ParameterEditorTable, mock_parameter_editor_window: MagicMock
+) -> None:
+    """A direct-read absence result hides a row without changing the step model."""
+    present_parameter = create_mock_data_model_ardupilot_parameter("PRESENT_PARAM", 1.0)
+    absent_parameter = create_mock_data_model_ardupilot_parameter("ABSENT_PARAM", 2.0)
+    parameter_editor_table.parameter_editor.current_step_parameters = {
+        "PRESENT_PARAM": present_parameter,
+        "ABSENT_PARAM": absent_parameter,
+    }
+    mock_parameter_editor_window._confirmed_absent_fc_parameter_names = {"ABSENT_PARAM"}
+    parameter_editor_table._render_table = MagicMock()
+
+    parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="simple")
+
+    rendered_parameters = parameter_editor_table._render_table.call_args.args[0]
+    assert rendered_parameters == {"PRESENT_PARAM": present_parameter}
+    assert "ABSENT_PARAM" in parameter_editor_table.parameter_editor.current_step_parameters
+
+
 def test_init_configures_style(parameter_editor_table: ParameterEditorTable) -> None:
     """
     ParameterEditorTable properly configures ttk.Style for consistent appearance.
