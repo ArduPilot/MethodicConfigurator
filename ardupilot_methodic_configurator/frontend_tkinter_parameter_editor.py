@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 import contextlib
+import re
 import tempfile
 import threading
 import tkinter as tk
@@ -70,7 +71,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_progress_window import (
     update_flight_controller_restart_progress,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText, get_widget_font_family_and_size
-from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
+from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
+from ardupilot_methodic_configurator.frontend_tkinter_show import get_monitor_bounds, show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import UsagePopupWindow
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import (
@@ -346,6 +348,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._file_browser_window: FileBrowserWindow | None = None
         self._log_report_return_pending: bool = False
         self.inline_component_editor: ComponentEditorWindow | None = None
+        self.inline_component_scroll_frame: ScrollFrame | None = None
+        self._inline_component_chrome_height = 0
+        self._parameter_area_resize_pending = False
         self._inline_component_name: str | None = None
         self._updating_inline_editor: bool = False
         self._requested_action = ParameterEditorAction.FINISHED
@@ -385,9 +390,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Resize window height to ensure all widgets, including the skip button, are fully visible
         # as some Linux Window managers like KDE, like to change font sizes and padding.
         # So we need to dynamically accommodate for that after placing the widgets
-        self.root.update_idletasks()
-        req_height = max(self.root.winfo_reqheight(), round(820 * self.dpi_scaling_factor))
-        self.root.geometry(f"{round(990 * self.dpi_scaling_factor)}x{req_height}")
+        self._fit_window_to_screen_height(initialize=True)
+        self._bind_parameter_layout_events()
 
         # Set up startup notification for the main application window
         FreeDesktop.setup_startup_notification(self.root)  # type: ignore[arg-type]
@@ -1588,12 +1592,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         for child in self.inline_component_container.winfo_children():
             child.destroy()
         self.inline_component_editor = None
+        self.inline_component_scroll_frame = None
         self._inline_component_name = None
 
         if component_name is None:
             # Hide the container when no inline component editor is required.
             self.inline_component_container.configure(text="")
             self.inline_component_container.pack_forget()
+            self._fit_window_to_screen_height()
             return
 
         # Show (or re-show) the container with the new component name.
@@ -1603,17 +1609,141 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 side=tk.TOP, fill="x", expand=False, padx=(4, 4), before=self.parameter_area_container
             )
 
+        self.inline_component_container.pack_propagate(flag=True)
+        scroll_frame = ScrollFrame(self.inline_component_container)
+        scroll_frame.canvas.configure(height=1)
+        scroll_frame.pack(side="top", fill="both", expand=True)
         deps: ComponentEditorDeps = self.parameter_editor.get_component_editor_deps()
         editor = ComponentEditorWindow(
             __version__,
             deps.local_filesystem,
             deps.fc_parameters,
-            embedded_parent_frame=self.inline_component_container,
+            embedded_parent_frame=scroll_frame.view_port,
             on_component_change=self._on_component_data_changed,
         )
         editor.populate_single_component(component_name)
         self.inline_component_editor = editor
         self._inline_component_name = component_name
+        self.root.update_idletasks()
+        self._inline_component_chrome_height = (
+            self.inline_component_container.winfo_reqheight() - scroll_frame.winfo_reqheight()
+        )
+        self.inline_component_scroll_frame = scroll_frame
+        scroll_frame.view_port.bind("<Configure>", self._on_main_frame_resize, add="+")
+        self._fit_window_to_screen_height()
+
+    def _window_manager_controls_geometry(self) -> bool:
+        """Recognize maximised and full-screen windows across Tk platforms."""
+        if self.root.state() == "zoomed":
+            return True
+        for attribute in ("-zoomed", "-fullscreen"):
+            # -zoomed is an X11 attribute, unsupported by some other Tk platforms.
+            with contextlib.suppress(tk.TclError):
+                if self.root.tk.getboolean(self.root.attributes(attribute)):
+                    return True
+        return False
+
+    def _fit_window_to_screen_height(self, *, initialize: bool = False) -> None:
+        """Set the startup size, then preserve user sizing unless it exceeds the monitor."""
+        self.root.update_idletasks()
+        if self._window_manager_controls_geometry():
+            self._resize_parameter_area_to_fit()
+            return
+        bounds = get_monitor_bounds(self.root)
+        root_y = self.root.winfo_rooty()
+        current_height = self.root.winfo_height()
+        if not initialize and bounds.top <= root_y and root_y + current_height <= bounds.bottom:
+            self._resize_parameter_area_to_fit()
+            return
+        # Reserve space above and below the client area for window decorations and panels.
+        margin = round(40 * self.dpi_scaling_factor)
+        available_height = max(1, bounds.bottom - bounds.top - 2 * margin)
+        requested_height = (
+            max(self.root.winfo_reqheight(), round(820 * self.dpi_scaling_factor)) if initialize else self.root.winfo_height()
+        )
+        window_height = min(requested_height, available_height)
+        target_y = max(bounds.top + margin, min(root_y, bounds.bottom - margin - window_height))
+        if initialize or window_height != requested_height or target_y != root_y:
+            window_width = round(990 * self.dpi_scaling_factor) if initialize else self.root.winfo_width()
+            # wm geometry uses frame coordinates, while winfo reports the client
+            # position on X11. Apply the client displacement to the WM position
+            # and preserve its horizontal anchor, avoiding decoration-sized drift.
+            geometry = re.fullmatch(r"\d+x\d+([+-]-?\d+)([+-]-?\d+)", self.root.geometry())
+            if geometry is not None:
+                window_x, window_y = geometry.groups()
+                displacement = target_y - root_y
+                if window_y.startswith("+"):
+                    window_y = f"+{int(window_y[1:]) + displacement}"
+                else:
+                    # A minus sign anchors the window to the bottom of the screen.
+                    window_y = f"-{int(window_y[1:]) + current_height - window_height - displacement}"
+                self.root.geometry(f"{window_width}x{window_height}{window_x}{window_y}")
+
+        self.root.update_idletasks()
+        self._resize_parameter_area_to_fit()
+
+    def _bind_parameter_layout_events(self) -> None:
+        """Refit when the window or any fixed section changes its allocated size."""
+        self.main_frame.bind("<Configure>", self._on_main_frame_resize, add="+")
+        for widget in self.main_frame.winfo_children():
+            if widget is not self.parameter_area_container:
+                widget.bind("<Configure>", self._on_main_frame_resize, add="+")
+
+    def _on_main_frame_resize(self, _event: tk.Event) -> None:
+        """Fit once idle, after fixed controls have re-wrapped at the new width."""
+        if not self._parameter_area_resize_pending:
+            self._parameter_area_resize_pending = True
+            self.root.after_idle(self._resize_parameter_area_to_fit)
+
+    def _resize_parameter_area_to_fit(self) -> None:
+        """Give the parameter area the height left after all fixed controls are placed."""
+        self._parameter_area_resize_pending = False
+        # The parameter table is the only expandable section between the fixed
+        # header/component editor and the bottom buttons. Give it only the height
+        # left after those other widgets have been placed, so its requested size
+        # cannot consume the button row on short screens.
+        fixed_height = 0
+        for widget in self.main_frame.winfo_children():
+            if widget is self.parameter_area_container or widget.winfo_manager() != "pack":
+                continue
+            pack_info = cast("tk.Pack", widget).pack_info()
+            vertical_padding = pack_info.get("pady", 0)
+            padding_values: tuple[int | str, ...]
+            if isinstance(vertical_padding, tuple):
+                padding_values = vertical_padding
+            elif isinstance(vertical_padding, str):
+                padding_values = self.root.tk.splitlist(vertical_padding)
+            else:
+                padding_values = (vertical_padding,)
+            padding_height = sum(widget.winfo_pixels(value) for value in padding_values)
+            if len(padding_values) == 1:
+                padding_height *= 2
+            if widget is self.inline_component_container and self.inline_component_scroll_frame is not None:
+                fixed_height += padding_height
+            else:
+                fixed_height += widget.winfo_reqheight() + padding_height
+
+        if self.inline_component_scroll_frame is not None:
+            # Keep a useful parameter table on component-heavy steps such as Battery.
+            # Extra component fields remain accessible through the existing ScrollFrame.
+            scroll_frame = self.inline_component_scroll_frame
+            content_height = scroll_frame.view_port.winfo_reqheight() + 8
+            desired_height = content_height + self._inline_component_chrome_height
+            minimum_table_height = round(120 * self.dpi_scaling_factor)
+            component_height = min(
+                desired_height, max(1, self.main_frame.winfo_height() - fixed_height - minimum_table_height)
+            )
+            scroll_frame.canvas.configure(height=content_height)
+            self.inline_component_container.pack_propagate(flag=False)
+            if int(str(self.inline_component_container.cget("height"))) != component_height:
+                self.inline_component_container.configure(height=component_height)
+            fixed_height += component_height
+
+        table_height = max(1, self.main_frame.winfo_height() - fixed_height)
+        configured_height = self.parameter_area_container.cget("height")
+        if not configured_height or int(str(configured_height)) != table_height:
+            self.parameter_area_container.pack_propagate(flag=False)
+            self.parameter_area_container.configure(height=table_height)
 
     def on_show_only_changed_checkbox_change(self) -> None:
         self.repopulate_parameter_table()
