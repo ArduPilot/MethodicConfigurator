@@ -968,80 +968,80 @@ msgstr "{filename}中的固件版本字符串{version_str}无效"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:72
 msgid "The {description} redirected away from the official ArduPilot server"
-msgstr ""
+msgstr "{description} 已重定向到 ArduPilot 官方服务器之外"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:80
 msgid "firmware catalog"
-msgstr ""
+msgstr "固件目录"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:86
 msgid "The ArduPilot firmware catalog is too large"
-msgstr ""
+msgstr "ArduPilot 固件目录过大"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:91
 msgid "The ArduPilot firmware catalog is invalid"
-msgstr ""
+msgstr "ArduPilot 固件目录无效"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:103
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:116
 msgid "Firmware download cancelled"
-msgstr ""
+msgstr "固件下载已取消"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:107
 msgid "firmware download"
-msgstr ""
+msgstr "固件下载"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:120
 msgid "The firmware image is too large"
-msgstr ""
+msgstr "固件映像过大"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:125
 msgid "The firmware download is empty"
-msgstr ""
+msgstr "下载的固件为空"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:194
 msgid ""
 "Firmware upload requires a direct USB serial connection to the flight "
 "controller"
-msgstr ""
+msgstr "固件上传需要与飞控进行直接 USB 串口连接"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:197
 msgid "Firmware upload requires explicit confirmation"
-msgstr ""
+msgstr "固件上传需要明确确认"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:201
 msgid "Firmware upload requires the connected flight-controller board ID"
-msgstr ""
+msgstr "固件上传需要已连接飞控的板卡 ID"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:216
 msgid ""
 "The selected release does not match the connected flight-controller board"
-msgstr ""
+msgstr "所选发布版本与已连接的飞控板卡不匹配"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:222
 msgid "Downloading firmware…"
-msgstr ""
+msgstr "正在下载固件…"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:226
 msgid "The flight-controller connection changed while downloading firmware"
-msgstr ""
+msgstr "下载固件时飞控连接已更改"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:230
 msgid "The downloaded firmware does not match the detected board ID"
-msgstr ""
+msgstr "下载的固件与检测到的板卡 ID 不匹配"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:236
 msgid "The downloaded firmware build does not match the selected release"
-msgstr ""
+msgstr "下载的固件构建版本与所选发布版本不匹配"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:257
 msgid "Inspecting selected firmware…"
-msgstr ""
+msgstr "正在检查所选固件…"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:260
 msgid ""
 "The selected APJ does not match the connected flight-controller board ID"
-msgstr ""
+msgstr "所选 APJ 与已连接飞控的板卡 ID 不匹配"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:103
 msgid "flight-controller connection was lost before bootloader entry"
@@ -1105,13 +1105,13 @@ msgstr "安全中止固件上传后无法重新连接：%s"
 msgid ""
 "Firmware upload was cancelled, but reconnection failed: {error}. Restart AMC "
 "to reconnect."
-msgstr ""
+msgstr "固件上传已取消，但重新连接失败：{error}。请重启 AMC 以重新连接。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:589
 msgid ""
 "The reconnected board does not match the controller before cancellation. "
 "Restart AMC."
-msgstr ""
+msgstr "重新连接的板卡与取消前的控制器不匹配。请重启 AMC。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:906
 msgid ""
@@ -4584,16 +4584,16 @@ msgstr "参数已重命名"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_catalog.py:56
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_catalog.py:97
 msgid "Copter - heli"
-msgstr ""
+msgstr "Copter - 直升机"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_catalog.py:56
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_catalog.py:97
 msgid "Copter - multicopter"
-msgstr ""
+msgstr "Copter - 多旋翼"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_catalog.py:123
 msgid "Invalid ArduPilot firmware manifest"
-msgstr ""
+msgstr "无效的 ArduPilot 固件清单"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:143
 msgid "bootloader flash size must be a non-negative multiple of four"
@@ -7425,17 +7425,17 @@ msgstr "未处理任何条目。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:81
 msgid "Select a flight controller"
-msgstr ""
+msgstr "选择飞控"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:86
 msgid "Flight controller connection"
-msgstr ""
+msgstr "飞控连接"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:99
 msgid ""
 "Find and connect to a flight controller\n"
 "plugged into your computer by USB."
-msgstr ""
+msgstr "查找并连接通过 USB\n插入电脑的飞控。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:137
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:476
@@ -7445,28 +7445,28 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:763
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:80
 msgid "Upload ArduPilot firmware"
-msgstr ""
+msgstr "上传 ArduPilot 固件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:145
 msgid "Connected flight controller"
-msgstr ""
+msgstr "已连接的飞控"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:150
 msgid "Connect"
-msgstr ""
+msgstr "连接"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:165
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:331
 msgid "Connect a flight controller to detect its board"
-msgstr ""
+msgstr "连接飞控以检测其板卡"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:173
 msgid "Upload custom APJ…"
-msgstr ""
+msgstr "上传自定义 APJ…"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:176
 msgid "Upload firmware"
-msgstr ""
+msgstr "上传固件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:178
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:385
@@ -7480,7 +7480,7 @@ msgstr "取消"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:192
 msgid "Open the firmware upload user manual"
-msgstr ""
+msgstr "打开固件上传用户手册"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:199
 msgid ""
@@ -7488,20 +7488,20 @@ msgid ""
 "that runs your vehicle.\n"
 "This shows its model and USB connection.\n"
 "The board ID identifies compatible firmware."
-msgstr ""
+msgstr "飞控是运行您的载具的\n小型计算机。\n这里会显示其型号和 USB 连接。\n板卡 ID 用于识别兼容的固件。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:208
 msgid ""
 "Connect your flight controller by USB.\n"
 "Its model is detected so compatible firmware\n"
 "can be offered."
-msgstr ""
+msgstr "通过 USB 连接您的飞控。\n系统会检测其型号，以便提供\n兼容的固件。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:212
 msgid ""
 "Shows the current step, result, or error\n"
 "while preparing and installing firmware."
-msgstr ""
+msgstr "在准备和安装固件时，\n显示当前步骤、结果或错误。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:216
 msgid ""
@@ -7509,7 +7509,7 @@ msgid ""
 "APJ is ArduPilot's firmware file format.\n"
 "The file must match your connected board.\n"
 "You will be asked to confirm before writing."
-msgstr ""
+msgstr "选择您电脑上的 .apj 固件文件。\nAPJ 是 ArduPilot 的固件文件格式。\n该文件必须与您连接的板卡匹配。\n写入前会要求您确认。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:225
 msgid ""
@@ -7518,47 +7518,47 @@ msgid ""
 "Installation replaces its current firmware.\n"
 "You will be asked to confirm before writing.\n"
 "Keep the USB cable connected until it finishes."
-msgstr ""
+msgstr "下载所选固件并准备\n将其安装到您的飞控上。\n安装会替换其当前固件。\n写入前会要求您确认。\n请保持 USB 线缆连接，直到完成。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:235
 msgid ""
 "Stop before the current firmware is erased.\n"
 "Cancellation is unavailable once erasing starts."
-msgstr ""
+msgstr "请在当前固件被擦除前停止。\n一旦开始擦除，将无法取消。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:242
 msgid "Official ArduPilot firmware"
-msgstr ""
+msgstr "官方 ArduPilot 固件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:246
 msgid ""
 "Firmware is the software that runs on your\n"
 "flight controller. These releases come from\n"
 "the official ArduPilot download server."
-msgstr ""
+msgstr "固件是在您的飞控上运行的\n软件。这些发布版本来自\nArduPilot 官方下载服务器。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:252
 msgid "Firmware type:"
-msgstr ""
+msgstr "固件类型："
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:258
 msgid "Firmware target:"
-msgstr ""
+msgstr "固件目标："
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:264
 msgid "Firmware version:"
-msgstr ""
+msgstr "固件版本："
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:271
 msgid "Refresh versions"
-msgstr ""
+msgstr "刷新版本"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:276
 msgid ""
 "Download the latest list of available\n"
 "firmware releases from ArduPilot.\n"
 "An internet connection is required."
-msgstr ""
+msgstr "从 ArduPilot 下载最新的\n可用固件发布列表。\n需要互联网连接。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:282
 msgid ""
@@ -7569,7 +7569,7 @@ msgid ""
 "Rover is for ground vehicles and boats.\n"
 "Sub is for underwater vehicles.\n"
 "Only available builds are listed."
-msgstr ""
+msgstr "选择适用于您载具的软件。\nCopter - multicopter 用于具有\n多个螺旋桨的无人机。Copter - heli 用于\n直升机。Plane 用于固定翼飞机。\nRover 用于地面车辆和船只。\nSub 用于水下载具。\n仅列出可用的构建版本。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:295
 msgid ""
@@ -7577,7 +7577,7 @@ msgid ""
 "Only targets matching your connected board\n"
 "are listed. Some boards have several options.\n"
 "The target can change the available features."
-msgstr ""
+msgstr "目标是针对某种板卡型号的固件构建。\n仅列出与您所连接板卡匹配的目标。\n某些板卡有多个选项。\n目标会影响可用功能。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:305
 msgid ""
@@ -7588,23 +7588,23 @@ msgid ""
 "STABLE-x.y.z is an older stable release.\n"
 "Only versions for your chosen type and target\n"
 "are listed."
-msgstr ""
+msgstr "选择要安装的软件发布版本。\nOFFICIAL 是当前稳定版本。\nBETA 是正在测试的版本。\nDEV 是开发版本。\nSTABLE-x.y.z 是较早的稳定版本。\n仅列出适用于您所选类型和目标的\n版本。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:343
 msgid "{board_name} (APJ board ID {board_id}) — {device}"
-msgstr ""
+msgstr "{board_name}（APJ 板卡 ID {board_id}）— {device}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:402
 msgid "Loading available firmware versions…"
-msgstr ""
+msgstr "正在加载可用固件版本…"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:428
 msgid "Select a firmware type, target and version for the detected board"
-msgstr ""
+msgstr "为检测到的板卡选择固件类型、目标和版本"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:435
 msgid "No APJ firmware is listed for this board ID"
-msgstr ""
+msgstr "此板卡 ID 没有列出 APJ 固件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:477
 msgid ""
@@ -7613,15 +7613,15 @@ msgid ""
 "After a successful or failed upload, closing this window closes AMC. Restart "
 "AMC to continue configuration. Cancelling before erase keeps AMC open unless "
 "a detected board was unplugged while idle."
-msgstr ""
+msgstr "下载适用于板卡 ID {board_id} 的 {release} 并准备刷写吗？\n\n无论上传成功还是失败，关闭此窗口都会关闭 AMC。请重新启动 AMC 以继续配置。在擦除开始前取消将使 AMC 保持打开，除非检测到的板卡在空闲时被拔出。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:503
 msgid "Select APJ firmware file"
-msgstr ""
+msgstr "选择 APJ 固件文件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:504
 msgid "ArduPilot firmware"
-msgstr ""
+msgstr "ArduPilot 固件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:512
 msgid ""
@@ -7630,19 +7630,19 @@ msgid ""
 "After a successful or failed upload, closing this window closes AMC. Restart "
 "AMC to continue configuration. Cancelling before erase keeps AMC open unless "
 "a detected board was unplugged while idle."
-msgstr ""
+msgstr "使用适用于板卡 ID {board_id} 的本地固件 {file} 并准备刷写吗？\n\n无论上传成功还是失败，关闭此窗口都会关闭 AMC。请重新启动 AMC 以继续配置。在擦除开始前取消将使 AMC 保持打开，除非检测到的板卡在空闲时被拔出。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:591
 msgid "Firmware catalog error"
-msgstr ""
+msgstr "固件目录错误"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:596
 msgid "Firmware upload: {stage}"
-msgstr ""
+msgstr "固件上传：{stage}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:613
 msgid "Confirm firmware flash"
-msgstr ""
+msgstr "确认刷写固件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:614
 msgid ""
@@ -7650,71 +7650,71 @@ msgid ""
 "\n"
 "Bootloader board ID: {board_id}\n"
 "APJ SHA-256: {digest}"
-msgstr ""
+msgstr "擦除并刷写 {release} 吗？\n\n引导加载程序板卡 ID：{board_id}\nAPJ SHA-256：{digest}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:631
 msgid "Firmware upload completed and flight controller reconnected"
-msgstr ""
+msgstr "固件上传完成，飞控已重新连接"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:634
 msgid "Firmware upload cancelled"
-msgstr ""
+msgstr "固件上传已取消"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:636
 msgid "Close this window and restart AMC before continuing configuration."
-msgstr ""
+msgstr "在继续配置前，请关闭此窗口并重新启动 AMC。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:640
 msgid "Firmware upload failed"
-msgstr ""
+msgstr "固件上传失败"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:660
 msgid "Idle"
-msgstr ""
+msgstr "空闲"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:661
 msgid "Inspecting firmware"
-msgstr ""
+msgstr "正在检查固件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:662
 msgid "Awaiting confirmation"
-msgstr ""
+msgstr "等待确认"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:663
 msgid "Entering bootloader"
-msgstr ""
+msgstr "正在进入引导加载程序"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:664
 msgid "Identifying board"
-msgstr ""
+msgstr "正在识别板卡"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:665
 msgid "Erasing firmware"
-msgstr ""
+msgstr "正在擦除固件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:666
 msgid "Programming firmware"
-msgstr ""
+msgstr "正在写入固件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:667
 msgid "Verifying firmware"
-msgstr ""
+msgstr "正在验证固件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:668
 msgid "Rebooting board"
-msgstr ""
+msgstr "正在重启板卡"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:669
 msgid "Reconnecting to board"
-msgstr ""
+msgstr "正在重新连接板卡"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:670
 msgid "Completed"
-msgstr ""
+msgstr "已完成"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:671
 msgid "Failed"
-msgstr ""
+msgstr "失败"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:672
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_compass_calibration.py:382
@@ -7723,43 +7723,43 @@ msgstr "已取消"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:680
 msgid "Erase"
-msgstr ""
+msgstr "擦除"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:681
 msgid ""
 "Removing the old firmware from the board\n"
 "before writing the selected firmware.\n"
 "Keep the USB cable connected."
-msgstr ""
+msgstr "正在从开发板中擦除旧固件\n然后写入所选固件。\n请保持 USB 数据线连接。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:689
 msgid "Program"
-msgstr ""
+msgstr "写入"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:690
 msgid ""
 "Writing the selected firmware to the board.\n"
 "Keep the USB cable connected."
-msgstr ""
+msgstr "正在将所选固件写入开发板。\n请保持 USB 数据线连接。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:694
 msgid "Verify"
-msgstr ""
+msgstr "校验"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:695
 msgid ""
 "Checking that the firmware was written\n"
 "correctly before restarting the board."
-msgstr ""
+msgstr "正在检查固件是否已正确写入\n然后再重启开发板。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:745
 msgid "Wait for the current operation to finish"
-msgstr ""
+msgstr "请等待当前操作完成"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:768
 msgid ""
 "Upload this local APJ firmware file after connecting (with confirmation)."
-msgstr ""
+msgstr "连接后上传此本地 APJ 固件文件（需确认）。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_connection_progress.py:47
 msgid "Initializing Flight Controller"
@@ -9514,7 +9514,7 @@ msgstr ""
 msgid ""
 "Open the firmware upload window to install ArduPilot on a flight controller "
 "connected by USB."
-msgstr ""
+msgstr "打开固件上传窗口，为通过 USB 连接的飞控安装 ArduPilot。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:147
 msgid ""
