@@ -803,10 +803,29 @@ class TestWidgetCreationWorkflows:
         components = {f"Component_{i}": {"value": i} for i in range(num_components)}
         editor_with_realistic_data.data_model.get_all_components.return_value = components
 
-        editor_with_realistic_data.populate_frames()
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.platform_system",
+            return_value="Linux",
+        ):
+            editor_with_realistic_data.populate_frames()
 
         expected_yields = num_components // 5
         assert editor_with_realistic_data.scroll_frame.view_port.update_idletasks.call_count == expected_yields
+
+    def test_populate_frames_skips_idle_updates_on_macos(self, editor_with_realistic_data: ComponentEditorWindowBase) -> None:
+        """populate_frames avoids the Tcl/Tk idle-rendering crash path on macOS."""
+        components = {f"Component_{i}": {"value": i} for i in range(5)}
+        editor_with_realistic_data.data_model.get_all_components.return_value = components
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.platform_system",
+            return_value="Darwin",
+        ):
+            editor_with_realistic_data.populate_frames()
+
+        assert editor_with_realistic_data._add_widget.call_count == len(components)
+        editor_with_realistic_data.scroll_frame.scroll_to_top.assert_called_once()
+        editor_with_realistic_data.scroll_frame.view_port.update_idletasks.assert_not_called()
 
 
 class TestComplexityComboboxWorkflows:
@@ -858,11 +877,28 @@ class TestComplexityComboboxWorkflows:
         THEN: The component display should be refreshed with new settings
         """
         # Act: Trigger interface refresh
-        editor_for_complexity_tests._refresh_component_display()
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.platform_system",
+            return_value="Linux",
+        ):
+            editor_for_complexity_tests._refresh_component_display()
 
         # Assert: Display should be refreshed
         editor_for_complexity_tests.populate_frames.assert_called_once()
         editor_for_complexity_tests.scroll_frame.view_port.update_idletasks.assert_called_once()
+
+    def test_macos_complexity_refresh_repopulates_without_idle_update(
+        self, editor_for_complexity_tests: ComponentEditorWindowBase
+    ) -> None:
+        """Changing complexity on macOS still refreshes widgets without processing idle events."""
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.platform_system",
+            return_value="Darwin",
+        ):
+            editor_for_complexity_tests._refresh_component_display()
+
+        editor_for_complexity_tests.populate_frames.assert_called_once()
+        editor_for_complexity_tests.scroll_frame.view_port.update_idletasks.assert_not_called()
 
 
 class TestModuleConstantsAndTypes:

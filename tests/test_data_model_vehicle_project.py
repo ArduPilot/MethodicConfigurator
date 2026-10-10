@@ -14,6 +14,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -588,7 +589,7 @@ class TestVehicleProjectCreation:
 
         mock_flight_controller = MagicMock()
         mock_flight_controller.master = MagicMock()
-        mock_flight_controller.fc_parameters = {"SERIAL5_BAUD": 57.0}
+        mock_flight_controller.fc_parameters = {"SERIAL5_BAUD": 57.0, "BATT_MONITOR": 4.0}
         mock_flight_controller.info.vehicle_type = "ArduCopter"
         mock_flight_controller.info.flight_sw_version = "4.6.0"
         manager = VehicleProjectManager(local_filesystem, mock_flight_controller)
@@ -604,6 +605,8 @@ class TestVehicleProjectCreation:
         imported_files = list(project_dir.glob("*_imported_flight_controller_parameters.param"))
         assert len(imported_files) == 1
         assert ParDict.from_file(str(imported_files[0]))["SERIAL5_BAUD"].value == 57.0
+        saved_components = json.loads((project_dir / "vehicle_components.json").read_text(encoding="utf-8"))["Components"]
+        assert saved_components["Battery Monitor"]["FC Connection"]["Protocol"] == "Analog Voltage and Current"
 
     def test_template_project_with_fc_params_uses_fc_defaults(self, tmp_path) -> None:
         """Creating from a template writes FC defaults when FC values are selected."""
