@@ -321,6 +321,7 @@ and a detailed but generic [Usermanual](https://ardupilot.github.io/MethodicConf
 
 **Additional Documentation:**
 
+- [Recover a stuck AM32 ESC](AM32_esc_bootloader_guide.md) - recovery steps for AM32 ESCs that are stuck or no longer detected
 - [Frequently Asked Questions (FAQ)](https://ardupilot.github.io/MethodicConfigurator/FAQ.html)
 - [Customizing Configuration Steps](https://ardupilot.github.io/MethodicConfigurator/CUSTOMIZING_CONFIGURATION_STEPS.html) - for advanced users and integrators
 - [Project Governance](https://ardupilot.github.io/MethodicConfigurator/GOVERNANCE.html) - how decisions are made
