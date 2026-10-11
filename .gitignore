@@ -23,6 +23,7 @@ venv/
 .venv/
 test.txt
 test.xml
+node_modules/
 
 **/apm.pdef.xml
 
