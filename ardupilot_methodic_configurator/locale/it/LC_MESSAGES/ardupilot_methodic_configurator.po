@@ -1711,11 +1711,11 @@ msgstr "Nessuna connessione al controllore di volo o parametri disponibili"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:1063
 msgid "Battery monitoring is not enabled"
-msgstr ""
+msgstr "Il monitoraggio della batteria non è abilitato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:1082
 msgid "Failed to get battery statuses from telemetry: %(error)s"
-msgstr ""
+msgstr "Impossibile ottenere gli stati delle batterie dalla telemetria: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:1095
 msgid "Battery status not available from telemetry"
@@ -12822,7 +12822,7 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1247
 msgid "low"
-msgstr ""
+msgstr "basso"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1260
 msgid "Current: Disabled"
@@ -13453,15 +13453,15 @@ msgid ""
 "    (Battery 1 must also be below the motor voltage limit)\n"
 "  • Red: Critical voltage (outside safe range)\n"
 "  • Gray: Battery monitoring disabled or unavailable\n"
-msgstr ""
+msgstr "Modifica i parametri a destra e premi\n\"Carica i parametri selezionati sul FC\" per vederne i risultati.\n  • Verde: Sopra la tensione di armamento di questa batteria\n    (La batteria 1 deve anche essere al di sotto del limite di tensione del motore)\n  • Rosso: Tensione critica (fuori dall'intervallo di sicurezza)\n  • Grigio: Monitoraggio della batteria disabilitato o non disponibile\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:94
 msgid "Current"
-msgstr ""
+msgstr "Corrente"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:94
 msgid "Voltage"
-msgstr ""
+msgstr "Tensione"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:94
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:20
@@ -13470,11 +13470,11 @@ msgstr "Batteria"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:125
 msgid "Battery %(number)d:"
-msgstr ""
+msgstr "Batteria %(number)d:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:132
 msgid "Battery %(number)d status updated: %(voltage)s, %(current)s"
-msgstr ""
+msgstr "Stato della batteria %(number)d aggiornato: %(voltage)s, %(current)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:141
 msgid "Disabled"
