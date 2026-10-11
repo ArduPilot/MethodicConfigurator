@@ -1528,11 +1528,11 @@ msgstr "无飞控连接或参数可用"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:1063
 msgid "Battery monitoring is not enabled"
-msgstr ""
+msgstr "未启用电池监测"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:1082
 msgid "Failed to get battery statuses from telemetry: %(error)s"
-msgstr ""
+msgstr "无法从遥测获取电池状态：%(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:1095
 msgid "Battery status not available from telemetry"
@@ -11705,7 +11705,7 @@ msgstr "机架类型%(key)s不适用于当前机架类别"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1247
 msgid "low"
-msgstr ""
+msgstr "低"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1260
 msgid "Current: Disabled"
@@ -12278,15 +12278,15 @@ msgid ""
 "    (Battery 1 must also be below the motor voltage limit)\n"
 "  • Red: Critical voltage (outside safe range)\n"
 "  • Gray: Battery monitoring disabled or unavailable\n"
-msgstr ""
+msgstr "调整右侧参数，然后按下\n\"将选定参数上传到飞控\" 以查看结果。\n  • 绿色：高于该电池的解锁电压\n    （电池 1 还必须低于电机电压限制）\n  • 红色：临界电压（超出安全范围）\n  • 灰色：电池监测已禁用或不可用\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:94
 msgid "Current"
-msgstr ""
+msgstr "电流"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:94
 msgid "Voltage"
-msgstr ""
+msgstr "电压"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:94
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:20
@@ -12295,11 +12295,11 @@ msgstr "电池"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:125
 msgid "Battery %(number)d:"
-msgstr ""
+msgstr "电池 %(number)d："
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:132
 msgid "Battery %(number)d status updated: %(voltage)s, %(current)s"
-msgstr ""
+msgstr "电池 %(number)d 状态已更新：%(voltage)s，%(current)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:141
 msgid "Disabled"

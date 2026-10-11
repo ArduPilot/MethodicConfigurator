@@ -1660,11 +1660,11 @@ msgstr "フライトコントローラ接続またはパラメータが利用で
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:1063
 msgid "Battery monitoring is not enabled"
-msgstr ""
+msgstr "バッテリー監視が有効になっていません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:1082
 msgid "Failed to get battery statuses from telemetry: %(error)s"
-msgstr ""
+msgstr "テレメトリーからバッテリーの状態を取得できませんでした: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:1095
 msgid "Battery status not available from telemetry"
@@ -12414,7 +12414,7 @@ msgstr "フレームタイプ%(key)sは現在のフレームクラスでは利�
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1247
 msgid "low"
-msgstr ""
+msgstr "低い"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1260
 msgid "Current: Disabled"
@@ -13029,15 +13029,15 @@ msgid ""
 "    (Battery 1 must also be below the motor voltage limit)\n"
 "  • Red: Critical voltage (outside safe range)\n"
 "  • Gray: Battery monitoring disabled or unavailable\n"
-msgstr ""
+msgstr "右側のパラメータを変更し、\n\"選択したパラメータをFCにアップロード\" を押して\n結果を確認してください。\n  • 緑: このバッテリーのアーミング電圧より上\n    (バッテリー1もモーター電圧制限より下である必要があります)\n  • 赤: 危険電圧 (安全範囲外)\n  • 灰色: バッテリー監視が無効、または利用できません\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:94
 msgid "Current"
-msgstr ""
+msgstr "電流"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:94
 msgid "Voltage"
-msgstr ""
+msgstr "電圧"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:94
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:20
@@ -13046,11 +13046,11 @@ msgstr "バッテリー"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:125
 msgid "Battery %(number)d:"
-msgstr ""
+msgstr "バッテリー %(number)d:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:132
 msgid "Battery %(number)d status updated: %(voltage)s, %(current)s"
-msgstr ""
+msgstr "バッテリー %(number)d の状態を更新しました: %(voltage)s, %(current)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:141
 msgid "Disabled"
