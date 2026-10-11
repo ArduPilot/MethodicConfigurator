@@ -31,6 +31,7 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from pathlib import Path
 from sys import exit as sys_exit
+from tkinter import Tk, ttk
 
 import argcomplete
 
@@ -123,6 +124,23 @@ def validate_plugin_registration() -> None:
         logging_error("Plugin registration validation failed. Missing plugins: %s", ", ".join(sorted(missing)))
         sys_exit(1)
     logging_info("Validated registration of all %d plugins", len(expected))
+
+
+def validate_tkinter_runtime() -> None:
+    """Verify Tcl, Tk, and ttk initialize using the runtime's bundled library data."""
+    root = Tk()
+    try:
+        root.withdraw()
+        ttk.Button(root, text="Packaging validation").pack()
+        root.update_idletasks()
+        logging_info(
+            "Validated Tcl %s and Tk %s (Tcl library: %s)",
+            root.tk.call("info", "patchlevel"),
+            root.tk.call("package", "require", "Tk"),
+            root.tk.call("info", "library"),
+        )
+    finally:
+        root.destroy()
 
 
 class ApplicationState:  # pylint: disable=too-few-public-methods
@@ -788,7 +806,10 @@ def parameter_editor_and_uploader(state: ApplicationState) -> None:
 
 
 def _run_validation_command() -> bool:
-    """Handle headless validation modes before normal application startup."""
+    """Handle packaging validation modes before normal application startup."""
+    if sys.argv[1:] == ["--validate-tkinter"]:
+        validate_tkinter_runtime()
+        return True
     if sys.argv[1:] == ["--validate-plugins"]:
         validate_plugin_registration()
         return True
