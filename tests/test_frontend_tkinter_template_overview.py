@@ -219,6 +219,51 @@ class TestUserTemplateSelection:
 class TestTemplateDataDisplay:
     """Test how template data is presented to users."""
 
+    @pytest.mark.parametrize(("vehicle_type", "row_count"), [("", 4), ("ArduCopter", 3)])
+    def test_visible_rows_keep_alternating_stripes_after_filtering_and_sorting(
+        self, template_window, vehicle_type: str, row_count: int
+    ) -> None:
+        """Filtering and either sort direction stripe rows by their visible position."""
+        window = template_window
+        template = MagicMock()
+        template.attributes.return_value = []
+        window.vehicle_components_provider.get_vehicle_components_overviews.return_value = dict.fromkeys(
+            ("Other/X", "ArduCopter/Z", "ArduCopter/A", "ArduCopter/M"), template
+        )
+        rows: list[str] = []
+        row_tags: dict[str, tuple[str, ...]] = {}
+        row_values: dict[str, str] = {}
+
+        def insert_row(_parent: str, _position: str, *, text: str, values: tuple[str], tags: tuple[str, ...]) -> str:
+            rows.append(text)
+            row_values[text] = values[0]
+            row_tags[text] = tags
+            return text
+
+        def update_tags(item: str, *, tags: tuple[str, ...]) -> None:
+            row_tags[item] = tags
+
+        def move_row(item: str, _parent: str, index: int) -> None:
+            rows.remove(item)
+            rows.insert(index, item)
+
+        window.tree.insert.side_effect = insert_row
+        window.tree.get_children.side_effect = lambda *_: tuple(rows)
+        window.tree.set.side_effect = lambda item, _column: row_values[item]
+        window.tree.move.side_effect = move_row
+        window.tree.item.side_effect = update_tags
+
+        with patch("tkinter.ttk.Style"):
+            window._setup_treeview_style()
+        window.tree.tag_configure.assert_called_once_with("striped", background="#eeeeee")
+        window._populate_treeview(vehicle_type)
+
+        for reverse in (None, False, True):
+            if reverse is not None:
+                window._sort_by_column("template", reverse=reverse)
+            assert len(rows) == row_count
+            assert [("striped" in row_tags[item]) for item in rows] == [index % 2 == 1 for index in range(row_count)]
+
     def test_templates_are_populated_from_vehicle_components(self, template_window) -> None:
         """
         Test that templates are correctly populated from vehicle components.
@@ -413,6 +458,7 @@ class TestUIComponentInitialization:
         # Mock the necessary components for layout
         template_window.top_frame = MagicMock()
         template_window.instruction_label = MagicMock()
+        template_window.instruction_label.winfo_reqheight.return_value = 75
         template_window.image_label = MagicMock()
         template_window.tree_frame = MagicMock()
         template_window.tree = MagicMock()
@@ -429,6 +475,25 @@ class TestUIComponentInitialization:
         assert layout_success, "Layout setup should complete without errors"
         assert hasattr(template_window, "top_frame")
         assert hasattr(template_window, "instruction_label")
+
+    @pytest.mark.parametrize(("instruction_height", "expected_height"), [(60, 104), (90, 120)])
+    def test_header_reserves_height_for_image_and_instructions(self, instruction_height: int, expected_height: int) -> None:
+        """The table stays fixed below whichever header content needs more room."""
+        window = object.__new__(TemplateOverviewWindow)
+        window.dpi_scaling_factor = 1.0
+        window.top_frame = MagicMock()
+        window.instruction_label = MagicMock()
+        window.instruction_label.winfo_reqheight.return_value = instruction_height
+        window.image_label = MagicMock()
+        window.tree_frame = MagicMock()
+        window.tree = MagicMock()
+        window.scrollbar = MagicMock()
+        window.calculate_scaled_padding_tuple = MagicMock(side_effect=[(10, 20), (20, 20)])
+
+        window._setup_layout()
+
+        window.top_frame.configure.assert_called_once_with(height=expected_height)
+        window.top_frame.pack_propagate.assert_called_once_with(flag=False)
 
     def test_instruction_label_uses_system_font_size_without_dpi_scaling(self, template_window) -> None:
         """
@@ -498,7 +563,7 @@ class TestTreeviewConfiguration:
         THEN: Widths should accommodate content with appropriate DPI scaling
         """
         # Arrange: Set up mock font and treeview data
-        with patch("tkinter.font.Font") as mock_font_class:
+        with patch("tkinter.font.Font") as mock_font_class, patch("tkinter.ttk.Style"):
             mock_font = MagicMock()
             mock_font.measure.return_value = 100
             mock_font_class.return_value = mock_font
@@ -869,53 +934,39 @@ class TestSortingBehaviorDetails:
 class TestImageDisplayBehavior:
     """Test vehicle image display behavior."""
 
-    def test_image_display_removes_previous_image_correctly(self, template_window) -> None:
+    @pytest.mark.parametrize("image_available", [True, False])
+    def test_image_display_reuses_label_without_stale_padding(self, template_window, image_available: bool) -> None:
         """
-        Image display should remove previous image correctly.
+        Image display should reuse its label and clear padding from the missing-image message.
 
         GIVEN: A previous image is displayed
         WHEN: A new template is selected
-        THEN: Previous image should be removed before showing new one
+        THEN: The label is retained and shows the new image without stale padding
         """
         # Arrange: Mock existing image widget and top_frame
         old_image_widget = MagicMock(spec=ttk.Label)
         template_window.image_label = old_image_widget
         template_window.top_frame = MagicMock()
-        template_window.top_frame.winfo_children.return_value = [old_image_widget]
         template_window.dpi_scaling_factor = 1.0
+        new_image_widget = MagicMock(spec=ttk.Label)
+        new_image_widget.cget.side_effect = {"image": "photo" if image_available else "", "text": ""}.__getitem__
+        photo = object() if image_available else None
+        if image_available:
+            new_image_widget.image = photo
 
         with (
             patch.object(template_window, "get_vehicle_image_filepath", return_value="/path/to/image.jpg"),
-            patch.object(template_window, "put_image_in_label", return_value=MagicMock()),
+            patch.object(template_window, "put_image_in_label", return_value=new_image_widget),
         ):
             # Act: Display new image
             template_window._display_vehicle_image("Copter/NewTemplate")
 
-            # Assert: Old image was destroyed
-            old_image_widget.destroy.assert_called_once()
-
-    def test_display_vehicle_image_skips_non_matching_child_widget(self, template_window) -> None:
-        """
-        _display_vehicle_image() does not destroy a child widget that is not the image_label.
-
-        GIVEN: A top_frame whose only child is a plain MagicMock (not a ttk.Label)
-        WHEN: _display_vehicle_image() is called
-        THEN: The child widget's destroy() is NOT called
-              (covers the False branch of line 346: 346→345)
-        """
-        non_label_widget = MagicMock()  # no spec → isinstance(..., ttk.Label) is False
-        template_window.top_frame = MagicMock()
-        template_window.top_frame.winfo_children.return_value = [non_label_widget]
-        template_window.image_label = MagicMock()
-        template_window.dpi_scaling_factor = 1.0
-
-        with (
-            patch.object(template_window, "get_vehicle_image_filepath", return_value="/path/to/image.jpg"),
-            patch.object(template_window, "put_image_in_label", return_value=MagicMock()),
-        ):
-            template_window._display_vehicle_image("Copter/QuadX")
-
-        non_label_widget.destroy.assert_not_called()
+            # Assert: The visible label remains stable, including for an unreadable image.
+            assert template_window.image_label is old_image_widget
+            old_image_widget.destroy.assert_not_called()
+            old_image_widget.configure.assert_called_once_with(image="photo" if image_available else "", text="", padding=0)
+            assert old_image_widget.image is photo
+            new_image_widget.destroy.assert_called_once()
 
     def test_image_display_handles_file_not_found_gracefully(self, template_window) -> None:
         """
@@ -927,20 +978,21 @@ class TestImageDisplayBehavior:
         """
         # Arrange: Mock FileNotFoundError and top_frame
         template_window.top_frame = MagicMock()
-        template_window.top_frame.winfo_children.return_value = []
         template_window.dpi_scaling_factor = 1.0
 
-        with (
-            patch.object(template_window, "get_vehicle_image_filepath", side_effect=FileNotFoundError),
-            patch("tkinter.ttk.Label") as mock_label,
-        ):
+        template_window.image_label = MagicMock(spec=ttk.Label)
+        with patch.object(template_window, "get_vehicle_image_filepath", side_effect=FileNotFoundError):
             # Act: Try to display image
             template_window._display_vehicle_image("Copter/NoImage")
 
-            # Assert: Fallback label was created
-            mock_label.assert_called_once()
-            call_args = mock_label.call_args[1]
+            # Assert: The existing label shows the fallback and releases the previous image.
+            template_window.image_label.configure.assert_called_once()
+            call_args = template_window.image_label.configure.call_args[1]
             assert "No 'vehicle.jpg'" in call_args["text"]
+            assert call_args["image"] == ""
+            assert call_args["wraplength"] == 300
+            assert template_window.image_label.image is None
+            template_window.image_label.destroy.assert_not_called()
 
     def test_get_vehicle_image_filepath_delegates_to_provider(self, template_window) -> None:
         """

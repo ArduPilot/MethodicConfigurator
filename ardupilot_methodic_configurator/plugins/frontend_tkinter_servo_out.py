@@ -24,7 +24,7 @@ from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_SERV
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
 
 
-class ServoOutView(ttk.Frame):
+class ServoOutView(ttk.Frame):  # pylint: disable=too-many-ancestors
     """Show and apply safe default motor-function assignments."""
 
     def __init__(self, parent: tk.Frame | ttk.Frame, model: ServoOutDataModel, base_window: BaseWindow) -> None:
