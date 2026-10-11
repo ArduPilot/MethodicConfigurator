@@ -8,7 +8,12 @@ NTF_BUZZ_TYPES,3  # the 4-in-1 ESC uses this
 NTF_LED_TYPES,2369  # Built-in LED, NCP5623 External (Holybro F9P), Neopixel (Matek H743 slim v3), and DShot (4-in-1 ESC)
 SERVO_BLH_AUTO,1  # Enables BLHeli passthrough
 SERVO_BLH_BDMASK,15  # All four of our ESC support bi-directional DShot
+SERVO_BLH_MASK,15
 SERVO_DSHOT_ESC,1  # BLHeli32
 SERVO_DSHOT_RATE,2  # Sends DShot control signals to the ESC twice per control loop
+SERVO1_FUNCTION,33
 SERVO13_FUNCTION,120  # For matek H743Slim v3 board
+SERVO2_FUNCTION,34
+SERVO3_FUNCTION,35
+SERVO4_FUNCTION,36
 TKOFF_RPM_MIN,1400  # Our motors should idle at around 1400 RPM, see https://ardupilot.org/copter/docs/tkoff-rpm-min.html

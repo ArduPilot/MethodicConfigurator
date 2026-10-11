@@ -724,7 +724,10 @@
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
             "delete_parameters": {
-                "ARMING_CHECK": {}
+                "ARMING_CHECK": {},
+                "EK3_DRAG_BCOEF_X": {},
+                "EK3_DRAG_BCOEF_Y": {},
+                "EK3_DRAG_MCOEF": {}
             },
             "old_filenames": ["12_general_configuration.param", "13_general_configuration.param", "15_general_configuration.param"]
         },
