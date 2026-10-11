@@ -41,6 +41,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_factory_serial imp
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from pathlib import Path
 
     from ardupilot_methodic_configurator.backend_flightcontroller_protocols import MavlinkConnection
@@ -2804,16 +2805,17 @@ class TestFlightControllerConnectionRegisterAndTryConnect:  # pylint: disable=to
 class TestFlightControllerConnectionAutoDetectWithMavlink:
     """Tests for _auto_detect_serial when connection tuples have 'mavlink' description."""
 
-    def test_single_mavlink_port_returns_directly(self) -> None:
+    def test_single_mavlink_port_keeps_other_ports_as_fallback(self) -> None:
         """
-        _auto_detect_serial returns single mavlink port without calling auto_detect_serial.
+        A single MAVLink-described connection retains serial fallback candidates.
 
         GIVEN: A connection with exactly one entry having 'mavlink' in description
         WHEN: _auto_detect_serial is called
-        THEN: That single port should be returned directly (not via mavutil.auto_detect_serial)
+        THEN: That connection should be tried first and the other port should remain available
         """
         connection = FlightControllerConnection(
             info=FlightControllerInfo(),
+            serial_port_discovery=FakeSerialPortDiscovery(),
             mavlink_connection_factory=FakeMavlinkConnectionFactory(),
         )
         # Pre-populate with a single mavlink-described port
@@ -2823,26 +2825,24 @@ class TestFlightControllerConnectionAutoDetectWithMavlink:
         ]
 
         with patch(
-            "ardupilot_methodic_configurator.backend_flightcontroller_connection.mavutil.auto_detect_serial"
-        ) as mock_auto_detect:
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.mavutil.auto_detect_serial",
+            return_value=[mavutil.SerialPort(device="COM3", description="Unknown")],
+        ):
             result = connection._auto_detect_serial()
 
-        # auto_detect_serial should NOT have been called
-        mock_auto_detect.assert_not_called()
-        assert result is not None
-        assert len(result) == 1
-        assert result[0].device == "udp:127.0.0.1:14550"
+        assert [port.device for port in reversed(result)] == ["udp:127.0.0.1:14550", "COM3"]
 
-    def test_multiple_mavlink_ports_falls_through_to_autodetect(self) -> None:
+    def test_multiple_mavlink_connections_are_retained_with_discovered_ports(self) -> None:
         """
-        _auto_detect_serial falls through to mavutil.auto_detect_serial when >1 mavlink port.
+        Multiple MAVLink-described connections are retained alongside discovered ports.
 
         GIVEN: A connection with 2+ entries having 'mavlink' in description
         WHEN: _auto_detect_serial is called
-        THEN: mavutil.auto_detect_serial should be called for hardware detection
+        THEN: All known connections and the discovered serial port should remain available
         """
         connection = FlightControllerConnection(
             info=FlightControllerInfo(),
+            serial_port_discovery=FakeSerialPortDiscovery(),
             mavlink_connection_factory=FakeMavlinkConnectionFactory(),
         )
         connection._connection_tuples = [
@@ -2857,11 +2857,10 @@ class TestFlightControllerConnectionAutoDetectWithMavlink:
         with patch(
             "ardupilot_methodic_configurator.backend_flightcontroller_connection.mavutil.auto_detect_serial",
             return_value=mock_ports,
-        ) as mock_auto_detect:
+        ):
             result = connection._auto_detect_serial()
 
-        mock_auto_detect.assert_called_once()
-        assert result == mock_ports
+        assert {port.device for port in result} == {"udp:127.0.0.1:14550", "tcp:192.168.1.1:5760", "/dev/ttyUSB0"}
 
     @pytest.mark.parametrize(
         ("field", "value"),
@@ -2945,6 +2944,164 @@ class TestFlightControllerConnectionAutoDetectWithMavlink:
             result = connection._auto_detect_serial()
 
         assert [port.device for port in result] == ["COM7"]
+
+
+@pytest.fixture(name="usb_autodetect_connection")
+def fixture_usb_autodetect_connection() -> Iterator[FlightControllerConnection]:
+    """Supply USB metadata while preventing any real serial-port opening."""
+    discovery = FakeSerialPortDiscovery()
+    port_metadata: list[tuple[str, int | None, int | None, str]] = [
+        ("COM11", None, None, "Unknown device"),
+        ("COM7", 0x0403, 0x6001, "USB Serial Port"),
+        ("COM9", None, None, "MatekH743"),
+        ("COM2", 0x2DAE, 0x1058, "USB Serial Device"),
+        ("COM10", 0x10C4, 0xEA60, "USB Serial Port"),
+    ]
+    for device, vid, pid, description in port_metadata:
+        port = serial.tools.list_ports_common.ListPortInfo(device)
+        port.vid, port.pid, port.description = vid, pid, description
+        discovery._ports.append(port)
+    connection = FlightControllerConnection(info=FlightControllerInfo(), serial_port_discovery=discovery, network_ports=[])
+    with (
+        patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.mavutil.auto_detect_serial", return_value=[]
+        ),
+        patch("serial.Serial", side_effect=AssertionError("Enumeration must not open a serial port")),
+        patch("pymavlink.mavutil.mavlink_connection", side_effect=AssertionError("Enumeration must not connect")),
+    ):
+        yield connection
+
+
+class TestFlightControllerConnectionUsbCandidateRanking:
+    """USB enumeration selects likely FCs before opening any fallback devices."""
+
+    def test_dual_cdc_dronecan_and_mavlink_interfaces_are_preserved(
+        self, usb_autodetect_connection: FlightControllerConnection
+    ) -> None:
+        """
+        Distinct DroneCAN and MAVLink interfaces remain available as candidates.
+
+        GIVEN: Two sibling by-id endpoints for DroneCAN and MAVLink
+        WHEN: USB serial candidates are enumerated
+        THEN: Both are retained and MAVLink is ranked first for connection attempts
+        """
+        # Given: A device exposing separate DroneCAN and MAVLink interfaces.
+        discovery = FakeSerialPortDiscovery()
+        for device, interface in (
+            ("/dev/serial/by-id/usb-Dual_CDC-if00", "DroneCAN"),
+            ("/dev/serial/by-id/usb-Dual_CDC-if01", "MAVLink"),
+        ):
+            port = serial.tools.list_ports_common.ListPortInfo(device)
+            port.description = "Dual CDC"
+            port.interface = interface
+            discovery._ports.append(port)
+        usb_autodetect_connection._serial_port_discovery = discovery
+
+        # When: Enumerate available serial candidates.
+        ports = usb_autodetect_connection._auto_detect_serial()
+
+        # Then: Preserve both endpoints and prefer the MAVLink interface.
+        assert [port.device for port in reversed(ports)] == [
+            "/dev/serial/by-id/usb-Dual_CDC-if01",
+            "/dev/serial/by-id/usb-Dual_CDC-if00",
+        ]
+
+    def test_user_gets_ranked_candidates_without_opening_ports(
+        self, usb_autodetect_connection: FlightControllerConnection
+    ) -> None:
+        """
+        USB metadata ranks FCs ahead of generic adapters while preserving unknown ports.
+
+        GIVEN: A native FC, an FC description, two telemetry adapters, and an unknown port
+        WHEN: The application enumerates connection candidates
+        THEN: Ports are ranked by confidence without opening any of them
+        """
+        # When: Enumerate and rank without establishing a serial connection.
+        ports = usb_autodetect_connection._auto_detect_serial()
+
+        # Then: A generic adapter never outranks a known FC and unknown ports remain.
+        assert [port.device for port in reversed(ports)] == ["COM2", "COM9", "COM10", "COM7", "COM11"]
+
+    def test_user_connects_without_probing_lower_priority_ports(
+        self, usb_autodetect_connection: FlightControllerConnection
+    ) -> None:
+        """
+        A responding FC prevents unnecessary attempts on unrelated ports.
+
+        GIVEN: USB enumeration finds a known FC and other serial devices
+        WHEN: The first candidate provides a working connection
+        THEN: Only the known FC is tried
+        """
+        # When: The highest-ranked candidate connects successfully.
+        with patch.object(usb_autodetect_connection, "_register_and_try_connect", return_value="") as try_connect:
+            result = usb_autodetect_connection.connect(device="")
+
+        # Then: Lower-priority devices are not probed.
+        assert result == ""
+        assert [attempt.kwargs["comport"].device for attempt in try_connect.call_args_list] == ["COM2"]
+
+    def test_user_can_connect_on_an_unknown_port_after_known_candidates_fail(
+        self, usb_autodetect_connection: FlightControllerConnection
+    ) -> None:
+        """
+        Unknown controllers remain reachable when USB identity hints fail.
+
+        GIVEN: Known candidates do not respond and an unknown port carries MAVLink
+        WHEN: The user starts automatic connection
+        THEN: All ranked candidates are tried until the unknown controller responds
+        """
+        # When: Only the last, unknown candidate successfully connects.
+        with patch.object(
+            usb_autodetect_connection, "_register_and_try_connect", side_effect=["No heartbeat"] * 4 + [""]
+        ) as try_connect:
+            result = usb_autodetect_connection.connect(device="")
+
+        # Then: USB metadata does not filter out an otherwise working connection.
+        assert result == ""
+        assert [attempt.kwargs["comport"].device for attempt in try_connect.call_args_list] == [
+            "COM2",
+            "COM9",
+            "COM10",
+            "COM7",
+            "COM11",
+        ]
+
+    @pytest.mark.parametrize(
+        ("named_mavlink_interface", "expected_order"),
+        [(False, ["COM10", "COM9"]), (True, ["COM9", "COM10"])],
+    )
+    def test_user_can_fall_back_to_another_interface_of_the_same_fc(
+        self,
+        usb_autodetect_connection: FlightControllerConnection,
+        named_mavlink_interface: bool,
+        expected_order: list[str],
+    ) -> None:
+        """
+        Interfaces sharing USB IDs and serial numbers are kept as separate candidates.
+
+        GIVEN: A known FC exposes COM9 and COM10 with the same USB identity
+        WHEN: The preferred interface fails to respond
+        THEN: The other interface is tried, with a named MAVLink interface preferred when present
+        """
+        # Given: Both serial interfaces belong to the same physical FC.
+        discovery = FakeSerialPortDiscovery()
+        for device in ("COM9", "COM10"):
+            port = serial.tools.list_ports_common.ListPortInfo(device)
+            port.vid, port.pid, port.serial_number = 0x2DAE, 0x1058, "same-controller"
+            if named_mavlink_interface:
+                port.interface = "MAVLink" if device == "COM9" else "SLCAN"
+            discovery._ports.append(port)
+        usb_autodetect_connection._serial_port_discovery = discovery
+
+        # When: Only the second attempt returns a working connection.
+        with patch.object(
+            usb_autodetect_connection, "_register_and_try_connect", side_effect=["No heartbeat", ""]
+        ) as try_connect:
+            result = usb_autodetect_connection.connect(device="")
+
+        # Then: Natural port ordering and fallback preserve both interfaces.
+        assert result == ""
+        assert [attempt.kwargs["comport"].device for attempt in try_connect.call_args_list] == expected_order
 
 
 class TestFlightControllerConnectionChibiOSVersionMatch:

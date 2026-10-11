@@ -52,19 +52,30 @@ _KNOWN_FC_MANUFACTURERS = tuple(
 )
 _KNOWN_FC_BOARD_NAMES = tuple(board.casefold() for boards in VID_PID_PRODUCT_DICT.values() for board in boards)
 _KNOWN_FC_USB_IDS = frozenset(VID_PID_PRODUCT_DICT)
+_KNOWN_TELEMETRY_USB_SERIAL_IDS = frozenset(
+    {
+        (0x0403, 0x6001),  # FTDI FT232R USB-to-serial cable
+        (0x10C4, 0xEA60),  # Silicon Labs CP2102
+    }
+)
 
 
-def _serial_port_matches_fc_identity(port: ListPortInfo) -> bool:
-    """Return whether PySerial metadata or USB IDs identify a known FC."""
-    if port.vid is not None and port.pid is not None and (port.vid, port.pid) in _KNOWN_FC_USB_IDS:
-        return True
+def _serial_port_autodetect_rank(port: ListPortInfo) -> int:
+    """Rank USB metadata without opening the port; larger values are tried first."""
+    usb_id = (port.vid, port.pid)
+    if usb_id in _KNOWN_FC_USB_IDS:
+        return 4
 
     metadata = " ".join(
         str(value).casefold()
-        for value in (port.description, port.manufacturer, port.product)
+        for value in (port.description, port.manufacturer, port.product, port.interface)
         if value and str(value).casefold() != "n/a"
     )
-    return any(name in metadata for name in _KNOWN_FC_MANUFACTURERS + _KNOWN_FC_BOARD_NAMES)
+    if "mavlink" in metadata or any(name in metadata for name in _KNOWN_FC_MANUFACTURERS + _KNOWN_FC_BOARD_NAMES):
+        return 3
+    if usb_id in _KNOWN_TELEMETRY_USB_SERIAL_IDS:
+        return 2
+    return 0
 
 
 # pylint: disable=too-many-lines
@@ -335,9 +346,9 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         Establishes a connection to the FlightController using a specified device.
 
         This method attempts to connect to the FlightController using the provided device
-        connection string. If no device is specified, it attempts to auto-detect a serial
-        port that matches the preferred ports list. If no serial device is found it tries
-        the "standard" ArduPilot UDP and TCP connections.
+        connection string. If no device is specified, it ranks candidates using USB IDs
+        and serial-port metadata, then opens them in priority order to confirm MAVLink.
+        If no candidate connects, it tries the "standard" ArduPilot UDP and TCP connections.
 
         Args:
             device (str): The connection string to the flight controller. If an empty string
@@ -821,10 +832,10 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
     # pylint: disable=duplicate-code
     def _auto_detect_serial(self) -> list[mavutil.SerialPort]:
         """
-        Auto-detect serial ports with connected flight controllers.
+        Enumerate and rank unconfirmed connection candidates without opening ports.
 
         Returns:
-            list[mavutil.SerialPort]: List of detected serial ports
+            list[mavutil.SerialPort]: Candidates in reverse attempt order for connect().
 
         """
         preferred_ports = [
@@ -853,46 +864,40 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             if connection[1] and "mavlink" in connection[1].lower()
         ]
 
-        if len(serial_list) == 1:
-            # selected automatically if unique
-            return serial_list
-
-        serial_list = mavutil.auto_detect_serial(preferred_list=preferred_ports)
-
-        # PyMAVLink primarily matches port paths on POSIX, which often omit the FC
-        # identity. Add ports recognized from PySerial's richer USB metadata on all OSes.
-        known_fc_ports = [
-            port for port in self._serial_port_discovery.get_available_ports() if _serial_port_matches_fc_identity(port)
-        ]
+        explicit_mavlink_devices = {os_path.realpath(port.device) for port in serial_list}
+        # Both discovery APIs read OS metadata without opening serial ports.
+        # PySerial supplies VID/PID; PyMAVLink also finds POSIX by-id paths.
+        available_ports = self._serial_port_discovery.get_available_ports()
+        usb_metadata_ranks = {os_path.realpath(port.device): _serial_port_autodetect_rank(port) for port in available_ports}
+        pymavlink_ports = mavutil.auto_detect_serial(preferred_list=preferred_ports)
+        pymavlink_detected_devices = {os_path.realpath(port.device) for port in pymavlink_ports}
+        mavlink_interfaces = {
+            os_path.realpath(port.device)
+            for port in available_ports
+            if "mavlink" in f"{port.description} {port.product} {port.interface}".casefold()
+        }
         detected_devices = {os_path.realpath(port.device) for port in serial_list}
-        for port in known_fc_ports:
+        # Keep every interface and unknown device as a fallback. Deduplicate
+        # only aliases of the same port, not ports with the same USB IDs.
+        for port in [*pymavlink_ports, *available_ports]:
             resolved_device = os_path.realpath(port.device)
             if resolved_device not in detected_devices:
                 serial_list.append(mavutil.SerialPort(device=port.device, description=str(port.description)))
                 detected_devices.add(resolved_device)
-        serial_list.sort(key=lambda x: x.device)
 
-        if serial_list:
-            return serial_list
-        if os_name == "posix":
-            serial_list = [
-                mavutil.SerialPort(
-                    device=port.device,
-                    description=port.description,
-                )
-                for port in self._serial_port_discovery.get_available_ports()
-                if port.description and port.description.lower() != "n/a"
-            ]
-            serial_list.sort(key=lambda x: x.device)
+        # connect() reverses this list. Prefer known FC IDs, then FC descriptions,
+        # telemetry adapters, PyMAVLink candidates, and finally unknown ports.
+        # Within a tier, prefer a named MAVLink interface, then the last endpoint
+        # in natural port order (COM10 follows COM9).
+        def candidate_rank(port: mavutil.SerialPort) -> tuple[int, bool, ListPortInfo]:
+            resolved_device = os_path.realpath(port.device)
+            rank = max(
+                usb_metadata_ranks.get(resolved_device, 0),
+                4 if resolved_device in explicit_mavlink_devices else int(resolved_device in pymavlink_detected_devices),
+            )
+            return rank, resolved_device in mavlink_interfaces, ListPortInfo(port.device)
 
-        # remove OTG2 ports for dual CDC
-        if (
-            len(serial_list) == 2
-            and serial_list[0].device.startswith("/dev/serial/by-id")
-            and serial_list[0].device[:-1] == serial_list[1].device[0:-1]
-        ):
-            serial_list.pop(1)
-
+        serial_list.sort(key=candidate_rank)
         return serial_list
 
     # pylint: enable=duplicate-code
