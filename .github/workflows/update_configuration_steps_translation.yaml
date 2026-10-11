@@ -33,7 +33,7 @@ jobs:
     permissions:
       contents: write       # for creating branches and commits
       pull-requests: write  # for creating PRs
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
     env:
       STRINGS_CHANGED: false
 

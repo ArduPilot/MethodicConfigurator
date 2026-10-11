@@ -19,7 +19,7 @@ jobs:
     permissions:
       contents: write       # for creating branches and commits
       pull-requests: write  # for creating PRs
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
     env:
       MO_FILES_CHANGED: false
 
@@ -45,7 +45,7 @@ jobs:
           path: |
             /var/cache/apt/archives/*.deb
             /var/lib/apt/lists/*
-          key: ${{ runner.os }}-apt-gettext-ubuntu2204
+          key: ${{ runner.os }}-apt-gettext-${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
           restore-keys: |
             ${{ runner.os }}-apt-gettext-
             ${{ runner.os }}-apt-

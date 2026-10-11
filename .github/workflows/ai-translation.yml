@@ -25,7 +25,7 @@ jobs:
     permissions:
       contents: write       # for creating branches and commits
       pull-requests: write  # for creating PRs
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
     outputs:
       po-files-changed: ${{ steps.check-changes.outputs.po-files-changed }}
       translations-to-process: ${{ steps.prepare-translations.outputs.translations-to-process }}
@@ -55,7 +55,7 @@ jobs:
           path: |
             /var/cache/apt/archives/*.deb
             /var/lib/apt/lists/*
-          key: ${{ runner.os }}-apt-gettext-ubuntu2204
+          key: ${{ runner.os }}-apt-gettext-${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
           restore-keys: |
             ${{ runner.os }}-apt-gettext-
             ${{ runner.os }}-apt-
@@ -204,7 +204,7 @@ jobs:
     permissions:
       actions: read        # needed for downloading artifacts
       contents: read       # required by checkout
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
     strategy:
       matrix:
         include: ${{ fromJson(needs.extract_strings.outputs.translation-matrix) }}
@@ -398,7 +398,7 @@ jobs:
       actions: read         # needed for downloading translated artifacts
       contents: write       # for creating branches and commits
       pull-requests: write  # for creating PRs
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
     env:
       PYGETTEXT_DOMAIN: ardupilot_methodic_configurator
       PYGETTEXT_LOCALEDIR: ardupilot_methodic_configurator/locale
@@ -424,7 +424,7 @@ jobs:
           path: |
             /var/cache/apt/archives/*.deb
             /var/lib/apt/lists/*
-          key: ${{ runner.os }}-apt-gettext-ubuntu2204
+          key: ${{ runner.os }}-apt-gettext-${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
           restore-keys: |
             ${{ runner.os }}-apt-gettext-
             ${{ runner.os }}-apt-

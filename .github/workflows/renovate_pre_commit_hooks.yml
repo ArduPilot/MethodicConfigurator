@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   renovate:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
     permissions:
       contents: write      # Job-specific permission for creating branches
       pull-requests: write # Job-specific permission for creating PRs
