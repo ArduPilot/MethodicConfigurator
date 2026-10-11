@@ -21,7 +21,7 @@ permissions:
 jobs:
   mypy:
     name: mypy
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
 
     steps:
       - name: Harden the runner (Audit all outbound calls)

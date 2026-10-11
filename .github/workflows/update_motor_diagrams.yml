@@ -15,7 +15,7 @@ jobs:
     permissions:
       contents: write  # for Git to git push
       pull-requests: write  # for creating PRs
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
