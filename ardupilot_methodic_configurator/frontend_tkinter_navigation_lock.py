@@ -1,7 +1,7 @@
 """
 Owner-scoped locking of navigation controls during long-running GUI operations.
 
-SPDX-FileCopyrightText: 2026 ArduPilot Contributors
+SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
