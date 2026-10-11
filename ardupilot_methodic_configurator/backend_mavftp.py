@@ -5341,7 +5341,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         """Save Ardupilot parameter information to a local file."""
         if not pdict or not filename:
             return
-        with open(filename, "w", encoding="utf-8") as f:
+        with open(filename, "w", encoding="utf-8", newline="\n") as f:
             parameter_data_types = {
                 1: "8-bit",
                 2: "16-bit",
