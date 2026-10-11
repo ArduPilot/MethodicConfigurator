@@ -40,18 +40,6 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: Install lxml dependencies (Ubuntu)
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.15.0'
-        run: sudo apt-get update && sudo apt-get install -y libxml2-dev libxslt-dev
-
-      - name: Install lxml dependencies (macOS)
-        if: matrix.os == 'macos-latest' && matrix.python-version == '3.15.0'
-        run: |
-          brew install libxml2 libxslt
-          echo "LDFLAGS=-L$(brew --prefix libxml2)/lib -L$(brew --prefix libxslt)/lib" >> $GITHUB_ENV
-          echo "CPPFLAGS=-I$(brew --prefix libxml2)/include -I$(brew --prefix libxslt)/include" >> $GITHUB_ENV
-          echo "PKG_CONFIG_PATH=$(brew --prefix libxml2)/lib/pkgconfig:$(brew --prefix libxslt)/lib/pkgconfig" >> $GITHUB_ENV
-
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
