@@ -42,12 +42,6 @@ class LevelCalibrationView(Frame):
         main_frame = ttk.Frame(self)
         main_frame.pack(fill="both", expand=True)
 
-        ttk.Label(
-            main_frame,
-            text=_("Accelerometer Level Calibration"),
-            font=("TkDefaultFont", 14, "bold"),
-        ).pack(pady=(0, 10))
-
         calibration_frame = ttk.Frame(main_frame)
         calibration_frame.pack(fill="x", pady=(0, 10))
 
@@ -61,8 +55,8 @@ class LevelCalibrationView(Frame):
         self._level_info_label = ttk.Label(
             calibration_frame,
             text=_(
-                "Must be performed AFTER a Simple or Full calibration. "
-                "Place the calibrated vehicle on a level surface and keep it still. "
+                "Optional, but must be performed after a Simple or Full calibration.\n"
+                "Place the calibrated vehicle on a level surface and keep it still.\n"
                 "This trims roll and pitch only; it does not affect yaw."
             ),
             justify="left",

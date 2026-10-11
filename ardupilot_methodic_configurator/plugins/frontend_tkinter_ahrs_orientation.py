@@ -73,7 +73,7 @@ class AhrsOrientationView(Frame):  # pylint: disable=too-many-instance-attribute
             text=_("Option 1 - Set AHRS_ORIENTATION manually"),
             padding=10,
         )
-        manual_option_frame.pack(fill="x", padx=10, pady=(0, 10))
+        manual_option_frame.pack(fill="x", pady=(2, 2), padx=(4, 4))
         wraplength = 800
         ttk.Label(
             manual_option_frame,
@@ -90,7 +90,7 @@ class AhrsOrientationView(Frame):  # pylint: disable=too-many-instance-attribute
             text=_("Option 2 - Determine AHRS_ORIENTATION automatically"),
             padding=10,
         )
-        automated_option_frame.pack(fill="x", padx=10)
+        automated_option_frame.pack(fill="x", pady=(2, 2), padx=(4, 4))
         info_text = _(
             "Use this option if you do not know the vehicle orientation. "
             "This assistant estimates AHRS_ORIENTATION from three vehicle positions:\n"
