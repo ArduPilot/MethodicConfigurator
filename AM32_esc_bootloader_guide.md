@@ -4,7 +4,7 @@ If an AM32 ESC became stuck, stopped being detected, or stayed in bootloader mod
 
 ![ESC not detected](images/am32_esc_not.jpeg)
 
-The first method attempts to connect with the AM32 Configurator before the ESC finishes its normal startup.
+The first method uses AM32 Configurator passthrough through the flight controller.
 It does not require an STM programmer, so try it first.
 
 The second method is to manually program the affected ESC using an ST-Link or another compatible STM programmer.
@@ -47,6 +47,7 @@ Try these settings so that ArduPilot sends the correct signals for AM32 communic
 Connect the FC to your computer through USB and open Mission Planner.
 
 Before changing parameters, record the current values of `MOT_PWM_TYPE` and `SERVO_BLH_AUTO`.
+For QuadPlane, use `Q_M_PWM_TYPE` instead of `MOT_PWM_TYPE` for the QuadPlane motors.
 You will restore them after recovery.
 
 Open the full parameter list and set the following parameters:
@@ -54,8 +55,6 @@ Open the full parameter list and set the following parameters:
 `MOT_PWM_TYPE` should be set to `DShot600`.
 
 `SERVO_BLH_AUTO` should be set to `1`.
-
-Write the parameters to the flight controller and reboot the flight controller before continuing.
 
 After writing the parameters, reboot the flight controller.
 Then close Mission Planner, AMC, and any other software that could keep the serial port open.
@@ -77,7 +76,10 @@ For background, see ArduPilot's [AM32 ESC documentation](https://ardupilot.org/c
 
 If the ArduPilot method does not allow the ESCs to be accessed, temporarily flash Betaflight firmware to the flight controller and use its passthrough.
 
-Before flashing, copy the current `complete.param` file from your AMC vehicle directory to a safe location.
+If you used the Betaflight method:
+
+Before flashing, connect AMC to the flight controller once more so it downloads the latest parameters.
+Then copy the newly updated `complete.param` file from your AMC vehicle directory to a safe location.
 You will use it to restore the ArduPilot parameters.
 
 Flash the Betaflight firmware target for your exact flight controller.
@@ -124,6 +126,8 @@ Do not refresh the browser, disconnect USB, or remove power while the firmware i
 Afterward, verify that the ESCs are detected and can be configured.
 
 ### Restore ArduPilot
+
+If you used the Betaflight method:
 
 Disconnect the main battery.
 Restore ArduPilot firmware for the exact flight controller model.
