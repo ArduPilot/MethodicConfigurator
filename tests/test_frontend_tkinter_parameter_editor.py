@@ -37,6 +37,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (
 from ardupilot_methodic_configurator.frontend_tkinter_show import MonitorBounds
 from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
 from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
+from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_RC_CALIBRATION
+from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
@@ -153,6 +155,7 @@ def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:  # noq
     editor.inline_component_scroll_frame = None
     editor._inline_component_chrome_height = 0
     editor._parameter_area_resize_pending = False
+    editor._parameter_area_resize_running = False
     editor._inline_component_name = None
     editor._updating_inline_editor = False
     editor._requested_action = ParameterEditorAction.FINISHED
@@ -2366,6 +2369,61 @@ class TestPluginLayoutRebuild:
         assert parameter_editor_window.parameter_container is created_frames[2]
         mock_load.assert_called_once_with(created_frames[1], plugin)
         table.pack.assert_called_once_with(side="top", fill="both", expand=True)
+
+    @pytest.mark.parametrize(("width", "height"), [(990, 600), (1100, 500), (990, 440)])
+    def test_user_can_read_parameters_after_revisiting_a_left_plugin_step(
+        self,
+        parameter_editor_window: ParameterEditorWindow,
+        parameter_editor: MagicMock,
+        root: tk.Tk,
+        width: int,
+        height: int,
+    ) -> None:
+        """
+        Left plugin steps preserve usable parameter table width and visible buttons.
+
+        GIVEN: A registered plugin requires a flight controller that is disconnected
+        WHEN: The user revisits its step with a refit queued before the layout rebuild
+        THEN: The real parameter table remains readable and the Skip button stays visible
+        """
+        editor = parameter_editor_window
+        window = tk.Toplevel(root)
+        window.geometry(f"{width}x{height}+0+0")
+        editor.root = window
+        editor.main_frame = ttk.Frame(window)
+        editor.main_frame.place(width=width, height=height)
+        editor.parameter_area_container = ttk.Frame(editor.main_frame, height=300)
+        editor.parameter_area_container.pack(side="top", fill="both", expand=True)
+        buttons = ttk.Frame(editor.main_frame)
+        buttons.pack(side="bottom", fill="x")
+        ttk.Button(buttons, text="Skip").pack()
+        parameter_editor.is_fc_connected = False
+        parameter_editor.create_plugin_data_model.return_value = None
+        parameter_editor.current_step_parameters = {}
+        plugin_creator = MagicMock()
+        registry = PluginFactory()
+        registry.register(PLUGIN_RC_CALIBRATION, plugin_creator)
+
+        try:
+            root.update()
+            editor._bind_parameter_layout_events()
+            with patch.object(parameter_editor_module, "plugin_factory", registry):
+                for _ in range(2):
+                    editor._on_main_frame_resize(tk.Event())
+                    editor._rebuild_plugin_layout({"name": PLUGIN_RC_CALIBRATION, "placement": "left"})
+                    editor.parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="normal")
+                    root.update()
+
+                    assert editor.parameter_container.winfo_width() > 100
+                    assert editor.parameter_editor_table.winfo_width() > 100
+                    assert buttons.winfo_height() == buttons.winfo_reqheight()
+                    assert buttons.winfo_y() + buttons.winfo_height() <= height
+
+                    editor._rebuild_plugin_layout(None)
+                    root.update_idletasks()
+            plugin_creator.assert_not_called()
+        finally:
+            window.destroy()
 
     def test_user_rebuilds_top_layout_with_separator(self, parameter_editor_window: ParameterEditorWindow) -> None:
         parameter_editor_window.parameter_area_container = _build_parameter_area_container()

@@ -351,6 +351,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.inline_component_scroll_frame: ScrollFrame | None = None
         self._inline_component_chrome_height = 0
         self._parameter_area_resize_pending = False
+        self._parameter_area_resize_running = False
         self._inline_component_name: str | None = None
         self._updating_inline_editor: bool = False
         self._requested_action = ParameterEditorAction.FINISHED
@@ -1691,13 +1692,25 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def _on_main_frame_resize(self, _event: tk.Event) -> None:
         """Fit once idle, after fixed controls have re-wrapped at the new width."""
-        if not self._parameter_area_resize_pending:
+        if not self._parameter_area_resize_pending and not self._parameter_area_resize_running:
             self._parameter_area_resize_pending = True
             self.root.after_idle(self._resize_parameter_area_to_fit)
 
-    def _resize_parameter_area_to_fit(self) -> None:  # pylint: disable=too-many-locals
+    def _resize_parameter_area_to_fit(self) -> None:  # pylint: disable=too-many-locals,too-many-branches
         """Give the parameter area the height left after all fixed controls are placed."""
+        if self._parameter_area_resize_running:
+            return
+
         self._parameter_area_resize_pending = False
+        if not self.parameter_area_container.cget("height"):
+            # Measure new panes before fixing their height, so the parameter
+            # table has a requested width when the PanedWindow first lays out.
+            self._parameter_area_resize_running = True
+            try:
+                self.parameter_area_container.update_idletasks()
+            finally:
+                self._parameter_area_resize_running = False
+
         # The parameter table is the only expandable section between the fixed
         # header/component editor and the bottom buttons. Give it only the height
         # left after those other widgets have been placed, so its requested size
