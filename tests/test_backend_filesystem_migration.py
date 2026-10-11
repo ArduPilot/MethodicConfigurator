@@ -1656,7 +1656,7 @@ class TestVehicleSpecificV1ToV2Migration:
         ("vehicle_type", "source_name"),
         [
             (vehicle, source)
-            for vehicle in ("Heli", "Rover")
+            for vehicle in ("ArduPlane", "Heli", "Rover")
             for source in (
                 "11_mp_setup_mandatory_hardware.param",
                 "12_mp_setup_mandatory_hardware.param",
@@ -1752,6 +1752,7 @@ class TestVehicleSpecificV1ToV2Migration:
     @pytest.mark.parametrize(
         ("vehicle_type", "template_name"),
         [
+            ("ArduPlane", "normal_plane"),
             ("Rover", "AION_R1"),
             ("Rover", "Carisma_SCA-1E"),
             ("Heli", "OMP_M4"),
@@ -1805,6 +1806,7 @@ class TestVehicleSpecificV1ToV2Migration:
         [
             ("ArduCopter", "Holybro_X500", "Holybro_X500_mig"),
             ("ArduCopter", "Holybro_X500", "empty_4.6.x_mig"),
+            ("ArduPlane", "normal_plane", ""),
             ("Heli", "OMP_M4", ""),
             ("Rover", "AION_R1", ""),
         ],
