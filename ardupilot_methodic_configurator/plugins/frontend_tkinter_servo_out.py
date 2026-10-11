@@ -10,7 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
-from tkinter import Frame, ttk
+from tkinter import ttk
 from tkinter.messagebox import showerror, showinfo
 
 from ardupilot_methodic_configurator import _
@@ -24,7 +24,7 @@ from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_SERV
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
 
 
-class ServoOutView(Frame):
+class ServoOutView(ttk.Frame):
     """Show and apply safe default motor-function assignments."""
 
     def __init__(self, parent: tk.Frame | ttk.Frame, model: ServoOutDataModel, base_window: BaseWindow) -> None:
@@ -32,7 +32,6 @@ class ServoOutView(Frame):
         self.model = model
         self.base_window = base_window
         self._summary = tk.StringVar(value="")
-        ttk.Label(self, text=_("Servo Output Functions"), font=("TkDefaultFont", 14, "bold")).pack(pady=(0, 8))
         ttk.Label(
             self,
             text=_(

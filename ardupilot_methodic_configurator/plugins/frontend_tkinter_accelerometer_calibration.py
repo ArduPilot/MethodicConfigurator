@@ -88,13 +88,6 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
         main_frame = ttk.Frame(self)
         main_frame.pack(fill="both", expand=True)
 
-        # Title
-        ttk.Label(
-            main_frame,
-            text=_("Accelerometer Calibration"),
-            font=("TkDefaultFont", 14, "bold"),
-        ).pack(pady=(0, 10))
-
         calibration_status_frame = ttk.Frame(main_frame)
         calibration_status_frame.pack(fill="x", pady=(0, 10))
 
