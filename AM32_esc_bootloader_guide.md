@@ -128,7 +128,8 @@ Afterward, verify that the ESCs are detected and can be configured.
 Disconnect the main battery.
 Restore ArduPilot firmware for the exact flight controller model.
 Follow the [ArduPilot firmware flashing guide](https://ardupilot.org/copter/docs/common-loading-firmware.html) and the board-specific instructions to enter DFU mode.
-When the board needs DFU flashing, use the matching `*_with_bl.hex` file with the documented DFU tool; use the ground-station method and `.apj` file if the board still has an ArduPilot-compatible bootloader.
+When the board needs DFU flashing, use the matching `*_with_bl.hex` file with the documented DFU tool; use the ground-station method and `.apj` file if the board still has
+an ArduPilot-compatible bootloader.
 
 After ArduPilot starts, reopen the vehicle in AMC and use **Compare and upload** to upload the saved `complete.param` file.
 Check that `MOT_PWM_TYPE` and `SERVO_BLH_AUTO` match the values you recorded; restore them in Mission Planner if needed.
@@ -148,4 +149,5 @@ Follow the section titled "How to Flash AM32 Bootloader".
 
 ## If Nothing Works
 
-If the ESC cannot be detected using either the ArduPilot method or the Betaflight method, and it also cannot be programmed using an STM programmer, there is a high possibility that the ESC has a hardware problem.
+If the ESC cannot be detected using either the ArduPilot method or the Betaflight method, and it also cannot be programmed using an STM programmer,
+there is a high possibility that the ESC has a hardware problem.
