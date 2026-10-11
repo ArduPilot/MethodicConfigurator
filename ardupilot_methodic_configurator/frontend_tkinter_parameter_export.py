@@ -86,7 +86,7 @@ class ParameterExportWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.parameters = parameters
         self._on_close = on_close
         self.root.title(_("Export parameters"))
-        self.root.geometry(self.calculate_scaled_geometry(525, 500))
+        self.root.geometry(self.calculate_scaled_geometry(450, 500))
         self.root.protocol("WM_DELETE_WINDOW", self.close)
         parent_is_visible = parent.root.winfo_viewable()
         if parent_is_visible:
@@ -285,9 +285,9 @@ class ParameterExportWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         }
         for column, label in self._column_labels.items():
             self.parameter_tree.heading(column, text=label, command=partial(self._sort_by_column, column))
-        self.parameter_tree.column("name", width=320, minwidth=150, stretch=True)
+        self.parameter_tree.column("name", width=146, minwidth=120, stretch=False)
         self.parameter_tree.column("fc_value", width=140, minwidth=90, anchor=tk.E, stretch=False)
-        self.parameter_tree.column("unit", width=120, minwidth=70, stretch=False)
+        self.parameter_tree.column("unit", width=120, minwidth=70, stretch=True)
         scrollbar = ttk.Scrollbar(table_frame, orient=tk.VERTICAL, command=self.parameter_tree.yview)
         self.parameter_tree.configure(yscrollcommand=scrollbar.set)
         self.parameter_tree.pack(side=tk.LEFT, fill="both", expand=True)
