@@ -1,53 +1,55 @@
 # Guide to Unlock a Stuck AM32 4-in-1 ESC
 
-If you were trying to flash firmware or upgrade the firmware on your AM32 ESC using software such as ESC Configurator or the AM32 Configurator, and the ESC became stuck,
-stopped being detected, or stuck in bootloader mode,
-there are a few ways to recover it.
+If an AM32 ESC became stuck, stopped being detected, or stayed in bootloader mode while you were flashing or upgrading its firmware, there are a few ways to recover it.
 
 ![ESC not detected](images/am32_esc_not.jpeg)
 
-The first method is to try to bypass the normal ESC startup process and force the AM32 Configurator to connect to the ESC before it finishes booting up.
-This method does not require an STM programmer and should be tried first.
+The first method attempts to connect with the AM32 Configurator before the ESC finishes its normal startup.
+It does not require an STM programmer, so try it first.
 
 The second method is to manually program the affected ESC using an ST-Link or another compatible STM programmer.
-This requires physically connecting the programmer to the ESC. Try this if you are comfortable doing precise soldering and some
-complicated steps, or you might ruin your ESC. [If You Have an STM Programmer](#if-you-have-an-stm-programmer).
+This requires physically connecting the programmer to the ESC.
+Attempt it only if you are comfortable with precise soldering and the risk of damaging the ESC.
+See [If You Have an STM Programmer](#if-you-have-an-stm-programmer).
 
 ## Before Starting
 
 Keep the propellers removed from the vehicle throughout this process.
 
-There are two approaches depending on the flight controller firmware being used. The first approach uses ArduPilot. The second approach uses Betaflight.
+There are two approaches, depending on the flight controller firmware.
+The first uses ArduPilot; the second temporarily uses Betaflight.
 
-Start with the ArduPilot method. If the ESC still cannot be accessed through ArduPilot, use the Betaflight method.
+Start with the ArduPilot method.
+If the ESC still cannot be accessed through ArduPilot, use the Betaflight method.
 
 ### Requirements
 
-Before using the AM32 Configurator through ArduPilot, ensure that the following
-requirements are met:
+Before using the AM32 Configurator through ArduPilot, ensure that the following requirements are met:
 
 - The ESCs must be connected to DShot-capable FMU/AUX outputs.
-- ArduPilot passthrough does not work through IOMCU-controlled MAIN outputs. Use supported FMU/AUX outputs instead.
-- ArduPilot firmware 4.5 or later is required when using the web-based ESC
-  configurator.
+- ArduPilot passthrough does not work through IOMCU-controlled MAIN outputs.
+  Use supported FMU/AUX outputs instead.
+- ArduPilot firmware 4.5 or later is required when using the web-based ESC configurator.
 - The flight controller must be configured to use a DShot protocol.
-- Disconnect all propellers before starting the passthrough procedure.
 
-Output availability and DShot support vary between flight controllers. Check
-the flight controller's documentation before connecting the ESCs.
+Output availability and DShot support vary between flight controllers.
+Check the flight controller's documentation before connecting the ESCs.
 
-For further information, see the
-[ArduPilot BLHeli/AM32 passthrough documentation](https://ardupilot.org/copter/docs/common-blheli32-passthru.html).
+For further information, see the [ArduPilot BLHeli/AM32 passthrough documentation](https://ardupilot.org/copter/docs/common-blheli32-passthru.html).
 
 ## ArduPilot Method
 
-Different FCs act differently with the ESC, some allow the ESC to communicate with the AM32 software, while others don't
+Flight controllers differ in how well they pass AM32 communications to the ESCs.
+Try this method first; if the ESCs cannot be accessed, use the Betaflight method.
 
 Try these settings so that ArduPilot sends the correct signals for AM32 communication.
 
 Connect the FC to your computer through USB and open Mission Planner.
 
-Open the full parameter list and set the following parameters.
+Before changing parameters, record the current values of `MOT_PWM_TYPE` and `SERVO_BLH_AUTO`.
+You will restore them after recovery.
+
+Open the full parameter list and set the following parameters:
 
 `MOT_PWM_TYPE` should be set to `DShot600`.
 
@@ -55,80 +57,84 @@ Open the full parameter list and set the following parameters.
 
 Write the parameters to the flight controller and reboot the flight controller before continuing.
 
-After writing the parameters, completely close Mission Planner and AMC, make sure the port is not occupied by any software.
-This is important because Mission Planner or other software can keep the flight controller's connection occupied and prevent
-the AM32 Configurator from accessing it.
+After writing the parameters, reboot the flight controller.
+Then close Mission Planner, AMC, and any other software that could keep the serial port open.
+An open connection can prevent the AM32 Configurator from accessing the flight controller.
 
 Now connect the main battery to power the ESCs.
 
-Open the [AM32 Web Configurator](https://am32.ca/configurator).
+Open the [AM32 Web Configurator](https://am32.ca/configurator) in a browser that supports Web Serial, or use a desktop configurator from the [AM32 project](https://github.com/am32-firmware/AM32#firmware-release--configuration-tool).
 
-Select the flight controller's port using the Port Select option. Try connecting to the ESCs.
+Select the flight controller's port with **Port select**, then connect and click **Read**.
+If the ESCs are detected, continue with [Flash the AM32 firmware](#flash-the-am32-firmware).
+After flashing, close the configurator, reconnect with Mission Planner, restore the parameter values recorded above, write them, and reboot the flight controller.
 
-If the ESC is still not detected, continue with the [Betaflight method](#betaflight-method).
+If the ESCs are not detected, continue with the [Betaflight method](#betaflight-method).
 
-Some useful docs:
-
-<https://ardupilot.org/copter/docs/common-am32-escs.html>
-
-<https://ardupilot.org/copter/docs/common-matekh743-wing.html>
+For background, see ArduPilot's [AM32 ESC documentation](https://ardupilot.org/copter/docs/common-am32-escs.html) and [Mateksys H743-WING documentation](https://ardupilot.org/copter/docs/common-matekh743-wing.html).
 
 ## Betaflight Method
 
-If the ArduPilot method does not allow the ESC to be accessed, the Betaflight method can be used as an alternative and mostly works.
+If the ArduPilot method does not allow the ESCs to be accessed, temporarily flash Betaflight firmware to the flight controller and use its passthrough.
 
-This requires temporarily flashing Betaflight firmware to the flight controller.
+Before flashing, copy the current `complete.param` file from your AMC vehicle directory to a safe location.
+You will use it to restore the ArduPilot parameters.
 
-> [!NOTE]
-> Before flashing Betaflight, make sure to have a copy of your current vehicle's parameters. Do this by manually saving a copy of the
-> "complete.param" file, from your AMC's vehicle directory on your hard disk. This file will be used to reflash the parameters to the vehicle.
+Flash the Betaflight firmware target for your exact flight controller.
+Follow that board's instructions to enter DFU mode; on many boards, this means holding the DFU/BOOT button (or bridging the BOOT pads) while connecting USB.
+Disconnect the main battery before flashing.
+Keep the flight controller connected to USB and powered through USB during the firmware flash.
 
-Flash the Betaflight firmware target corresponding to your exact flight controller. Do not use an unrelated Betaflight target.
-(Disconnect the main battery from the flight controller before flashing Betaflight. Keep the flight controller connected to USB and powered through USB during the firmware
-flashing process.)
+Open Betaflight Configurator and select a DShot protocol for the ESCs.
+Save the configuration, close Betaflight, and disconnect USB.
 
-Open the Betaflight Configurator and select the ESC protocol that is appropriate for your setup. Save the configuration.
+Reconnect the flight controller to USB without the main battery and let it boot.
+Open the AM32 Web Configurator or desktop configurator and use **Port select** to choose the flight controller's USB port.
 
-After configuring Betaflight, close Betaflight and disconnect everything from the drone.
+The next step needs to be performed quickly.
+Connect the main battery and immediately click **Connect** in the AM32 Configurator.
+This prompts it to communicate with the ESC before the ESC finishes its normal startup.
 
-Open the [AM32 Web Configurator](https://am32.ca/configurator).
+If the ESCs are not detected, disconnect the battery and USB, then try again.
+On each attempt, reconnect the battery and click **Connect** almost simultaneously.
+Repeat until the configurator detects the ESCs.
 
-Connect the flight controller to the computer (don't power the drone using battery now) through USB and allow it to boot.
+Click **Read**.
+If the connection succeeds, the detected ESCs will appear in the configurator.
+Then [flash the AM32 firmware](#flash-the-am32-firmware).
 
-In the AM32 Configurator, use the "Port Select" button and select the flight controller's USB port.
+### Flash the AM32 firmware
 
-The next step needs to be performed very quickly.
+After the configurator connects to the ESCs, click **Flash firmware**.
+If the button is disabled, confirm that the ESCs were detected and read.
 
-Connect the main battery to the drone and immediately click Connect in the AM32 Configurator.
-The purpose of doing this quickly is to make the configurator attempt to communicate with the ESC before the ESC has completely finished its normal startup process.
+![Flash firmware button in the AM32 Configurator](images/am32_firmware_button.png)
 
-If the ESC is still not detected, disconnect everything from the drone and try again.
+Select the ESC or ESCs to recover.
+For a 4-in-1 ESC whose four ESCs use the same target, select all four.
 
-On the next attempt, connect the battery and click "Connect" almost simultaneously. This needs to be done very quickly.
-Repeat this process if necessary until the AM32 Configurator detects the ESC.
+![Select ESCs to flash](images/am32_select_esc.png)
 
-Click "Read" to read the ESCs. If the connection was successful, the detected ESCs will appear in the configurator.
+Choose a stable firmware release and the `.hex` firmware file whose target matches the ESC's MCU and layout.
+Leave **Ignore current mcu layout** and **Include prerelease versions** unchecked unless the ESC manufacturer's instructions specifically require otherwise.
+If you are unsure which target file matches your ESC, stop and check with the ESC manufacturer before flashing.
 
-Click the "Flash Firmware" button.
+Start the flash and wait for it to finish.
+Do not refresh the browser, disconnect USB, or remove power while the firmware is being written.
+Afterward, verify that the ESCs are detected and can be configured.
 
-![Flash Firmware button](images/am32_firmware_button.png)
+### Restore ArduPilot
 
-Select the ESC or ESCs that need to be recovered. For a 4-in-1 ESC with identical ESC targets, selecting all ESCs ensures that the same firmware is flashed to each ESC.
+Disconnect the main battery.
+Restore ArduPilot firmware for the exact flight controller model.
+Follow the [ArduPilot firmware flashing guide](https://ardupilot.org/copter/docs/common-loading-firmware.html) and the board-specific instructions to enter DFU mode.
+When the board needs DFU flashing, use the matching `*_with_bl.hex` file with the documented DFU tool; use the ground-station method and `.apj` file if the board still has an ArduPilot-compatible bootloader.
 
-![Select required ESC to flash](images/am32_select_esc.png)
+After ArduPilot starts, reopen the vehicle in AMC and use **Compare and upload** to upload the saved `complete.param` file.
+Check that `MOT_PWM_TYPE` and `SERVO_BLH_AUTO` match the values you recorded; restore them in Mission Planner if needed.
+Reboot and verify the vehicle configuration before reconnecting the main battery.
 
-Select the required AM32 firmware version and start the firmware flash. Don't refresh the browser or touch the usb and make sure the
-firmware completely flashes.
-
-After the firmware has been successfully flashed, verify that the ESC is detected normally and can be configured.
-
-> Restore the saved ArduPilot parameter file after flashing the appropriate ArduPilot firmware with the `*_with_bl.hex` file using DFU mode.
-> See the [ArduPilot firmware flashing guide](https://ardupilot.org/copter/docs/common-loading-firmware.html).
-> After ArduPilot has been restored, use the "Compare and upload" button in AMC to upload the `complete.param` file saved earlier.
-
-Restore the original configuration and motor protocol if they were changed during the recovery process.
-
-![Compare and Upload button](images/compare_and_upload.png)
+![Compare and upload button in AMC](images/compare_and_upload.png)
 
 ## If You Have an STM Programmer
 
@@ -136,12 +142,10 @@ If the ESC cannot be recovered using the methods above and you have an ST-Link o
 
 This requires connecting the programmer to the appropriate programming points on the ESC and manually flashing the AM32 bootloader or firmware.
 
-Use the following [guide](https://oscarliang.com/flash-am32-blheli32-esc/)
-for the physical connection and flashing procedure.
+Use the following [guide](https://oscarliang.com/flash-am32-blheli32-esc/) for the physical connection and flashing procedure.
 
 Follow the section titled "How to Flash AM32 Bootloader".
 
 ## If Nothing Works
 
-If the ESC cannot be detected using either the ArduPilot method or the Betaflight method, and it also cannot be programmed using an STM programmer,
-there is a high possibility that the ESC has a hardware problem.
+If the ESC cannot be detected using either the ArduPilot method or the Betaflight method, and it also cannot be programmed using an STM programmer, there is a high possibility that the ESC has a hardware problem.
