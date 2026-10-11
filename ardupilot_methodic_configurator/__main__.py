@@ -133,12 +133,10 @@ def validate_tkinter_runtime() -> None:
         root.withdraw()
         ttk.Button(root, text="Packaging validation").pack()
         root.update_idletasks()
-        logging_info(
-            "Validated Tcl %s and Tk %s (Tcl library: %s)",
-            root.tk.call("info", "patchlevel"),
-            root.tk.call("package", "require", "Tk"),
-            root.tk.call("info", "library"),
-        )
+        tcl_version = root.tk.call("info", "patchlevel")
+        tk_version = root.tk.call("package", "require", "Tk")
+        tcl_library = root.tk.call("info", "library")
+        print(f"Validated Tcl {tcl_version} and Tk {tk_version} (Tcl library: {tcl_library})")  # noqa: T201
     finally:
         root.destroy()
 
