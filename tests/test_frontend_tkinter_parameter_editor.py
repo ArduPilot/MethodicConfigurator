@@ -595,18 +595,31 @@ class TestWindowSizing:
         editor.parameter_area_container.configure.assert_called_once_with(height=485)
         assert not editor._parameter_area_resize_pending
 
-    @pytest.mark.parametrize(("frame_height", "component_height", "table_height"), [(600, 172, 120), (854, 304, 242)])
-    def test_component_fields_scroll_to_preserve_a_usable_table(
-        self, parameter_editor_window: ParameterEditorWindow, frame_height: int, component_height: int, table_height: int
+    @pytest.mark.parametrize(
+        ("frame_height", "component_height", "table_height", "plugin_height"),
+        [(600, 172, 120, None), (854, 304, 242, None), (600, 92, 200, 200)],
+    )
+    def test_component_fields_scroll_to_preserve_the_parameter_area(
+        self,
+        parameter_editor_window: ParameterEditorWindow,
+        frame_height: int,
+        component_height: int,
+        table_height: int,
+        plugin_height: int | None,
     ) -> None:
         """
-        Component-heavy steps preserve useful table space on short screens.
+        Component-heavy steps preserve useful table and plugin space on short screens.
 
         GIVEN: Fixed controls consume 300 pixels beside a 272-pixel component editor
         WHEN: The remaining space is allocated on small or large windows
-        THEN: The table keeps at least 120 pixels and component fields can scroll
+        THEN: The table or left plugin gets usable height and component fields can scroll
         """
         editor = parameter_editor_window
+        if plugin_height is not None:
+            editor.current_plugin = {"placement": "left"}
+            plugin_view = MagicMock()
+            plugin_view.winfo_reqheight.return_value = plugin_height
+            editor.current_plugin_view = plugin_view
         fixed_controls = MagicMock()
         fixed_controls.winfo_manager.return_value = "pack"
         fixed_controls.winfo_reqheight.return_value = 300

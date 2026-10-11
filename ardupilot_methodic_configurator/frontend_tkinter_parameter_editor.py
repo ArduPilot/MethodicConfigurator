@@ -1696,7 +1696,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self._parameter_area_resize_pending = True
             self.root.after_idle(self._resize_parameter_area_to_fit)
 
-    def _resize_parameter_area_to_fit(self) -> None:  # pylint: disable=too-many-locals,too-many-branches
+    def _resize_parameter_area_to_fit(self) -> None:  # noqa: PLR0915 # pylint: disable=too-many-locals,too-many-branches
         """Give the parameter area the height left after all fixed controls are placed."""
         if self._parameter_area_resize_running:
             return
@@ -1711,7 +1711,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             finally:
                 self._parameter_area_resize_running = False
 
-        # The parameter table is the only expandable section between the fixed
+        # The parameter area is the only expandable section between the fixed
         # header/component editor and the bottom buttons. Give it only the height
         # left after those other widgets have been placed, so its requested size
         # cannot consume the button row on short screens.
@@ -1743,10 +1743,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             content_height = scroll_frame.view_port.winfo_reqheight() + 8
             desired_height = content_height + self._inline_component_chrome_height
             minimum_table_height = round(120 * self.dpi_scaling_factor)
+            if self.current_plugin and self.current_plugin.get("placement") == "left" and self.current_plugin_view is not None:
+                # The parameter area also holds the plugin. Let the scrollable
+                # component editor yield space to it before the plugin is cut.
+                minimum_table_height = max(minimum_table_height, cast("tk.Widget", self.current_plugin_view).winfo_reqheight())
             available_height = max(1, self.main_frame.winfo_height() - fixed_height)
             minimum_component_height = round(80 * self.dpi_scaling_factor)
             # Share very limited space equally until the component minimum fits.
-            # Then let the table reach its minimum before growing the component
+            # Then let the parameter area reach its minimum before growing the component
             # panel further. Both allocations grow continuously with the window.
             component_budget = max(
                 min(minimum_component_height, available_height // 2), available_height - minimum_table_height

@@ -12,6 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
 
+import tkinter as tk
 from tkinter import ttk
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, cast
@@ -186,6 +187,37 @@ def _label_texts(widget) -> list[str]:
 
 class TestAhrsOrientationViewUiSurface:
     """Static UI assertions for the simplified orientation helper."""
+
+    def test_user_can_scroll_the_assistant_in_a_short_plugin_pane(self, tk_root: tk.Tk, mocker) -> None:
+        """
+        The orientation assistant remains reachable when the plugin pane is short.
+
+        GIVEN: The assistant is taller than the available pane
+        WHEN: The user scrolls to the bottom
+        THEN: The lower controls come into view
+        """
+        model = MagicMock(spec=AhrsOrientationDataModel)
+        model.get_required_steps.return_value = ("LEVEL", "NOSE DOWN", "RIGHT")
+        mocker.patch.object(AhrsOrientationView, "_start_imu_polling")
+        window = tk.Toplevel(tk_root)
+        window.geometry("600x120+0+0")
+        try:
+            view = AhrsOrientationView(window, model, MagicMock())
+            view.pack(fill="both", expand=True)
+            tk_root.update()
+
+            canvas = view._scroll_frame.canvas
+            assert view._scroll_frame.view_port.winfo_reqheight() > canvas.winfo_height()
+            canvas.yview_moveto(1)
+            tk_root.update()
+
+            assert canvas.yview()[0] > 0
+            assert canvas.winfo_rooty() <= view._continue_btn.winfo_rooty()
+            assert view._continue_btn.winfo_rooty() + view._continue_btn.winfo_height() <= (
+                canvas.winfo_rooty() + canvas.winfo_height()
+            )
+        finally:
+            window.destroy()
 
     def test_view_does_not_show_detected_position_or_reset_button(self, view_with_model) -> None:
         """

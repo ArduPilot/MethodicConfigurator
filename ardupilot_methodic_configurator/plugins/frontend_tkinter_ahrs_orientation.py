@@ -21,6 +21,7 @@ from ardupilot_methodic_configurator.data_model_parameter_editor import (
     OperationNotPossibleError,
     ParameterValueUpdateStatus,
 )
+from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_helpers import refresh_parameter_editor_table
 from ardupilot_methodic_configurator.plugins.imu_helpers import (
     ImuPollHandlers,
@@ -65,7 +66,9 @@ class AhrsOrientationView(Frame):  # pylint: disable=too-many-instance-attribute
         self._start_imu_polling()
 
     def _setup_ui(self) -> None:
-        main_frame = ttk.Frame(self)
+        self._scroll_frame = ScrollFrame(self)
+        self._scroll_frame.pack(fill="both", expand=True)
+        main_frame = ttk.Frame(self._scroll_frame.view_port)
         main_frame.pack(fill="both", expand=True)
 
         manual_option_frame = ttk.LabelFrame(
