@@ -83,7 +83,7 @@ else:
     MavlinkConnection: TypeAlias = object
 
 
-class FlightControllerConnectionProtocol(Protocol):
+class FlightControllerConnectionProtocol(Protocol):  # pylint: disable=too-many-public-methods
     """
     Protocol for flight controller connection management.
 
@@ -132,6 +132,14 @@ class FlightControllerConnectionProtocol(Protocol):
     ) -> None: ...
 
     def disconnect(self) -> None: ...
+
+    def mark_connection_lost(self, reason: str) -> None: ...
+
+    def get_connection_lost_reason(self) -> str | None: ...
+
+    def get_connection_session_id(self) -> int: ...
+
+    def poll_connection(self) -> str | None: ...
 
     def add_connection(self, connection_string: str) -> bool: ...
 

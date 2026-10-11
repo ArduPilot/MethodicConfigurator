@@ -22,6 +22,7 @@ from unittest.mock import Mock, call, patch
 import pytest
 import serial.tools.list_ports_common
 from pymavlink import mavutil
+from serial import SerialException
 
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import (
     DEFAULT_BAUDRATE,
@@ -47,6 +48,13 @@ if TYPE_CHECKING:
     from ardupilot_methodic_configurator.backend_flightcontroller_protocols import MavlinkConnection
 
 # pylint: disable=protected-access, too-many-lines
+
+
+@pytest.fixture(autouse=True)
+def isolated_native_subscriptions() -> Iterator[None]:
+    """Keep connection unit tests from starting OS listeners for their simulated transports."""
+    with patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.SerialPortRemovalMonitor", autospec=True):
+        yield
 
 
 class TestFlightControllerConnectionServiceInjection:
@@ -2725,6 +2733,48 @@ class TestFlightControllerConnectionSetMaster:
         assert connection.master is mock_master
         # comport was NOT cleared
         assert connection.comport is mock_comport
+
+    def test_serial_receive_error_is_latched_immediately(self) -> None:
+        """A serial read error marks the connection lost at the PyMAVLink boundary."""
+
+        class FailingMavlinkMaster:  # pylint: disable=too-few-public-methods
+            """Minimal master whose receive operation simulates a removed serial port."""
+
+            def recv(self) -> bytes:
+                error_message = "device was disconnected"
+                raise SerialException(error_message)
+
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        mock_comport = Mock()
+        mock_comport.device = "COM21"
+        connection.comport = mock_comport
+        mock_master = FailingMavlinkMaster()
+        connection.set_master_for_testing(mock_master)
+
+        with pytest.raises(SerialException, match="device was disconnected"):
+            mock_master.recv()
+
+        assert connection.get_connection_lost_reason() == "device was disconnected"
+
+    def test_os_port_removal_event_latches_connection_loss_and_stops_monitor(self) -> None:
+        """An OS removal callback marks the selected serial connection as lost."""
+        monitor = Mock()
+        monitor_factory = Mock(return_value=monitor)
+        connection = FlightControllerConnection(info=FlightControllerInfo(), serial_port_monitor_factory=monitor_factory)
+        mock_comport = Mock()
+        mock_comport.device = "COM21"
+        connection.comport = mock_comport
+        connection.master = Mock(port=object())
+        connection._start_serial_port_monitor()
+        monitor_factory.assert_called_once()
+        monitor.start.assert_called_once()
+        on_removed = monitor_factory.call_args.args[1]
+        on_removed()
+
+        assert connection.get_connection_lost_reason() == ("The flight-controller serial port is no longer available.")
+        connection.disconnect()
+
+        monitor.stop.assert_called_once()
 
 
 class TestFlightControllerConnectionRegisterAndTryConnect:  # pylint: disable=too-few-public-methods

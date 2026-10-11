@@ -86,6 +86,46 @@ This architecture provides:
 - **Single source of truth**: Connection manager owns connection state
 - **No shared mutable state**: Managers query each other rather than caching references
 
+### Connection-loss observation
+
+The connection manager owns the failure reason for the current transport session.
+`get_connection_lost_reason()` reads that state without performing I/O;
+`poll_connection()` explicitly checks serial-port presence through the injected
+`SerialPortDiscovery`. The facade and parameter-editor model delegate these APIs.
+`get_connection_session_id()` exposes a monotonically increasing session ID so
+the GUI can warn once per failed session even when reconnect and another failure
+occur between polls.
+Polling does not consume MAVLink packets, so calibration, diagnostics and file
+transfers retain ownership of their receive queues.
+
+Native serial removal subscriptions are supplied through an injectable factory
+implementing the `SerialPortMonitor` lifecycle. They remember removal even if a
+device is quickly plugged back in. If native notifications are unavailable,
+two consecutive successful inventories missing a previously enumerated port
+provide a fallback. The initial inventory is captured when the session starts;
+later successful observations can also establish that the endpoint is enumerable.
+Endpoints omitted by discovery, such as Linux PTYs and some platform UARTs,
+remain monitored through transport errors and native events without treating
+their absence from inventory as a removal. Inventory errors are inconclusive
+and interrupt the sequence of missing observations.
+Port identities account for Windows COM aliases, macOS dial-in/callout nodes,
+and Linux symlinks resolved when the session starts.
+
+Transport read errors are observed at the existing PyMAVLink receive boundary;
+TCP EOF is observed through PyMAVLink's `handle_eof()` before its automatic
+reconnection attempt. This distinguishes a peer closing the socket from a
+nonblocking read with no data available. The original receive and EOF methods
+are restored when the session ends. PyMAVLink's `portdead` flag also reports
+swallowed write failures. Session IDs prevent late removal, EOF or read-error
+callbacks from affecting a replacement connection.
+Native handles and GUI polling callbacks are released when their owners close.
+
+These checks observe serial removal and transport I/O failures. An enumerated
+USB-to-UART adapter does not establish that its attached controller is responding,
+and an idle network connection has no heartbeat timeout in this observer.
+Detecting those conditions requires heartbeat supervision coordinated with the
+existing receive owner.
+
 ### Components
 
 #### Flight Controller Facade

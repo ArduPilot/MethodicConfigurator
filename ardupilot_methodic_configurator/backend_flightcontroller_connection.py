@@ -20,6 +20,7 @@ from os import name as os_name
 from os import path as os_path
 from os import readlink as os_readlink
 from sys import platform as sys_platform
+from threading import Lock
 from time import monotonic
 from time import sleep as time_sleep
 from time import time as time_time
@@ -41,12 +42,14 @@ from ardupilot_methodic_configurator.backend_flightcontroller_factory_serial imp
     SerialPortDiscovery,
     SystemSerialPortDiscovery,
 )
+from ardupilot_methodic_configurator.backend_serial_port_monitor import SerialPortRemovalMonitor, serial_port_identity
 from ardupilot_methodic_configurator.data_model_fc_diagnostics import StatusTextAssembler, message_source
 from ardupilot_methodic_configurator.data_model_fc_ids import VID_PID_PRODUCT_DICT, VID_VENDOR_DICT
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
 if TYPE_CHECKING:
     from ardupilot_methodic_configurator.backend_flightcontroller_protocols import MavlinkConnection
+    from ardupilot_methodic_configurator.backend_serial_port_monitor import SerialPortMonitor
 
 # pymavlink initializes this dialect module dynamically and types it as optional.
 mavlink = cast("Any", mavutil.mavlink)
@@ -185,13 +188,15 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         "udp:0.0.0.0:14550",
     ]
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         info: FlightControllerInfo,
         baudrate: int = DEFAULT_BAUDRATE,
         network_ports: list[str] | None = None,
         serial_port_discovery: SerialPortDiscovery | None = None,
         mavlink_connection_factory: MavlinkConnectionFactory | None = None,
+        *,
+        serial_port_monitor_factory: Callable[[str, Callable[[], None]], "SerialPortMonitor"] | None = None,
     ) -> None:
         """
         Initialize the connection manager.
@@ -202,6 +207,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             network_ports: Optional list of network ports to try (overrides defaults)
             serial_port_discovery: Optional serial port discovery service
             mavlink_connection_factory: Optional MAVLink connection factory service
+            serial_port_monitor_factory: Optional native serial removal subscription factory
 
         """
         self.info = info
@@ -220,6 +226,15 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         self._status_text_buffer: deque[tuple[datetime, str]] = deque(maxlen=FC_STATUS_TEXT_BUFFER_LIMIT)
         self._status_text_assembler = StatusTextAssembler()
         self._receiving_banner = False
+        self._connection_loss_reason: str | None = None
+        self._missing_port_checks = 0
+        self._serial_port_seen = False
+        self._serial_device_identity: str | None = None
+        self._connection_session = 0
+        self._connection_loss_lock = Lock()
+        self._serial_port_monitor_factory = serial_port_monitor_factory or SerialPortRemovalMonitor
+        self._serial_port_monitor: SerialPortMonitor | None = None
+        self._restore_receive_error_watcher: Callable[[], None] | None = None
 
     @property
     def banner_text_buffer(self) -> list[str]:
@@ -239,6 +254,154 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             for received_at, text in reversed(self._status_text_buffer)
             if text not in self._banner_text_buffer
         ]
+
+    def mark_connection_lost(self, reason: str) -> None:
+        """Latch a transport error so the frontend can warn the user once."""
+        self._mark_session_connection_lost(self._connection_session, reason)
+
+    def _mark_session_connection_lost(self, session: int, reason: str) -> None:
+        """Ignore late callbacks from transports belonging to a previous session."""
+        with self._connection_loss_lock:
+            if session == self._connection_session and self._connection_loss_reason is None:
+                self._connection_loss_reason = reason
+
+    def _reset_connection_monitoring(self) -> None:
+        """Invalidate old callbacks before stopping their subscription."""
+        with self._connection_loss_lock:
+            self._connection_session += 1
+            self._connection_loss_reason = None
+        self._missing_port_checks = 0
+        self._serial_port_seen = False
+        self._serial_device_identity = None
+        if self._restore_receive_error_watcher is not None:
+            with contextlib.suppress(AttributeError, TypeError):
+                self._restore_receive_error_watcher()
+            self._restore_receive_error_watcher = None
+        self._stop_serial_port_monitor()
+
+    def _is_serial_connection(self) -> bool:
+        """Whether the selected endpoint is a direct serial device."""
+        network_prefixes = ("tcp:", "tcpin:", "tcpout:", "udp:", "udpin:", "udpout:", "ws:", "wss:")
+        return bool(self.comport_device) and not self.comport_device.lower().startswith(network_prefixes)
+
+    def _capture_serial_port_identity(self) -> None:
+        """Remember the endpoint and whether its disappearance can be observed through discovery."""
+        self._serial_device_identity = serial_port_identity(self.comport_device, sys_platform)
+        self._serial_port_seen = self._serial_port_is_available() is True
+
+    def _serial_port_is_available(self) -> bool | None:
+        """Return an inventory observation, or None when discovery is inconclusive."""
+        try:
+            available_ports = self._serial_port_discovery.get_available_ports()
+        except OSError as error:
+            logging_debug("Could not check flight-controller serial port presence: %s", error)
+            return None
+        normalized_device = self._serial_device_identity or serial_port_identity(self.comport_device, sys_platform)
+        return any(serial_port_identity(port.device, sys_platform) == normalized_device for port in available_ports)
+
+    def _start_serial_port_monitor(self) -> None:
+        """Subscribe to native removal events for the currently connected serial port."""
+        self._stop_serial_port_monitor()
+        device = self.comport_device
+        if not self._is_serial_connection() or self.master is None or getattr(self.master, "port", None) is None:
+            return
+        session = self._connection_session
+        try:
+            self._serial_port_monitor = self._serial_port_monitor_factory(
+                device,
+                lambda: self._mark_session_connection_lost(
+                    session, _("The flight-controller serial port is no longer available.")
+                ),
+            )
+            self._serial_port_monitor.start()
+        except (OSError, RuntimeError) as error:
+            self._stop_serial_port_monitor()
+            logging_debug("Could not start native flight-controller port monitoring: %s", error)
+
+    def _stop_serial_port_monitor(self) -> None:
+        """Stop the native device watcher before changing or closing the connection."""
+        if self._serial_port_monitor is not None:
+            self._serial_port_monitor.stop()
+            self._serial_port_monitor = None
+
+    def _watch_serial_receive_errors(self, master: object) -> None:
+        """Observe PyMAVLink's receive boundary without introducing a second reader."""
+        if self.comport is None:
+            return
+        if self._restore_receive_error_watcher is not None:
+            return
+        original_recv = getattr(master, "recv", None)
+        if not callable(original_recv):
+            return
+        session = self._connection_session
+        original_eof = (
+            getattr(master, "handle_eof", None)
+            if self.comport_device.lower().startswith(("tcp:", "tcpin:", "tcpout:"))
+            else None
+        )
+
+        def receive(*args: object, **kwargs: object) -> object:
+            try:
+                return original_recv(*args, **kwargs)
+            except (OSError, SerialException) as error:
+                self._mark_session_connection_lost(session, str(error))
+                raise
+
+        def handle_eof(*args: object, **kwargs: object) -> object:
+            self._mark_session_connection_lost(session, _("The flight-controller TCP connection was closed by the peer."))
+            return cast("Callable[..., object]", original_eof)(*args, **kwargs)
+
+        try:
+            object.__setattr__(master, "recv", receive)
+        except (AttributeError, TypeError):
+            # Keep port-enumeration detection as a fallback for immutable test doubles.
+            return
+
+        if callable(original_eof):
+            with contextlib.suppress(AttributeError, TypeError):
+                object.__setattr__(master, "handle_eof", handle_eof)
+
+        def restore() -> None:
+            if getattr(master, "recv", None) is receive:
+                object.__setattr__(master, "recv", original_recv)
+            if callable(original_eof) and getattr(master, "handle_eof", None) is handle_eof:
+                object.__setattr__(master, "handle_eof", original_eof)
+
+        self._restore_receive_error_watcher = restore
+
+    def get_connection_lost_reason(self) -> str | None:
+        """Return the latched transport failure without performing I/O."""
+        with self._connection_loss_lock:
+            return self._connection_loss_reason
+
+    def get_connection_session_id(self) -> int:
+        """Identify the current session independently of whether a failure has been observed."""
+        with self._connection_loss_lock:
+            return self._connection_session
+
+    def poll_connection(self) -> str | None:
+        """Check serial presence without consuming MAVLink messages owned by other operations."""
+        reason = self.get_connection_lost_reason()
+        if reason is not None or self.master is None or self.comport is None:
+            return reason
+        if getattr(self.master, "portdead", False) is True:
+            self.mark_connection_lost(_("The flight-controller transport reported an I/O failure."))
+            return self.get_connection_lost_reason()
+        if not self._is_serial_connection():
+            return None
+        port_is_available = self._serial_port_is_available()
+        if port_is_available is None:
+            # An inventory failure is inconclusive; require consecutive successful missing checks.
+            self._missing_port_checks = 0
+            return self.get_connection_lost_reason()
+        if port_is_available:
+            self._serial_port_seen = True
+            self._missing_port_checks = 0
+        elif self._serial_port_seen:
+            self._missing_port_checks += 1
+        if self._missing_port_checks >= 2:
+            self.mark_connection_lost(_("The flight-controller serial port is no longer available."))
+        return self.get_connection_lost_reason()
 
     def append_status_text(self, text: str) -> None:
         """Retain a received STATUSTEXT message for the flight-controller banner window."""
@@ -373,6 +536,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
     def disconnect(self) -> None:
         """Close the connection to the flight controller."""
+        self._reset_connection_monitoring()
         if self.master is not None:
             with contextlib.suppress(Exception):
                 self.master.close()  # pyright: ignore[reportAttributeAccessIssue]
@@ -467,13 +631,12 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                 a successful connection.
 
         """
-        connection_baudrate = baudrate if baudrate is not None else self._baudrate
-        self._active_baudrate = connection_baudrate
-
         # Always clear cached metadata before attempting a new connection so UI
         # components never display stale data while we probe ports.
-        self._clear_diagnostics()
-        self.info.reset()
+        # Release the previous transport before opening the same serial port again.
+        self.disconnect()
+        connection_baudrate = baudrate if baudrate is not None else self._baudrate
+        self._active_baudrate = connection_baudrate
 
         if device:
             if device == "none":
@@ -1067,6 +1230,9 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                 if reconnect_progress_callback:
                     attempt_progress = 30 + int((attempt - 1) * 40 / max(1, attempts - 1))
                     reconnect_progress_callback(attempt_progress, 100)
+                self._reset_connection_monitoring()
+                if self._is_serial_connection():
+                    self._capture_serial_port_identity()
                 self.master = self._create_mavlink_connection(
                     device=comport.device,
                     baudrate=baudrate,
@@ -1078,6 +1244,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                 if not self.master:
                     msg = f"Failed to create mavlink connect to {comport.device}"
                     raise ConnectionError(msg)
+                self._watch_serial_receive_errors(self.master)
                 self._register_status_text_hook(self.master)
                 detected_vehicles = self._detect_vehicles_from_heartbeats(timeout, reconnecting)
                 if not detected_vehicles:
@@ -1090,6 +1257,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                         raise ConnectionError(error)
                     return error
                 retryable_failure = False
+                self._start_serial_port_monitor()
                 if reconnect_progress_callback:
                     reconnect_progress_callback(90, 100)
                 error = self._retrieve_autopilot_version_and_banner(timeout)
@@ -1166,8 +1334,12 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             master: The MAVLink connection object or None
 
         """
+        self._reset_connection_monitoring()
         self.master = master
         if master is not None:
+            if self._is_serial_connection():
+                self._capture_serial_port_identity()
+            self._watch_serial_receive_errors(master)
             self._register_status_text_hook(master)
         # If setting to None, also clear related state
         if master is None:

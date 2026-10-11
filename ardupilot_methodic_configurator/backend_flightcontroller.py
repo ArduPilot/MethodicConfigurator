@@ -445,6 +445,18 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         # Clear parameter cache via params manager
         self._params_manager.clear_parameters()
 
+    def get_connection_lost_reason(self) -> str | None:
+        """Return a latched transport failure without performing I/O."""
+        return self._connection_manager.get_connection_lost_reason()
+
+    def get_connection_session_id(self) -> int:
+        """Identify the current transport session for consumers of connection status."""
+        return self._connection_manager.get_connection_session_id()
+
+    def poll_connection(self) -> str | None:
+        """Refresh connection status without consuming MAVLink messages."""
+        return self._connection_manager.poll_connection()
+
     def upload_apj_firmware(  # pylint: disable=too-many-arguments,too-many-locals
         self,
         path: Path,

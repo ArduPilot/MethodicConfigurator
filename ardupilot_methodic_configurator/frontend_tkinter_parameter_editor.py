@@ -320,6 +320,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     operate on drone parameters.
     """
 
+    _connection_monitor_job: str | None
+    _connection_warning_session_id: int | None
+
     def __init__(
         self,
         parameter_editor: ParameterEditor,
@@ -347,6 +350,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._log_analysis_running = False
         self._file_browser_window: FileBrowserWindow | None = None
         self._log_report_return_pending: bool = False
+        self._connection_loss_warning_shown = self._connection_monitor_running = False
+        self._connection_monitor_job = self._connection_warning_session_id = None
         self.inline_component_editor: ComponentEditorWindow | None = None
         self.inline_component_scroll_frame: ScrollFrame | None = None
         self._inline_component_chrome_height = 0
@@ -399,6 +404,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         # trigger a table update to ask the user what to do in the case this file needs special actions
         self.root.after(10, lambda: self.on_param_file_combobox_change(None, forced=True))
+        self._start_connection_monitor()
 
         # this one should be on top of the previous one hence the longer time
         if isinstance(self.root, tk.Tk) and UsagePopupWindow.should_display("parameter_editor"):
@@ -415,7 +421,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             The action requested by the user when the event loop ends.
 
         """
-        self.root.mainloop()
+        try:
+            self.root.mainloop()
+        finally:
+            self._stop_connection_monitor()
         return self._requested_action
 
     def _create_conf_widgets(self, version: str) -> None:  # pylint: disable=too-many-locals
@@ -1982,6 +1991,53 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             ):
                 resume_plugin()
 
+    def _start_connection_monitor(self) -> None:
+        """Start polling and cancel it if the editor's root is destroyed."""
+        self._connection_monitor_running = True
+        self._connection_monitor_job = self.root.after(1500, self._check_fc_connection)
+        self.root.bind(
+            "<Destroy>",
+            lambda event: self._stop_connection_monitor() if event.widget is self.root else None,
+            add="+",
+        )
+
+    def _check_fc_connection(self) -> None:
+        """Check the transport periodically and warn once when it has been lost."""
+        self._connection_monitor_job = None
+        try:
+            if not self._connection_monitor_running or not self.root.winfo_exists():
+                return
+            session_id = self.parameter_editor.get_fc_connection_session_id()
+            if session_id != self._connection_warning_session_id:
+                self._connection_warning_session_id = session_id
+                self._connection_loss_warning_shown = False
+            reason = self.parameter_editor.poll_fc_connection()
+            if reason is None:
+                self._connection_loss_warning_shown = False
+            elif isinstance(reason, str) and not self._connection_loss_warning_shown:
+                self._connection_loss_warning_shown = True
+                self.ui.show_warning(
+                    _("Flight-controller connection lost"),
+                    _(
+                        "The flight-controller connection was lost. "
+                        "You must restart AMC after the connection is re-established."
+                    ),
+                )
+            # Modal warnings run a nested event loop; the parent can close while one is open.
+            if self._connection_monitor_running and self.root.winfo_exists():
+                self._connection_monitor_job = self.root.after(1500, self._check_fc_connection)
+        except tk.TclError:
+            self._stop_connection_monitor()
+
+    def _stop_connection_monitor(self) -> None:
+        """Cancel polling before quitting or destroying the editor."""
+        self._connection_monitor_running = False
+        job = getattr(self, "_connection_monitor_job", None)
+        self._connection_monitor_job = None
+        if job is not None:
+            with contextlib.suppress(tk.TclError):
+                self.root.after_cancel(job)
+
     def on_zip_vehicle_for_forum_help_click(self) -> None:
         """Handle the zip vehicle for forum help button click."""
         if self.navigation_lock.locked:
@@ -2070,6 +2126,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def close_connection_and_quit(self) -> None:
         self._commit_focused_edit_and_offer_save()
+        self._stop_connection_monitor()
         self.root.quit()  # Then stop the Tkinter event loop
 
     def on_edit_vehicle_components_click(self) -> None:
@@ -2098,6 +2155,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._commit_focused_edit_and_offer_save()
         self._requested_action = ParameterEditorAction.EDIT_COMPONENTS
         self._cleanup_plugin_views()
+        self._stop_connection_monitor()
         self.root.destroy()
 
     def _commit_focused_edit_and_offer_save(self) -> None:
