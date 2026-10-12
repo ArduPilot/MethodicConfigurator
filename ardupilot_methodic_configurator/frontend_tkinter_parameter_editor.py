@@ -1133,6 +1133,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.parameter_area_container.pack(side="top", fill="both", expand=True)
 
         self.current_plugin = plugin
+        plugin_parent: ttk.Frame | None = None
 
         if plugin and plugin.get("placement") == "left":
             # Left placement: Create horizontal split with plugin on left, parameters on right
@@ -1145,8 +1146,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.parameter_area_paned.add(left_frame, minsize=500, stretch="always")
             self._set_pane_sticky(self.parameter_area_paned, left_frame)
 
-            # Instantiate and display the plugin in the left frame
-            self._load_plugin(left_frame, plugin)
+            plugin_parent = left_frame
 
             # Create right pane for parameter table (gets remaining space)
             right_frame = ttk.Frame(self.parameter_area_paned)
@@ -1168,7 +1168,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             # Create top frame for plugin, yielding height when space is limited.
             top_plugin_frame = ttk.Frame(top_container)
             top_plugin_frame.grid(row=0, column=0, sticky="nsew")
-            self._load_plugin(top_plugin_frame, plugin)
+            plugin_parent = top_plugin_frame
 
             # Visual separator between plugin and parameter table
             ttk.Separator(top_container, orient="horizontal").grid(row=1, column=0, sticky="ew", pady=2)
@@ -1187,6 +1187,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # The container varies based on plugin placement (left pane, below plugin, or full area).
         self.parameter_editor_table = ParameterEditorTable(self.parameter_container, self.parameter_editor, self)
         self.parameter_editor_table.pack(side="top", fill="both", expand=True)
+
+        # Plugin construction or activation can open a modal dialog, which runs
+        # a nested event loop. Build both panes and the table before that loop
+        # can measure the layout; adding a pane later does not reclaim its width.
+        if plugin_parent is not None and plugin is not None:
+            self._load_plugin(plugin_parent, plugin)
 
     @staticmethod
     def _set_pane_sticky(paned_window: tk.PanedWindow, pane: tk.Widget) -> None:
