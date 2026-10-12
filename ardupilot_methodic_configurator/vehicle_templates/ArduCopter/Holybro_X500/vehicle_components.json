@@ -10,7 +10,7 @@
             },
             "Firmware": {
                 "Type": "ArduCopter",
-                "Version": "4.6.3 official"
+                "Version": "4.6.3"
             },
             "Specifications": {
                 "MCU Series": "STM32F7xx"
