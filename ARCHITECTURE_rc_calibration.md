@@ -20,6 +20,8 @@ an additional optional renderer module for 3D vehicle attitude visualisation.
 - Per-channel PWM labels to the left of status bars mapped across 800-2200 µs
 - Green MIN, blue TRIM and red MAX markers on every channel; matching text appears only above channel 1
 - 100 ms non-blocking polling via tkinter `after()` — same pattern as accelerometer calibration
+- Paired activation/deactivation hooks cancel telemetry polling during diagnostics and
+  resume exactly one timer afterwards, preserving collected and staged calibration values
 - Floating, draggable live-monitor popup (`RCCalibrationPopup`) for real-time feedback
 - Remote controller stick preview with two side-by-side 126×126 white squares (30% smaller than the original)
   and red circles whose diameter is 1/12 of the square side

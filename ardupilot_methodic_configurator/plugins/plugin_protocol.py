@@ -35,6 +35,14 @@ class PluginView(Protocol):
         - destroy(): Final cleanup of all resources when the plugin is removed
 
         This ensures plugins don't leak resources when hidden or removed.
+
+    Temporary Diagnostics Pause:
+        Views may optionally implement a paired on_suspend()/on_resume() interface
+        to yield the shared telemetry receiver without running hide/show logic.
+        Suspend must cancel receiver timers; resume must restart them idempotently,
+        preserving workflow state and avoiding stale telemetry samples.
+        Both hooks are required for this optional interface. Otherwise diagnostics
+        uses on_deactivate()/on_activate(), retaining safety cleanup such as stopping motors.
     """
 
     def __init__(

@@ -688,6 +688,15 @@ class RCCalibrationView(ttk.Frame):  # pylint: disable=too-many-ancestors, too-m
                 self.after_cancel(self._timer_id)
             self._timer_id = None
 
+    def on_activate(self) -> None:
+        """Resume live RC monitoring without changing collected or staged calibration values."""
+        if self._timer_id is None:
+            self._timer_id = self.after(100, self._check_telemetry)
+
+    def on_deactivate(self) -> None:
+        """Yield the shared receiver while hidden or while diagnostics is open."""
+        self._stop_polling()
+
     def _check_telemetry(self) -> None:
         telemetry = self.model.get_rc_telemetry()
         self.craft_preview.update_telemetry(telemetry)

@@ -34,7 +34,7 @@ from ardupilot_methodic_configurator.plugins.frontend_tkinter_rc_calibration imp
     RCStickPreview,
 )
 
-# pylint: disable=protected-access,redefined-outer-name
+# pylint: disable=protected-access,redefined-outer-name,too-many-lines
 
 
 def _label_texts(widget: tk.Misc) -> list[str]:
@@ -75,6 +75,37 @@ def rc_navigation_view(
     finally:
         view.destroy()
         parent.destroy()
+
+
+def test_rc_monitor_stops_while_inactive_and_resumes_once(rc_navigation_view: SimpleNamespace) -> None:
+    """
+    A receiver pause does not lose the RC monitor's state or create duplicate timers.
+
+    GIVEN: An idle RC monitor with a pending telemetry callback
+    WHEN: It is deactivated and activated repeatedly
+    THEN: Its old timer is cancelled and exactly one timer resumes without staging edits
+    """
+    view = rc_navigation_view.view
+    initial_timer = view._timer_id
+    poll_calls = rc_navigation_view.controller.master.recv_match.call_count
+    staged = {name: parameter.get_new_value() for name, parameter in rc_navigation_view.editor.current_step_parameters.items()}
+
+    view.on_deactivate()
+    view.on_deactivate()
+
+    assert view._timer_id is None
+    assert initial_timer not in view.tk.call("after", "info")
+    assert rc_navigation_view.controller.master.recv_match.call_count == poll_calls
+    view.on_activate()
+    assert view._timer_id is not None
+    assert view._timer_id != initial_timer
+    resumed_timer = view._timer_id
+    view.on_activate()
+    assert view._timer_id == resumed_timer
+    assert {
+        name: parameter.get_new_value() for name, parameter in rc_navigation_view.editor.current_step_parameters.items()
+    } == staged
+    rc_navigation_view.controller.set_param.assert_not_called()
 
 
 class TestRCChannelBars:
