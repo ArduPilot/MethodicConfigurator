@@ -22,6 +22,8 @@ from pymavlink import mavutil
 
 from ardupilot_methodic_configurator.backend_flightcontroller_commands import FlightControllerCommands
 
+# pylint: disable=protected-access
+
 
 class TestSendCommandAndWaitAckBranches:
     """Unit tests for the internal branch logic of send_command_and_wait_ack."""
@@ -337,18 +339,21 @@ class TestCompassCalibrationProgressPolling:
         # pylint: enable=duplicate-code
 
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
-        commands_mgr.send_command_and_wait_ack = MagicMock(return_value=(True, ""))
+        commands_mgr._send_command_and_wait_ack_with_result = MagicMock(return_value=(True, "", 0))
 
         success, error = commands_mgr.start_compass_calibration()
 
-        commands_mgr.send_command_and_wait_ack.assert_called_once()
+        commands_mgr._send_command_and_wait_ack_with_result.assert_called_once()
         assert success is True
         assert error == ""
-        _, kwargs = commands_mgr.send_command_and_wait_ack.call_args
+        args, kwargs = commands_mgr._send_command_and_wait_ack_with_result.call_args
+        assert args[0] == mavutil.mavlink.MAV_CMD_DO_START_MAG_CAL
         assert kwargs["param1"] == 0
         assert kwargs["param2"] == 1
         assert kwargs["param3"] == 1
         assert kwargs["timeout"] == 5.0
+        assert kwargs["capture_status_text"] is True
+        assert kwargs["start_confirmation"][0] == "MAG_CAL_PROGRESS"
 
     def test_start_compass_calibration_surfaces_backend_rejection(self) -> None:
         """
@@ -367,13 +372,33 @@ class TestCompassCalibrationProgressPolling:
         # pylint: enable=duplicate-code
 
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
-        commands_mgr.send_command_and_wait_ack = MagicMock(return_value=(False, "MAVLink rejected"))
+        commands_mgr._send_command_and_wait_ack_with_result = MagicMock(return_value=(False, "MAVLink rejected", 4))
 
         success, error = commands_mgr.start_compass_calibration()
 
         assert success is False
         assert "Compass calibration start failed" in error
         assert "MAVLink rejected" in error
+
+    def test_start_compass_calibration_accepts_active_progress_without_ack(self) -> None:
+        """Active MAG_CAL_PROGRESS telemetry confirms the command when its ACK is lost."""
+        mock_master = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+        progress = MagicMock()
+        progress.get_type.return_value = "MAG_CAL_PROGRESS"
+        progress.cal_status = mavutil.mavlink.MAG_CAL_RUNNING_STEP_ONE
+        progress.get_srcSystem.return_value = 1
+        progress.get_srcComponent.return_value = 1
+        mock_master.recv_match.side_effect = [None, progress, None]
+        mock_conn_mgr = Mock(master=mock_master)
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time", side_effect=[0, 0, 6]):
+            success, error = commands_mgr.start_compass_calibration()
+
+        assert success is True
+        assert error == ""
 
     def test_cancel_compass_calibration_returns_clear_error_when_disconnected(self) -> None:
         """

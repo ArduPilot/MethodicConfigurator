@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -32,6 +33,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_protocols import (
     FlightControllerParamsProtocol,
     MavlinkConnection,
 )
+from ardupilot_methodic_configurator.data_model_fc_diagnostics import StatusTextAssembler, decode_status_text, message_source
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -197,6 +199,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         timeout: float = 5.0,
         *,
         capture_status_text: bool = False,
+        start_confirmation: tuple[str, Callable[[object], bool]] | None = None,
     ) -> tuple[bool, str, int | None]:
         """Send a command and also return its MAV_RESULT for behavior-specific decisions."""
         if self.master is None:
@@ -205,6 +208,9 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             return False, error_msg, None
 
         try:
+            message_types = self._prepare_command_receive(capture_status_text, start_confirmation)
+            status_assembler = StatusTextAssembler()
+            start_confirmed = False
             # Send the command
             self.master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
                 self.master.target_system,  # pyright: ignore[reportAttributeAccessIssue]
@@ -228,23 +234,27 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             while True:
                 now = time_time()
                 if failure is not None and now >= failure.grace_deadline:
-                    error_msg = failure.error_message
-                    if status_texts:
-                        error_msg = f"{error_msg}: {'; '.join(status_texts)}"
+                    error_msg = self._command_error_with_status(failure.error_message, status_texts)
                     logging_error(error_msg)
                     return False, error_msg, failure.result
                 if failure is None and now - start_time >= timeout:
                     break
                 msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                    type=["COMMAND_ACK", "STATUSTEXT"] if capture_status_text else "COMMAND_ACK", blocking=False
+                    type=message_types,
+                    blocking=False,
                 )
                 if msg is None:
                     time_sleep(0.1)  # Sleep briefly to reduce CPU usage
                     continue
                 get_message_type = getattr(msg, "get_type", None)
-                if callable(get_message_type) and get_message_type() == "STATUSTEXT":
-                    status_text = self._extract_status_text(msg)
-                    if status_text:
+                message_type = get_message_type() if callable(get_message_type) else None
+                if start_confirmation is not None and message_type == start_confirmation[0]:
+                    if failure is None and start_confirmation[1](msg):
+                        start_confirmed = True
+                    continue
+                if message_type == "STATUSTEXT":
+                    status_text = status_assembler.assemble(msg)
+                    if status_text and capture_status_text:
                         status_texts.append(status_text)
                     continue
                 if getattr(msg, "command", None) == command:
@@ -294,7 +304,11 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
                 time_sleep(0.1)  # Sleep briefly to reduce CPU usage
 
             # Timeout occurred
+            if start_confirmed:
+                logging_debug("Command start confirmed by telemetry after acknowledgment timeout")
+                return True, "", mavlink.MAV_RESULT_ACCEPTED
             error_msg = _("Command acknowledgment timeout after %(timeout).1f seconds") % {"timeout": timeout}
+            error_msg = self._command_error_with_status(error_msg, status_texts)
             logging_debug(error_msg)
             return False, error_msg, None
         except Exception as e:  # pylint: disable=broad-exception-caught
@@ -303,12 +317,56 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             return False, error_msg, None
 
     @staticmethod
+    def _command_error_with_status(error_msg: str, status_texts: list[str]) -> str:
+        """Preserve received controller diagnostics for rejected commands and missing ACKs."""
+        return f"{error_msg}: {'; '.join(status_texts)}" if status_texts else error_msg
+
+    @staticmethod
     def _extract_status_text(msg: object) -> str:
         """Decode and normalize a MAVLink STATUSTEXT payload."""
-        raw_text = getattr(msg, "text", "")
-        if isinstance(raw_text, bytes):
-            return raw_text.decode("utf-8", errors="replace").rstrip("\x00").strip()
-        return str(raw_text).rstrip("\x00").strip()
+        return decode_status_text(msg)
+
+    def _prepare_command_receive(
+        self, capture_status_text: bool, start_confirmation: tuple[str, Callable[[object], bool]] | None
+    ) -> str | list[str]:
+        """Choose the response filter once, draining old replies before a telemetry-confirmed start."""
+        message_types = ["COMMAND_ACK"]
+        if capture_status_text:
+            message_types.append("STATUSTEXT")
+        if start_confirmation is not None and self.master is not None:
+            message_types.append(start_confirmation[0])
+            for _packet in range(1000):
+                response = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                    type=message_types, blocking=False
+                )
+                if response is None:
+                    break
+        return message_types if len(message_types) > 1 else message_types[0]
+
+    def _compass_calibration_started(self, message: object) -> bool:
+        """Only active calibration telemetry from the selected controller can confirm startup."""
+        master = self.master
+        if master is None:
+            return False
+        # PyMAVLink learns the system from HEARTBEAT but leaves target_component at
+        # zero (broadcast). Discovery metadata identifies the selected autopilot.
+        info = self._connection_manager.info
+        system_id = getattr(info, "system_id", None)
+        component_id = getattr(info, "component_id", None)
+        target_system = int(system_id) if isinstance(system_id, str) and system_id else getattr(master, "target_system", None)
+        target_component = (
+            int(component_id) if isinstance(component_id, str) and component_id else getattr(master, "target_component", None)
+        )
+        source = message_source(message)
+        if source is None or not isinstance(target_system, int) or target_system <= 0 or source[0] != target_system:
+            return False
+        if isinstance(target_component, int) and target_component > 0 and source[1] != target_component:
+            return False
+        return getattr(message, "cal_status", None) in (
+            mavlink.MAG_CAL_WAITING_TO_START,
+            mavlink.MAG_CAL_RUNNING_STEP_ONE,
+            mavlink.MAG_CAL_RUNNING_STEP_TWO,
+        )
 
     def reboot_to_bootloader(self) -> tuple[bool, str]:
         """Request reboot into the bootloader and wait for its command acknowledgment."""
@@ -1151,7 +1209,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
                 "p3": 1,
             },
         )
-        success, error_msg = self.send_command_and_wait_ack(
+        success, error_msg, _result_code = self._send_command_and_wait_ack_with_result(
             mavlink.MAV_CMD_DO_START_MAG_CAL,
             param1=0,  # All compasses
             param2=1,  # Retry
@@ -1161,6 +1219,8 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             param6=0,  # unused
             param7=0,  # unused
             timeout=5.0,
+            capture_status_text=True,
+            start_confirmation=("MAG_CAL_PROGRESS", self._compass_calibration_started),
         )
         if success:
             logging_info(_("Compass calibration start command confirmed"))
@@ -1263,7 +1323,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
                     continue
 
                 if msg_type == "STATUSTEXT":
-                    status_text = getattr(msg, "text", "")
+                    status_text = self._extract_status_text(msg)
                     status_severity = getattr(msg, "severity", None)
                     compass_match = re.search(r"Mag\((\d+)\)", status_text)
                     compass_id = int(compass_match.group(1)) if compass_match else None
