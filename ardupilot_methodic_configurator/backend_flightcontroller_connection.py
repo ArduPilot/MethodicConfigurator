@@ -60,6 +60,22 @@ _KNOWN_TELEMETRY_USB_SERIAL_IDS = frozenset(
 )
 
 
+def _connection_device_key(device: str) -> str:
+    """Deduplicate connection aliases without resolving COM or network endpoints."""
+    # Windows realpath can open COM devices and time out on Bluetooth ports.
+    # COM28, com28 and \\.\COM28 identify the same endpoint without any I/O.
+    com_device = device.removeprefix("\\\\.\\").upper()
+    if com_device.startswith("COM") and com_device[3:].isdigit():
+        return com_device
+    if device.startswith(("udp", "tcp")):
+        return device
+    try:
+        return os_path.realpath(device)
+    except OSError:
+        # Inaccessible or disappearing POSIX paths must remain usable fallbacks.
+        return device
+
+
 def _serial_port_autodetect_rank(port: ListPortInfo) -> int:
     """Rank USB metadata without opening the port; larger values are tried first."""
     usb_id = (port.vid, port.pid)
@@ -864,23 +880,25 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             if connection[1] and "mavlink" in connection[1].lower()
         ]
 
-        explicit_mavlink_devices = {os_path.realpath(port.device) for port in serial_list}
+        explicit_mavlink_devices = {_connection_device_key(port.device) for port in serial_list}
         # Both discovery APIs read OS metadata without opening serial ports.
         # PySerial supplies VID/PID; PyMAVLink also finds POSIX by-id paths.
         available_ports = self._serial_port_discovery.get_available_ports()
-        usb_metadata_ranks = {os_path.realpath(port.device): _serial_port_autodetect_rank(port) for port in available_ports}
+        usb_metadata_ranks = {
+            _connection_device_key(port.device): _serial_port_autodetect_rank(port) for port in available_ports
+        }
         pymavlink_ports = mavutil.auto_detect_serial(preferred_list=preferred_ports)
-        pymavlink_detected_devices = {os_path.realpath(port.device) for port in pymavlink_ports}
+        pymavlink_detected_devices = {_connection_device_key(port.device) for port in pymavlink_ports}
         mavlink_interfaces = {
-            os_path.realpath(port.device)
+            _connection_device_key(port.device)
             for port in available_ports
             if "mavlink" in f"{port.description} {port.product} {port.interface}".casefold()
         }
-        detected_devices = {os_path.realpath(port.device) for port in serial_list}
+        detected_devices = {_connection_device_key(port.device) for port in serial_list}
         # Keep every interface and unknown device as a fallback. Deduplicate
         # only aliases of the same port, not ports with the same USB IDs.
         for port in [*pymavlink_ports, *available_ports]:
-            resolved_device = os_path.realpath(port.device)
+            resolved_device = _connection_device_key(port.device)
             if resolved_device not in detected_devices:
                 serial_list.append(mavutil.SerialPort(device=port.device, description=str(port.description)))
                 detected_devices.add(resolved_device)
@@ -890,12 +908,12 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         # Within a tier, prefer a named MAVLink interface, then the last endpoint
         # in natural port order (COM10 follows COM9).
         def candidate_rank(port: mavutil.SerialPort) -> tuple[int, bool, ListPortInfo]:
-            resolved_device = os_path.realpath(port.device)
+            resolved_device = _connection_device_key(port.device)
             rank = max(
                 usb_metadata_ranks.get(resolved_device, 0),
                 4 if resolved_device in explicit_mavlink_devices else int(resolved_device in pymavlink_detected_devices),
             )
-            return rank, resolved_device in mavlink_interfaces, ListPortInfo(port.device)
+            return rank, resolved_device in mavlink_interfaces, ListPortInfo(port.device, skip_link_detection=True)
 
         serial_list.sort(key=candidate_rank)
         return serial_list
