@@ -1,5 +1,5 @@
 """
-Normalize and assemble flight-controller STATUSTEXT diagnostics.
+Normalize flight-controller diagnostics and derive device-table rows.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -8,7 +8,10 @@ SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import re
 from time import monotonic
+
+from ardupilot_methodic_configurator.decode_devid import DeviceCategory, decode_device_id, get_device_type_name
 
 
 def status_text_bytes(message: object) -> bytes:
@@ -78,3 +81,49 @@ class StatusTextAssembler:
             return text.decode("utf-8", errors="replace").strip()
         self._pending[key] = (sequence + 1, text, now)
         return None
+
+
+def _device_category(parameter_name: str) -> DeviceCategory | None:
+    if parameter_name.startswith("COMPASS_"):
+        return "compass"
+    if parameter_name.startswith("BARO"):
+        return "baro"
+    if parameter_name.startswith("INS") and ("_ACC" in parameter_name or "_GYR" in parameter_name):
+        return "imu"
+    if parameter_name.startswith(("ARSPD", "AIRSPEED")):
+        return "airspeed"
+    return None
+
+
+def device_rows(fc_parameters: dict[str, float]) -> list[tuple[str, str, int, int, str, str]]:
+    """Derive present device names, decoded IDs and source labels without GUI I/O."""
+    rows: list[tuple[str, str, int, int, str, str]] = []
+    for parameter_name, raw_device_id in fc_parameters.items():
+        category = _device_category(parameter_name)
+        if category is None or not (
+            parameter_name.endswith("_DEVID")
+            or "_DEV_ID" in parameter_name
+            or (category == "compass" and parameter_name.startswith("COMPASS_PRIO") and parameter_name.endswith("_ID"))
+            or (category == "imu" and parameter_name.endswith("_ID"))
+        ):
+            continue
+        try:
+            device_id = int(raw_device_id)
+        except (TypeError, ValueError, OverflowError):
+            continue
+        if device_id <= 0:
+            continue
+        decoded, error = decode_device_id(device_id)
+        if error is not None or decoded is None:
+            continue
+        name = (
+            parameter_name.removesuffix("_DEVID")
+            if parameter_name.endswith("_DEVID")
+            else re.sub(r"_ID(\d*)$", r"\1", parameter_name)
+        )
+        devtype = "DRONECAN" if decoded["is_dronecan"] else get_device_type_name(decoded["devtype"], category)
+        devtype = re.sub(r"^(?:(?:DEVTYPE_?|INS_|BARO_))+", "", devtype, flags=re.IGNORECASE)
+        rows.append(
+            (name, decoded["bus_type_name"], decoded["bus"], decoded["address"], devtype, f"{parameter_name}: {device_id}")
+        )
+    return sorted(rows, key=lambda row: row[0])

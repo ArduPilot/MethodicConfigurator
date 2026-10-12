@@ -590,7 +590,124 @@ class TestWidgetFactoryMethods:
         ) as banner_window:
             parameter_editor_window.on_fc_banner_click()
 
-        banner_window.assert_called_once_with(parameter_editor_window.root, banner_text)
+        banner_window.assert_called_once_with(
+            parameter_editor_window.root,
+            banner_text,
+            parameter_editor_window.parameter_editor.get_fc_status_text.return_value,
+            parameter_editor_window.parameter_editor.fc_parameters,
+            status_text_provider=parameter_editor_window.parameter_editor.poll_fc_status_text,
+            navigation_lock=parameter_editor_window.navigation_lock,
+        )
+
+    @pytest.mark.parametrize("parent_exists", [True, False])
+    def test_diagnostics_pauses_plugin_receivers_until_closed(
+        self, parameter_editor_window: ParameterEditorWindow, parent_exists: bool
+    ) -> None:
+        """GIVEN a polling plugin, WHEN diagnostics opens, THEN polling stops and resumes only after closing."""
+        editor = parameter_editor_window
+        plugin = MagicMock(spec=["on_deactivate", "on_activate"])
+        editor.current_plugin_view = plugin
+        editor.root.winfo_exists.return_value = parent_exists
+        popup = MagicMock()
+
+        def create_banner(*_args: object, **_kwargs: object) -> MagicMock:
+            plugin.on_deactivate.assert_called_once_with()
+            return popup
+
+        def wait_for_close(_root: object) -> None:
+            plugin.on_deactivate.assert_called_once_with()
+            plugin.on_activate.assert_not_called()
+
+        editor.root.wait_window.side_effect = wait_for_close
+        with patch.object(parameter_editor_module, "FlightControllerBannerWindow", side_effect=create_banner):
+            editor.on_fc_banner_click()
+
+        editor.root.wait_window.assert_called_once_with(popup.root)
+        if parent_exists:
+            plugin.on_activate.assert_called_once_with()
+        else:
+            plugin.on_activate.assert_not_called()
+
+    def test_plugin_receiver_resumes_when_diagnostics_cannot_open(
+        self, parameter_editor_window: ParameterEditorWindow
+    ) -> None:
+        """GIVEN a polling plugin, WHEN popup creation fails, THEN plugin monitoring can continue."""
+        editor = parameter_editor_window
+        plugin = MagicMock(spec=["on_deactivate", "on_activate"])
+        editor.current_plugin_view = plugin
+        editor.root.winfo_exists.return_value = True
+        with (
+            patch.object(parameter_editor_module, "FlightControllerBannerWindow", side_effect=tk.TclError("closed")),
+            pytest.raises(tk.TclError, match="closed"),
+        ):
+            editor.on_fc_banner_click()
+
+        plugin.on_deactivate.assert_called_once_with()
+        plugin.on_activate.assert_called_once_with()
+
+    @pytest.mark.parametrize("partial_hook", ["on_suspend", "on_resume"])
+    def test_incomplete_suspend_interface_keeps_legacy_plugin_safety_cleanup(
+        self, parameter_editor_window: ParameterEditorWindow, partial_hook: str
+    ) -> None:
+        """
+        Incomplete optional hooks must not bypass existing safety cleanup.
+
+        GIVEN: A plugin with only one of the optional suspend/resume hooks
+        WHEN: Diagnostics opens and closes
+        THEN: Both legacy lifecycle hooks run and the incomplete optional hook is ignored
+        """
+        editor = parameter_editor_window
+        plugin = MagicMock(spec=["on_deactivate", "on_activate", partial_hook])
+        editor.current_plugin_view = plugin
+        editor.root.winfo_exists.return_value = True
+        with patch.object(parameter_editor_module, "FlightControllerBannerWindow"):
+            editor.on_fc_banner_click()
+        plugin.on_deactivate.assert_called_once_with()
+        plugin.on_activate.assert_called_once_with()
+        getattr(plugin, partial_hook).assert_not_called()
+
+    @pytest.mark.parametrize("plugin_replaced", [False, True])
+    def test_suspended_plugin_does_not_resume_after_parent_or_plugin_is_removed(
+        self, parameter_editor_window: ParameterEditorWindow, plugin_replaced: bool
+    ) -> None:
+        """
+        Diagnostics must not restart receivers for a removed view.
+
+        GIVEN: A plugin offering state-preserving suspend/resume hooks
+        WHEN: The parent closes or the plugin is replaced while diagnostics is open
+        THEN: The old view remains suspended and legacy lifecycle hooks do not run
+        """
+        editor = parameter_editor_window
+        plugin = MagicMock(spec=["on_suspend", "on_resume", "on_deactivate", "on_activate"])
+        editor.current_plugin_view = plugin
+        editor.root.winfo_exists.return_value = plugin_replaced
+
+        def remove_owner(_root: object) -> None:
+            if plugin_replaced:
+                editor.current_plugin_view = None
+
+        editor.root.wait_window.side_effect = remove_owner
+        with patch.object(parameter_editor_module, "FlightControllerBannerWindow"):
+            editor.on_fc_banner_click()
+        plugin.on_suspend.assert_called_once_with()
+        plugin.on_resume.assert_not_called()
+        plugin.on_deactivate.assert_not_called()
+        plugin.on_activate.assert_not_called()
+
+    def test_busy_controller_does_not_pause_plugin_or_open_diagnostics(
+        self, parameter_editor_window: ParameterEditorWindow
+    ) -> None:
+        """GIVEN an FC operation in progress, WHEN diagnostics is requested, THEN the existing owner continues."""
+        editor = parameter_editor_window
+        plugin = MagicMock(spec=["on_deactivate", "on_activate"])
+        editor.current_plugin_view = plugin
+        editor.navigation_lock.acquire(plugin)
+        with patch.object(parameter_editor_module, "FlightControllerBannerWindow") as banner_window:
+            editor.on_fc_banner_click()
+
+        banner_window.assert_not_called()
+        plugin.on_deactivate.assert_not_called()
+        plugin.on_activate.assert_not_called()
 
     def test_create_conf_widgets_configures_combobox(self, parameter_editor: MagicMock) -> None:
         editor = _create_editor(parameter_editor)

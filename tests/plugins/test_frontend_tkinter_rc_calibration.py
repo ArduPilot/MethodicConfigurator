@@ -25,6 +25,7 @@ from ardupilot_methodic_configurator.data_model_parameter_editor import Paramete
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_calibration_popup_base import CalibrationPopupBase
 from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
+from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 from ardupilot_methodic_configurator.plugins.data_model_rc_calibration import RCCalibrationDataModel
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_rc_calibration import (
     RCCalibrationPopup,
@@ -77,26 +78,38 @@ def rc_navigation_view(
         parent.destroy()
 
 
-def test_rc_monitor_stops_while_inactive_and_resumes_once(rc_navigation_view: SimpleNamespace) -> None:
+def test_rc_monitor_yields_its_timer_to_diagnostics_and_resumes_once(rc_navigation_view: SimpleNamespace) -> None:
     """
-    A receiver pause does not lose the RC monitor's state or create duplicate timers.
+    Diagnostics temporarily owns the receiver without losing the RC monitor's state.
 
-    GIVEN: An idle RC monitor with a pending telemetry callback
-    WHEN: It is deactivated and activated repeatedly
-    THEN: Its old timer is cancelled and exactly one timer resumes without staging edits
+    GIVEN an idle RC monitor with a pending telemetry callback,
+    WHEN diagnostics opens and closes,
+    THEN its timer is cancelled throughout the popup and exactly one timer resumes without staging edits.
     """
     view = rc_navigation_view.view
     initial_timer = view._timer_id
+    host = SimpleNamespace(
+        root=MagicMock(),
+        current_plugin_view=view,
+        navigation_lock=rc_navigation_view.host.navigation_lock,
+        parameter_editor=MagicMock(),
+    )
+    host.root.winfo_exists.return_value = True
     poll_calls = rc_navigation_view.controller.master.recv_match.call_count
     staged = {name: parameter.get_new_value() for name, parameter in rc_navigation_view.editor.current_step_parameters.items()}
 
-    view.on_deactivate()
-    view.on_deactivate()
+    def while_popup_open(*_args: object, **_kwargs: object) -> MagicMock:
+        assert view._timer_id is None
+        assert initial_timer not in view.tk.call("after", "info")
+        assert rc_navigation_view.controller.master.recv_match.call_count == poll_calls
+        return MagicMock()
 
-    assert view._timer_id is None
-    assert initial_timer not in view.tk.call("after", "info")
-    assert rc_navigation_view.controller.master.recv_match.call_count == poll_calls
-    view.on_activate()
+    with patch(
+        "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.FlightControllerBannerWindow",
+        side_effect=while_popup_open,
+    ):
+        ParameterEditorWindow.on_fc_banner_click(host)
+
     assert view._timer_id is not None
     assert view._timer_id != initial_timer
     resumed_timer = view._timer_id

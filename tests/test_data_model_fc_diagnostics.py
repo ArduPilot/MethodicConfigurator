@@ -72,3 +72,53 @@ def test_empty_final_chunk_completes_an_exact_multiple_of_fifty_bytes() -> None:
     assembler = diagnostics.StatusTextAssembler()
     assert assembler.assemble(MAVLink_statustext_message(4, b"A" * 50, id=42, chunk_seq=0)) is None
     assert assembler.assemble(MAVLink_statustext_message(4, b"\x00", id=42, chunk_seq=1)) == "A" * 50
+
+
+def test_device_rows_show_only_present_devices_with_formatted_names_and_types(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Present device rows omit ID suffixes and type prefixes, and skip absent IDs."""
+
+    def get_device_type_name(_devtype: int, category: str) -> str:
+        type_names = {
+            "baro": "DEVTYPE_BARO_DPS310",
+            "compass": "COMPASS_HMC5883",
+            "imu": "INS_ICM42688",
+        }
+        return type_names[category]
+
+    monkeypatch.setattr(diagnostics, "get_device_type_name", get_device_type_name)
+
+    rows = diagnostics.device_rows(
+        {
+            "BARO1_DEVID": 423425.0,
+            "BARO2_DEVID": 0,
+            "COMPASS_DEV_ID2": 423425,
+            "COMPASS_PRIO1_ID": 423425,
+            "INS_ACC2_ID": 423425,
+            "INS_GYR3_ID": 0,
+            "BATT_MONITOR": 423425,
+        }
+    )
+
+    assert [row[0] for row in rows] == ["BARO1", "COMPASS_DEV2", "COMPASS_PRIO1", "INS_ACC2"]
+    assert [row[4] for row in rows] == ["DPS310", "COMPASS_HMC5883", "COMPASS_HMC5883", "ICM42688"]
+    assert [row[5] for row in rows] == [
+        "BARO1_DEVID: 423425",
+        "COMPASS_DEV_ID2: 423425",
+        "COMPASS_PRIO1_ID: 423425",
+        "INS_ACC2_ID: 423425",
+    ]
+
+
+@pytest.mark.parametrize("parameter_name", ["INS4_ACC_ID", "INS4_GYR_ID", "INS5_ACC_ID", "INS5_GYR_ID"])
+def test_device_rows_include_fourth_and_fifth_imu(parameter_name: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    """GIVEN an extra IMU ID, WHEN diagnostics opens, THEN its device and IMU type are displayed."""
+    monkeypatch.setattr(
+        diagnostics, "get_device_type_name", lambda _devtype, category: "INS_ICM42688" if category == "imu" else "unknown"
+    )
+
+    rows = diagnostics.device_rows({parameter_name: 423425})
+
+    assert len(rows) == 1
+    assert rows[0][0] == parameter_name.removesuffix("_ID")
+    assert rows[0][4] == "ICM42688"
+    assert rows[0][5] == f"{parameter_name}: 423425"

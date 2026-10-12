@@ -692,7 +692,7 @@ def test_documentation_tooltip_stays_within_monitor_bounds() -> None:
     tooltip.tooltip.winfo_reqwidth.return_value = 80
     tooltip.tooltip.winfo_reqheight.return_value = 30
     with patch(
-        "ardupilot_methodic_configurator.frontend_tkinter_parameter_export.get_monitor_bounds",
+        "ardupilot_methodic_configurator.frontend_tkinter_show.get_monitor_bounds",
         return_value=(0, 0, 200, 100),
     ):
         tooltip.position_tooltip()
