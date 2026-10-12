@@ -2972,8 +2972,232 @@ def fixture_usb_autodetect_connection() -> Iterator[FlightControllerConnection]:
         yield connection
 
 
+@pytest.fixture(name="bluetooth_timeout_connection")
+def fixture_bluetooth_timeout_connection(
+    usb_autodetect_connection: FlightControllerConnection,
+) -> Iterator[FlightControllerConnection]:
+    """Reproduce WinError 121 on COM6 alone, allowing Cube paths to resolve."""
+    discovery = FakeSerialPortDiscovery()
+    discovery.add_port("COM6", "Standard Serial over Bluetooth link (COM6)")
+    discovery.add_port("COM27", "Cube Orange+ SLCAN (COM27)")
+    discovery.add_port("COM28", "Cube Orange+ Mavlink (COM28)")
+    for port in discovery._ports[1:]:
+        port.vid, port.pid = 0x2DAE, 0x1058
+    usb_autodetect_connection._serial_port_discovery = discovery
+    usb_autodetect_connection.discover_connections()
+    cube_ports = [mavutil.SerialPort(device=port.device, description=port.description) for port in discovery._ports[1:]]
+
+    def resolve_device(device: str) -> str:
+        """Only the unrelated Bluetooth endpoint raises the reported Windows error."""
+        if device == "COM6":
+            raise OSError(0, "The semaphore timeout period has expired", r"\\.\COM6", 121)
+        return device
+
+    with (
+        patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.os_name", "nt"),
+        patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.os_path.realpath",
+            side_effect=resolve_device,
+        ),
+        patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.mavutil.auto_detect_serial",
+            return_value=cube_ports,
+        ),
+    ):
+        yield usb_autodetect_connection
+
+
 class TestFlightControllerConnectionUsbCandidateRanking:
     """USB enumeration selects likely FCs before opening any fallback devices."""
+
+    def test_user_can_connect_to_cube_when_only_bluetooth_realpath_times_out(
+        self, bluetooth_timeout_connection: FlightControllerConnection
+    ) -> None:
+        """
+        A timeout on an unrelated Bluetooth port cannot abort automatic connection.
+
+        GIVEN: Only COM6 fails path resolution; Cube COM27 and COM28 resolve successfully
+        WHEN: The user starts automatic connection and COM28 responds
+        THEN: COM28 connects without attempting SLCAN or Bluetooth
+        """
+        # When: The Cube's MAVLink endpoint accepts the connection.
+        with patch.object(bluetooth_timeout_connection, "_register_and_try_connect", return_value="") as try_connect:
+            result = bluetooth_timeout_connection.connect(device="")
+
+        # Then: An unrelated path-resolution error cannot block the Cube.
+        assert result == ""
+        assert [attempt.kwargs["comport"].device for attempt in try_connect.call_args_list] == ["COM28"]
+
+    def test_user_can_reach_network_fallback_when_only_bluetooth_realpath_times_out(
+        self, bluetooth_timeout_connection: FlightControllerConnection
+    ) -> None:
+        """
+        A Bluetooth path-resolution timeout cannot prevent reaching a network FC.
+
+        GIVEN: COM6 would raise WinError 121 and no serial candidate provides a heartbeat
+        WHEN: The user starts automatic connection and the UDP endpoint responds
+        THEN: Serial candidates remain available and the UDP fallback connects
+        """
+        # Given: A reachable network endpoint after all serial candidates fail.
+        network_device = "udp:0.0.0.0:14550"
+        bluetooth_timeout_connection._network_ports = [network_device]
+
+        # When: Serial attempts fail, but the network connection succeeds.
+        with patch.object(
+            bluetooth_timeout_connection, "_register_and_try_connect", side_effect=["No heartbeat"] * 3 + [""]
+        ) as try_connect:
+            result = bluetooth_timeout_connection.connect(device="")
+
+        # Then: The Bluetooth endpoint does not abort serial or network fallback.
+        assert result == ""
+        assert [attempt.kwargs["comport"].device for attempt in try_connect.call_args_list] == [
+            "COM28",
+            "COM27",
+            "COM6",
+            network_device,
+        ]
+
+    @pytest.mark.parametrize("bluetooth_device", ["COM6", r"\\.\COM6"])
+    def test_user_connects_to_cube_without_resolving_bluetooth_ports(
+        self, usb_autodetect_connection: FlightControllerConnection, bluetooth_device: str
+    ) -> None:
+        """
+        A Bluetooth path-resolution timeout cannot prevent connecting to a Cube.
+
+        GIVEN: Bluetooth COM6 and Cube Orange+ SLCAN and MAVLink interfaces
+        WHEN: Windows realpath would raise a semaphore timeout for COM devices
+        THEN: Enumeration retains all ports and connects only to the MAVLink interface
+        """
+        # Given: The user's ports, including the unrelated Bluetooth endpoint.
+        discovery = FakeSerialPortDiscovery()
+        discovery.add_port(bluetooth_device, "Standard Serial over Bluetooth link")
+        discovery.add_port("COM27", "Cube Orange+ SLCAN")
+        discovery.add_port("COM28", "Cube Orange+ Mavlink")
+        for port in discovery._ports[1:]:
+            port.vid, port.pid = 0x2DAE, 0x1058
+        usb_autodetect_connection._serial_port_discovery = discovery
+        usb_autodetect_connection.discover_connections()
+        pymavlink_ports = [mavutil.SerialPort(device=port.device, description=port.description) for port in discovery._ports]
+
+        # When: Resolve no COM paths, even if Windows would fail to resolve them.
+        with (
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.os_name", "nt"),
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_connection.os_path.realpath",
+                side_effect=OSError(121, "The semaphore timeout period has expired", bluetooth_device),
+            ) as realpath,
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_connection.mavutil.auto_detect_serial",
+                return_value=pymavlink_ports,
+            ),
+            patch.object(usb_autodetect_connection, "_register_and_try_connect", return_value="") as try_connect,
+        ):
+            ports = usb_autodetect_connection._auto_detect_serial()
+            result = usb_autodetect_connection.connect(device="")
+
+        # Then: Keep the fallback but never probe it when the Cube responds.
+        assert [port.device for port in reversed(ports)] == ["COM28", "COM27", bluetooth_device]
+        assert result == ""
+        assert [attempt.kwargs["comport"].device for attempt in try_connect.call_args_list] == ["COM28"]
+        realpath.assert_not_called()
+
+    @pytest.mark.parametrize("pymavlink_device", ["com28", r"\\.\COM28", r"\\.\com28"])
+    def test_user_sees_one_candidate_for_windows_com_aliases(
+        self, usb_autodetect_connection: FlightControllerConnection, pymavlink_device: str
+    ) -> None:
+        """
+        Equivalent COM spellings retain the same USB metadata and ranking.
+
+        GIVEN: PyMAVLink and PySerial report different spellings of the same COM port
+        WHEN: The application merges candidates
+        THEN: The known FC is retained once and ranks ahead of a telemetry adapter
+        """
+        # Given: Generic descriptions require USB metadata to recognize the FC.
+        pymavlink_ports = [
+            mavutil.SerialPort(device=pymavlink_device, description="USB Serial Device"),
+            mavutil.SerialPort(device="COM7", description="USB Serial Port"),
+        ]
+        discovery = FakeSerialPortDiscovery()
+        discovery.add_port("COM28", "USB Serial Device")
+        discovery._ports[0].vid, discovery._ports[0].pid = 0x2DAE, 0x1058
+        discovery.add_port("COM7", "USB Serial Port")
+        discovery._ports[1].vid, discovery._ports[1].pid = 0x0403, 0x6001
+        usb_autodetect_connection._serial_port_discovery = discovery
+
+        # When: Merge without accessing the COM devices as filesystem paths.
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_connection.mavutil.auto_detect_serial",
+                return_value=pymavlink_ports,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_connection.os_path.realpath",
+                side_effect=OSError("COM paths must not be resolved"),
+            ) as realpath,
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_connection.os_path.islink",
+                side_effect=AssertionError("COM paths must not be checked for symbolic links"),
+            ) as islink,
+        ):
+            ports = usb_autodetect_connection._auto_detect_serial()
+
+        # Then: The alias gets the FC's metadata rather than becoming a duplicate.
+        assert [port.device for port in reversed(ports)] == [pymavlink_device, "COM7"]
+        realpath.assert_not_called()
+        islink.assert_not_called()
+
+    @pytest.mark.parametrize("resolution_error", [OSError("Device unavailable"), PermissionError("Access denied")])
+    def test_user_can_still_try_a_device_when_its_filesystem_path_cannot_be_resolved(
+        self, usb_autodetect_connection: FlightControllerConnection, resolution_error: OSError
+    ) -> None:
+        """
+        Unresolvable filesystem paths remain available for connection attempts.
+
+        GIVEN: A discovered serial device whose path cannot be resolved
+        WHEN: The application enumerates candidates
+        THEN: The original path remains a candidate instead of aborting discovery
+        """
+        # Given: A filesystem-backed serial endpoint with inaccessible metadata.
+        discovery = FakeSerialPortDiscovery()
+        discovery.add_port("/dev/ttyACM0", "CubePilot MAVLink")
+        usb_autodetect_connection._serial_port_discovery = discovery
+        usb_autodetect_connection.discover_connections()
+
+        # When: Path resolution fails.
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.os_path.realpath",
+            side_effect=resolution_error,
+        ):
+            ports = usb_autodetect_connection._auto_detect_serial()
+
+        # Then: Connection can still attempt the original endpoint.
+        assert [port.device for port in ports] == ["/dev/ttyACM0"]
+
+    @pytest.mark.parametrize("device", ["udp:127.0.0.1:14550", "tcp:127.0.0.1:5760"])
+    def test_user_keeps_network_candidates_without_filesystem_resolution(
+        self, usb_autodetect_connection: FlightControllerConnection, device: str
+    ) -> None:
+        """
+        Network connection strings are identities, not filesystem paths.
+
+        GIVEN: An explicitly described MAVLink network connection
+        WHEN: Serial and network candidates are merged
+        THEN: The network endpoint is preserved without filesystem access
+        """
+        # Given: No serial devices and one explicitly described network endpoint.
+        usb_autodetect_connection._serial_port_discovery = FakeSerialPortDiscovery()
+        usb_autodetect_connection._connection_tuples = [(device, "MAVLink")]
+
+        # When: Enumerate with filesystem resolution unavailable.
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.os_path.realpath",
+            side_effect=OSError("Network connections are not filesystem paths"),
+        ) as realpath:
+            ports = usb_autodetect_connection._auto_detect_serial()
+
+        # Then: Keep the exact connection string.
+        assert [port.device for port in ports] == [device]
+        realpath.assert_not_called()
 
     def test_dual_cdc_dronecan_and_mavlink_interfaces_are_preserved(
         self, usb_autodetect_connection: FlightControllerConnection
