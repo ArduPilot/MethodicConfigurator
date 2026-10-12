@@ -302,6 +302,78 @@ def test_serial_monitor_ignores_unavailable_port_inventory() -> None:
     controller.disconnect.assert_not_called()
 
 
+def test_serial_monitor_detects_removed_board_with_unresolvable_bluetooth_port() -> None:
+    """
+    An unrelated Bluetooth COM port cannot hide a removed flight controller.
+
+    GIVEN: The connected board's COM28 is absent while Bluetooth COM6 remains listed.
+    WHEN: Resolving COM6 raises the Windows path-resolution error.
+    THEN: The monitor disconnects the stale board instead of ignoring the failed scan.
+    """
+    controller = MagicMock()
+    controller.master = object()
+    controller.comport_device = "COM28"
+    controller.get_serial_ports.return_value = [
+        SimpleNamespace(device="COM6", description="Standard Serial over Bluetooth link")
+    ]
+
+    with (
+        patch.object(
+            firmware_upload,
+            "realpath",
+            side_effect=OSError("The semaphore timeout period has expired"),
+            create=True,
+        ) as firmware_realpath,
+        patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.os_path.realpath",
+            side_effect=OSError("The semaphore timeout period has expired"),
+        ) as connection_realpath,
+    ):
+        removed = FirmwareUploadService.disconnect_if_serial_port_removed(controller)
+
+    assert removed
+    controller.disconnect.assert_called_once_with()
+    firmware_realpath.assert_not_called()
+    connection_realpath.assert_not_called()
+
+
+@pytest.mark.parametrize("resolution_error", [OSError("Device unavailable"), PermissionError("Access denied")])
+@pytest.mark.parametrize("connected_via_alias", [True, False])
+def test_serial_monitor_preserves_present_board_when_serial_alias_cannot_be_resolved(
+    resolution_error: OSError, connected_via_alias: bool
+) -> None:
+    """
+    An unresolved filesystem alias does not prove that a connected board was removed.
+
+    GIVEN: A present board reported by its by-id alias and canonical tty path.
+    WHEN: Resolving the alias fails on either the connection or inventory side.
+    THEN: The monitor preserves the connection so a later idle tick can retry.
+    """
+    # Given: The connection and inventory use different names for the same board.
+    alias = "/dev/serial/by-id/usb-CubePilot-if00"
+    canonical = "/dev/ttyACM0"
+    controller = MagicMock()
+    controller.master = object()
+    controller.comport_device = alias if connected_via_alias else canonical
+    controller.get_serial_ports.return_value = [SimpleNamespace(device=canonical if connected_via_alias else alias)]
+
+    def resolve_device(device: str) -> str:
+        if device == alias:
+            raise resolution_error
+        return device
+
+    # When: The board's alias cannot be resolved.
+    with patch(
+        "ardupilot_methodic_configurator.backend_flightcontroller_connection.os_path.realpath",
+        side_effect=resolve_device,
+    ):
+        removed = FirmwareUploadService.disconnect_if_serial_port_removed(controller)
+
+    # Then: Uncertain identity must not be treated as confirmed removal.
+    assert not removed
+    controller.disconnect.assert_not_called()
+
+
 @pytest.mark.parametrize("board_id", ["unknown", -1])
 def test_board_identity_is_unavailable_for_invalid_id(board_id: object) -> None:
     """
