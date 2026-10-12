@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import contextlib
+from collections import deque
 from collections.abc import Callable, Sequence
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -18,6 +19,7 @@ from os import name as os_name
 from os import path as os_path
 from os import readlink as os_readlink
 from sys import platform as sys_platform
+from time import monotonic
 from time import sleep as time_sleep
 from time import time as time_time
 from typing import TYPE_CHECKING, Any, ClassVar, NoReturn, Optional, Union, cast, no_type_check
@@ -38,6 +40,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_factory_serial imp
     SerialPortDiscovery,
     SystemSerialPortDiscovery,
 )
+from ardupilot_methodic_configurator.data_model_fc_diagnostics import StatusTextAssembler, message_source
 from ardupilot_methodic_configurator.data_model_fc_ids import VID_PID_PRODUCT_DICT, VID_VENDOR_DICT
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
@@ -131,6 +134,7 @@ class FakeSerialForTests:
 
 
 DEFAULT_BAUDRATE: int = 115200
+FC_STATUS_TEXT_BUFFER_LIMIT = 100
 DEVICE_FC_PARAM_FROM_FILE: str = "file"  # Special device name to simulate FC parameters from params.param file
 # https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_SerialManager/AP_SerialManager.cpp#L741C1-L757C32
 SUPPORTED_BAUDRATES: list[str] = [
@@ -212,11 +216,77 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             mavlink_connection_factory or SystemMavlinkConnectionFactory()
         )
         self._banner_text_buffer: list[str] = []
+        self._status_text_buffer: deque[str] = deque(maxlen=FC_STATUS_TEXT_BUFFER_LIMIT)
+        self._status_text_assembler = StatusTextAssembler()
+        self._receiving_banner = False
 
     @property
     def banner_text_buffer(self) -> list[str]:
-        """Return the most recently received flight-controller banner text."""
-        return self._banner_text_buffer[:]
+        """Return startup banner text from the flight controller."""
+        return list(self._banner_text_buffer)
+
+    @property
+    def status_text_buffer(self) -> list[str]:
+        """Return the latest runtime STATUSTEXT messages."""
+        return [text for text in self._status_text_buffer if text not in self._banner_text_buffer]
+
+    def append_status_text(self, text: str) -> None:
+        """Retain a received STATUSTEXT message for the flight-controller banner window."""
+        status_text = text.strip()
+        if not status_text:
+            return
+        if self._receiving_banner:
+            if status_text not in self._banner_text_buffer:
+                self._banner_text_buffer.append(status_text)
+            self._status_text_buffer = deque(
+                (text for text in self._status_text_buffer if text != status_text), maxlen=FC_STATUS_TEXT_BUFFER_LIMIT
+            )
+            return
+        if status_text in self._banner_text_buffer:
+            return
+        self._status_text_buffer.append(status_text)
+
+    def poll_status_text(self) -> list[str]:
+        """Read a bounded batch while the diagnostics UI exclusively owns the idle connection."""
+        deadline = monotonic() + 0.02
+        try:
+            for _packet in range(1000):
+                if self.master is None or monotonic() >= deadline:
+                    break
+                if self.master.recv_match(blocking=False) is None:  # pyright: ignore[reportAttributeAccessIssue]
+                    break
+        except (OSError, SerialException) as exc:
+            logging_debug("Failed to read flight-controller diagnostics: %s", exc)
+        return self.status_text_buffer
+
+    def _register_status_text_hook(self, master: object) -> None:
+        """Register a PyMAVLink message hook to capture STATUSTEXT before type filtering."""
+        message_hooks = getattr(master, "message_hooks", None)
+        if isinstance(message_hooks, list) and self._capture_status_text not in message_hooks:
+            message_hooks.append(self._capture_status_text)
+
+    def _capture_status_text(self, master: object, message: object) -> None:
+        """Capture STATUSTEXT messages whenever PyMAVLink parses an incoming packet."""
+        get_message_type = getattr(message, "get_type", None)
+        if not callable(get_message_type) or get_message_type() != "STATUSTEXT":
+            return
+        source = message_source(message)
+        target_system = int(self.info.system_id) if self.info.system_id else getattr(master, "target_system", None)
+        target_component = int(self.info.component_id) if self.info.component_id else getattr(master, "target_component", None)
+        if isinstance(target_system, int) and target_system > 0 and (source is None or source[0] != target_system):
+            return
+        if isinstance(target_component, int) and target_component > 0 and (source is None or source[1] != target_component):
+            return
+        status_text = self._status_text_assembler.assemble(message)
+        if status_text is not None:
+            self.append_status_text(status_text)
+
+    def _clear_diagnostics(self) -> None:
+        """Reset complete and unfinished diagnostics at connection boundaries."""
+        self._banner_text_buffer.clear()
+        self._status_text_buffer.clear()
+        self._status_text_assembler.clear()
+        self._receiving_banner = False
 
     def discover_connections(
         self,
@@ -296,7 +366,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             with contextlib.suppress(Exception):
                 self.master.close()  # pyright: ignore[reportAttributeAccessIssue]
             self.master = None
-        self._banner_text_buffer.clear()
+        self._clear_diagnostics()
         self.info.reset()
 
     def add_connection(self, connection_string: str) -> bool:
@@ -391,7 +461,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
         # Always clear cached metadata before attempting a new connection so UI
         # components never display stale data while we probe ports.
-        self._banner_text_buffer.clear()
+        self._clear_diagnostics()
         self.info.reset()
 
         if device:
@@ -550,6 +620,8 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             )
             self.info.set_autopilot(m.autopilot)
             if self.info.is_supported:
+                # Discovery can encounter several vehicles before selecting this one.
+                self._clear_diagnostics()
                 msg = _("Autopilot type {self.info.autopilot}")
                 logging_info(msg.format(**locals()))
                 self.info.set_type(m.type)
@@ -620,21 +692,21 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
         """
         start_time = time_time()
-        banner_msgs: list[str] = []
-        while self.master:
-            msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                type="STATUSTEXT", blocking=False
-            )
-            if msg:
-                self._banner_text_buffer.append(msg.text)
-                if banner_msgs:
-                    banner_msgs.append(msg.text)
-                else:
-                    banner_msgs = [msg.text]
-            time_sleep(0.1)  # Sleep briefly to reduce CPU usage
-            if time_time() - start_time > self.BANNER_RECEIVE_TIMEOUT:
-                break  # Exit the loop if timeout elapsed
-        return banner_msgs
+        self._receiving_banner = True
+        try:
+            while self.master:
+                # The packet hook assembles and routes complete banner messages.
+                while (
+                    self.master.recv_match(type="STATUSTEXT", blocking=False)  # pyright: ignore[reportAttributeAccessIssue]
+                    is not None
+                ):
+                    pass
+                time_sleep(0.1)
+                if time_time() - start_time > self.BANNER_RECEIVE_TIMEOUT:
+                    break
+        finally:
+            self._receiving_banner = False
+        return self.banner_text_buffer
 
     def _request_message(self, message_id: int) -> None:
         """
@@ -995,6 +1067,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                 if not self.master:
                     msg = f"Failed to create mavlink connect to {comport.device}"
                     raise ConnectionError(msg)
+                self._register_status_text_hook(self.master)
                 detected_vehicles = self._detect_vehicles_from_heartbeats(timeout, reconnecting)
                 if not detected_vehicles:
                     error = self._select_supported_autopilot(detected_vehicles)
@@ -1083,7 +1156,9 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
         """
         self.master = master
+        if master is not None:
+            self._register_status_text_hook(master)
         # If setting to None, also clear related state
         if master is None:
             self.comport = None
-            self._banner_text_buffer.clear()
+            self._clear_diagnostics()

@@ -25,6 +25,7 @@ from ardupilot_methodic_configurator.data_model_parameter_editor import (
     ParameterValueUpdateStatus,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
+from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 from ardupilot_methodic_configurator.plugins.data_model_ahrs_orientation import (
     AhrsOrientationDataModel,
     AhrsOrientationEstimate,
@@ -56,15 +57,16 @@ def diagnostics_orientation_view(tk_root) -> Generator[SimpleNamespace, None, No
         parent.destroy()
 
 
-def test_temporary_pause_preserves_orientation_poses_and_requires_fresh_imu(
-    diagnostics_orientation_view: SimpleNamespace,
+@pytest.mark.parametrize("popup_fails", [False, True])
+def test_diagnostics_preserves_captured_orientation_poses_and_requires_fresh_imu(
+    diagnostics_orientation_view: SimpleNamespace, popup_fails: bool
 ) -> None:
     """
-    A temporary receiver pause preserves a partially completed orientation workflow.
+    Pausing for diagnostics preserves a partially completed orientation workflow.
 
-    GIVEN: An orientation wizard with two captured poses
-    WHEN: Its telemetry receiver is suspended and resumed
-    THEN: Samples and progress remain intact and capture waits for fresh IMU telemetry
+    GIVEN an orientation wizard with two captured poses,
+    WHEN diagnostics closes normally or fails to open,
+    THEN samples and progress remain intact and capture waits for fresh IMU telemetry.
     """
     view = diagnostics_orientation_view.view
     model = diagnostics_orientation_view.model
@@ -77,17 +79,30 @@ def test_temporary_pause_preserves_orientation_poses_and_requires_fresh_imu(
     samples = dict(model._samples)
     instruction = view._wizard_instruction_var.get()
 
-    view.on_suspend()
+    def while_popup_open(*_args: object, **_kwargs: object) -> MagicMock:
+        assert view._imu_poll_job is None
+        assert initial_timer not in view.tk.call("after", "info")
+        if popup_fails:
+            error = "popup unavailable"
+            raise RuntimeError(error)
+        return MagicMock()
 
-    assert view._imu_poll_job is None
-    assert initial_timer not in view.tk.call("after", "info")
+    with patch(
+        "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.FlightControllerBannerWindow",
+        side_effect=while_popup_open,
+    ):
+        if popup_fails:
+            with pytest.raises(RuntimeError, match="popup unavailable"):
+                ParameterEditorWindow.on_fc_banner_click(diagnostics_orientation_view.host)
+        else:
+            ParameterEditorWindow.on_fc_banner_click(diagnostics_orientation_view.host)
+
     assert view._wizard_active
     assert view._step_index == 2
     assert model._samples == samples
     assert view._wizard_instruction_var.get() == instruction
     assert view._latest_imu is None
     assert str(view._continue_btn.cget("state")) == "disabled"
-    view.on_resume()
     assert view._imu_poll_job is not None
     resumed_timer = view._imu_poll_job
     view.on_resume()
@@ -98,24 +113,26 @@ def test_temporary_pause_preserves_orientation_poses_and_requires_fresh_imu(
     assert model.has_all_required_samples()
 
 
-def test_resuming_telemetry_does_not_repeat_orientation_prerequisite_errors(
+def test_closing_diagnostics_does_not_repeat_orientation_prerequisite_errors(
     diagnostics_orientation_view: SimpleNamespace,
 ) -> None:
     """
-    Resuming monitoring is not another attempt to start orientation detection.
+    A diagnostics round-trip is not another attempt to start orientation detection.
 
-    GIVEN: An orientation wizard blocked by unsupported prerequisites
-    WHEN: Its telemetry receiver is suspended and resumed
-    THEN: Polling resumes without restarting detection or showing the same error again
+    GIVEN an orientation wizard blocked by unsupported prerequisites,
+    WHEN diagnostics opens and closes,
+    THEN it resumes polling without restarting detection or showing the same error again.
     """
     context = diagnostics_orientation_view
     context.model.flight_controller.fc_parameters = {"AHRS_ORIENTATION": 101.0}
-    with patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_ahrs_orientation.showerror") as show_error:
+    with (
+        patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_ahrs_orientation.showerror") as show_error,
+        patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.FlightControllerBannerWindow"),
+    ):
         context.view.on_activate()
         show_error.assert_called_once()
         show_error.reset_mock()
-        context.view.on_suspend()
-        context.view.on_resume()
+        ParameterEditorWindow.on_fc_banner_click(context.host)
         show_error.assert_not_called()
     assert not context.view._wizard_active
     assert context.view._imu_poll_job is not None

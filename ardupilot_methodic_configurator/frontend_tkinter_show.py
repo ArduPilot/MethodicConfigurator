@@ -518,6 +518,20 @@ def calculate_tooltip_position(  # noqa: PLR0913, PLR0917 # pylint: disable=too-
     return x, y
 
 
+def position_tooltip_at_pointer(widget: tk.Widget, tooltip: tk.Toplevel | None) -> None:
+    """Place a tooltip beside the pointer while keeping it inside the active monitor."""
+    if tooltip is None:
+        return
+    try:
+        tooltip.update_idletasks()
+        left, top, right, bottom = get_monitor_bounds(widget.winfo_toplevel())
+        x = max(left, min(widget.winfo_pointerx() + 12, right - tooltip.winfo_reqwidth()))
+        y = max(top, min(widget.winfo_pointery() + 12, bottom - tooltip.winfo_reqheight()))
+        tooltip.geometry(f"+{x}+{y}")
+    except tk.TclError:
+        pass
+
+
 class Tooltip:
     """
     A tooltip class for displaying tooltips on widgets.

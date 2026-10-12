@@ -1424,48 +1424,21 @@ class TestFlightControllerConnectionBannerMethods:
         connection._request_banner()  # Must not raise
 
     def test_receive_banner_text_collects_statustext_messages(self) -> None:
-        """
-        _receive_banner_text collects STATUS_TEXT messages until timeout.
-
-        GIVEN: A connection with a mock master that returns STATUS_TEXT messages
-        WHEN: _receive_banner_text() is called
-        THEN: All returned STATUS_TEXT text values should be collected in a list
-        AND: The list should be returned after timeout
-        """
+        """GIVEN banner packets, WHEN received, THEN complete text appears only in the banner."""
         connection = FlightControllerConnection(info=FlightControllerInfo())
-        mock_master = Mock()
-
-        msg1 = Mock()
-        msg1.text = "ArduCopter V4.5.0"
-        msg2 = Mock()
-        msg2.text = "ChibiOS: abc1234"
-
-        call_count = 0
-
-        def recv_match_side_effect(**_kwargs) -> Mock | None:
-            nonlocal call_count
-            call_count += 1
-            if call_count == 1:
-                return msg1
-            if call_count == 2:
-                return msg2
-            return None
-
-        mock_master.recv_match = recv_match_side_effect
-        connection.master = mock_master
-
-        start = real_time()
+        master = FakeMavlinkConnectionFactory().create("fake", DEFAULT_BAUDRATE)
+        connection.set_master_for_testing(master)
+        for text in ("ArduCopter V4.5.0", "ChibiOS: abc1234"):
+            message = Mock(text=text)
+            message.get_type.return_value = "STATUSTEXT"
+            master.add_message(message)
         with (
-            patch(
-                "ardupilot_methodic_configurator.backend_flightcontroller_connection.time_time",
-                side_effect=[start, start, start, start + 9999],
-            ),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.time_time", side_effect=[0, 0, 2]),
             patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.time_sleep"),
         ):
-            banner_msgs = connection._receive_banner_text()
-
-        assert "ArduCopter V4.5.0" in banner_msgs
-        assert "ChibiOS: abc1234" in banner_msgs
+            banner = connection._receive_banner_text()
+        assert banner == ["ArduCopter V4.5.0", "ChibiOS: abc1234"]
+        assert connection.status_text_buffer == []
 
     def test_receive_banner_text_returns_empty_list_without_master(self) -> None:
         """
@@ -1479,34 +1452,6 @@ class TestFlightControllerConnectionBannerMethods:
         assert connection.master is None
         result = connection._receive_banner_text()
         assert not result
-
-    def test_receive_banner_text_retains_banner_without_reset_capture(self) -> None:
-        """The latest banner is retained even when no reset capture is active."""
-        connection = FlightControllerConnection(info=FlightControllerInfo())
-        mock_master = Mock()
-        msg = Mock()
-        msg.text = "ArduCopter V4.5.0"
-        call_count = 0
-
-        def recv_match_side_effect(**_kwargs) -> Mock | None:
-            nonlocal call_count
-            call_count += 1
-            return msg if call_count == 1 else None
-
-        mock_master.recv_match = recv_match_side_effect
-        connection.master = mock_master
-
-        start = real_time()
-        with (
-            patch(
-                "ardupilot_methodic_configurator.backend_flightcontroller_connection.time_time",
-                side_effect=[start, start, start, start + 9999],
-            ),
-            patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.time_sleep"),
-        ):
-            connection._receive_banner_text()
-
-        assert connection.banner_text_buffer == ["ArduCopter V4.5.0"]
 
     def test_request_message_calls_command_long_send_when_master_is_set(self) -> None:
         """
@@ -2172,6 +2117,27 @@ class TestFlightControllerConnectionRetry:
         assert result == "No MAVLink heartbeat received, connection failed."
         master.close.assert_called_once()
         assert connection.master is None
+
+    def test_create_connection_registers_status_text_capture_hook(self) -> None:
+        """The production connection path installs the STATUSTEXT packet hook."""
+        master = Mock()
+        master.message_hooks = []
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+        connection.comport = mavutil.SerialPort(device="/dev/ttyACM0", description="Test")
+
+        with (
+            patch.object(connection, "_create_mavlink_connection", return_value=master),
+            patch.object(connection, "_detect_vehicles_from_heartbeats", return_value={(1, 1): Mock()}),
+            patch.object(connection, "_select_supported_autopilot", return_value=""),
+            patch.object(connection, "_retrieve_autopilot_version_and_banner", return_value=""),
+        ):
+            result = connection.create_connection_with_retry(progress_callback=None, retries=1, timeout=1)
+
+        assert result == ""
+        assert connection._capture_status_text in master.message_hooks
 
     def test_create_connection_with_retry_raises_connection_error_when_master_is_none(self) -> None:
         """
@@ -3502,6 +3468,28 @@ def test_populate_flight_controller_info_stores_mavlink_uid2() -> None:
     connection._populate_flight_controller_info(message)
 
     assert info.hw_unique_id == "0x3D002C000651333230363332000000000000"
+
+
+def test_status_text_hook_captures_packets_discarded_by_type_filter_and_keeps_latest_100() -> None:
+    """Capture each parsed STATUSTEXT even while recv_match waits for another type."""
+    connection = FlightControllerConnection(info=FlightControllerInfo())
+    fake_factory = FakeMavlinkConnectionFactory()
+    master = fake_factory.create(device="fake", baudrate=DEFAULT_BAUDRATE)
+    assert master is not None
+    connection.set_master_for_testing(master)
+
+    for index in range(101):
+        status_text = Mock()
+        status_text.get_type.return_value = "STATUSTEXT"
+        status_text.text = f"status {index}".encode() + b"\x00"
+        master.add_message(status_text)
+
+    heartbeat = Mock()
+    heartbeat.get_type.return_value = "HEARTBEAT"
+    master.add_message(heartbeat)
+
+    assert master.recv_match(type="HEARTBEAT", blocking=False) is heartbeat
+    assert connection.status_text_buffer == [f"status {index}" for index in range(1, 101)]
 
 
 if __name__ == "__main__":

@@ -250,6 +250,14 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         """Return the latest flight-controller banner text."""
         return self._flight_controller.banner_text_buffer
 
+    def get_fc_status_text(self) -> list[str]:
+        """Return the latest flight-controller STATUSTEXT messages."""
+        return self._flight_controller.status_text_buffer
+
+    def poll_fc_status_text(self) -> list[str]:
+        """Refresh diagnostics while the modal diagnostics view owns the connection."""
+        return self._flight_controller.poll_status_text()
+
     @property
     def fc_parameters(self) -> dict[str, float]:
         return (

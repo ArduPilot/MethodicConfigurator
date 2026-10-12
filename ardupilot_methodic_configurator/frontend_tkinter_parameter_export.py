@@ -42,7 +42,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_application impo
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_application import (
     create_argument_parser as create_parameter_application_argument_parser,
 )
-from ardupilot_methodic_configurator.frontend_tkinter_show import Tooltip, get_monitor_bounds, show_tooltip
+from ardupilot_methodic_configurator.frontend_tkinter_show import Tooltip, position_tooltip_at_pointer, show_tooltip
 
 # pylint: enable=wrong-import-position
 
@@ -62,13 +62,7 @@ class _ParameterTreeTooltip(Tooltip):
     """Show parameter documentation beside the hovered Treeview cell."""
 
     def position_tooltip(self) -> None:
-        if self.tooltip is None:
-            return
-        self.tooltip.update_idletasks()
-        left, top, right, bottom = get_monitor_bounds(self.widget.winfo_toplevel())
-        x = max(left, min(self.widget.winfo_pointerx() + 12, right - self.tooltip.winfo_reqwidth()))
-        y = max(top, min(self.widget.winfo_pointery() + 12, bottom - self.tooltip.winfo_reqheight()))
-        self.tooltip.geometry(f"+{x}+{y}")
+        position_tooltip_at_pointer(self.widget, self.tooltip)
 
 
 class ParameterExportWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes

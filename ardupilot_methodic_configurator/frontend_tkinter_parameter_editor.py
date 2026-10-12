@@ -1738,10 +1738,43 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         download_window.set_closed_callback(lambda: setattr(self, "_file_browser_window", None))
 
     def on_fc_banner_click(self) -> None:
-        """Display the latest flight-controller banner."""
+        """
+        Display diagnostics with plugin receivers paused until the popup closes.
+
+        Prefer paired on_suspend/on_resume hooks for state-preserving pauses.
+        Legacy views use their hide/show hooks, including the motor-test safety stop.
+        """
         if self.navigation_lock.locked:
             return
-        FlightControllerBannerWindow(self.root, self.parameter_editor.get_fc_banner_text())
+        plugin_view = self.current_plugin_view
+        resume_plugin: Callable[[], object] | None = None
+        try:
+            if plugin_view is not None:
+                suspend = getattr(plugin_view, "on_suspend", None)
+                resume = getattr(plugin_view, "on_resume", None)
+                if callable(suspend) and callable(resume):
+                    resume_plugin = resume
+                    suspend()
+                elif hasattr(plugin_view, "on_deactivate") and hasattr(plugin_view, "on_activate"):
+                    resume_plugin = plugin_view.on_activate
+                    plugin_view.on_deactivate()
+            banner_window = FlightControllerBannerWindow(
+                self.root,
+                self.parameter_editor.get_fc_banner_text(),
+                self.parameter_editor.get_fc_status_text(),
+                self.parameter_editor.fc_parameters,
+                status_text_provider=self.parameter_editor.poll_fc_status_text,
+                navigation_lock=self.navigation_lock,
+            )
+            self.root.wait_window(banner_window.root)
+        finally:
+            if (
+                plugin_view is not None
+                and resume_plugin is not None
+                and self.current_plugin_view is plugin_view
+                and self.root.winfo_exists()
+            ):
+                resume_plugin()
 
     def on_zip_vehicle_for_forum_help_click(self) -> None:
         """Handle the zip vehicle for forum help button click."""
