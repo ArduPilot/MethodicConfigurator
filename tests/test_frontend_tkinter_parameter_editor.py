@@ -2382,6 +2382,86 @@ class TestPluginLayoutLifecycle:
 class TestPluginLayoutRebuild:
     """Cover the layout rebuild logic for each placement."""
 
+    @pytest.mark.parametrize("queued_refit", [False, True], ids=["no-refit", "queued-refit"])
+    def test_user_can_read_parameters_after_a_plugin_activation_dialog(  # noqa: PLR0915
+        self, parameter_editor_window: ParameterEditorWindow, root: tk.Tk, queued_refit: bool
+    ) -> None:
+        """
+        A modal prerequisite warning must not collapse the adjacent parameter pane.
+
+        GIVEN: A left AHRS assistant whose prerequisites fail during activation
+        WHEN: Its real modal Tk warning runs a nested event loop while layout is rebuilt
+        THEN: Both panes and the navigation remain usable, including on a revisit
+        """
+        editor = parameter_editor_window
+        window = tk.Toplevel(root)
+        window.geometry("990x600+0+0")
+        editor.root = window
+        editor.main_frame = ttk.Frame(window)
+        editor.main_frame.place(width=990, height=600)
+        editor.parameter_area_container = ttk.Frame(editor.main_frame)
+        editor.parameter_area_container.pack(fill="both", expand=True)
+        buttons = ttk.Frame(editor.main_frame)
+        buttons.pack(side="bottom", fill="x")
+        ttk.Button(buttons, text="Skip").pack()
+        cast("MagicMock", editor.parameter_editor).current_step_parameters = {}
+        model = MagicMock(spec=AhrsOrientationDataModel)
+        model.get_required_steps.return_value = ("LEVEL", "NOSE DOWN", "RIGHT")
+        model.is_connected.return_value = True
+        model.validate_detection_prerequisites.return_value = (False, "IMU data unavailable")
+        cast("MagicMock", editor.parameter_editor).create_plugin_data_model.return_value = model
+        registry = PluginFactory()
+        registry.register(
+            PLUGIN_AHRS_ORIENTATION,
+            lambda parent, model, window: AhrsOrientationView(
+                parent, cast("AhrsOrientationDataModel", model), cast("BaseWindow", window)
+            ),
+        )
+
+        def show_modal_warning(title: str, message: str) -> None:
+            # A Tk modal dialog is portable; Windows' native messagebox cannot
+            # be dismissed through Tk. This still runs a real nested wait loop.
+            dialog = tk.Toplevel(window)
+            dialog.title(title)
+            dialog.transient(window)
+            ttk.Label(dialog, text=message).pack()
+            ttk.Button(dialog, text="OK", command=dialog.destroy).pack()
+            dialog.grab_set()
+            dialog.after(20, dialog.destroy)
+            dialog.wait_window()
+
+        try:
+            root.update_idletasks()
+            editor._bind_parameter_layout_events()
+            with (
+                patch.object(parameter_editor_module, "plugin_factory", registry),
+                patch.object(AhrsOrientationView, "_start_imu_polling"),
+                patch(
+                    "ardupilot_methodic_configurator.plugins.frontend_tkinter_ahrs_orientation.showerror",
+                    side_effect=show_modal_warning,
+                ) as warning,
+            ):
+                for _ in range(2):
+                    if queued_refit:
+                        editor._on_main_frame_resize(tk.Event())
+                    editor._rebuild_plugin_layout({"name": PLUGIN_AHRS_ORIENTATION, "placement": "left"})
+                    editor.parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="normal")
+                    editor._resize_parameter_area_to_fit()
+                    root.update_idletasks()
+
+                    assert editor.parameter_container.winfo_width() > 100
+                    assert editor.parameter_editor_table.winfo_width() > 100
+                    assert editor.current_plugin_view is not None
+                    assert cast("tk.Widget", editor.current_plugin_view).winfo_width() >= 500
+                    assert buttons.winfo_height() == buttons.winfo_reqheight()
+                    assert buttons.winfo_y() + buttons.winfo_height() <= 600
+                    editor._rebuild_plugin_layout(None)
+                    root.update_idletasks()
+                assert warning.call_count == 2
+                assert "Not Ready" in warning.call_args.args[0]
+        finally:
+            window.destroy()
+
     @pytest.mark.parametrize("component_visible", [True, False], ids=["with-component", "without-component"])
     @pytest.mark.parametrize("height", [688, 820], ids=["768-screen", "1080-screen"])
     def test_user_can_edit_parameters_below_the_top_orientation_assistant(  # noqa: PLR0915 # pylint: disable=too-many-statements,too-many-locals
