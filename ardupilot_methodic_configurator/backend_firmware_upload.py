@@ -16,7 +16,6 @@ import tempfile
 from collections.abc import Callable
 from dataclasses import dataclass
 from logging import debug as logging_debug
-from os.path import normcase, realpath
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -30,6 +29,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_bootloader import 
     ProgressCallback,
     load_apj,
 )
+from ardupilot_methodic_configurator.backend_flightcontroller_connection import _connection_device_key
 from ardupilot_methodic_configurator.backend_internet import _get_verify_param
 from ardupilot_methodic_configurator.data_model_firmware_catalog import FirmwareRelease, releases_for_board
 from ardupilot_methodic_configurator.data_model_firmware_upload import (
@@ -141,8 +141,12 @@ class FirmwareUploadService:
         if flight_controller.master is None or not device or ":" in device:
             return False
         try:
-            connected_device = normcase(realpath(device))
-            available_devices = {normcase(realpath(port.device)) for port in flight_controller.get_serial_ports()}
+            # Unresolved filesystem aliases cannot establish that a board was removed.
+            connected_device = _connection_device_key(device, raise_on_resolution_error=True)
+            available_devices = {
+                _connection_device_key(port.device, raise_on_resolution_error=True)
+                for port in flight_controller.get_serial_ports()
+            }
         except OSError as exc:
             logging_debug("Could not check firmware upload connection: %s", exc)
             return False

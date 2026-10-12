@@ -60,8 +60,12 @@ _KNOWN_TELEMETRY_USB_SERIAL_IDS = frozenset(
 )
 
 
-def _connection_device_key(device: str) -> str:
-    """Deduplicate connection aliases without resolving COM or network endpoints."""
+def _connection_device_key(device: str, *, raise_on_resolution_error: bool = False) -> str:
+    """
+    Deduplicate connection aliases without resolving COM or network endpoints.
+
+    Presence checks can request resolution errors instead of an uncertain fallback.
+    """
     # Windows realpath can open COM devices and time out on Bluetooth ports.
     # COM28, com28 and \\.\COM28 identify the same endpoint without any I/O.
     com_device = device.removeprefix("\\\\.\\").upper()
@@ -72,6 +76,8 @@ def _connection_device_key(device: str) -> str:
     try:
         return os_path.realpath(device)
     except OSError:
+        if raise_on_resolution_error:
+            raise
         # Inaccessible or disappearing POSIX paths must remain usable fallbacks.
         return device
 
