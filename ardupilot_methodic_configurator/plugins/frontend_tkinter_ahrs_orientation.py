@@ -330,6 +330,17 @@ class AhrsOrientationView(Frame):  # pylint: disable=too-many-instance-attribute
         self._wizard_active = False
         self._continue_btn.configure(state="disabled")
 
+    def on_suspend(self) -> None:
+        """Yield telemetry to diagnostics without discarding poses, progress, or recommendations."""
+        self._stop_imu_polling()
+        self.model.stop_imu_monitoring()
+        self._latest_imu = None
+        self._continue_btn.configure(state="disabled")
+
+    def on_resume(self) -> None:
+        """Resume only polling; the next fresh IMU sample re-enables pose capture."""
+        self._start_imu_polling()
+
     def destroy(self) -> None:
         """Cleanup resources when plugin is removed."""
         self._stop_imu_polling()

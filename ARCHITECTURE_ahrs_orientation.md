@@ -66,6 +66,9 @@ If no sufficiently strong and distinct preset match is found, it provides fallba
 - N1: Keep business logic in data model, no tkinter dependency in model.
 - N2: Non-blocking UI updates via `after()` polling.
 - N3: Reuse existing FlightController IMU-stream helpers.
+- N4: Temporarily yield the receiver to diagnostics without resetting captured poses,
+  wizard progress, or recommendations. Resume polling without restarting prerequisite checks;
+  require a fresh IMU sample before enabling capture again.
 
 ## Data Flow
 

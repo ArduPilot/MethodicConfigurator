@@ -15,7 +15,7 @@ from __future__ import annotations
 from tkinter import ttk
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, cast
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -24,6 +24,7 @@ from ardupilot_methodic_configurator.data_model_parameter_editor import (
     OperationNotPossibleError,
     ParameterValueUpdateStatus,
 )
+from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
 from ardupilot_methodic_configurator.plugins.data_model_ahrs_orientation import (
     AhrsOrientationDataModel,
     AhrsOrientationEstimate,
@@ -36,6 +37,88 @@ if TYPE_CHECKING:
     from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 
 # pylint: disable=redefined-outer-name, protected-access
+
+
+@pytest.fixture
+def diagnostics_orientation_view(tk_root) -> Generator[SimpleNamespace, None, None]:
+    """Create a real wizard/model and timer, mocking only controller I/O and its host."""
+    controller = MagicMock(fc_parameters={"AHRS_ORIENTATION": 0.0})
+    model = AhrsOrientationDataModel(controller)
+    parent = ttk.Frame(tk_root)
+    host = SimpleNamespace(root=MagicMock(), navigation_lock=NavigationLock(), parameter_editor=MagicMock())
+    host.root.winfo_exists.return_value = True
+    view = AhrsOrientationView(parent, model, cast("BaseWindow", host))
+    host.current_plugin_view = view
+    try:
+        yield SimpleNamespace(view=view, model=model, host=host)
+    finally:
+        view.destroy()
+        parent.destroy()
+
+
+def test_temporary_pause_preserves_orientation_poses_and_requires_fresh_imu(
+    diagnostics_orientation_view: SimpleNamespace,
+) -> None:
+    """
+    A temporary receiver pause preserves a partially completed orientation workflow.
+
+    GIVEN: An orientation wizard with two captured poses
+    WHEN: Its telemetry receiver is suspended and resumed
+    THEN: Samples and progress remain intact and capture waits for fresh IMU telemetry
+    """
+    view = diagnostics_orientation_view.view
+    model = diagnostics_orientation_view.model
+    view.on_activate()
+    for sample in ((0.0, 0.0, -1000.0), (1000.0, 0.0, 0.0)):
+        view._handle_live_imu_sample(sample)
+        view._on_continue()
+    assert view._step_index == 2
+    initial_timer = view._imu_poll_job
+    samples = dict(model._samples)
+    instruction = view._wizard_instruction_var.get()
+
+    view.on_suspend()
+
+    assert view._imu_poll_job is None
+    assert initial_timer not in view.tk.call("after", "info")
+    assert view._wizard_active
+    assert view._step_index == 2
+    assert model._samples == samples
+    assert view._wizard_instruction_var.get() == instruction
+    assert view._latest_imu is None
+    assert str(view._continue_btn.cget("state")) == "disabled"
+    view.on_resume()
+    assert view._imu_poll_job is not None
+    resumed_timer = view._imu_poll_job
+    view.on_resume()
+    assert view._imu_poll_job == resumed_timer
+    view._handle_live_imu_sample((0.0, 1000.0, 0.0))
+    assert str(view._continue_btn.cget("state")) == "normal"
+    assert model.record_sample("RIGHT", view._latest_imu)[0]
+    assert model.has_all_required_samples()
+
+
+def test_resuming_telemetry_does_not_repeat_orientation_prerequisite_errors(
+    diagnostics_orientation_view: SimpleNamespace,
+) -> None:
+    """
+    Resuming monitoring is not another attempt to start orientation detection.
+
+    GIVEN: An orientation wizard blocked by unsupported prerequisites
+    WHEN: Its telemetry receiver is suspended and resumed
+    THEN: Polling resumes without restarting detection or showing the same error again
+    """
+    context = diagnostics_orientation_view
+    context.model.flight_controller.fc_parameters = {"AHRS_ORIENTATION": 101.0}
+    with patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_ahrs_orientation.showerror") as show_error:
+        context.view.on_activate()
+        show_error.assert_called_once()
+        show_error.reset_mock()
+        context.view.on_suspend()
+        context.view.on_resume()
+        show_error.assert_not_called()
+    assert not context.view._wizard_active
+    assert context.view._imu_poll_job is not None
 
 
 @pytest.fixture
