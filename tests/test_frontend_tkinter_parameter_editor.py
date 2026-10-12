@@ -26,6 +26,8 @@ from unittest.mock import call as mock_call
 import pytest
 
 import ardupilot_methodic_configurator.frontend_tkinter_parameter_editor as parameter_editor_module
+from ardupilot_methodic_configurator.backend_filesystem import Par
+from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_parameter_editor import LogAnalysisInputs
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
@@ -34,10 +36,13 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (
     ParameterEditorUiServices,
     ParameterEditorWindow,
 )
+from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import MonitorBounds
 from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
 from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
-from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_RC_CALIBRATION
+from ardupilot_methodic_configurator.plugins.data_model_ahrs_orientation import AhrsOrientationDataModel
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_ahrs_orientation import AhrsOrientationView
+from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_AHRS_ORIENTATION, PLUGIN_RC_CALIBRATION
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory
 
 if TYPE_CHECKING:
@@ -324,6 +329,41 @@ class TestParameterEditorUiServices:  # pylint: disable=too-few-public-methods
 
 class TestWindowSizing:
     """Keep navigation controls visible while respecting the user's window size."""
+
+    @pytest.mark.parametrize("height_option", [0, "0", pytest.param("pixel", id="truthy-tcl-pixel-zero")])
+    def test_new_parameter_panes_are_measured_for_all_tk_zero_representations(
+        self, parameter_editor_window: ParameterEditorWindow, height_option: int | str
+    ) -> None:
+        """
+        Unset Tk distances must not prevent the new panes from being measured.
+
+        GIVEN: Tk returns zero as an integer, string or truthy Tcl pixel object
+        WHEN: A new parameter area is fitted with a resize callback queued
+        THEN: Idle geometry is flushed before its height is fixed, without re-entry
+        """
+        editor = parameter_editor_window
+        pixel_zero = MagicMock()
+        pixel_zero.__str__.return_value = "0"
+        container = cast("MagicMock", editor.parameter_area_container)
+        container.cget.return_value = pixel_zero if height_option == "pixel" else height_option
+        flushing = False
+
+        def settle_geometry() -> None:
+            nonlocal flushing
+            assert not flushing, "Measuring panes must not recursively flush geometry"
+            flushing = True
+            editor._resize_parameter_area_to_fit()
+            editor._on_main_frame_resize(tk.Event())
+            flushing = False
+
+        container.update_idletasks.side_effect = settle_geometry
+
+        editor._resize_parameter_area_to_fit()
+
+        container.update_idletasks.assert_called_once()
+        container.configure.assert_called_once_with(height=600)
+        cast("MagicMock", editor.root).after_idle.assert_not_called()
+        assert not editor._parameter_area_resize_running
 
     @pytest.mark.parametrize("padding", [10, (10,), (10, 10), "10", "10 10", (4, 16), "4 16"])
     def test_bottom_buttons_keep_their_full_height(
@@ -2342,6 +2382,101 @@ class TestPluginLayoutLifecycle:
 class TestPluginLayoutRebuild:
     """Cover the layout rebuild logic for each placement."""
 
+    @pytest.mark.parametrize("component_visible", [True, False], ids=["with-component", "without-component"])
+    @pytest.mark.parametrize("height", [688, 820], ids=["768-screen", "1080-screen"])
+    def test_user_can_edit_parameters_below_the_top_orientation_assistant(  # noqa: PLR0915 # pylint: disable=too-many-statements,too-many-locals
+        self, parameter_editor_window: ParameterEditorWindow, root: tk.Tk, height: int, component_visible: bool
+    ) -> None:
+        """
+        Manual orientation remains usable alongside the scrollable assistant.
+
+        GIVEN: A top orientation assistant and optionally a tall Frame component editor
+        WHEN: The user opens, resizes and revisits the board-orientation step
+        THEN: Parameter rows and navigation stay visible and the assistant can scroll
+        """
+        editor = parameter_editor_window
+        window = tk.Toplevel(root)
+        window.geometry(f"990x{height}+0+0")
+        editor.root = window
+        editor.main_frame = ttk.Frame(window)
+        editor.main_frame.place(width=990, height=height)
+        header = ttk.Frame(editor.main_frame, height=300)
+        header.pack(side="top", fill="x")
+        header.pack_propagate(flag=False)
+        editor.inline_component_container = ttk.LabelFrame(editor.main_frame)
+        editor.parameter_area_container = ttk.Frame(editor.main_frame)
+        editor.parameter_area_container.pack(side="top", fill="both", expand=True)
+        if component_visible:
+            editor.inline_component_container.pack(side="top", before=editor.parameter_area_container, fill="x")
+            scroll_frame = ScrollFrame(editor.inline_component_container)
+            scroll_frame.pack(fill="both", expand=True)
+            for _ in range(20):
+                ttk.Entry(scroll_frame.view_port).pack(fill="x")
+            editor.inline_component_scroll_frame = scroll_frame
+        buttons = ttk.Frame(editor.main_frame)
+        buttons.pack(side="bottom", fill="x")
+        ttk.Button(buttons, text="Upload parameters\nand advance").pack()
+        cast("MagicMock", editor.parameter_editor).current_step_parameters = {
+            "AHRS_ORIENTATION": ArduPilotParameter("AHRS_ORIENTATION", Par(0, "Board orientation"))
+        }
+        cast("MagicMock", editor.parameter_editor).should_display_bitmask_parameter_editor_usage.return_value = False
+        model = MagicMock(spec=AhrsOrientationDataModel)
+        model.get_required_steps.return_value = ("LEVEL", "NOSE DOWN", "RIGHT")
+        model.validate_detection_prerequisites.return_value = (True, "")
+        cast("MagicMock", editor.parameter_editor).create_plugin_data_model.return_value = model
+        registry = PluginFactory()
+        registry.register(
+            PLUGIN_AHRS_ORIENTATION,
+            lambda parent, model, window: AhrsOrientationView(
+                parent, cast("AhrsOrientationDataModel", model), cast("BaseWindow", window)
+            ),
+        )
+
+        try:
+            root.update_idletasks()
+            if editor.inline_component_scroll_frame is not None:
+                editor._inline_component_chrome_height = (
+                    editor.inline_component_container.winfo_reqheight()
+                    - editor.inline_component_scroll_frame.winfo_reqheight()
+                )
+            editor._bind_parameter_layout_events()
+            with (
+                patch.object(parameter_editor_module, "plugin_factory", registry),
+                patch.object(AhrsOrientationView, "_start_imu_polling"),
+            ):
+                for _ in range(2):
+                    editor._rebuild_plugin_layout({"name": PLUGIN_AHRS_ORIENTATION, "placement": "top"})
+                    editor.parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="normal")
+                    for client_height in (height, height - 40, height):
+                        editor.main_frame.place_configure(height=client_height)
+                        root.update_idletasks()
+                        editor._resize_parameter_area_to_fit()
+                        root.update_idletasks()
+
+                        assert editor.parameter_container.winfo_height() >= 120
+                        table = editor.parameter_editor_table
+                        value_widget = table._new_value_widgets["AHRS_ORIENTATION"]
+                        assert not value_widget.instate(["disabled"])
+                        assert table.canvas.winfo_rooty() <= value_widget.winfo_rooty()
+                        assert value_widget.winfo_rooty() + value_widget.winfo_height() <= (
+                            table.canvas.winfo_rooty() + table.canvas.winfo_height()
+                        )
+                        assert buttons.winfo_height() == buttons.winfo_reqheight()
+                        assert buttons.winfo_y() + buttons.winfo_height() <= client_height
+                        view = cast("AhrsOrientationView", editor.current_plugin_view)
+                        canvas = view._scroll_frame.canvas
+                        assert canvas.winfo_height() >= view._continue_btn.winfo_reqheight() + 8
+                        canvas.yview_moveto(1)
+                        root.update_idletasks()
+                        assert canvas.winfo_rooty() <= view._continue_btn.winfo_rooty()
+                        assert view._continue_btn.winfo_rooty() + view._continue_btn.winfo_height() <= (
+                            canvas.winfo_rooty() + canvas.winfo_height()
+                        )
+                    editor._rebuild_plugin_layout(None)
+                    root.update_idletasks()
+        finally:
+            window.destroy()
+
     def test_user_rebuilds_left_layout_with_split_view(self, parameter_editor_window: ParameterEditorWindow) -> None:
         parameter_editor_window.parameter_area_container = _build_parameter_area_container()
         parameter_editor_window.main_frame = MagicMock()
@@ -2453,7 +2588,7 @@ class TestPluginLayoutRebuild:
         table = MagicMock()
         table.pack = MagicMock()
         plugin = {"name": "beta", "placement": "top"}
-        separator = MagicMock(pack=MagicMock())
+        separator = MagicMock()
 
         with (
             patch(
@@ -2474,7 +2609,7 @@ class TestPluginLayoutRebuild:
 
         assert parameter_editor_window.parameter_container is created_frames[3]
         mock_load.assert_called_once_with(created_frames[2], plugin)
-        separator.pack.assert_called_once_with(side="top", fill="x", pady=2)
+        separator.grid.assert_called_once_with(row=1, column=0, sticky="ew", pady=2)
 
     def test_user_rebuilds_simple_layout_when_no_plugin(self, parameter_editor_window: ParameterEditorWindow) -> None:
         parameter_editor_window.parameter_area_container = _build_parameter_area_container()

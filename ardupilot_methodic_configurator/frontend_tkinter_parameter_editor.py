@@ -1159,18 +1159,23 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             # This gives plugin full horizontal width, useful for wide controls
             top_container = ttk.Frame(self.parameter_area_container)
             top_container.pack(side="top", fill="both", expand=True)
+            top_container.columnconfigure(0, weight=1)
+            top_container.rowconfigure(0, weight=1)
+            # Unlike pack, grid can shrink the scrollable plugin without first
+            # hiding the parameter rows needed for manual configuration.
+            top_container.rowconfigure(2, weight=1, minsize=round(120 * self.dpi_scaling_factor))
 
-            # Create top frame for plugin (fixed height, expands horizontally only)
+            # Create top frame for plugin, yielding height when space is limited.
             top_plugin_frame = ttk.Frame(top_container)
-            top_plugin_frame.pack(side="top", fill="both", expand=True)
+            top_plugin_frame.grid(row=0, column=0, sticky="nsew")
             self._load_plugin(top_plugin_frame, plugin)
 
             # Visual separator between plugin and parameter table
-            ttk.Separator(top_container, orient="horizontal").pack(side="top", fill="x", pady=2)
+            ttk.Separator(top_container, orient="horizontal").grid(row=1, column=0, sticky="ew", pady=2)
 
             # Create bottom frame for parameter table (takes remaining vertical space)
             bottom_frame = ttk.Frame(top_container)
-            bottom_frame.pack(side="top", fill="both", expand=True)
+            bottom_frame.grid(row=2, column=0, sticky="nsew")
 
             self.parameter_container = bottom_frame
         else:
@@ -1696,13 +1701,26 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self._parameter_area_resize_pending = True
             self.root.after_idle(self._resize_parameter_area_to_fit)
 
-    def _resize_parameter_area_to_fit(self) -> None:  # noqa: PLR0915 # pylint: disable=too-many-locals,too-many-branches
+    def _minimum_parameter_area_height(self) -> int:
+        """Reserve table space alongside, or below, the current plugin."""
+        minimum_height = round(120 * self.dpi_scaling_factor)
+        if self.current_plugin and self.current_plugin_view is not None:
+            plugin_height = cast("tk.Widget", self.current_plugin_view).winfo_reqheight()
+            placement = self.current_plugin.get("placement")
+            if placement == "left":
+                minimum_height = max(minimum_height, plugin_height)
+            elif placement == "top":
+                # Include the separator's height and padding in the vertical stack.
+                minimum_height += plugin_height + 6
+        return minimum_height
+
+    def _resize_parameter_area_to_fit(self) -> None:  # pylint: disable=too-many-locals,too-many-branches
         """Give the parameter area the height left after all fixed controls are placed."""
         if self._parameter_area_resize_running:
             return
 
         self._parameter_area_resize_pending = False
-        if not self.parameter_area_container.cget("height"):
+        if int(str(self.parameter_area_container.cget("height"))) == 0:
             # Measure new panes before fixing their height, so the parameter
             # table has a requested width when the PanedWindow first lays out.
             self._parameter_area_resize_running = True
@@ -1742,11 +1760,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             scroll_frame = self.inline_component_scroll_frame
             content_height = scroll_frame.view_port.winfo_reqheight() + 8
             desired_height = content_height + self._inline_component_chrome_height
-            minimum_table_height = round(120 * self.dpi_scaling_factor)
-            if self.current_plugin and self.current_plugin.get("placement") == "left" and self.current_plugin_view is not None:
-                # The parameter area also holds the plugin. Let the scrollable
-                # component editor yield space to it before the plugin is cut.
-                minimum_table_height = max(minimum_table_height, cast("tk.Widget", self.current_plugin_view).winfo_reqheight())
+            minimum_table_height = self._minimum_parameter_area_height()
             available_height = max(1, self.main_frame.winfo_height() - fixed_height)
             minimum_component_height = round(80 * self.dpi_scaling_factor)
             # Share very limited space equally until the component minimum fits.
@@ -1765,8 +1779,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             fixed_height += component_height
 
         table_height = max(1, self.main_frame.winfo_height() - fixed_height)
-        configured_height = self.parameter_area_container.cget("height")
-        if not configured_height or int(str(configured_height)) != table_height:
+        configured_height = int(str(self.parameter_area_container.cget("height")))
+        if configured_height != table_height:
             self.parameter_area_container.pack_propagate(flag=False)
             self.parameter_area_container.configure(height=table_height)
 
