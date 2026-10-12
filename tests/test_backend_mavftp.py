@@ -705,6 +705,34 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):  # pylint: disable=too-many-
 
         assert args.idle_detection_time == 3.7
 
+    def test_directory_listing_default_timeout_is_at_least_15_seconds(self) -> None:
+        """A directory listing without an explicit timeout gets a 15-second minimum."""
+        self.mav_ftp.ftp_settings.list_time = 0
+        result = MAVFTPReturn("ListDirectory", FtpError.Success)
+
+        with (
+            patch.object(self.mav_ftp, "_MAVFTP__send"),
+            patch.object(self.mav_ftp, "_MAVFTP__initial_request_retry_budget", return_value=1.0),
+            patch.object(self.mav_ftp, "_MAVFTP__process_command_reply", return_value=result) as process,
+        ):
+            assert self.mav_ftp.cmd_list(["/"]) is result
+
+        process.assert_called_once_with("ListDirectory", timeout=15.0, extend_timeout_on_no_sessions=True)
+
+    def test_event_directory_listing_default_timeout_is_at_least_15_seconds(self) -> None:
+        """Event-driven directory listings also get a 15-second minimum."""
+        self.mav_ftp._managed_transport = True  # pylint: disable=protected-access
+        self.mav_ftp.ftp_settings.list_time = 0
+
+        with (
+            patch.object(self.mav_ftp, "_MAVFTP__send"),
+            patch.object(self.mav_ftp, "_MAVFTP__initial_request_retry_budget", return_value=1.0),
+        ):
+            result = self.mav_ftp.cmd_list(["/"], wait=False)
+
+        assert result.error_code == FtpError.Success
+        assert self.mav_ftp._event_timeout == 15.0  # pylint: disable=protected-access
+
     def test_file_download_does_not_expose_a_stale_synchronous_read_result(self) -> None:
         """Streaming downloads clear a result left by a preceding synchronous read."""
         self.mav_ftp.get_result = b"old read result"

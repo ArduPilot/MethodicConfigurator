@@ -812,7 +812,8 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
             self._event_timeout = None
             return
         if timeout is None:
-            timeout = max(5.0, self.__initial_request_retry_budget())
+            minimum_timeout = 15.0 if operation_name == "ListDirectory" else 5.0
+            timeout = max(minimum_timeout, self.__initial_request_retry_budget())
             if operation_name in {"Get", "Put"}:
                 timeout = max(timeout, (MAX_READ_RETRIES + 2) * self.retry_timeout())
             if operation_name == "ListDirectory" and self.list_with_time:
@@ -1725,7 +1726,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         if self._event_generation != generation:
             return MAVFTPReturn("ListDirectory", FtpError.Fail)
         if timeout is None:
-            timeout = max(5.0, self.__initial_request_retry_budget())
+            timeout = max(15.0, self.__initial_request_retry_budget())
             if self.list_with_time:
                 list_time_timeout = float(
                     getattr(self.ftp_settings, "list_time_timeout", 3.0)
