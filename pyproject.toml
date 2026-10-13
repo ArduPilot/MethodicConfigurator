@@ -36,6 +36,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Software Development :: Embedded Systems",
     "Topic :: System :: Installation/Setup",
     "Topic :: Scientific/Engineering",
@@ -48,9 +49,11 @@ dependencies = [
     "defusedxml==0.7.1",
     "jsonschema==4.26.0",
     "matplotlib==3.10.3; python_version < '3.14'",
-    "matplotlib==3.10.9; python_version >= '3.14'",
+    "matplotlib==3.10.9; python_version >= '3.14' and python_version < '3.15'",
+    "matplotlib==3.11.2; python_version >= '3.15'",
     "numpy==2.0.2; python_version < '3.13'",
-    "numpy==2.3.4; python_version >= '3.13'",
+    "numpy==2.3.4; python_version >= '3.13' and python_version < '3.15'",
+    "numpy==2.5.4; python_version >= '3.15'",
     "pillow==12.3.0",
     "pip_system_certs==5.3",
     "platformdirs==4.11.11",
@@ -106,22 +109,22 @@ pypi_dist = [
 win_dist = [
     "pip==26.2.1",
     "pywin32==312",
-    "pyinstaller==6.20.0",
-    "pyinstaller-hooks-contrib==2026.6",
+    "pyinstaller==6.22.3",
+    "pyinstaller-hooks-contrib==2026.7",
     "packaging==26.3",
 ]
 
 mac_dist = [
     "pip==26.2.1",
-    "pyinstaller==6.20.0",
-    "pyinstaller-hooks-contrib==2026.6",
+    "pyinstaller==6.22.3",
+    "pyinstaller-hooks-contrib==2026.7",
     "packaging==26.3",
 ]
 
 linux_dist = [
     "pip==26.2.1",
-    "pyinstaller==6.20.0",
-    "pyinstaller-hooks-contrib==2026.6",
+    "pyinstaller==6.22.3",
+    "pyinstaller-hooks-contrib==2026.7",
     "packaging==26.3",
 ]
 

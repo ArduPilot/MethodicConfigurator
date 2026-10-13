@@ -28,7 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.14"]  # to make sure the latest AMC supported python version does not break
+        python-version: ["3.15.0"]  # to make sure the latest AMC supported python version does not break
         include:
           - os: ubuntu-latest
             python-version: "3.10"  # to make sure the minimum AMC supported python version does not break
@@ -267,7 +267,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           parallel-finished: true
-          carryforward: "run-ubuntu-latest-py3.10,run-ubuntu-latest-py3.14,run-windows-latest-py3.14,run-macos-latest-py3.14"
+          carryforward: "run-ubuntu-latest-py3.10,run-ubuntu-latest-py3.15.0,run-windows-latest-py3.15.0"
 
       # TODO: create a badge that presents the result of the Upload coverage xml report step
 

@@ -40,7 +40,7 @@ jobs:
     - name: Install rsync
       run: |
         sudo apt-get update && sudo apt-get install -y rsync
-        python -m pip install lxml
+        python -m pip install lxml==6.1.3
         mv ardupilot ..
 
     - name: Run generate_pdef.xml_metadata.py
