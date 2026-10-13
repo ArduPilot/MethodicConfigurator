@@ -95,15 +95,33 @@ def _device_category(parameter_name: str) -> DeviceCategory | None:
     return None
 
 
-def device_rows(fc_parameters: dict[str, float]) -> list[tuple[str, str, int, int, str, str]]:
-    """Derive present device names, decoded IDs and source labels without GUI I/O."""
-    rows: list[tuple[str, str, int, int, str, str]] = []
+def _compass_priorities(fc_parameters: dict[str, float]) -> dict[int, int]:
+    """Map compass device IDs to their configured one-based priority, not their instance number."""
+    priorities: dict[int, int] = {}
+    for parameter_name, raw_device_id in fc_parameters.items():
+        match = re.fullmatch(r"COMPASS_PRIO([1-9]\d*)_ID", parameter_name)
+        if match is None:
+            continue
+        try:
+            device_id = int(raw_device_id)
+        except (TypeError, ValueError, OverflowError):
+            continue
+        if raw_device_id != device_id or not 0 < device_id <= 0x00FFFFFF:
+            continue
+        priority = int(match[1])
+        priorities[device_id] = min(priority, priorities.get(device_id, priority))
+    return priorities
+
+
+def device_rows(fc_parameters: dict[str, float]) -> list[tuple[str, str, int, int, str, int | None, str]]:
+    """Derive present devices, decoded IDs, compass priorities and source labels without GUI I/O."""
+    rows: list[tuple[str, str, int, int, str, int | None, str]] = []
+    compass_priorities = _compass_priorities(fc_parameters)
     for parameter_name, raw_device_id in fc_parameters.items():
         category = _device_category(parameter_name)
         if category is None or not (
             parameter_name.endswith("_DEVID")
             or "_DEV_ID" in parameter_name
-            or (category == "compass" and parameter_name.startswith("COMPASS_PRIO") and parameter_name.endswith("_ID"))
             or (category == "imu" and parameter_name.endswith("_ID"))
         ):
             continue
@@ -121,9 +139,21 @@ def device_rows(fc_parameters: dict[str, float]) -> list[tuple[str, str, int, in
             if parameter_name.endswith("_DEVID")
             else re.sub(r"_ID(\d*)$", r"\1", parameter_name)
         )
+        compass_instance = re.fullmatch(r"COMPASS_DEV_ID(\d*)", parameter_name)
+        if compass_instance is not None:
+            name = f"COMPASS{compass_instance[1] or '1'}"
+        priority = compass_priorities.get(device_id) if category == "compass" else None
         devtype = "DRONECAN" if decoded["is_dronecan"] else get_device_type_name(decoded["devtype"], category)
-        devtype = re.sub(r"^(?:(?:DEVTYPE_?|INS_|BARO_))+", "", devtype, flags=re.IGNORECASE)
+        devtype = re.sub(r"^(?:(?:DEVTYPE_?|INS_|BARO_|ACC_|GYR_))+", "", devtype, flags=re.IGNORECASE)
         rows.append(
-            (name, decoded["bus_type_name"], decoded["bus"], decoded["address"], devtype, f"{parameter_name}: {device_id}")
+            (
+                name,
+                decoded["bus_type_name"],
+                decoded["bus"],
+                decoded["address"],
+                devtype,
+                priority,
+                f"{parameter_name}: {device_id}",
+            )
         )
     return sorted(rows, key=lambda row: row[0])

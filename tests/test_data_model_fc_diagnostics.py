@@ -10,6 +10,8 @@ SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from itertools import permutations
+
 import pytest
 from pymavlink.dialects.v20.ardupilotmega import MAVLink_statustext_message
 
@@ -74,51 +76,158 @@ def test_empty_final_chunk_completes_an_exact_multiple_of_fifty_bytes() -> None:
     assert assembler.assemble(MAVLink_statustext_message(4, b"\x00", id=42, chunk_seq=1)) == "A" * 50
 
 
-def test_device_rows_show_only_present_devices_with_formatted_names_and_types(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Present device rows omit ID suffixes and type prefixes, and skip absent IDs."""
+def test_device_rows_show_only_present_devices_with_formatted_names_and_types() -> None:
+    """
+    Decoded device details and compass priorities are preserved in complete rows.
 
-    def get_device_type_name(_devtype: int, category: str) -> str:
-        type_names = {
-            "baro": "DEVTYPE_BARO_DPS310",
-            "compass": "COMPASS_HMC5883",
-            "imu": "INS_ICM42688",
-        }
-        return type_names[category]
-
-    monkeypatch.setattr(diagnostics, "get_device_type_name", get_device_type_name)
-
+    GIVEN: Real barometer, compass and IMU IDs on different buses and absent devices
+    WHEN: Diagnostics derives the table using the real device-type lookup
+    THEN: Every displayed field and original parameter label matches the detected device
+    """
+    baro_id = (6 << 16) | (118 << 8) | (1 << 3) | 1
+    compass_id = (7 << 16) | (30 << 8) | (2 << 3) | 1
+    imu_id = (52 << 16) | (1 << 8) | (3 << 3) | 2
     rows = diagnostics.device_rows(
         {
-            "BARO1_DEVID": 423425.0,
+            "BARO1_DEVID": float(baro_id),
             "BARO2_DEVID": 0,
-            "COMPASS_DEV_ID2": 423425,
-            "COMPASS_PRIO1_ID": 423425,
-            "INS_ACC2_ID": 423425,
+            "COMPASS_DEV_ID2": compass_id,
+            "COMPASS_PRIO1_ID": compass_id,
+            "INS_ACC2_ID": imu_id,
             "INS_GYR3_ID": 0,
-            "BATT_MONITOR": 423425,
+            "BATT_MONITOR": compass_id,
         }
     )
 
-    assert [row[0] for row in rows] == ["BARO1", "COMPASS_DEV2", "COMPASS_PRIO1", "INS_ACC2"]
-    assert [row[4] for row in rows] == ["DPS310", "COMPASS_HMC5883", "COMPASS_HMC5883", "ICM42688"]
-    assert [row[5] for row in rows] == [
-        "BARO1_DEVID: 423425",
-        "COMPASS_DEV_ID2: 423425",
-        "COMPASS_PRIO1_ID: 423425",
-        "INS_ACC2_ID: 423425",
+    assert rows == [
+        ("BARO1", "I2C", 1, 118, "DPS310", None, f"BARO1_DEVID: {baro_id}"),
+        ("COMPASS2", "I2C", 2, 30, "HMC5883", 1, f"COMPASS_DEV_ID2: {compass_id}"),
+        ("INS_ACC2", "SPI", 3, 1, "ICM42688", None, f"INS_ACC2_ID: {imu_id}"),
     ]
 
 
 @pytest.mark.parametrize("parameter_name", ["INS4_ACC_ID", "INS4_GYR_ID", "INS5_ACC_ID", "INS5_GYR_ID"])
-def test_device_rows_include_fourth_and_fifth_imu(parameter_name: str, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_device_rows_include_fourth_and_fifth_imu(parameter_name: str) -> None:
     """GIVEN an extra IMU ID, WHEN diagnostics opens, THEN its device and IMU type are displayed."""
-    monkeypatch.setattr(
-        diagnostics, "get_device_type_name", lambda _devtype, category: "INS_ICM42688" if category == "imu" else "unknown"
-    )
+    device_id = (52 << 16) | (1 << 8) | (3 << 3) | 2
+
+    rows = diagnostics.device_rows({parameter_name: device_id})
+
+    assert rows == [(parameter_name.removesuffix("_ID"), "SPI", 3, 1, "ICM42688", None, f"{parameter_name}: {device_id}")]
+
+
+@pytest.mark.parametrize(
+    ("parameter_name", "device_type", "expected_type"),
+    [
+        ("INS_ACC_ID", 19, "MPU6000"),
+        ("INS_GYR_ID", 33, "MPU6000"),
+        ("INS_ACC2_ID", 24, "LSM9DS1"),
+        ("INS_GYR2_ID", 38, "LSM9DS1"),
+    ],
+)
+def test_device_types_omit_accelerometer_and_gyroscope_prefixes(
+    parameter_name: str, device_type: int, expected_type: str
+) -> None:
+    """
+    Accelerometer and gyroscope type names show the sensor model without category prefixes.
+
+    GIVEN: Real device IDs whose enum names contain DEVTYPE_ACC_ or DEVTYPE_GYR_
+    WHEN: Diagnostics derives the detected-device rows
+    THEN: Only the type prefix is removed and all other device fields remain intact
+    """
+    device_id = (device_type << 16) | (1 << 8) | (2 << 3) | 2
+
+    rows = diagnostics.device_rows({parameter_name: device_id})
+
+    assert rows == [(parameter_name.removesuffix("_ID"), "SPI", 2, 1, expected_type, None, f"{parameter_name}: {device_id}")]
+
+
+def test_user_sees_compass_priorities_matched_by_device_id_not_instance_number() -> None:
+    """
+    Each compass displays its configured priority rather than a duplicate priority-device row.
+
+    GIVEN: Three compass devices with a priority order different from their instance order
+    WHEN: Diagnostics derives the detected-device rows
+    THEN: Priorities follow matching device IDs and other device categories have no priority
+    """
+    parameters = {
+        "COMPASS_PRIO3_ID": 423681,
+        "COMPASS_DEV_ID": 423425,
+        "COMPASS_DEV_ID2": 423681,
+        "COMPASS_DEV_ID3": 423937,
+        "COMPASS_PRIO1_ID": 423937,
+        "COMPASS_PRIO2_ID": 423425,
+        "BARO1_DEVID": 423937,
+    }
+
+    rows = diagnostics.device_rows(parameters)
+
+    assert [(row[0], row[5]) for row in rows] == [
+        ("BARO1", None),
+        ("COMPASS1", 2),
+        ("COMPASS2", 3),
+        ("COMPASS3", 1),
+    ]
+    assert rows[1][6] == "COMPASS_DEV_ID: 423425"
+    assert diagnostics.device_rows(dict(reversed(list(parameters.items())))) == rows
+
+
+@pytest.mark.parametrize("instance", range(1, 9))
+def test_compass_names_use_instance_numbers_instead_of_dev_suffixes(instance: int) -> None:
+    """
+    All detected compasses have consistent instance names.
+
+    GIVEN: A compass device-ID parameter, including additional detected compasses
+    WHEN: Its row is derived
+    THEN: The device name is COMPASS followed by its one-based instance number
+    """
+    parameter_name = f"COMPASS_DEV_ID{instance if instance > 1 else ''}"
 
     rows = diagnostics.device_rows({parameter_name: 423425})
 
     assert len(rows) == 1
-    assert rows[0][0] == parameter_name.removesuffix("_ID")
-    assert rows[0][4] == "ICM42688"
-    assert rows[0][5] == f"{parameter_name}: 423425"
+    assert rows[0][0] == f"COMPASS{instance}"
+    assert rows[0][5] is None
+    assert rows[0][6] == f"{parameter_name}: 423425"
+
+
+@pytest.mark.parametrize("priority_id", [0, -1, 423681, 423425.5, float("nan"), float("inf")])
+def test_missing_or_invalid_compass_priority_does_not_assign_a_rank(priority_id: float) -> None:
+    """
+    A compass without a matching valid priority remains visible without an invented rank.
+
+    GIVEN: A detected compass and an unset, nonmatching, or malformed priority ID
+    WHEN: Diagnostics derives the device table
+    THEN: Only the compass device is shown and its priority is None
+    """
+    rows = diagnostics.device_rows({"COMPASS_DEV_ID": 423425, "COMPASS_PRIO1_ID": priority_id})
+
+    assert [(row[0], row[5]) for row in rows] == [("COMPASS1", None)]
+
+
+def test_priority_parameters_without_detected_compasses_do_not_create_device_rows() -> None:
+    """
+    Priority parameters describe ordering, not additional devices.
+
+    GIVEN: Stored compass priorities without any detected compass device-ID parameters
+    WHEN: Diagnostics derives the table
+    THEN: No priority-only device rows are created
+    """
+    assert diagnostics.device_rows({"COMPASS_PRIO1_ID": 423425, "COMPASS_PRIO2_ID": 423681}) == []
+
+
+@pytest.mark.parametrize("priority_order", list(permutations((1, 2, 3))))
+def test_duplicate_compass_priority_ids_use_the_highest_priority(priority_order: tuple[int, ...]) -> None:
+    """
+    Duplicate priority references do not make the displayed rank depend on parameter order.
+
+    GIVEN: Multiple priority slots referencing the same detected compass
+    WHEN: Diagnostics derives the table
+    THEN: The lowest priority number is displayed once on the compass row
+    """
+    parameters = {"COMPASS_DEV_ID": 423425}
+    parameters.update({f"COMPASS_PRIO{priority}_ID": 423425 for priority in priority_order})
+
+    rows = diagnostics.device_rows(parameters)
+
+    assert rows == [("COMPASS1", "I2C", 0, 118, "LSM9DS1", 1, "COMPASS_DEV_ID: 423425")]
