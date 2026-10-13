@@ -126,8 +126,10 @@ class FirmwareUploadWindow(BaseWindow):  # pylint: disable=too-many-instance-att
         self.cancelled = Event()
         self.busy = False
         self.uploading = False
-        # A later cancellation cannot clear a restart requirement from an upload or idle disconnect.
+        # A later cancellation cannot clear a restart requirement from an upload, Connect or idle disconnect.
         self.restart_required = False
+        # The upload result dialog already tells the user to restart AMC.
+        self.restart_notified = False
         self.connecting = False
         self._connection_timer_id: str | None = None
         self._event_poll_id: str | None = None
@@ -478,7 +480,7 @@ class FirmwareUploadWindow(BaseWindow):  # pylint: disable=too-many-instance-att
                 "Download {release} for board ID {board_id} and prepare to flash it?\n\n"
                 "After a successful or failed upload, closing this window closes AMC. "
                 "Restart AMC to continue configuration. Cancelling before erase keeps AMC open "
-                "unless a detected board was unplugged while idle."
+                "unless a board was connected or unplugged in this window."
             ).format(release=release.label, board_id=release.board_id),
             parent=self.root,
         ):
@@ -513,7 +515,7 @@ class FirmwareUploadWindow(BaseWindow):  # pylint: disable=too-many-instance-att
                 "Use local firmware {file} for board ID {board_id} and prepare to flash it?\n\n"
                 "After a successful or failed upload, closing this window closes AMC. "
                 "Restart AMC to continue configuration. Cancelling before erase keeps AMC open "
-                "unless a detected board was unplugged while idle."
+                "unless a board was connected or unplugged in this window."
             ).format(file=path, board_id=board_info.board_id),
             parent=self.root,
         ):
@@ -633,6 +635,7 @@ class FirmwareUploadWindow(BaseWindow):  # pylint: disable=too-many-instance-att
         if cancelled:
             messagebox.showinfo(_("Firmware upload cancelled"), status, parent=self.root)
         else:
+            self.restart_notified = True
             status += "\n\n" + _("Close this window and restart AMC before continuing configuration.")
             if error is None:
                 messagebox.showinfo(_("Upload ArduPilot firmware"), status, parent=self.root)
@@ -739,12 +742,19 @@ class FirmwareUploadWindow(BaseWindow):  # pylint: disable=too-many-instance-att
             self._active_progress_stage = None
 
     def close(self) -> None:
-        """Keep the window alive while a bootloader operation is running."""
+        """Keep the window alive during a bootloader operation and announce a pending AMC exit."""
         if self.uploading:
             messagebox.showinfo(
                 _("Upload ArduPilot firmware"), _("Wait for the current operation to finish"), parent=self.root
             )
             return
+        if self.restart_required and not self.owns_connection and not self.restart_notified:
+            # Connect or an idle unplug set the flag without telling the user, and closing now exits AMC.
+            messagebox.showinfo(
+                _("Upload ArduPilot firmware"),
+                _("AMC will close now. Restart AMC to continue configuration."),
+                parent=self.root,
+            )
         if self.owns_connection:
             self.flight_controller.disconnect()
         if self._connection_timer_id is not None:

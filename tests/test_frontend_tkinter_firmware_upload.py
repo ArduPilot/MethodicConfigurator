@@ -68,6 +68,7 @@ def _headless_firmware_window() -> firmware_upload.FirmwareUploadWindow:
     window.uploading = False
     window.connecting = False
     window.restart_required = False
+    window.restart_notified = False
     window.owns_connection = False
     window._connection_timer_id = None
     window._event_poll_id = None
@@ -560,6 +561,37 @@ def test_close_disconnects_owned_controller_and_cancels_pending_callbacks() -> N
     window.root.destroy.assert_called_once_with()
 
 
+@pytest.mark.parametrize(
+    ("restart_required", "owns_connection", "restart_notified", "notice_shown"),
+    [
+        (True, False, False, True),
+        (True, False, True, False),
+        (True, True, False, False),
+        (False, False, False, False),
+    ],
+)
+def test_close_announces_amc_exit_only_when_the_user_was_not_told(
+    restart_required: bool, owns_connection: bool, restart_notified: bool, notice_shown: bool
+) -> None:
+    """
+    Closing the embedded window says AMC will exit when nothing has said so yet.
+
+    GIVEN: An idle window whose restart flag came from Connect, an idle unplug or an upload.
+    WHEN: The user closes the window.
+    THEN: A notice appears only inside AMC and only if the upload result dialog did not already ask for a restart.
+    """
+    window = _headless_firmware_window()
+    window.restart_required = restart_required
+    window.owns_connection = owns_connection
+    window.restart_notified = restart_notified
+
+    with patch.object(firmware_upload.messagebox, "showinfo") as show_info:
+        window.close()
+
+    assert show_info.called is notice_shown
+    window.root.destroy.assert_called_once_with()
+
+
 def test_idle_connection_actions_handle_busy_states_and_optional_grabs() -> None:
     """
     Busy actions return early and a closed parent is not re-grabbed after selection.
@@ -670,11 +702,13 @@ def test_upload_result_selects_restart_or_return_to_amc(event: tuple, restart_re
     window = firmware_upload.FirmwareUploadWindow.__new__(firmware_upload.FirmwareUploadWindow)
     window.root = MagicMock()
     window.restart_required = False
+    window.restart_notified = False
     window._finish = MagicMock()
     with patch.object(firmware_upload, "messagebox") as dialogs:
         window._handle_event(event)
 
     assert window.restart_required is restart_required
+    assert window.restart_notified is restart_required
     window.root.destroy.assert_not_called()
     if not restart_required:
         dialogs.showerror.assert_not_called()
@@ -1425,6 +1459,7 @@ def test_usb_removal_waits_for_window_close_before_exiting_amc(
     GIVEN: A connected board.
     WHEN: Its USB serial port disappears.
     THEN: AMC is marked to exit, the Cancel button remains disabled, and the window stays open.
+    AND: Closing the window tells the user that AMC will exit.
     """
     window = connected_firmware_window
     window.flight_controller.get_serial_ports.return_value = []
@@ -1438,8 +1473,11 @@ def test_usb_removal_waits_for_window_close_before_exiting_amc(
     assert window.root.winfo_exists()
     assert str(window.cancel_button.cget("state")) == "disabled"
 
-    window.close()
+    with patch.object(firmware_upload.messagebox, "showinfo") as show_info:
+        window.close()
 
+    show_info.assert_called_once()
+    assert "AMC will close" in show_info.call_args.args[1]
     assert not window.root.winfo_exists()
 
 

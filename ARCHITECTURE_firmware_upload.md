@@ -48,10 +48,12 @@ flowchart TD
   and waits for the modal child without destroying or hiding its own window.
   On Windows the owner is also disabled until the child closes. The upload window
   has 30% more height on Windows, before DPI scaling.
-  A successful or failed upload, or removal of a previously detected board while idle,
-  sets a sticky restart-required flag; reconnecting or a later safe cancellation cannot
+  A successful or failed upload, connecting a board with Connect, or removal of a
+  previously detected board while idle, sets a sticky restart-required flag; reconnecting or a later safe cancellation cannot
   clear it. Worker errors retain their exception type until rendered on the Tk thread.
   Safe cancellation before erase does not set this flag on its own.
+  If no upload result dialog has already asked for a restart, closing the child with
+  this flag shows a notice first.
   When the child closes with restart required, the project opener disconnects the
   controller, destroys its window, and exits AMC. The user restarts AMC to load the
   current firmware state. No post-upload parameter/default download, project refresh,

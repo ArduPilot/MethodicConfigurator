@@ -40,11 +40,11 @@ remains visible but inactive until you close the firmware upload window. The upl
 shares the application's flight-controller connection.
 Closing without attempting an upload, or after cancelling safely before erase, returns
 to project selection without exiting AMC, provided no restart requirement was recorded.
-If a detected controller is unplugged while the window is idle, AMC records a restart
-requirement. Reconnecting the controller or safely cancelling a later upload does not
-clear it; closing the firmware window then exits AMC. After a successful or failed
-upload, closing the firmware window also exits AMC. Restart AMC before continuing
-configuration.
+If you connect a controller with **Connect** in this window, or a detected controller is
+unplugged while the window is idle, AMC records a restart requirement. Reconnecting the
+controller or safely cancelling a later upload does not clear it; closing the firmware
+window then shows a notice and exits AMC. After a successful or failed upload, closing
+the firmware window also exits AMC. Restart AMC before continuing configuration.
 
 With AMC installed in your Python environment, start the standalone tool from a terminal:
 
@@ -211,8 +211,8 @@ effect at a safe point, so it may not be immediate. Once erasing begins, **Cance
 The window also refuses to close while an upload operation is running. Keep the cable connected
 and wait for the result.
 After safe cancellation, closing the window returns to AMC without a restart if no
-restart requirement was already recorded, such as by unplugging a detected controller
-while idle.
+restart requirement was already recorded, such as by connecting a controller with
+**Connect** or unplugging a detected controller while idle.
 If cancellation recovery fails, AMC reports an upload failure instead; closing the
 window then exits AMC so you can restart and reconnect.
 

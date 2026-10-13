@@ -92,7 +92,7 @@ class VehicleProjectOpenerWindow(BaseWindow):  # pylint: disable=too-many-instan
         sys_exit(0)
 
     def open_firmware_upload(self) -> None:
-        """Return after safe use; exit AMC after upload or idle disconnect requires restart."""
+        """Return after safe use; exit AMC after an upload, Connect or idle disconnect requires restart."""
         window = FirmwareUploadWindow(self.project_manager.flight_controller, parent=self.root)
         previous_grab = self.root.grab_current()  # type: ignore[no-untyped-call] # Tk stubs omit this return type.
         is_windows = self.root.tk.call("tk", "windowingsystem") == "win32"
