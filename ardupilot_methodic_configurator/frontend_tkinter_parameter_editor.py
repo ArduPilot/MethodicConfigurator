@@ -1746,6 +1746,17 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         """
         if self.navigation_lock.locked:
             return
+        browser_window = getattr(self, "_file_browser_window", None)
+        if browser_window is not None:
+            try:
+                if browser_window.root.winfo_exists():
+                    self.ui.show_error(
+                        _("File browser is open"),
+                        _("Close the flight-controller file browser before opening diagnostics."),
+                    )
+                    return
+            except tk.TclError:
+                self._file_browser_window = None
         plugin_view = self.current_plugin_view
         resume_plugin: Callable[[], object] | None = None
         try:
