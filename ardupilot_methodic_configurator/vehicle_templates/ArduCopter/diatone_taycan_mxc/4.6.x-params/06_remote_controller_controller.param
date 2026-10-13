@@ -1,0 +1,42 @@
+ARMING_RUDDER,0  # We find it safer to use only a switch to arm instead of through rudder inputs
+RC1_MAX,2011
+RC1_MIN,988
+RC1_TRIM,1500
+RC10_MAX,1500
+RC10_MIN,1000
+RC11_MAX,1500
+RC11_MIN,1000
+RC12_MAX,1500
+RC12_MIN,1000
+RC2_MAX,2011
+RC2_MIN,988
+RC2_TRIM,1500
+RC3_MAX,2011
+RC3_MIN,988
+RC3_TRIM,988
+RC4_MAX,2011
+RC4_MIN,988
+RC4_TRIM,1500
+RC5_MAX,1857
+RC5_MIN,1141
+RC5_TRIM,1570
+RC6_MAX,2011
+RC6_MIN,988
+RC6_OPTION,153  # "Arm/Disarm", to use an arming switch (here Channel 6)
+RC6_TRIM,988
+RC7_MAX,2011
+RC7_MIN,988
+RC7_OPTION,31  # To stop all motors immediately if the vehicle starts moving dangerously
+RC7_TRIM,988
+RC8_MAX,2011
+RC8_MIN,988
+RC8_OPTION,30  # "Lost Copter Sound", generates a loud tone from the buzzer at a high signal to locate a lost multicopter
+RC8_TRIM,988
+RC9_MAX,2011
+RC9_MIN,988
+RC9_OPTION,300  # Used to jump to the next waypoint
+RC9_TRIM,988
+RCMAP_PITCH,2  # Current RC pitch channel mapping; editable in the RC calibration plugin
+RCMAP_ROLL,1  # Current RC roll channel mapping; editable in the RC calibration plugin
+RCMAP_THROTTLE,3  # Current RC throttle channel mapping; editable in the RC calibration plugin
+RCMAP_YAW,4  # Current RC yaw channel mapping; editable in the RC calibration plugin
