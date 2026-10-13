@@ -410,6 +410,117 @@ class TestWindowSizing:
             assert style.theme_use() == "clam"
             assert {name: tkfont.nametofont(name, root=root).configure() for name in original_fonts} == original_fonts
 
+    @pytest.mark.parametrize("height", [500, 688], ids=["short-window", "768-screen"])
+    @pytest.mark.parametrize("complexity", ["simple", "normal"])
+    def test_user_can_reclaim_table_space_by_collapsing_information_sections(  # noqa: PLR0915 # pylint: disable=too-many-locals,too-many-statements
+        self,
+        parameter_editor_window: ParameterEditorWindow,
+        root: tk.Tk,
+        height: int,
+        complexity: str,
+    ) -> None:
+        """
+        Collapsing progress and documentation gives space back to the parameter table.
+
+        GIVEN: The real information sections and parameter table in a short editor window
+        WHEN: The user collapses each section, changes steps and expands them again
+        THEN: Table space grows, edits and section state survive, and navigation stays visible
+        """
+        editor = parameter_editor_window
+        model = cast("MagicMock", editor.parameter_editor)
+        model.get_last_configuration_step_number.return_value = 30
+        model.get_sorted_phases_with_end_and_weight.return_value = {
+            "Hardware setup": {"start": 1, "end": 10, "weight": 9},
+            "Flight tuning": {"start": 10, "end": 30, "weight": 20},
+        }
+        model.get_documentation_frame_title.return_value = "Initial setup Documentation"
+        model.get_documentation_text_and_url.side_effect = lambda key: (
+            ("75", "") if key == "mandatory" else ("Setup guide", "https://ardupilot.org/")
+        )
+        model.parse_mandatory_level_percentage.return_value = (75, "Required setup")
+        model.get_why_why_now_tooltip.return_value = "Configure the vehicle before flying."
+        model.current_step_parameters = {"TEST_GAIN": ArduPilotParameter("TEST_GAIN", Par(0.2, "Gain"))}
+        model.should_display_bitmask_parameter_editor_usage.return_value = False
+        window = tk.Toplevel(root)
+        window.geometry(f"990x{height}+0+0")
+        window.update_idletasks()
+        editor.root = window
+        editor.gui_complexity = complexity
+        editor.main_frame = ttk.Frame(window)
+        editor.main_frame.place(width=990, height=height)
+        header = ttk.Frame(editor.main_frame, height=100)
+        header.pack(side="top", fill="x")
+        header.pack_propagate(flag=False)
+
+        try:
+            with patch.object(
+                parameter_editor_module.ProgramSettings,
+                "get_setting",
+                side_effect=lambda key: complexity if key == "gui_complexity" else False,
+            ):
+                editor._create_progress_and_documentation_widgets()
+            editor.parameter_area_container = ttk.Frame(editor.main_frame)
+            editor.parameter_area_container.pack(side="top", fill="both", expand=True)
+            editor.parameter_container = editor.parameter_area_container
+            table = parameter_editor_module.ParameterEditorTable(editor.parameter_container, model, editor)
+            editor.parameter_editor_table = table
+            table.pack(fill="both", expand=True)
+            table.repopulate_table(show_only_differences=False, gui_complexity=complexity)
+            buttons = ttk.Frame(editor.main_frame)
+            buttons.pack(side="bottom", fill="x", pady=10)
+            ttk.Button(buttons, text="Upload parameters\nand advance").pack()
+            root.update_idletasks()
+            editor._bind_parameter_layout_events()
+            editor._resize_parameter_area_to_fit()
+            root.update_idletasks()
+            initial_table_height = editor.parameter_area_container.winfo_height()
+            value_widget = table._new_value_widgets["TEST_GAIN"]
+            value_widget.delete(0, tk.END)
+            value_widget.insert(0, "0.15")
+            docs = editor.documentation_frame.documentation_frame
+            progress = editor.stage_progress_bar
+            assert docs.expanded
+            assert progress.expanded
+
+            docs.header_label.event_generate("<Button-1>")
+            root.update_idletasks()
+            after_docs_height = editor.parameter_area_container.winfo_height()
+            assert after_docs_height > initial_table_height
+            assert docs.header_label.winfo_ismapped()
+            assert not docs.content_frame.winfo_ismapped()
+
+            progress.header_label.event_generate("<Button-1>")
+            root.update_idletasks()
+            assert editor.parameter_area_container.winfo_height() > after_docs_height
+            assert progress.header_label.winfo_ismapped()
+            assert not progress.content_frame.winfo_ismapped()
+            model.get_documentation_frame_title.return_value = "Flight tuning Documentation"
+            editor.documentation_frame.refresh_documentation_labels()
+            progress.update_progress(15)
+            assert not docs.expanded
+            assert not progress.expanded
+            assert docs.header_label.cget("text") == "▶ Flight tuning Documentation"
+            assert cast("ttk.Progressbar", progress.phase_bars[1]["bar"]).cget("value") == 5
+            assert editor.parameter_editor_table is table
+            assert value_widget.get() == "0.15"
+            assert window.winfo_height() == height
+            assert buttons.winfo_height() == buttons.winfo_reqheight()
+            assert buttons.winfo_y() + buttons.winfo_height() <= height - 10
+
+            for section in (progress, docs):
+                section.header_label.event_generate("<Button-1>")
+            root.update_idletasks()
+
+            assert docs.content_frame.winfo_ismapped()
+            assert progress.content_frame.winfo_ismapped()
+            assert editor.parameter_area_container.winfo_height() == initial_table_height
+            assert table._new_value_widgets["TEST_GAIN"] is value_widget
+            assert value_widget.get() == "0.15"
+            assert buttons.winfo_height() == buttons.winfo_reqheight()
+            assert buttons.winfo_y() + buttons.winfo_height() <= height - 10
+        finally:
+            window.destroy()
+
     @pytest.mark.parametrize("height_option", [0, "0", pytest.param("pixel", id="truthy-tcl-pixel-zero")])
     def test_new_parameter_panes_are_measured_for_all_tk_zero_representations(
         self, parameter_editor_window: ParameterEditorWindow, height_option: int | str

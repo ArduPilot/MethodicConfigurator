@@ -441,9 +441,18 @@ select a different intermediate parameter file in the `Current intermediate para
 The steps are grouped into phases and optional phases are greyed-out.
 There are mouse-over hints for each phase.
 
+Click the **Configuration sequence progress** header to collapse or expand the bar.
+Its progress continues to update while collapsed, leaving more vertical space for the parameter table.
+You can also focus the header with **Tab** and toggle it with **Enter** or **Space**.
+
 ![Parameter editor and uploader window](images/App_parameter_editor_and_uploader.png)
 
 #### 4b. Viewing Documentation
+
+Click the **Documentation** section header to hide or restore its contents without losing the
+automatic-browser-opening setting. The header still shows the current step when collapsed,
+and documentation links continue to update when you change steps.
+Both information sections start expanded and retain your collapse choices while the editor remains open.
 
 - **Click on the documentation labels to open the corresponding documentation in a web browser.**
 - Documentation is split into four categories:

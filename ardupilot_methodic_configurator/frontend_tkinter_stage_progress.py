@@ -46,11 +46,12 @@ from tkinter import ttk
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps, PhaseData
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
+from ardupilot_methodic_configurator.frontend_tkinter_collapsible_label_frame import CollapsibleLabelFrame
 from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_config
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 
 
-class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
+class StageProgressBar(CollapsibleLabelFrame):  # pylint: disable=too-many-ancestors
     """Stage-segmented Configuration sequence progress UI."""
 
     def __init__(
@@ -72,13 +73,13 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
         smaller_font_size = int(default_font_size * 0.9)
         ttk.Style(self).configure("PhaseProgress.TLabel", font=(default_font["family"], smaller_font_size))
 
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(0, weight=1)
+        self.content_frame.columnconfigure(0, weight=1)
+        self.content_frame.rowconfigure(0, weight=1)
 
         self.create_phase_frames(gui_complexity)
         self.bind("<Configure>", self._on_resize)
         show_tooltip(
-            self,
+            self.content_frame,
             _(
                 "This bar shows your progress through the configuration phases. "
                 "Each phase contains configuration steps that must be completed in sequence."
@@ -94,7 +95,7 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
         phases_to_display = non_optional_phases if gui_complexity == "simple" else self.phases
 
         # Create container frame that will expand
-        container = ttk.Frame(self)
+        container = ttk.Frame(self.content_frame)
         container.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
 
         # Configure container columns to expand equally

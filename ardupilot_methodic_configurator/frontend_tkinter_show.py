@@ -602,6 +602,9 @@ class Tooltip:
         """Create and show the tooltip when the pointer is still over the widget after the delay."""
         self._cancel_show()
 
+        if not self.text:
+            return
+
         try:
             pointed = self.widget.winfo_containing(self.widget.winfo_pointerx(), self.widget.winfo_pointery())
             widget_path = str(self.widget)

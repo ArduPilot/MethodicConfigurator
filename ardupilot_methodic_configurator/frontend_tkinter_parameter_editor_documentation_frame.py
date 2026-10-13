@@ -16,6 +16,7 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
+from ardupilot_methodic_configurator.frontend_tkinter_collapsible_label_frame import CollapsibleLabelFrame
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import get_widget_font_family_and_size
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 
@@ -52,17 +53,18 @@ class DocumentationFrame:
     def __init__(self, root: tk.Widget, parameter_editor: ParameterEditor) -> None:
         self.root = root
         self.parameter_editor = parameter_editor
-        self.documentation_frame: ttk.LabelFrame
+        self.documentation_frame: CollapsibleLabelFrame
         self.documentation_labels: dict[str, ttk.Label] = {}
         self.mandatory_level: ttk.Progressbar
         self.auto_open_var = tk.BooleanVar(value=bool(ProgramSettings.get_setting("auto_open_doc_in_browser")))
         self._create_documentation_frame()
 
     def _create_documentation_frame(self) -> None:
-        self.documentation_frame = ttk.LabelFrame(self.root, text=_("Documentation"))
+        self.documentation_frame = CollapsibleLabelFrame(self.root, text=_("Documentation"))
+        self.documentation_frame.set_header_tooltip("")
 
         # Create a grid structure within the documentation_frame
-        documentation_grid = ttk.Frame(self.documentation_frame)
+        documentation_grid = ttk.Frame(self.documentation_frame.content_frame)
         documentation_grid.pack(fill="both", expand=True)
 
         for row, (text, tooltip) in enumerate(self.DOCUMENTATION_SECTIONS):
@@ -113,15 +115,14 @@ class DocumentationFrame:
 
     def update_why_why_now_tooltip(self) -> None:
         tooltip_text = self.parameter_editor.get_why_why_now_tooltip()
-        if tooltip_text:
-            show_tooltip(self.documentation_frame, tooltip_text, position_below=False)
+        self.documentation_frame.set_header_tooltip(tooltip_text)
 
     def get_auto_open_documentation_in_browser(self) -> bool:
         return self.auto_open_var.get()
 
     def refresh_documentation_labels(self) -> None:
         frame_title = self.parameter_editor.get_documentation_frame_title()
-        self.documentation_frame.config(text=frame_title)
+        self.documentation_frame.set_title(frame_title)
 
         blog_text, blog_url = self.parameter_editor.get_documentation_text_and_url("blog")
         self._refresh_documentation_label(self.BLOG_LABEL, _(blog_text) if blog_text else "", blog_url)

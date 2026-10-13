@@ -23,11 +23,13 @@ from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import Stag
 
 
 @pytest.fixture
-def root_window() -> Generator[tk.Tk, None, None]:
-    """Fixture providing a tkinter root window for testing."""
-    root = tk.Tk()
-    yield root
-    root.destroy()
+def root_window(root: tk.Tk) -> Generator[tk.Toplevel, None, None]:
+    """Fixture providing a tkinter Toplevel window for testing."""
+    window = tk.Toplevel(root)
+    try:
+        yield window
+    finally:
+        window.destroy()
 
 
 @pytest.fixture
@@ -56,7 +58,7 @@ def processed_phases(raw_phases) -> dict[str, PhaseData]:
 
 
 @pytest.fixture
-def progress_bar(root_window: tk.Tk, processed_phases: dict[str, PhaseData]) -> StageProgressBar:
+def progress_bar(root_window: tk.Toplevel, processed_phases: dict[str, PhaseData]) -> StageProgressBar:
     """Fixture providing a configured StageProgressBar instance."""
     return StageProgressBar(root_window, processed_phases, 30, gui_complexity="normal")
 
