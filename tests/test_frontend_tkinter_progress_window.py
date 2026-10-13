@@ -66,6 +66,33 @@ def lazy_progress_window(tk_root) -> Generator[ProgressWindow, None, None]:
 class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name,too-many-public-methods
     """Test ProgressWindow from the user's perspective - focusing on progress indication behavior."""
 
+    @pytest.mark.parametrize("parent_visible", [True, False])
+    @pytest.mark.parametrize("lazy", [True, False])
+    def test_user_sees_progress_owned_by_visible_parent_or_independent_of_hidden_parent(
+        self, tk_root: tk.Tk, parent_visible: bool, lazy: bool
+    ) -> None:
+        """
+        Progress stays associated with a visible parent and can appear without one.
+
+        GIVEN: A visible application window or withdrawn initialization parent
+        WHEN: Its eager or lazy progress window appears
+        THEN: Only the visible parent owns it, and progress is visible in both cases
+        """
+        parent = tk.Toplevel(tk_root)
+        if not parent_visible:
+            parent.withdraw()
+        parent.update_idletasks()
+        window = ProgressWindow(parent, title="Progress", only_show_when_update_progress_called=lazy)
+        try:
+            window.update_progress_bar(10, 100)
+            window.progress_window.update_idletasks()
+
+            assert str(window.progress_window.transient()) == (str(parent) if parent_visible else "")
+            assert window.progress_window.winfo_viewable()
+        finally:
+            window.destroy()
+            parent.destroy()
+
     def test_user_sees_progress_window_with_initial_state(self, progress_window) -> None:
         """
         User sees a progress window that displays initial progress state.
@@ -142,6 +169,22 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name,
         assert progress_window.progress_bar["value"] == 30
         assert progress_window.progress_bar["maximum"] == 100
         assert progress_window.progress_label.cget("text") == "Reconnect attempt 1 of 3"
+
+    def test_user_keeps_window_stacking_order_while_progress_updates(self, progress_window: ProgressWindow) -> None:
+        """
+        Progress updates repaint the window without repeatedly raising it.
+
+        GIVEN: A progress window has already been shown above its parent
+        WHEN: A transfer reports further progress
+        THEN: The bar advances without changing the user's window stacking order
+        """
+        with patch.object(progress_window.progress_window, "lift") as lift:
+            progress_window.update_progress_bar(30, 100)
+            progress_window.update_progress_bar(60, 100)
+
+        lift.assert_not_called()
+        assert progress_window.progress_bar["value"] == 60
+        assert progress_window.progress_label.cget("text") == "Progress: 60/100"
 
     def test_restart_progress_does_not_assume_three_reconnect_attempts(self) -> None:
         """The restart UI leaves the retry count unspecified when it is not supplied."""
@@ -369,31 +412,20 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name,
         progress_window.progress_bar.update.assert_not_called()
         progress_window.progress_bar.update_idletasks.assert_called_once()
 
-    def test_user_sees_progress_window_handle_lazy_window_relift(self, progress_window) -> None:
+    def test_user_sees_lazy_progress_window_raised_only_when_first_shown(self, lazy_progress_window: ProgressWindow) -> None:
         """
-        User sees progress window handle relifting for already shown windows.
+        A lazy progress window is raised once when it first becomes visible.
 
-        GIVEN: A progress window that is already shown
+        GIVEN: A progress window initially hidden until it receives progress
         WHEN: Progress is updated multiple times
-        THEN: Window is lifted appropriately for non-lazy windows
+        THEN: The window is raised on its first update, but not on subsequent updates
         """
-        # Mock the lift method to track calls
-        progress_window.progress_window.lift = MagicMock()
+        with patch.object(lazy_progress_window.progress_window, "lift") as lift:
+            lazy_progress_window.update_progress_bar(25, 100)
+            lazy_progress_window.update_progress_bar(50, 100)
 
-        # First update - window should be lifted
-        progress_window.update_progress_bar(25, 100)
-
-        # Verify window is lifted for non-lazy windows
-        progress_window.progress_window.lift.assert_called_once()
-
-        # Reset mock
-        progress_window.progress_window.lift.reset_mock()
-
-        # Second update - window should be lifted again
-        progress_window.update_progress_bar(50, 100)
-
-        # Should be lifted again
-        progress_window.progress_window.lift.assert_called_once()
+        lift.assert_called_once()
+        assert lazy_progress_window.progress_bar["value"] == 50
 
     def test_user_sees_fc_init_progress_centered_on_screen_when_parent_is_withdrawn(self, tk_root) -> None:
         """
@@ -422,6 +454,7 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name,
                 message="Init: {}/{}",
                 only_show_when_update_progress_called=True,
             )
+            assert str(window.progress_window.transient()) == ""
 
             # Ignore any centering that may have happened during __init__
             mock_center_screen.reset_mock()

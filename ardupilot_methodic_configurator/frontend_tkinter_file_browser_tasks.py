@@ -10,9 +10,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 import logging
-import queue
 from collections.abc import Callable
-from threading import Thread
+from threading import Lock, Thread
 from typing import NamedTuple, Protocol
 
 ProgressCallback = Callable[[int, int], None]
@@ -44,14 +43,18 @@ class TaskRunner(Protocol):
     ) -> bool: ...
 
 
-class BackgroundTaskRunner:
-    """Execute one task at a time, polling its queue on the UI thread."""
+class BackgroundTaskRunner:  # pylint: disable=too-many-instance-attributes
+    """Execute one task at a time, sampling its latest progress on the UI thread."""
 
     POLL_INTERVAL_MS = 50
 
     def __init__(self, schedule: Callable[[int, Callable[[], None]], object]) -> None:
         self._schedule = schedule
-        self._messages: queue.Queue[_ProgressMessage | _DoneMessage] = queue.Queue()
+        self._messages_lock = Lock()
+        self._pending_progress: _ProgressMessage | None = None
+        self._pending_done: _DoneMessage | None = None
+        self._last_progress: _ProgressMessage | None = None
+        self._polling = False
         self._thread: Thread | None = None
         self._on_progress: ProgressCallback | None = None
         self._on_done: TaskCompletion | None = None
@@ -75,18 +78,27 @@ class BackgroundTaskRunner:
         """Start work only if no other browser task is pending."""
         if self.active:
             return False
+        with self._messages_lock:
+            self._pending_progress = None
+            self._pending_done = None
+        self._last_progress = None
         self._on_progress = on_progress
         self._on_done = on_done
 
         def report_progress(current: int, total: int) -> None:
-            self._messages.put(_ProgressMessage(current, total))
+            # Progress is a snapshot, not an event history. Replacing this
+            # slot keeps packet-rate reporting from growing a GUI backlog.
+            with self._messages_lock:
+                self._pending_progress = _ProgressMessage(current, total)
 
         def run() -> None:
             try:
                 outcome = _DoneMessage(task(report_progress), None)
             except Exception as error:  # pylint: disable=broad-exception-caught
                 outcome = _DoneMessage(None, error)
-            self._messages.put(outcome)
+            # Completion has its own slot, so coalescing can never drop it.
+            with self._messages_lock:
+                self._pending_done = outcome
 
         self._thread = Thread(target=run, name="mavftp-browser-task", daemon=True)
         self._thread.start()
@@ -94,24 +106,40 @@ class BackgroundTaskRunner:
         return True
 
     def poll(self) -> None:
-        """Drain progress and deliver the final result on the scheduling thread."""
-        while True:
-            try:
-                message = self._messages.get_nowait()
-            except queue.Empty:
-                self._schedule(self.POLL_INTERVAL_MS, self.poll)
-                return
-            if isinstance(message, _ProgressMessage):
+        """Render at most one snapshot per tick, then yield to the GUI event loop."""
+        # Some progress windows pump Tk events while painting on macOS.
+        # A nested poll must not deliver completion inside a progress callback.
+        if self._polling:
+            return
+        self._polling = True
+        try:
+            with self._messages_lock:
+                progress = self._pending_progress
+                outcome = self._pending_done
+                self._pending_progress = None
+                self._pending_done = None
+
+            # Never hold the lock while calling Tk or user callbacks. New
+            # reports arriving during rendering belong to the next tick.
+            if progress is not None and progress != self._last_progress:
+                self._last_progress = progress
                 if self._on_progress is not None:
                     try:
-                        self._on_progress(message.current, message.total)
+                        self._on_progress(progress.current, progress.total)
                     except Exception:  # pylint: disable=broad-exception-caught
                         logging.exception("File-browser progress callback failed")
-                continue
+
+            if outcome is None:
+                self._schedule(self.POLL_INTERVAL_MS, self.poll)
+                return
             completion = self._on_done
             self._thread = None
             self._on_done = None
             self._on_progress = None
+            # Completion may start another task and enter a modal Tk loop.
+            # Its scheduled poll must be allowed to deliver the new result.
+            self._polling = False
             if completion is not None:
-                completion(message.result, message.error)
-            return
+                completion(outcome.result, outcome.error)
+        finally:
+            self._polling = False
