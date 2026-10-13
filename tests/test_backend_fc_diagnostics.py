@@ -11,12 +11,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from collections.abc import Callable
+from datetime import datetime, timezone
 from unittest.mock import patch
 
 import pytest
 from pymavlink import mavutil
 from pymavlink.dialects.v20 import ardupilotmega as mavlink
 
+import ardupilot_methodic_configurator.backend_flightcontroller_connection as connection_module
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import FlightControllerConnection
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
@@ -26,6 +28,7 @@ from ardupilot_methodic_configurator.data_model_flightcontroller_info import Fli
 @pytest.fixture
 def diagnostics_connection(monkeypatch: pytest.MonkeyPatch) -> tuple[FlightControllerConnection, Callable[..., None]]:
     """Provide the real receive/parser/hook pipeline with an in-memory transport."""
+    # pylint: disable=duplicate-code  # Shared in-memory PyMAVLink transport setup.
     master = mavutil.mavfile(None, "in-memory", input=False)
     master.mav = mavlink.MAVLink(master)
     master.target_system = 1
@@ -44,6 +47,7 @@ def diagnostics_connection(monkeypatch: pytest.MonkeyPatch) -> tuple[FlightContr
     monkeypatch.setattr(master, "recv", recv)
     connection = FlightControllerConnection(info=FlightControllerInfo())
     connection.set_master_for_testing(master)
+    # pylint: enable=duplicate-code
     return connection, enqueue
 
 
@@ -117,6 +121,40 @@ def test_history_retains_one_hundred_complete_diagnostics_without_counting_banne
         connection.poll_status_text()
     connection.poll_status_text()
     assert connection.status_text_buffer == expected[1:]
+
+
+def test_display_history_is_newest_first_with_local_arrival_times(
+    diagnostics_connection: tuple[FlightControllerConnection, Callable[..., None]],
+) -> None:
+    """
+    Displayed diagnostics include local arrival times and put the newest message first.
+
+    GIVEN: Two complete STATUSTEXT packets arrive at known local times
+    WHEN: The diagnostics display history is requested
+    THEN: Each message has its own local arrival time and the newest appears first
+    AND: The raw status buffer remains unformatted and in arrival order
+    """
+    # Arrange: Use the real MAVLink parser while controlling only the arrival clock.
+    connection, enqueue = diagnostics_connection
+    received_times = [
+        datetime(2026, 10, 13, 12, 34, 56, tzinfo=timezone.utc),
+        datetime(2026, 10, 13, 12, 34, 58, tzinfo=timezone.utc),
+    ]
+
+    # Act: Parse each packet separately so each completed message receives its own timestamp.
+    with patch.object(connection_module, "datetime") as datetime_mock:
+        datetime_mock.now.side_effect = received_times
+        enqueue(b"Older warning")
+        connection.poll_status_text()
+        enqueue(b"Newer warning")
+        connection.poll_status_text()
+
+    # Assert: Display data is local-time and newest-first without changing the raw API.
+    assert connection.status_text_buffer == ["Older warning", "Newer warning"]
+    assert connection.status_text_display_buffer == [
+        f"[{received_times[1].astimezone():%Y-%m-%d %H:%M:%S}] Newer warning",
+        f"[{received_times[0].astimezone():%Y-%m-%d %H:%M:%S}] Older warning",
+    ]
 
 
 def test_reconnect_discards_unfinished_diagnostics(

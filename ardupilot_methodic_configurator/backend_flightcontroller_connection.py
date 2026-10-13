@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import contextlib
 from collections import deque
 from collections.abc import Callable, Sequence
+from datetime import datetime
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
@@ -216,7 +217,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             mavlink_connection_factory or SystemMavlinkConnectionFactory()
         )
         self._banner_text_buffer: list[str] = []
-        self._status_text_buffer: deque[str] = deque(maxlen=FC_STATUS_TEXT_BUFFER_LIMIT)
+        self._status_text_buffer: deque[tuple[datetime, str]] = deque(maxlen=FC_STATUS_TEXT_BUFFER_LIMIT)
         self._status_text_assembler = StatusTextAssembler()
         self._receiving_banner = False
 
@@ -228,7 +229,16 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
     @property
     def status_text_buffer(self) -> list[str]:
         """Return the latest runtime STATUSTEXT messages."""
-        return [text for text in self._status_text_buffer if text not in self._banner_text_buffer]
+        return [text for _received_at, text in self._status_text_buffer if text not in self._banner_text_buffer]
+
+    @property
+    def status_text_display_buffer(self) -> list[str]:
+        """Return runtime STATUSTEXT lines newest first, prefixed with their local arrival time."""
+        return [
+            f"[{received_at:%Y-%m-%d %H:%M:%S}] {text}"
+            for received_at, text in reversed(self._status_text_buffer)
+            if text not in self._banner_text_buffer
+        ]
 
     def append_status_text(self, text: str) -> None:
         """Retain a received STATUSTEXT message for the flight-controller banner window."""
@@ -239,12 +249,13 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             if status_text not in self._banner_text_buffer:
                 self._banner_text_buffer.append(status_text)
             self._status_text_buffer = deque(
-                (text for text in self._status_text_buffer if text != status_text), maxlen=FC_STATUS_TEXT_BUFFER_LIMIT
+                ((received_at, text) for received_at, text in self._status_text_buffer if text != status_text),
+                maxlen=FC_STATUS_TEXT_BUFFER_LIMIT,
             )
             return
         if status_text in self._banner_text_buffer:
             return
-        self._status_text_buffer.append(status_text)
+        self._status_text_buffer.append((datetime.now().astimezone(), status_text))
 
     def poll_status_text(self) -> list[str]:
         """Read a bounded batch while the diagnostics UI exclusively owns the idle connection."""

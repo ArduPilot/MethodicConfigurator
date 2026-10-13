@@ -89,6 +89,7 @@ def discovered_compass_controller(monkeypatch: pytest.MonkeyPatch) -> tuple[Flig
     )
     wire = bytearray(heartbeat.pack(encoder))
 
+    # pylint: disable=duplicate-code  # Shared in-memory PyMAVLink transport setup.
     def recv(count: int) -> bytes:
         data = bytes(wire[:count])
         del wire[:count]
@@ -97,6 +98,7 @@ def discovered_compass_controller(monkeypatch: pytest.MonkeyPatch) -> tuple[Flig
     monkeypatch.setattr(master, "recv", recv)
     connection = FlightControllerConnection(info=FlightControllerInfo())
     connection.set_master_for_testing(master)
+    # pylint: enable=duplicate-code
     detected = connection._detect_vehicles_from_heartbeats(1, return_after_first_heartbeat=True)
     assert connection._select_supported_autopilot(detected) == ""
     assert (master.target_system, master.target_component) == (1, 0)

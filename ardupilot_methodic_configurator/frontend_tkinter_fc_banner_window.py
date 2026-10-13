@@ -72,7 +72,7 @@ class FlightControllerBannerWindow(BaseWindow):  # pylint: disable=too-many-inst
         self.status_text_widget = self._create_text_buffer(
             status_frame, self._last_status_text, _("No status messages captured.")
         )
-        self.status_text_widget.see(tk.END)
+        self.status_text_widget.see("1.0")
 
         devices_frame = ttk.LabelFrame(self.section_panes, text=_("Detected devices"))
         self.section_panes.add(devices_frame, minsize=minimum_section_height, stretch="always", sticky="nsew")
@@ -93,7 +93,16 @@ class FlightControllerBannerWindow(BaseWindow):  # pylint: disable=too-many-inst
 
     def _runtime_text(self, lines: list[str]) -> list[str]:
         """Exclude banner information even when a caller supplies overlapping snapshots."""
-        return [line for line in lines if line.strip() not in self._banner_text]
+        return [line for line in lines if self._status_message(line).strip() not in self._banner_text]
+
+    @staticmethod
+    def _status_message(line: str) -> str:
+        """Remove the display-only arrival timestamp before comparing a line with the banner."""
+        if line.startswith("["):
+            _timestamp, separator, message = line.partition("] ")
+            if separator:
+                return message
+        return line
 
     def _refresh_status_text(self) -> None:
         """Refresh while this modal view owns the connection, preserving the reader's scroll position."""
@@ -102,13 +111,13 @@ class FlightControllerBannerWindow(BaseWindow):  # pylint: disable=too-many-inst
             return
         lines = self._runtime_text(self._status_text_provider())
         if lines != self._last_status_text:
-            top, bottom = self.status_text_widget.yview()
+            top, _bottom = self.status_text_widget.yview()
             self.status_text_widget.configure(state=tk.NORMAL)
             self.status_text_widget.delete("1.0", tk.END)
             self.status_text_widget.insert(tk.END, "\n".join(lines) if lines else _("No status messages captured."))
             self.status_text_widget.configure(state=tk.DISABLED)
-            if bottom >= 0.999:
-                self.status_text_widget.see(tk.END)
+            if top <= 0.001:
+                self.status_text_widget.see("1.0")
             else:
                 self.status_text_widget.yview_moveto(top)
             self._last_status_text = lines
