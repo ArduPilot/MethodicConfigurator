@@ -709,6 +709,68 @@ class TestWidgetFactoryMethods:
         plugin.on_deactivate.assert_not_called()
         plugin.on_activate.assert_not_called()
 
+    @pytest.mark.parametrize("plugin_hooks", [("on_suspend", "on_resume"), ("on_deactivate", "on_activate")])
+    def test_diagnostics_is_refused_while_file_browser_is_open(
+        self, parameter_editor_window: ParameterEditorWindow, plugin_hooks: tuple[str, str]
+    ) -> None:
+        """
+        Keep diagnostics from consuming replies intended for the flight-controller file browser.
+
+        GIVEN: The file browser is open without holding the navigation lock, as on macOS
+        WHEN: The user requests diagnostics
+        THEN: The browser stays open, no diagnostics reader starts, and the plugin keeps running
+        """
+        editor = parameter_editor_window
+        browser = MagicMock()
+        browser.root.winfo_exists.return_value = True
+        editor._file_browser_window = browser
+        plugin = MagicMock(spec=plugin_hooks)
+        editor.current_plugin_view = plugin
+        assert not editor.navigation_lock.locked
+
+        with patch.object(parameter_editor_module, "FlightControllerBannerWindow") as banner_window:
+            editor.on_fc_banner_click()
+
+        banner_window.assert_not_called()
+        editor.root.wait_window.assert_not_called()
+        editor.parameter_editor.get_fc_banner_text.assert_not_called()
+        editor.parameter_editor.poll_fc_status_text.assert_not_called()
+        editor.ui.show_error.assert_called_once_with(
+            "File browser is open",
+            "Close the flight-controller file browser before opening diagnostics.",
+        )
+        browser.root.destroy.assert_not_called()
+        assert editor._file_browser_window is browser
+        assert not plugin.mock_calls
+        assert not editor.navigation_lock.locked
+
+    @pytest.mark.parametrize("browser_destroyed", [False, True])
+    def test_user_can_open_diagnostics_after_file_browser_is_destroyed(
+        self, parameter_editor_window: ParameterEditorWindow, browser_destroyed: bool
+    ) -> None:
+        """
+        A stale browser reference must not prevent diagnostics from opening.
+
+        GIVEN: The file browser has closed but the editor still references its window
+        WHEN: The user requests diagnostics and Tk reports a missing window or interpreter
+        THEN: Diagnostics opens without reporting that the file browser is open
+        """
+        editor = parameter_editor_window
+        browser = MagicMock()
+        browser.root.winfo_exists.return_value = False
+        if browser_destroyed:
+            browser.root.winfo_exists.side_effect = tk.TclError("application has been destroyed")
+        editor._file_browser_window = browser
+
+        with patch.object(parameter_editor_module, "FlightControllerBannerWindow") as banner_window:
+            editor.on_fc_banner_click()
+
+        banner_window.assert_called_once()
+        editor.root.wait_window.assert_called_once_with(banner_window.return_value.root)
+        editor.ui.show_error.assert_not_called()
+        if browser_destroyed:
+            assert editor._file_browser_window is None
+
     def test_create_conf_widgets_configures_combobox(self, parameter_editor: MagicMock) -> None:
         editor = _create_editor(parameter_editor)
         editor.main_frame = MagicMock()
