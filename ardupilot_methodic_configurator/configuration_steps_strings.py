@@ -23,16 +23,21 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     """
     # why
     _config_steps_strings = _("ATC_THR_MIX_MAX should be increased after autotune to maximize attitude control authority at high throttle")
+    _config_steps_strings = _("Accelerometer calibration values and the accelerometers to use must be configured before the vehicle can be flown.")
+    _config_steps_strings = _("Accelerometer level trim values compensate for the vehicle attitude when it is stationary.")
     _config_steps_strings = _("After calibrating the IMU temperature bias, disable disarmed logging (no longer needed) and set board target temperature.")
     _config_steps_strings = _("An OSD (On Screen Display) overlays flight data on the FPV video feed, giving the pilot situational awareness without looking away from the aircraft")
     _config_steps_strings = _("An even better result for roll and pitch will be achieved by re-autotuning an already (in all axis) autotuned vehicle")
     _config_steps_strings = _("Because the mathematical model of the vehicle allows for analytical PID optimization")
+    _config_steps_strings = _("Compass calibration and ordering are required for reliable heading estimation.")
+    _config_steps_strings = _("Configure the range finder used by the aircraft.")
     _config_steps_strings = _("Configuring RC controller options ensures correct arming behavior and channel function assignments for the specific RC system in use")
     _config_steps_strings = _("Correct orientation ensures that the flight controller accurately interprets the vehicle's movements and orientation, which is fundamental for stable flight and navigation.")
     _config_steps_strings = _("Disarmed and replay logging must be disabled after windspeed estimation flights to avoid filling the storage with unnecessary logs")
     _config_steps_strings = _("Ensures the vehicle operates within safe voltage limits and can trigger appropriate failsafe actions to protect the vehicle and its surroundings. It also helps by scaling the PIDs to provide a constant flight behavior, independent of the battery state-of-charge")
     _config_steps_strings = _("Evaluate the aircraft's PID tuning and flight characteristics with feed-forward enable to test faster dynamics")
     _config_steps_strings = _("Evaluating the aircraft's PID tuning and flight characteristics is best done with feed-forward disabled")
+    _config_steps_strings = _("Flight modes determine how the vehicle responds to pilot and ground-control inputs.")
     _config_steps_strings = _("For accurate altitude estimation")
     _config_steps_strings = _("For accurate navigation and stabilization at high speeds and/or in windy conditions")
     _config_steps_strings = _("GNSS positioning is required to compensate for the IMU drift. This is required by the configuration and tuning steps. After configuration and tuning are complete the GNSS can be replaced by other positioning system")
@@ -47,6 +52,7 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     _config_steps_strings = _("Remote controller is mandatory in the initial configuration and tuning phases. Later might be required for operation and/or safety")
     _config_steps_strings = _("Safety parameters protect the vehicle and its surroundings by enabling arming checks, geofencing and failsafe actions. ESC slew rate limits protect the ESCs from desync events.")
     _config_steps_strings = _("Sensors need to be calibrated once, before they can be used")
+    _config_steps_strings = _("Servo output functions define how the flight controller drives the vehicle outputs.")
     _config_steps_strings = _("Some countries require a remote ID for drones to be flown legally.")
     _config_steps_strings = _("Sometimes the weights of the barometer vs. GNSS altitude need to be adjusted.")
     _config_steps_strings = _("System identification is required to create a mathematical model of the vehicle")
@@ -114,6 +120,7 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     _config_steps_strings = _("Before the second flight so that the vehicle can be safely tuned.")
     _config_steps_strings = _("Can only be done after IMU temperature compensation results are available. Future steps will use a drift-compensated, constant temperature and only log when armed.")
     _config_steps_strings = _("Can only be done after the connections and device drivers have been configured in the preceding steps")
+    _config_steps_strings = _("Configure optional range-finder hardware after the core sensor and safety setup.")
     _config_steps_strings = _("Done before sensor calibration in Mission Planner to minimize the changes the user has to do in mission planner")
     _config_steps_strings = _("It con only be done after optical flow sensor calibration setup")
     _config_steps_strings = _("It is a pre-requirement for configuring some telemetry systems and ESCs")
@@ -122,6 +129,7 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     _config_steps_strings = _("Needs to be done after setting ESC telemetry, but before testing the motor")
     _config_steps_strings = _("Needs to be done before compass calibration")
     _config_steps_strings = _("OSD configuration depends on the telemetry and battery monitor being configured in the preceding steps, and it must be set up before the first flight")
+    _config_steps_strings = _("Output functions are assigned after the connected hardware and vehicle type are known.")
     _config_steps_strings = _("PID notch filters require different logging parameters from motor notch filters")
     _config_steps_strings = _("Pre-requires remote control configuration. Uses GCS telemetry if available. Setting up ESCs early allows for initial motor tests and ensures a stable base for further tuning and flight testing without risking damage to the vehicle.")
     _config_steps_strings = _("Real-flight data with PID notch filter batch logging is only available after the dedicated logging flight")
@@ -130,9 +138,13 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     _config_steps_strings = _("Requires the setup (provided by the previous step) and should be done before the second quicktune.")
     _config_steps_strings = _("Requires the setup step. It is easier to do before the FC is mounted in the vehicle")
     _config_steps_strings = _("Sometimes it depends on the remote controller. Configuring telemetry early allows vehicle configuration and sensor calibration in later steps without requiring a USB cable connection to the autopilot")
+    _config_steps_strings = _("The accelerometers must be calibrated before their level can be checked and corrected.")
+    _config_steps_strings = _("The compass hardware and vehicle orientation are configured in the preceding steps.")
     _config_steps_strings = _("The failsafe configuration step requires this. During flight tests PID scaling depends on the battery voltage")
+    _config_steps_strings = _("The flight controller and sensors have been configured in the preceding steps.")
     _config_steps_strings = _("The following steps require that the orientation is correctly set")
     _config_steps_strings = _("The notch filter setup step requires this, and the safety of the vehicle depends on the ESC and motor configuration")
+    _config_steps_strings = _("The radio and flight controller inputs have been configured in the preceding steps.")
     _config_steps_strings = _("This is the last step in the tuning process")
     _config_steps_strings = _("You need to cool down the FC to perform this calibration. It is easier to do before the FC is mounted in the vehicle")
     _config_steps_strings = _("real-flight data is only available after the first flight")
@@ -141,9 +153,12 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     _config_steps_strings = _("Adjust the Proportional-Integral-Derivative (PID) controllers based on the vehicle size before the first flight")
     _config_steps_strings = _("Calculate angle rate derivative feed-forward gains (ATC_RAT_*_D_FF and PSC_ACCZ_D_FF) to improve aggressive maneuver tracking")
     _config_steps_strings = _("Calculate angle rate derivative feed-forward gains (Q_A_RAT_*_D_FF and Q_P_ACCZ_D_FF) to improve aggressive maneuver tracking")
+    _config_steps_strings = _("Calibrate and configure the compasses.")
+    _config_steps_strings = _("Calibrate the accelerometers and configure the accelerometer sensors.")
     _config_steps_strings = _("Configure Extended Kalman Filter (EKF) noise weights")
     _config_steps_strings = _("Configure PID notch filters logging")
     _config_steps_strings = _("Configure RC controller options including the arming method and RC channel option assignments")
+    _config_steps_strings = _("Configure RC mapping, calibration and controller options. Plugin changes are staged; press parameter upload to write them to the flight controller")
     _config_steps_strings = _("Configure logging parameters, including what data is logged and how it's stored")
     _config_steps_strings = _("Configure parameters for everyday use")
     _config_steps_strings = _("Configure parameters for precision landing")
@@ -158,6 +173,7 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     _config_steps_strings = _("Configure parameters for wind speed estimation")
     _config_steps_strings = _("Configure remote controller connection, protocol and settings, including channel mapping and flight modes")
     _config_steps_strings = _("Configure safety parameters including arming checks, geofence, failsafe actions and ESC slew rate limits")
+    _config_steps_strings = _("Configure servo output functions.")
     _config_steps_strings = _("Configure settings for the Electronic Speed Controllers (ESCs), including PWM range and failsafe behavior")
     _config_steps_strings = _("Configure telemetry connection, data protocol and settings between the autopilot and the ground control station(s)")
     _config_steps_strings = _("Configure the GNSS (Global Navigation Satellite System) connection and settings, including antenna phase center location and constellation selection for optimal update rates")
@@ -167,6 +183,7 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     _config_steps_strings = _("Configure the notch filter settings, used to reduce gyroscope signal noise caused by the motors rotation")
     _config_steps_strings = _("Configure the notch filter(s) based on the data collected from the first flight")
     _config_steps_strings = _("Configure the position controller(s)")
+    _config_steps_strings = _("Configure the vehicle flight modes.")
     _config_steps_strings = _("Define the orientation of the flight controller board relative to the vehicle's body frame")
     _config_steps_strings = _("ESC, Motor and propeller configurations")
     _config_steps_strings = _("Evaluate the aircraft's tuning with feed-forward control disabled")
@@ -177,6 +194,7 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     _config_steps_strings = _("IMU (Inertial Measurement Unit) temperature calibration results")
     _config_steps_strings = _("IMU (Inertial Measurement Unit) temperature calibration setup")
     _config_steps_strings = _("Initial attitude controller configuration depends on the vehicle's propeller size defined in the component editor window")
+    _config_steps_strings = _("Level the accelerometers.")
     _config_steps_strings = _("Motor specifications")
     _config_steps_strings = _("Parameters for analytical PID optimization")
     _config_steps_strings = _("Record the results of the in-flight magnetometer calibration")
@@ -207,14 +225,18 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     _config_steps_strings = _("Use optical flow sensor instead of GNSS sensor for positioning")
 
     # wiki_text
+    _config_steps_strings = _("Accelerometer Calibration")
+    _config_steps_strings = _("Accelerometer Level")
     _config_steps_strings = _("Arming Checks")
     _config_steps_strings = _("AutoTune")
     _config_steps_strings = _("Barometer Position Error Compensation")
     _config_steps_strings = _("Battery Monitors (aka Power Monitors/Modules) - BATT_* parameters")
+    _config_steps_strings = _("Compass Calibration")
     _config_steps_strings = _("Downloading and Analyzing Data Logs in Mission Planner")
     _config_steps_strings = _("ESC (Electronic Speed Controls)")
     _config_steps_strings = _("Evaluating the aircraft tune")
     _config_steps_strings = _("Extended Kalman filter tuning")
+    _config_steps_strings = _("Flight Modes")
     _config_steps_strings = _("Follow the blog instructions and use Mission Planner instead of this tool to configure the mandatory hardware parameters.")
     _config_steps_strings = _("GPS/Compass (landing page) - GPS* parameters")
     _config_steps_strings = _("Guided Mode")
@@ -231,7 +253,9 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     _config_steps_strings = _("OSD (On Screen Display)")
     _config_steps_strings = _("Precision Landing and Loiter")
     _config_steps_strings = _("Radio Control Systems")
+    _config_steps_strings = _("Rangefinders")
     _config_steps_strings = _("Remote ID (aka Drone ID)")
+    _config_steps_strings = _("Servo Output Functions")
     _config_steps_strings = _("Telemetry (landing page)")
     _config_steps_strings = _("Test AltHold")
     _config_steps_strings = _("Wind speed estimation")
@@ -244,10 +268,10 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     _config_steps_strings = _("ArduPilot Hardware report")
     _config_steps_strings = _("ArduPilot MAGFit in flight compass calibration")
     _config_steps_strings = _("ArduPilot PID Review Tool")
+    _config_steps_strings = _("ArduPilot PID Review tool")
     _config_steps_strings = _("ArduPilot Thrust Expo")
     _config_steps_strings = _("ArduPlane Analytic Tune Tool")
     _config_steps_strings = _("Ardupilot Filter Review tool")
-    _config_steps_strings = _("Ardupilot PID Review tool")
     _config_steps_strings = _("BLHeliSuite32")
     _config_steps_strings = _("Dronetag BS user manual")
     _config_steps_strings = _("EdgeTX Companion")
@@ -273,14 +297,26 @@ Do you want to skip it?""")
 You can skip some steps now.
 
 Jump to '66_everyday_use.param' file?""")
+    _config_steps_strings = _("""If you are impatient and do not want a fully optimized flight controller
+You can skip some steps now.
+
+Jump to '70_everyday_use.param' file?""")
     _config_steps_strings = _("""If you do not use optical flow
 you can skip some steps now.
 
 Jump to '66_everyday_use.param' file?""")
+    _config_steps_strings = _("""If you do not use optical flow
+you can skip some steps now.
+
+Jump to '70_everyday_use.param' file?""")
     _config_steps_strings = _("""If you do not want an analytical PID optimization
 you can skip some steps now.
 
 Jump to '60_position_controller.param' file?""")
+    _config_steps_strings = _("""If you do not want an analytical PID optimization
+you can skip some steps now.
+
+Jump to '64_position_controller.param' file?""")
 
     # instructions_popup
     _config_steps_strings = _("""After the flight, analyze the .bin in the filter review tool, change the values here and upload to the FC.
@@ -309,6 +345,7 @@ It must be repeated multiple times until outputs no longer oscillate.""")
     _config_steps_strings = _("Autotune yaw axis")
     _config_steps_strings = _("Because ALTHOLD flight mode was used for more than 30 seconds to correctly learn the MOT_THST_HOVER value")
     _config_steps_strings = _("Because ALTHOLD flight mode was used for more than 30 seconds to correctly learn the Q_M_THST_HOVER value")
+    _config_steps_strings = _("Copied from the connected flight controller")
     _config_steps_strings = _("Critical failsafe voltage x nr. of cells")
     _config_steps_strings = _("Current RC pitch channel mapping; editable in the RC calibration plugin")
     _config_steps_strings = _("Current RC roll channel mapping; editable in the RC calibration plugin")
