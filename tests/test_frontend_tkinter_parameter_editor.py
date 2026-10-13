@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import re
 import tkinter as tk
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from tkinter import font as tkfont
 from tkinter import ttk
 from typing import TYPE_CHECKING, cast
@@ -57,6 +57,44 @@ if TYPE_CHECKING:
 # pylint: disable=too-many-lines, redefined-outer-name, protected-access
 
 # ============================== SHARED FIXTURES ==============================
+
+
+def _set_layout_dpi(root: tk.Tk, dpi: int) -> None:
+    """Set DPI before creating widgets and refresh fonts cached by the shared Tk root."""
+    root.tk.call("tk", "scaling", dpi / 72)
+    for name in tkfont.names(root):
+        if name.startswith("Tk"):
+            tkfont.nametofont(name, root=root).configure(family="Arial", size=10)
+
+
+@contextmanager
+def _layout_display(root: tk.Tk, dpi: int = 96) -> Iterator[tk.Tk]:
+    """Give fixed-pixel scenarios explicit fonts, DPI and theme, without leaking them."""
+    original_scaling = float(root.tk.call("tk", "scaling"))
+    fonts = {name: tkfont.nametofont(name, root=root) for name in tkfont.names(root) if name.startswith("Tk")}
+    original_fonts = {name: font.configure() for name, font in fonts.items()}
+    style = ttk.Style(root)
+    original_theme = style.theme_use()
+    try:
+        style.theme_use("alt")
+        _set_layout_dpi(root, dpi)
+        root.update_idletasks()
+        yield root
+    finally:
+        root.tk.call("tk", "scaling", original_scaling)
+        for name, font in fonts.items():
+            original_font = original_fonts[name]
+            assert original_font is not None
+            font.configure(**original_font)
+        style.theme_use(original_theme)
+        root.update_idletasks()
+
+
+@pytest.fixture
+def layout_root(root: tk.Tk) -> Iterator[tk.Tk]:
+    """Match fixed-pixel windows to 96 DPI; individual scenarios may select another DPI."""
+    with _layout_display(root) as configured_root:
+        yield configured_root
 
 
 def _configure_root_stubs(root: MagicMock) -> None:
@@ -335,6 +373,42 @@ class TestParameterEditorUiServices:  # pylint: disable=too-few-public-methods
 
 class TestWindowSizing:
     """Keep navigation controls visible while respecting the user's window size."""
+
+    @pytest.mark.parametrize("ambient_dpi", [96, 144], ids=["96dpi-desktop", "144dpi-desktop"])
+    @pytest.mark.parametrize("fail", [False, True], ids=["success", "failure"])
+    def test_layout_scenarios_restore_shared_display_settings(self, root: tk.Tk, ambient_dpi: int, fail: bool) -> None:
+        """
+        Fixed-pixel scenarios must not change the display used by later tests.
+
+        GIVEN: A shared Tk root with a desktop DPI and a customized default font
+        WHEN: A 96-DPI layout scenario completes or raises an error
+        THEN: Its scaling, named fonts and theme are restored for the next user scenario
+        """
+        with _layout_display(root, ambient_dpi):
+            tkfont.nametofont("TkDefaultFont", root=root).configure(family="Courier", size=14)
+            style = ttk.Style(root)
+            style.theme_use("clam")
+            original_scaling = float(root.tk.call("tk", "scaling"))
+            original_fonts = {
+                name: tkfont.nametofont(name, root=root).configure() for name in tkfont.names(root) if name.startswith("Tk")
+            }
+            failure_message = "layout scenario failed"
+            with (
+                pytest.raises(RuntimeError, match=failure_message) if fail else nullcontext(),
+                _layout_display(root),
+            ):
+                assert float(root.tk.call("tk", "scaling")) == pytest.approx(96 / 72, rel=0.01)
+                default_font = tkfont.nametofont("TkDefaultFont", root=root)
+                assert default_font.cget("size") == 10
+                assert default_font.metrics("linespace") == tkfont.Font(root=root, family="Arial", size=10).metrics(
+                    "linespace"
+                )
+                assert style.theme_use() == "alt"
+                if fail:
+                    raise RuntimeError(failure_message)
+            assert float(root.tk.call("tk", "scaling")) == pytest.approx(original_scaling, rel=0.01)
+            assert style.theme_use() == "clam"
+            assert {name: tkfont.nametofont(name, root=root).configure() for name in original_fonts} == original_fonts
 
     @pytest.mark.parametrize("height_option", [0, "0", pytest.param("pixel", id="truthy-tcl-pixel-zero")])
     def test_new_parameter_panes_are_measured_for_all_tk_zero_representations(
@@ -734,7 +808,7 @@ class TestWindowSizing:
             previous_heights = (component_height, table_height)
 
     def test_fixed_widget_growth_keeps_real_buttons_visible(
-        self, parameter_editor_window: ParameterEditorWindow, root: tk.Tk
+        self, parameter_editor_window: ParameterEditorWindow, layout_root: tk.Tk
     ) -> None:
         """
         Real Tk layout settles after the stage bar wraps at a narrower width.
@@ -743,6 +817,7 @@ class TestWindowSizing:
         WHEN: The window is narrowed in single jumps and Tk processes idle layout
         THEN: The button row stays fully visible and the table gives space to wrapping
         """
+        root = layout_root
         editor = parameter_editor_window
         editor.root = root
         editor.main_frame = ttk.Frame(root)
@@ -830,7 +905,13 @@ class TestWindowSizing:
         ],
     )
     def test_real_component_fields_remain_accessible_after_rebuilding(  # pylint: disable=too-many-locals,too-many-arguments,too-many-positional-arguments
-        self, parameter_editor_window: ParameterEditorWindow, root: tk.Tk, width: int, height: int, dpi: int, field_count: int
+        self,
+        parameter_editor_window: ParameterEditorWindow,
+        layout_root: tk.Tk,
+        width: int,
+        height: int,
+        dpi: int,
+        field_count: int,
     ) -> None:
         """
         A scrolling component editor keeps both fields and parameter rows accessible.
@@ -839,9 +920,9 @@ class TestWindowSizing:
         WHEN: Equal-height editors are rebuilt consecutively and across a component-less step
         THEN: Fitting fields stay fully visible, overflowing fields scroll, and buttons remain visible
         """
+        root = layout_root
         editor = parameter_editor_window
-        original_scaling = float(root.tk.call("tk", "scaling"))
-        root.tk.call("tk", "scaling", dpi / 72)
+        _set_layout_dpi(root, dpi)
         field_font = tkfont.Font(root=root, family="Arial", size=10)
         assert float(root.tk.call("tk", "scaling")) == pytest.approx(dpi / 72, rel=0.01)
         editor.dpi_scaling_factor = dpi / 96
@@ -894,7 +975,6 @@ class TestWindowSizing:
         finally:
             editor.main_frame.destroy()
             root.update_idletasks()
-            root.tk.call("tk", "scaling", original_scaling)
 
 
 class TestParameterFileSelection:
@@ -2401,7 +2481,7 @@ class TestPluginLayoutRebuild:
     def test_user_can_apply_gain_backoff_and_read_feedback_on_short_screens(  # noqa: PLR0915 # pylint: disable=too-many-statements,too-many-locals
         self,
         parameter_editor_window: ParameterEditorWindow,
-        root: tk.Tk,
+        layout_root: tk.Tk,
         window_size: tuple[int, int],
         result_step: tuple[str, str],
     ) -> None:
@@ -2412,6 +2492,7 @@ class TestPluginLayoutRebuild:
         WHEN: The user resizes, applies back-off and switches between top plugins in place
         THEN: All back-off controls and feedback remain visible, and orientation still scrolls
         """
+        root = layout_root
         editor = parameter_editor_window
         parameter_editor = cast("MagicMock", editor.parameter_editor)
         width, height = window_size
@@ -2515,7 +2596,7 @@ class TestPluginLayoutRebuild:
 
     @pytest.mark.parametrize("queued_refit", [False, True], ids=["no-refit", "queued-refit"])
     def test_user_can_read_parameters_after_a_plugin_activation_dialog(  # noqa: PLR0915
-        self, parameter_editor_window: ParameterEditorWindow, root: tk.Tk, queued_refit: bool
+        self, parameter_editor_window: ParameterEditorWindow, layout_root: tk.Tk, queued_refit: bool
     ) -> None:
         """
         A modal prerequisite warning must not collapse the adjacent parameter pane.
@@ -2524,6 +2605,7 @@ class TestPluginLayoutRebuild:
         WHEN: Its real modal Tk warning runs a nested event loop while layout is rebuilt
         THEN: Both panes and the navigation remain usable, including on a revisit
         """
+        root = layout_root
         editor = parameter_editor_window
         window = tk.Toplevel(root)
         window.geometry("990x600+0+0")
@@ -2596,7 +2678,7 @@ class TestPluginLayoutRebuild:
     @pytest.mark.parametrize("component_visible", [True, False], ids=["with-component", "without-component"])
     @pytest.mark.parametrize("height", [688, 820], ids=["768-screen", "1080-screen"])
     def test_user_can_edit_parameters_below_the_top_orientation_assistant(  # noqa: PLR0915 # pylint: disable=too-many-statements,too-many-locals
-        self, parameter_editor_window: ParameterEditorWindow, root: tk.Tk, height: int, component_visible: bool
+        self, parameter_editor_window: ParameterEditorWindow, layout_root: tk.Tk, height: int, component_visible: bool
     ) -> None:
         """
         Manual orientation remains usable alongside the scrollable assistant.
@@ -2605,6 +2687,7 @@ class TestPluginLayoutRebuild:
         WHEN: The user opens, resizes and revisits the board-orientation step
         THEN: Parameter rows and navigation stay visible and the assistant can scroll
         """
+        root = layout_root
         editor = parameter_editor_window
         window = tk.Toplevel(root)
         window.geometry(f"990x{height}+0+0")
