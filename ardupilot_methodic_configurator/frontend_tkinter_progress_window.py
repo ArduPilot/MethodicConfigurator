@@ -68,6 +68,10 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
 
         if not isinstance(master, (tk.Tk, tk.Toplevel)):
             logging_error("ProgressWindow: master is not a tk.Tk or tk.Toplevel instance, window centering may fail")
+        elif master.winfo_viewable():
+            # Keep progress above its parent without repeatedly raising it.
+            # A transient of a withdrawn initialization root can stay hidden.
+            self.progress_window.transient(master)
 
         if not self.only_show_when_update_progress_called:
             self.progress_window.deiconify()  # needs to be done before centering, but it does flicker :(
@@ -127,8 +131,6 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
                 if getattr(self, "_is_aqua", False):
                     self.progress_window.update()  # macOS needs this to paint pixels NOW
                 self._shown = True
-            elif not self.only_show_when_update_progress_called:
-                self.progress_window.lift()
 
             # Additional safety checks before updating widgets
             if (
