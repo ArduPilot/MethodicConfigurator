@@ -10,8 +10,11 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import sys
+import tkinter as tk
+from collections.abc import Generator
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 from unittest.mock import Mock
 
 import pytest
@@ -41,16 +44,100 @@ def _live_banner_window(
 
     monkeypatch.setattr(banner_window.BaseWindow, "__init__", initialize)
     monkeypatch.setattr(banner_window.BaseWindow, "center_window", Mock())
-    monkeypatch.setattr(banner_window.ttk, "LabelFrame", Mock())
+    monkeypatch.setattr(banner_window.tk, "PanedWindow", Mock())
+    monkeypatch.setattr(banner_window.ttk, "LabelFrame", _FakeWidget)
     monkeypatch.setattr(banner_window.ttk, "Button", Mock())
     monkeypatch.setattr(banner_window.ttk, "Frame", _FakeWidget)
     monkeypatch.setattr(banner_window.ttk, "Treeview", _FakeTree)
+    monkeypatch.setattr(banner_window.ttk, "Scrollbar", _FakeScrollbar)
     monkeypatch.setattr(banner_window, "_DeviceTreeTooltip", Mock())
     monkeypatch.setattr(banner_window.scrolledtext, "ScrolledText", Mock(return_value=text))
     window = banner_window.FlightControllerBannerWindow(
         root, ["ArduCopter V4.6.3"], status_text_provider=provider, navigation_lock=lock
     )
     return window, text, provider, lock
+
+
+def test_diagnostics_sections_have_two_vertical_resize_dividers(
+    live_banner_window: tuple[banner_window.FlightControllerBannerWindow, Mock, Mock, NavigationLock],
+) -> None:
+    """
+    Diagnostics sections share a vertically resizable container.
+
+    GIVEN: The diagnostics popup is open on Windows or macOS
+    WHEN: The user wants to allocate more height to one section
+    THEN: Both section boundaries are draggable and the section titles retain a minimum height
+    """
+    window, _text, _provider, _lock = live_banner_window
+    panes_constructor = cast("Mock", banner_window.tk.PanedWindow)
+    panes_constructor.assert_called_once_with(  # pylint: disable=no-member
+        window.main_frame,
+        orient=tk.VERTICAL,
+        sashwidth=6,
+        sashrelief=tk.RAISED,
+        sashcursor="sb_v_double_arrow",
+        opaqueresize=True,
+        borderwidth=0,
+    )
+    panes = cast("Mock", window.section_panes)
+    assert [call.args[0].kwargs["text"] for call in panes.add.call_args_list] == [
+        "FC banner",
+        "Latest 100 STATUSTEXT messages",
+        "Detected devices",
+    ]
+    assert all(call.kwargs == {"minsize": 60, "stretch": "always", "sticky": "nsew"} for call in panes.add.call_args_list)
+
+
+@pytest.fixture(name="resizable_banner_window")
+def _resizable_banner_window(
+    root: tk.Tk, monkeypatch: pytest.MonkeyPatch
+) -> Generator[banner_window.FlightControllerBannerWindow, None, None]:
+    """Create real off-screen widgets for native sash-resizing tests on supported CI platforms."""
+    if sys.platform == "darwin":
+        pytest.skip("Real widget geometry updates are unsafe on headless macOS runners.")
+    monkeypatch.setattr(banner_window.BaseWindow, "_get_dpi_scaling_factor", lambda _self: 1.0)
+    monkeypatch.setattr(banner_window.BaseWindow, "center_window", Mock())
+    monkeypatch.setattr(banner_window, "_DeviceTreeTooltip", Mock())
+    window = banner_window.FlightControllerBannerWindow(root, ["ArduCopter V4.6.3"])
+    try:
+        window.root.tk.call("wm", "transient", window.root, "")
+        window.root.geometry("800x680+20000+20000")
+        # Allow native window mapping before checking pane sizes; this fixture skips macOS.
+        window.root.after(50, window.root.quit)
+        window.root.mainloop()
+        window.root.update_idletasks()
+        yield window
+    finally:
+        window.root.destroy()
+
+
+@pytest.mark.parametrize("sash_index", [0, 1])
+@pytest.mark.parametrize("distance", [-40, 40])
+@pytest.mark.skipif(sys.platform == "darwin", reason="Real widget geometry updates are unsafe on headless macOS.")
+def test_user_can_drag_each_diagnostics_divider_up_and_down(
+    resizable_banner_window: banner_window.FlightControllerBannerWindow, sash_index: int, distance: int
+) -> None:
+    """
+    Both boundaries resize their adjacent sections using Tk's native sash positioning.
+
+    GIVEN: Three visible diagnostic sections separated by two dividers
+    WHEN: The user drags either divider up or down
+    THEN: The two adjacent sections change height and the third section stays unchanged
+    """
+    window = resizable_banner_window
+    panes = window.section_panes
+    frames = [window.root.nametowidget(str(pane)) for pane in panes.panes()]
+    heights_before = [frame.winfo_height() for frame in frames]
+    x, y = panes.sash_coord(sash_index)
+    # Native drag bindings use sash placement; avoid DPI-sensitive synthetic pointer events.
+    panes.sash_place(sash_index, x, y + distance)
+    window.root.update_idletasks()
+
+    heights_after = [frame.winfo_height() for frame in frames]
+    assert heights_after[sash_index] == heights_before[sash_index] + distance
+    assert heights_after[sash_index + 1] == heights_before[sash_index + 1] - distance
+    unchanged_index = 2 if sash_index == 0 else 0
+    assert heights_after[unchanged_index] == heights_before[unchanged_index]
 
 
 def test_user_sees_fresh_runtime_messages_without_banner_duplicates(
@@ -213,7 +300,7 @@ def test_device_table_uses_requested_columns_and_stripes_rows(monkeypatch: pytes
         "device-0": "BARO1_DEVID: 423425",
         "device-1": "INS_ACC_ID: 3408138",
     }
-    assert not scrollbars
+    assert len(scrollbars) == 1
 
 
 def _init_tree(tree: _FakeTree, kwargs: dict[str, Any]) -> _FakeTree:
@@ -228,11 +315,18 @@ def _create_fake_scrollbar(scrollbars: list[dict[str, Any]], kwargs: dict[str, A
     return _FakeScrollbar(**kwargs)
 
 
-def test_device_table_shows_vertical_scrollbar_only_when_rows_overflow(monkeypatch: pytest.MonkeyPatch) -> None:
-    """A vertical scrollbar is created when device rows exceed the visible table height."""
+@pytest.mark.parametrize("row_count", [0, 2, 8, 9])
+def test_user_can_scroll_devices_after_shortening_the_device_pane(monkeypatch: pytest.MonkeyPatch, row_count: int) -> None:
+    """
+    The device scrollbar remains available regardless of the initial number of rows.
+
+    GIVEN: A device table that may initially fit all its rows
+    WHEN: The user shortens the device pane with its divider
+    THEN: A vertical scrollbar is available to reach rows that no longer fit
+    """
     tree = _FakeTree()
     scrollbars: list[dict[str, Any]] = []
-    rows = [(f"INS_ACC{index}", "SPI", index, index, "IMU", f"INS_ACC{index}_ID: {index}") for index in range(9)]
+    rows = [(f"INS_ACC{index}", "SPI", index, index, "IMU", f"INS_ACC{index}_ID: {index}") for index in range(row_count)]
     monkeypatch.setattr(banner_window.ttk, "Frame", _FakeWidget)
     monkeypatch.setattr(banner_window.ttk, "Treeview", lambda *_args, **kwargs: _init_tree(tree, kwargs))
     monkeypatch.setattr(
@@ -248,7 +342,7 @@ def test_device_table_shows_vertical_scrollbar_only_when_rows_overflow(monkeypat
 
     window._create_device_table(_FakeWidget(), {})
 
-    assert len(tree.get_children()) == banner_window.FlightControllerBannerWindow.DEVICE_TABLE_HEIGHT + 1
+    assert len(tree.get_children()) == row_count
     assert len(scrollbars) == 1
     assert scrollbars[0]["orient"] == banner_window.tk.VERTICAL
     assert "yscrollcommand" in tree.configure_options

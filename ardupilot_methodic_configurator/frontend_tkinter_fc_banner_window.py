@@ -51,19 +51,31 @@ class FlightControllerBannerWindow(BaseWindow):  # pylint: disable=too-many-inst
         self._banner_text = set(banner_text)
         self._last_status_text = self._runtime_text(status_text or [])
 
-        banner_frame = ttk.LabelFrame(self.main_frame, text=_("FC banner"))
-        banner_frame.pack(fill=tk.BOTH, expand=True, padx=8, pady=(8, 4))
+        self.section_panes = tk.PanedWindow(
+            self.main_frame,
+            orient=tk.VERTICAL,
+            sashwidth=round(6 * self.dpi_scaling_factor),
+            sashrelief=tk.RAISED,
+            sashcursor="sb_v_double_arrow",
+            opaqueresize=True,
+            borderwidth=0,
+        )
+        self.section_panes.pack(fill=tk.BOTH, expand=True, padx=8, pady=(8, 4))
+        minimum_section_height = round(60 * self.dpi_scaling_factor)
+
+        banner_frame = ttk.LabelFrame(self.section_panes, text=_("FC banner"))
+        self.section_panes.add(banner_frame, minsize=minimum_section_height, stretch="always", sticky="nsew")
         self._create_text_buffer(banner_frame, banner_text, _("No banner messages captured."))
 
-        status_frame = ttk.LabelFrame(self.main_frame, text=_("Latest 100 STATUSTEXT messages"))
-        status_frame.pack(fill=tk.BOTH, expand=True, padx=8, pady=4)
+        status_frame = ttk.LabelFrame(self.section_panes, text=_("Latest 100 STATUSTEXT messages"))
+        self.section_panes.add(status_frame, minsize=minimum_section_height, stretch="always", sticky="nsew")
         self.status_text_widget = self._create_text_buffer(
             status_frame, self._last_status_text, _("No status messages captured.")
         )
         self.status_text_widget.see(tk.END)
 
-        devices_frame = ttk.LabelFrame(self.main_frame, text=_("Detected devices"))
-        devices_frame.pack(fill=tk.BOTH, expand=True, padx=8, pady=4)
+        devices_frame = ttk.LabelFrame(self.section_panes, text=_("Detected devices"))
+        self.section_panes.add(devices_frame, minsize=minimum_section_height, stretch="always", sticky="nsew")
         self._create_device_table(devices_frame, fc_parameters or {})
 
         close_button = ttk.Button(self.main_frame, text=_("Close"), command=self.root.destroy)
@@ -130,10 +142,10 @@ class FlightControllerBannerWindow(BaseWindow):  # pylint: disable=too-many-inst
         self.device_tree = tree
         tree.tag_configure("striped", background="#eeeeee")
         tree.grid(row=0, column=0, sticky="nsew")
-        if len(rows) > self.DEVICE_TABLE_HEIGHT:
-            vertical_scrollbar = ttk.Scrollbar(container, orient=tk.VERTICAL, command=tree.yview)
-            tree.configure(yscrollcommand=vertical_scrollbar.set)
-            vertical_scrollbar.grid(row=0, column=1, sticky="ns")
+        # A shortened device pane can overflow even with fewer than eight rows.
+        vertical_scrollbar = ttk.Scrollbar(container, orient=tk.VERTICAL, command=tree.yview)
+        tree.configure(yscrollcommand=vertical_scrollbar.set)
+        vertical_scrollbar.grid(row=0, column=1, sticky="ns")
         container.rowconfigure(0, weight=1)
         container.columnconfigure(0, weight=1)
 
