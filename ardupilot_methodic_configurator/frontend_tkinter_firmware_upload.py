@@ -121,6 +121,8 @@ class FirmwareUploadWindow(BaseWindow):  # pylint: disable=too-many-instance-att
         self.service = FirmwareUploadService() if service is None else service
         self.worker_launcher = _start_background_worker if worker_launcher is None else worker_launcher
         self.owns_connection = owns_connection or flight_controller is None
+        # Only the window opened from AMC has a parent; closing it may exit AMC.
+        self.embedded = parent is not None
         self.releases: list[FirmwareRelease] = []
         self.events: SimpleQueue[tuple] = SimpleQueue()
         self.cancelled = Event()
@@ -748,7 +750,7 @@ class FirmwareUploadWindow(BaseWindow):  # pylint: disable=too-many-instance-att
                 _("Upload ArduPilot firmware"), _("Wait for the current operation to finish"), parent=self.root
             )
             return
-        if self.restart_required and not self.owns_connection and not self.restart_notified:
+        if self.restart_required and self.embedded and not self.restart_notified:
             # Connect or an idle unplug set the flag without telling the user, and closing now exits AMC.
             messagebox.showinfo(
                 _("Upload ArduPilot firmware"),
