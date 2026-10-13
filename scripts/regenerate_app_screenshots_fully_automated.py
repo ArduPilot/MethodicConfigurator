@@ -60,7 +60,7 @@ from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_MOTO
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator
+    from collections.abc import Callable, Generator, Iterator
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 IMAGES_DIR = ROOT_DIR / "images"
@@ -545,7 +545,7 @@ def capture_widget(  # pylint: disable=too-many-arguments, too-many-positional-a
 
 
 @contextmanager
-def hidden_root() -> Iterator[tk.Tk]:
+def hidden_root() -> Generator[tk.Tk, None, None]:
     """Create a hidden root and always clean it up."""
     root = tk.Tk()
     root.withdraw()

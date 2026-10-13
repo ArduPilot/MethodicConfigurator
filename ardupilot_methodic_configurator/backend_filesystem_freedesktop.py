@@ -212,9 +212,6 @@ StartupNotify=true
             startup_id: The DESKTOP_STARTUP_ID that was passed to the application
 
         """
-        if not tk:
-            return
-
         try:
             # Create a temporary Tk instance to access X11 if we don't have one yet
             temp_root = tk.Tk()

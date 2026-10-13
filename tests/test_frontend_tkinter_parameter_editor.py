@@ -52,7 +52,7 @@ from ardupilot_methodic_configurator.plugins.plugin_constants import (
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator
+    from collections.abc import Callable, Generator, Iterator
 
 # pylint: disable=too-many-lines, redefined-outer-name, protected-access
 
@@ -68,7 +68,7 @@ def _set_layout_dpi(root: tk.Tk, dpi: int) -> None:
 
 
 @contextmanager
-def _layout_display(root: tk.Tk, dpi: int = 96) -> Iterator[tk.Tk]:
+def _layout_display(root: tk.Tk, dpi: int = 96) -> Generator[tk.Tk, None, None]:
     """Give fixed-pixel scenarios explicit fonts, DPI and theme, without leaking them."""
     original_scaling = float(root.tk.call("tk", "scaling"))
     fonts = {name: tkfont.nametofont(name, root=root) for name in tkfont.names(root) if name.startswith("Tk")}
@@ -1116,7 +1116,7 @@ class TestUsagePopupScheduling:
         parameter_editor: MagicMock,
         *,
         should_display: bool,
-    ) -> Iterator[tuple[ParameterEditorWindow, MagicMock]]:
+    ) -> Generator[tuple[ParameterEditorWindow, MagicMock], None, None]:
         parameter_editor.get_last_configuration_step_number.return_value = None
 
         def fake_get_setting(key: str) -> object:

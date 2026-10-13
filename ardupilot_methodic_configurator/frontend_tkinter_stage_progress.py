@@ -40,7 +40,6 @@ import argparse
 import tkinter as tk
 from logging import basicConfig as logging_basicConfig
 from logging import error as logging_error
-from logging import getLevelName as logging_getLevelName
 from tkinter import ttk
 
 from ardupilot_methodic_configurator import _
@@ -230,7 +229,7 @@ def argument_parser() -> argparse.Namespace:  # pragma: no cover
 def main() -> None:  # pragma: no cover
     args = argument_parser()
 
-    logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
+    logging_basicConfig(level=args.loglevel, format="%(asctime)s - %(levelname)s - %(message)s")
 
     root = tk.Tk()
     root.title("Configuration Progress")

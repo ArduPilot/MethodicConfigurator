@@ -10,7 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
 import posixpath
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -166,7 +166,7 @@ class FlightControllerFiles:
         return self._connection_manager.info
 
     @contextmanager
-    def _mavftp_operation(self) -> Iterator[None]:
+    def _mavftp_operation(self) -> Generator[None, None, None]:
         """Serialize threads and reject callback re-entry before a client can reset sessions."""
         with self._mavftp_lock:
             if self._mavftp_operation_active:

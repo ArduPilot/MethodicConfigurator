@@ -13,7 +13,6 @@ from argparse import ArgumentParser, Namespace
 from collections.abc import Callable
 from contextlib import suppress
 from logging import basicConfig as logging_basicConfig
-from logging import getLevelName as logging_getLevelName
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -67,7 +66,7 @@ def create_argument_parser(description: str) -> ArgumentParser:
 
 def configure_standalone_logging(args: Namespace) -> None:
     """Configure logging from the shared standalone command-line arguments."""
-    logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
+    logging_basicConfig(level=args.loglevel, format="%(asctime)s - %(levelname)s - %(message)s")
 
 
 def initialize_standalone_parameter_editor(
