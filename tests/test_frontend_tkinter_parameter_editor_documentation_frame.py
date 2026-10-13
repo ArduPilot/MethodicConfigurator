@@ -51,12 +51,14 @@ def mock_parameter_editor() -> MagicMock:
 
 
 @pytest.fixture
-def documentation_frame(mock_parameter_editor) -> Generator[DocumentationFrame, None, None]:
+def documentation_frame(root: tk.Tk, mock_parameter_editor) -> Generator[DocumentationFrame, None, None]:
     """Fixture providing a properly initialized DocumentationFrame for testing."""
-    root = tk.Tk()
-    frame = DocumentationFrame(root, mock_parameter_editor)
-    yield frame
-    root.destroy()
+    window = tk.Toplevel(root)
+    frame = DocumentationFrame(window, mock_parameter_editor)
+    try:
+        yield frame
+    finally:
+        window.destroy()
 
 
 class TestDocumentationFrameInitialization:
@@ -71,7 +73,8 @@ class TestDocumentationFrameInitialization:
         THEN: The frame should show the current file name in the title
         """
         assert isinstance(documentation_frame.documentation_frame, ttk.LabelFrame)
-        assert documentation_frame.documentation_frame.cget("text") == "01_initial_setup.param Documentation"
+        assert documentation_frame.documentation_frame.title == "01_initial_setup.param Documentation"
+        assert documentation_frame.documentation_frame.header_label.cget("text") == "▼ 01_initial_setup.param Documentation"
 
     def test_user_sees_all_documentation_sections_displayed(self, documentation_frame) -> None:
         """
@@ -189,6 +192,44 @@ class TestDocumentationInteractionBehavior:
 class TestDocumentationUpdateBehavior:
     """Test how documentation updates when configuration changes."""
 
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame.webbrowser_open_url")
+    def test_user_can_keep_documentation_collapsed_while_changing_steps(
+        self, mock_webbrowser_open, documentation_frame, mock_parameter_editor
+    ) -> None:
+        """
+        Hidden documentation refreshes without reopening or losing user preferences.
+
+        GIVEN: Collapsed documentation with automatic browser opening selected
+        WHEN: A different step supplies a new title and link
+        THEN: It stays collapsed and reopening shows the updated link and checkbox state
+        """
+        section = documentation_frame.documentation_frame
+        section.pack(fill="x")
+        section.update_idletasks()
+        blog_label = documentation_frame.documentation_labels[documentation_frame.BLOG_LABEL]
+        documentation_frame.auto_open_var.set(True)
+        section.header_label.event_generate("<Button-1>")
+        mock_parameter_editor.get_documentation_frame_title.return_value = "Next step Documentation"
+        mock_parameter_editor.get_documentation_text_and_url.side_effect = lambda key: (
+            ("100", "") if key == "mandatory" else ("Next step guide", "https://ardupilot.org/next-step")
+        )
+
+        documentation_frame.refresh_documentation_labels()
+        section.update_idletasks()
+
+        assert not section.expanded
+        assert section.header_label.cget("text") == "▶ Next step Documentation"
+        assert not blog_label.winfo_ismapped()
+        assert documentation_frame.get_auto_open_documentation_in_browser()
+        section.header_label.event_generate("<Button-1>")
+        section.update_idletasks()
+        blog_label.event_generate("<Button-1>")
+
+        assert documentation_frame.documentation_labels[documentation_frame.BLOG_LABEL] is blog_label
+        assert blog_label.winfo_ismapped()
+        assert blog_label.cget("text") == "Next step guide"
+        mock_webbrowser_open.assert_called_once_with("https://ardupilot.org/next-step")
+
     def test_user_sees_updated_documentation_when_file_changes(self, documentation_frame, mock_parameter_editor) -> None:
         """
         User sees updated documentation when switching to different parameter file.
@@ -203,24 +244,28 @@ class TestDocumentationUpdateBehavior:
 
         documentation_frame.refresh_documentation_labels()
 
-        assert documentation_frame.documentation_frame.cget("text") == "02_frame_setup.param Documentation"
+        assert documentation_frame.documentation_frame.title == "02_frame_setup.param Documentation"
+        assert documentation_frame.documentation_frame.header_label.cget("text") == "▼ 02_frame_setup.param Documentation"
 
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame.show_tooltip")
-    def test_user_sees_why_why_now_explanation_in_frame_tooltip(self, mock_show_tooltip, documentation_frame) -> None:
+    def test_user_sees_why_why_now_explanation_on_documentation_title(
+        self, documentation_frame, mock_parameter_editor
+    ) -> None:
         """
-        User sees why/why now explanation when hovering over the documentation frame.
+        The documentation title explains the current step instead of showing a generic hint.
 
         GIVEN: A user wants to understand the purpose of the current step
-        WHEN: They hover over the documentation frame
-        THEN: A tooltip should explain why this step is important
+        WHEN: The current step changes
+        THEN: Its title tooltip explains why this step is important
         """
+        tooltip = documentation_frame.documentation_frame.header_tooltip
+        assert tooltip.widget is documentation_frame.documentation_frame.header_label
+        assert tooltip.text == "Why: Initial setup is required\nWhy now: Must be done first"
+
+        mock_parameter_editor.get_why_why_now_tooltip.return_value = "Why: Frame setup is required"
         documentation_frame.update_why_why_now_tooltip()
 
-        mock_show_tooltip.assert_called_once_with(
-            documentation_frame.documentation_frame,
-            "Why: Initial setup is required\nWhy now: Must be done first",
-            position_below=False,
-        )
+        assert documentation_frame.documentation_frame.header_tooltip is tooltip
+        assert tooltip.text == "Why: Frame setup is required"
 
 
 class TestDocumentationEdgeCases:
@@ -251,10 +296,7 @@ class TestDocumentationEdgeCases:
         assert str(blog_label.cget("foreground")) == "black"
         assert str(blog_label.cget("cursor")) == "arrow"
 
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame.show_tooltip")
-    def test_user_sees_no_tooltip_when_why_why_now_not_available(
-        self, mock_show_tooltip, documentation_frame, mock_parameter_editor
-    ) -> None:
+    def test_user_sees_no_tooltip_when_why_why_now_not_available(self, documentation_frame, mock_parameter_editor) -> None:
         """
         User sees no tooltip when why/why now explanation is not available.
 
@@ -266,7 +308,10 @@ class TestDocumentationEdgeCases:
 
         documentation_frame.update_why_why_now_tooltip()
 
-        mock_show_tooltip.assert_not_called()
+        tooltip = documentation_frame.documentation_frame.header_tooltip
+        assert tooltip.text == ""
+        tooltip.create_show()
+        assert tooltip.tooltip is None
 
     def test_user_sees_zero_mandatory_level_for_optional_steps(self, documentation_frame, mock_parameter_editor) -> None:
         """

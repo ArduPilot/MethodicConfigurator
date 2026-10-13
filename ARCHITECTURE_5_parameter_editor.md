@@ -108,6 +108,18 @@ This systematic approach ensures methodical, traceable, and safe vehicle configu
   - Coordinate between documentation, table, and progress components
   - Manage application state and configuration persistence
 
+#### Collapsible Information Sections
+
+- **File**: `frontend_tkinter_collapsible_label_frame.py`
+- **Purpose**: Reusable `ttk.LabelFrame` with a persistent disclosure button and a content frame
+- **Responsibilities**:
+  - Hide and restore content with `grid_remove()` and `grid()` without recreating controls
+  - Keep translated section titles visible and support keyboard toggling
+  - Preserve per-section expansion state while progress and documentation update
+  - Let the parameter editor's existing `<Configure>` bindings reclaim released vertical space
+- **Consumers**: `StageProgressBar` and `DocumentationFrame`, both initially expanded
+- **Lifetime**: Collapse choices last for the current editor window; they are not stored in program settings
+
 #### Calibration Navigation Lock
 
 - **File**: `frontend_tkinter_navigation_lock.py`

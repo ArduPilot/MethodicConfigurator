@@ -369,16 +369,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         self._create_conf_widgets(__version__)
 
-        last_step_nr = self.parameter_editor.get_last_configuration_step_number()
-        if last_step_nr is not None:
-            phases = self.parameter_editor.get_sorted_phases_with_end_and_weight(last_step_nr)
-
-            self.stage_progress_bar = StageProgressBar(self.main_frame, phases, last_step_nr, self.gui_complexity)
-            self.stage_progress_bar.pack(side=tk.TOP, fill="x", expand=False, pady=(2, 2), padx=(4, 4))
-
-        # Create a DocumentationFrame object for the Documentation Content
-        self.documentation_frame = DocumentationFrame(self.main_frame, self.parameter_editor)
-        self.documentation_frame.documentation_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(2, 2), padx=(4, 4))
+        self._create_progress_and_documentation_widgets()
 
         # Placeholder frame for the optional inline component editor.
         # It lives between the documentation frame and the parameter table.
@@ -417,6 +408,17 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         """
         self.root.mainloop()
         return self._requested_action
+
+    def _create_progress_and_documentation_widgets(self) -> None:
+        """Create independently collapsible information sections above the table."""
+        last_step_nr = self.parameter_editor.get_last_configuration_step_number()
+        if last_step_nr is not None:
+            phases = self.parameter_editor.get_sorted_phases_with_end_and_weight(last_step_nr)
+            self.stage_progress_bar = StageProgressBar(self.main_frame, phases, last_step_nr, self.gui_complexity)
+            self.stage_progress_bar.pack(side=tk.TOP, fill="x", expand=False, pady=(2, 2), padx=(4, 4))
+
+        self.documentation_frame = DocumentationFrame(self.main_frame, self.parameter_editor)
+        self.documentation_frame.documentation_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(2, 2), padx=(4, 4))
 
     def _create_conf_widgets(self, version: str) -> None:  # pylint: disable=too-many-locals
         config_frame = ttk.Frame(self.main_frame)
