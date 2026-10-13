@@ -16,7 +16,6 @@ from argparse import ArgumentParser
 from collections.abc import Callable
 from logging import basicConfig as logging_basicConfig
 from logging import error as logging_error
-from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from logging import warning as logging_warning
 from typing import Any
@@ -189,7 +188,7 @@ def check_for_software_updates() -> bool:
 
 
 if __name__ == "__main__":  # pragma: no cover
-    logging_basicConfig(level=logging_getLevelName("DEBUG"), format="%(asctime)s - %(levelname)s - %(message)s")
+    logging_basicConfig(level="DEBUG", format="%(asctime)s - %(levelname)s - %(message)s")
     logging_warning(
         _(
             "This main is for testing and development only, usually the check_for_software_updates is"

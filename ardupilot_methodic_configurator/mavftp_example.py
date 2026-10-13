@@ -14,7 +14,6 @@ from argparse import ArgumentParser, Namespace
 from logging import basicConfig as logging_basicConfig
 from logging import debug as logging_debug
 from logging import error as logging_error
-from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from typing import Any
 
@@ -216,7 +215,7 @@ def main() -> None:
     """For testing/example purposes only."""
     args = argument_parser()
 
-    logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(levelname)s - %(message)s")
+    logging_basicConfig(level=args.loglevel, format="%(levelname)s - %(message)s")
 
     # create a mavlink serial instance
     comport = auto_connect(args.device)

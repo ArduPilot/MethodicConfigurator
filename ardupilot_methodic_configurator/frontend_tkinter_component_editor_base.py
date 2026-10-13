@@ -19,7 +19,6 @@ from enum import Enum, auto
 
 # from logging import debug as logging_debug
 from logging import basicConfig as logging_basicConfig
-from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from platform import system as platform_system
 from tkinter import messagebox, ttk
@@ -809,7 +808,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
 if __name__ == "__main__":  # pragma: no cover
     args = argument_parser()
 
-    logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
+    logging_basicConfig(level=args.loglevel, format="%(asctime)s - %(levelname)s - %(message)s")
 
     filesystem = LocalFilesystem(
         args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files, args.save_component_to_system_templates

@@ -170,10 +170,11 @@ def main() -> None:
     proxies = get_env_proxies()
 
     # Set up authentication if credentials provided
-    auth = (USERNAME, PASSWORD) if USERNAME and PASSWORD else None
+    # These placeholders are intentionally editable constants rather than runtime configuration.
+    auth = (USERNAME, PASSWORD) if USERNAME and PASSWORD else None  # ty: ignore[redundant-condition]
 
     session = requests.Session()
-    if auth:
+    if auth:  # ty: ignore[redundant-condition]
         session.auth = auth
     if proxies:
         session.proxies = proxies

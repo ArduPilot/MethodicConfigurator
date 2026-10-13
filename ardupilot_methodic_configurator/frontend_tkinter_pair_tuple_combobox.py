@@ -17,7 +17,6 @@ from argparse import ArgumentParser, Namespace
 from logging import basicConfig as logging_basicConfig
 from logging import critical as logging_critical
 from logging import debug as logging_debug
-from logging import getLevelName as logging_getLevelName
 from logging import warning as logging_warning
 from platform import system as platform_system
 from sys import exit as sys_exit
@@ -376,7 +375,7 @@ def argument_parser() -> Namespace:  # pragma: no cover
 def main() -> None:  # pragma: no cover
     argsp = argument_parser()
 
-    logging_basicConfig(level=logging_getLevelName(argsp.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
+    logging_basicConfig(level=argsp.loglevel, format="%(asctime)s - %(levelname)s - %(message)s")
 
     logging_warning(
         _("This main is for testing and development only, usually the PairTupleCombobox is called from another script")
