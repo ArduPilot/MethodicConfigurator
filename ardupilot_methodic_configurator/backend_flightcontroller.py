@@ -600,6 +600,11 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         """Return recent FC STATUSTEXT messages."""
         return self._connection_manager.status_text_buffer
 
+    @property
+    def status_text_display_buffer(self) -> list[str]:
+        """Return recent FC STATUSTEXT messages newest first with local arrival times."""
+        return self._connection_manager.status_text_display_buffer
+
     def poll_status_text(self) -> list[str]:
         """Refresh diagnostics while the caller exclusively owns the idle connection."""
         return self._connection_manager.poll_status_text()

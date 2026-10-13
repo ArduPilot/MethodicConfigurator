@@ -10,17 +10,23 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import re
 import sys
 import tkinter as tk
 from collections.abc import Generator
+from datetime import datetime
 from tkinter import ttk
 from types import SimpleNamespace
 from typing import Any, cast
 from unittest.mock import Mock
 
 import pytest
+from pymavlink import mavutil
+from pymavlink.dialects.v20 import ardupilotmega as mavlink
 
 from ardupilot_methodic_configurator import frontend_tkinter_fc_banner_window as banner_window
+from ardupilot_methodic_configurator.backend_flightcontroller_connection import FlightControllerConnection
+from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
 
 
@@ -224,6 +230,92 @@ def test_user_sees_fresh_runtime_messages_without_banner_duplicates(
     provider.return_value = ["ArduCopter V4.6.3", "Runtime warning", "New diagnostic"]
     window._refresh_status_text()  # pylint: disable=protected-access
     assert text.insert.call_args.args[1] == "Runtime warning\nNew diagnostic"
+
+
+@pytest.mark.skipif(sys.platform == "darwin", reason="Real modal Tk updates are unsafe on headless macOS runners.")
+def test_user_sees_newest_statustext_with_local_arrival_times_at_the_top(root: tk.Tk, monkeypatch: pytest.MonkeyPatch) -> None:  # pylint: disable=too-many-locals
+    """
+    FC diagnostics show live STATUSTEXT in local-time arrival order.
+
+    GIVEN: The FC has emitted many status messages, including one also shown in its boot banner
+    WHEN: The user opens diagnostics and another status message arrives
+    THEN: The banner duplicate is excluded and the newest timestamped message is at the top
+    AND: The list remains pinned to the top while new status messages arrive
+    """
+    # Arrange: Connect a real PyMAVLink parser to an in-memory byte stream.
+    # pylint: disable=duplicate-code  # Shared in-memory PyMAVLink transport setup.
+    master = mavutil.mavfile(None, "in-memory", input=False)
+    master.mav = mavlink.MAVLink(master)
+    master.target_system = 1
+    master.target_component = 1
+    wire = bytearray()
+
+    def recv(count: int) -> bytes:
+        data = bytes(wire[:count])
+        del wire[:count]
+        return data
+
+    monkeypatch.setattr(master, "recv", recv)
+    connection = FlightControllerConnection(info=FlightControllerInfo())
+    connection.set_master_for_testing(master)
+    # pylint: enable=duplicate-code
+
+    def enqueue_status_text(text: str) -> None:
+        encoder = mavlink.MAVLink(None, srcSystem=1, srcComponent=1)
+        packet = mavlink.MAVLink_statustext_message(4, text.encode(), id=0, chunk_seq=0)
+        wire.extend(packet.pack(encoder))
+
+    def poll_and_format() -> list[str]:
+        connection.poll_status_text()
+        return connection.status_text_display_buffer
+
+    received_messages = [f"Diagnostic {index}" for index in range(20)]
+    for message in received_messages:
+        enqueue_status_text(message)
+    enqueue_status_text("Boot banner duplicate")
+    poll_and_format()
+
+    navigation_lock = NavigationLock()
+    window = banner_window.FlightControllerBannerWindow(
+        root,
+        ["Boot banner duplicate"],
+        connection.status_text_display_buffer,
+        status_text_provider=poll_and_format,
+        navigation_lock=navigation_lock,
+    )
+    try:
+        # Assert the initial view: complete timestamped history, newest first, duplicate filtered, top visible.
+        root.update_idletasks()
+        displayed_lines = window.status_text_widget.get("1.0", "end-1c").splitlines()
+        assert [line.split("] ", maxsplit=1)[1] for line in displayed_lines] == [
+            f"Diagnostic {index}" for index in reversed(range(len(received_messages)))
+        ]
+        local_today = datetime.now().astimezone().date()
+        for line in displayed_lines:
+            timestamp, _message = line.split("] ", maxsplit=1)
+            assert re.fullmatch(r"\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}", timestamp)
+            assert timestamp[1:11] == local_today.strftime("%Y-%m-%d")
+        assert window.status_text_widget.yview()[0] == 0.0
+
+        # Act: Let the window's scheduled poll process a newly arrived packet.
+        enqueue_status_text("Newest warning")
+        window.root.after(500, window.root.quit)
+        window.root.mainloop()
+        root.update_idletasks()
+
+        # Assert: The actual widget refreshes from the packet stream and remains top-anchored.
+        refreshed_lines = window.status_text_widget.get("1.0", "end-1c").splitlines()
+        assert [line.split("] ", maxsplit=1)[1] for line in refreshed_lines] == [
+            "Newest warning",
+            *[f"Diagnostic {index}" for index in reversed(range(len(received_messages)))],
+        ]
+        assert window.status_text_widget.yview()[0] == 0.0
+        assert window.status_text_widget.cget("state") == tk.DISABLED
+        assert navigation_lock.locked
+    finally:
+        window.root.destroy()
+
+    assert not navigation_lock.locked
 
 
 def test_refresh_preserves_the_position_of_a_user_reading_older_messages(

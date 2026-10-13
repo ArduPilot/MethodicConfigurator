@@ -182,6 +182,9 @@ class FlightControllerConnectionProtocol(Protocol):
     @property
     def status_text_buffer(self) -> list[str]: ...
 
+    @property
+    def status_text_display_buffer(self) -> list[str]: ...
+
     def poll_status_text(self) -> list[str]: ...
 
     def _detect_vehicles_from_heartbeats(
