@@ -41,8 +41,14 @@ from ardupilot_methodic_configurator.frontend_tkinter_show import MonitorBounds
 from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
 from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
 from ardupilot_methodic_configurator.plugins.data_model_ahrs_orientation import AhrsOrientationDataModel
+from ardupilot_methodic_configurator.plugins.data_model_autotune_gain_backoff import AutotuneGainBackoffDataModel
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_ahrs_orientation import AhrsOrientationView
-from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_AHRS_ORIENTATION, PLUGIN_RC_CALIBRATION
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_autotune_gain_backoff import AutotuneGainBackoffView
+from ardupilot_methodic_configurator.plugins.plugin_constants import (
+    PLUGIN_AHRS_ORIENTATION,
+    PLUGIN_AUTOTUNE_GAIN_BACKOFF,
+    PLUGIN_RC_CALIBRATION,
+)
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory
 
 if TYPE_CHECKING:
@@ -2354,14 +2360,16 @@ class TestPluginLayoutLifecycle:
         class DummyFrame:  # pylint: disable=too-few-public-methods
             """Minimal container that mimics ttk.Frame for plugin layout tests."""
 
-            def __init__(self) -> None:
+            def __init__(self, master: DummyFrame | None = None) -> None:
                 self._children: list[object] = []
+                self.master = master
+                self.rowconfigure = MagicMock()
 
             def winfo_children(self) -> list[object]:
                 return self._children
 
         top_container = DummyFrame()
-        plugin_holder = DummyFrame()
+        plugin_holder = DummyFrame(top_container)
         child = MagicMock()
         plugin_holder._children = [child]
         top_container._children = [plugin_holder]
@@ -2381,6 +2389,129 @@ class TestPluginLayoutLifecycle:
 
 class TestPluginLayoutRebuild:
     """Cover the layout rebuild logic for each placement."""
+
+    @pytest.mark.parametrize(
+        "result_step",
+        [("27_autotune_pitch_RatePD_results.param", "PIT"), ("36_autotune_roll_results.param", "RLL")],
+        ids=["heli", "copter"],
+    )
+    @pytest.mark.parametrize(
+        "window_size", [(990, 688), (990, 520), (1100, 500)], ids=["768-screen", "600-screen", "short-window"]
+    )
+    def test_user_can_apply_gain_backoff_and_read_feedback_on_short_screens(  # noqa: PLR0915 # pylint: disable=too-many-statements,too-many-locals
+        self,
+        parameter_editor_window: ParameterEditorWindow,
+        root: tk.Tk,
+        window_size: tuple[int, int],
+        result_step: tuple[str, str],
+    ) -> None:
+        """
+        Non-scrollable top controls stay usable without sacrificing scrollable assistants.
+
+        GIVEN: AutoTune results below a fixed header on a short screen
+        WHEN: The user resizes, applies back-off and switches between top plugins in place
+        THEN: All back-off controls and feedback remain visible, and orientation still scrolls
+        """
+        editor = parameter_editor_window
+        parameter_editor = cast("MagicMock", editor.parameter_editor)
+        width, height = window_size
+        filename, axis = result_step
+        window = tk.Toplevel(root)
+        window.geometry(f"{width}x{height}+0+0")
+        editor.root = window
+        editor.main_frame = ttk.Frame(window)
+        editor.main_frame.place(width=width, height=height)
+        header = ttk.Frame(editor.main_frame, height=300)
+        header.pack(side="top", fill="x")
+        header.pack_propagate(flag=False)
+        editor.parameter_area_container = ttk.Frame(editor.main_frame)
+        editor.parameter_area_container.pack(side="top", fill="both", expand=True)
+        buttons = ttk.Frame(editor.main_frame)
+        buttons.pack(side="bottom", fill="x")
+        ttk.Button(buttons, text="Upload parameters\nand advance").pack()
+        parameter_editor.current_file = filename
+        parameter_editor.current_step_parameters = {
+            f"ATC_RAT_{axis}_{term}": ArduPilotParameter(f"ATC_RAT_{axis}_{term}", Par(0.2, "AutoTune result"))
+            for term in ("P", "I", "D")
+        }
+        parameter_editor.should_display_bitmask_parameter_editor_usage.return_value = False
+        backoff_model = AutotuneGainBackoffDataModel(parameter_editor)
+        orientation_model = MagicMock(spec=AhrsOrientationDataModel)
+        orientation_model.get_required_steps.return_value = ("LEVEL", "NOSE DOWN", "RIGHT")
+        orientation_model.validate_detection_prerequisites.return_value = (True, "")
+        parameter_editor.create_plugin_data_model.side_effect = lambda name: (
+            orientation_model if name == PLUGIN_AHRS_ORIENTATION else backoff_model
+        )
+        registry = PluginFactory()
+        registry.register(
+            PLUGIN_AUTOTUNE_GAIN_BACKOFF,
+            lambda parent, model, window: AutotuneGainBackoffView(
+                parent, cast("AutotuneGainBackoffDataModel", model), cast("BaseWindow", window)
+            ),
+        )
+        registry.register(
+            PLUGIN_AHRS_ORIENTATION,
+            lambda parent, model, window: AhrsOrientationView(
+                parent, cast("AhrsOrientationDataModel", model), cast("BaseWindow", window)
+            ),
+        )
+
+        try:
+            root.update_idletasks()
+            editor._bind_parameter_layout_events()
+            with (
+                patch.object(parameter_editor_module, "plugin_factory", registry),
+                patch.object(AhrsOrientationView, "_start_imu_polling"),
+            ):
+                for name in (
+                    PLUGIN_AUTOTUNE_GAIN_BACKOFF,
+                    PLUGIN_AHRS_ORIENTATION,
+                    PLUGIN_AUTOTUNE_GAIN_BACKOFF,
+                    PLUGIN_AHRS_ORIENTATION,
+                ):
+                    previous_container = editor.parameter_area_container
+                    previous_table = editor.parameter_editor_table
+                    previous_plugin = editor.current_plugin
+                    editor._update_plugin_layout({"name": name, "placement": "top"})
+                    if previous_plugin is not None:
+                        assert editor.parameter_area_container is previous_container
+                        assert editor.parameter_editor_table is previous_table
+                    editor.parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="normal")
+                    for client_height in (height, height - 40, height):
+                        editor.main_frame.place_configure(height=client_height)
+                        root.update_idletasks()
+                        editor._resize_parameter_area_to_fit()
+                        root.update_idletasks()
+
+                        if name == PLUGIN_AUTOTUNE_GAIN_BACKOFF:
+                            view = cast("AutotuneGainBackoffView", editor.current_plugin_view)
+                            assert view.winfo_height() >= view.winfo_reqheight()
+                            gain = parameter_editor.current_step_parameters[f"ATC_RAT_{axis}_P"]
+                            previous_gain = gain.get_new_value()
+                            view.apply_button.invoke()
+                            root.update_idletasks()
+                            assert gain.get_new_value() == pytest.approx(previous_gain * 0.75)
+                            assert "Updated gains:" in view.status.get()
+                            assert view.winfo_height() >= view.winfo_reqheight()
+                            for widget in (*view.winfo_children(), view.entry, view.apply_button):
+                                assert widget.winfo_ismapped()
+                                assert view.winfo_rooty() <= widget.winfo_rooty()
+                                assert widget.winfo_rooty() + widget.winfo_height() <= (
+                                    view.winfo_rooty() + view.winfo_height()
+                                )
+                            assert editor.parameter_container.winfo_height() > 1
+                        else:
+                            assert editor.parameter_container.winfo_height() >= 120
+                            orientation_view = cast("AhrsOrientationView", editor.current_plugin_view)
+                            canvas = orientation_view._scroll_frame.canvas
+                            canvas.yview_moveto(1)
+                            root.update_idletasks()
+                            assert canvas.yview()[0] > 0
+                            assert canvas.yview()[1] == pytest.approx(1)
+                        assert buttons.winfo_height() == buttons.winfo_reqheight()
+                        assert buttons.winfo_y() + buttons.winfo_height() <= client_height
+        finally:
+            window.destroy()
 
     @pytest.mark.parametrize("queued_refit", [False, True], ids=["no-refit", "queued-refit"])
     def test_user_can_read_parameters_after_a_plugin_activation_dialog(  # noqa: PLR0915

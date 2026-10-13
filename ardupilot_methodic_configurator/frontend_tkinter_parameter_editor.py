@@ -1108,8 +1108,28 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
             # Load new plugin into existing frame
             self._load_plugin(plugin_parent, plugin)
+            if placement == "top":
+                self._configure_top_plugin_rows(plugin_parent)
 
         self.current_plugin = plugin
+
+    def _configure_top_plugin_rows(self, plugin_parent: ttk.Frame) -> None:
+        """Only let top plugins yield height when their content can be scrolled."""
+        widgets: list[tk.Misc] = [plugin_parent]
+        scrollable = False
+        while widgets and not scrollable:
+            widget = widgets.pop()
+            scrollable = isinstance(widget, ScrollFrame)
+            if not scrollable:
+                widgets.extend(widget.winfo_children())
+
+        top_container = cast("ttk.Frame", plugin_parent.master)
+        # A zero-weight row keeps its natural requested height, including when
+        # feedback text grows after Apply. Do not freeze a measured minsize.
+        top_container.rowconfigure(0, weight=int(scrollable), minsize=0)
+        # The table scrolls, so it takes the shortfall for fixed-height plugins.
+        # Scrollable assistants instead share space and retain editable rows.
+        top_container.rowconfigure(2, weight=1, minsize=round(120 * self.dpi_scaling_factor) if scrollable else 0)
 
     def _rebuild_plugin_layout(self, plugin: dict | None) -> None:
         """
@@ -1160,12 +1180,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             top_container = ttk.Frame(self.parameter_area_container)
             top_container.pack(side="top", fill="both", expand=True)
             top_container.columnconfigure(0, weight=1)
-            top_container.rowconfigure(0, weight=1)
-            # Unlike pack, grid can shrink the scrollable plugin without first
-            # hiding the parameter rows needed for manual configuration.
-            top_container.rowconfigure(2, weight=1, minsize=round(120 * self.dpi_scaling_factor))
+            top_container.rowconfigure(0, weight=0)
+            top_container.rowconfigure(2, weight=1)
 
-            # Create top frame for plugin, yielding height when space is limited.
+            # Preserve controls until the loaded view is known to be scrollable.
             top_plugin_frame = ttk.Frame(top_container)
             top_plugin_frame.grid(row=0, column=0, sticky="nsew")
             plugin_parent = top_plugin_frame
@@ -1193,6 +1211,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # can measure the layout; adding a pane later does not reclaim its width.
         if plugin_parent is not None and plugin is not None:
             self._load_plugin(plugin_parent, plugin)
+            if plugin.get("placement") == "top":
+                self._configure_top_plugin_rows(plugin_parent)
 
     @staticmethod
     def _set_pane_sticky(paned_window: tk.PanedWindow, pane: tk.Widget) -> None:
