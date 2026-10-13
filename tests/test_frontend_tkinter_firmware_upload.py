@@ -12,6 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from collections.abc import Callable, Generator
+from contextlib import suppress
 from pathlib import Path
 from queue import SimpleQueue
 from threading import Event
@@ -69,6 +70,7 @@ def _headless_firmware_window() -> firmware_upload.FirmwareUploadWindow:
     window.connecting = False
     window.restart_required = False
     window.restart_notified = False
+    window.embedded = True
     window.owns_connection = False
     window._connection_timer_id = None
     window._event_poll_id = None
@@ -562,16 +564,16 @@ def test_close_disconnects_owned_controller_and_cancels_pending_callbacks() -> N
 
 
 @pytest.mark.parametrize(
-    ("restart_required", "owns_connection", "restart_notified", "notice_shown"),
+    ("restart_required", "embedded", "restart_notified", "notice_shown"),
     [
-        (True, False, False, True),
-        (True, False, True, False),
-        (True, True, False, False),
-        (False, False, False, False),
+        (True, True, False, True),
+        (True, True, True, False),
+        (True, False, False, False),
+        (False, True, False, False),
     ],
 )
 def test_close_announces_amc_exit_only_when_the_user_was_not_told(
-    restart_required: bool, owns_connection: bool, restart_notified: bool, notice_shown: bool
+    restart_required: bool, embedded: bool, restart_notified: bool, notice_shown: bool
 ) -> None:
     """
     Closing the embedded window says AMC will exit when nothing has said so yet.
@@ -582,7 +584,7 @@ def test_close_announces_amc_exit_only_when_the_user_was_not_told(
     """
     window = _headless_firmware_window()
     window.restart_required = restart_required
-    window.owns_connection = owns_connection
+    window.embedded = embedded
     window.restart_notified = restart_notified
 
     with patch.object(firmware_upload.messagebox, "showinfo") as show_info:
@@ -1304,9 +1306,43 @@ def firmware_window_fixture(
             yield window
         finally:
             window.uploading = False
+            # Teardown must not block on the real AMC exit notice.
+            window.restart_notified = True
             if window.root.winfo_exists():
                 window.close()
             owner.destroy()
+
+
+def test_standalone_window_is_not_embedded_and_closes_without_amc_notice() -> None:
+    """
+    The standalone tool is built with a controller but no parent, so it is not AMC.
+
+    GIVEN: A window built the way the standalone main() builds it.
+    WHEN: An idle unplug set the restart flag and the user closes the window.
+    THEN: No AMC exit notice is shown.
+    """
+    controller = SimpleNamespace(
+        master=None,
+        comport_device="COM3",
+        info=SimpleNamespace(apj_board_id=9, firmware_type="fmuv3", vehicle_type="ArduCopter"),
+        get_serial_ports=MagicMock(return_value=[]),
+        disconnect=MagicMock(),
+    )
+    service = MagicMock(spec=firmware_upload.FirmwareUploadService, wraps=firmware_upload.FirmwareUploadService())
+    with (
+        patch("tkinter.Misc.update"),
+        patch("tkinter.Misc.update_idletasks"),
+    ):
+        window = firmware_upload.FirmwareUploadWindow(controller, service=service, worker_launcher=lambda _task: None)
+    try:
+        assert not window.embedded
+        window.restart_required = True
+        with patch.object(firmware_upload.messagebox, "showinfo") as show_info:
+            window.close()
+        show_info.assert_not_called()
+    finally:
+        with suppress(tk.TclError):  # close() already destroyed the standalone root
+            window.root.destroy()
 
 
 @pytest.mark.parametrize("catalog_fails", [False, True])
