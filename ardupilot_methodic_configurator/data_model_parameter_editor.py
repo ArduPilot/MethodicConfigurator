@@ -15,6 +15,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import contextlib
 import platform
 import subprocess
+import textwrap
 from collections.abc import Callable
 from copy import deepcopy
 from csv import writer as csv_writer
@@ -2605,12 +2606,14 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
     def get_why_why_now_tooltip(self) -> str:
         why_tooltip_text = self._local_filesystem.get_seq_tooltip_text(self.current_file, "why")
         why_now_tooltip_text = self._local_filesystem.get_seq_tooltip_text(self.current_file, "why_now")
-        tooltip_text = ""
+        tooltip_lines: list[str] = []
         if why_tooltip_text:
-            tooltip_text += _("Why: ") + _(why_tooltip_text) + "\n"
+            label = _("Why: ")
+            tooltip_lines.append(textwrap.fill(label + _(why_tooltip_text), width=80, subsequent_indent=" " * len(label)))
         if why_now_tooltip_text:
-            tooltip_text += _("Why now: ") + _(why_now_tooltip_text)
-        return tooltip_text
+            label = _("Why now: ")
+            tooltip_lines.append(textwrap.fill(label + _(why_now_tooltip_text), width=80, subsequent_indent=" " * len(label)))
+        return "\n".join(tooltip_lines)
 
     def get_documentation_frame_title(self) -> str:
         if self.current_file:
