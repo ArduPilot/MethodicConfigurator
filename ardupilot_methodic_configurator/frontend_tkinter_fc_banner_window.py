@@ -26,7 +26,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_show import Tooltip, posit
 class FlightControllerBannerWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes
     """Popup showing the FC boot banner, recent status text, and detected devices."""
 
-    DEVICE_COLUMNS = ("DeviceName", "BusType", "Bus", "Address", "DevType")
+    DEVICE_COLUMNS = ("DeviceName", "BusType", "Bus", "Address", "DevType", "Priority")
     DEVICE_TABLE_HEIGHT = 8
 
     def __init__(  # pylint: disable=too-many-arguments
@@ -149,7 +149,7 @@ class FlightControllerBannerWindow(BaseWindow):  # pylint: disable=too-many-inst
         container.rowconfigure(0, weight=1)
         container.columnconfigure(0, weight=1)
 
-        widths = {"DeviceName": 190, "BusType": 100, "Bus": 70, "Address": 90, "DevType": 190}
+        widths = {"DeviceName": 190, "BusType": 100, "Bus": 70, "Address": 90, "DevType": 190, "Priority": 80}
         for column in self.DEVICE_COLUMNS:
             tree.heading(column, text=self._heading_text(column), command=partial(self._sort_by_column, column))
             tree.column(
@@ -160,17 +160,23 @@ class FlightControllerBannerWindow(BaseWindow):  # pylint: disable=too-many-inst
 
         for index, row in enumerate(rows):
             tags = ("striped",) if index % 2 else ()
-            tree.insert("", tk.END, iid=f"device-{index}", values=row[:5], tags=tags)
-        self._device_tooltip = _DeviceTreeTooltip(tree, {f"device-{index}": row[5] for index, row in enumerate(rows)})
+            display_values = (*row[:-2], "" if row[-2] is None else row[-2])
+            tree.insert("", tk.END, iid=f"device-{index}", values=display_values, tags=tags)
+        self._device_tooltip = _DeviceTreeTooltip(tree, {f"device-{index}": row[-1] for index, row in enumerate(rows)})
 
     def _sort_by_column(self, column: str) -> None:
         """Sort the detected-device table by a clicked heading."""
         descending = self._sort_column == column and not self._sort_descending
         items = [(self.device_tree.set(item, column), item) for item in self.device_tree.get_children("")]
+        unranked_items: list[tuple[str, str]] = []
+        if column == "Priority":
+            unranked_items = [pair for pair in items if not pair[0]]
+            items = [pair for pair in items if pair[0]]
         try:
             items.sort(key=lambda pair: float(pair[0]), reverse=descending)
         except ValueError:
             items.sort(key=lambda pair: pair[0].casefold(), reverse=descending)
+        items.extend(unranked_items)
         for index, (_value, item) in enumerate(items):
             self.device_tree.move(item, "", index)
         for index, item in enumerate(self.device_tree.get_children("")):
@@ -190,6 +196,7 @@ class FlightControllerBannerWindow(BaseWindow):  # pylint: disable=too-many-inst
             "Bus": _("Bus"),
             "Address": _("Address"),
             "DevType": _("Device type"),
+            "Priority": _("Priority"),
         }
         return labels[column]
 

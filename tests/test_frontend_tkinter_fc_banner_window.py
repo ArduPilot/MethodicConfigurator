@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import sys
 import tkinter as tk
 from collections.abc import Generator
+from tkinter import ttk
 from types import SimpleNamespace
 from typing import Any, cast
 from unittest.mock import Mock
@@ -27,6 +28,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import Nav
 def _live_banner_window(
     monkeypatch: pytest.MonkeyPatch,
     request: pytest.FixtureRequest,
+    dpi_scaling_factor: float,
 ) -> tuple[banner_window.FlightControllerBannerWindow, Mock, Mock, NavigationLock]:
     """Construct the real window using mocked Tk widgets and a live diagnostics provider."""
     monkeypatch.setattr(banner_window, "sys_platform", request.param)
@@ -40,7 +42,7 @@ def _live_banner_window(
     def initialize(window: banner_window.FlightControllerBannerWindow, _parent: object) -> None:
         window.root = root
         window.main_frame = Mock()
-        window.dpi_scaling_factor = 1.0
+        window.dpi_scaling_factor = dpi_scaling_factor
 
     monkeypatch.setattr(banner_window.BaseWindow, "__init__", initialize)
     monkeypatch.setattr(banner_window.BaseWindow, "center_window", Mock())
@@ -58,6 +60,12 @@ def _live_banner_window(
     return window, text, provider, lock
 
 
+@pytest.fixture(name="dpi_scaling_factor", params=[1.0, 1.5, 2.0])
+def _dpi_scaling_factor(request: pytest.FixtureRequest) -> float:
+    """Exercise standard and HiDPI divider sizing without creating native windows."""
+    return request.param
+
+
 def test_diagnostics_sections_have_two_vertical_resize_dividers(
     live_banner_window: tuple[banner_window.FlightControllerBannerWindow, Mock, Mock, NavigationLock],
 ) -> None:
@@ -73,7 +81,7 @@ def test_diagnostics_sections_have_two_vertical_resize_dividers(
     panes_constructor.assert_called_once_with(  # pylint: disable=no-member
         window.main_frame,
         orient=tk.VERTICAL,
-        sashwidth=6,
+        sashwidth=round(6 * window.dpi_scaling_factor),
         sashrelief=tk.RAISED,
         sashcursor="sb_v_double_arrow",
         opaqueresize=True,
@@ -85,7 +93,10 @@ def test_diagnostics_sections_have_two_vertical_resize_dividers(
         "Latest 100 STATUSTEXT messages",
         "Detected devices",
     ]
-    assert all(call.kwargs == {"minsize": 60, "stretch": "always", "sticky": "nsew"} for call in panes.add.call_args_list)
+    minimum_height = round(60 * window.dpi_scaling_factor)
+    assert all(
+        call.kwargs == {"minsize": minimum_height, "stretch": "always", "sticky": "nsew"} for call in panes.add.call_args_list
+    )
 
 
 @pytest.fixture(name="resizable_banner_window")
@@ -97,8 +108,8 @@ def _resizable_banner_window(
         pytest.skip("Real widget geometry updates are unsafe on headless macOS runners.")
     monkeypatch.setattr(banner_window.BaseWindow, "_get_dpi_scaling_factor", lambda _self: 1.0)
     monkeypatch.setattr(banner_window.BaseWindow, "center_window", Mock())
-    monkeypatch.setattr(banner_window, "_DeviceTreeTooltip", Mock())
-    window = banner_window.FlightControllerBannerWindow(root, ["ArduCopter V4.6.3"])
+    parameters = {f"COMPASS_DEV_ID{instance if instance > 1 else ''}": 423425 + instance * 256 for instance in range(1, 9)}
+    window = banner_window.FlightControllerBannerWindow(root, ["ArduCopter V4.6.3"], fc_parameters=parameters)
     try:
         window.root.tk.call("wm", "transient", window.root, "")
         window.root.geometry("800x680+20000+20000")
@@ -114,14 +125,14 @@ def _resizable_banner_window(
 @pytest.mark.parametrize("sash_index", [0, 1])
 @pytest.mark.parametrize("distance", [-40, 40])
 @pytest.mark.skipif(sys.platform == "darwin", reason="Real widget geometry updates are unsafe on headless macOS.")
-def test_user_can_drag_each_diagnostics_divider_up_and_down(
+def test_user_can_resize_each_diagnostics_section_up_and_down(
     resizable_banner_window: banner_window.FlightControllerBannerWindow, sash_index: int, distance: int
 ) -> None:
     """
     Both boundaries resize their adjacent sections using Tk's native sash positioning.
 
     GIVEN: Three visible diagnostic sections separated by two dividers
-    WHEN: The user drags either divider up or down
+    WHEN: Either native sash position is moved up or down
     THEN: The two adjacent sections change height and the third section stays unchanged
     """
     window = resizable_banner_window
@@ -138,6 +149,65 @@ def test_user_can_drag_each_diagnostics_divider_up_and_down(
     assert heights_after[sash_index + 1] == heights_before[sash_index + 1] - distance
     unchanged_index = 2 if sash_index == 0 else 0
     assert heights_after[unchanged_index] == heights_before[unchanged_index]
+
+
+@pytest.mark.parametrize("sash_index", [0, 1])
+@pytest.mark.parametrize("direction", [-1, 1])
+@pytest.mark.skipif(sys.platform == "darwin", reason="Real widget geometry updates are unsafe on headless macOS.")
+def test_diagnostics_sections_cannot_be_resized_below_the_minimum_height(
+    resizable_banner_window: banner_window.FlightControllerBannerWindow, sash_index: int, direction: int
+) -> None:
+    """
+    Section headers remain visible when a divider is moved beyond its allowed range.
+
+    GIVEN: Three sections with configured minimum heights
+    WHEN: Either sash is moved far beyond the top or bottom of the popup
+    THEN: The shrinking section stops at its minimum and no section becomes smaller
+    """
+    window = resizable_banner_window
+    panes = window.section_panes
+    frames = [window.root.nametowidget(str(pane)) for pane in panes.panes()]
+    assert all(int(panes.panecget(frame, "minsize")) == 60 for frame in frames)
+    x, y = panes.sash_coord(sash_index)
+
+    panes.sash_place(sash_index, x, y + direction * 10000)
+    window.root.update_idletasks()
+
+    assert all(frame.winfo_height() >= 60 for frame in frames)
+    shrinking_index = sash_index if direction < 0 else sash_index + 1
+    assert frames[shrinking_index].winfo_height() == 60
+
+
+@pytest.mark.skipif(sys.platform == "darwin", reason="Real widget geometry updates are unsafe on headless macOS.")
+def test_shortened_device_pane_can_scroll_to_the_last_detected_device(
+    resizable_banner_window: banner_window.FlightControllerBannerWindow,
+) -> None:
+    """
+    Shortening the pane does not make detected devices unreachable.
+
+    GIVEN: Eight real detected-device rows that initially fit in the device pane
+    WHEN: The pane is shortened and its actual scrollbar command is invoked
+    THEN: The table scrolls to its last row and the scrollbar reports the same position
+    """
+    window = resizable_banner_window
+    panes = window.section_panes
+    tree = window.device_tree
+    scrollbar = next(child for child in tree.master.winfo_children() if isinstance(child, ttk.Scrollbar))
+    assert len(tree.get_children()) == 8
+    assert tree.yview() == (0.0, 1.0)
+    x, _y = panes.sash_coord(1)
+
+    panes.sash_place(1, x, panes.winfo_height() - 140)
+    window.root.update_idletasks()
+    before = tree.yview()
+    assert before[1] < 1.0
+    window.root.tk.call(scrollbar.cget("command"), "moveto", 1.0)
+    window.root.update_idletasks()
+
+    after = tree.yview()
+    assert after[0] > before[0]
+    assert after[1] == 1.0
+    assert scrollbar.get() == after
 
 
 def test_user_sees_fresh_runtime_messages_without_banner_duplicates(
@@ -188,15 +258,17 @@ def test_closing_the_popup_stops_reception_and_releases_navigation(
 class _FakeWidget:
     """Small Tk widget substitute for testing table setup without a display."""
 
-    def __init__(self, *_args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:
+        self.parent = args[0] if args else None
         self.kwargs = kwargs
         self.configure_options: dict[str, Any] = {}
+        self.grid_options: dict[str, Any] = {}
 
     def pack(self, **_kwargs) -> None:
         pass
 
-    def grid(self, **_kwargs) -> None:
-        pass
+    def grid(self, **kwargs) -> None:
+        self.grid_options.update(kwargs)
 
     def configure(self, **kwargs) -> None:
         self.configure_options.update(kwargs)
@@ -228,7 +300,7 @@ class _FakeTree(_FakeWidget):
         pass
 
     def heading(self, column: str, **kwargs) -> None:
-        self.headings[column] = kwargs
+        self.headings.setdefault(column, {}).update(kwargs)
 
     def column(self, column: str, **kwargs) -> None:
         self.columns[column] = kwargs
@@ -261,10 +333,13 @@ class _FakeTree(_FakeWidget):
         return {"tags": self.tags[item]}
 
 
-def test_device_table_uses_requested_columns_and_stripes_rows(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The visible Treeview omits DevID and displays the supplied device rows."""
+@pytest.fixture(name="device_table_setup")
+def _device_table_setup(
+    monkeypatch: pytest.MonkeyPatch,
+) -> tuple[banner_window.FlightControllerBannerWindow, _FakeTree, list[_FakeScrollbar], dict[str, str]]:
+    """Replace only Tk widget construction while retaining the real decoder and table behavior."""
     tree = _FakeTree()
-    scrollbars: list[dict[str, Any]] = []
+    scrollbars: list[_FakeScrollbar] = []
     monkeypatch.setattr(banner_window.ttk, "Frame", _FakeWidget)
     monkeypatch.setattr(banner_window.ttk, "Treeview", lambda *_args, **kwargs: _init_tree(tree, kwargs))
     monkeypatch.setattr(
@@ -272,11 +347,6 @@ def test_device_table_uses_requested_columns_and_stripes_rows(monkeypatch: pytes
         "Scrollbar",
         lambda *_args, **kwargs: _create_fake_scrollbar(scrollbars, kwargs),
     )
-    rows = [
-        ("BARO1", "I2C", 0, 118, "BARO_DPS310", "BARO1_DEVID: 423425"),
-        ("INS_ACC", "SPI", 1, 1, "INS_ICM42688", "INS_ACC_ID: 3408138"),
-    ]
-    monkeypatch.setattr(banner_window, "device_rows", lambda _params: rows)
     tooltip_texts: dict[str, str] = {}
     monkeypatch.setattr(
         banner_window,
@@ -286,19 +356,47 @@ def test_device_table_uses_requested_columns_and_stripes_rows(monkeypatch: pytes
     window = banner_window.FlightControllerBannerWindow.__new__(banner_window.FlightControllerBannerWindow)
     window._sort_column = None
     window._sort_descending = False
+    return window, tree, scrollbars, tooltip_texts
 
-    window._create_device_table(_FakeWidget(), {})
 
-    assert tree.kwargs["columns"] == ("DeviceName", "BusType", "Bus", "Address", "DevType")
+def test_device_table_uses_requested_columns_and_stripes_rows(
+    device_table_setup: tuple[banner_window.FlightControllerBannerWindow, _FakeTree, list[_FakeScrollbar], dict[str, str]],
+) -> None:
+    """
+    Real flight-controller parameters reach the displayed table without changing device information.
+
+    GIVEN: Decodable barometer, compass and accelerometer parameters and a compass priority
+    WHEN: The table is built using the real diagnostics model
+    THEN: Complete rows, translated headings, stripes and original parameter tooltips are displayed
+    """
+    window, tree, scrollbars, tooltip_texts = device_table_setup
+    baro_id = (6 << 16) | (118 << 8) | (1 << 3) | 1
+    compass_id = (7 << 16) | (30 << 8) | (2 << 3) | 1
+    imu_id = (19 << 16) | (1 << 8) | (3 << 3) | 2
+
+    window._create_device_table(
+        _FakeWidget(),
+        {"BARO1_DEVID": baro_id, "COMPASS_DEV_ID2": compass_id, "COMPASS_PRIO1_ID": compass_id, "INS_ACC_ID": imu_id},
+    )
+
+    assert tree.kwargs["columns"] == ("DeviceName", "BusType", "Bus", "Address", "DevType", "Priority")
     assert tree.kwargs["show"] == "headings"
     assert tree.headings["DeviceName"]["text"] == "Device"
     assert tree.headings["BusType"]["text"] == "Bus type"
     assert tree.headings["DevType"]["text"] == "Device type"
-    assert tree.get_children() == ("device-0", "device-1")
-    assert tree.tags == {"device-0": (), "device-1": ("striped",)}
+    assert tree.headings["Priority"]["text"] == "Priority"
+    assert tree.columns["Priority"]["anchor"] == tk.CENTER
+    assert tree.get_children() == ("device-0", "device-1", "device-2")
+    assert tree.tags == {"device-0": (), "device-1": ("striped",), "device-2": ()}
     assert tooltip_texts == {
-        "device-0": "BARO1_DEVID: 423425",
-        "device-1": "INS_ACC_ID: 3408138",
+        "device-0": f"BARO1_DEVID: {baro_id}",
+        "device-1": f"COMPASS_DEV_ID2: {compass_id}",
+        "device-2": f"INS_ACC_ID: {imu_id}",
+    }
+    assert tree.values == {
+        "device-0": ("BARO1", "I2C", 1, 118, "DPS310", ""),
+        "device-1": ("COMPASS2", "I2C", 2, 30, "HMC5883", 1),
+        "device-2": ("INS_ACC", "SPI", 3, 1, "MPU6000", ""),
     }
     assert len(scrollbars) == 1
 
@@ -309,63 +407,98 @@ def _init_tree(tree: _FakeTree, kwargs: dict[str, Any]) -> _FakeTree:
     return tree
 
 
-def _create_fake_scrollbar(scrollbars: list[dict[str, Any]], kwargs: dict[str, Any]) -> _FakeScrollbar:
+def _create_fake_scrollbar(scrollbars: list[_FakeScrollbar], kwargs: dict[str, Any]) -> _FakeScrollbar:
     """Record scrollbar creation while returning a widget substitute."""
-    scrollbars.append(kwargs)
-    return _FakeScrollbar(**kwargs)
+    scrollbar = _FakeScrollbar(**kwargs)
+    scrollbars.append(scrollbar)
+    return scrollbar
 
 
 @pytest.mark.parametrize("row_count", [0, 2, 8, 9])
-def test_user_can_scroll_devices_after_shortening_the_device_pane(monkeypatch: pytest.MonkeyPatch, row_count: int) -> None:
+def test_device_scrollbar_is_wired_for_vertical_scrolling_even_when_all_rows_initially_fit(
+    device_table_setup: tuple[banner_window.FlightControllerBannerWindow, _FakeTree, list[_FakeScrollbar], dict[str, str]],
+    row_count: int,
+) -> None:
     """
     The device scrollbar remains available regardless of the initial number of rows.
 
     GIVEN: A device table that may initially fit all its rows
-    WHEN: The user shortens the device pane with its divider
-    THEN: A vertical scrollbar is available to reach rows that no longer fit
+    WHEN: The device table is created
+    THEN: Its scrollbar and scroll-position callbacks are wired for vertical scrolling
     """
-    tree = _FakeTree()
-    scrollbars: list[dict[str, Any]] = []
-    rows = [(f"INS_ACC{index}", "SPI", index, index, "IMU", f"INS_ACC{index}_ID: {index}") for index in range(row_count)]
-    monkeypatch.setattr(banner_window.ttk, "Frame", _FakeWidget)
-    monkeypatch.setattr(banner_window.ttk, "Treeview", lambda *_args, **kwargs: _init_tree(tree, kwargs))
-    monkeypatch.setattr(
-        banner_window.ttk,
-        "Scrollbar",
-        lambda *_args, **kwargs: _create_fake_scrollbar(scrollbars, kwargs),
-    )
-    monkeypatch.setattr(banner_window, "device_rows", lambda _params: rows)
-    monkeypatch.setattr(banner_window, "_DeviceTreeTooltip", lambda _tree, _texts: None)
-    window = banner_window.FlightControllerBannerWindow.__new__(banner_window.FlightControllerBannerWindow)
-    window._sort_column = None
-    window._sort_descending = False
+    window, tree, scrollbars, _tooltip_texts = device_table_setup
+    parameters = {f"BARO{index + 1}_DEVID": 423425 + index * 256 for index in range(row_count)}
 
-    window._create_device_table(_FakeWidget(), {})
+    window._create_device_table(_FakeWidget(), parameters)
 
     assert len(tree.get_children()) == row_count
     assert len(scrollbars) == 1
-    assert scrollbars[0]["orient"] == banner_window.tk.VERTICAL
-    assert "yscrollcommand" in tree.configure_options
+    scrollbar = scrollbars[0]
+    assert scrollbar.kwargs["orient"] == tk.VERTICAL
+    assert scrollbar.kwargs["command"] == tree.yview
+    assert tree.configure_options["yscrollcommand"] == scrollbar.set
+    assert scrollbar.grid_options == {"row": 0, "column": 1, "sticky": "ns"}
+    assert tree.grid_options == {"row": 0, "column": 0, "sticky": "nsew"}
 
 
-def test_device_table_sort_orders_values_and_reapplies_stripes() -> None:
+def test_device_table_sort_orders_values_and_reapplies_stripes(
+    device_table_setup: tuple[banner_window.FlightControllerBannerWindow, _FakeTree, list[_FakeScrollbar], dict[str, str]],
+) -> None:
     """Sorting rearranges rows and recalculates alternating row tags."""
-    window = banner_window.FlightControllerBannerWindow.__new__(banner_window.FlightControllerBannerWindow)
-    window.device_tree = _FakeTree(columns=window.DEVICE_COLUMNS)
-    window._sort_column = None
-    window._sort_descending = False
-    for iid, bus in (("device-0", "4"), ("device-1", "1"), ("device-2", "2")):
-        window.device_tree.insert("", "end", iid=iid, values=(iid, "SPI", bus, "1", "IMU"), tags=())
+    window, tree, _scrollbars, tooltip_texts = device_table_setup
+    parameters = {f"BARO{index + 1}_DEVID": (6 << 16) | (118 << 8) | (bus << 3) | 1 for index, bus in enumerate((10, 1, 2))}
+    window._create_device_table(_FakeWidget(), parameters)
+    values_before = dict(tree.values)
+    tooltips_before = dict(tooltip_texts)
 
-    window._sort_by_column("Bus")
+    tree.headings["Bus"]["command"]()
 
     assert window.device_tree.get_children() == ("device-1", "device-2", "device-0")
     assert [window.device_tree.tags[iid] for iid in window.device_tree.get_children()] == [(), ("striped",), ()]
     assert window.device_tree.headings["Bus"]["text"].endswith("▲")
 
-    window._sort_by_column("Bus")
+    tree.headings["Bus"]["command"]()
     assert window.device_tree.get_children() == ("device-0", "device-2", "device-1")
     assert window.device_tree.headings["Bus"]["text"].endswith("▼")
+    assert [tree.tags[iid] for iid in tree.get_children()] == [(), ("striped",), ()]
+    assert tree.values == values_before
+    assert tooltip_texts == tooltips_before
+
+
+def test_user_can_sort_compass_priorities_with_unranked_devices_last(
+    device_table_setup: tuple[banner_window.FlightControllerBannerWindow, _FakeTree, list[_FakeScrollbar], dict[str, str]],
+) -> None:
+    """
+    Priority sorting exposes the compass order without mixing in other devices.
+
+    GIVEN: Ranked compasses and an unranked device in the same table
+    WHEN: The user clicks the Priority heading twice
+    THEN: Compass ranks sort numerically in both directions and unranked devices stay last
+    """
+    window, tree, _scrollbars, _tooltip_texts = device_table_setup
+    parameters = {
+        "BARO1_DEVID": 423425,
+        "COMPASS_DEV_ID": 423425,
+        "COMPASS_DEV_ID2": 423681,
+        "COMPASS_DEV_ID3": 423937,
+        "COMPASS_PRIO1_ID": 423681,
+        "COMPASS_PRIO2_ID": 423937,
+        "COMPASS_PRIO3_ID": 423425,
+    }
+    window._create_device_table(_FakeWidget(), parameters)
+
+    tree.headings["Priority"]["command"]()
+
+    assert tree.get_children() == ("device-2", "device-3", "device-1", "device-0")
+    assert window.device_tree.headings["Priority"]["text"] == "Priority ▲"
+    assert [tree.tags[iid] for iid in tree.get_children()] == [(), ("striped",), (), ("striped",)]
+    tree.headings["Priority"]["command"]()
+    assert tree.get_children() == ("device-1", "device-3", "device-2", "device-0")
+    assert window.device_tree.headings["Priority"]["text"] == "Priority ▼"
+    assert [tree.tags[iid] for iid in tree.get_children()] == [(), ("striped",), (), ("striped",)]
+    tree.headings["DeviceName"]["command"]()
+    assert tree.get_children() == ("device-0", "device-1", "device-2", "device-3")
+    assert tree.headings["Priority"]["text"] == "Priority"
 
 
 def test_device_tooltip_uses_parameter_text_only_in_first_column(monkeypatch: pytest.MonkeyPatch) -> None:
