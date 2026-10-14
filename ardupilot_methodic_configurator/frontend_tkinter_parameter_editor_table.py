@@ -119,6 +119,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         self.parameter_editor = parameter_editor
         self.parameter_editor_window = parameter_editor_window  # the parent window that contains this table
         self.upload_checkbutton_var: dict[str, tk.BooleanVar] = {}
+        self._bulk_upload_selected: bool | None = None
         self._dialogs = dialogs or ParameterEditorTableDialogs()
         self.options = options or ParameterTableOptions()
         self.parameters = parameters
@@ -227,7 +228,11 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
 
         if show_upload_column:
             base_headers.append(_("Upload"))
-            base_tooltips.append(_("When selected, upload the new value to the flight controller"))
+            base_tooltips.append(
+                _("When selected, upload the new value to the flight controller")
+                + "\n"
+                + _("Click this header to deselect all upload checkboxes; click again to select all.")
+            )
 
         if self.options.show_manual_override_column:
             base_headers.append(_("Manual"))
@@ -253,6 +258,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
             )
         else:
             self._upload_selection_defaults.clear()
+            self._bulk_upload_selected = None
         self._upload_selection_defaults_file = self.parameter_editor.current_file
         for widget in self.view_port.winfo_children():
             widget.destroy()
@@ -272,6 +278,15 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
 
         for i, header in enumerate(headers):
             label = ttk.Label(self.view_port, text=header)
+            if show_upload_column and i == 5 + int(self.options.show_parameter_actions):
+                label.configure(cursor="hand2", takefocus=True)
+                label.bind(
+                    "<ButtonPress>",
+                    lambda event: self._toggle_all_upload_checkbuttons(event) if event.num == 1 else None,
+                    add="+",
+                )
+                label.bind("<Return>", self._toggle_all_upload_checkbuttons)
+                label.bind("<space>", self._toggle_all_upload_checkbuttons)
             label.grid(row=0, column=i, sticky="ew")  # Use sticky="ew" to make the label stretch horizontally
             self._show_tooltip(label, tooltips[i])
 
@@ -963,6 +978,23 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
             self._show_tooltip(unit_label, unit_tooltip)
         return unit_label
 
+    def _toggle_all_upload_checkbuttons(self, _event: tk.Event | None = None) -> None:
+        """Alternate between clearing and selecting every uploadable row in the table."""
+        if not self.parameter_editor.is_fc_connected:
+            return
+        self._bulk_upload_selected = False if self._bulk_upload_selected is None else not self._bulk_upload_selected
+        # Save the choice for rows that have not rendered yet, including across filter changes.
+        parameters = self.parameters if self.parameters is not None else self.parameter_editor.current_step_parameters
+        self._upload_selection_defaults.update(
+            {
+                name: self._bulk_upload_selected and (self.parameters is None or not param.is_readonly)
+                for name, param in parameters.items()
+            }
+        )
+        for param_name, variable in self.upload_checkbutton_var.items():
+            if self.parameters is None or not self.parameters[param_name].is_readonly:
+                variable.set(self._bulk_upload_selected)
+
     def _create_upload_checkbutton(self, param_name: str) -> ttk.Checkbutton:
         """Create a checkbutton for upload selection."""
         fc_connected: bool = self.parameter_editor.is_fc_connected
@@ -973,6 +1005,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         else:
             is_uploadable = True
             initially_selected = fc_connected
+        if self._bulk_upload_selected is not None:
+            initially_selected = self._bulk_upload_selected and fc_connected
         selected = self._upload_selection_defaults.get(param_name, initially_selected) if is_uploadable else False
         self.upload_checkbutton_var[param_name] = tk.BooleanVar(value=selected)
         upload_checkbutton = ttk.Checkbutton(self.view_port, variable=self.upload_checkbutton_var[param_name])
