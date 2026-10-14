@@ -14,12 +14,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from collections.abc import Callable
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, cast
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
-from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterValueUpdateStatus
+from ardupilot_methodic_configurator.data_model_parameter_editor import (
+    InvalidParameterNameError,
+    OperationNotPossibleError,
+    ParameterValueUpdateStatus,
+)
 from ardupilot_methodic_configurator.data_model_vehicle_components_validation import PWM_OUT_PORTS
 from ardupilot_methodic_configurator.plugins.data_model_servo_out import PWM_OUT_PORTS as SERVO_OUT_PWM_PORTS
 from ardupilot_methodic_configurator.plugins.data_model_servo_out import ServoOutDataModel, ServoOutRecommendationStatus
@@ -626,3 +630,145 @@ class TestServoOutputApplication:
         assert applied == ["SERVO4_FUNCTION"]
         assert "Applied 1 motor output assignment(s)." in message
         assert "Motor2, Motor3, Motor4 are not assigned to any output" in message
+
+
+@pytest.mark.parametrize("frame_class", ["invalid", [], float("inf")])
+def test_invalid_frame_configuration_cannot_propose_motor_outputs(
+    servo_model_factory: Callable[[str, int, dict[str, object] | None], ServoOutDataModel], frame_class: object
+) -> None:
+    """
+    Reject unsupported frame values without guessing output assignments.
+
+    GIVEN: FRAME_CLASS contains malformed data
+    WHEN: The user requests motor outputs
+    THEN: No assignments are proposed and the unsupported mapping is explained
+    """
+    # Given: A valid connection but an unusable frame value.
+    model = servo_model_factory("Main Out", 1, None)
+    cast("dict[str, object]", model._parameter_editor.fc_parameters)["FRAME_CLASS"] = frame_class
+    # When: Resolve recommendations through the public API.
+    recommendations, message, status = model.get_recommendations()
+    # Then: Do not guess a frame or overwrite outputs.
+    assert recommendations == {}
+    assert status is ServoOutRecommendationStatus.ERROR
+    assert "supported motor-output mapping" in message
+
+
+@pytest.mark.parametrize("invalid_function", [[], "invalid", 5.5])
+def test_unrecognized_output_functions_are_preserved_instead_of_reassigned(
+    servo_model_factory: Callable[[str, int, dict[str, object] | None], ServoOutDataModel], invalid_function: object
+) -> None:
+    """
+    Preserve ambiguous output assignments for user review.
+
+    GIVEN: An output has a value that is not a valid integer servo function
+    WHEN: Motor assignments are recommended
+    THEN: That output is left alone and motors are assigned to known free outputs
+    """
+    # Given: An occupied or ambiguous first output.
+    model = servo_model_factory("Main Out", 1, None)
+    cast("dict[str, object]", model._parameter_editor.fc_parameters)["SERVO1_FUNCTION"] = invalid_function
+    # When: Recommend safe assignments.
+    recommendations, _message, status = model.get_recommendations()
+    # Then: Ambiguous values are not interpreted as disabled outputs.
+    assert recommendations == {f"SERVO{index + 1}_FUNCTION": 32 + index for index in range(1, 5)}
+    assert status is ServoOutRecommendationStatus.RECOMMENDATIONS_AVAILABLE
+
+
+@pytest.mark.parametrize(
+    "layouts", [None, [{"Class": 1}], [{"Class": 1, "motors": [None]}], [{"Class": 1, "motors": [{"Number": "1"}]}]]
+)
+def test_unusable_motor_metadata_produces_an_actionable_mapping_error(
+    servo_model_factory: Callable[[str, int, dict[str, object] | None], ServoOutDataModel], layouts: object
+) -> None:
+    """
+    Reject malformed motor-layout metadata.
+
+    GIVEN: Motor-layout data is missing or contains invalid motor records
+    WHEN: The user requests output recommendations
+    THEN: A supported-mapping error is returned rather than a partial assignment
+    """
+    # Given: Only the external JSON-loader boundary is mocked.
+    model = servo_model_factory("Main Out", 1, None)
+    with patch.object(model._motor_data_loader, "load_json_data", return_value={"layouts": layouts}):
+        # When: Read and interpret the layout.
+        recommendations, message, status = model.get_recommendations()
+    # Then: Invalid records do not silently become a usable layout.
+    assert recommendations == {}
+    assert status is ServoOutRecommendationStatus.ERROR
+    assert "supported motor-output mapping" in message
+
+
+@pytest.mark.parametrize("occupied", [True, False])
+def test_applying_outputs_without_available_assignments_explains_the_result(
+    servo_model_factory: Callable[[str, int, dict[str, object] | None], ServoOutDataModel], occupied: bool
+) -> None:
+    """
+    Distinguish already assigned motors from motors that cannot be routed.
+
+    GIVEN: All motor functions are assigned or all outputs are occupied by other functions
+    WHEN: The user applies recommended outputs
+    THEN: No changes occur and the message explains which situation applies
+    """
+    # Given: A complete mapping or no available free outputs.
+    parameters: dict[str, object] = {
+        f"SERVO{index}_FUNCTION": SimpleNamespace(get_new_value=lambda index=index: 4 if occupied else 32 + index)
+        for index in range(1, 15 if occupied else 5)
+    }
+    model = servo_model_factory("Main Out", 1, parameters)
+    # When: Apply recommendations.
+    applied, message, status = model.apply_recommendations()
+    # Then: A no-op carries the correct semantic result.
+    assert applied == []
+    if occupied:
+        assert status is ServoOutRecommendationStatus.UNASSIGNED_MOTORS
+        assert "Motor1, Motor2, Motor3, Motor4 are not assigned" in message
+    else:
+        assert status is ServoOutRecommendationStatus.NO_CHANGES
+        assert "no changes are needed" in message
+
+
+@pytest.mark.parametrize("exception_type", [InvalidParameterNameError, OperationNotPossibleError])
+def test_unavailable_servo_parameter_does_not_prevent_other_motor_assignments(
+    servo_model_factory: Callable[[str, int, dict[str, object] | None], ServoOutDataModel], exception_type: type[Exception]
+) -> None:
+    """
+    Recover from a domain error when adding one output parameter.
+
+    GIVEN: The first recommended output cannot be added to the current step
+    WHEN: The user applies the recommendations
+    THEN: Other outputs are staged and the unavailable output is named
+    """
+    # Given: Parameter-editor operations form the boundary under test.
+    model = servo_model_factory("Main Out", 1, None)
+    editor = cast("SimpleNamespace", model._parameter_editor)
+    editor.add_parameter_to_current_file = MagicMock(side_effect=[exception_type("Unavailable"), True, True, True])
+    editor.update_parameter_value = MagicMock(return_value=SimpleNamespace(status=ParameterValueUpdateStatus.UPDATED))
+    # When: Apply the real model's recommendations.
+    applied, message, status = model.apply_recommendations()
+    # Then: One unavailable output does not prevent the others from being assigned.
+    assert applied == ["SERVO2_FUNCTION", "SERVO3_FUNCTION", "SERVO4_FUNCTION"]
+    assert status is ServoOutRecommendationStatus.APPLIED
+    assert "Could not apply: SERVO1_FUNCTION." in message
+
+
+def test_a_frame_needing_too_many_outputs_is_rejected_before_assigning_any(
+    servo_model_factory: Callable[[str, int, dict[str, object] | None], ServoOutDataModel],
+) -> None:
+    """
+    Reject layouts exceeding the plugin's output capacity.
+
+    GIVEN: A supported frame layout requires fifteen outputs
+    WHEN: The user requests assignments for fourteen available outputs
+    THEN: No truncated mapping is offered and the capacity error is explained
+    """
+    # Given: A realistic external layout exceeding this plugin's routing capacity.
+    model = servo_model_factory("Main Out", 1, None)
+    metadata = {"layouts": [{"Class": 1, "motors": [{"Number": number} for number in range(1, 16)]}]}
+    with patch.object(model._motor_data_loader, "load_json_data", return_value=metadata):
+        # When: Resolve the complete motor layout.
+        recommendations, message, status = model.get_recommendations()
+    # Then: Never silently omit the fifteenth motor.
+    assert recommendations == {}
+    assert status is ServoOutRecommendationStatus.ERROR
+    assert "requires more outputs" in message

@@ -13,6 +13,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -746,3 +747,50 @@ class TestCompassCalibrationViewInternals:
         frame.pack.assert_called_once_with(fill="x", expand=False, padx=10, pady=10)
         button.pack.assert_called_once_with(pady=5)
         assert popup.start_button is button
+
+
+def test_failed_compass_report_keeps_monitoring_when_controller_cancel_is_rejected(
+    progress_popup: CompassCalibrationPopup,
+) -> None:
+    """
+    Keep monitoring a failed calibration until controller cancellation is confirmed.
+
+    GIVEN: A failed compass report and a rejected cancellation
+    WHEN: The popup handles progress
+    THEN: The error is shown and monitoring resumes without closing the session
+    """
+    # Given: One compass reports failure and controller cancellation is rejected.
+    popup = progress_popup
+    model = cast("MagicMock", popup.model)
+    root = cast("MagicMock", popup.root)
+    model.get_progress.return_value = [{"type": "REPORT", "compass_id": 0, "status": 5}]
+    model.cancel_calibration.return_value = (False, "Controller still calibrating")
+    with patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.messagebox.showerror") as error:
+        # When: Process the failed report.
+        popup._check_progress()
+    # Then: Do not claim that cancellation completed or abandon monitoring silently.
+    error.assert_called_once_with("Failed to Cancel", "Controller still calibrating", parent=popup.root)
+    model.finish_calibration.assert_not_called()
+    cast("MagicMock", popup.destroy).assert_not_called()
+    root.after.assert_called_once_with(100, popup._check_progress)
+
+
+def test_user_can_decline_abandoning_unconfirmed_compass_calibration(progress_popup: CompassCalibrationPopup) -> None:
+    """
+    Continue monitoring when the user declines to abandon an unconfirmed cancellation.
+
+    GIVEN: Cancellation was not confirmed by the controller
+    WHEN: The user declines the abandon-monitoring warning
+    THEN: The session remains open and another progress poll is scheduled
+    """
+    # Given: An open monitor with a cancelable pending poll.
+    popup = progress_popup
+    with patch(
+        "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.messagebox.askyesno", return_value=False
+    ):
+        # When: Decline abandoning local monitoring.
+        popup._on_abandon_calibration()
+    # Then: The controller session is retained and monitoring continues.
+    cast("MagicMock", popup.model).finish_calibration.assert_not_called()
+    cast("MagicMock", popup.destroy).assert_not_called()
+    cast("MagicMock", popup.root).after.assert_called_once_with(100, popup._check_progress)

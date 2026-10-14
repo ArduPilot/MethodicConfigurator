@@ -14,14 +14,20 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from collections.abc import Generator
 from tkinter import ttk
 from types import SimpleNamespace
+from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock
 
 import pytest
+from pytest_mock import MockerFixture
 
 from ardupilot_methodic_configurator.plugins.data_model_servo_out import ServoOutDataModel, ServoOutRecommendationStatus
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_servo_out import ServoOutView, register_servo_out_plugin
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_SERVO_OUT
-from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory
+from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory, PluginModelContext
+
+if TYPE_CHECKING:
+    from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+    from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 
 # pytest injects fixtures by matching the test function parameter name.
 # pylint: disable=redefined-outer-name,protected-access
@@ -204,3 +210,35 @@ class TestServoOutputView:
 
         showerror.assert_called_once_with("Servo Output Functions", message)
         showinfo.assert_not_called()
+
+
+def test_registered_servo_plugin_offers_offline_motor_assignments(
+    servo_out_view: SimpleNamespace, mocker: MockerFixture
+) -> None:
+    """
+    Build a usable offline servo-output view through the application registry.
+
+    GIVEN: A Main Out quad template and no flight-controller connection
+    WHEN: The application creates the registered plugin model and view
+    THEN: Motor assignments are shown when the plugin is activated
+    """
+    # Given: Only application dependencies and registry access are isolated.
+    factory = PluginFactory()
+    mocker.patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_servo_out.plugin_factory", factory)
+    filesystem = SimpleNamespace(
+        vehicle_components_fs=SimpleNamespace(data={"Components": {"ESC": {"FC->ESC Connection": {"Type": "Main Out"}}}})
+    )
+    editor = SimpleNamespace(fc_parameters={"FRAME_CLASS": 1}, current_step_parameters={})
+    context = PluginModelContext(MagicMock(master=None), cast("LocalFilesystem", filesystem), cast("ParameterEditor", editor))
+    # When: Create the real model and view through their registrations.
+    register_servo_out_plugin()
+    model = factory.create_model(PLUGIN_SERVO_OUT, context)
+    view = factory.create(PLUGIN_SERVO_OUT, servo_out_view.view.master, model, servo_out_view.view.base_window)
+    # Then: Offline recommendations are usable and visible.
+    assert isinstance(view, ServoOutView)
+    try:
+        view.on_activate()
+        assert "SERVO1_FUNCTION=33" in view._summary.get()
+        assert not factory.requires_flight_controller(PLUGIN_SERVO_OUT)
+    finally:
+        view.destroy()

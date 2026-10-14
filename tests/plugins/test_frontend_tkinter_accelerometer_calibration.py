@@ -23,15 +23,21 @@ from pymavlink import mavutil
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
+from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
+from ardupilot_methodic_configurator.plugins import frontend_tkinter_accelerometer_calibration as frontend
 from ardupilot_methodic_configurator.plugins.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_accelerometer_calibration import (
     AccelerometerCalibrationView,
     _accel_calibration_names,
     _create_accelerometer_calibration_view,
 )
+from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_ACCELEROMETER_CALIBRATION
+from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory, PluginModelContext
 
 if TYPE_CHECKING:
     from collections.abc import Generator
+
+    from pytest_mock import MockerFixture
 
 # pylint: disable=protected-access,redefined-outer-name
 
@@ -853,3 +859,107 @@ class TestPluginFactoryFunction:  # pylint: disable=too-few-public-methods
             assert view.model is model
         finally:
             parent.destroy()
+
+
+@pytest.mark.parametrize(("sample", "matches"), [((0.0, 0.0, -1000.0), True), ((0.0, -1000.0, 0.0), False)])
+def test_full_calibration_allows_capture_only_when_live_orientation_matches(
+    view_with_model: SimpleNamespace, sample: tuple[float, float, float], matches: bool
+) -> None:
+    """
+    Compare a requested pose with real live-IMU interpretation.
+
+    GIVEN: Full calibration is waiting for LEVEL
+    WHEN: Fresh telemetry reports LEVEL or RIGHT
+    THEN: Continue is enabled only for LEVEL and live movement information is displayed
+    """
+    # Given: Use the real model's physical-unit and orientation calculations.
+    view = view_with_model.view
+    view.model = AccelerometerCalibrationDataModel(MagicMock())
+    view._waiting_for_position = True
+    view._expected_position_name = "LEVEL"
+    # When: A fresh raw IMU sample arrives.
+    view._handle_live_imu_sample(sample)
+    # Then: Correct orientation enables capture and missing telemetry gates it again.
+    assert view._continue_btn.instate(["!disabled"]) is matches
+    assert view._imu_position_var.get() == ("LEVEL" if matches else "RIGHT")
+    assert "9.81 m/s²" in view._imu_magnitude_var.get()
+    view._handle_no_live_imu_sample()
+    assert view._continue_btn.instate(["disabled"])
+
+
+@pytest.mark.parametrize("operation", ["poll", "confirm"])
+def test_full_calibration_restores_navigation_after_transport_errors(view_with_model: SimpleNamespace, operation: str) -> None:
+    """
+    Recover the wizard after failed polling or position confirmation.
+
+    GIVEN: A full calibration owns navigation
+    WHEN: Controller polling or confirmation raises an error
+    THEN: The wizard closes and navigation and top-level controls are restored
+    """
+    # Given: Start a real wizard with an isolated backend boundary.
+    context = view_with_model
+    context.base_window.navigation_lock = NavigationLock()
+    context.model.start_full_calibration.return_value = (True, "Started")
+    context.view._on_start_full_calibration()
+    callback = context.view._poll_tick if operation == "poll" else context.view._on_continue
+    backend = context.model.poll_for_next_position if operation == "poll" else context.model.confirm_current_position
+    backend.side_effect = OSError("Telemetry unavailable")
+    # When / Then: The original error propagates after control cleanup.
+    with pytest.raises(OSError, match="Telemetry unavailable"):
+        callback()
+    assert not context.base_window.navigation_lock.locked
+    assert context.view._wizard_frame.winfo_manager() == ""
+    assert context.view._simple_btn.instate(["!disabled"])
+    assert context.view._full_btn.instate(["!disabled"])
+
+
+def test_simple_accelerometer_calibration_cannot_interrupt_another_operation(view_with_model: SimpleNamespace) -> None:
+    """
+    Honor a competing operation's navigation lock.
+
+    GIVEN: Another operation owns navigation
+    WHEN: The user starts simple calibration
+    THEN: No calibration command is sent and the existing lock remains held
+    """
+    # Given: A real lock with a distinct owner.
+    context = view_with_model
+    lock = NavigationLock()
+    owner = object()
+    lock.acquire(owner)
+    context.base_window.navigation_lock = lock
+    # When: Try to start simple calibration.
+    context.view._on_simple_calibration()
+    # Then: The competing operation is respected.
+    context.model.start_simple_calibration.assert_not_called()
+    assert lock.locked
+    lock.release(owner)
+
+
+def test_registered_accelerometer_plugin_creates_live_calibration_controls(
+    view_with_model: SimpleNamespace, mocker: MockerFixture
+) -> None:
+    """
+    Construct a live accelerometer assistant from application dependencies.
+
+    GIVEN: A controller and an isolated plugin registry
+    WHEN: Registered factories create the model and view
+    THEN: The real calibration controls and a cancelable live-IMU timer are present
+    """
+    # Given: Isolate registration and external application dependencies.
+    factory = PluginFactory()
+    mocker.patch.object(frontend, "plugin_factory", factory)
+    controller = MagicMock()
+    context = PluginModelContext(controller, MagicMock(), MagicMock())
+    # When: Register and instantiate through the public factory API.
+    frontend.register_accelerometer_calibration_plugin()
+    model = factory.create_model(PLUGIN_ACCELEROMETER_CALIBRATION, context)
+    view = factory.create(PLUGIN_ACCELEROMETER_CALIBRATION, view_with_model.view.master, model, view_with_model.base_window)
+    # Then: The real assistant is ready and cleans up its timer on destruction.
+    assert isinstance(view, AccelerometerCalibrationView)
+    assert isinstance(model, AccelerometerCalibrationDataModel)
+    try:
+        assert model.flight_controller is controller
+        assert view._simple_btn.instate(["!disabled"])
+        assert view._imu_poll_job is not None
+    finally:
+        view.destroy()

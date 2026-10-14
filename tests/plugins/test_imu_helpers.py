@@ -22,6 +22,7 @@ from ardupilot_methodic_configurator.plugins.imu_helpers import (
     compute_movement_magnitude_ms2,
     poll_imu_periodically,
     poll_scaled_imu,
+    start_periodic_polling,
     stop_periodic_polling,
 )
 
@@ -85,3 +86,54 @@ def test_stop_periodic_polling_ignores_tcl_error() -> None:
     stop_periodic_polling(cancel, "after-1")
 
     cancel.assert_called_once_with("after-1")
+
+
+@pytest.mark.parametrize("pending", [None, "existing-timer"])
+def test_reopening_a_monitor_keeps_only_one_pending_timer(pending: str | None) -> None:
+    """
+    Prevent duplicate monitor timers.
+
+    GIVEN: A monitor with or without a pending timer
+    WHEN: Polling is started again
+    THEN: A timer is created only when none is already pending
+    """
+    # Given: The scheduler represents the external Tk event queue.
+    schedule = MagicMock(return_value="new-timer")
+    tick = MagicMock()
+    # When: Request periodic monitoring.
+    result = start_periodic_polling(schedule, pending, 200, tick)
+    # Then: Existing work is retained without adding another timer.
+    assert result == (pending or "new-timer")
+    if pending:
+        schedule.assert_not_called()
+    else:
+        schedule.assert_called_once_with(200, tick)
+
+
+@pytest.mark.parametrize("notify_missing_sample", [True, False])
+def test_monitor_keeps_polling_when_no_imu_sample_arrives(notify_missing_sample: bool) -> None:
+    """
+    Recover from a telemetry gap with optional missing-sample feedback.
+
+    GIVEN: No IMU reading and a monitor with optional callbacks
+    WHEN: Its timer fires
+    THEN: It reports no fresh sample when requested and schedules another poll
+    """
+    # Given: Capture actual timer callbacks so the tick can be driven deterministically.
+    callbacks: list[Callable[[], None]] = []
+
+    def schedule(interval: int, callback: Callable[[], None]) -> str:
+        assert interval == 200
+        callbacks.append(callback)
+        return f"timer-{len(callbacks)}"
+
+    on_sample = MagicMock()
+    on_missing = MagicMock()
+    handlers = ImuPollHandlers(200, lambda: None, on_sample, on_no_sample=on_missing if notify_missing_sample else None)
+    # When: Start monitoring and fire one scheduled poll.
+    assert poll_imu_periodically(schedule, None, handlers) == "timer-1"
+    callbacks[0]()
+    # Then: Missing data does not stop monitoring or invent a reading.
+    assert len(callbacks) == 2
+    on_sample.assert_not_called()
+    assert on_missing.called is notify_missing_sample

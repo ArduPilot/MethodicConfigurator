@@ -26,6 +26,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWin
 from ardupilot_methodic_configurator.frontend_tkinter_calibration_popup_base import CalibrationPopupBase
 from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
+from ardupilot_methodic_configurator.plugins import frontend_tkinter_rc_calibration as frontend
 from ardupilot_methodic_configurator.plugins.data_model_rc_calibration import RCCalibrationDataModel
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_rc_calibration import (
     RCCalibrationPopup,
@@ -34,6 +35,8 @@ from ardupilot_methodic_configurator.plugins.frontend_tkinter_rc_calibration imp
     RCCraftPreview,
     RCStickPreview,
 )
+from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_RC_CALIBRATION
+from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory, PluginModelContext
 
 # pylint: disable=protected-access,redefined-outer-name,too-many-lines
 
@@ -1039,3 +1042,150 @@ def test_craft_preview_is_rendered_before_telemetry_without_inventing_live_statu
         assert preview.status_label.cget("text") == "No RC telemetry"
     finally:
         preview.destroy()
+
+
+@pytest.fixture
+def floating_rc_monitor(
+    tk_root: tk.Tk, rc_staging_context: tuple[MagicMock, ParameterEditor]
+) -> Generator[SimpleNamespace, None, None]:
+    """Build a real floating monitor and staging model with controller I/O isolated."""
+    controller, editor = rc_staging_context
+    root = tk.Toplevel(tk_root)
+    root.withdraw()
+
+    def init_hidden_base(window: BaseWindow, _parent: tk.Toplevel) -> None:
+        window.root = root
+        window.main_frame = ttk.Frame(root)
+        window.main_frame.pack(fill="both", expand=True)
+
+    with (
+        patch.object(BaseWindow, "__init__", init_hidden_base),
+        patch.object(CalibrationPopupBase, "_resize_and_center"),
+        patch.object(root, "lift"),
+        patch.object(root, "focus_force"),
+        patch("tkinter.Misc.update_idletasks"),
+    ):
+        popup = RCCalibrationPopup(cast("tk.Widget", tk_root), RCCalibrationDataModel(controller, editor))
+        try:
+            yield SimpleNamespace(popup=popup, controller=controller, editor=editor)
+        finally:
+            popup.destroy()
+
+
+@pytest.mark.parametrize("monitor", ["floating", "embedded"])
+def test_rc_monitor_warns_once_for_a_telemetry_gap_then_recovers(
+    floating_rc_monitor: SimpleNamespace, rc_navigation_view: SimpleNamespace, caplog: pytest.LogCaptureFixture, monitor: str
+) -> None:
+    """
+    Recover RC monitoring after an extended telemetry gap.
+
+    GIVEN: Fifty polls without receiver telemetry
+    WHEN: Monitoring continues and a valid RC packet then arrives
+    THEN: One warning is logged, channel displays recover and another poll remains scheduled
+    """
+    # Given: Real widgets and models with only transport I/O mocked.
+    context = floating_rc_monitor if monitor == "floating" else rc_navigation_view
+    view = context.popup if monitor == "floating" else context.view
+    for _poll in range(51):
+        view._stop_polling()
+        view._check_telemetry()
+    # Then: An extended gap produces one useful warning, rather than repeated noise.
+    assert [message for message in caplog.messages if "No RC telemetry has arrived" in message] == [
+        "No RC telemetry has arrived after 50 polls."
+    ]
+    assert view._timer_id is not None
+    # When: Fresh receiver telemetry arrives.
+    message = MagicMock(chancount=16)
+    for number in range(1, 17):
+        setattr(message, f"chan{number}_raw", 1700 if number == 3 else 1500)
+    context.controller.master.recv_match.side_effect = [message, None]
+    view._stop_polling()
+    view._check_telemetry()
+    # Then: The monitor recovers without restarting calibration or uploading parameters.
+    assert view._polls_without_updates == 0
+    assert not view._no_telemetry_warning_emitted
+    assert view.channel_bars._value_labels[3].cget("text") == "1700 µs"
+    assert view.craft_preview.status_label.cget("text") == "16 channels live"
+    context.controller.set_param.assert_not_called()
+
+
+def test_floating_rc_monitor_refreshes_staged_mapping_without_uploading(floating_rc_monitor: SimpleNamespace) -> None:
+    """
+    Show a mapping change immediately in the floating monitor.
+
+    GIVEN: A real monitor using staged RC parameters
+    WHEN: The user chooses another transmitter stick mode
+    THEN: The channel function labels refresh and no controller parameter is written
+    """
+    # Given: A monitor with the real staging model and editor.
+    context = floating_rc_monitor
+    selector = context.popup.stick_preview
+    selector._selected_mode.set("1")
+    # When: Use the same handler as the mode-selection event.
+    selector._on_mode_changed(tk.Event())
+    # Then: Staged mode and all monitor sections agree.
+    assert context.popup.model.get_mapping_mode() == 1
+    assert context.popup.channel_bars._function_labels[2].cget("text") == "Throttle"
+    assert context.popup.channel_bars._function_labels[3].cget("text") == "Pitch"
+    context.controller.set_param.assert_not_called()
+
+
+def test_unknown_auxiliary_function_remains_visible_when_option_metadata_is_incomplete(
+    rc_navigation_view: SimpleNamespace,
+) -> None:
+    """
+    Preserve an unknown receiver option for user review.
+
+    GIVEN: An auxiliary channel with an unknown option and malformed metadata keys
+    WHEN: Channel functions are displayed
+    THEN: Invalid metadata is skipped and the current unknown value stays visible
+    """
+    # Given: Optional metadata contains valid and invalid entries.
+    channel_bars = rc_navigation_view.view.channel_bars
+    channels = [
+        {
+            "name": "CH6",
+            "option_value": 999,
+            "option_choices": {"invalid": "Bad metadata", "0": "Disabled"},
+            "function_editable": True,
+        }
+    ]
+    # When: Update the actual channel widgets.
+    channel_bars.update_channels(channels)
+    # Then: The unknown current selection is visible and cannot be silently overwritten.
+    selector = channel_bars._option_selectors[6]
+    assert selector.get() == "999: Unknown option"
+    assert tuple(selector.cget("values")) == ("0: Disabled", "999: Unknown option")
+    assert selector.instate(["readonly"])
+    rc_navigation_view.controller.set_param.assert_not_called()
+
+
+def test_registered_rc_plugin_builds_a_monitor_from_shared_staged_parameters(
+    rc_navigation_view: SimpleNamespace, mocker: MockerFixture
+) -> None:
+    """
+    Create the RC assistant through registered application dependencies.
+
+    GIVEN: A controller and real shared parameter editor
+    WHEN: The application creates the registered RC plugin
+    THEN: Its monitor shows the same staged mapping without uploading it
+    """
+    # Given: Keep application registration isolated.
+    factory = PluginFactory()
+    mocker.patch.object(frontend, "plugin_factory", factory)
+    context = rc_navigation_view
+    dependencies = PluginModelContext(context.controller, MagicMock(), context.editor)
+    # When: Register and create both the model and view.
+    frontend.register_rc_calibration_plugin()
+    model = factory.create_model(PLUGIN_RC_CALIBRATION, dependencies)
+    view = factory.create(PLUGIN_RC_CALIBRATION, context.view.master, model, context.host)
+    # Then: A live assistant is ready with the shared mode and channel mapping.
+    assert isinstance(view, RCCalibrationView)
+    assert isinstance(model, RCCalibrationDataModel)
+    try:
+        assert model.get_mapping_mode() == context.view.model.get_mapping_mode()
+        assert view.channel_bars._function_labels[1].cget("text") == "Roll"
+        assert view._timer_id is not None
+        context.controller.set_param.assert_not_called()
+    finally:
+        view.destroy()

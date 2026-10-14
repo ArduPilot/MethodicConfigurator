@@ -12,6 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
 
+import tkinter as tk
 from importlib import import_module
 from tkinter import Event, ttk
 from types import SimpleNamespace
@@ -39,7 +40,10 @@ from ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test import 
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
+    from pathlib import Path
     from typing import Any
+
+    from pytest_mock import MockerFixture
 
 
 # pylint: disable=redefined-outer-name, too-few-public-methods, protected-access, raising-bad-type, too-many-lines
@@ -1011,3 +1015,253 @@ class TestMotorTestViewMotorSwapping:
         # Verify the actual error message was passed to the UI
         assert "Mock FC read error" in dialog_spies.showerror.call_args[0][1]
         assert motor_view.detected_comboboxes[0].get() == ""
+
+
+def test_motor_diagram_displays_a_real_png_and_reuses_the_resolved_path(
+    motor_view: MotorTestView,
+    fake_model: FakeMotorTestModel,
+    dummy_base_window: DummyBaseWindow,
+    tmp_path: Path,
+    mocker: MockerFixture,
+) -> None:
+    """
+    Display and retain the motor-layout PNG through repeated refreshes.
+
+    GIVEN: A valid PNG layout in the selected frame configuration
+    WHEN: The diagram is refreshed twice
+    THEN: The image remains displayed and the resolved path is reused
+    """
+    # Given: Create a genuine PNG and isolate only the external image-loading boundary.
+    path = tmp_path / "motor-layout.png"
+    tk.PhotoImage(master=motor_view, width=2, height=2).write(str(path), format="png")
+    images: list[tk.PhotoImage] = []
+
+    def load(parent: tk.Misc, filepath: str, image_height: int, fallback_text: str) -> ttk.Label:
+        assert image_height == 230
+        image = tk.PhotoImage(master=parent, file=filepath)
+        images.append(image)
+        label = ttk.Label(parent, image=image, text=fallback_text)
+        cast("Any", label).image = image
+        return label
+
+    mocker.patch.object(dummy_base_window, "put_image_in_label", side_effect=load)
+    fake_model.diagram_available = True
+    fake_model.diagram_path = str(path)
+    resolver = mocker.patch.object(fake_model, "get_motor_diagram_path", wraps=fake_model.get_motor_diagram_path)
+    # When: Display the image and refresh it again.
+    motor_view._update_diagram()
+    motor_view._update_diagram()
+    # Then: Tk has a real image, its Python reference is retained and the path was resolved only once.
+    assert tuple(str(image) for image in motor_view.tk.splitlist(motor_view.diagram_label.cget("image"))) == (str(images[-1]),)
+    assert motor_view._current_diagram_image is images[-1]
+    assert motor_view.diagram_label.cget("text") == ""
+    resolver.assert_called_once_with()
+
+
+def test_motor_diagram_shows_the_loader_fallback_when_no_image_is_available(
+    motor_view: MotorTestView, dummy_base_window: DummyBaseWindow, mocker: MockerFixture
+) -> None:
+    """
+    Show useful fallback text when a diagram loader has no image.
+
+    GIVEN: Image loading returns a label describing the unavailable image
+    WHEN: The view loads a PNG diagram
+    THEN: The fallback text replaces the diagram and no stale image reference remains
+    """
+    # Given: A real label without an image represents the loader fallback.
+    mocker.patch.object(
+        dummy_base_window,
+        "put_image_in_label",
+        side_effect=lambda **kwargs: ttk.Label(kwargs["parent"], text="Image unavailable"),
+    )
+    # When: Load the diagram through the real view method.
+    motor_view._load_png_diagram("missing.png")
+    # Then: The fallback is visible without retaining an old diagram.
+    assert motor_view.diagram_label.cget("text") == "Image unavailable"
+    assert motor_view._current_diagram_image is None
+
+
+@pytest.mark.parametrize("exception_type", [FileNotFoundError, OSError, ValueError, TypeError, AttributeError])
+def test_motor_diagram_loading_errors_leave_the_test_controls_usable(
+    motor_view: MotorTestView, dummy_base_window: DummyBaseWindow, mocker: MockerFixture, exception_type: type[Exception]
+) -> None:
+    """
+    Recover the diagram display from expected image-loading failures.
+
+    GIVEN: The loader raises a file, decoding or image-configuration error
+    WHEN: The view attempts to load the PNG
+    THEN: A useful fallback is visible and motor test controls remain enabled
+    """
+    # Given: Fail only at the external image-loader boundary.
+    mocker.patch.object(dummy_base_window, "put_image_in_label", side_effect=exception_type("Cannot load diagram"))
+    # When: Attempt to display the diagram.
+    motor_view._load_png_diagram("layout.png")
+    # Then: The image failure does not prevent motor configuration.
+    assert motor_view.diagram_label.cget("text") == (
+        "Diagram not found" if exception_type is FileNotFoundError else "Error loading diagram"
+    )
+    assert motor_view._current_diagram_image is None
+    assert all(button.instate(["!disabled"]) for button in motor_view.motor_buttons)
+
+
+@pytest.mark.parametrize("operation", ["single", "all", "sequence"])
+def test_declining_the_motor_safety_warning_sends_no_motor_commands(
+    motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, operation: str
+) -> None:
+    """
+    Respect declined propeller-removal confirmation for every motor test mode.
+
+    GIVEN: The first motor-test safety warning has not been acknowledged
+    WHEN: The operator declines confirmation
+    THEN: No motor test runs and the warning remains unacknowledged
+    """
+    # Given: The operator declines the safety prompt.
+    dialog_spies.askyesno.return_value = False
+    # When: Request a single, simultaneous or sequential test.
+    if operation == "single":
+        motor_view._test_motor(0, 1)
+    elif operation == "all":
+        motor_view._test_all_motors()
+    else:
+        motor_view._test_motors_in_sequence()
+    # Then: Every motor command path remains inactive.
+    assert fake_model.single_motor_calls == []
+    assert fake_model.all_motor_runs == 0
+    assert fake_model.sequence_runs == 0
+    assert fake_model.should_show_first_test_warning()
+
+
+@pytest.mark.parametrize("operation", ["all", "sequence"])
+@pytest.mark.parametrize("exception_type", [MotorTestSafetyError, ValidationError, RuntimeError])
+def test_batch_motor_failures_show_feedback_without_claiming_success(
+    motor_view: MotorTestView,
+    fake_model: FakeMotorTestModel,
+    dialog_spies: SimpleNamespace,
+    operation: str,
+    exception_type: type[Exception],
+) -> None:
+    """
+    Explain rejected batch motor tests.
+
+    GIVEN: Batch testing fails a safety check, parameter validation or transport operation
+    WHEN: The operator runs all motors or a sequence
+    THEN: The matching warning or error is displayed
+    """
+    # Given: Confirmation was acknowledged but the model rejects execution.
+    fake_model._should_warn = False
+    error = exception_type("Test cannot proceed")
+    if operation == "all":
+        fake_model.next_all_motor_error = error
+        callback = motor_view._test_all_motors
+    else:
+        fake_model.next_sequence_error = error
+        callback = motor_view._test_motors_in_sequence
+    # When: Execute the batch test.
+    callback()
+    # Then: Safety failures are warnings and other failures are errors.
+    if exception_type is MotorTestSafetyError:
+        dialog_spies.showwarning.assert_called_once_with("Safety Check Failed", "Test cannot proceed")
+    else:
+        dialog_spies.showerror.assert_called_once()
+        assert dialog_spies.showerror.call_args.args[1] == "Test cannot proceed"
+
+
+@pytest.mark.parametrize("focused_control", ["throttle_spinbox", "duration_spinbox"])
+def test_periodic_motor_refresh_preserves_the_input_being_edited(
+    motor_view: MotorTestView, mocker: MockerFixture, focused_control: str
+) -> None:
+    """
+    Preserve the operator's unfinished throttle or duration entry.
+
+    GIVEN: A motor-test input has focus and contains an unfinished edit
+    WHEN: The periodic view refresh runs
+    THEN: The focused input is not overwritten by the current model value
+    """
+    # Given: Only one input has focus, as in a real Tk window.
+    control = getattr(motor_view, focused_control)
+    control.delete(0, "end")
+    control.insert(0, "editing")
+    mocker.patch("tkinter.Misc.focus_get", return_value=control)
+    # When: Refresh current values from the model.
+    motor_view._update_spinbox_values()
+    # Then: User input survives the refresh.
+    assert control.get() == "editing"
+
+
+def test_fast_motor_operations_do_not_flash_a_progress_window(mocker: MockerFixture) -> None:
+    """
+    Delay progress feedback until an operation has actually taken long enough.
+
+    GIVEN: A progress callback with a one-second delay
+    WHEN: Updates arrive before and at the delay threshold
+    THEN: Only the update at the threshold is forwarded
+    """
+    # Given: Control the clock rather than sleeping in the test.
+    mocker.patch.object(motor_test_module.time, "time", side_effect=[0.0, 0.0, 0.5, 1.0])
+    progress = MagicMock()
+    delayed = DelayedProgressCallback(progress, delay_seconds=1.0)
+    # When: Report progress over the first second.
+    delayed(1, 3)
+    delayed(2, 3)
+    delayed(3, 3)
+    # Then: Fast intermediate updates do not show progress UI.
+    progress.assert_called_once_with(3, 3)
+
+
+def test_missing_frame_selection_does_not_restart_the_controller(
+    motor_view: MotorTestView, fake_model: FakeMotorTestModel, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    Ignore an empty frame-type selection safely.
+
+    GIVEN: No frame type is selected
+    WHEN: A selection-change notification arrives
+    THEN: No controller configuration command is sent and the missing selection is logged
+    """
+    # Given: The combobox has no user selection.
+    motor_view.frame_type_combobox.set("")
+    # When: Handle the selection notification.
+    motor_view._on_frame_type_change(None)
+    # Then: Do not send an invalid frame update or restart.
+    assert fake_model.last_frame_type_key is None
+    assert "No frame type selected" in caplog.messages
+
+
+def test_motor_diagram_without_a_supported_image_format_shows_its_path(
+    motor_view: MotorTestView, fake_model: FakeMotorTestModel
+) -> None:
+    """
+    Retain useful diagram information when only an unsupported image format is available.
+
+    GIVEN: The model has an SVG diagram without a loading error
+    WHEN: The view refreshes the motor diagram
+    THEN: Its path is shown as descriptive fallback text
+    """
+    # Given: A diagram exists but cannot be displayed by the PNG loader.
+    fake_model.diagram_available = True
+    fake_model.diagram_path = "motor-layout.svg"
+    fake_model.diagram_error = ""
+    # When: Refresh the diagram.
+    motor_view._update_diagram()
+    # Then: Preserve useful information instead of showing an empty image.
+    assert motor_view.diagram_label.cget("text") == "Diagram: motor-layout.svg"
+
+
+def test_non_battery_motor_safety_failures_show_the_specific_check_reason(
+    motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace
+) -> None:
+    """
+    Explain safety rejections that are unrelated to battery voltage.
+
+    GIVEN: Confirmation was acknowledged but the controller cannot safely run a motor
+    WHEN: The user requests a single-motor test
+    THEN: The actual safety reason is shown and the motor status reports the failure
+    """
+    # Given: A safety rejection unrelated to battery telemetry.
+    fake_model._should_warn = False
+    fake_model.next_single_motor_error = MotorTestSafetyError("Vehicle not secured", battery_related=False)
+    # When: Attempt the test.
+    motor_view._test_motor(0, 1)
+    # Then: Do not substitute irrelevant battery guidance.
+    dialog_spies.showwarning.assert_called_once_with("Safety Check Failed", "Vehicle not secured")
+    assert motor_view.motor_status_labels[0].cget("text") == "Safety Check Failed"
