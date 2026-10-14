@@ -705,8 +705,8 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):  # pylint: disable=too-many-
 
         assert args.idle_detection_time == 3.7
 
-    def test_directory_listing_default_timeout_is_at_least_15_seconds(self) -> None:
-        """A directory listing without an explicit timeout gets a 15-second minimum."""
+    def test_directory_listing_default_timeout_refreshes_after_page_progress(self) -> None:
+        """A default listing uses the retry budget and refreshes its timeout on each page."""
         self.mav_ftp.ftp_settings.list_time = 0
         result = MAVFTPReturn("ListDirectory", FtpError.Success)
 
@@ -717,10 +717,15 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):  # pylint: disable=too-many-
         ):
             assert self.mav_ftp.cmd_list(["/"]) is result
 
-        process.assert_called_once_with("ListDirectory", timeout=15.0, extend_timeout_on_no_sessions=True)
+        process.assert_called_once_with(
+            "ListDirectory",
+            timeout=5.0,
+            extend_timeout_on_no_sessions=True,
+            refresh_list_timeout=True,
+        )
 
-    def test_event_directory_listing_default_timeout_is_at_least_15_seconds(self) -> None:
-        """Event-driven directory listings also get a 15-second minimum."""
+    def test_event_directory_listing_default_timeout_uses_retry_budget(self) -> None:
+        """Event-driven default listings use the initial request retry budget."""
         self.mav_ftp._managed_transport = True  # pylint: disable=protected-access
         self.mav_ftp.ftp_settings.list_time = 0
 
@@ -731,7 +736,71 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):  # pylint: disable=too-many-
             result = self.mav_ftp.cmd_list(["/"], wait=False)
 
         assert result.error_code == FtpError.Success
-        assert self.mav_ftp._event_timeout == 15.0  # pylint: disable=protected-access
+        assert self.mav_ftp._event_timeout == 5.0  # pylint: disable=protected-access
+
+    def test_directory_listing_explicit_timeout_remains_a_total_budget(self) -> None:
+        """An explicit listing timeout is passed as a total budget without refresh."""
+        result = MAVFTPReturn("ListDirectory", FtpError.Success)
+        self.mav_ftp.ftp_settings.list_time = 0
+
+        with (
+            patch.object(self.mav_ftp, "_MAVFTP__send"),
+            patch.object(self.mav_ftp, "_MAVFTP__process_command_reply", return_value=result) as process,
+        ):
+            assert self.mav_ftp.cmd_list(["/"], timeout=12.0) is result
+
+        process.assert_called_once_with(
+            "ListDirectory",
+            timeout=12.0,
+            extend_timeout_on_no_sessions=False,
+            refresh_list_timeout=False,
+        )
+
+    def test_event_directory_listing_explicit_timeout_remains_a_total_budget(self) -> None:
+        """An event-driven listing keeps its explicitly supplied total budget."""
+        self.mav_ftp._managed_transport = True  # pylint: disable=protected-access
+        self.mav_ftp.ftp_settings.list_time = 0
+
+        with patch.object(self.mav_ftp, "_MAVFTP__send"):
+            result = self.mav_ftp.cmd_list(["/"], timeout=12.0, wait=False)
+
+        assert result.error_code == FtpError.Success
+        assert self.mav_ftp._event_timeout == 12.0  # pylint: disable=protected-access
+        assert self.mav_ftp._event_extend_timeout_on_no_sessions is False  # pylint: disable=protected-access
+
+    def test_listing_timeout_refreshes_only_when_default_page_progress_is_enabled(self) -> None:
+        """Accepted listing progress refreshes a default deadline, while explicit budgets expire."""
+
+        def check_timeout(refresh: bool, expected_receives: int) -> None:
+            clock = [0.0]
+            receive_times = iter((4.0, 8.5, 9.1))
+
+            def receive_match(**_kwargs) -> None:
+                clock[0] = next(receive_times)
+                if clock[0] == 4.0:
+                    self.mav_ftp.accepted_reply_generation += 1
+                    self.mav_ftp.dir_offset += 1
+
+            self.mav_ftp.accepted_reply_generation = 0
+            self.mav_ftp.dir_offset = 0
+            self.mav_ftp._next_list_timeout_refresh = refresh  # pylint: disable=protected-access
+            with (
+                patch(
+                    "ardupilot_methodic_configurator.backend_mavftp.time",
+                    SimpleNamespace(time=lambda: clock[0]),
+                ),
+                patch.object(self.mav_ftp.master, "recv_match", side_effect=receive_match) as receive,
+                patch.object(self.mav_ftp, "idle_task", return_value=False),
+                patch.object(self.mav_ftp, "_MAVFTP__has_active_session", return_value=False),
+            ):
+                result = self.mav_ftp.process_ftp_reply("ListDirectory", timeout=5.0)
+
+            assert result.error_code == FtpError.RemoteReplyTimeout
+            assert receive.call_count == expected_receives
+
+        for refresh, expected_receives in ((True, 3), (False, 2)):
+            with self.subTest(refresh=refresh):
+                check_timeout(refresh, expected_receives)
 
     def test_file_download_does_not_expose_a_stale_synchronous_read_result(self) -> None:
         """Streaming downloads clear a result left by a preceding synchronous read."""
@@ -751,6 +820,14 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):  # pylint: disable=too-many-
             assert destination.read_bytes() == b"data"
             assert self.mav_ftp.callback_failure is None
 
+    def test_param_download_treats_estimated_size_as_an_upper_bound(self) -> None:
+        """Packed parameter files finish at EOF instead of their estimated size."""
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "param.pck"
+            self._finish_short_download("/@PARAM/param.pck", destination, 100000)
+            assert destination.read_bytes() == b"data"
+            assert self.mav_ftp.callback_failure is None
+
     def test_sysfs_exact_size_files_reject_short_downloads(self) -> None:
         """Storage and crash dumps retain their authoritative OpenFileRO sizes."""
         for remote in ("/@SYS/storage.bin", "/@SYS/crash_dump.bin"):
@@ -761,7 +838,30 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):  # pylint: disable=too-many-
                 assert destination.read_bytes() == b"original"
                 assert self.mav_ftp.callback_failure.error_code == FtpError.InvalidDataSize
 
-    def _finish_short_download(self, remote: str, destination: Path, advertised_size: int) -> None:
+    def test_param_download_preserves_existing_destination_when_staging_loses_received_bytes(self) -> None:
+        """
+        Reject a truncated staging file even when the remote size is only an estimate.
+
+        GIVEN: An existing destination and four received bytes from a packed parameter file
+        WHEN: The staging file is truncated to three bytes before EOF publication
+        THEN: The original destination is preserved and the incomplete staging file is removed
+        """
+        # Arrange (Given): Preserve a previously downloaded parameter file.
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "param.pck"
+            destination.write_bytes(b"original")
+
+            # Act (When): Lose one received byte before publishing at EOF.
+            self._finish_short_download("/@PARAM/param.pck", destination, 100000, truncate_to=3)
+
+            # Assert (Then): Report data loss without replacing the existing file.
+            assert destination.read_bytes() == b"original"
+            assert self.mav_ftp.callback_failure.error_code == FtpError.InvalidDataSize
+            assert set(Path(directory).iterdir()) == {destination}
+
+    def _finish_short_download(
+        self, remote: str, destination: Path, advertised_size: int, *, truncate_to: int | None = None
+    ) -> None:
         """Drive the real open reply and EOF publication path with a short payload."""
         with patch.object(self.mav_ftp, "_MAVFTP__send"):
             result = self.mav_ftp.cmd_get([remote, str(destination)])
@@ -778,6 +878,8 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):  # pylint: disable=too-many-
             )
             self.mav_ftp._MAVFTP__handle_open_ro_reply(reply, None)  # pylint: disable=protected-access
             self.mav_ftp.fh.write(b"data")
+            if truncate_to is not None:
+                self.mav_ftp.fh.truncate(truncate_to)
             self.mav_ftp.read_total = 4
             self.mav_ftp.reached_eof = True
             with patch.object(
