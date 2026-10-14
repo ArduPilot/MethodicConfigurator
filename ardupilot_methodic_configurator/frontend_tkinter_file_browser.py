@@ -36,6 +36,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_files import (
 from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
 from ardupilot_methodic_configurator.backend_web_log_tools import WEB_LOG_TOOLS, open_log_in_web_tool
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
+from ardupilot_methodic_configurator.data_model_transfer_progress import TransferDirection, TransferProgress
 from ardupilot_methodic_configurator.formatting import format_filesize
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
     BaseWindow,
@@ -63,7 +64,12 @@ from ardupilot_methodic_configurator.frontend_tkinter_file_browser_operations im
     _upload_local_plan_worker,
     format_transfer_summary,
 )
-from ardupilot_methodic_configurator.frontend_tkinter_file_browser_tasks import BackgroundTaskRunner, TaskRunner
+from ardupilot_methodic_configurator.frontend_tkinter_file_browser_tasks import (
+    BackgroundTaskRunner,
+    ProgressParameters,
+    Task,
+    TaskRunner,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_application import (
     configure_standalone_logging,
     connect_standalone_flight_controller,
@@ -91,14 +97,15 @@ class _TransferBatchUi:
     summary_title: str
     retry_prompt: tuple[str, str]
     refresh: Callable[[], None]
+    direction: TransferDirection = TransferDirection.DOWNLOAD
 
 
 @dataclass(frozen=True)
 class _TransferBatchOperations(Generic[TransferPlan]):
     """Plan-specific callbacks for executing and retrying a transfer batch."""
 
-    items: Callable[[TransferPlan], Sequence[tuple[str, int]]]
-    execute: Callable[[TransferPlan, int, Callable[[int, int], None]], TransferAttempt]
+    file_paths: Callable[[TransferPlan], Sequence[str]]
+    execute: Callable[[TransferPlan, Callable[[TransferProgress], None]], TransferAttempt]
     retry: Callable[[TransferPlan, Sequence[str]], TransferPlan]
 
 
@@ -1224,8 +1231,8 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
 
     def _start_task(
         self,
-        task: Callable[[Callable[[int, int], None]], object],
-        on_progress: Callable[[int, int], None] | None,
+        task: Callable[[Callable[ProgressParameters, None]], object],
+        on_progress: Callable[ProgressParameters, None] | None,
         on_done: Callable[[object | None, Exception | None], None],
         *,
         disable_all_controls: bool,
@@ -1303,8 +1310,10 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         self,
         title: str,
         message: str,
-        worker: Callable[[Callable[[int, int], None]], object],
+        worker: Task[ProgressParameters],
         completion: Callable[[object | None, Exception | None], None],
+        *,
+        get_progress_callback: Callable[[ProgressWindow], Callable[ProgressParameters, None]],
     ) -> bool:
         """Run a progress task and deliver its result on Tk's event loop."""
         if self._controls_locked():
@@ -1322,7 +1331,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         try:
             started = self._start_task(
                 worker,
-                progress.update_progress_bar,
+                get_progress_callback(progress),
                 done,
                 disable_all_controls=True,
             )
@@ -1354,16 +1363,25 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
                 succeeded, failed = cast("tuple[list[str], list[str]]", result)
                 completion(succeeded, failed)
 
-        return self._start_progress_task(title, message, worker, done)
+        return self._start_progress_task(
+            title, message, worker, done, get_progress_callback=lambda popup: popup.update_progress_bar
+        )
 
     def _start_transfer_operation(
         self,
         title: str,
         message: str,
-        worker: Callable[[Callable[[int, int], None]], TransferAttempt],
+        worker: Callable[[Callable[[TransferProgress], None]], TransferAttempt],
         completion: Callable[[TransferAttempt], None],
+        *,
+        direction: TransferDirection | None = None,
     ) -> bool:
         """Deliver one typed transfer attempt to its completion callback."""
+
+        def get_progress_callback(popup: ProgressWindow) -> Callable[[TransferProgress], None]:
+            if direction is not None:
+                popup.enable_transfer_progress(direction)
+            return popup.update_transfer_progress
 
         def done(result: object | None, error: Exception | None) -> None:
             if error is not None:
@@ -1371,7 +1389,13 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
             else:
                 completion(cast("TransferAttempt", result))
 
-        return self._start_progress_task(title, message, worker, done)
+        return self._start_progress_task(
+            title,
+            message,
+            worker,
+            done,
+            get_progress_callback=get_progress_callback,
+        )
 
     def _show_summary(
         self,
@@ -1386,12 +1410,10 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
 
     def _run_transfer_batch(self, request: _TransferBatchRequest[TransferPlan]) -> None:
         """Run a transfer attempt, present cumulative results, and offer one retry."""
-        file_items = request.operations.items(request.batch)
-        total = max(sum(max(size, 1) for _path, size in file_items), 1)
-        request.results.prepare([path for path, _size in file_items])
+        request.results.prepare(request.operations.file_paths(request.batch))
 
-        def worker(report_progress: Callable[[int, int], None]) -> TransferAttempt:
-            return request.operations.execute(request.batch, total, report_progress)
+        def worker(report_progress: Callable[[TransferProgress], None]) -> TransferAttempt:
+            return request.operations.execute(request.batch, report_progress)
 
         def completion(attempt: TransferAttempt) -> None:
             retry_batch = request.operations.retry(request.batch, attempt.files_failed) if request.allow_retry else None
@@ -1404,7 +1426,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
             )
             if (
                 retry_batch is not None
-                and request.operations.items(retry_batch)
+                and request.operations.file_paths(retry_batch)
                 and self.ui.ask_yesno(*request.ui.retry_prompt) is True
             ):
                 self._run_transfer_batch(
@@ -1419,7 +1441,13 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
             # A remote refresh could occupy the single-task runner before a retry starts.
             request.ui.refresh()
 
-        self._start_transfer_operation(request.ui.title, request.ui.progress_message, worker, completion)
+        self._start_transfer_operation(
+            request.ui.title,
+            request.ui.progress_message,
+            worker,
+            completion,
+            direction=request.ui.direction,
+        )
 
     def download_selected_remote_entries(self) -> None:
         """Recursively download selected remote entries into the local panel directory."""
@@ -1472,14 +1500,9 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
                     plan,
                     results,
                     _TransferBatchOperations(
-                        items=lambda batch: [(entry.remote_path, entry.size_bytes) for entry, _target in batch.files],
-                        execute=lambda batch, total, progress: _download_remote_plan_worker(
-                            batch,
-                            local_directory,
-                            total,
-                            download_remote_file,
-                            progress,
-                            verify_remote_file=verify_remote_file,
+                        file_paths=lambda batch: [entry.remote_path for entry, _target in batch.files],
+                        execute=lambda batch, progress: _download_remote_plan_worker(
+                            batch, local_directory, download_remote_file, progress, verify_remote_file=verify_remote_file
                         ),
                         retry=_retry_remote_download_plan,
                     ),
@@ -1489,6 +1512,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
                         _("Download summary"),
                         (_("Retry failed downloads?"), _("Retry only the failed file downloads?")),
                         self.refresh_local_panel,
+                        direction=TransferDirection.DOWNLOAD,
                     ),
                 ),
             )
@@ -1542,14 +1566,9 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
                     result,
                     results,
                     _TransferBatchOperations(
-                        items=lambda batch: [(remote_path, size) for _path, remote_path, size in batch.files],
-                        execute=lambda batch, total, progress: _upload_local_plan_worker(
-                            batch,
-                            total,
-                            make_remote_directory,
-                            upload_file_to_fc,
-                            progress,
-                            verify_remote_file=verify_remote_file,
+                        file_paths=lambda batch: [remote_path for _path, remote_path, _size in batch.files],
+                        execute=lambda batch, progress: _upload_local_plan_worker(
+                            batch, make_remote_directory, upload_file_to_fc, progress, verify_remote_file=verify_remote_file
                         ),
                         retry=_retry_local_upload_plan,
                     ),
@@ -1559,6 +1578,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
                         _("Upload summary"),
                         (_("Retry failed uploads?"), _("Retry only the failed file uploads?")),
                         self.refresh_remote_panel,
+                        direction=TransferDirection.UPLOAD,
                     ),
                 ),
             )
@@ -1778,13 +1798,16 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         download_last_flight_log = self.parameter_editor.download_last_flight_log
         outcome = LastLogDownloadResult.FAILED
 
-        def worker(report_progress: Callable[[int, int], None]) -> tuple[list[str], list[str]]:
+        def worker(report_progress: Callable[[TransferProgress], None]) -> TransferAttempt:
             nonlocal outcome
             outcome = _download_last_flight_log_worker(filename, download_last_flight_log, report_progress)
-            return ([filename], []) if outcome is LastLogDownloadResult.SUCCESS else ([], [filename])
+            return TransferAttempt(
+                files_succeeded=[filename] if outcome is LastLogDownloadResult.SUCCESS else [],
+                files_failed=[] if outcome is LastLogDownloadResult.SUCCESS else [filename],
+            )
 
-        def completion(succeeded: list[str], failed: list[str]) -> None:
-            if failed:
+        def completion(attempt: TransferAttempt) -> None:
+            if attempt.files_failed or attempt.other_failed:
                 self.ui.show_error(
                     _("Download error"),
                     (
@@ -1794,14 +1817,15 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
                     ),
                 )
             else:
-                self._show_summary(_("Download summary"), succeeded, failed)
+                self._show_summary(_("Download summary"), attempt.files_succeeded, [])
                 self.refresh_local_panel()
 
-        self._start_background_operation(
+        self._start_transfer_operation(
             _("Downloading Flight Log"),
-            _("Downloaded {}% from {}%"),
+            _("Downloaded {} of {} bytes"),
             worker,
             completion,
+            direction=TransferDirection.DOWNLOAD,
         )
 
 

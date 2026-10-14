@@ -47,6 +47,7 @@ from ardupilot_methodic_configurator.data_model_file_upload import (
     FileUploadDisposition,
     FileUploadOutcome,
     FileUploadWorkflow,
+    UploadExecutor,
 )
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParamFileError, ParDict, is_within_tolerance
 from ardupilot_methodic_configurator.data_model_parameter_conversion import (
@@ -735,13 +736,15 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 error_msg = _("Failed to download {local_filename} from {url}, please download it manually")
                 show_error(_("Download failed"), error_msg.format(local_filename=local_filename, url=url))
 
-    def should_upload_file_to_fc_workflow(
+    def should_upload_file_to_fc_workflow(  # pylint: disable=too-many-arguments
         self,
         selected_file: str,
         ask_confirmation: Callable[[str, str], bool],
         show_error: Callable[[str, str], None],
         show_warning: Callable[[str, str], None],
         get_progress_callback: Callable[[], Callable | None],
+        *,
+        run_upload: UploadExecutor | None = None,
     ) -> bool:
         """
         Handle file upload workflow with injected GUI callbacks.
@@ -756,6 +759,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             show_warning: Callback to show warning messages to the user.
             get_progress_callback: Factory callback that creates and returns a progress callback
                                    only when actually needed (after all checks pass).
+            run_upload: Optional execution boundary for running transport work away from the UI thread.
 
         Returns:
             bool: True if upload was successful or not needed, False if upload failed.
@@ -778,7 +782,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 message.format(local_filename=local_filename, remote_filename=remote_filename),
             )
 
-        outcomes = self._file_upload_workflow.upload_files(files, download_filenames, confirm_upload, get_progress_callback)
+        outcomes = self._file_upload_workflow.upload_files(
+            files, download_filenames, confirm_upload, get_progress_callback, run_upload=run_upload
+        )
         return self._report_file_upload_outcomes(outcomes, show_error, show_warning)
 
     @staticmethod

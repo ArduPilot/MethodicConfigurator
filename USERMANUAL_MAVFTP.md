@@ -193,6 +193,20 @@ again. Failed directory listings and non-transfer operations are not retried.
 The browser shows a progress window for remote transfers. The browser cannot
 be closed while a remote operation is in progress; wait for it to finish.
 
+Download and upload progress include the transferred size, average rate in **KiB/s**
+(1 KiB = 1024 bytes), and estimated remaining transfer time. For multiple files
+or directories, these values cover the whole transfer attempt. Failed files do
+not add their untransferred bytes to the rate. A retry starts a new estimate for
+only the files being retried.
+
+The popup shows **Estimating…** initially. Rate and time estimates continue to
+refresh when a transfer pauses or stalls. If a file's size is unknown, it shows
+the rate without a remaining-time estimate until the size is resolved.
+When CRC32 verification is selected, all files are transferred first, then the
+popup shows **Verifying downloaded files…** or **Verifying uploaded files…**
+until the checksum checks finish. The transfer estimate excludes this verification
+phase. Upload rates count bytes acknowledged by the flight controller.
+
 When an operation finishes, the browser reports successful and failed entries.
 One failed file does not stop the remaining selected entries from being
 processed.

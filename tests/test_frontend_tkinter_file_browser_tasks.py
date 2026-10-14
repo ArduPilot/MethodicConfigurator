@@ -14,6 +14,7 @@ from collections import deque
 from collections.abc import Callable
 from threading import Event
 from unittest.mock import MagicMock, call
+from weakref import ref
 
 import pytest
 
@@ -22,6 +23,47 @@ from ardupilot_methodic_configurator.frontend_tkinter_file_browser_tasks import 
 
 class TestBackgroundTaskRunner:
     """The single scheduling boundary serializes work and delivers on poll."""
+
+    def test_user_receives_keyword_progress_arguments_on_the_ui_thread(self) -> None:
+        """Given a typed callback boundary, preserve positional and keyword arguments."""
+        runner = BackgroundTaskRunner(MagicMock())
+        updates: list[tuple[int, int]] = []
+
+        def task(report) -> None:
+            report(2, total=10)
+
+        def render(current: int, *, total: int) -> None:
+            updates.append((current, total))
+
+        assert runner.start(task, render, MagicMock())
+        assert runner.thread is not None
+        runner.thread.join(2)
+        assert not updates
+        runner.poll()
+        assert updates == [(2, 10)]
+
+    def test_completed_task_releases_its_progress_handler(self) -> None:
+        """Given completed progress, deduplication must not retain a handler's widgets."""
+        runner = BackgroundTaskRunner(MagicMock())
+
+        class Handler:  # pylint: disable=too-few-public-methods
+            """Stand in for a bound GUI progress handler."""
+
+            def __call__(self, _current: int, _total: int) -> None:
+                pass
+
+        handler = Handler()
+        reference = ref(handler)
+
+        def task(report: ProgressCallback) -> None:
+            report(1, 2)
+
+        assert runner.start(task, handler, MagicMock())
+        assert runner.thread is not None
+        runner.thread.join(2)
+        del handler
+        runner.poll()
+        assert reference() is None
 
     def test_user_receives_next_task_result_while_previous_completion_pumps_events(self) -> None:
         """

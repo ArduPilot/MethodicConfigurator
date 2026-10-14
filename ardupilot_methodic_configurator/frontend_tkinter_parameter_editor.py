@@ -45,6 +45,7 @@ from ardupilot_methodic_configurator.data_model_parameter_editor import (
     LogAnalysisInputs,
     ParameterEditor,
 )
+from ardupilot_methodic_configurator.data_model_transfer_progress import TransferDirection, TransferProgress
 from ardupilot_methodic_configurator.frontend_tkinter_about_popup_window import AboutWindow
 from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import AutoResizeCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
@@ -59,6 +60,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_component_editor import Co
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 from ardupilot_methodic_configurator.frontend_tkinter_fc_banner_window import FlightControllerBannerWindow
 from ardupilot_methodic_configurator.frontend_tkinter_file_browser import FileBrowserWindow
+from ardupilot_methodic_configurator.frontend_tkinter_file_browser_tasks import BackgroundTaskRunner
 from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_config
 from ardupilot_methodic_configurator.frontend_tkinter_log_availability import LogAvailabilityReportWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload import ParameterFileUploadWindow
@@ -86,6 +88,8 @@ from ardupilot_methodic_configurator.plugins.plugin_factory import plugin_factor
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from ardupilot_methodic_configurator.backend_flightcontroller_protocols import FileUploadResult
+    from ardupilot_methodic_configurator.data_model_file_upload import ProgressCallback, UploadTask
     from ardupilot_methodic_configurator.data_model_par_dict import ParDict
     from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
     from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
@@ -146,16 +150,12 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
             only_show_when_update_called: bool = False,
             auto_close_on_complete: bool = True,
         ) -> ProgressWindow:
-            progress_window_kwargs = {
-                "only_show_when_update_progress_called": only_show_when_update_called,
-            }
-            if not auto_close_on_complete:
-                progress_window_kwargs["auto_close_on_complete"] = False
             return ProgressWindow(
                 parent,
                 title,
                 template,
-                **progress_window_kwargs,
+                only_show_when_update_progress_called=only_show_when_update_called,
+                auto_close_on_complete=auto_close_on_complete,
             )
 
         def _load_apm_doc(vehicle_dir: str, vehicle_type: str, firmware_version: str) -> APMDoc | None:
@@ -341,6 +341,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.parameter_container: ttk.Frame
         self._tempcal_imu_progress_window: ProgressWindow | None = None
         self.file_upload_progress_window: ProgressWindow | None = None
+        self._configured_upload_active = False
+        self._param_file_change_active = False
+        self._close_after_configured_upload = False
         self._param_download_progress_window: ProgressWindow | None = None
         self._log_availability_report_window: LogAvailabilityReportWindow | None = None
         self._log_analysis_running = False
@@ -986,8 +989,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 instructions_text,
             )
 
-    def _cleanup_plugin_views(self) -> None:
-        """Clean up existing plugin views and UI elements."""
+    def _deactivate_plugin_view(self) -> None:
+        """Stop plugin activity and remove its controls, bindings and timers."""
         # Call deactivation hook on current plugin before cleanup
         if self.current_plugin_view is not None and hasattr(self.current_plugin_view, "on_deactivate"):
             try:
@@ -1004,6 +1007,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             finally:
                 self.current_plugin_view = None
 
+    def _cleanup_plugin_views(self) -> None:
+        """Clean up existing plugin views and UI elements."""
+        self._deactivate_plugin_view()
+
         # Note: parameter_editor_table doesn't need explicit destroy()
         # It will be automatically destroyed when its parent container is destroyed
 
@@ -1016,7 +1023,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             finally:
                 self.parameter_area_paned = None
 
-    def _update_plugin_layout(self, plugin: Optional[dict]) -> None:  # noqa: UP045
+    def _update_plugin_layout(self, plugin: Optional[dict], *, force_reload: bool = False) -> None:  # noqa: UP045
         """
         Update the plugin layout based on the current plugin configuration.
 
@@ -1030,10 +1037,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         Args:
             plugin: Plugin configuration dict with 'name' and 'placement' keys, or None
+            force_reload: Reload after step navigation has deactivated the previous view.
 
         """
         # If plugin configuration hasn't changed at all, do nothing
-        if self.current_plugin == plugin:
+        if self.current_plugin == plugin and not force_reload:
             return
 
         # Determine old and new placements
@@ -1054,7 +1062,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Layout structure is different - need full rebuild
         self._rebuild_plugin_layout(plugin)
 
-    def _swap_plugin_in_place(self, plugin: dict) -> None:  # pylint: disable=too-many-branches
+    def _swap_plugin_in_place(self, plugin: dict) -> None:
         """
         Swap plugin content without rebuilding the entire layout.
 
@@ -1065,20 +1073,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             plugin: New plugin configuration dict
 
         """
-        # Deactivate and destroy old plugin
-        if self.current_plugin_view is not None:
-            if hasattr(self.current_plugin_view, "on_deactivate"):
-                try:
-                    self.current_plugin_view.on_deactivate()  # pyright: ignore[reportAttributeAccessIssue]
-                except (AttributeError, TypeError) as e:
-                    logging_warning(_("Error deactivating plugin: %s"), e)
-
-            try:
-                self.current_plugin_view.destroy()
-            except (AttributeError, tk.TclError) as e:
-                logging_warning(_("Error destroying plugin view: %s"), e)
-            finally:
-                self.current_plugin_view = None
+        self._deactivate_plugin_view()
 
         # Locate the existing plugin parent frame based on placement strategy.
         # This avoids full layout rebuild when only the plugin content needs updating.
@@ -1446,6 +1441,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     show_error=self.ui.show_error,
                     show_warning=self.ui.show_warning,
                     get_progress_callback=partial(self._create_file_upload_progress_callback, progress_windows),
+                    run_upload=self._run_configured_file_upload,
                 )
             except Exception as e:  # pylint: disable=broad-exception-caught
                 logging_exception("File upload to flight controller failed")
@@ -1468,17 +1464,56 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             if not retry:
                 return False
 
-    def _create_file_upload_progress_callback(self, progress_windows: list[ProgressWindow]) -> Callable:
+    def _run_configured_file_upload(self, task: UploadTask, total: int, report: ProgressCallback) -> FileUploadResult:
+        """Run transport off-thread while the modal wait services Tk timers and progress."""
+        owner = object()
+        completed = tk.BooleanVar(master=self.root, value=False)
+        outcome: list[tuple[object | None, Exception | None]] = []
+        runner = BackgroundTaskRunner(self.root.after)
+        self.navigation_lock.acquire(owner)
+        self._configured_upload_active = True
+
+        def done(result: object | None, error: Exception | None) -> None:
+            outcome.append((result, error))
+            completed.set(True)
+
+        try:
+            # Step navigation has already destroyed the outgoing plugin.
+            # Start the popup clock before the transport receives its first ACK.
+            report(0, total)
+            runner.start(task, report, done)
+            self.root.wait_variable(completed)
+            result, error = outcome[0]
+            if error is not None:
+                raise error
+            return cast("FileUploadResult", result)
+        finally:
+            self.navigation_lock.release(owner)
+            popup = getattr(self, "file_upload_progress_window", None)
+            if popup is not None:
+                popup.destroy()
+                self.file_upload_progress_window = None
+            self._configured_upload_active = False
+            if self._close_after_configured_upload:
+                self._close_after_configured_upload = False
+                self.root.after_idle(self.close_connection_and_quit)
+
+    def _create_file_upload_progress_callback(self, progress_windows: list[ProgressWindow]) -> Callable[[int, int], None]:
         """Create and retain a progress window for one file upload."""
         progress_window = self.ui.create_progress_window(
             self.root,
             _("Uploading file"),
-            _("Uploaded {} of {} %"),
+            _("Uploaded {} of {} bytes"),
             only_show_when_update_called=True,
         )
         progress_windows.append(progress_window)
         self.file_upload_progress_window = progress_window
-        return progress_window.update_progress_bar
+        progress_window.enable_transfer_progress(TransferDirection.UPLOAD)
+
+        def report_bytes(current: int, total: int) -> None:
+            progress_window.update_transfer_progress(TransferProgress(current, total, direction=TransferDirection.UPLOAD))
+
+        return report_bytes
 
     def on_param_file_combobox_change(self, _event: Union[tk.Event, None], forced: bool = False) -> None:  # noqa: UP007
         if self.navigation_lock.locked:
@@ -1494,19 +1529,31 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             # Write any pending changes before switching files
             self.write_changes_to_intermediate_parameter_file()
 
-            # Handle the parameter file change workflow
-            final_file, should_continue = self.parameter_editor.handle_param_file_change_workflow(
-                selected_file,
-                forced,
-                self.gui_complexity,
-                self.documentation_frame.get_auto_open_documentation_in_browser(),
-                handle_imu_temp_cal=self._do_tempcal_imu,
-                handle_copy_fc_values=self._should_copy_fc_values_to_file,
-                handle_upload_file=self._should_upload_file_to_fc,
-                ask_confirmation=self.ui.ask_yesno,
-                show_error=self.ui.show_error,
-                show_info=self.ui.show_info,
-            )
+            # Yield the link before any workflow dialog or transfer can service Tk events.
+            # Keep the layout so the resulting step can reuse its plugin container.
+            self._deactivate_plugin_view()
+            self._param_file_change_active = True
+            try:
+                final_file, should_continue = self.parameter_editor.handle_param_file_change_workflow(
+                    selected_file,
+                    forced,
+                    self.gui_complexity,
+                    self.documentation_frame.get_auto_open_documentation_in_browser(),
+                    handle_imu_temp_cal=self._do_tempcal_imu,
+                    handle_copy_fc_values=self._should_copy_fc_values_to_file,
+                    handle_upload_file=self._should_upload_file_to_fc,
+                    ask_confirmation=self.ui.ask_yesno,
+                    show_error=self.ui.show_error,
+                    show_info=self.ui.show_info,
+                )
+            except Exception:
+                # Restore a usable plugin for the current step before propagating the failure.
+                self._update_plugin_layout(
+                    self.parameter_editor.get_plugin(self.parameter_editor.current_file), force_reload=True
+                )
+                raise
+            finally:
+                self._param_file_change_active = False
 
             # If user chose to close, exit
             if not should_continue:
@@ -1523,7 +1570,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
             # Update plugin layout if needed
             plugin = self.parameter_editor.get_plugin(final_file)
-            self._update_plugin_layout(plugin)
+            self._update_plugin_layout(plugin, force_reload=True)
 
             # Repopulate parameter table with new file
             self.repopulate_parameter_table()
@@ -1606,7 +1653,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             # see the updated values when refresh_current_step_computed_parameters() runs.
             self.parameter_editor.update_vehicle_components(editor_data["Components"])
             self.parameter_editor.refresh_current_step_computed_parameters()
-            if self.parameter_editor.current_file:
+            # Workflow dialogs and upload waits can dispatch events from the outgoing inline editor.
+            if (
+                self.parameter_editor.current_file
+                and not self._param_file_change_active
+                and not self._configured_upload_active
+            ):
                 self._update_plugin_layout(self.parameter_editor.get_plugin(self.parameter_editor.current_file))
             self.repopulate_parameter_table()
         finally:
@@ -2070,6 +2122,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         return success
 
     def close_connection_and_quit(self) -> None:
+        if self._configured_upload_active:
+            self._close_after_configured_upload = True
+            return
         self._commit_focused_edit_and_offer_save()
         self.root.quit()  # Then stop the Tkinter event loop
 

@@ -181,7 +181,7 @@ class FlightControllerFiles:
     def upload_file(
         self, local_filename: str, remote_filename: str, progress_callback: Callable[[int, int], None] | None = None
     ) -> bool:
-        """Serialize and upload a file to the flight controller."""
+        """Upload a file, reporting acknowledged bytes and total bytes."""
         with self._mavftp_operation():
             return self._upload_file(local_filename, remote_filename, progress_callback)
 
@@ -223,9 +223,9 @@ class FlightControllerFiles:
             logging_error(_("MAVFTP is not available for file upload"))
             return False
 
-        def put_progress_callback(completion: float) -> None:
+        def put_progress_callback(completion: float | None) -> None:
             if progress_callback is not None and completion is not None:
-                progress_callback(int(completion * 100), 100)
+                progress_callback(mavftp_instance.write_acked_bytes, mavftp_instance.write_file_size)
 
         try:
             if not os.path.isfile(local_filename):
@@ -347,7 +347,8 @@ class FlightControllerFiles:
 
         Args:
             local_filename: Local file path to save the downloaded log
-            progress_callback: Optional callback function for progress updates (current, total)
+            progress_callback: Optional callback receiving (received bytes, total bytes).
+                Total is zero when the remote size is unknown.
 
         Returns:
             SUCCESS, NO_LOGS (confirmed by listing), or FAILED.
@@ -367,17 +368,13 @@ class FlightControllerFiles:
             logging_error(_("MAVFTP is not available for file download"))
             return LastLogDownloadResult.FAILED
 
-        def get_progress_callback(completion: float) -> None:
-            if progress_callback is not None and completion is not None:
-                progress_callback(int(completion * 100), 100)
-
         try:
             # Try to get the last log number using different methods
             remote_filenumber, confirmed_no_logs = self._get_last_log_number(mavftp_instance)
             if remote_filenumber is None:
                 return LastLogDownloadResult.NO_LOGS if confirmed_no_logs else LastLogDownloadResult.FAILED
 
-            downloaded = self._download_log_file(mavftp_instance, remote_filenumber, local_filename, get_progress_callback)
+            downloaded = self._download_log_file(mavftp_instance, remote_filenumber, local_filename, progress_callback)
             return LastLogDownloadResult.SUCCESS if downloaded else LastLogDownloadResult.FAILED
 
         except Exception as e:  # pylint: disable=broad-exception-caught
@@ -577,7 +574,7 @@ class FlightControllerFiles:
         local_filename: str,
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> bool:
-        """Serialize and download one explicitly selected remote regular file."""
+        """Download a file, reporting received/total bytes (zero total means unknown)."""
         with self._mavftp_operation():
             return self._download_selected_remote_file(remote_path, local_filename, progress_callback)
 
@@ -750,15 +747,11 @@ class FlightControllerFiles:
             logging_error(_("MAVFTP is not available for file download"))
             return False
 
-        def get_progress_callback(completion: float) -> None:
-            if progress_callback is not None and completion is not None:
-                progress_callback(int(completion * 100), 100)
-
         return self._download_remote_file(
             mavftp_instance,
             normalized_remote_path,
             local_filename,
-            get_progress_callback,
+            progress_callback,
         )
 
     def _get_last_log_number(
@@ -921,21 +914,9 @@ class FlightControllerFiles:
         mavftp_instance: "MAVFTP",  # pyright: ignore[reportInvalidTypeForm]
         remote_filenumber: int,
         local_filename: str,
-        get_progress_callback: Callable,
+        get_progress_callback: Callable[[int, int], None] | None,
     ) -> bool:
-        """
-        Download the actual log file from the flight controller.
-
-        Args:
-            mavftp_instance: MAVFTP object for file operations
-            remote_filenumber: Remote log file number to download
-            local_filename: Local file path to save the downloaded log
-            get_progress_callback: Callback function for progress updates
-
-        Returns:
-            bool: True if download was successful, False otherwise
-
-        """
+        """Download a numbered flight log with byte progress updates."""
         remote_filename = f"/APM/LOGS/{remote_filenumber:08}.BIN"
         return self._download_remote_file(
             mavftp_instance,
@@ -949,20 +930,38 @@ class FlightControllerFiles:
         mavftp_instance: "MAVFTP",  # pyright: ignore[reportInvalidTypeForm]
         remote_filename: str,
         local_filename: str,
-        get_progress_callback: Callable,
+        get_progress_callback: Callable[[int, int], None] | None,
     ) -> bool:
         """Download an explicitly named remote file through MAVFTP."""
         logging_info(_("Downloading flight log %(remote)s to %(local)s"), {"remote": remote_filename, "local": local_filename})
 
+        received_bytes = 0
+
+        def report_bytes(completion: float | None) -> None:
+            nonlocal received_bytes
+            # MAVFTP sends None after clearing counters during failed-session cleanup.
+            if completion is None:
+                return
+            received_bytes = mavftp_instance.read_total
+            if get_progress_callback is not None:
+                total = mavftp_instance.remote_file_size if mavftp_instance.remote_size_known else 0
+                get_progress_callback(received_bytes, total)
+
         try:
             # Download the actual log file
-            mavftp_instance.cmd_get([remote_filename, local_filename], progress_callback=get_progress_callback)
+            mavftp_instance.cmd_get([remote_filename, local_filename], progress_callback=report_bytes)
             ret = mavftp_instance.process_ftp_reply("OpenFileRO", timeout=0)  # No timeout for large log files
             if ret.error_code != FtpError.Success:
                 logging_error(_("Failed to download flight log %(remote)s"), {"remote": remote_filename})
                 ret.display_message()
                 return False
 
+            if get_progress_callback is not None:
+                # EOF supplies the exact size even for generated/unknown-size files.
+                try:
+                    get_progress_callback(received_bytes, received_bytes)
+                except Exception:  # pylint: disable=broad-exception-caught
+                    logging_debug("Could not display final MAVFTP download progress", exc_info=True)
             logging_info(_("Successfully downloaded flight log to %(local)s"), {"local": local_filename})
             return True
         except Exception as e:  # pylint: disable=broad-exception-caught

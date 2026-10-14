@@ -17,6 +17,7 @@ from __future__ import annotations
 import re
 import tkinter as tk
 from contextlib import contextmanager, nullcontext
+from functools import partial
 from tkinter import font as tkfont
 from tkinter import ttk
 from typing import TYPE_CHECKING, cast
@@ -28,7 +29,7 @@ import pytest
 import ardupilot_methodic_configurator.frontend_tkinter_parameter_editor as parameter_editor_module
 from ardupilot_methodic_configurator.backend_filesystem import Par
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
-from ardupilot_methodic_configurator.data_model_parameter_editor import LogAnalysisInputs
+from ardupilot_methodic_configurator.data_model_parameter_editor import LogAnalysisInputs, ParameterEditor
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (
@@ -194,6 +195,9 @@ def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:  # noq
     editor._param_download_progress_window_upload = None
     editor._reset_progress_window = None
     editor.file_upload_progress_window = None
+    editor._configured_upload_active = False
+    editor._param_file_change_active = False
+    editor._close_after_configured_upload = False
     editor._tempcal_imu_progress_window = None
     _configure_layout_stubs(editor)
     parameter_area_container = _build_parameter_area_container()
@@ -364,6 +368,7 @@ class TestParameterEditorUiServices:  # pylint: disable=too-few-public-methods
             "Title",
             "Template",
             only_show_when_update_progress_called=True,
+            auto_close_on_complete=True,
         )
         assert window is progress_window
 
@@ -2137,15 +2142,19 @@ class TestFileUploadHelpers:
             show_error: Callable[[str, str], None],
             show_warning: Callable[[str, str], None],
             get_progress_callback: Callable[[], Callable | None],
+            **_execution: object,
         ) -> bool:
             assert selected_file == "01_initial.param"
             assert ask_confirmation is parameter_editor_window.ui.ask_yesno
             assert show_error is parameter_editor_window.ui.show_error
             assert show_warning is parameter_editor_window.ui.show_warning
             callback = get_progress_callback()
-            assert callback is progress_window.update_progress_bar
             assert callback is not None
             callback(5, 10)
+            snapshot = progress_window.update_transfer_progress.call_args.args[0]
+            assert snapshot.transferred_bytes == 5
+            assert snapshot.total_bytes == 10
+            assert snapshot.direction.name == "UPLOAD"
             return True
 
         parameter_editor.should_upload_file_to_fc_workflow.side_effect = fake_upload
@@ -2172,13 +2181,13 @@ class TestFileUploadHelpers:
             show_error: Callable[[str, str], None],
             show_warning: Callable[[str, str], None],
             get_progress_callback: Callable[[], Callable | None],
+            **_execution: object,
         ) -> None:
             assert selected_file == "01_initial.param"
             assert ask_confirmation is parameter_editor_window.ui.ask_yesno
             assert show_error is parameter_editor_window.ui.show_error
             assert show_warning is parameter_editor_window.ui.show_warning
             callback = get_progress_callback()
-            assert callback is progress_window.update_progress_bar
             assert callback is not None
             callback(1, 2)
             msg = "boom"
@@ -2456,8 +2465,73 @@ class TestUploadSelectedParameters:
 class TestPluginLayoutLifecycle:
     """Exercise plugin layout decisions and cleanup flows."""
 
+    @pytest.mark.parametrize("dialog", ["step_info", "copy_fc_values", "upload_confirmation"])
+    @pytest.mark.parametrize("fail", [False, True])
+    def test_step_dialog_component_sync_defers_plugin_until_workflow_finishes(
+        self,
+        parameter_editor_window: ParameterEditorWindow,
+        parameter_editor: MagicMock,
+        dialog: str,
+        fail: bool,
+    ) -> None:
+        """
+        Inline editor callbacks cannot restore a plugin during step dialogs or upload.
+
+        GIVEN: A new step has a different plugin and an outgoing component editor still exists.
+        WHEN: A workflow dialog syncs that editor before the configured upload starts.
+        THEN: Component changes are synced but the plugin loads only after completion or failure.
+        """
+        editor = parameter_editor_window
+        editor.current_plugin = {"name": "old_plugin", "placement": "left"}
+        editor.current_plugin_view = MagicMock()
+        new_plugin = {"name": "new_plugin", "placement": "left"}
+        parameter_editor.get_plugin.return_value = new_plugin
+        parameter_editor.get_instructions_popup.return_value = None
+        parameter_editor._handle_file_jump_workflow.return_value = "01_initial.param"
+        parameter_editor._repopulate_configuration_step_parameters.return_value = ([], [("Step", "Information")])
+        parameter_editor.handle_param_file_change_workflow.side_effect = partial(
+            ParameterEditor.handle_param_file_change_workflow, parameter_editor
+        )
+        components = {"Battery": {"Specifications": {"Volt per cell max": 4.2}}}
+        editor.inline_component_editor = MagicMock()
+        editor.inline_component_editor.get_component_data.return_value = {"Components": components}
+
+        with (
+            patch.object(editor, "_update_plugin_layout") as load_plugin,
+            patch.object(editor, "_do_tempcal_imu"),
+            patch.object(editor, "_should_copy_fc_values_to_file", return_value=False) as copy_values,
+            patch.object(editor, "_should_upload_file_to_fc", return_value=True) as upload,
+        ):
+
+            def sync_during_dialog(*_args: object) -> bool:
+                assert parameter_editor.current_file == "01_initial.param"
+                assert not editor._configured_upload_active
+                editor._on_component_data_changed()
+                parameter_editor.update_vehicle_components.assert_called_once_with(components)
+                parameter_editor.refresh_current_step_computed_parameters.assert_called_once_with()
+                load_plugin.assert_not_called()
+                assert editor.current_plugin_view is None
+                if fail:
+                    message = "dialog failed"
+                    raise RuntimeError(message)
+                return False
+
+            callbacks = {"step_info": editor.ui.show_info, "copy_fc_values": copy_values, "upload_confirmation": upload}
+            cast("MagicMock", callbacks[dialog]).side_effect = sync_during_dialog
+            if fail:
+                with pytest.raises(RuntimeError, match="dialog failed"):
+                    editor.on_param_file_combobox_change(None)
+            else:
+                editor.on_param_file_combobox_change(None)
+                upload.assert_called_once_with("01_initial.param")
+
+        load_plugin.assert_called_once_with(new_plugin, force_reload=True)
+        assert not editor._param_file_change_active
+        assert not editor._configured_upload_active
+
     def test_user_refreshes_same_plugin_without_layout_changes(self, parameter_editor_window: ParameterEditorWindow) -> None:
         parameter_editor_window.current_plugin = {"name": "alpha", "placement": "left"}
+        parameter_editor_window.current_plugin_view = MagicMock()
 
         with (
             patch.object(parameter_editor_window, "_swap_plugin_in_place") as mock_swap,
@@ -2467,6 +2541,70 @@ class TestPluginLayoutLifecycle:
 
         mock_swap.assert_not_called()
         mock_rebuild.assert_not_called()
+
+    @pytest.mark.parametrize("forced", [False, True])
+    @pytest.mark.parametrize("final_file", ["00_previous.param", "01_initial.param"])
+    def test_step_workflow_removes_outgoing_plugin_before_any_dialog(
+        self,
+        parameter_editor_window: ParameterEditorWindow,
+        parameter_editor: MagicMock,
+        forced: bool,
+        final_file: str,
+    ) -> None:
+        """
+        Step changes and forced refreshes release all outgoing plugin functionality.
+
+        GIVEN: A plugin with controls and polling is active in the current step.
+        WHEN: A transition runs, possibly returning to the original step.
+        THEN: Its safety cleanup finishes before workflow dialogs and the final plugin is loaded.
+        """
+        editor = parameter_editor_window
+        plugin = MagicMock()
+        editor.current_plugin_view = plugin
+        parameter_editor.current_file = "01_initial.param" if forced else "00_previous.param"
+
+        def destroy() -> None:
+            plugin.on_deactivate.assert_called_once_with()
+
+        plugin.destroy.side_effect = destroy
+
+        def workflow(*_args, **_kwargs) -> tuple[str, bool]:
+            plugin.destroy.assert_called_once_with()
+            assert editor.current_plugin_view is None
+            parameter_editor.current_file = final_file
+            return final_file, True
+
+        parameter_editor.handle_param_file_change_workflow.side_effect = workflow
+        with patch.object(editor, "_update_plugin_layout") as refresh:
+            editor.on_param_file_combobox_change(None, forced=forced)
+
+        parameter_editor.get_plugin.assert_called_once_with(final_file)
+        refresh.assert_called_once_with(parameter_editor.get_plugin.return_value, force_reload=True)
+        plugin.on_activate.assert_not_called()
+        plugin.on_suspend.assert_not_called()
+
+    def test_failed_plugin_safety_cleanup_prevents_step_workflow(
+        self, parameter_editor_window: ParameterEditorWindow, parameter_editor: MagicMock
+    ) -> None:
+        """
+        A failed safety stop prevents a configuration step transition.
+
+        GIVEN: An outgoing plugin cannot complete its safety stop.
+        WHEN: The user attempts to leave the step.
+        THEN: No transfer or other step workflow starts and the error propagates.
+        """
+        editor = parameter_editor_window
+        plugin = MagicMock()
+        editor.current_plugin_view = plugin
+        plugin.on_deactivate.side_effect = RuntimeError("motor stop failed")
+        parameter_editor.current_file = "00_previous.param"
+
+        with pytest.raises(RuntimeError, match="motor stop failed"):
+            editor.on_param_file_combobox_change(None)
+
+        parameter_editor.handle_param_file_change_workflow.assert_not_called()
+        plugin.destroy.assert_not_called()
+        assert editor.current_plugin_view is plugin
 
     def test_user_swaps_plugin_with_matching_placement(self, parameter_editor_window: ParameterEditorWindow) -> None:
         parameter_editor_window.current_plugin = {"name": "alpha", "placement": "left"}
@@ -3190,7 +3328,7 @@ class TestPluginLoading:
         doc_frame = cast("MagicMock", parameter_editor_window.documentation_frame)
         doc_frame.refresh_documentation_labels.assert_called_once()
         doc_frame.update_why_why_now_tooltip.assert_called_once()
-        mock_plugin_layout.assert_called_once_with(parameter_editor.get_plugin.return_value)
+        mock_plugin_layout.assert_called_once_with(parameter_editor.get_plugin.return_value, force_reload=True)
         mock_repopulate.assert_called_once_with()
         mock_skip_state.assert_called_once()
 
@@ -3790,6 +3928,17 @@ class TestPersistenceAndExit:
         mock_write.assert_called_once()
         mock_quit.assert_called_once()
 
+    def test_user_can_close_application_during_other_navigation_locks(
+        self, parameter_editor_window: ParameterEditorWindow
+    ) -> None:
+        """Calibration and diagnostics locks still allow saving and closing the application."""
+        editor = parameter_editor_window
+        editor.navigation_lock.acquire(self)
+        with patch.object(editor, "_commit_focused_edit_and_offer_save") as save:
+            editor.close_connection_and_quit()
+        save.assert_called_once_with()
+        editor.root.quit.assert_called_once_with()
+
     @pytest.mark.parametrize("save_result", [True, False])
     def test_user_hands_off_after_being_offered_to_save_changes(
         self, parameter_editor_window: ParameterEditorWindow, save_result: bool
@@ -3888,7 +4037,11 @@ class TestPersistenceAndExit:
         assert callable(kwargs["show_error"])
         assert callable(kwargs["show_warning"])
 
-        assert parameter_editor.last_upload_progress_callback is progress_instance.update_progress_bar
+        progress_instance.enable_transfer_progress.assert_called_once()
+        snapshot = progress_instance.update_transfer_progress.call_args.args[0]
+        assert snapshot.transferred_bytes == 10
+        assert snapshot.total_bytes == 20
+        assert snapshot.direction.name == "UPLOAD"
         progress_instance.destroy.assert_called_once()
 
 
@@ -4178,6 +4331,50 @@ class TestStepInstructionsPopupWorkflows:
 
 class TestInlineComponentEditorCallbacks:
     """Tests for the inline component editor data-sync and table-refresh callback."""
+
+    @pytest.mark.parametrize("plugin_name", ["rc_calibration", "battery_monitor"])
+    def test_offline_component_edits_preserve_plugin_placeholder(
+        self,
+        parameter_editor_window: ParameterEditorWindow,
+        parameter_editor: MagicMock,
+        root: tk.Tk,
+        caplog: pytest.LogCaptureFixture,
+        plugin_name: str,
+    ) -> None:
+        """
+        Editing components offline keeps the unavailable plugin's existing explanation.
+
+        GIVEN: A plugin cannot load without a flight controller connection.
+        WHEN: The user edits five inline component fields.
+        THEN: The placeholder survives and the connection warning is logged only once.
+        """
+        editor = parameter_editor_window
+        plugin = {"name": plugin_name, "placement": "left"}
+        editor.current_plugin = plugin
+        editor.current_plugin_view = None
+        parameter_editor.get_plugin.return_value = plugin
+        parameter_editor.create_plugin_data_model.return_value = None
+        inline_editor = MagicMock()
+        inline_editor.get_component_data.return_value = {"Components": {"Battery": {}}}
+        editor.inline_component_editor = inline_editor
+        parent = ttk.Frame(root)
+        paned = MagicMock()
+        paned.panes.return_value = ("plugin",)
+        paned.nametowidget.return_value = parent
+        editor.parameter_area_paned = paned
+        try:
+            with patch.object(parameter_editor_module.plugin_factory, "is_registered", return_value=True):
+                editor._load_plugin(parent, plugin)
+                placeholder = parent.winfo_children()[0]
+                for _ in range(5):
+                    editor._on_component_data_changed()
+
+            assert parent.winfo_children() == [placeholder]
+            assert editor.current_plugin_view is None
+            assert sum("Plugin requires flight controller connection" in record.message for record in caplog.records) == 1
+            assert parameter_editor.update_vehicle_components.call_count == 5
+        finally:
+            parent.destroy()
 
     def test_component_data_change_calls_update_and_refresh(self, parameter_editor: MagicMock) -> None:
         """

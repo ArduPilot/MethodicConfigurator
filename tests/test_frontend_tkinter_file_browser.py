@@ -25,6 +25,7 @@ import pytest
 
 from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerLogFile, LastLogDownloadResult
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
+from ardupilot_methodic_configurator.data_model_transfer_progress import TransferDirection, TransferPhase, TransferProgress
 from ardupilot_methodic_configurator.frontend_tkinter_file_browser import FileBrowserWindow, _PanelState
 from ardupilot_methodic_configurator.frontend_tkinter_file_browser_operations import (
     LocalFileEntry,
@@ -41,6 +42,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_file_browser_tasks import 
     TaskCompletion,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
+from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 
 # pylint: disable=too-many-lines, too-few-public-methods, too-many-public-methods, protected-access
 
@@ -70,7 +72,7 @@ class ImmediateTaskRunner:
             return False
         self.active = True
         try:
-            result, error = task(on_progress or (lambda _current, _total: None)), None
+            result, error = task(on_progress or (lambda *_args: None)), None
         except Exception as exception:  # pylint: disable=broad-exception-caught
             result, error = None, exception
         self.active = False
@@ -100,7 +102,7 @@ class DeferredTaskRunner:
             error_message = "No deferred task is pending"
             raise RuntimeError(error_message)
         try:
-            result, error = task(lambda _current, _total: None), None
+            result, error = task(lambda *_args: None), None
         except Exception as exception:  # pylint: disable=broad-exception-caught
             result, error = None, exception
         self.active = False
@@ -382,8 +384,8 @@ class TestFileBrowserWindow:
         window._show_summary = MagicMock()
         window.refresh_local_panel = MagicMock()
 
-        def run_operation(_title, _message, worker, completion) -> None:
-            completion(*worker(lambda _current, _total: None))
+        def run_operation(_title, _message, worker, completion, **_kwargs) -> None:
+            completion(*worker(lambda *_progress: None))
 
         window._start_background_operation = MagicMock(side_effect=run_operation)
 
@@ -407,7 +409,9 @@ class TestFileBrowserWindow:
         window.ui = MagicMock()
         window.ui.asksaveasfilename.return_value = "last.BIN"
         window._start_background_operation = MagicMock(
-            side_effect=lambda _title, _message, worker, completion: completion(*worker(lambda _current, _total: None))
+            side_effect=lambda _title, _message, worker, completion, **_kwargs: completion(
+                *worker(lambda _current, _total: None)
+            )
         )
 
         window.download_last_flight_log()
@@ -492,8 +496,8 @@ class TestFileBrowserWindow:
         window._show_summary = MagicMock()
         window.refresh_local_panel = MagicMock()
 
-        def run_operation(_title, _message, worker, completion) -> None:
-            completion(*worker(lambda _current, _total: None))
+        def run_operation(_title, _message, worker, completion, **_kwargs) -> None:
+            completion(*worker(lambda *_progress: None))
 
         window._start_background_operation = MagicMock(side_effect=run_operation)
 
@@ -2477,3 +2481,120 @@ class TestFileBrowserWindow:
         modal.assert_called_once_with(editor.root, editor.parameter_editor, editor.ui)
         editor.ui.create_progress_window.assert_not_called()
         editor.parameter_editor.download_last_flight_log.assert_not_called()
+
+
+def test_download_popup_stays_open_during_verification_and_closes_with_the_task(tk_root) -> None:
+    """Given a completed byte transfer, display verification until the task returns."""
+    window = _bare_window()
+    progress = ProgressWindow(tk_root, "Downloading", "Downloaded {} of {} bytes")
+    window._progress_window = MagicMock(return_value=progress)
+    window._set_operation_controls_state = MagicMock()
+    window._update_parent_navigation_buttons = MagicMock()
+    window._update_transfer_buttons = MagicMock()
+    completion = MagicMock()
+
+    def worker(report_progress) -> TransferAttempt:
+        report_progress(TransferProgress(0, 1024))
+        report_progress(TransferProgress(1024, 1024, TransferPhase.VERIFYING))
+        assert progress.progress_window.winfo_exists()
+        assert "Verifying downloaded files…" in progress.progress_label.cget("text")
+        return TransferAttempt(files_succeeded=["/log.bin"], verification={"/log.bin": True})
+
+    try:
+        assert window._start_transfer_operation(
+            "Downloading",
+            "Downloaded {} of {} bytes",
+            worker,
+            completion,
+            direction=TransferDirection.DOWNLOAD,
+        )
+        assert completion.call_args.args[0].verification == {"/log.bin": True}
+        assert not progress.progress_window.winfo_exists()
+    finally:
+        progress.destroy()
+
+
+def _prepare_retry_transfer_window(
+    tmp_path: Path, entries: typing.Sequence[FlightControllerLogFile], direction: TransferDirection
+) -> FileBrowserWindow:
+    """Prepare selected files and destinations for either transfer direction."""
+    window = _bare_window()
+    window.remote_entries = list(entries)
+    window.remote_tree = MagicMock()
+    window.remote_tree.selection.return_value = ("0", "1")
+    window.local_directory_var = MagicMock()
+    window.local_directory_var.get.return_value = str(tmp_path)
+    window.parameter_editor = MagicMock()
+    window.ui = MagicMock()
+    window.refresh_local_panel = MagicMock()
+    if direction is TransferDirection.UPLOAD:
+        window.local_entries = [LocalFileEntry(entry.name, tmp_path / entry.name, entry.size_bytes) for entry in entries]
+        window.local_tree = MagicMock()
+        window.local_tree.selection.return_value = ("0", "1")
+        window.remote_directory_var = MagicMock()
+        window.remote_directory_var.get.return_value = "/"
+        window._last_listed_remote_directory = "/"
+        window.refresh_remote_panel = MagicMock()
+    return window
+
+
+@pytest.mark.parametrize("direction", list(TransferDirection))
+def test_user_gets_fresh_byte_counts_rate_and_eta_when_retrying_failed_transfers(
+    tk_root, tmp_path: Path, direction: TransferDirection
+) -> None:
+    """Given a partial failure and a long retry decision, estimate only the new attempt."""
+    entries = [
+        FlightControllerLogFile("good.bin", "/good.bin", 4096),
+        FlightControllerLogFile("retry.bin", "/retry.bin", 2048),
+    ]
+    window = _prepare_retry_transfer_window(tmp_path, entries, direction)
+    clock = [0.0]
+    popups: list[ProgressWindow] = []
+    paths: list[str] = []
+    retry_messages: list[str] = []
+
+    def create_popup(title: str, message: str) -> ProgressWindow:
+        popup = ProgressWindow(tk_root, title, message, clock=lambda: clock[0])
+        popups.append(popup)
+        return popup
+
+    def accept_retry(_title: str, _message: str) -> bool:
+        clock[0] = 1000
+        return True
+
+    def download(remote: str, _local: str, report: typing.Callable[[int, int], None]) -> bool:
+        paths.append(remote)
+        if remote == entries[0].remote_path:
+            clock[0] = 2
+            report(4096, 4096)
+            return True
+        clock[0] += 2
+        report(1024, 2048)
+        if len(popups) == 1:
+            return False
+        assert popups[-1].progress_bar["value"] == 1024
+        assert popups[-1].progress_bar["maximum"] == 2048
+        retry_messages.append(str(popups[-1].progress_label.cget("text")))
+        report(2048, 2048)
+        return True
+
+    window._progress_window = MagicMock(side_effect=create_popup)
+    window.ui.ask_yesno.side_effect = accept_retry
+    window.parameter_editor.download_remote_file.side_effect = download
+    if direction is TransferDirection.UPLOAD:
+        window.parameter_editor.upload_file_to_fc.side_effect = lambda local, remote, report: download(remote, local, report)
+        window.ui.ask_yesno.side_effect = lambda title, message: (
+            True if title == "Upload selected entries?" else accept_retry(title, message)
+        )
+    try:
+        if direction is TransferDirection.UPLOAD:
+            window.upload_selected_local_entries()
+        else:
+            window.download_selected_remote_entries()
+        assert paths == ["/good.bin", "/retry.bin", "/retry.bin"]
+        assert "0.5 KiB/s · About 0:02 remaining" in retry_messages[0]
+        assert len(popups) == 2
+        assert all(not popup.progress_window.winfo_exists() for popup in popups)
+    finally:
+        for popup in popups:
+            popup.destroy()

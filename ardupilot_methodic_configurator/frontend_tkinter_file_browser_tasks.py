@@ -12,16 +12,20 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from threading import Lock, Thread
-from typing import NamedTuple, Protocol
+from typing import NamedTuple, ParamSpec, Protocol
 
 ProgressCallback = Callable[[int, int], None]
-Task = Callable[[ProgressCallback], object]
+ProgressParameters = ParamSpec("ProgressParameters")
+
+
+Task = Callable[[Callable[ProgressParameters, None]], object]
 TaskCompletion = Callable[[object | None, Exception | None], None]
 
 
 class _ProgressMessage(NamedTuple):
-    current: int
-    total: int
+    args: tuple[object, ...]
+    kwargs: dict[str, object]
+    deliver: Callable[[], None]
 
 
 class _DoneMessage(NamedTuple):
@@ -37,8 +41,8 @@ class TaskRunner(Protocol):
 
     def start(
         self,
-        task: Task,
-        on_progress: ProgressCallback | None,
+        task: Callable[[Callable[ProgressParameters, None]], object],
+        on_progress: Callable[ProgressParameters, None] | None,
         on_done: TaskCompletion,
     ) -> bool: ...
 
@@ -53,10 +57,9 @@ class BackgroundTaskRunner:  # pylint: disable=too-many-instance-attributes
         self._messages_lock = Lock()
         self._pending_progress: _ProgressMessage | None = None
         self._pending_done: _DoneMessage | None = None
-        self._last_progress: _ProgressMessage | None = None
+        self._last_progress: tuple[tuple[object, ...], dict[str, object]] | None = None
         self._polling = False
         self._thread: Thread | None = None
-        self._on_progress: ProgressCallback | None = None
         self._on_done: TaskCompletion | None = None
 
     @property
@@ -71,8 +74,8 @@ class BackgroundTaskRunner:  # pylint: disable=too-many-instance-attributes
 
     def start(
         self,
-        task: Task,
-        on_progress: ProgressCallback | None,
+        task: Callable[[Callable[ProgressParameters, None]], object],
+        on_progress: Callable[ProgressParameters, None] | None,
         on_done: TaskCompletion,
     ) -> bool:
         """Start work only if no other browser task is pending."""
@@ -82,14 +85,17 @@ class BackgroundTaskRunner:  # pylint: disable=too-many-instance-attributes
             self._pending_progress = None
             self._pending_done = None
         self._last_progress = None
-        self._on_progress = on_progress
         self._on_done = on_done
 
-        def report_progress(current: int, total: int) -> None:
+        def report_progress(*args: ProgressParameters.args, **kwargs: ProgressParameters.kwargs) -> None:
+            def deliver() -> None:
+                if on_progress is not None:
+                    on_progress(*args, **kwargs)
+
             # Progress is a snapshot, not an event history. Replacing this
             # slot keeps packet-rate reporting from growing a GUI backlog.
             with self._messages_lock:
-                self._pending_progress = _ProgressMessage(current, total)
+                self._pending_progress = _ProgressMessage(args, kwargs, deliver)
 
         def run() -> None:
             try:
@@ -121,13 +127,13 @@ class BackgroundTaskRunner:  # pylint: disable=too-many-instance-attributes
 
             # Never hold the lock while calling Tk or user callbacks. New
             # reports arriving during rendering belong to the next tick.
-            if progress is not None and progress != self._last_progress:
-                self._last_progress = progress
-                if self._on_progress is not None:
-                    try:
-                        self._on_progress(progress.current, progress.total)
-                    except Exception:  # pylint: disable=broad-exception-caught
-                        logging.exception("File-browser progress callback failed")
+            if progress is not None and (progress.args, progress.kwargs) != self._last_progress:
+                # Retain only values; the delivery closure can own Tk widgets.
+                self._last_progress = (progress.args, progress.kwargs)
+                try:
+                    progress.deliver()
+                except Exception:  # pylint: disable=broad-exception-caught
+                    logging.exception("File-browser progress callback failed")
 
             if outcome is None:
                 self._schedule(self.POLL_INTERVAL_MS, self.poll)
@@ -135,7 +141,6 @@ class BackgroundTaskRunner:  # pylint: disable=too-many-instance-attributes
             completion = self._on_done
             self._thread = None
             self._on_done = None
-            self._on_progress = None
             # Completion may start another task and enter a modal Tk loop.
             # Its scheduled poll must be allowed to deliver the new result.
             self._polling = False

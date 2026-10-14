@@ -120,10 +120,22 @@ This systematic approach ensures methodical, traceable, and safe vehicle configu
 - **Consumers**: `StageProgressBar` and `DocumentationFrame`, both initially expanded
 - **Lifetime**: Collapse choices last for the current editor window; they are not stored in program settings
 
+#### Plugin Lifecycle During Step Changes
+
+After saving pending edits, the parameter editor deactivates and destroys the outgoing plugin view
+before running the step-change workflow. Deactivation completes safety actions such as stopping motors;
+destruction removes controls, keyboard bindings, and polling timers before dialogs or transfers process
+Tk events. The existing layout remains available for reuse.
+
+The resulting step gets a new plugin view even when its plugin configuration matches the outgoing one.
+Forced step refreshes follow the same lifecycle. If the workflow raises an exception, the editor restores
+the plugin for the current step before propagating the error. A failed safety stop prevents the workflow
+from starting. Diagnostics temporarily suspend plugin receivers while preserving the active view.
+
 #### Calibration Navigation Lock
 
 - **File**: `frontend_tkinter_navigation_lock.py`
-- **Purpose**: Keep the active configuration context stable during calibration
+- **Purpose**: Keep the active configuration context stable during calibration and configured file uploads
 - **Responsibilities**:
   - Disable registered navigation, upload, file-browser, export, and auxiliary action controls
   - Preserve each control's existing disabled state and the step selector's readonly state
@@ -136,6 +148,10 @@ This systematic approach ensures methodical, traceable, and safe vehicle configu
   - Accelerometer and level calibration retain their locks through parameter readback and staging
   - RC calibration retains its lock while collecting and saving channel extremes
   - Compass calibration retains its lock until its progress popup closes
+  - Configured file uploads retain their lock while a background transport worker runs;
+    the modal Tk wait continues processing estimates and progress
+  - Closing the parameter editor is deferred until a configured file upload finishes;
+    other navigation locks leave application close available
   - Future asynchronous calibrations can use `start_calibration_with_navigation_lock()` and
     `end_calibration_navigation_lock()` without depending on `ParameterEditorWindow`
   - Calibration continue/cancel controls and application close remain available

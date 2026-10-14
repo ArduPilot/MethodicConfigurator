@@ -13,6 +13,8 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import struct
+from collections import deque
 from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
@@ -29,7 +31,19 @@ from ardupilot_methodic_configurator.backend_flightcontroller_files import (
     normalize_remote_path,
 )
 from ardupilot_methodic_configurator.backend_flightcontroller_protocols import FileUploadCheckStatus, FileUploadResult
-from ardupilot_methodic_configurator.backend_mavftp import DirectoryEntry, FtpError
+from ardupilot_methodic_configurator.backend_mavftp import (
+    FTP_OP,
+    MAVFTP,
+    DirectoryEntry,
+    FtpError,
+    OP_Ack,
+    OP_BurstReadFile,
+    OP_CreateFile,
+    OP_Nack,
+    OP_OpenFileRO,
+    OP_TerminateSession,
+    OP_WriteFile,
+)
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
 
@@ -261,8 +275,13 @@ class TestFlightControllerFilesUpload:
         mock_mavftp.cmd_put.assert_called_once()
         mock_mavftp.process_ftp_reply.assert_called_once_with("put", timeout=files_mgr.MAVFTP_UPLOAD_TIMEOUT_BASE)
         callback = mock_mavftp.cmd_put.call_args.kwargs["progress_callback"]
-        callback(0.42)
-        assert progress_calls == [(42, 100)]
+        mock_mavftp.write_acked_bytes = 239
+        mock_mavftp.write_file_size = 240
+        callback(0.5)
+        callback(None)  # Failed-session cleanup must not publish a reset counter.
+        mock_mavftp.write_acked_bytes = 240
+        callback(1.0)
+        assert progress_calls == [(239, 240), (240, 240)]
 
     def test_file_upload_reports_mavftp_error_code(self) -> None:
         """Upload reports MAVFTP errors when CreateFile fails."""
@@ -742,8 +761,8 @@ class TestFlightControllerFilesDownload:
         def user_progress(current: int, total: int) -> None:
             progress_calls.append((current, total))
 
-        def fake_download(_mavftp: MagicMock, _number: int, _local: str, callback: Callable[[float], None]) -> bool:
-            callback(0.25)
+        def fake_download(_mavftp: MagicMock, _number: int, _local: str, callback: Callable[[int, int], None]) -> bool:
+            callback(1024, 4096)
             return True
 
         with (
@@ -760,7 +779,7 @@ class TestFlightControllerFilesDownload:
             )
 
         assert result is LastLogDownloadResult.SUCCESS
-        assert progress_calls == [(25, 100)]
+        assert progress_calls == [(1024, 4096)]
 
     def test_log_download_handles_exceptions(self) -> None:
         """Download gracefully handles unexpected exceptions."""
@@ -1223,7 +1242,7 @@ class TestFlightControllerFilesDownloadHelpers:
 
         assert result is True
         mock_mavftp.cmd_get.assert_called_once()
-        assert mock_mavftp.cmd_get.call_args.kwargs["progress_callback"] is _progress_callback
+        assert callable(mock_mavftp.cmd_get.call_args.kwargs["progress_callback"])
 
     def test_extract_log_number_reads_value_and_cleans_file(self, tmp_path: Path) -> None:
         """
@@ -1762,11 +1781,11 @@ class TestFlightControllerFilesResilience:  # pylint: disable=too-many-public-me
 
     def test_explicit_download_validates_prerequisites_and_reports_progress(self) -> None:
         """
-        User downloads only validated paths and receives percentage progress from MAVFTP.
+        User downloads only validated paths and receives byte progress from MAVFTP.
 
         GIVEN: Connection prerequisites fail before a final successful transfer
         WHEN: Explicit downloads are requested
-        THEN: Invalid requests fail and the valid request reports normalized percentage progress
+        THEN: Invalid requests fail and the valid request reports received and total bytes
         """
         files_mgr = _create_files_manager()
         create_path = "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe"
@@ -1783,13 +1802,17 @@ class TestFlightControllerFilesResilience:  # pylint: disable=too-many-public-me
 
         mavftp = MagicMock()
         mavftp.process_ftp_reply.return_value = SimpleNamespace(error_code=FtpError.Success)
+        mavftp.read_total = 1024
+        mavftp.remote_file_size = 4096
+        mavftp.remote_size_known = True
         progress = MagicMock()
         with patch(create_path, return_value=mavftp):
             assert files_mgr.download_remote_file("/APM//log.bin", "local.bin", progress)
         callback = mavftp.cmd_get.call_args.kwargs["progress_callback"]
+        progress.reset_mock()
         callback(0.25)
         callback(None)
-        progress.assert_called_once_with(25, 100)
+        progress.assert_called_once_with(1024, 4096)
 
     def test_upload_cleanup_and_timeout_fallback_survive_secondary_os_errors(self) -> None:
         """
@@ -1864,3 +1887,221 @@ class TestFlightControllerFilesPropertyDelegation:
 
         # Then: Correct info returned
         assert retrieved_info is mock_info
+
+
+@pytest.mark.parametrize("known_size", [False, True])
+@pytest.mark.parametrize("last_log", [False, True])
+@pytest.mark.parametrize("failed", [False, True])
+def test_download_reports_precise_bytes_and_ignores_session_cleanup(known_size: bool, last_log: bool, failed: bool) -> None:
+    """Given sub-percent byte updates, preserve them through unknown sizes and cleanup."""
+    files_mgr = _create_files_manager()
+    mavftp = MagicMock()
+    mavftp.remote_file_size = 1024 * 1024
+    mavftp.remote_size_known = known_size
+    progress = MagicMock()
+
+    def transfer(_operation: str, timeout: float) -> SimpleNamespace:
+        assert timeout == 0
+        callback = mavftp.cmd_get.call_args.kwargs["progress_callback"]
+        for received in (257, 521):
+            mavftp.read_total = received
+            callback(received / mavftp.remote_file_size)
+        mavftp.read_total = 0
+        mavftp.remote_size_known = False
+        callback(None)
+        return SimpleNamespace(error_code=FtpError.Fail if failed else FtpError.Success)
+
+    mavftp.process_ftp_reply.side_effect = transfer
+    with (
+        patch("ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe", return_value=mavftp),
+        patch.object(files_mgr, "_get_last_log_number", return_value=(42, False)),
+    ):
+        if last_log:
+            result = files_mgr.download_last_flight_log("local.bin", progress)
+            assert result is (LastLogDownloadResult.FAILED if failed else LastLogDownloadResult.SUCCESS)
+        else:
+            assert files_mgr.download_remote_file("/APM/LOGS/log.bin", "local.bin", progress) is not failed
+
+    total = 1024 * 1024 if known_size else 0
+    expected = [(257, total), (521, total)]
+    if not failed:
+        expected.append((521, 521))
+    assert [call.args for call in progress.call_args_list] == expected
+
+
+class MemoryMavftpTransport:
+    """Replace only MAVLink packet delivery around the real MAVFTP client."""
+
+    def __init__(self) -> None:
+        self.replies: deque[SimpleNamespace] = deque()
+        self.master = SimpleNamespace(
+            source_system=255,
+            source_component=0,
+            mav=SimpleNamespace(file_transfer_protocol_send=self.send),
+            recv_match=self.receive,
+        )
+
+    def queue(self, reply: FTP_OP) -> None:
+        """Deliver a flight-controller packet addressed to this client."""
+        self.replies.append(
+            SimpleNamespace(
+                get_type=lambda: "FILE_TRANSFER_PROTOCOL",
+                get_srcSystem=lambda: 1,
+                get_srcComponent=lambda: 1,
+                target_system=255,
+                target_component=0,
+                payload=reply.pack(),
+            )
+        )
+
+    def send(self, _network: int, _system: int, _component: int, payload: bytes) -> None:
+        """Let each transport implement the flight controller's responses."""
+        raise NotImplementedError
+
+    def receive(self, **_kwargs: object) -> SimpleNamespace | None:
+        """Deliver queued packets, allowing real retry handling during silence."""
+        return self.replies.popleft() if self.replies else None
+
+
+class DownloadTransport(MemoryMavftpTransport):
+    """Answer download requests without replacing MAVFTP transfer logic."""
+
+    def __init__(self, data: bytes, known_size: bool, failed: bool) -> None:
+        super().__init__()
+        self.data = data
+        self.known_size = known_size
+        self.failed = failed
+
+    def send(self, _network: int, _system: int, _component: int, payload: bytes) -> None:
+        """Supply OpenFileRO, burst data, and session termination replies."""
+        sequence, session, opcode = struct.unpack_from("<HBB", payload)
+        sequence = (sequence + 1) % 65536
+        if opcode == OP_OpenFileRO:
+            size = struct.pack("<I", len(self.data)) if self.known_size else b""
+            self.queue(FTP_OP(sequence, session, OP_Ack, len(size), opcode, 0, 0, size))
+        elif opcode == OP_BurstReadFile:
+            if not self.data:
+                error = FtpError.FileNotFound if self.failed else FtpError.EndOfFile
+                self.queue(FTP_OP(sequence, session, OP_Nack, 1, opcode, 0, 0, bytes([error])))
+                return
+            first = self.data[:239]
+            self.queue(FTP_OP(sequence, session, OP_Ack, len(first), opcode, 0, 0, first))
+            if self.failed:
+                self.queue(FTP_OP(sequence + 1, session, OP_Nack, 1, opcode, 0, len(first), bytes([FtpError.FileNotFound])))
+            else:
+                rest = self.data[239:]
+                self.queue(FTP_OP(sequence + 1, session, OP_Ack, len(rest), opcode, 1, len(first), rest))
+                if not rest:
+                    self.queue(FTP_OP(sequence + 2, session, OP_Nack, 1, opcode, 0, len(first), bytes([FtpError.EndOfFile])))
+        elif opcode == OP_TerminateSession:
+            self.queue(FTP_OP(sequence, session, OP_Ack, 0, opcode, 0, 0, b""))
+        else:
+            message = f"Unexpected FTP request: {opcode}"
+            raise AssertionError(message)
+
+
+@pytest.mark.parametrize("known_size", [False, True])
+@pytest.mark.parametrize("failed", [False, True])
+@pytest.mark.parametrize("empty", [False, True])
+def test_user_gets_real_mavftp_byte_counts_through_publication_and_cleanup(
+    tmp_path: Path, known_size: bool, failed: bool, empty: bool
+) -> None:
+    """Given real protocol handling, preserve byte counts after EOF or failed cleanup."""
+    data = b"" if empty else b"x" * 300
+    transport = DownloadTransport(data, known_size, failed)
+    client = MAVFTP(transport.master, 1, 1, reset_sessions=False)
+    manager = _create_files_manager()
+    destination = tmp_path / "log.bin"
+    destination.write_bytes(b"original")
+    progress: list[tuple[int, int]] = []
+    with patch("ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe", return_value=client):
+        success = manager.download_remote_file("/log.bin", str(destination), lambda *counts: progress.append(counts))
+
+    assert success is not failed
+    assert destination.read_bytes() == (b"original" if failed else data)
+    assert client.read_total == 0
+    assert not client.remote_size_known
+    received = [current for current, _total in progress]
+    assert received == sorted(received)
+    if failed:
+        assert received == ([] if empty else [239])
+    else:
+        assert progress[-1] == (len(data), len(data))
+    if not empty:
+        assert progress[0] == (239, len(data) if known_size else 0)
+
+
+class UploadTransport(MemoryMavftpTransport):
+    """Store real WriteFile payloads and simulate lost ACKs or a write failure."""
+
+    def __init__(self, mode: str) -> None:
+        super().__init__()
+        self.mode = mode
+        self.data = bytearray()
+        self.write_attempts: dict[int, int] = {}
+        self.terminations = 0
+
+    def send(self, _network: int, _system: int, _component: int, payload: bytes) -> None:
+        """Acknowledge writes, including duplicates, through actual protocol packets."""
+        sequence, session, opcode, size, _request, _burst, _padding, offset = struct.unpack_from("<HBBBBBBI", payload)
+        sequence = (sequence + 1) % 65536
+        if opcode == OP_CreateFile:
+            self.data.clear()
+        elif opcode == OP_WriteFile:
+            self.write_attempts[offset] = self.write_attempts.get(offset, 0) + 1
+            if self.mode == "failure" and offset > 0:
+                self.queue(FTP_OP(sequence, session, OP_Nack, 1, opcode, 0, offset, bytes([FtpError.Fail])))
+                return
+            self.data.extend(b"\0" * max(0, offset + size - len(self.data)))
+            self.data[offset : offset + size] = payload[12 : 12 + size]
+            if self.mode == "retry" and offset == 0 and self.write_attempts[offset] == 1:
+                return  # Store the payload but lose its ACK, requiring retransmission.
+            self.queue(FTP_OP(sequence, session, OP_Ack, 0, opcode, 0, offset, b""))
+        elif opcode == OP_TerminateSession:
+            self.terminations += 1
+        else:
+            message = f"Unexpected upload request: {opcode}"
+            raise AssertionError(message)
+        self.queue(FTP_OP(sequence, session, OP_Ack, 0, opcode, 0, offset, b""))
+
+
+@pytest.mark.parametrize("mode", ["normal", "retry", "failure"])
+@pytest.mark.parametrize("empty", [False, True])
+def test_user_gets_real_mavftp_upload_bytes_through_retries_and_cleanup(tmp_path: Path, mode: str, empty: bool) -> None:
+    """
+    Upload progress reflects payload ACKs through the real MAVFTP state machine.
+
+    GIVEN: A real MAVFTP client with a short final block, duplicate ACKs, and optional loss or failure.
+    WHEN: The public file manager uploads a real local file.
+    THEN: Progress counts acknowledged payload bytes once, preserves partial bytes, and closes the session.
+    """
+    data = b"" if empty else bytes(range(251)) * 2 + b"short block"
+    source = tmp_path / "script.lua"
+    source.write_bytes(data)
+    transport = UploadTransport(mode)
+    client = MAVFTP(transport.master, 1, 1, reset_sessions=False)
+    client.ftp_settings.append(("write_size", int, 239))
+    client.ftp_settings.append(("write_qsize", int, 2))
+    client.ftp_settings.append(("retry_time", float, 0.2))
+    client.ftp_settings.append(("read_retry_time", float, 0.1))
+    client.ftp_settings.append(("idle_detection_time", float, 0.7))
+    manager = _create_files_manager()
+    progress: list[tuple[int, int]] = []
+    with patch("ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe", return_value=client):
+        success = manager.upload_file(str(source), "/script.lua", lambda *counts: progress.append(counts))
+
+    failed = mode == "failure" and not empty
+    assert success is not failed
+    assert progress
+    assert all(total == len(data) for _current, total in progress)
+    assert [current for current, _total in progress] == sorted(current for current, _total in progress)
+    assert all(0 <= current <= len(data) for current, _total in progress)
+    assert progress[-1] == (239 if failed else len(data), len(data))
+    assert bytes(transport.data) == (data[:239] if failed else data)
+    assert transport.terminations == 1
+    assert client.fh is None
+    assert not client.transfer_active
+    if mode == "retry" and not empty:
+        assert transport.write_attempts[0] >= 2
+    if failed:
+        assert all(current == 239 for current, _total in progress)
