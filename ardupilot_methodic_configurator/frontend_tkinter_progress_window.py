@@ -11,10 +11,20 @@ SPDX-License-Identifier: GPL-3.0-or-later
 # https://wiki.tcl-lang.org/page/Changing+Widget+Colors
 
 import tkinter as tk
+from collections.abc import Callable
+from contextlib import suppress
 from logging import error as logging_error
+from time import monotonic
 from tkinter import ttk
+from typing import Literal
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.data_model_transfer_progress import (
+    TransferDirection,
+    TransferPhase,
+    TransferProgress,
+    estimate_transfer,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 
 
@@ -35,12 +45,18 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
         height: int = 80,
         only_show_when_update_progress_called: bool = False,
         auto_close_on_complete: bool = True,
+        *,
+        clock: Callable[[], float] = monotonic,
     ) -> None:
         self.parent = master
         self.message = message
         self.only_show_when_update_progress_called = only_show_when_update_progress_called
         self.auto_close_on_complete = auto_close_on_complete
         self._shown = False
+        self._transfer_started: float | None = None
+        self._clock = clock
+        self._transfer_progress: TransferProgress | None = None
+        self._transfer_refresh_id: str | None = None
         self.progress_window = tk.Toplevel(self.parent)
         # Withdraw immediately to prevent flicker while setting up
         self.progress_window.withdraw()
@@ -166,7 +182,118 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
         self.message = message
         self.update_progress_bar(current_value, max_value)
 
+    TRANSFER_REFRESH_MS = 500
+
+    def enable_transfer_progress(self, direction: TransferDirection = TransferDirection.DOWNLOAD) -> None:
+        """Enable transfer rendering, with cleanup owned by task completion."""
+        self.auto_close_on_complete = False
+        self._transfer_started = self._clock()
+        self.progress_window.bind("<Destroy>", self._on_transfer_window_destroy, add="+")
+        self.update_transfer_progress(TransferProgress(0, None, direction=direction))
+        # Let the two-line translated label determine the popup's required size.
+        self.progress_window.update_idletasks()
+        self.progress_window.minsize(self.progress_window.winfo_width(), self.progress_window.winfo_reqheight())
+        self.progress_window.geometry("")
+        self._center_progress_window()
+
+    def update_transfer_progress(self, progress: TransferProgress) -> None:
+        """Render a snapshot and refresh its estimate even while no bytes arrive."""
+        self._cancel_transfer_refresh()
+        self._transfer_progress = progress
+        try:
+            if not self.progress_window.winfo_exists():
+                return
+            mode: Literal["determinate", "indeterminate"] = "indeterminate" if progress.total_bytes is None else "determinate"
+            if str(self.progress_bar["mode"]) != mode:
+                self.progress_bar.stop()
+                self.progress_bar.configure(mode=mode)
+                if progress.total_bytes is None:
+                    self.progress_bar.configure(maximum=100, value=0)
+                    self.progress_bar.start()
+            if self._transfer_started is None:
+                self._transfer_started = self._clock()
+            message = self._transfer_message(progress, self._clock() - self._transfer_started)
+            if progress.total_bytes is None:
+                # Preserve the running animation while refreshing the transfer estimate.
+                self.progress_label.config(text=message)
+                self.progress_bar.update_idletasks()
+                if getattr(self, "_is_aqua", False):
+                    self.progress_window.update()
+            else:
+                maximum = max(progress.total_bytes, 1)
+                value = progress.transferred_bytes
+                if progress.phase is not TransferPhase.TRANSFERRING:
+                    value = maximum
+                self.update_progress_bar_with_message(value, maximum, message.replace("{", "{{").replace("}", "}}"))
+            # Tk painting can deliver a newer snapshot or close the popup on macOS.
+            if (
+                self._transfer_progress is progress
+                and progress.phase is TransferPhase.TRANSFERRING
+                and self.progress_window.winfo_exists()
+            ):
+                self._transfer_refresh_id = self.progress_window.after(
+                    self.TRANSFER_REFRESH_MS, self._refresh_transfer_progress
+                )
+        except tk.TclError as exc:
+            logging_error(_("Updating progress widgets: {_e}").format(_e=exc))
+
+    @staticmethod
+    def _transfer_message(progress: TransferProgress, elapsed: float) -> str:
+        """Translate and format the pure model's estimate for the popup."""
+        if progress.total_bytes is not None:
+            transferred = (
+                _("Uploaded {current:.1f} of {total:.1f} MiB")
+                if progress.direction is TransferDirection.UPLOAD
+                else _("Downloaded {current:.1f} of {total:.1f} MiB")
+            ).format(current=progress.transferred_bytes / (1024 * 1024), total=progress.total_bytes / (1024 * 1024))
+        else:
+            transferred = (
+                _("Uploaded {current:.1f} MiB")
+                if progress.direction is TransferDirection.UPLOAD
+                else _("Downloaded {current:.1f} MiB")
+            ).format(current=progress.transferred_bytes / (1024 * 1024))
+        estimate = estimate_transfer(progress, elapsed)
+        if progress.phase is TransferPhase.VERIFYING:
+            status = (
+                _("Verifying uploaded files…")
+                if progress.direction is TransferDirection.UPLOAD
+                else _("Verifying downloaded files…")
+            )
+        elif progress.phase is TransferPhase.FINISHED:
+            status = _("Upload complete") if progress.direction is TransferDirection.UPLOAD else _("Download complete")
+        elif estimate.bytes_per_second is None:
+            status = _("Estimating…")
+        elif estimate.remaining_seconds is None:
+            status = _("{rate:.1f} KiB/s · Remaining time unknown").format(rate=estimate.bytes_per_second / 1024)
+        else:
+            hours, remainder = divmod(estimate.remaining_seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            duration = f"{hours:d}:{minutes:02d}:{seconds:02d}" if hours else f"{minutes:d}:{seconds:02d}"
+            status = _("{rate:.1f} KiB/s · About {time} remaining").format(
+                rate=estimate.bytes_per_second / 1024, time=duration
+            )
+        return transferred + "\n" + status
+
+    def _refresh_transfer_progress(self) -> None:
+        """Recompute elapsed time using the latest snapshot on the Tk thread."""
+        self._transfer_refresh_id = None
+        if self._transfer_progress is not None:
+            self.update_transfer_progress(self._transfer_progress)
+
+    def _cancel_transfer_refresh(self) -> None:
+        """Cancel the timer when a phase changes, the popup closes, or it is repainted."""
+        if self._transfer_refresh_id is not None:
+            with suppress(tk.TclError):
+                self.progress_window.after_cancel(self._transfer_refresh_id)
+            self._transfer_refresh_id = None
+
+    def _on_transfer_window_destroy(self, event: tk.Event) -> None:
+        """Handle external destruction as well as explicit popup cleanup."""
+        if event.widget is self.progress_window:
+            self._cancel_transfer_refresh()
+
     def destroy(self) -> None:
+        self._cancel_transfer_refresh()
         try:
             if self.progress_window.winfo_exists():
                 self.progress_window.destroy()

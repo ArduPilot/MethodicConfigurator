@@ -22,6 +22,12 @@ from ardupilot_methodic_configurator.backend_flightcontroller_files import (
     LastLogDownloadResult,
     is_safe_local_entry_name,
 )
+from ardupilot_methodic_configurator.data_model_transfer_progress import (
+    TransferBatchAccounting,
+    TransferDirection,
+    TransferPhase,
+    TransferProgress,
+)
 
 
 @dataclass(frozen=True)
@@ -105,13 +111,16 @@ class TransferAttempt:
 
 @dataclass
 class _FileTransferState:
-    """Track progress and file outcomes for one transfer attempt."""
+    """Share byte accounting, outcomes, and deferred verification for both directions."""
 
-    total: int
-    report_progress: Callable[[int, int], None]
-    verify_remote_file: Callable[[str, str], bool | None] | None
+    accounting: TransferBatchAccounting
+    report_progress: Callable[[TransferProgress], None]
     attempt: TransferAttempt
-    completed: int = 0
+    pending_verification: list[tuple[str, str]] = field(default_factory=list)
+
+    def report(self, snapshot: TransferProgress) -> None:
+        """Publish precise snapshots or adapt them to ordinary byte callbacks."""
+        self.report_progress(snapshot)
 
     def process(
         self,
@@ -120,29 +129,35 @@ class _FileTransferState:
         size: int,
         transfer: Callable[[Callable[[int, int], None]], bool] | None,
     ) -> None:
-        """Transfer and optionally verify one file, always advancing progress."""
-        units = max(size, 1)
+        """Retain actual bytes on failure and continue the rest of the batch."""
+        file_state = self.accounting.start_file(size)
 
         def file_progress(current: int, maximum: int) -> None:
-            # Keep the window open until optional CRC verification finishes.
-            limit = self.total - 1 if self.verify_remote_file is not None else self.total
-            progress = min(limit, int(self.completed + units * (current / maximum if maximum else 0.0)))
-            self.report_progress(progress, self.total)
+            self.report(file_state.update(current, maximum))
 
         try:
             success = transfer(file_progress) if transfer is not None else False
         except Exception:  # pylint: disable=broad-exception-caught
             success = False
-        if success and self.verify_remote_file is not None:
-            try:
-                verification = self.verify_remote_file(remote_path, local_path)
-            except Exception:  # pylint: disable=broad-exception-caught
-                verification = False
-            self.attempt.verification[remote_path] = verification
-            success = verification is not False
+        self.report(file_state.finish())
         (self.attempt.files_succeeded if success else self.attempt.files_failed).append(remote_path)
-        self.completed += units
-        self.report_progress(self.completed, self.total)
+        if success:
+            self.pending_verification.append((remote_path, local_path))
+
+    def finish(self, verify_remote_file: Callable[[str, str], bool | None] | None) -> None:
+        """Verify after all transfers, excluding CRC time from rate and ETA."""
+        if verify_remote_file is not None and self.pending_verification:
+            self.report(self.accounting.snapshot(phase=TransferPhase.VERIFYING))
+            for remote_path, local_path in self.pending_verification:
+                try:
+                    verification = verify_remote_file(remote_path, local_path)
+                except Exception:  # pylint: disable=broad-exception-caught
+                    verification = False
+                self.attempt.verification[remote_path] = verification
+                if verification is False:
+                    self.attempt.files_succeeded.remove(remote_path)
+                    self.attempt.files_failed.append(remote_path)
+        self.report(self.accounting.snapshot(phase=TransferPhase.FINISHED))
 
 
 @dataclass
@@ -365,18 +380,23 @@ def _record_directory_result(path: str, success: bool, attempt: TransferAttempt)
     (attempt.directories_succeeded if success else attempt.directories_failed).append(path)
 
 
-def _download_remote_plan_worker(  # pylint: disable=too-many-arguments
+def _download_remote_plan_worker(
     plan: RemoteDownloadPlan,
     local_directory: Path,
-    total: int,
     download_remote_file: Callable[..., bool],
-    report_progress: Callable[[int, int], None],
+    report_progress: Callable[[TransferProgress], None],
     *,
     verify_remote_file: Callable[[str, str], bool | None] | None = None,
 ) -> TransferAttempt:
     """Create local directories and transfer files without retaining a Tk window."""
     attempt = TransferAttempt(other_failed=list(plan.failed))
-    state = _FileTransferState(total, report_progress, verify_remote_file, attempt)
+    state = _FileTransferState(
+        TransferBatchAccounting.from_sizes(entry.size_bytes for entry, _target in plan.files),
+        report_progress,
+        attempt,
+    )
+    state.report(state.accounting.snapshot())
+
     for directory in plan.directories:
         success = False
         try:
@@ -390,15 +410,16 @@ def _download_remote_plan_worker(  # pylint: disable=too-many-arguments
         _record_directory_result(str(directory), success, attempt)
 
     for entry, target in plan.files:
-        safe_target = _local_target_is_contained(local_directory, target) and not (
-            target.is_symlink() or (target.parent.exists() and not target.parent.is_dir())
-        )
-        state.process(
-            entry.remote_path,
-            str(target),
-            entry.size_bytes,
-            partial(download_remote_file, entry.remote_path, str(target)) if safe_target else None,
-        )
+        transfer = None
+        try:
+            if _local_target_is_contained(local_directory, target) and not (
+                target.is_symlink() or (target.parent.exists() and not target.parent.is_dir())
+            ):
+                transfer = partial(download_remote_file, entry.remote_path, str(target))
+        except OSError:
+            pass
+        state.process(entry.remote_path, str(target), entry.size_bytes, transfer)
+    state.finish(verify_remote_file)
     return attempt
 
 
@@ -463,18 +484,22 @@ def _call_remote_bool(callback: Callable[..., bool], *args: object) -> bool:
 
 
 # Transfer callbacks stay explicit so the worker remains independent of Tk and easy to inject in tests.
-def _upload_local_plan_worker(  # pylint: disable=too-many-arguments
+def _upload_local_plan_worker(
     plan: LocalUploadPlan,
-    total: int,
     make_remote_directory: Callable[..., bool],
     upload_file_to_fc: Callable[..., bool],
-    report_progress: Callable[[int, int], None],
+    report_progress: Callable[[TransferProgress], None],
     *,
     verify_remote_file: Callable[[str, str], bool | None] | None = None,
 ) -> TransferAttempt:
     """Create remote directories and upload files without retaining a Tk window."""
     attempt = TransferAttempt(other_failed=list(plan.failed))
-    state = _FileTransferState(total, report_progress, verify_remote_file, attempt)
+    state = _FileTransferState(
+        TransferBatchAccounting.from_sizes((size for _local, _remote, size in plan.files), direction=TransferDirection.UPLOAD),
+        report_progress,
+        attempt,
+    )
+    state.report(state.accounting.snapshot())
     failed_directories: set[str] = set()
 
     def below_failed_directory(remote_path: str) -> bool:
@@ -496,6 +521,7 @@ def _upload_local_plan_worker(  # pylint: disable=too-many-arguments
             if not below_failed_directory(remote_path)
             else None,
         )
+    state.finish(verify_remote_file)
     return attempt
 
 
@@ -546,10 +572,20 @@ def _create_remote_directory_worker(
 def _download_last_flight_log_worker(
     filename: str,
     download_last_flight_log: Callable[..., LastLogDownloadResult],
-    report_progress: Callable[[int, int], None],
+    report_progress: Callable[[TransferProgress], None],
 ) -> LastLogDownloadResult:
     """Download the last flight log without retaining a Tk window."""
     try:
-        return download_last_flight_log(filename, report_progress)
+        received = 0
+
+        def report_bytes(current: int, total: int) -> None:
+            nonlocal received
+            received = current
+            report_progress(TransferProgress(current, total if total > 0 else None))
+
+        result = download_last_flight_log(filename, report_bytes)
+        if result is LastLogDownloadResult.SUCCESS:
+            report_progress(TransferProgress(received, received, TransferPhase.FINISHED))
+        return result
     except Exception:  # pylint: disable=broad-exception-caught
         return LastLogDownloadResult.FAILED

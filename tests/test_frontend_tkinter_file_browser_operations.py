@@ -18,6 +18,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerLogFile, LastLogDownloadResult
+from ardupilot_methodic_configurator.data_model_transfer_progress import TransferPhase, TransferProgress
 from ardupilot_methodic_configurator.frontend_tkinter_file_browser_operations import (
     LocalFileEntry,
     LocalUploadPlan,
@@ -72,13 +73,7 @@ def test_download_directory_success_does_not_erase_colliding_file_failure(tmp_pa
     remote_file = FlightControllerLogFile("other.bin", str(tmp_path / "folder"), 5)
     plan = _build_remote_download_plan([directory, remote_file], tmp_path, MagicMock(return_value=[]))
 
-    attempt = _download_remote_plan_worker(
-        plan,
-        tmp_path,
-        5,
-        MagicMock(return_value=False),
-        MagicMock(),
-    )
+    attempt = _download_remote_plan_worker(plan, tmp_path, MagicMock(return_value=False), _byte_progress(MagicMock()))
     results = TransferBatchResults()
     results.record(attempt)
 
@@ -125,6 +120,18 @@ def test_operation_annotations_resolve_at_runtime() -> None:
     """Public planning annotations can be inspected by runtime tooling."""
     assert typing.get_type_hints(LocalFileEntry)["path"] == Path
     assert typing.get_type_hints(_build_local_upload_plan)
+
+
+def _byte_progress(
+    callback: typing.Callable[[int, int], None],
+) -> typing.Callable[[TransferProgress], None]:
+    """Inspect byte snapshots through the existing worker assertions."""
+
+    def report(progress: TransferProgress) -> None:
+        if progress.phase is TransferPhase.TRANSFERRING:
+            callback(progress.transferred_bytes, progress.total_bytes or 0)
+
+    return report
 
 
 class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
@@ -346,7 +353,7 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
         )
         make_directory = MagicMock(side_effect=[False, True])
         upload = MagicMock(return_value=True)
-        attempt = _upload_local_plan_worker(plan, 13, make_directory, upload, MagicMock())
+        attempt = _upload_local_plan_worker(plan, make_directory, upload, _byte_progress(MagicMock()))
 
         assert attempt.files_succeeded == ["/APM/LOGS/other/good.bin"]
         assert attempt.files_failed == ["/APM/LOGS/folder/nested/child.bin"]
@@ -364,11 +371,7 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
         )
 
         attempt = _upload_local_plan_worker(
-            plan,
-            5,
-            MagicMock(return_value=True),
-            MagicMock(return_value=True),
-            MagicMock(),
+            plan, MagicMock(return_value=True), MagicMock(return_value=True), _byte_progress(MagicMock())
         )
 
         assert attempt.directories_succeeded == ["/APM/LOGS/folder"]
@@ -392,13 +395,7 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
         download_remote_file = MagicMock()
         progress = MagicMock()
 
-        attempt = _download_remote_plan_worker(
-            plan,
-            destination,
-            12,
-            download_remote_file,
-            progress,
-        )
+        attempt = _download_remote_plan_worker(plan, destination, download_remote_file, _byte_progress(progress))
 
         assert not attempt.files_succeeded
         assert entry.remote_path in attempt.files_failed
@@ -414,13 +411,7 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
         plan = RemoteDownloadPlan((), ((entry, target),))
         download_remote_file = MagicMock(return_value=True)
 
-        attempt = _download_remote_plan_worker(
-            plan,
-            destination,
-            12,
-            download_remote_file,
-            MagicMock(),
-        )
+        attempt = _download_remote_plan_worker(plan, destination, download_remote_file, _byte_progress(MagicMock()))
 
         assert attempt.files_succeeded == [entry.remote_path]
         assert not attempt.files_failed
@@ -441,7 +432,7 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
             return True
 
         attempt = _download_remote_plan_worker(
-            RemoteDownloadPlan((), ((entry, outside),)), destination, 3, download, lambda _done, _total: None
+            RemoteDownloadPlan((), ((entry, outside),)), destination, download, _byte_progress(lambda _done, _total: None)
         )
 
         assert not attempt.files_succeeded
@@ -458,13 +449,7 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
         entry = FlightControllerLogFile("log.bin", "/APM/LOGS/log.bin", 12)
         plan = RemoteDownloadPlan((directory,), ((entry, target),))
 
-        attempt = _download_remote_plan_worker(
-            plan,
-            destination,
-            12,
-            MagicMock(return_value=True),
-            MagicMock(),
-        )
+        attempt = _download_remote_plan_worker(plan, destination, MagicMock(return_value=True), _byte_progress(MagicMock()))
 
         assert attempt.directories_succeeded == [str(directory)]
         assert attempt.files_succeeded == [entry.remote_path]
@@ -477,9 +462,8 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
         attempt = _download_remote_plan_worker(
             plan,
             tmp_path,
-            12,
             MagicMock(return_value=True),
-            MagicMock(),
+            _byte_progress(MagicMock()),
             verify_remote_file=MagicMock(return_value=False),
         )
 
@@ -487,15 +471,15 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
         assert attempt.files_failed == [entry.remote_path]
         assert attempt.verification == {entry.remote_path: False}
 
-    def test_verification_keeps_progress_open_until_crc_finishes(self, tmp_path: Path) -> None:
-        """The final file callback cannot announce completion before CRC returns."""
+    def test_download_verification_starts_after_byte_progress_finishes(self, tmp_path: Path) -> None:
+        """CRC verification does not add synthetic bytes to the download rate."""
         entry = FlightControllerLogFile("log.bin", "/APM/LOGS/log.bin", 12)
         plan = RemoteDownloadPlan((), ((entry, tmp_path / "log.bin"),))
         progress: list[tuple[int, int]] = []
         progress_during_crc: list[tuple[int, int]] = []
 
         def download(_remote: str, _local: str, callback) -> bool:
-            callback(100, 100)
+            callback(12, 12)
             return True
 
         def verify(_remote: str, _local: str) -> bool:
@@ -503,12 +487,12 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
             return True
 
         attempt = _download_remote_plan_worker(
-            plan, tmp_path, 12, download, lambda *args: progress.append(args), verify_remote_file=verify
+            plan, tmp_path, download, _byte_progress(lambda *args: progress.append(args)), verify_remote_file=verify
         )
 
         assert attempt.files_succeeded == [entry.remote_path]
         assert not attempt.files_failed
-        assert progress_during_crc[0][0] < progress_during_crc[0][1]
+        assert progress_during_crc == [(12, 12)]
         assert progress[-1] == (12, 12)
 
     def test_upload_verification_keeps_progress_open_until_crc_finishes(self) -> None:
@@ -517,15 +501,15 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
         progress: list[tuple[int, int]] = []
 
         def upload(_local: str, _remote: str, callback) -> bool:
-            callback(100, 100)
+            callback(12, 12)
             return True
 
         def verify(_remote: str, _local: str) -> bool:
-            assert progress[-1] == (11, 12)
+            assert progress[-1] == (12, 12)
             return True
 
         attempt = _upload_local_plan_worker(
-            plan, 12, MagicMock(), upload, lambda *args: progress.append(args), verify_remote_file=verify
+            plan, MagicMock(), upload, _byte_progress(lambda *args: progress.append(args)), verify_remote_file=verify
         )
 
         assert attempt.files_succeeded == ["/APM/LOGS/log.bin"]
@@ -544,35 +528,33 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
             outcome = _download_remote_plan_worker(
                 RemoteDownloadPlan((), ((entry, tmp_path / "log.bin"),)),
                 tmp_path,
-                12,
                 transfer,
-                progress,
+                _byte_progress(progress),
                 verify_remote_file=verify,
             )
         else:
             outcome = _upload_local_plan_worker(
                 LocalUploadPlan((), ((tmp_path / "log.bin", remote, 12),)),
-                12,
                 MagicMock(),
                 transfer,
-                progress,
+                _byte_progress(progress),
                 verify_remote_file=verify,
             )
 
         assert outcome.files_succeeded == []  # pylint: disable=use-implicit-booleaness-not-comparison
         assert outcome.files_failed == [remote]
         verify.assert_not_called()
-        progress.assert_called_with(12, 12)
+        expected_bytes = 0
+        progress.assert_called_with(expected_bytes, expected_bytes)
 
     def test_upload_verification_can_be_skipped_for_virtual_file(self) -> None:
         """An unsupported verification result must not masquerade as verified."""
         plan = LocalUploadPlan((), ((Path("threads.txt"), "/@SYS/threads.txt", 12),))
         attempt = _upload_local_plan_worker(
             plan,
-            12,
             MagicMock(),
             MagicMock(return_value=True),
-            MagicMock(),
+            _byte_progress(MagicMock()),
             verify_remote_file=MagicMock(return_value=None),
         )
 
@@ -580,19 +562,24 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
         assert not attempt.files_failed
         assert attempt.verification == {"/@SYS/threads.txt": None}
 
-    def test_last_log_worker_passes_progress_to_backend(self) -> None:
-        """The last-log worker passes a progress callback to the backend."""
-        download_last_flight_log = MagicMock(return_value=LastLogDownloadResult.SUCCESS)
-        progress = MagicMock()
+    def test_last_log_worker_reports_bytes_and_completion(self) -> None:
+        """A last-log transfer converts backend bytes into complete lifecycle snapshots."""
+        progress: list[TransferProgress] = []
 
-        outcome = _download_last_flight_log_worker(
-            "last.BIN",
-            download_last_flight_log,
-            progress,
-        )
+        def download(filename: str, callback: typing.Callable[[int, int], None]) -> LastLogDownloadResult:
+            assert filename == "last.BIN"
+            callback(239, 300)
+            callback(300, 300)
+            return LastLogDownloadResult.SUCCESS
+
+        outcome = _download_last_flight_log_worker("last.BIN", download, progress.append)
 
         assert outcome is LastLogDownloadResult.SUCCESS
-        download_last_flight_log.assert_called_once_with("last.BIN", progress)
+        assert progress == [
+            TransferProgress(239, 300),
+            TransferProgress(300, 300),
+            TransferProgress(300, 300, TransferPhase.FINISHED),
+        ]
 
     def test_last_log_worker_maps_unexpected_exception_to_failure(self) -> None:
         """Unexpected worker errors must not be mistaken for confirmed no-logs."""
@@ -747,7 +734,7 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
             return_value=True,
         ):
             attempt = _download_remote_plan_worker(
-                RemoteDownloadPlan((directory,), ()), Path("destination"), 0, MagicMock(), MagicMock()
+                RemoteDownloadPlan((directory,), ()), Path("destination"), MagicMock(), _byte_progress(MagicMock())
             )
 
         assert attempt.directories_failed == [str(directory)]
@@ -799,10 +786,9 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
 
         attempt = _upload_local_plan_worker(
             plan,
-            4,
             MagicMock(),
             MagicMock(return_value=True),
-            MagicMock(),
+            _byte_progress(MagicMock()),
             verify_remote_file=MagicMock(side_effect=RuntimeError("CRC unavailable")),
         )
 
@@ -826,9 +812,8 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
         attempt = _download_remote_plan_worker(
             RemoteDownloadPlan((), ((first, tmp_path / first.name), (second, tmp_path / second.name))),
             tmp_path,
-            4,
             download,
-            MagicMock(),
+            _byte_progress(MagicMock()),
             verify_remote_file=verify,
         )
 
@@ -846,18 +831,15 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
         progress = MagicMock()
 
         def upload(_local: str, _remote: str, report_file_progress) -> bool:
-            report_file_progress(1, 2)
+            report_file_progress(5, 10)
+            report_file_progress(10, 10)
             return True
 
         _upload_local_plan_worker(
-            LocalUploadPlan((), ((Path("log.bin"), "/APM/LOGS/log.bin", 10),)),
-            10,
-            MagicMock(),
-            upload,
-            progress,
+            LocalUploadPlan((), ((Path("log.bin"), "/APM/LOGS/log.bin", 10),)), MagicMock(), upload, _byte_progress(progress)
         )
 
-        assert progress.call_args_list[0].args == (5, 10)
+        assert (5, 10) in [call.args for call in progress.call_args_list]
         assert progress.call_args_list[-1].args == (10, 10)
 
     def test_remote_directory_deletion_handles_listing_outcomes_independently(self) -> None:
@@ -880,3 +862,101 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
         assert succeeded == [empty.remote_path]
         assert failed == [unreadable.remote_path, populated.remote_path]
         delete.assert_called_once_with(empty.remote_path, True)  # noqa: FBT003
+
+
+def test_user_sees_transferred_bytes_across_unequal_files_and_partial_failure(tmp_path: Path) -> None:
+    """Given unequal files and a partial failure, skipped bytes never inflate the rate."""
+    sizes = (1024, 3072, 8192)
+    entries = [FlightControllerLogFile(f"{index}.bin", f"/{index}.bin", size) for index, size in enumerate(sizes)]
+    plan = RemoteDownloadPlan((), tuple((entry, tmp_path / entry.name) for entry in entries))
+    progress: list[tuple[int, int]] = []
+
+    def download(remote: str, _local: str, callback) -> bool:
+        entry = next(entry for entry in entries if entry.remote_path == remote)
+        if entry is entries[-1]:
+            callback(1024, entry.size_bytes)
+            return False
+        callback(entry.size_bytes // 2, entry.size_bytes)
+        callback(entry.size_bytes, entry.size_bytes)
+        return True
+
+    attempt = _download_remote_plan_worker(plan, tmp_path, download, _byte_progress(lambda *args: progress.append(args)))
+
+    assert (512, 12288) in progress
+    assert (2560, 12288) in progress
+    assert (5120, 12288) in progress
+    assert progress[-1] == (5120, 5120)
+    assert [current for current, _total in progress] == sorted(current for current, _total in progress)
+    assert attempt.files_failed == [entries[-1].remote_path]
+
+
+def test_user_gets_an_updated_batch_total_when_a_remote_file_grows(tmp_path: Path) -> None:
+    """Given stale listing sizes, use OpenFileRO sizes while retaining other files."""
+    entries = [FlightControllerLogFile("a.bin", "/a.bin", 1024), FlightControllerLogFile("b.bin", "/b.bin", 2048)]
+    plan = RemoteDownloadPlan((), tuple((entry, tmp_path / entry.name) for entry in entries))
+    progress: list[tuple[int, int]] = []
+
+    def download(remote: str, _local: str, callback) -> bool:
+        size = 4096 if remote == "/a.bin" else 2048
+        callback(size // 2, size)
+        callback(size, size)
+        return True
+
+    _download_remote_plan_worker(plan, tmp_path, download, _byte_progress(lambda *args: progress.append(args)))
+
+    assert (2048, 6144) in progress
+    assert (5120, 6144) in progress
+    assert progress[-1] == (6144, 6144)
+
+
+def test_user_gets_no_batch_eta_until_unknown_and_empty_files_are_resolved(tmp_path: Path) -> None:
+    """Given a generated and an empty file, report only real bytes and unknown totals."""
+    entries = [
+        FlightControllerLogFile("a.bin", "/a.bin", 1024),
+        FlightControllerLogFile("generated", "/generated", 0),
+        FlightControllerLogFile("empty", "/empty", 0),
+    ]
+    plan = RemoteDownloadPlan((), tuple((entry, tmp_path / entry.name) for entry in entries))
+    progress: list[tuple[int, int]] = []
+
+    def download(remote: str, _local: str, callback) -> bool:
+        if remote == "/a.bin":
+            callback(1024, 1024)
+        elif remote == "/generated":
+            callback(2048, 0)
+            callback(2048, 2048)  # EOF resolves the size.
+        else:
+            callback(0, 0)
+        return True
+
+    _download_remote_plan_worker(plan, tmp_path, download, _byte_progress(lambda *args: progress.append(args)))
+
+    assert all(total == 0 for _current, total in progress[:-1])
+    assert progress[-1] == (3072, 3072)
+
+
+def test_user_enters_verification_only_after_every_file_has_downloaded(tmp_path: Path) -> None:
+    """Given a verified batch, finish downloads before starting checksum checks."""
+    entries = [FlightControllerLogFile(f"{index}.bin", f"/{index}.bin", 1024) for index in range(3)]
+    plan = RemoteDownloadPlan((), tuple((entry, tmp_path / entry.name) for entry in entries))
+    events: list[str] = []
+    progress: list[tuple[int, int]] = []
+
+    def download(remote: str, _local: str, callback) -> bool:
+        events.append(f"download {remote}")
+        callback(1024, 1024)
+        return True
+
+    def verify(remote: str, _local: str) -> bool:
+        assert progress[-1] == (3072, 3072)
+        events.append(f"verify {remote}")
+        return True
+
+    attempt = _download_remote_plan_worker(
+        plan, tmp_path, download, _byte_progress(lambda *args: progress.append(args)), verify_remote_file=verify
+    )
+
+    assert events == [f"download {entry.remote_path}" for entry in entries] + [
+        f"verify {entry.remote_path}" for entry in entries
+    ]
+    assert attempt.files_succeeded == [entry.remote_path for entry in entries]

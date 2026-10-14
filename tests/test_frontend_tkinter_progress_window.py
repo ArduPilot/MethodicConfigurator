@@ -17,6 +17,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from ardupilot_methodic_configurator.data_model_transfer_progress import TransferProgress
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import (
     ProgressWindow,
     update_flight_controller_restart_progress,
@@ -545,3 +546,16 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name,
 
         # Should not raise even though progress_bar is None
         progress_window.update_progress_bar(50, 100)
+
+
+def test_user_sees_the_entire_download_label_at_the_required_popup_size(tk_root) -> None:
+    """Given a two-line download label, the popup grows to fit both lines."""
+    window = ProgressWindow(tk_root, "Downloading", "Downloaded {} of {} bytes")
+    try:
+        window.enable_transfer_progress()
+        window.update_transfer_progress(TransferProgress(1024, 2048))
+        window.progress_window.update_idletasks()
+        label_bottom = window.progress_label.winfo_y() + window.progress_label.winfo_height()
+        assert label_bottom <= window.progress_window.winfo_height()
+    finally:
+        window.destroy()

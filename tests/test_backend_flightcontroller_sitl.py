@@ -1176,8 +1176,8 @@ def test_user_can_upload_files_via_files_manager(sitl_flight_controller: FlightC
 
         assert result is True
         cleanup_needed = True
-        if progress_updates:
-            assert max(current for current, _total in progress_updates) == 100
+        assert progress_updates
+        assert progress_updates[-1] == (local_file.stat().st_size, local_file.stat().st_size)
 
         verification_file = tmp_path / "copilot_upload_verify.txt"
         mavftp.cmd_get([remote_filename, str(verification_file)])
@@ -1227,8 +1227,8 @@ def test_user_can_upload_script_to_apm_scripts_via_files_manager(
 
         assert result is True
         cleanup_needed = True
-        if progress_updates:
-            assert max(current for current, _total in progress_updates) == 100
+        assert progress_updates
+        assert progress_updates[-1] == (local_file.stat().st_size, local_file.stat().st_size)
 
         mavftp.cmd_get([remote_filename, str(verification_file)])
         ret = mavftp.process_ftp_reply("OpenFileRO", timeout=FlightControllerFiles.MAVFTP_FILE_OPERATION_TIMEOUT)
@@ -1291,8 +1291,8 @@ def test_user_can_download_synthetic_log_via_files_manager(sitl_flight_controlle
 
         assert result is LastLogDownloadResult.SUCCESS
         assert downloaded_file.read_bytes() == local_source.read_bytes()
-        if progress_updates:
-            assert max(current for current, _total in progress_updates) == 100
+        assert progress_updates
+        assert progress_updates[-1] == (local_source.stat().st_size, local_source.stat().st_size)
     finally:
         mavftp.cmd_rm([remote_filename])
         if lastlog_backed_up:

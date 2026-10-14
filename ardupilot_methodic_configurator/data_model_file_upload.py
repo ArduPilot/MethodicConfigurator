@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from collections.abc import Callable, Collection, Sequence
 from dataclasses import dataclass
 from enum import Enum, auto
+from functools import partial
 from logging import warning as logging_warning
 
 from ardupilot_methodic_configurator import _
@@ -20,6 +21,8 @@ ProgressCallback = Callable[[int, int], None]
 ProgressCallbackFactory = Callable[[], ProgressCallback | None]
 FileUploadCheck = Callable[[str, str], FileUploadCheckStatus]
 FileUpload = Callable[[str, str, ProgressCallback | None], FileUploadResult]
+UploadTask = Callable[[ProgressCallback], FileUploadResult]
+UploadExecutor = Callable[[UploadTask, int, ProgressCallback], FileUploadResult]
 
 
 class FileUploadDisposition(Enum):
@@ -55,6 +58,15 @@ class FileUploadOutcome:
     disposition: FileUploadDisposition
 
 
+@dataclass(frozen=True)
+class _UploadCallbacks:
+    """Interaction and execution boundaries for one configured-upload attempt."""
+
+    confirm: Callable[[str, str], bool]
+    progress_factory: ProgressCallbackFactory
+    execute: UploadExecutor | None
+
+
 class FileUploadWorkflow:  # pylint: disable=too-few-public-methods
     """Apply upload policy using injected filesystem, transport, and interaction callbacks."""
 
@@ -77,6 +89,8 @@ class FileUploadWorkflow:  # pylint: disable=too-few-public-methods
         download_filenames: Collection[str],
         confirm_upload: Callable[[str, str], bool],
         get_progress_callback: ProgressCallbackFactory,
+        *,
+        run_upload: UploadExecutor | None = None,
     ) -> list[FileUploadOutcome]:
         """Return an outcome for each file processed, continuing after individual failures."""
         if self._upload_active:
@@ -84,7 +98,9 @@ class FileUploadWorkflow:  # pylint: disable=too-few-public-methods
             raise RuntimeError(msg)
         self._upload_active = True
         try:
-            return self._upload_files(files, download_filenames, confirm_upload, get_progress_callback)
+            return self._upload_files(
+                files, download_filenames, _UploadCallbacks(confirm_upload, get_progress_callback, run_upload)
+            )
         finally:
             self._upload_active = False
 
@@ -92,8 +108,7 @@ class FileUploadWorkflow:  # pylint: disable=too-few-public-methods
         self,
         files: Sequence[tuple[str, str]],
         download_filenames: Collection[str],
-        confirm_upload: Callable[[str, str], bool],
-        get_progress_callback: ProgressCallbackFactory,
+        callbacks: _UploadCallbacks,
     ) -> list[FileUploadOutcome]:
         """Process the batch while retaining ownership across callbacks."""
         outcomes: list[FileUploadOutcome] = []
@@ -102,8 +117,7 @@ class FileUploadWorkflow:  # pylint: disable=too-few-public-methods
                 local_filename,
                 remote_filename,
                 local_filename in download_filenames,
-                confirm_upload,
-                get_progress_callback,
+                callbacks,
             )
             outcomes.append(outcome)
             if outcome.disposition is FileUploadDisposition.NO_CONNECTION:
@@ -116,8 +130,7 @@ class FileUploadWorkflow:  # pylint: disable=too-few-public-methods
         local_filename: str,
         remote_filename: str,
         is_download_configured: bool,
-        confirm_upload: Callable[[str, str], bool],
-        get_progress_callback: ProgressCallbackFactory,
+        callbacks: _UploadCallbacks,
     ) -> FileUploadOutcome:
         try:
             local_file_size = self._file_size(local_filename)
@@ -142,11 +155,11 @@ class FileUploadWorkflow:  # pylint: disable=too-few-public-methods
                 else FileUploadDisposition.VERIFICATION_FAILED
             )
             return FileUploadOutcome(local_filename, remote_filename, disposition)
-        if not confirm_upload(local_filename, remote_filename):
+        if not callbacks.confirm(local_filename, remote_filename):
             return FileUploadOutcome(local_filename, remote_filename, FileUploadDisposition.USER_DECLINED)
 
         try:
-            upload_result = self._upload_with_lazy_progress(local_filename, remote_filename, get_progress_callback)
+            upload_result = self._upload_with_lazy_progress(local_filename, remote_filename, local_file_size or 0, callbacks)
         except (OSError, RuntimeError) as error:
             logging_warning("Could not upload file %s to %s: %s", local_filename, remote_filename, error)
             return FileUploadOutcome(local_filename, remote_filename, FileUploadDisposition.UPLOAD_FAILED)
@@ -171,9 +184,10 @@ class FileUploadWorkflow:  # pylint: disable=too-few-public-methods
         self,
         local_filename: str,
         remote_filename: str,
-        get_progress_callback: ProgressCallbackFactory,
+        local_file_size: int,
+        callbacks: _UploadCallbacks,
     ) -> FileUploadResult:
-        """Create the progress callback only after the transport reports progress."""
+        """Create progress on demand; an executor may announce transfer start before I/O."""
         progress_callback: ProgressCallback | None = None
         progress_callback_created = False
 
@@ -181,8 +195,11 @@ class FileUploadWorkflow:  # pylint: disable=too-few-public-methods
             nonlocal progress_callback, progress_callback_created
             if not progress_callback_created:
                 progress_callback_created = True
-                progress_callback = get_progress_callback()
+                progress_callback = callbacks.progress_factory()
             if progress_callback is not None:
                 progress_callback(current, total)
 
-        return self._upload_if_needed(local_filename, remote_filename, forward_upload_progress)
+        task = partial(self._upload_if_needed, local_filename, remote_filename)
+        if callbacks.execute is not None:
+            return callbacks.execute(task, local_file_size, forward_upload_progress)
+        return task(forward_upload_progress)

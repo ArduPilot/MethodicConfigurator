@@ -19,10 +19,13 @@ from typing import TYPE_CHECKING
 import pytest
 
 from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerLogFile
+from ardupilot_methodic_configurator.data_model_transfer_progress import TransferDirection
 from ardupilot_methodic_configurator.frontend_tkinter_file_browser import FileBrowserWindow, _PanelState
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from ardupilot_methodic_configurator.data_model_transfer_progress import TransferProgress
 
 # pylint: disable=protected-access, redefined-outer-name
 
@@ -120,6 +123,12 @@ class Progress:
 
     def update_progress_bar(self, current: int, total: int) -> None:
         self.updates.append((current, total))
+
+    def enable_transfer_progress(self, _direction: TransferDirection = TransferDirection.DOWNLOAD) -> None:
+        """The real popup keeps downloads open until the task completes."""
+
+    def update_transfer_progress(self, progress: TransferProgress) -> None:
+        self.updates.append((progress.transferred_bytes, progress.total_bytes or 0))
 
     def destroy(self) -> None:
         self.destroyed = True

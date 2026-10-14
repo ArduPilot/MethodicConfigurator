@@ -116,6 +116,16 @@ when a callback raises. Recoverable filesystem and transport exceptions become
 per-file outcomes, allowing later files to proceed without treating an
 unverifiable target as permission to overwrite it.
 
+The workflow accepts an injected `UploadExecutor` for confirmed transfers.
+`ParameterEditorWindow` runs the transport with `BackgroundTaskRunner` and waits
+for completion with Tk's modal variable wait, keeping timers and UI delivery
+active. Confirmation and result dialogs remain on the Tk thread. The popup
+clock starts before transport execution, including the delay before the first
+ACK. The outgoing plugin view is destroyed before the step-change workflow starts.
+Navigation remains locked until the worker finishes, and application close
+requests are deferred until then. The popup closes before reporting failure
+or asking about a retry.
+
 ## Data contracts
 
 Remote entries are represented by `FlightControllerLogFile`:
@@ -152,11 +162,38 @@ code path that runs without Tk.
 While a remote operation is active, relevant controls are disabled
 using the ttk state API. The browser cannot close until that operation finishes.
 
-Batch transfer progress is aggregated in bytes. Unknown-size and zero-byte
-files still consume at least one progress unit, avoiding a zero-total progress
-calculation.
+Download and upload progress use immutable `TransferProgress` snapshots from
+`data_model_transfer_progress.py`: cumulative transferred bytes, an optional total,
+and an explicit `TRANSFERRING`, `VERIFYING`, or `FINISHED` phase. `None` denotes
+an unknown total; zero denotes a known empty transfer. Failed files remove only
+their untransferred remainder from the batch total. Upload counts use acknowledged
+payload bytes, including short final blocks;
+zero-byte local files have known sizes. Snapshots carry their transfer direction
+so the popup uses download or upload labels.
 
-Optional CRC32 verification runs after a completed file transfer via
+`TransferBatchAccounting` and `TransferFileAccounting` own the listing-size,
+unknown-size, and partial-transfer accounting rules in the data model. They
+consume supplied counts and return snapshots without performing I/O. The
+batch worker owns transfer execution, result recording, and verification.
+Both transfer workers accept one `TransferProgress` callback; they derive totals
+from their plans through the shared accounting model. The browser does not
+calculate separate progress totals.
+
+The background runner coalesces complete snapshots, including phase changes,
+and delivers them on the Tk thread. Ordinary tasks retain their two-integer
+progress callbacks. `estimate_transfer` calculates average throughput and ETA
+from supplied counts and elapsed time without accessing a clock or widgets.
+The popup accepts an injected clock and refreshes the latest transferring
+snapshot every 500 ms, even when no new packets arrive. Phase transitions and
+popup destruction cancel the refresh timer.
+
+The runner uses `ParamSpec` to require matching worker and handler signatures.
+It transports callback arguments without knowing their transfer-specific
+meaning. The frontend supplies the matching popup callback directly for count
+or transfer progress. Completed tasks retain only snapshot values for
+deduplication, releasing their progress handlers and widgets.
+
+Optional CRC32 verification runs after all batch transfers finish via
 `FlightControllerFiles.verify_remote_file`. Generated `@SYS` files are marked
 not verified. The batch summary offers a single explicit retry of failed
 file transfers using a reduced plan; successful files and remote mutations
@@ -187,6 +224,25 @@ tests Tk-independent transfer planning, workers, and path boundaries.
 `tests/test_frontend_tkinter_file_browser_tasks.py` tests progress, errors, and
 task serialization. `tests/test_backend_flightcontroller_file_browser.py`
 tests the flight-controller file API used by the browser.
+
+`tests/test_data_model_transfer_progress.py` tests estimates with plain inputs.
+`tests/test_frontend_tkinter_transfer_progress.py` covers stalled transfers,
+empty-file verification, timer cleanup, and integration of the real background
+runner, controlled transfer callbacks, and actual Tk widgets.
+
+The backend file tests also exercise a real MAVFTP client through an in-memory
+transport, checking EOF publication and failed-session cleanup without hardware.
+Upload tests use real local files and the real MAVFTP state machine to verify
+short final blocks, duplicate ACKs, lost ACK retransmission, partial failure,
+remote payload contents, and session cleanup. Configured-upload tests use real
+Tk widgets, the runner, and the model workflow to check initial delay, stalled
+estimates, thread ownership, locked navigation, and cleanup on every outcome.
+The browser tests verify that retries reset bytes, throughput, and ETA after a
+long user decision. Run static callback-signature regression checks with:
+
+```text
+mypy --follow-imports=silent --warn-unused-ignores tests/test_typing_frontend_tkinter_file_browser_tasks.py
+```
 
 `tests/test_backend_mavftp.py` and
 `tests/test_backend_flightcontroller_files.py` cover MAVFTP and backend

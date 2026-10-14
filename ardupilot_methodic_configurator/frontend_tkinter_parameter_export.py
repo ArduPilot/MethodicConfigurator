@@ -228,7 +228,8 @@ class ParameterExportWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             annotate_checkbox,
             _(
                 "Add human-readable comments with ArduPilot documentation to the exported file.\n"
-                "This makes the file easier to understand but does not change parameter values."
+                "This makes the file easier to understand and does not change parameter values.\n"
+                "It will dramatically increase the file size though."
             ),
         )
         cancel_button = ttk.Button(buttons, text=_("Cancel"), command=self.close)
