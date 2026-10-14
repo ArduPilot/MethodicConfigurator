@@ -12,6 +12,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory, PluginModelContext, plugin_factory
 
 # pylint: disable=protected-access
@@ -19,6 +21,55 @@ from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory
 
 class TestPluginFactory:
     """Test plugin factory functionality for dependency injection."""
+
+    def test_user_is_told_once_about_each_unavailable_configured_plugin(self, caplog: pytest.LogCaptureFixture) -> None:
+        """
+        Identify unavailable plugins and suggest registered alternatives.
+
+        GIVEN: Configuration steps reference a registered plugin and repeated unavailable plugins
+        WHEN: Startup validates the configuration
+        THEN: Each unavailable name is logged once with the sorted available names
+        """
+        # Given: A real registry and realistic configuration-step metadata.
+        factory = PluginFactory()
+        factory.register("zeta", lambda _parent, _model, _window: object())
+        factory.register("alpha", lambda _parent, _model, _window: object())
+        steps: dict[str, dict[str, object]] = {
+            "01.param": {"plugin": {"name": "missing"}},
+            "02.param": {"plugin": {"name": "missing"}},
+            "03.param": {"plugin": {"name": "another"}},
+            "04.param": {"plugin": {"name": "alpha"}},
+            "05.param": {},
+            "06.param": {"plugin": {}},
+            "07.param": {"plugin": {"name": ""}},
+        }
+
+        # When: Validate all references.
+        factory.validate_configuration_steps(steps)
+
+        # Then: Repeated references produce one actionable error per missing name.
+        assert sorted(caplog.messages) == [
+            "Plugin 'another' is configured but not registered. Available plugins: alpha, zeta",
+            "Plugin 'missing' is configured but not registered. Available plugins: alpha, zeta",
+        ]
+        assert all(record.levelname == "ERROR" for record in caplog.records)
+
+    def test_user_is_told_when_no_plugins_are_available(self, caplog: pytest.LogCaptureFixture) -> None:
+        """
+        Diagnose a configured plugin when the registry is empty.
+
+        GIVEN: No plugins are registered
+        WHEN: A configuration step references a plugin
+        THEN: The diagnostic explicitly says that no plugins are available
+        """
+        # Given: An empty registry.
+        factory = PluginFactory()
+
+        # When: Validate an unavailable plugin reference.
+        factory.validate_configuration_steps({"01.param": {"plugin": {"name": "motor_test"}}})
+
+        # Then: The user gets a useful empty-registry diagnostic.
+        assert caplog.messages == ["Plugin 'motor_test' is configured but not registered. Available plugins: none"]
 
     def test_user_can_initialize_plugin_factory(self) -> None:
         """
@@ -315,3 +366,25 @@ class TestPluginFactory:
         assert factory.is_registered("plugin-with-dashes") is True
         assert factory.is_registered("plugin_with_underscores") is True
         assert factory.is_registered("plugin.123") is True
+
+
+@pytest.mark.parametrize("steps", [{}, {"01.param": {}}, {"01.param": {"plugin": {"name": "available"}}}])
+def test_valid_configuration_does_not_report_unavailable_plugins(
+    caplog: pytest.LogCaptureFixture, steps: dict[str, dict[str, object]]
+) -> None:
+    """
+    Accept steps without plugins and steps with registered plugins.
+
+    GIVEN: Only available plugins or no plugin references
+    WHEN: Startup validates configuration steps
+    THEN: No plugin availability errors are logged
+    """
+    # Given: A registry containing every referenced plugin.
+    factory = PluginFactory()
+    factory.register("available", lambda _parent, _model, _window: object())
+
+    # When: Validate configuration.
+    factory.validate_configuration_steps(steps)
+
+    # Then: Startup diagnostics remain clear.
+    assert not caplog.records

@@ -20,6 +20,49 @@ from ardupilot_methodic_configurator.plugins.data_model_accelerometer_calibratio
 # pylint: disable=protected-access
 
 
+def test_accelerometer_monitor_restarts_telemetry_after_leaving_and_returning(connected_flight_controller: MagicMock) -> None:
+    """
+    Recover accelerometer monitoring after a plugin is reopened.
+
+    GIVEN: A controller that supplies samples after an initial telemetry gap
+    WHEN: Monitoring stops and then resumes
+    THEN: Samples are returned and the stream is requested again after stopping
+    """
+    # Given: Only controller I/O is mocked.
+    controller = connected_flight_controller
+    controller.request_scaled_imu_messages.return_value = (True, "")
+    controller.poll_scaled_imu.side_effect = [None, (0.0, 0.0, -1000.0), (0.0, -1000.0, 0.0)]
+    model = AccelerometerCalibrationDataModel(controller)
+    # When: Poll, leave the plugin and return.
+    assert model.poll_imu_raw() is None
+    assert model.poll_imu_raw() == (0.0, 0.0, -1000.0)
+    model.stop_imu_monitoring()
+    sample = model.poll_imu_raw()
+    # Then: The new reading has physical units and orientation appropriate to calibration.
+    assert sample is not None
+    assert sample == (0.0, -1000.0, 0.0)
+    assert model.compute_detected_position(*sample) == "RIGHT"
+    assert model.compute_movement_magnitude_ms2(*sample) == pytest.approx(9.80665)
+    assert controller.request_scaled_imu_messages.call_count == 2
+
+
+@pytest.mark.parametrize(("position", "expected"), [(1, "LEVEL"), (3, "RIGHT"), (999, "")])
+def test_requested_calibration_pose_has_an_orientation_for_live_comparison(
+    connected_flight_controller: MagicMock, position: int, expected: str
+) -> None:
+    """
+    Compare a requested calibration pose with live orientation feedback.
+
+    GIVEN: A standard or unrecognized position request
+    WHEN: The requested orientation is queried
+    THEN: Known positions have a name and unknown positions have no false match
+    """
+    # Given: A real calibration model.
+    model = AccelerometerCalibrationDataModel(connected_flight_controller)
+    # When / Then: Resolve the controller's requested position.
+    assert model.get_position_orientation_name(position) == expected
+
+
 class TestAccelerometerCalibrationDataModelConnection:
     """Test how the model reflects the flight controller connection state."""
 

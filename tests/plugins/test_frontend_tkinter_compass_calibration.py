@@ -13,11 +13,18 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from collections.abc import Generator
+from types import SimpleNamespace
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 import pytest
+from pytest_mock import MockerFixture
 
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
+from ardupilot_methodic_configurator.plugins import frontend_tkinter_compass_calibration as frontend
+from ardupilot_methodic_configurator.plugins.data_model_compass_calibration import CompassCalibrationDataModel
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration import (
     CompassCalibrationInstructionsPopup,
     CompassCalibrationPopup,
@@ -27,6 +34,7 @@ from ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibratio
     register_compass_calibration_plugin,
 )
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_COMPASS_CALIBRATION
+from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory, PluginModelContext
 
 # pylint: disable=protected-access, redefined-outer-name, too-few-public-methods
 
@@ -336,3 +344,101 @@ class TestCompassCalibrationViewSetupAndRegistration:
 
         mock_view.assert_called_once_with(parent, model, base_window)
         assert result == mock_view.return_value
+
+
+@pytest.fixture
+def compass_session(tk_root: tk.Tk, mocker: MockerFixture) -> Generator[SimpleNamespace, None, None]:
+    """Use a real view and popup window; isolate controller I/O and popup presentation."""
+    parent = tk.Frame(tk_root)
+    popup_root = tk.Toplevel(tk_root)
+    popup_root.withdraw()
+    popup = SimpleNamespace(root=popup_root, destroy=popup_root.destroy)
+    mocker.patch.object(frontend, "CompassCalibrationPopup", return_value=popup)
+    host = SimpleNamespace(navigation_lock=NavigationLock())
+    model = MagicMock(spec=CompassCalibrationDataModel)
+    model.start_calibration.return_value = (True, "Started")
+    model.cancel_calibration.return_value = (True, "Cancelled")
+    view = CompassCalibrationView(parent, model, cast("BaseWindow", host))
+    try:
+        yield SimpleNamespace(view=view, model=model, host=host, popup=popup)
+    finally:
+        if view.winfo_exists():
+            view.destroy()
+        if popup_root.winfo_exists():
+            popup_root.destroy()
+        parent.destroy()
+
+
+def test_compass_calibration_keeps_navigation_locked_until_the_popup_itself_closes(compass_session: SimpleNamespace) -> None:
+    """
+    Retain navigation through child-control teardown.
+
+    GIVEN: Compass calibration is active with an open progress window
+    WHEN: A child control is destroyed and then the window closes
+    THEN: Navigation is released only when the progress window itself is destroyed
+    """
+    # Given: The real view binds the real popup window's Destroy event.
+    context = compass_session
+    context.view._begin_calibration()
+    assert context.host.navigation_lock.locked
+    child = tk.Label(context.popup.root, text="Progress")
+    # When: Destroy an inner control first.
+    child.destroy()
+    # Then: The active session retains navigation until its own window closes.
+    assert context.host.navigation_lock.locked
+    context.popup.root.destroy()
+    assert not context.host.navigation_lock.locked
+    assert not context.view._calibration_active
+
+
+def test_leaving_compass_calibration_cancels_the_session_and_closes_owned_windows(compass_session: SimpleNamespace) -> None:
+    """
+    Clean up active compass calibration when the plugin is removed.
+
+    GIVEN: A calibration progress window and an instructions window belong to the view
+    WHEN: The view is destroyed
+    THEN: Cancellation is requested, both windows close and navigation is released
+    """
+    # Given: A real active view with two owned windows.
+    context = compass_session
+    context.view._begin_calibration()
+    instructions = tk.Toplevel(context.popup.root.master)
+    instructions.withdraw()
+    context.view._instructions_popup = SimpleNamespace(root=instructions)
+    # When: Leave the configuration step.
+    context.view.destroy()
+    # Then: All owned windows and the session lock are released.
+    context.model.cancel_calibration.assert_called_once_with()
+    assert not instructions.winfo_exists()
+    assert not context.popup.root.winfo_exists()
+    assert not context.host.navigation_lock.locked
+    assert not context.view.winfo_exists()
+
+
+def test_registered_compass_plugin_creates_the_user_start_control(tk_root: tk.Tk, mocker: MockerFixture) -> None:
+    """
+    Open compass calibration through application registration.
+
+    GIVEN: A controller and isolated plugin registry
+    WHEN: Both registered factories create the assistant
+    THEN: A real compass model and enabled Start control are available
+    """
+    # Given: External dependencies are isolated while factories remain real.
+    factory = PluginFactory()
+    mocker.patch.object(frontend, "plugin_factory", factory)
+    controller = MagicMock()
+    context = PluginModelContext(controller, MagicMock(), MagicMock())
+    parent = tk.Frame(tk_root)
+    # When: Build the plugin through registered factories.
+    register_compass_calibration_plugin()
+    model = factory.create_model(PLUGIN_COMPASS_CALIBRATION, context)
+    view = factory.create(PLUGIN_COMPASS_CALIBRATION, parent, model, SimpleNamespace())
+    # Then: The user can begin the compass workflow.
+    assert isinstance(view, CompassCalibrationView)
+    assert isinstance(model, CompassCalibrationDataModel)
+    try:
+        assert view.start_button.instate(["!disabled"])
+        assert model.flight_controller is controller
+    finally:
+        view.destroy()
+        parent.destroy()

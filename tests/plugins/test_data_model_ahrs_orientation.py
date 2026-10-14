@@ -10,11 +10,100 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from unittest.mock import MagicMock
+
 import pytest
 
 from ardupilot_methodic_configurator.plugins.data_model_ahrs_orientation import AhrsOrientationDataModel
 
 # pylint: disable=protected-access
+
+
+@pytest.mark.parametrize("orientation", [0.0, 101.0])
+def test_orientation_monitor_waits_for_usable_telemetry(connected_flight_controller: MagicMock, orientation: float) -> None:
+    """
+    Wait for fresh telemetry and a supported active board orientation.
+
+    GIVEN: An initial telemetry gap and either a preset or custom active rotation
+    WHEN: The orientation monitor polls twice
+    THEN: It supplies only samples whose active rotation can be undone
+    """
+    # Given: Controller samples arrive after a gap.
+    controller = connected_flight_controller
+    controller.fc_parameters = {"AHRS_ORIENTATION": orientation}
+    controller.request_scaled_imu_messages.return_value = (True, "")
+    controller.poll_scaled_imu.side_effect = [None, (0.0, 0.0, -1000.0)]
+    model = AhrsOrientationDataModel(controller)
+    # When / Then: Do not invent a sample or interpret unsupported rotations.
+    assert model.poll_imu_raw() is None
+    assert model.poll_imu_raw() == ((0.0, 0.0, -1000.0) if orientation == 0.0 else None)
+
+
+def test_unknown_capture_step_does_not_change_the_orientation_sequence(connected_flight_controller: MagicMock) -> None:
+    """
+    Reject an unsupported capture step without discarding valid poses.
+
+    GIVEN: A valid LEVEL pose has been recorded
+    WHEN: An unknown pose is requested
+    THEN: It is rejected and the existing sequence is retained
+    """
+    # Given: A partially captured sequence.
+    model = AhrsOrientationDataModel(connected_flight_controller)
+    assert model.record_sample("LEVEL", (0.0, 0.0, -1000.0))[0]
+    # When: Attempt a step that is not part of detection.
+    success, message = model.record_sample("BACK", (0.0, 0.0, 1000.0))
+    # Then: Only the original capture remains.
+    assert not success
+    assert message == "Unknown capture step: BACK"
+    assert model._samples == {"LEVEL": (0.0, 0.0, -1000.0)}
+
+
+def test_left_side_capture_cannot_masquerade_as_the_required_right_pose(connected_flight_controller: MagicMock) -> None:
+    """
+    Reject a physically inconsistent set of three poses.
+
+    GIVEN: LEVEL and NOSE DOWN followed by LEFT instead of RIGHT
+    WHEN: The captured orientation is estimated
+    THEN: The model asks for accurate poses rather than recommending a reflected rotation
+    """
+    # Given: Still samples that individually pass capture validation.
+    model = AhrsOrientationDataModel(connected_flight_controller)
+    for step, sample in zip(
+        model.get_required_steps(), ((0.0, 0.0, -1000.0), (-1000.0, 0.0, 0.0), (0.0, 1000.0, 0.0)), strict=True
+    ):
+        assert model.record_sample(step, sample)[0]
+    # When: Estimate from the full sequence.
+    success, estimate, message = model.estimate_orientation()
+    # Then: Do not offer an incorrect preset or custom rotation.
+    assert not success
+    assert estimate is None
+    assert "inconsistent" in message
+    assert model.compute_detected_position(0.0, 1000.0, 0.0) == "LEFT"
+
+
+@pytest.mark.parametrize(("angle", "expected"), [(540.0, 180.0), (-540.0, -180.0), (725.0, 5.0)])
+def test_custom_rotation_angles_are_normalized_to_the_ardupilot_range(angle: float, expected: float) -> None:
+    """
+    Keep equivalent custom rotations in the supported angle range.
+
+    GIVEN: An angle spanning multiple revolutions
+    WHEN: The rotation angle is normalized
+    THEN: The equivalent angle lies between minus and plus 180 degrees
+    """
+    # When / Then: Pure angle normalization preserves an equivalent rotation.
+    assert AhrsOrientationDataModel._wrap_deg(angle) == expected
+
+
+def test_zero_acceleration_has_no_direction_for_orientation_estimation() -> None:
+    """
+    Avoid assigning a direction to a zero vector.
+
+    GIVEN: No acceleration vector
+    WHEN: Direction normalization is requested
+    THEN: No direction is returned instead of dividing by zero
+    """
+    # When / Then: The numerical helper rejects an undefined direction.
+    assert AhrsOrientationDataModel._normalize((0.0, 0.0, 0.0)) is None
 
 
 class TestAhrsOrientationDataModelConnection:

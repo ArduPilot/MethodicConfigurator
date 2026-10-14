@@ -17,9 +17,14 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
+from pytest_mock import MockerFixture
 
+from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
+from ardupilot_methodic_configurator.plugins import frontend_tkinter_level_calibration as frontend
 from ardupilot_methodic_configurator.plugins.data_model_level_calibration import LevelCalibrationDataModel
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_level_calibration import LevelCalibrationView
+from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_LEVEL_CALIBRATION
+from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory, PluginModelContext
 
 # pytest injects fixtures by matching the test function parameter name.
 # pylint: disable=redefined-outer-name,protected-access
@@ -271,3 +276,111 @@ class TestLevelCalibrationView:
 
         editor.update_parameters_from_fc_values.assert_called_once_with({"AHRS_TRIM_X": 0.04})
         assert "AHRS_TRIM_X" in fixture.showerror.call_args.args[1]
+
+
+def test_level_calibration_cannot_interrupt_another_vehicle_operation(level_calibration_view: SimpleNamespace) -> None:
+    """
+    Preserve the shared navigation lock during a competing operation.
+
+    GIVEN: Another vehicle operation owns the navigation lock
+    WHEN: The user requests level calibration
+    THEN: Calibration does not start and the existing lock remains owned
+    """
+    # Given: A real lock owned by a different operation.
+    context = level_calibration_view
+    lock = NavigationLock()
+    owner = object()
+    lock.acquire(owner)
+    context.base_window.navigation_lock = lock
+    # When: Try to start level calibration.
+    context.view._on_level_calibration()
+    # Then: No backend command or control-state transition occurs.
+    context.model.start_level_calibration.assert_not_called()
+    assert lock.locked
+    assert not context.view._calibration_in_progress
+    assert context.view._level_btn.instate(["!disabled"])
+    lock.release(owner)
+
+
+def test_level_calibration_releases_navigation_when_polling_raises(level_calibration_view: SimpleNamespace) -> None:
+    """
+    Recover navigation after a telemetry failure while polling.
+
+    GIVEN: An active asynchronous calibration
+    WHEN: Controller polling raises a transport error
+    THEN: The error propagates and navigation and calibration controls are restored
+    """
+    # Given: A real lock and a failing controller-I/O boundary.
+    context = level_calibration_view
+    context.base_window.navigation_lock = NavigationLock()
+    context.model.start_level_calibration.return_value = (True, "Started")
+    context.model.poll_level_calibration.side_effect = OSError("Connection lost")
+    context.view._on_level_calibration()
+    # When / Then: Restore UI state even when the backend raises.
+    with pytest.raises(OSError, match="Connection lost"):
+        context.view._poll_level_calibration()
+    assert not context.base_window.navigation_lock.locked
+    assert not context.view._calibration_in_progress
+    assert context.view._level_btn.instate(["!disabled"])
+    context.model.poll_level_calibration.reset_mock()
+    context.view._poll_level_calibration()
+    context.model.poll_level_calibration.assert_not_called()
+
+
+def test_failed_level_ack_explains_unconfirmed_trim_and_stale_steps(level_calibration_view: SimpleNamespace) -> None:
+    """
+    Explain ambiguous calibration results after a failed acknowledgment.
+
+    GIVEN: A failed ACK with a changed cached trim and failed readback
+    WHEN: Calibration results are presented
+    THEN: The user sees both stale-step guidance and the unconfirmed-save warning
+    """
+    # Given: One trim changed, but controller readback cannot confirm the result.
+    context = level_calibration_view
+    editor = context.base_window.parameter_editor
+
+    def download(**_kwargs: object) -> tuple[dict[str, float], dict[str, float]]:
+        editor.fc_parameters["AHRS_TRIM_X"] = 0.04
+        return {}, {}
+
+    context.base_window.download_flight_controller_parameters.side_effect = download
+    editor.find_other_steps_with_stale_calibration_values.return_value = ["14_hardware.param"]
+    # When: Present a failed command that was actually sent.
+    context.view._finish_level_calibration(success=False, message="ACK timed out", command_sent=True)
+    # Then: No ambiguous result is presented as confirmed success.
+    message = context.showerror.call_args.args[1]
+    assert "AHRS_TRIM_X" in message
+    assert "Review stale AHRS trim values in: 14_hardware.param" in message
+    assert "Could not confirm whether the trim values were saved." in message
+    context.showinfo.assert_not_called()
+
+
+def test_registered_level_plugin_builds_the_trim_controls(
+    level_calibration_view: SimpleNamespace, mocker: MockerFixture
+) -> None:
+    """
+    Create the level-trim workflow from registered application dependencies.
+
+    GIVEN: A controller and isolated plugin registry
+    WHEN: The application creates the registered model and view
+    THEN: The level-trim control is available with the correct controller dependency
+    """
+    # Given: Isolate registration from the application-wide registry.
+    factory = PluginFactory()
+    mocker.patch.object(frontend, "plugin_factory", factory)
+    controller = MagicMock()
+    context = PluginModelContext(controller, MagicMock(), MagicMock())
+    # When: Instantiate through both registered factories.
+    frontend.register_level_calibration_plugin()
+    model = factory.create_model(PLUGIN_LEVEL_CALIBRATION, context)
+    view = factory.create(
+        PLUGIN_LEVEL_CALIBRATION, level_calibration_view.view.master, model, level_calibration_view.base_window
+    )
+    # Then: The real view offers level calibration.
+    assert isinstance(view, LevelCalibrationView)
+    assert isinstance(model, LevelCalibrationDataModel)
+    try:
+        assert model.flight_controller is controller
+        assert view._level_btn.instate(["!disabled"])
+    finally:
+        view.destroy()

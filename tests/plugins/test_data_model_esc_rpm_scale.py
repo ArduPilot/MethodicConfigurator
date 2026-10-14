@@ -3,6 +3,8 @@
 """
 Tests for the ESC RPM scale plugin data model.
 
+This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
+
 SPDX-FileCopyrightText: 2026 Erwan Billard
 
 SPDX-License-Identifier: GPL-3.0-or-later
@@ -51,6 +53,44 @@ def flight_controller() -> MagicMock:
 @pytest.fixture
 def model(flight_controller: MagicMock, filesystem: MagicMock) -> EscRpmScaleDataModel:
     return EscRpmScaleDataModel(flight_controller, filesystem)
+
+
+@pytest.mark.parametrize("components", [[], {"ESC": []}, {"ESC": {"Product": []}}, {"ESC": {"ESC->FC Telemetry": []}}])
+def test_incomplete_vehicle_metadata_does_not_enable_an_inapplicable_esc_correction(
+    model: EscRpmScaleDataModel, filesystem: MagicMock, components: object
+) -> None:
+    """
+    Treat malformed component metadata as unavailable product/protocol information.
+
+    GIVEN: A vehicle template has malformed nested component data
+    WHEN: The correction requirements are checked
+    THEN: No Hobbywing correction or scripting telemetry is inferred
+    """
+    # Given: Malformed metadata at one component boundary.
+    filesystem.vehicle_components_fs.data = {"Components": components}
+    # When / Then: Detection returns safe defaults without raising.
+    assert not model.is_hobbywing_6x_se()
+    assert not model.is_scripting_telemetry_protocol()
+    assert model.recommended_scale == 1.0
+
+
+@pytest.mark.parametrize("vehicle_directory", ["", "/nonexistent/methodic-vehicle-directory"])
+def test_user_cannot_upload_a_script_without_an_available_vehicle_directory(
+    model: EscRpmScaleDataModel, filesystem: MagicMock, flight_controller: MagicMock, vehicle_directory: str
+) -> None:
+    """
+    Require a valid vehicle directory before generating an upload.
+
+    GIVEN: The vehicle directory is unset or no longer exists
+    WHEN: The user generates and uploads a correction
+    THEN: An actionable error is raised before any upload occurs
+    """
+    # Given: No usable destination for the generated script.
+    filesystem.vehicle_dir = vehicle_directory
+    # When / Then: Fail before controller I/O.
+    with pytest.raises(RuntimeError, match="Vehicle directory is not available"):
+        model.generate_and_upload_script(0.714)
+    flight_controller.upload_file.assert_not_called()
 
 
 class TestHobbywingDetection:

@@ -27,14 +27,19 @@ from ardupilot_methodic_configurator.data_model_parameter_editor import (
 )
 from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
+from ardupilot_methodic_configurator.plugins import frontend_tkinter_ahrs_orientation as frontend
 from ardupilot_methodic_configurator.plugins.data_model_ahrs_orientation import (
     AhrsOrientationDataModel,
     AhrsOrientationEstimate,
 )
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_ahrs_orientation import AhrsOrientationView
+from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_AHRS_ORIENTATION
+from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory, PluginModelContext
 
 if TYPE_CHECKING:
     from collections.abc import Generator
+
+    from pytest_mock import MockerFixture
 
     from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 
@@ -183,6 +188,389 @@ def _label_texts(widget) -> list[str]:
                 texts.append(text)
         texts.extend(_label_texts(child))
     return texts
+
+
+@pytest.fixture
+def orientation_dialogs(mocker: MockerFixture) -> SimpleNamespace:
+    """Mock modal user interaction while retaining real wizard widgets."""
+    return SimpleNamespace(
+        error=mocker.patch.object(frontend, "showerror"),
+        info=mocker.patch.object(frontend, "showinfo"),
+        choose_custom=mocker.patch.object(frontend, "askyesno", return_value=True),
+    )
+
+
+@pytest.fixture
+def final_orientation_capture(view_with_model: SimpleNamespace) -> SimpleNamespace:
+    """Provide the final capture with a realistic low-confidence orientation estimate."""
+    estimate = AhrsOrientationEstimate(
+        best_code=0,
+        best_name="None",
+        match_score_percent=88.0,
+        is_preset_match=False,
+        custom_roll_deg=12.3,
+        custom_pitch_deg=-4.5,
+        custom_yaw_deg=67.8,
+    )
+    context = view_with_model
+    context.view._wizard_active = True
+    context.view._step_index = 2
+    context.view._latest_imu = (0.0, 1000.0, 0.0)
+    context.model.record_sample.return_value = (True, "Captured RIGHT sample")
+    context.model.estimate_orientation.return_value = (True, estimate, "Estimation complete")
+    return context
+
+
+def test_disconnected_user_cannot_start_orientation_detection(
+    view_with_model: SimpleNamespace, orientation_dialogs: SimpleNamespace
+) -> None:
+    """
+    Explain why detection cannot start while disconnected.
+
+    GIVEN: The flight controller is disconnected
+    WHEN: The user presses Continue
+    THEN: Detection remains inactive and a connection error is shown
+    """
+    # Given: No active controller connection.
+    view_with_model.model.is_connected.return_value = False
+
+    # When: Attempt to begin capturing poses.
+    view_with_model.view._continue_btn.configure(state="normal")
+    view_with_model.view._continue_btn.invoke()
+
+    # Then: No capture sequence is started.
+    assert not view_with_model.view._wizard_active
+    view_with_model.model.reset_sequence.assert_not_called()
+    orientation_dialogs.error.assert_called_once_with("Not Connected", "Flight controller not connected")
+
+
+def test_user_can_retry_a_failed_pose_capture(
+    final_orientation_capture: SimpleNamespace, orientation_dialogs: SimpleNamespace
+) -> None:
+    """
+    Preserve progress when a pose cannot be captured.
+
+    GIVEN: The last pose has no valid IMU sample
+    WHEN: The user attempts capture
+    THEN: The failure is explained and the same pose remains available for retry
+    """
+    # Given: Capture rejects the current IMU reading.
+    context = final_orientation_capture
+    context.model.record_sample.return_value = (False, "No fresh IMU sample")
+
+    # When: Capture the last pose.
+    context.view._on_continue()
+
+    # Then: Failed capture does not finish or advance the wizard.
+    assert context.view._wizard_active
+    assert context.view._step_index == 2
+    context.model.estimate_orientation.assert_not_called()
+    orientation_dialogs.error.assert_called_once_with("Capture Failed", "No fresh IMU sample")
+
+
+@pytest.mark.parametrize("successful_estimation", [True, False])
+def test_user_sees_why_orientation_estimation_has_no_result(
+    final_orientation_capture: SimpleNamespace, orientation_dialogs: SimpleNamespace, successful_estimation: bool
+) -> None:
+    """
+    Report estimation failures without staging parameters.
+
+    GIVEN: Captured poses yield no orientation estimate
+    WHEN: The user finishes detection
+    THEN: The reason remains visible and no parameter changes are staged
+    """
+    # Given: Estimation provides no usable result.
+    context = final_orientation_capture
+    context.model.estimate_orientation.return_value = (successful_estimation, None, "Poses are inconsistent")
+
+    # When: Finish capture.
+    context.view._on_continue()
+
+    # Then: Failure feedback persists and the user may start again.
+    assert not context.view._wizard_active
+    assert context.view._recommendation_var.get() == "Poses are inconsistent"
+    assert str(context.view._continue_btn.cget("state")) == "normal"
+    context.parameter_editor.update_parameter_value.assert_not_called()
+    orientation_dialogs.error.assert_called_once_with("Estimation Failed", "Poses are inconsistent")
+
+
+def test_user_sees_when_a_preset_orientation_cannot_be_staged(
+    final_orientation_capture: SimpleNamespace, orientation_dialogs: SimpleNamespace
+) -> None:
+    """
+    Explain a rejected preset parameter update.
+
+    GIVEN: A confident preset estimate and an unavailable parameter editor
+    WHEN: The user finishes detection
+    THEN: No success is claimed and a parameter update error is displayed
+    """
+    # Given: A valid preset estimate but no parameter editor in the host.
+    context = final_orientation_capture
+    context.model.estimate_orientation.return_value = (
+        True,
+        AhrsOrientationEstimate(
+            best_code=2,
+            best_name="Yaw90",
+            match_score_percent=97.5,
+            is_preset_match=True,
+            custom_roll_deg=0.0,
+            custom_pitch_deg=0.0,
+            custom_yaw_deg=90.0,
+        ),
+        "Estimated",
+    )
+    context.view.base_window.parameter_editor = None
+
+    # When: Finish detection.
+    context.view._on_continue()
+
+    # Then: Failure appears both in the wizard and in the dialog.
+    message = "Could not write AHRS_ORIENTATION into the parameter table."
+    assert context.view._recommendation_var.get() == message
+    orientation_dialogs.error.assert_called_once_with("Parameter Update Failed", message)
+    orientation_dialogs.info.assert_not_called()
+
+
+def test_user_can_accept_custom_orientation_after_a_low_confidence_estimate(
+    final_orientation_capture: SimpleNamespace, orientation_dialogs: SimpleNamespace
+) -> None:
+    """
+    Offer and stage Custom 1 when a preset match is uncertain.
+
+    GIVEN: A low-confidence estimate with custom Euler angles
+    WHEN: The user accepts the custom orientation option
+    THEN: Custom angles and the enable flag are staged and upload instructions are shown
+    """
+    # Given: Existing parameters can be updated without adding them again.
+    context = final_orientation_capture
+    context.parameter_editor.current_step_parameters = {
+        name: object()
+        for name in ("CUST_ROT_ENABLE", "AHRS_ORIENTATION", "CUST_ROT1_ROLL", "CUST_ROT1_PITCH", "CUST_ROT1_YAW")
+    }
+
+    # When: Finish capture and accept the custom option.
+    context.view._on_continue()
+
+    # Then: The recommendation reports the staged orientation accurately.
+    orientation_dialogs.choose_custom.assert_called_once()
+    assert "88.0%" in orientation_dialogs.choose_custom.call_args.args[1]
+    assert context.view._recommendation_var.get() == (
+        "Set CUST_ROT_ENABLE=1, Applied CUST_ROT1_ROLL=12.3, CUST_ROT1_PITCH=-4.5, "
+        "CUST_ROT1_YAW=67.8 and set AHRS_ORIENTATION=101 (Custom 1). Upload the changes to use Custom 1 rotation."
+    )
+    context.parameter_editor.add_parameter_to_current_file.assert_not_called()
+    context.parameter_editor.update_parameter_value.assert_any_call("AHRS_ORIENTATION", "101", include_range_check=False)
+    context.parameter_editor_table.repopulate_table.assert_called_once()
+    orientation_dialogs.info.assert_called_once_with("Custom Orientation Applied", context.view._recommendation_var.get())
+    orientation_dialogs.error.assert_not_called()
+
+
+@pytest.mark.parametrize("failure", ["missing_editor", "missing_parameter", "rejected_update"])
+def test_user_sees_failure_when_custom_orientation_cannot_be_staged(
+    final_orientation_capture: SimpleNamespace, orientation_dialogs: SimpleNamespace, failure: str
+) -> None:
+    """
+    Report custom-orientation parameter failures.
+
+    GIVEN: Required parameters cannot be accessed, added, or updated
+    WHEN: The user accepts the custom orientation recommendation
+    THEN: A failure is shown and no successful table refresh is performed
+    """
+    # Given: An unavailable dependency or a rejected parameter operation.
+    context = final_orientation_capture
+    if failure == "missing_editor":
+        context.view.base_window.parameter_editor = None
+    elif failure == "missing_parameter":
+        context.parameter_editor.add_parameter_to_current_file.return_value = False
+    else:
+        context.parameter_editor.update_parameter_value.return_value = SimpleNamespace(status=ParameterValueUpdateStatus.ERROR)
+
+    # When: Finish and accept custom orientation.
+    context.view._on_continue()
+
+    # Then: The staged-operation failure is visible and no success is reported.
+    message = "Could not apply Custom 1 orientation parameters in the parameter table."
+    assert context.view._recommendation_var.get() == message
+    orientation_dialogs.error.assert_called_once_with("Parameter Update Failed", message)
+    orientation_dialogs.info.assert_not_called()
+    context.parameter_editor_table.repopulate_table.assert_not_called()
+
+
+def test_user_can_decline_custom_orientation_and_capture_poses_again(
+    final_orientation_capture: SimpleNamespace, orientation_dialogs: SimpleNamespace
+) -> None:
+    """
+    Restart detection when the user declines an uncertain result.
+
+    GIVEN: An uncertain preset recommendation
+    WHEN: The user declines Custom 1
+    THEN: Detection starts at LEVEL again without staging parameter changes
+    """
+    # Given: The user prefers to repeat detection.
+    context = final_orientation_capture
+    orientation_dialogs.choose_custom.return_value = False
+
+    # When: Complete detection and decline the custom option.
+    context.view._on_continue()
+
+    # Then: A fresh capture sequence is ready.
+    assert context.view._wizard_active
+    assert context.view._step_index == 0
+    assert context.view._wizard_progress_var.get() == "Step 1/3: LEVEL"
+    assert context.view._recommendation_var.get() == ""
+    context.model.reset_sequence.assert_called_once_with()
+    context.parameter_editor.update_parameter_value.assert_not_called()
+
+
+def test_user_can_cancel_detection_and_start_a_fresh_sequence(
+    diagnostics_orientation_view: SimpleNamespace, orientation_dialogs: SimpleNamespace
+) -> None:
+    """
+    Discard captured poses on explicit cancellation.
+
+    GIVEN: An active detector with a captured LEVEL pose
+    WHEN: The user presses Cancel and later reactivates the plugin
+    THEN: Old poses are cleared and a fresh LEVEL sequence starts
+    """
+    # Given: Capture one pose using the real orientation model.
+    context = diagnostics_orientation_view
+    context.view.on_activate()
+    context.view._handle_live_imu_sample((0.0, 0.0, -1000.0))
+    context.view._continue_btn.invoke()
+    assert context.view._step_index == 1
+
+    # When: Cancel through the real button.
+    context.view._cancel_btn.invoke()
+
+    # Then: Captures and progress are reset.
+    assert not context.view._wizard_active
+    assert context.view._step_index == 0
+    assert context.model._samples == {}
+    assert context.view._wizard_progress_var.get() == ""
+    assert context.view._wizard_instruction_var.get() == "Press Continue to start the auto-detection wizard."
+    context.view.on_activate()
+    assert context.view._wizard_progress_var.get() == "Step 1/3: LEVEL"
+    orientation_dialogs.error.assert_not_called()
+
+
+def test_hidden_orientation_plugin_stops_telemetry_and_disables_capture(diagnostics_orientation_view: SimpleNamespace) -> None:
+    """
+    Stop collecting telemetry when the plugin is hidden.
+
+    GIVEN: An active plugin with an IMU polling timer
+    WHEN: The user leaves the configuration step
+    THEN: Its timer is removed and Continue cannot capture another pose
+    """
+    # Given: Detection is active with a scheduled real Tk timer.
+    view = diagnostics_orientation_view.view
+    view.on_activate()
+    timer = view._imu_poll_job
+
+    # When: Hide the plugin.
+    view.on_deactivate()
+
+    # Then: No timer or enabled capture action is left behind.
+    assert view._imu_poll_job is None
+    assert timer not in view.tk.call("after", "info")
+    assert not view._wizard_active
+    assert str(view._continue_btn.cget("state")) == "disabled"
+
+
+def test_user_can_stage_a_detected_preset_from_three_real_pose_samples(
+    diagnostics_orientation_view: SimpleNamespace, orientation_dialogs: SimpleNamespace
+) -> None:
+    """
+    Complete orientation estimation with the real pose-processing model.
+
+    GIVEN: A controller mounted in the default orientation
+    WHEN: The user captures LEVEL, NOSE DOWN and RIGHT poses
+    THEN: AHRS_ORIENTATION=0 is staged and the user is instructed to upload it
+    """
+    # Given: Only controller I/O, table presentation and dialogs are mocked.
+    context = diagnostics_orientation_view
+    context.host.parameter_editor.update_parameter_value.return_value = SimpleNamespace(
+        status=ParameterValueUpdateStatus.UPDATED
+    )
+    view = context.view
+    view.on_activate()
+
+    # When: Capture the three physical poses with real model validation and estimation.
+    samples = ((0.0, 0.0, -1000.0), (-1000.0, 0.0, 0.0), (0.0, -1000.0, 0.0))
+    for index, sample in enumerate(samples):
+        view._handle_live_imu_sample(sample)
+        view._continue_btn.invoke()
+        if index == 0:
+            # Re-showing an active plugin preserves the existing capture and timer.
+            timer = view._imu_poll_job
+            view.on_activate()
+            assert view._imu_poll_job == timer
+            assert view._wizard_progress_var.get() == "Step 2/3: NOSE DOWN"
+
+    # Then: The real estimator's default-orientation result is staged successfully.
+    assert not view._wizard_active
+    assert context.model.has_all_required_samples()
+    context.host.parameter_editor.update_parameter_value.assert_called_once_with(
+        "AHRS_ORIENTATION", "0", include_range_check=False
+    )
+    assert "AHRS_ORIENTATION was set to 0" in view._recommendation_var.get()
+    assert "Press upload to apply the changes." in view._recommendation_var.get()
+    orientation_dialogs.info.assert_called_once_with("AHRS Orientation Estimate", view._recommendation_var.get())
+    orientation_dialogs.error.assert_not_called()
+
+
+def test_missing_live_imu_disables_capture_until_a_fresh_sample_arrives(diagnostics_orientation_view: SimpleNamespace) -> None:
+    """
+    Prevent capture from stale telemetry.
+
+    GIVEN: An active orientation detector
+    WHEN: No live sample is available and then a fresh one arrives
+    THEN: Continue is disabled until the fresh sample arrives
+    """
+    # Given: Active detection.
+    view = diagnostics_orientation_view.view
+    view.on_activate()
+
+    # When: Telemetry becomes unavailable.
+    view._handle_no_live_imu_sample()
+
+    # Then: Capture is gated on a fresh sample.
+    assert str(view._continue_btn.cget("state")) == "disabled"
+    view._handle_live_imu_sample((0.0, 0.0, -1000.0))
+    assert str(view._continue_btn.cget("state")) == "normal"
+
+
+def test_registered_orientation_plugin_creates_a_real_detector(
+    tk_root: tk.Tk, mocker: MockerFixture, orientation_dialogs: SimpleNamespace
+) -> None:
+    """
+    Construct an orientation assistant through the application registry.
+
+    GIVEN: Registered orientation factories and a connected flight controller
+    WHEN: The application creates and activates the plugin
+    THEN: Its real data model starts a LEVEL capture sequence
+    """
+    # Given: An isolated registry and external controller I/O.
+    factory = PluginFactory()
+    mocker.patch.object(frontend, "plugin_factory", factory)
+    context = PluginModelContext(MagicMock(fc_parameters={"AHRS_ORIENTATION": 0.0}), MagicMock(), MagicMock())
+    parent = ttk.Frame(tk_root)
+
+    # When: Create through registered factories.
+    frontend.register_ahrs_orientation_plugin()
+    model = factory.create_model(PLUGIN_AHRS_ORIENTATION, context)
+    view = factory.create(PLUGIN_AHRS_ORIENTATION, parent, model, MagicMock())
+
+    # Then: A real detector is ready for pose capture.
+    assert isinstance(view, AhrsOrientationView)
+    assert isinstance(model, AhrsOrientationDataModel)
+    try:
+        view.on_activate()
+        assert view._wizard_progress_var.get() == "Step 1/3: LEVEL"
+        assert view._imu_poll_job is not None
+        orientation_dialogs.error.assert_not_called()
+    finally:
+        view.destroy()
+        parent.destroy()
 
 
 class TestAhrsOrientationViewUiSurface:
