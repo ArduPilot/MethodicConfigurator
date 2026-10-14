@@ -632,6 +632,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         # an omitted public timeout. This is consumed by the next reply loop
         # entry so process_ftp_reply keeps its long-standing public signature.
         self._next_no_sessions_timeout_extension: Optional[bool] = None
+        self._next_list_timeout_refresh: Optional[bool] = None
         self.last_op_reply = False
         # A synchronous operation that has returned an error must not be
         # retried later by idle_task(), including through the optional
@@ -812,8 +813,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
             self._event_timeout = None
             return
         if timeout is None:
-            minimum_timeout = 15.0 if operation_name == "ListDirectory" else 5.0
-            timeout = max(minimum_timeout, self.__initial_request_retry_budget())
+            timeout = max(5.0, self.__initial_request_retry_budget())
             if operation_name in {"Get", "Put"}:
                 timeout = max(timeout, (MAX_READ_RETRIES + 2) * self.retry_timeout())
             if operation_name == "ListDirectory" and self.list_with_time:
@@ -1677,7 +1677,11 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
     def cmd_list(
         self, args: List[str], timeout: Optional[float] = None, wait: bool = True
     ) -> MAVFTPReturn:
-        """List files."""
+        """List files; the default timeout bounds inactivity between pages.
+
+        An explicit blocking timeout remains a total operation budget, with
+        zero disabling that budget.
+        """
         extend_timeout_on_no_sessions = timeout is None
         valid_timeout, timeout = self.__coerce_optional_timeout(timeout)
         if not valid_timeout:
@@ -1726,7 +1730,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         if self._event_generation != generation:
             return MAVFTPReturn("ListDirectory", FtpError.Fail)
         if timeout is None:
-            timeout = max(15.0, self.__initial_request_retry_budget())
+            timeout = max(5.0, self.__initial_request_retry_budget())
             if self.list_with_time:
                 list_time_timeout = float(
                     getattr(self.ftp_settings, "list_time_timeout", 3.0)
@@ -1745,6 +1749,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
             "ListDirectory",
             timeout=timeout,
             extend_timeout_on_no_sessions=extend_timeout_on_no_sessions,
+            refresh_list_timeout=extend_timeout_on_no_sessions,
         )
 
     def __list_without_time(self, mark_unsupported: bool = True) -> None:
@@ -2070,12 +2075,15 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         else:
             self.filename = os.path.basename(fname)
         self.get_result = None
-        # Generated @SYS files advertise a placeholder size. Storage and
-        # crash dumps have authoritative sizes.
+        # Generated @SYS files and packed parameter files can advertise an
+        # estimated size. Storage and crash dumps have authoritative sizes.
         sys_path = fname.lstrip("/")
         self.remote_size_is_upper_bound = (
-            sys_path.startswith("@SYS/")
-            and sys_path[len("@SYS/") :] not in ("storage.bin", "crash_dump.bin")
+            sys_path.startswith("@PARAM/")
+            or (
+                sys_path.startswith("@SYS/")
+                and sys_path[len("@SYS/") :] not in ("storage.bin", "crash_dump.bin")
+            )
         )
         if callback is None or self.ftp_settings.debug > 1:
             logging.info("Getting %s to %s", fname, self.filename)
@@ -2379,7 +2387,11 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
                 elif self.filename == "-":
                     self.get_result = result
                 if not self.read_to_memory and not self.remote_size_known:
-                    self.requested_size = max(0, actual_size - self.requested_offset)
+                    # Full downloads require EOF and no outstanding gaps.
+                    # Some generated files report only an estimated size.
+                    # Use the received high-water mark, never a short staging
+                    # file's size, as the final publication/accounting target.
+                    self.requested_size = max(0, ofs - self.requested_offset)
                 if self.read_to_memory and len(self.get_result) < self.requested_size:
                     logging.warning(
                         "expected %u, got %u", self.requested_size, len(self.get_result)
@@ -2389,19 +2401,22 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
                         "expected %u, got %u", self.requested_size, actual_size
                     )
                 if (
-                    self.remote_size_known
-                    and not self.read_to_memory
+                    not self.read_to_memory
                     and self.filename not in (None, "-")
                     and self.temp_filename is not None
-                    and actual_size < self.requested_size
+                    and (
+                        actual_size < ofs
+                        or (
+                            self.remote_size_known
+                            and ofs - self.requested_offset < self.requested_size
+                        )
+                    )
                 ):
-                    # A destination-file transfer must not atomically replace
-                    # an existing good file with a known-truncated download.
-                    # Callback and stdout consumers intentionally retain their
-                    # historical EOF-authoritative behavior above.
+                    # Do not publish if the staging file lost received bytes,
+                    # or if an authoritative remote size was not fully read.
                     logging.error(
                         "FTP: refusing to publish short download: expected %u, got %u",
-                        self.requested_size,
+                        self.requested_size if self.remote_size_known else ofs,
                         actual_size,
                     )
                     self.callback_failure = MAVFTPReturn(
@@ -2671,8 +2686,9 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
                     logging.error(
                         "FTP: burst reply creates too many gaps (%u)", total_gap_count
                     )
-                    self.__terminate_session()
-                    return MAVFTPReturn("BurstReadFile", FtpError.InvalidDataSize)
+                    result = MAVFTPReturn("BurstReadFile", FtpError.InvalidDataSize)
+                    self.__terminate_session(result=result)
+                    return result
                 while True:
                     if gap[1] <= max_read:
                         self.read_gaps.append(gap)
@@ -4788,14 +4804,18 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         operation_name: str,
         timeout: Optional[float],
         extend_timeout_on_no_sessions: bool,
+        refresh_list_timeout: Optional[bool] = None,
     ) -> MAVFTPReturn:
         """Run a public command reply loop without changing its override API."""
         previous_extension = self._next_no_sessions_timeout_extension
+        previous_list_refresh = self._next_list_timeout_refresh
         self._next_no_sessions_timeout_extension = extend_timeout_on_no_sessions
+        self._next_list_timeout_refresh = refresh_list_timeout
         try:
             return self.process_ftp_reply(operation_name, timeout=timeout)
         finally:
             self._next_no_sessions_timeout_extension = previous_extension
+            self._next_list_timeout_refresh = previous_list_refresh
 
     def process_ftp_reply(  # pylint: disable=too-many-branches,too-many-locals,too-many-statements,too-many-nested-blocks,too-many-return-statements
         self, operation_name: str, timeout: Optional[float] = None
@@ -4806,6 +4826,10 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         ``_next_no_sessions_timeout_extension`` flag to control whether an
         omitted timeout is extended after ``NoSessionsAvailable`` replies;
         direct callers default to extending an omitted timeout.
+
+        ``cmd_list`` also preserves whether its timeout was omitted through
+        ``_next_list_timeout_refresh``. Only default listing deadlines restart
+        after accepted pages; explicit blocking timeouts remain total budgets.
         """
         start_time = time.time()
         generation = self._event_generation
@@ -4813,6 +4837,13 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         default_timeout = timeout is None
         extend_timeout_on_no_sessions = self._next_no_sessions_timeout_extension
         self._next_no_sessions_timeout_extension = None
+        refresh_list_timeout = self._next_list_timeout_refresh
+        self._next_list_timeout_refresh = None
+        if refresh_list_timeout is None:
+            refresh_list_timeout = default_timeout
+        refresh_list_timeout = (
+            refresh_list_timeout and operation_name == "ListDirectory"
+        )
         if extend_timeout_on_no_sessions is None:
             extend_timeout_on_no_sessions = default_timeout
         if timeout is None:
@@ -4874,6 +4905,8 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         self._ftp_reply_processing_depth += 1
         try:
             while True:  # an FTP operation can have multiple responses
+                accepted_before_receive = self.accepted_reply_generation
+                list_offset_before_receive = self.dir_offset
                 m = self.master.recv_match(
                     type=["FILE_TRANSFER_PROTOCOL"], timeout=recv_timeout
                 )
@@ -4960,6 +4993,14 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
                         ret = self.callback_failure
                         self.callback_failure = None
                         break
+                if (
+                    refresh_list_timeout
+                    and timeout > 0
+                    and self.accepted_reply_generation != accepted_before_receive
+                    and self.dir_offset > list_offset_before_receive
+                ):
+                    timeout_deadline = time.time() + timeout
+                    self._ftp_reply_deadline = timeout_deadline
                 # Completion is scoped to the terminal reply that produced it.
                 # This prevents a delayed ListDirectory EOF from completing a
                 # following RemoveFile or a subsequent list operation.
@@ -5002,6 +5043,8 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
                     )
                     ret = MAVFTPReturn(operation_name, FtpError.RemoteReplyTimeout)
                     break
+                accepted_before_idle = self.accepted_reply_generation
+                list_offset_before_idle = self.dir_offset
                 idle_expired = self.idle_task()
                 if self._event_generation != generation:
                     return ret
@@ -5059,6 +5102,17 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
                     break
                 if malformed_result:
                     break
+                # RX simulation can release a page from idle_task(), rather
+                # than the receive above. Refresh before the timeout check in
+                # that case too; stale or wrong-recipient traffic cannot count.
+                if (
+                    refresh_list_timeout
+                    and timeout > 0
+                    and self.accepted_reply_generation != accepted_before_idle
+                    and self.dir_offset > list_offset_before_idle
+                ):
+                    timeout_deadline = time.time() + timeout
+                    self._ftp_reply_deadline = timeout_deadline
                 if (
                     extend_timeout_on_no_sessions
                     and timeout > 0
