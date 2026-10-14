@@ -260,6 +260,7 @@ def test_external_upload_defaults_select_only_parameters_changed_from_fc() -> No
     table._upload_selection_defaults = {}
     table.upload_checkbutton_var = {}
     changed_variable = MagicMock()
+    table._bulk_upload_selected = None
     unchanged_variable = MagicMock()
     missing_variable = MagicMock()
 
@@ -298,6 +299,7 @@ def test_external_readonly_parameter_cannot_be_selected_for_upload() -> None:
     table.upload_checkbutton_var = {}
     variable = MagicMock()
     checkbox = MagicMock()
+    table._bulk_upload_selected = None
 
     with (
         patch(

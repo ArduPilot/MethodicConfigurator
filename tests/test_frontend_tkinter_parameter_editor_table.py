@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from tkinter import ttk
 from types import SimpleNamespace
 from typing import Any, cast
@@ -40,6 +40,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table imp
     ParameterEditorTable,
     ParameterEditorTableDialogs,
 )
+from ardupilot_methodic_configurator.frontend_tkinter_show import Tooltip
 
 # pylint: disable=protected-access, redefined-outer-name, too-few-public-methods, too-many-lines
 
@@ -317,15 +318,185 @@ def test_repopulate_resets_upload_selection_when_file_changes(parameter_editor_t
     parameter_editor_table._upload_selection_defaults_file = "first.param"
     parameter_editor_table.parameter_editor.current_file = "first.param"
     parameter_editor_table.upload_checkbutton_var = {"PARAM": tk.BooleanVar(value=False)}
+    parameter_editor_table._bulk_upload_selected = False
     parameter_editor_table._render_table = MagicMock()
 
     parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="simple")
     assert parameter_editor_table._upload_selection_defaults == {"PARAM": False}
+    assert parameter_editor_table._bulk_upload_selected is False
 
     parameter_editor_table.parameter_editor.current_file = "second.param"
     parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="simple")
 
     assert parameter_editor_table._upload_selection_defaults == {}
+    assert parameter_editor_table._bulk_upload_selected is None
+
+
+@pytest.mark.parametrize("initial_selection", [(True, True), (True, False), (False, False)])
+@pytest.mark.parametrize("external_table", [False, True])
+def test_user_can_toggle_all_upload_checkboxes_by_clicking_header(
+    parameter_editor_table: ParameterEditorTable, initial_selection: tuple[bool, bool], external_table: bool
+) -> None:
+    """
+    The Upload header alternates between deselecting and selecting every row.
+
+    GIVEN: A table with selected, mixed, or unselected upload checkboxes
+    WHEN: The user clicks the Upload header repeatedly
+    THEN: All checkboxes are cleared, selected, and cleared again
+    """
+    table = parameter_editor_table
+    params = {name: create_mock_data_model_ardupilot_parameter(name=name, fc_value=0.0) for name in ("PARAM1", "PARAM2")}
+    if external_table:
+        table.parameters = params
+        table.options.show_parameter_actions = False
+    else:
+        table.parameter_editor.current_step_parameters = params
+    table.parameter_editor_window.gui_complexity = "advanced"
+    table.repopulate_table(show_only_differences=False, gui_complexity="advanced")
+    header = next(widget for widget in table.view_port.grid_slaves(row=0) if widget.cget("text") == _("Upload"))
+    table.view_port.update_idletasks()
+    for variable, selected in zip(table.upload_checkbutton_var.values(), initial_selection, strict=True):
+        variable.set(selected)
+
+    for expected_selection in (False, True, False):
+        header.event_generate("<Button-1>")
+        assert [variable.get() for variable in table.upload_checkbutton_var.values()] == [expected_selection] * len(params)
+
+
+@pytest.mark.parametrize("fc_connected", [False, True])
+def test_bulk_upload_selection_keeps_disabled_rows_unselected(
+    parameter_editor_table: ParameterEditorTable, fc_connected: bool
+) -> None:
+    """
+    Bulk selection respects upload restrictions.
+
+    GIVEN: An external table with a read-only row and a connected or disconnected controller
+    WHEN: The user clears and selects all upload checkboxes
+    THEN: Read-only and disconnected rows stay unselected
+    """
+    table = parameter_editor_table
+    table.parameters = {
+        "WRITABLE": create_mock_data_model_ardupilot_parameter(name="WRITABLE", fc_value=0.0),
+        "READONLY": create_mock_data_model_ardupilot_parameter(name="READONLY", is_readonly=True),
+    }
+    table.parameter_editor.is_fc_connected = fc_connected
+    for name in table.parameters:
+        table._create_upload_checkbutton(name)
+
+    table._toggle_all_upload_checkbuttons()
+    table._toggle_all_upload_checkbuttons()
+
+    assert table.upload_checkbutton_var["WRITABLE"].get() is fc_connected
+    assert table.upload_checkbutton_var["READONLY"].get() is False
+
+
+def test_rows_rendered_after_header_click_follow_bulk_upload_selection(parameter_editor_table: ParameterEditorTable) -> None:
+    """
+    Newly rendered rows follow the most recent Upload header action.
+
+    GIVEN: A table whose remaining rows have not yet been rendered
+    WHEN: The user clears all upload checkboxes before another row appears
+    THEN: The new row appears unselected and participates in the next select-all action
+    """
+    table = parameter_editor_table
+    table._create_upload_checkbutton("FIRST")
+
+    table._toggle_all_upload_checkbuttons()
+    table._create_upload_checkbutton("LATER")
+
+    assert not any(variable.get() for variable in table.upload_checkbutton_var.values())
+    table._toggle_all_upload_checkbuttons()
+    assert all(variable.get() for variable in table.upload_checkbutton_var.values())
+
+
+@pytest.mark.parametrize("bulk_clicks", [1, 2])
+@pytest.mark.parametrize("individual_edit", [False, True])
+def test_bulk_upload_choice_survives_filter_change_during_batched_render(
+    parameter_editor_table: ParameterEditorTable, bulk_clicks: int, individual_edit: bool
+) -> None:
+    """
+    Preserve upload choices when a filter interrupts rendering.
+
+    GIVEN an external file with rows still waiting to render
+    WHEN the user toggles Upload and changes the filter before the last batch
+    THEN all rows retain that choice and the next header click reverses it.
+    """
+    table = parameter_editor_table
+    table.parameters = {
+        f"P{index}": create_mock_data_model_ardupilot_parameter(name=f"P{index}", fc_value=0.0) for index in range(6)
+    }
+    table.options.show_parameter_actions = False
+    table.options.render_batch_size = 2
+    table.parameter_editor_window.gui_complexity = "advanced"
+    table.parameter_editor.parameters_as_par_dict.side_effect = ParameterEditor.parameters_as_par_dict
+    pending_batches: list[Callable[[], None]] = []
+    with patch.object(table, "after_idle", side_effect=pending_batches.append):
+        table.repopulate_table(show_only_differences=False, gui_complexity="advanced")
+        assert len(table.upload_checkbutton_var) == 2
+        header = next(widget for widget in table.view_port.grid_slaves(row=0) if widget.cget("text") == _("Upload"))
+        for _click in range(bulk_clicks):
+            header.event_generate("<Button-1>")
+        # An individual choice must also survive alongside the bulk choice.
+        if individual_edit:
+            table.upload_checkbutton_var["P0"].set(bulk_clicks == 1)
+        table.repopulate_table(show_only_differences=True, gui_complexity="advanced")
+        while pending_batches:
+            pending_batches.pop(0)()
+
+    expected_names = set() if bulk_clicks == 1 else set(table.parameters)
+    if individual_edit:
+        expected_names.symmetric_difference_update({"P0"})
+    assert set(table.get_upload_selected_params("advanced")) == expected_names
+    header = next(widget for widget in table.view_port.grid_slaves(row=0) if widget.cget("text") == _("Upload"))
+    header.event_generate("<Button-1>")
+    assert all(variable.get() is (bulk_clicks == 1) for variable in table.upload_checkbutton_var.values())
+
+
+@pytest.mark.parametrize("defer_tooltips", [False, True])
+def test_clicking_upload_header_hides_tooltip_and_cancels_pending_show(
+    parameter_editor_table: ParameterEditorTable, defer_tooltips: bool
+) -> None:
+    """
+    Dismiss the tooltip while toggling Upload.
+
+    GIVEN an Upload header with a visible tooltip and a pending show timer
+    WHEN the user clicks the header
+    THEN the tooltip is dismissed, the timer is cancelled, and Upload is toggled.
+    """
+    table = parameter_editor_table
+    table.options.defer_tooltips = defer_tooltips
+    table.parameter_editor.current_step_parameters = {
+        "PARAM": create_mock_data_model_ardupilot_parameter(name="PARAM", fc_value=0.0)
+    }
+    table.parameter_editor_window.gui_complexity = "advanced"
+    tooltips: dict[tk.Widget, Tooltip] = {}
+
+    def record_tooltip(widget: tk.Widget, text: str, position_below: bool = True) -> Tooltip:
+        tooltip = Tooltip(widget, text, position_below=position_below)
+        tooltips[widget] = tooltip
+        return tooltip
+
+    with (
+        patch("ardupilot_methodic_configurator.frontend_tkinter_show.show_tooltip", side_effect=record_tooltip),
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip", side_effect=record_tooltip
+        ),
+    ):
+        table.repopulate_table(show_only_differences=False, gui_complexity="advanced")
+        header = next(widget for widget in table.view_port.grid_slaves(row=0) if widget.cget("text") == _("Upload"))
+        table.view_port.update_idletasks()
+        header.event_generate("<Enter>")
+
+    tooltip = tooltips[header]
+    visible_tooltip = MagicMock()
+    tooltip.tooltip = visible_tooltip
+    tooltip.schedule_show()
+    header.event_generate("<Button-1>")
+
+    visible_tooltip.destroy.assert_called_once_with()
+    assert tooltip.tooltip is None
+    assert "show" not in tooltip.timers
+    assert not table.upload_checkbutton_var["PARAM"].get()
 
 
 def test_repopulate_clears_existing_content(parameter_editor_table: ParameterEditorTable) -> None:
@@ -1416,6 +1587,25 @@ class TestUserParameterEditingWorkflows:
         assert result is True
         add_mock.assert_called_once_with("NEW_PARAM")
         parameter_editor_table.parameter_editor_window.repopulate_parameter_table.assert_called_once_with()
+
+    def test_parameter_added_after_clear_all_starts_unselected(self, parameter_editor_table: ParameterEditorTable) -> None:
+        """A newly added row follows the last Upload header choice after refresh."""
+        table = parameter_editor_table
+        table._create_upload_checkbutton("EXISTING")
+        table._toggle_all_upload_checkbuttons()
+        assert table.upload_checkbutton_var["EXISTING"].get() is False
+
+        add_mock = cast("MagicMock", table.parameter_editor.add_parameter_to_current_file)
+        add_mock.return_value = True
+        assert table._confirm_parameter_addition("NEW_PARAM") is True
+
+        table.parameter_editor.current_step_parameters = {
+            "NEW_PARAM": create_mock_data_model_ardupilot_parameter(name="NEW_PARAM", fc_value=0.0)
+        }
+        table._create_upload_checkbutton("NEW_PARAM")
+        assert table.upload_checkbutton_var["NEW_PARAM"].get() is False
+        assert table.get_upload_selected_params("advanced") == ParDict()
+        table.parameter_editor.get_parameters_as_par_dict.assert_called_once_with([])
 
     def test_user_can_delete_parameter_from_configuration_file(self, parameter_editor_table: ParameterEditorTable) -> None:
         """
