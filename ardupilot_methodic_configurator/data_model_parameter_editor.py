@@ -260,6 +260,18 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self._flight_controller.poll_status_text()
         return self._flight_controller.status_text_display_buffer
 
+    def get_fc_connection_lost_reason(self) -> str | None:
+        """Return an observed flight-controller transport failure, if any."""
+        return self._flight_controller.get_connection_lost_reason()
+
+    def get_fc_connection_session_id(self) -> int:
+        """Identify the connection session independently of polling frequency."""
+        return self._flight_controller.get_connection_session_id()
+
+    def poll_fc_connection(self) -> str | None:
+        """Refresh transport status without consuming messages owned by the current workflow."""
+        return self._flight_controller.poll_connection()
+
     @property
     def fc_parameters(self) -> dict[str, float]:
         return (

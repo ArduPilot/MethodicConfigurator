@@ -27,8 +27,12 @@ import pytest
 
 import ardupilot_methodic_configurator.frontend_tkinter_parameter_editor as parameter_editor_module
 from ardupilot_methodic_configurator.backend_filesystem import Par
+from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.backend_flightcontroller_connection import FlightControllerConnection
+from ardupilot_methodic_configurator.backend_flightcontroller_factory_serial import FakeSerialPortDiscovery
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
-from ardupilot_methodic_configurator.data_model_parameter_editor import LogAnalysisInputs
+from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
+from ardupilot_methodic_configurator.data_model_parameter_editor import LogAnalysisInputs, ParameterEditor
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (
@@ -151,6 +155,10 @@ def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:  # noq
     editor.parameter_editor_table.view_port = MagicMock()
     editor._log_availability_report_window = None
     editor._log_report_return_pending = False
+    editor._connection_monitor_job = None
+    editor._connection_warning_session_id = None
+    editor._connection_monitor_running = True
+    editor._connection_loss_warning_shown = False
     focus_widget = MagicMock()
     editor.parameter_editor_table.view_port.focus_get.return_value = focus_widget
     progress_windows: list[MagicMock] = []
@@ -230,6 +238,7 @@ def parameter_editor() -> MagicMock:
     manager.handle_param_file_change_workflow.return_value = ("01_initial.param", True)
     manager.get_plugin.return_value = None
     manager.get_current_component.return_value = None
+    manager.get_fc_connection_session_id.return_value = 0
     manager.handle_write_changes_workflow = MagicMock()
     manager.handle_copy_fc_values_workflow = MagicMock(return_value="close")
     manager.open_documentation_in_browser = MagicMock()
@@ -1330,6 +1339,103 @@ class TestRunLoop:
         assert events == ["component editor"]
 
 
+class TestConnectionLossWarnings:
+    """Transport warnings and editor polling have the same window lifecycle."""
+
+    def test_user_is_warned_once_for_a_failed_session(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """GIVEN a lost connection, WHEN polling repeats, THEN the user sees one warning."""
+        window = parameter_editor_window
+        window.parameter_editor.poll_fc_connection.return_value = "device removed"
+        window._check_fc_connection()
+        window._check_fc_connection()
+        window.ui.show_warning.assert_called_once()
+        window.root.after.assert_called_with(1500, window._check_fc_connection)
+
+    def test_new_session_can_report_a_new_connection_loss(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """GIVEN a previous warning, WHEN a healthy session is followed by a new loss, THEN a new warning is shown."""
+        window = parameter_editor_window
+        window.parameter_editor.poll_fc_connection.side_effect = ["old failure", None, "new failure"]
+        for _ in range(3):
+            window._check_fc_connection()
+        assert window.ui.show_warning.call_count == 2
+
+    def test_new_failed_session_is_warned_without_an_intermediate_healthy_poll(
+        self, parameter_editor_window: ParameterEditorWindow
+    ) -> None:
+        """GIVEN a previous warning, WHEN reconnect and a new loss occur between polls, THEN the new session also warns."""
+        window = parameter_editor_window
+        window.parameter_editor.get_fc_connection_session_id.side_effect = [1, 2]
+        window.parameter_editor.poll_fc_connection.side_effect = ["old failure", "new failure"]
+        window._check_fc_connection()
+        window._check_fc_connection()
+        assert window.ui.show_warning.call_count == 2
+
+    def test_real_connection_sessions_reach_the_warning_through_facade_and_model(
+        self, parameter_editor_window: ParameterEditorWindow
+    ) -> None:
+        """GIVEN real status delegates, WHEN two sessions fail between polls, THEN both failures reach the user."""
+        connection = FlightControllerConnection(FlightControllerInfo(), serial_port_discovery=FakeSerialPortDiscovery())
+        connection.comport = MagicMock(device="COM21")
+        connection.set_master_for_testing(MagicMock(portdead=False))
+        model = ParameterEditor.__new__(ParameterEditor)
+        model._flight_controller = FlightController(info=connection.info, connection_manager=connection)
+        window = parameter_editor_window
+        window.parameter_editor = model
+        try:
+            connection.mark_connection_lost("first failure")
+            window._check_fc_connection()
+            connection.disconnect()
+            connection.set_master_for_testing(MagicMock(portdead=False))
+            connection.mark_connection_lost("second failure")
+            window._check_fc_connection()
+            assert window.ui.show_warning.call_count == 2
+        finally:
+            connection.disconnect()
+
+    def test_healthy_connection_does_not_interrupt_the_user(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """GIVEN a healthy connection, WHEN polling runs, THEN monitoring continues without a popup."""
+        window = parameter_editor_window
+        window.parameter_editor.poll_fc_connection.return_value = None
+        window._check_fc_connection()
+        window.ui.show_warning.assert_not_called()
+        window.root.after.assert_called_with(1500, window._check_fc_connection)
+
+    @pytest.mark.parametrize("action", ["quit", "edit_components"])
+    def test_leaving_the_editor_cancels_its_pending_poll(
+        self, parameter_editor_window: ParameterEditorWindow, action: str
+    ) -> None:
+        """GIVEN a scheduled poll, WHEN the user leaves the editor, THEN no callback remains queued."""
+        window = parameter_editor_window
+        window._connection_monitor_job = "after#123"
+        if action == "quit":
+            window.close_connection_and_quit()
+        else:
+            window.on_edit_vehicle_components_click()
+        window.root.after_cancel.assert_called_once_with("after#123")
+        assert window._connection_monitor_job is None
+        assert window._connection_monitor_running is False
+
+    def test_closing_during_a_modal_warning_does_not_restart_polling(
+        self, parameter_editor_window: ParameterEditorWindow
+    ) -> None:
+        """GIVEN a warning's nested event loop, WHEN the editor closes, THEN the returning callback does not reschedule."""
+        window = parameter_editor_window
+        window.parameter_editor.poll_fc_connection.return_value = "device removed"
+        window.ui.show_warning.side_effect = lambda *_args: window.close_connection_and_quit()
+        window._check_fc_connection()
+        window.root.after.assert_not_called()
+        assert window._connection_monitor_job is None
+
+    def test_destroyed_interpreter_stops_polling_cleanly(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """GIVEN a destroyed Tcl interpreter, WHEN a pending poll returns, THEN it stops without an exception."""
+        window = parameter_editor_window
+        window.root.winfo_exists.side_effect = tk.TclError("application destroyed")
+        window._check_fc_connection()
+        window.parameter_editor.poll_fc_connection.assert_not_called()
+        window.root.after.assert_not_called()
+        assert window._connection_monitor_running is False
+
+
 class TestWidgetFactoryMethods:
     """Cover the widget factory helpers inside the parameter editor window."""
 
@@ -1605,6 +1711,10 @@ class TestWidgetFactoryMethods:
         directory_widget.container_frame = MagicMock()
 
         with (
+            patch.object(ParameterEditorWindow, "legend_frame"),
+            patch.object(parameter_editor_module, "get_widget_font_family_and_size", return_value=("Arial", 12)),
+            patch.object(parameter_editor_module.ttk, "Style"),
+            patch.object(parameter_editor_module.ttk, "Button"),
             patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Frame", return_value=MagicMock()),
             patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Label", return_value=MagicMock()),
             patch(
@@ -1642,6 +1752,7 @@ class TestWidgetFactoryMethods:
         annotate_checkbox = MagicMock(pack=MagicMock())
 
         with (
+            patch.object(parameter_editor_module.tk, "BooleanVar"),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ProgramSettings.get_setting",
                 return_value=False,
@@ -1702,6 +1813,7 @@ class TestWidgetFactoryMethods:
         parameter_table = MagicMock(pack=MagicMock())
 
         with (
+            patch.object(parameter_editor_module.tk, "BooleanVar"),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ProgramSettings.get_setting",
                 side_effect=lambda _key: False,
@@ -3285,6 +3397,7 @@ class TestCopyFlightControllerValues:
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.tk.Toplevel",
                 return_value=dialog,
             ),
+            patch.object(parameter_editor_module, "get_safe_font_config", return_value={"family": "Arial", "size": 12}),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.tk.Label",
                 side_effect=[message_label, link_label],

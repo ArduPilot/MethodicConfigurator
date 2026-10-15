@@ -19,6 +19,8 @@ from time import sleep as time_sleep
 from time import time as time_time
 from typing import TYPE_CHECKING, Any, Optional
 
+from serial.serialutil import SerialException
+
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import DEVICE_FC_PARAM_FROM_FILE
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp import create_mavftp
@@ -156,6 +158,8 @@ class FlightControllerParams:
             if param_dict:
                 self.fc_parameters = param_dict
                 return param_dict, default_param_dict
+            if isinstance(self._connection_manager.poll_connection(), str):
+                return {}, ParDict()
             logging_info(_("MAVFTP parameter download failed on the %s, fallback to MAVLink"), self.comport_device)
         else:
             logging_info(_("MAVFTP is not supported by the %s flight controller, fallback to MAVLink"), self.comport_device)
@@ -279,6 +283,13 @@ class FlightControllerParams:
             if pdict:
                 progress_reporter(100, 100)
             return pdict, defdict
+        except (ConnectionError, SerialException) as error:
+            self._connection_manager.mark_connection_lost(str(error))
+            logging_warning(
+                _("Flight-controller connection lost during MAVFTP parameter download: %(error)s"),
+                {"error": str(error)},
+            )
+            return {}, ParDict()
         except Exception as error:  # pylint: disable=broad-exception-caught
             logging_warning(
                 _("MAVFTP parameter download failed; falling back to MAVLink: %(error)s"),
