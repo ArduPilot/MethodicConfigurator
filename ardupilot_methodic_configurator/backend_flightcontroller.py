@@ -830,6 +830,10 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         """Request periodic SCALED_IMU messages - delegates to commands manager."""
         return self._commands_manager.request_scaled_imu_messages(interval_microseconds)
 
+    def request_rc_receiver_messages(self, interval_microseconds: int = 200_000) -> tuple[bool, str]:
+        """Request receiver telemetry intervals - delegates to commands manager."""
+        return self._commands_manager.request_rc_receiver_messages(interval_microseconds)
+
     def request_periodic_battery_status(self, interval_microseconds: int = 1000000) -> tuple[bool, str]:
         """Request periodic BATTERY_STATUS messages - delegates to commands manager."""
         return self._commands_manager.request_periodic_battery_status(interval_microseconds)

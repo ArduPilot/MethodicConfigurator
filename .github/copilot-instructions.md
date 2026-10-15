@@ -9,6 +9,46 @@ This is a Python GUI application for configuring ArduPilot flight controller par
 - Use ruff only for Python files (*.py); use `npx markdownlint-cli2` for markdown files (*.md)
 - All code must pass pre-commit checks before merging
 
+### Python file headers and test executability
+
+New hand-written Python files must use the full project module-docstring header below.
+Include the project identification and URL, blank lines, copyright notice and SPDX license identifier;
+an SPDX-only header does not match the project format. Use the appropriate year and copyright holder,
+and preserve existing notices when editing or moving files.
+
+```python
+"""
+Brief description of this module.
+
+This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
+
+SPDX-FileCopyrightText: YYYY Copyright holder <email>
+
+SPDX-License-Identifier: GPL-3.0-or-later
+"""
+```
+
+New Python test modules anywhere under `tests/`, including `tests/plugins/`, must also:
+
+- Start with `#!/usr/bin/env python3` as the very first line, immediately before the module docstring.
+- Be executable and recorded in Git with mode `100755`. Preserve this mode when moving or replacing tests.
+- Keep helper modules such as `conftest.py` and `__init__.py` without a shebang unless they are executable scripts.
+
+On Linux/macOS, use `chmod +x` on each new test module before staging it.
+On Windows, set the Git index mode explicitly; filesystem permissions and `core.filemode=false` do not establish it.
+Use the exact file paths, for example:
+
+```text
+git add -- tests/test_example.py
+git update-index --chmod=+x -- tests/test_example.py
+git ls-files --stage -- tests/test_example.py
+pre-commit run --files tests/test_example.py
+```
+
+Verify the first line and the staged `100755` mode before finishing.
+The existing shebang/executable hooks check consistency, but a test lacking both can pass them;
+REUSE checks SPDX coverage, not the complete project header format. Check all three requirements explicitly.
+
 ## Testing
 
 - Use pytest with behavior-driven development (BDD) approach

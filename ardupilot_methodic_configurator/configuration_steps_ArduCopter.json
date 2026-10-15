@@ -191,6 +191,14 @@
             "external_tool_url": "https://edgetx.org/getedgetx/",
             "mandatory_text": "100% mandatory (0% optional)",
             "component": "RC Receiver",
+            "plugin": {
+                "name": "rc_receiver",
+                "placement": "left"
+            },
+            "instructions_popup": {
+                "type": "info",
+                "msg": "Configuring and tuning a vehicle for the first time requires a RC-controller.\nConnect the RC-receiver to the FC, power on the RC-controller and bind them.\nOnce the vehicle is tuned, you can remove it and operate the vehicle without it."
+            },
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["BRD_ALT_CONFIG", "FS_THR_VALUE", "RC_.*", "RSSI_TYPE"],
             "derived_parameters": {

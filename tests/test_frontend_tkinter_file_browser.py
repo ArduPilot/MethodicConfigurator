@@ -41,6 +41,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_file_browser_tasks import 
     Task,
     TaskCompletion,
 )
+from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 
@@ -2481,6 +2482,97 @@ class TestFileBrowserWindow:
         modal.assert_called_once_with(editor.root, editor.parameter_editor, editor.ui)
         editor.ui.create_progress_window.assert_not_called()
         editor.parameter_editor.download_last_flight_log.assert_not_called()
+
+    @pytest.mark.parametrize("paired_hooks", [False, True])
+    def test_file_browser_owns_receiver_until_close(self, paired_hooks: bool) -> None:
+        """
+        Pause polling before MAVFTP can receive replies.
+
+        GIVEN an active plugin and no open browser,
+        WHEN the browser opens and is raised again,
+        THEN the plugin pauses once and resumes once after the browser closes.
+        """
+        editor = ParameterEditorWindow.__new__(ParameterEditorWindow)
+        editor.navigation_lock = NavigationLock()
+        editor.root = MagicMock()
+        editor.parameter_editor = MagicMock()
+        editor.ui = MagicMock()
+        hooks = ["on_suspend", "on_resume"] if paired_hooks else ["on_deactivate", "on_activate"]
+        plugin = MagicMock(spec=hooks)
+        editor.current_plugin_view = plugin
+        pause, resume = (getattr(plugin, hook) for hook in hooks)
+        browser = MagicMock()
+
+        def open_browser(*_args: object) -> MagicMock:
+            pause.assert_called_once_with()
+            resume.assert_not_called()
+            assert editor.navigation_lock.locked
+            editor.on_skip_click()
+            editor.parameter_editor.get_next_non_optional_file.assert_not_called()
+            return browser
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.FileBrowserWindow", side_effect=open_browser
+        ) as browser_factory:
+            editor.on_download_bin_logs_click()
+            editor.on_download_bin_logs_click()
+            browser_factory.assert_called_once()
+            resume.assert_not_called()
+            closed = browser.set_closed_callback.call_args.args[0]
+            closed()
+            closed()
+
+        assert editor._file_browser_window is None
+        assert not editor.navigation_lock.locked
+        pause.assert_called_once_with()
+        resume.assert_called_once_with()
+
+    @pytest.mark.parametrize("plugin_replaced", [False, True])
+    def test_file_browser_does_not_resume_removed_plugin(self, plugin_replaced: bool) -> None:
+        """
+        Avoid restarting an abandoned telemetry receiver.
+
+        GIVEN the file browser paused a plugin,
+        WHEN the plugin is replaced or the parent closes before the browser,
+        THEN the old plugin stays paused.
+        """
+        editor = ParameterEditorWindow.__new__(ParameterEditorWindow)
+        editor.navigation_lock = MagicMock(locked=False)
+        editor.root = MagicMock()
+        editor.parameter_editor = MagicMock()
+        editor.ui = MagicMock()
+        plugin = MagicMock(spec=["on_deactivate", "on_activate"])
+        editor.current_plugin_view = plugin
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.FileBrowserWindow") as browser:
+            editor.on_download_bin_logs_click()
+            if plugin_replaced:
+                editor.current_plugin_view = None
+            else:
+                editor.root.winfo_exists.return_value = False
+            browser.return_value.set_closed_callback.call_args.args[0]()
+        plugin.on_activate.assert_not_called()
+
+    def test_plugin_resumes_if_file_browser_cannot_open(self) -> None:
+        """Given a polling plugin, when browser creation fails, monitoring resumes."""
+        editor = ParameterEditorWindow.__new__(ParameterEditorWindow)
+        editor.navigation_lock = NavigationLock()
+        editor.root = MagicMock()
+        editor.parameter_editor = MagicMock()
+        editor.ui = MagicMock()
+        plugin = MagicMock(spec=["on_deactivate", "on_activate"])
+        editor.current_plugin_view = plugin
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.FileBrowserWindow",
+                side_effect=tk.TclError("closed"),
+            ),
+            pytest.raises(tk.TclError, match="closed"),
+        ):
+            editor.on_download_bin_logs_click()
+        plugin.on_deactivate.assert_called_once_with()
+        plugin.on_activate.assert_called_once_with()
+        assert editor._file_browser_window is None
+        assert not editor.navigation_lock.locked
 
 
 def test_download_popup_stays_open_during_verification_and_closes_with_the_task(tk_root) -> None:

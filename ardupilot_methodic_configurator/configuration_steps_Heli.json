@@ -190,6 +190,10 @@
             "external_tool_url": "https://edgetx.org/getedgetx/",
             "mandatory_text": "100% mandatory (0% optional)",
             "component": "RC Receiver",
+            "plugin": {
+                "name": "rc_receiver",
+                "placement": "left"
+            },
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["FS_THR_VALUE", "RC_.*"],
             "derived_parameters": {

@@ -1052,6 +1052,20 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             logging_debug(_("SCALED_IMU stream request failed: %(error)s"), {"error": error_msg})
         return success, error_msg
 
+    def request_rc_receiver_messages(self, interval_microseconds: int = 200_000) -> tuple[bool, str]:
+        """Request channel and receiver status streams; zero restores firmware defaults."""
+        errors = []
+        for message_id in (mavlink.MAVLINK_MSG_ID_RC_CHANNELS, mavlink.MAVLINK_MSG_ID_SYS_STATUS):
+            success, error = self.send_command_and_wait_ack(
+                mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,
+                param1=float(message_id),
+                param2=float(interval_microseconds),
+                timeout=self.COMMAND_ACK_TIMEOUT_BATTERY,
+            )
+            if not success:
+                errors.append(error)
+        return not errors, "; ".join(errors)
+
     def request_periodic_battery_status(self, interval_microseconds: int = 1000000) -> tuple[bool, str]:
         """
         Request periodic BATTERY_STATUS messages from the flight controller.

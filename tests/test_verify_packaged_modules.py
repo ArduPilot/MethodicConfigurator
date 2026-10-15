@@ -112,6 +112,7 @@ def test_plugin_validation_registers_expected_plugins_without_creating_windows()
             "level_calibration",
             "motor_test",
             "rc_calibration",
+            "rc_receiver",
             "servo_out",
         }
 
