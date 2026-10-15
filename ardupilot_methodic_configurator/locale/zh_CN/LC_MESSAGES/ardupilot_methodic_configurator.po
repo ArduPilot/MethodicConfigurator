@@ -6456,7 +6456,7 @@ msgstr "从 %s 加载图像时出错: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_collapsible_label_frame.py:52
 msgid "Show or hide this section's contents"
-msgstr ""
+msgstr "显示或隐藏此部分的内容"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:51
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:60
@@ -6925,40 +6925,40 @@ msgstr "未捕获到横幅消息。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:70
 msgid "Latest 100 STATUSTEXT messages"
-msgstr ""
+msgstr "最新的 100 条 STATUSTEXT 消息"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:73
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:117
 msgid "No status messages captured."
-msgstr ""
+msgstr "未捕获到状态消息。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:77
 msgid "Detected devices"
-msgstr ""
+msgstr "检测到的设备"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:203
 msgid "Device"
-msgstr ""
+msgstr "设备"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:204
 msgid "Bus type"
-msgstr ""
+msgstr "总线类型"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:205
 msgid "Bus"
-msgstr ""
+msgstr "总线"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:206
 msgid "Address"
-msgstr ""
+msgstr "地址"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:207
 msgid "Device type"
-msgstr ""
+msgstr "设备类型"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:208
 msgid "Priority"
-msgstr ""
+msgstr "优先级"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:147
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:640
@@ -7702,7 +7702,7 @@ msgid ""
 "After a successful or failed upload, closing this window closes AMC. Restart "
 "AMC to continue configuration. Cancelling before erase keeps AMC open unless "
 "a board was connected or unplugged in this window."
-msgstr ""
+msgstr "下载适用于板卡 ID {board_id} 的 {release} 并准备刷写吗？\n\n无论上传成功还是失败，关闭此窗口都会关闭 AMC。请重新启动 AMC 以继续配置。如果在擦除前取消，则 AMC 将保持打开，除非在此窗口中连接或拔出了板卡。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:507
 msgid "Select APJ firmware file"
@@ -7719,7 +7719,7 @@ msgid ""
 "After a successful or failed upload, closing this window closes AMC. Restart "
 "AMC to continue configuration. Cancelling before erase keeps AMC open unless "
 "a board was connected or unplugged in this window."
-msgstr ""
+msgstr "使用适用于板卡 ID {board_id} 的本地固件 {file} 并准备刷写吗？\n\n无论上传成功还是失败，关闭此窗口都会关闭 AMC。请重新启动 AMC 以继续配置。如果在擦除前取消，则 AMC 将保持打开，除非在此窗口中连接或拔出了板卡。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:595
 msgid "Firmware catalog error"
@@ -7858,7 +7858,7 @@ msgstr "请等待当前操作完成"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:757
 msgid "AMC will close now. Restart AMC to continue configuration."
-msgstr ""
+msgstr "AMC 现在将关闭。请重新启动 AMC 以继续配置。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:780
 msgid ""
@@ -8828,7 +8828,7 @@ msgstr "文件浏览器已打开"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1951
 msgid "Close the flight-controller file browser before opening diagnostics."
-msgstr ""
+msgstr "打开诊断之前，请先关闭飞控文件浏览器。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:2082
 msgid "Log analysis is running"
@@ -9018,7 +9018,7 @@ msgstr "选择后，将新值上传到飞控"
 msgid ""
 "Click this header to deselect all upload checkboxes; click again to select "
 "all."
-msgstr ""
+msgstr "点击此标题可取消选择所有上传复选框；再次点击可全部选中。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:238
 msgid "Manual"
@@ -12629,7 +12629,7 @@ msgid ""
 "Optional, but must be performed after a Simple or Full calibration.\n"
 "Place the calibrated vehicle on a level surface and keep it still.\n"
 "This trims roll and pitch only; it does not affect yaw."
-msgstr ""
+msgstr "可选，但必须在完成简易校准或完整校准后执行。\n将已校准的载具放置在水平表面上并保持静止。\n这仅微调横滚和俯仰，不影响偏航。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_level_calibration.py:138
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_level_calibration.py:156

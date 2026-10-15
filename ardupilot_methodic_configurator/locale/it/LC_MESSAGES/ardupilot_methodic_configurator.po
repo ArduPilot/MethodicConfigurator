@@ -7232,7 +7232,7 @@ msgstr "Errore durante il caricamento dell'immagine da %s: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_collapsible_label_frame.py:52
 msgid "Show or hide this section's contents"
-msgstr ""
+msgstr "Mostra o nascondi il contenuto di questa sezione"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:51
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:60
@@ -7718,40 +7718,40 @@ msgstr "Nessun messaggio del banner acquisito."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:70
 msgid "Latest 100 STATUSTEXT messages"
-msgstr ""
+msgstr "Ultimi 100 messaggi STATUSTEXT"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:73
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:117
 msgid "No status messages captured."
-msgstr ""
+msgstr "Nessun messaggio di stato acquisito."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:77
 msgid "Detected devices"
-msgstr ""
+msgstr "Dispositivi rilevati"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:203
 msgid "Device"
-msgstr ""
+msgstr "Dispositivo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:204
 msgid "Bus type"
-msgstr ""
+msgstr "Tipo di bus"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:205
 msgid "Bus"
-msgstr ""
+msgstr "Bus"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:206
 msgid "Address"
-msgstr ""
+msgstr "Indirizzo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:207
 msgid "Device type"
-msgstr ""
+msgstr "Tipo di dispositivo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:208
 msgid "Priority"
-msgstr ""
+msgstr "Priorità"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:147
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:640
@@ -8505,7 +8505,7 @@ msgid ""
 "After a successful or failed upload, closing this window closes AMC. Restart "
 "AMC to continue configuration. Cancelling before erase keeps AMC open unless "
 "a board was connected or unplugged in this window."
-msgstr ""
+msgstr "Scaricare {release} per la scheda con ID {board_id} e prepararsi a flasharlo?\n\nDopo un caricamento riuscito o non riuscito, la chiusura di questa finestra chiude AMC. Riavviare AMC per continuare la configurazione. L'annullamento prima della cancellazione mantiene AMC aperto, a meno che in questa finestra non sia stata collegata o scollegata una scheda."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:507
 msgid "Select APJ firmware file"
@@ -8522,7 +8522,7 @@ msgid ""
 "After a successful or failed upload, closing this window closes AMC. Restart "
 "AMC to continue configuration. Cancelling before erase keeps AMC open unless "
 "a board was connected or unplugged in this window."
-msgstr ""
+msgstr "Usare il firmware locale {file} per la scheda con ID {board_id} e prepararsi a flasharlo?\n\nDopo un caricamento riuscito o non riuscito, la chiusura di questa finestra chiude AMC. Riavviare AMC per continuare la configurazione. L'annullamento prima della cancellazione mantiene AMC aperto, a meno che in questa finestra non sia stata collegata o scollegata una scheda."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:595
 msgid "Firmware catalog error"
@@ -8662,7 +8662,7 @@ msgstr "Attendere il completamento dell'operazione in corso"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:757
 msgid "AMC will close now. Restart AMC to continue configuration."
-msgstr ""
+msgstr "AMC verrà chiuso ora. Riavviare AMC per continuare la configurazione."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:780
 msgid ""
@@ -9683,7 +9683,7 @@ msgstr "Il browser dei file è aperto"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1951
 msgid "Close the flight-controller file browser before opening diagnostics."
-msgstr ""
+msgstr "Chiudere il browser dei file del controller di volo prima di aprire la diagnostica."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:2082
 msgid "Log analysis is running"
@@ -9892,7 +9892,7 @@ msgstr "Quando selezionato, carica il nuovo valore sul controller di volo"
 msgid ""
 "Click this header to deselect all upload checkboxes; click again to select "
 "all."
-msgstr ""
+msgstr "Fare clic su questa intestazione per deselezionare tutte le caselle di controllo di caricamento; fare di nuovo clic per selezionarle tutte."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:238
 msgid "Manual"
@@ -13838,7 +13838,7 @@ msgid ""
 "Optional, but must be performed after a Simple or Full calibration.\n"
 "Place the calibrated vehicle on a level surface and keep it still.\n"
 "This trims roll and pitch only; it does not affect yaw."
-msgstr ""
+msgstr "Facoltativo, ma deve essere eseguito dopo una calibrazione Semplice o Completa.\nPosizionare il veicolo calibrato su una superficie piana e mantenerlo fermo.\nQuesto regola solo rollio e beccheggio; non influisce sull'imbardata."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_level_calibration.py:138
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_level_calibration.py:156

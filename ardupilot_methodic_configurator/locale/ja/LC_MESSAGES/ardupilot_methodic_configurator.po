@@ -6940,7 +6940,7 @@ msgstr "%sから画像を読み込む際にエラーが発生しました: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_collapsible_label_frame.py:52
 msgid "Show or hide this section's contents"
-msgstr ""
+msgstr "このセクションの内容を表示または非表示にします"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:51
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:60
@@ -7415,40 +7415,40 @@ msgstr "バナーメッセージは取得されませんでした。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:70
 msgid "Latest 100 STATUSTEXT messages"
-msgstr ""
+msgstr "最新のSTATUSTEXTメッセージ100件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:73
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:117
 msgid "No status messages captured."
-msgstr ""
+msgstr "ステータスメッセージは取得されていません。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:77
 msgid "Detected devices"
-msgstr ""
+msgstr "検出されたデバイス"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:203
 msgid "Device"
-msgstr ""
+msgstr "デバイス"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:204
 msgid "Bus type"
-msgstr ""
+msgstr "バスタイプ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:205
 msgid "Bus"
-msgstr ""
+msgstr "バス"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:206
 msgid "Address"
-msgstr ""
+msgstr "アドレス"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:207
 msgid "Device type"
-msgstr ""
+msgstr "デバイスタイプ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:208
 msgid "Priority"
-msgstr ""
+msgstr "優先度"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:147
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:640
@@ -8206,7 +8206,7 @@ msgid ""
 "After a successful or failed upload, closing this window closes AMC. Restart "
 "AMC to continue configuration. Cancelling before erase keeps AMC open unless "
 "a board was connected or unplugged in this window."
-msgstr ""
+msgstr "ボードID {board_id} 用の {release} をダウンロードして、書き込みの準備をしますか？\n\nアップロードが成功した場合も失敗した場合も、このウィンドウを閉じるとAMCは終了します。設定を続けるにはAMCを再起動してください。消去前にキャンセルした場合、このウィンドウでボードの接続または取り外しが行われていなければ、AMCは開いたままになります。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:507
 msgid "Select APJ firmware file"
@@ -8223,7 +8223,7 @@ msgid ""
 "After a successful or failed upload, closing this window closes AMC. Restart "
 "AMC to continue configuration. Cancelling before erase keeps AMC open unless "
 "a board was connected or unplugged in this window."
-msgstr ""
+msgstr "ボードID {board_id} 用のローカルファームウェア {file} を使用して、書き込みの準備をしますか？\n\nアップロードが成功した場合も失敗した場合も、このウィンドウを閉じるとAMCは終了します。設定を続けるにはAMCを再起動してください。消去前にキャンセルした場合、このウィンドウでボードの接続または取り外しが行われていなければ、AMCは開いたままになります。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:595
 msgid "Firmware catalog error"
@@ -8363,7 +8363,7 @@ msgstr "現在の操作が完了するまでお待ちください"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:757
 msgid "AMC will close now. Restart AMC to continue configuration."
-msgstr ""
+msgstr "AMCはこれから終了します。設定を続けるにはAMCを再起動してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:780
 msgid ""
@@ -9368,7 +9368,7 @@ msgstr "ファイルブラウザが開いています"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1951
 msgid "Close the flight-controller file browser before opening diagnostics."
-msgstr ""
+msgstr "診断を開く前に、フライトコントローラーのファイルブラウザーを閉じてください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:2082
 msgid "Log analysis is running"
@@ -9567,7 +9567,7 @@ msgstr "選択時、新しい値をフライトコントローラにアップロ
 msgid ""
 "Click this header to deselect all upload checkboxes; click again to select "
 "all."
-msgstr ""
+msgstr "このヘッダーをクリックすると、すべてのアップロードチェックボックスの選択を解除します。もう一度クリックすると、すべて選択します。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:238
 msgid "Manual"
@@ -13420,7 +13420,7 @@ msgid ""
 "Optional, but must be performed after a Simple or Full calibration.\n"
 "Place the calibrated vehicle on a level surface and keep it still.\n"
 "This trims roll and pitch only; it does not affect yaw."
-msgstr ""
+msgstr "任意ですが、SimpleまたはFullキャリブレーションの後に実行する必要があります。\nキャリブレーション済みの機体を水平な面に置き、動かさないでください。\nこれはロールとピッチのみを調整し、ヨーには影響しません。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_level_calibration.py:138
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_level_calibration.py:156
