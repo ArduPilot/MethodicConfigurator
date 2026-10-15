@@ -1956,6 +1956,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         """Run a parameter upload callback with shared progress and error handling."""
         if self.navigation_lock.locked:
             return False
+        resume_plugin = self._pause_plugin_receiver()
+        upload_owner = object()
+        self.navigation_lock.acquire(upload_owner)
         try:
             return self.ui.upload_params_with_progress(
                 self.root,
@@ -1966,11 +1969,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.ui.show_error(_("Upload Error"), f"{_('Failed to upload parameters:')} {e}")
             logging_exception("Parameter upload failed")
             return False
+        finally:
+            self.navigation_lock.release(upload_owner)
+            resume_plugin()
 
     def on_download_bin_logs_click(self) -> None:
         """Open the modal window for browsing and downloading FC log files."""
-        if self.navigation_lock.locked:
-            return
         existing_window = getattr(self, "_file_browser_window", None)
         if existing_window is not None:
             try:
@@ -1981,9 +1985,51 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             except tk.TclError:
                 self._file_browser_window = None
 
-        download_window = FileBrowserWindow(self.root, self.parameter_editor, self.ui)
-        self._file_browser_window = download_window
-        download_window.set_closed_callback(lambda: setattr(self, "_file_browser_window", None))
+        if self.navigation_lock.locked:
+            return
+        resume_plugin = ParameterEditorWindow._pause_plugin_receiver(self)
+        browser_owner = object()
+        self.navigation_lock.acquire(browser_owner)
+
+        def on_browser_closed() -> None:
+            self._file_browser_window = None
+            self.navigation_lock.release(browser_owner)
+            resume_plugin()
+
+        try:
+            download_window = FileBrowserWindow(self.root, self.parameter_editor, self.ui)
+            self._file_browser_window = download_window
+            download_window.set_closed_callback(on_browser_closed)
+        except Exception:
+            on_browser_closed()
+            raise
+
+    def _pause_plugin_receiver(self) -> Callable[[], None]:
+        """Pause the current receiver and return an idempotent, owner-checked resume callback."""
+        plugin_view = getattr(self, "current_plugin_view", None)
+        resume_plugin: Callable[[], object] | None = None
+        if plugin_view is not None:
+            suspend = getattr(plugin_view, "on_suspend", None)
+            resume = getattr(plugin_view, "on_resume", None)
+            if callable(suspend) and callable(resume):
+                resume_plugin = resume
+                suspend()
+            elif hasattr(plugin_view, "on_deactivate") and hasattr(plugin_view, "on_activate"):
+                resume_plugin = plugin_view.on_activate
+                plugin_view.on_deactivate()
+
+        def resume_receiver() -> None:
+            nonlocal resume_plugin
+            callback, resume_plugin = resume_plugin, None
+            if (
+                plugin_view is not None
+                and callback is not None
+                and self.current_plugin_view is plugin_view
+                and self.root.winfo_exists()
+            ):
+                callback()
+
+        return resume_receiver
 
     def on_fc_banner_click(self) -> None:
         """
@@ -2005,18 +2051,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     return
             except tk.TclError:
                 self._file_browser_window = None
-        plugin_view = self.current_plugin_view
-        resume_plugin: Callable[[], object] | None = None
+        resume_plugin = ParameterEditorWindow._pause_plugin_receiver(self)
         try:
-            if plugin_view is not None:
-                suspend = getattr(plugin_view, "on_suspend", None)
-                resume = getattr(plugin_view, "on_resume", None)
-                if callable(suspend) and callable(resume):
-                    resume_plugin = resume
-                    suspend()
-                elif hasattr(plugin_view, "on_deactivate") and hasattr(plugin_view, "on_activate"):
-                    resume_plugin = plugin_view.on_activate
-                    plugin_view.on_deactivate()
             banner_window = FlightControllerBannerWindow(
                 self.root,
                 self.parameter_editor.get_fc_banner_text(),
@@ -2027,13 +2063,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             )
             self.root.wait_window(banner_window.root)
         finally:
-            if (
-                plugin_view is not None
-                and resume_plugin is not None
-                and self.current_plugin_view is plugin_view
-                and self.root.winfo_exists()
-            ):
-                resume_plugin()
+            resume_plugin()
 
     def on_zip_vehicle_for_forum_help_click(self) -> None:
         """Handle the zip vehicle for forum help button click."""

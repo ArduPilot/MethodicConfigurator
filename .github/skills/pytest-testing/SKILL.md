@@ -106,6 +106,17 @@ def configured_window(mock_vehicle_provider) -> ComponentWindow:
 
 ## 📝 Test Structure Standards
 
+### Test file headers and executable mode
+
+Follow the canonical [Python header and test executability requirements](../../copilot-instructions.md#python-file-headers-and-test-executability)
+when creating, moving or replacing a test module, including files under `tests/plugins/`.
+Use the full project docstring header, start the file with `#!/usr/bin/env python3`,
+and ensure Git records mode `100755`. Shared fixture and package/helper modules follow the exceptions there.
+
+On Linux/macOS, apply `chmod +x` before staging; on Windows, use `git update-index --chmod=+x -- <path>` after staging.
+Inspect the actual first line and `git ls-files --stage -- <path>` output before finishing.
+Passing pytest, REUSE and the shebang hooks alone does not establish all three requirements.
+
 ### Test Class Organization
 
 ```python
@@ -279,6 +290,8 @@ tests/
 
 ### Code Review Checklist
 
+- [ ] New Python files use the complete project header, including the project identification and URL
+- [ ] New test modules start with `#!/usr/bin/env python3` and Git records mode `100755`
 - [ ] Tests follow GIVEN/WHEN/THEN structure
 - [ ] Fixtures used instead of repeated setup
 - [ ] Minimal, strategic mocking applied

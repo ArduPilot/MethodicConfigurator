@@ -98,6 +98,7 @@ def register_plugins() -> None:
         ("frontend_tkinter_level_calibration", "register_level_calibration_plugin"),
         ("frontend_tkinter_motor_test", "register_motor_test_plugin"),
         ("frontend_tkinter_rc_calibration", "register_rc_calibration_plugin"),
+        ("frontend_tkinter_rc_receiver", "register_rc_receiver_plugin"),
         ("frontend_tkinter_servo_out", "register_servo_out_plugin"),
     )
     for module_name, registration_name in registrations:

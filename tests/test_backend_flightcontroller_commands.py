@@ -1901,6 +1901,56 @@ class TestFlightControllerCommandsRequestScaledImu:
         assert float(sent_args[5]) == float(200_000)
 
 
+class TestReceiverTelemetryRequests:
+    """Enable receiver monitoring on controllers with disabled default streams."""
+
+    @pytest.mark.parametrize("interval", [200_000, 0])
+    def test_receiver_stream_intervals_are_requested_and_restored(self, interval: int) -> None:
+        """
+        Request both receiver streams through actual command handling.
+
+        GIVEN a connected controller acknowledging message interval commands,
+        WHEN the monitor requests telemetry or restores defaults,
+        THEN RC_CHANNELS and SYS_STATUS receive the requested interval.
+        """
+        master = MagicMock(target_system=1, target_component=0)
+        master.recv_match.return_value = mavlink2.MAVLink_command_ack_message(
+            mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL, mavutil.mavlink.MAV_RESULT_ACCEPTED
+        )
+        commands = FlightControllerCommands(params_manager=Mock(), connection_manager=Mock(master=master))
+        assert commands.request_rc_receiver_messages(interval) == (True, "")
+        assert [call.args for call in master.mav.command_long_send.call_args_list] == [
+            (1, 0, mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL, 0, message_id, interval, 0, 0, 0, 0, 0)
+            for message_id in (mavutil.mavlink.MAVLINK_MSG_ID_RC_CHANNELS, mavutil.mavlink.MAVLINK_MSG_ID_SYS_STATUS)
+        ]
+
+    def test_rejected_channel_request_does_not_prevent_requesting_receiver_status(self) -> None:
+        """
+        Attempt both telemetry requests even if one fails.
+
+        GIVEN a controller rejecting RC_CHANNELS but accepting SYS_STATUS,
+        WHEN receiver streams are requested,
+        THEN status is still requested and the failure is reported.
+        """
+        master = MagicMock(target_system=1, target_component=0)
+        master.recv_match.side_effect = [
+            mavlink2.MAVLink_command_ack_message(mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL, result)
+            for result in (mavutil.mavlink.MAV_RESULT_DENIED, mavutil.mavlink.MAV_RESULT_ACCEPTED)
+        ]
+        commands = FlightControllerCommands(params_manager=Mock(), connection_manager=Mock(master=master))
+        success, error = commands.request_rc_receiver_messages()
+        assert not success
+        assert error
+        assert master.mav.command_long_send.call_count == 2
+
+    def test_disconnected_receiver_cannot_request_streams(self) -> None:
+        """Given no connection, requesting receiver streams reports failure without I/O."""
+        commands = FlightControllerCommands(params_manager=Mock(), connection_manager=Mock(master=None))
+        success, error = commands.request_rc_receiver_messages()
+        assert not success
+        assert error
+
+
 class TestMultipleBatteryTelemetry:
     """Keep each battery's readings independent through actual MAVLink message handling."""
 
