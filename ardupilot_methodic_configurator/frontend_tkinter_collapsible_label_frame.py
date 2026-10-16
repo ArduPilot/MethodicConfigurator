@@ -101,6 +101,7 @@ class CollapsibleLabelFrame(ttk.LabelFrame):  # pylint: disable=too-many-ancesto
             self._collapsed_placeholder.grid(row=0, column=0)
         self.rowconfigure(0, weight=int(expanded))
         self._refresh_header()
+        self.event_generate("<<CollapsibleToggled>>")
 
     def toggle(self) -> None:
         """Toggle the content without recreating any widgets."""

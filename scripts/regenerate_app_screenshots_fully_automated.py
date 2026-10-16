@@ -42,6 +42,12 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_firmware_upload import FirmwareBoardInfo, FirmwareUploadService
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.data_model_data_telemetry import (
+    MessageRate,
+    MessageSample,
+    RadioSample,
+    TelemetryState,
+)
 from ardupilot_methodic_configurator.data_model_firmware_catalog import FirmwareRelease
 from ardupilot_methodic_configurator.data_model_firmware_upload import UploadStage
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
@@ -51,6 +57,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWin
 from ardupilot_methodic_configurator.frontend_tkinter_connection_selection import ConnectionSelectionWindow
 from ardupilot_methodic_configurator.frontend_tkinter_firmware_upload import FirmwareUploadWindow
 from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_info import FlightControllerInfoWindow
+from ardupilot_methodic_configurator.frontend_tkinter_mavlink_inspector import MavlinkInspectorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_project_creator import VehicleProjectCreatorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_project_opener import VehicleProjectOpenerWindow
@@ -92,6 +99,9 @@ TARGETS: tuple[CaptureTarget, ...] = (
     CaptureTarget("App_screenshot_instructions.png", "instructions"),
     CaptureTarget("App_screenshot_motor_test.png", "motor_test"),
     CaptureTarget("App_screenshot_Parameter_export.png", "parameter_export"),
+    CaptureTarget("App_screenshot_MAVLink_inspector.png", "mavlink_inspector", variant="radio"),
+    CaptureTarget("App_screenshot_MAVLink_inspector_no_radio.png", "mavlink_inspector", variant="no_radio"),
+    CaptureTarget("App_screenshot_MAVLink_inspector_collapsed.png", "mavlink_inspector", variant="collapsed"),
     CaptureTarget("App_screenshot_Firmware_upload.png", "firmware_upload"),
     CaptureTarget("App_screenshot_Firmware_upload_progress.png", "firmware_upload_progress"),
     CaptureTarget(
@@ -1056,6 +1066,63 @@ def _capture_parameter_export(output_path: Path, delay: float, padding: int, veh
             flight_controller.disconnect()
 
 
+def _mavlink_inspector_state(*, with_radio: bool) -> TelemetryState:
+    """Provide illustrative received values, independent of hardware or network access."""
+    attitude_fields = (("roll", "0.01"), ("pitch", "0.02"), ("yaw", "1.57"), ("rollspeed", "0.0"))
+    messages = [
+        MessageRate((1, 1, name), MessageSample(count, count * 40, 120.0, fields), hz, rate, 0.1)
+        for name, count, hz, rate, fields in (
+            ("HEARTBEAT", 120, 1.0, 21.0, (("type", "2"), ("autopilot", "3"))),
+            ("SYS_STATUS", 240, 2.0, 86.0, (("voltage_battery", "16800"),)),
+            ("ATTITUDE", 1200, 10.0, 400.0, attitude_fields),
+            ("GLOBAL_POSITION_INT", 240, 2.0, 84.0, (("relative_alt", "0"),)),
+            ("VFR_HUD", 240, 2.0, 64.0, (("groundspeed", "0.0"),)),
+        )
+    ]
+    radio = RadioSample((51, 68), 120.0, 160, 150, 50, 45, 90, 3, 12) if with_radio else None
+    if radio is not None:
+        messages.append(
+            MessageRate(
+                (51, 68, "RADIO_STATUS"),
+                MessageSample(120, 2520, 120.0, (("rssi", "160"), ("remrssi", "150"), ("txbuf", "90"))),
+                1.0,
+                21.0,
+                0.1,
+            )
+        )
+    return TelemetryState(
+        connected=True,
+        receiving=True,
+        rx_rate=685.0,
+        tx_rate=35.0,
+        parse_error_rate=0.0,
+        radio_error_rate=0.0 if radio is not None else None,
+        radio=radio,
+        messages=tuple(messages),
+    )
+
+
+def _capture_mavlink_inspector(output_path: Path, delay: float, padding: int, variant: str) -> None:
+    """Capture the actual inspector with and without modem reports, or with fields collapsed."""
+    controller = MagicMock(spec=FlightController)
+    controller.master = None
+    with hidden_root() as root, patch.object(MavlinkInspectorWindow, "_poll"):
+        window = MavlinkInspectorWindow(controller, root)
+        try:
+            window.root.geometry("+100+80")
+            window.root.attributes("-topmost", 1)
+            window.root.lift()
+            window.refresh(_mavlink_inspector_state(with_radio=variant != "no_radio"))
+            window.table.selection_set("1:1:ATTITUDE")
+            window.table.event_generate("<<TreeviewSelect>>")
+            settle_tk(window.root)
+            if variant == "collapsed":
+                window.message_contents.set_expanded(False)
+            capture_widget(window.main_frame, output_path, delay, padding, trim_windows_frame=False)
+        finally:
+            window.close()
+
+
 def _capture_firmware_upload(output_path: Path, delay: float, padding: int, show_progress: bool) -> None:
     """Capture the real firmware UI with sample catalog data and no hardware or downloads."""
     controller = MagicMock(spec=FlightController)
@@ -1144,22 +1211,21 @@ def _capture_motor_test(output_path: Path, delay: float, padding: int, vehicle_d
 def capture_target(target: CaptureTarget, output_path: Path, args: argparse.Namespace) -> None:  # pylint: disable=too-many-branches
     """Capture one screenshot target."""
     action = target.action
-    if action == "about":
-        _capture_about(output_path, args.delay, args.padding)
-    elif action == "connection":
-        _capture_connection(output_path, args.delay, args.padding)
+    simple_captures = {"about": _capture_about, "connection": _capture_connection, "instructions": _capture_instructions}
+    if action in simple_captures:
+        simple_captures[action](output_path, args.delay, args.padding)
     elif action in ("connection_add_another", "connection_udp_forwarding"):
         _capture_connection_forwarding(
             output_path, args.delay, args.padding, show_dialog=action == "connection_udp_forwarding"
         )
     elif action == "fc_info":
         _capture_fc_info(output_path, args.delay, args.padding, args.vehicle_dir)
-    elif action == "instructions":
-        _capture_instructions(output_path, args.delay, args.padding)
     elif action == "motor_test":
         _capture_motor_test(output_path, args.delay, args.padding, args.vehicle_dir)
     elif action == "parameter_export":
         _capture_parameter_export(output_path, args.delay, args.padding, args.vehicle_dir)
+    elif action == "mavlink_inspector":
+        _capture_mavlink_inspector(output_path, args.delay, args.padding, target.variant or "radio")
     elif action in ("firmware_upload", "firmware_upload_progress"):
         _capture_firmware_upload(output_path, args.delay, args.padding, show_progress=action == "firmware_upload_progress")
     elif action.startswith("param_"):
