@@ -66,7 +66,7 @@ def extract_result_strings_from_conditional(change_reason: str) -> list[str]:
 
 
 def process_configuration_steps(text_fields: list[str], extracted_strings: dict[str, set[str]], data: dict[str, Any]) -> None:
-    for step_data in data["steps"].values():
+    for step_data in data["steps"].values():  # pylint: disable=too-many-nested-blocks
         # Extract standard text fields
         for field in text_fields:
             if field in step_data and isinstance(step_data[field], str) and step_data[field].strip():

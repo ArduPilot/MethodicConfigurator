@@ -61,7 +61,7 @@ def find_template_directories() -> list[Path]:
     return leaf_dirs
 
 
-def process_template_directory(template_dir: Path) -> None:
+def process_template_directory(template_dir: Path) -> None:  # pylint: disable=too-many-locals
     """Process a single template directory."""
     logging.info("\nProcessing template: %s", template_dir)
 
