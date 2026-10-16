@@ -205,22 +205,31 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
         dialog.progress = progress_mock
         dialog.status_label = status_label_mock
 
-        # Test with both value and status
-        dialog.update_progress(75, "Downloading...")
-        progress_mock.__setitem__.assert_called_with("value", 75)
-        status_label_mock.__setitem__.assert_called_with("text", "Downloading...")
-        self.root.update.assert_called_once()
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_software_update.is_macos_sequoia_or_older",
+                return_value=False,
+            ),
+            patch.object(self.root, "update_idletasks") as update_idletasks,
+        ):
+            # Test with both value and status
+            dialog.update_progress(75, "Downloading...")
+            progress_mock.__setitem__.assert_called_with("value", 75)
+            status_label_mock.__setitem__.assert_called_with("text", "Downloading...")
+            update_idletasks.assert_called_once()
+            self.root.update.assert_not_called()
 
-        # Reset mocks
-        progress_mock.reset_mock()
-        status_label_mock.reset_mock()
-        self.root.update.reset_mock()
+            # Reset mocks
+            progress_mock.reset_mock()
+            status_label_mock.reset_mock()
+            update_idletasks.reset_mock()
 
-        # Test with only value (no status)
-        dialog.update_progress(50)
-        progress_mock.__setitem__.assert_called_with("value", 50)
-        status_label_mock.__setitem__.assert_not_called()
-        self.root.update.assert_called_once()
+            # Test with only value (no status)
+            dialog.update_progress(50)
+            progress_mock.__setitem__.assert_called_with("value", 50)
+            status_label_mock.__setitem__.assert_not_called()
+            update_idletasks.assert_called_once()
+            self.root.update.assert_not_called()
 
     def test_on_yes_successful_update(self) -> None:
         """Test successful update process."""

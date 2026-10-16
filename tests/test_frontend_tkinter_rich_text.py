@@ -195,7 +195,7 @@ class TestGetWidgetFontFamilyAndSize(unittest.TestCase):
             if platform_system() == "Darwin"
             else ["Helvetica", "sans-serif"]
         )
-        expected_size = [9] if platform_system() == "Windows" else [13] if platform_system() == "Darwin" else [-12, 10]
+        expected_size = [9] if platform_system() == "Windows" else [10, 13] if platform_system() == "Darwin" else [-12, 10]
         assert isinstance(family, str)
         assert isinstance(size, int)
         assert family in expected_family

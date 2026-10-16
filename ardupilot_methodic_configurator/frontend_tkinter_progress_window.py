@@ -10,13 +10,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # https://wiki.tcl-lang.org/page/Changing+Widget+Colors
 
+import contextlib
 import tkinter as tk
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 from contextlib import suppress
 from logging import error as logging_error
 from time import monotonic
 from tkinter import ttk
-from typing import Literal
+from typing import Literal, TypeVar, cast
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_transfer_progress import (
@@ -26,6 +27,11 @@ from ardupilot_methodic_configurator.data_model_transfer_progress import (
     estimate_transfer,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_file_browser_tasks import BackgroundTaskRunner
+from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
+from ardupilot_methodic_configurator.macos_utilities import is_macos_sequoia_or_older
+
+_TaskResult = TypeVar("_TaskResult")
 
 
 class ProgressWindow:  # pylint: disable=too-many-instance-attributes
@@ -57,6 +63,7 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
         self._clock = clock
         self._transfer_progress: TransferProgress | None = None
         self._transfer_refresh_id: str | None = None
+        self._task_active = False
         self.progress_window = tk.Toplevel(self.parent)
         # Withdraw immediately to prevent flicker while setting up
         self.progress_window.withdraw()
@@ -92,17 +99,14 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
         if not self.only_show_when_update_progress_called:
             self.progress_window.deiconify()  # needs to be done before centering, but it does flicker :(
 
-        self._center_progress_window()
-
         if not self.only_show_when_update_progress_called:
+            self._center_progress_window()
             # Show the window now that it's properly positioned
             self.progress_window.lift()
             self._shown = True
-            # Use update_idletasks() rather than update(): the latter pumps the
-            # full event queue (including queued mouse clicks against other
-            # windows) and can re-enter user-event handlers while the caller
-            # is still in the middle of a blocking I/O operation.
-            self.progress_bar.update_idletasks()
+            # Idle updates repaint without dispatching queued user events.
+            if not is_macos_sequoia_or_older():
+                self.progress_window.update_idletasks()
 
     def _center_progress_window(self) -> None:
         """
@@ -140,13 +144,16 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
                 return
 
             if self.only_show_when_update_progress_called and not self._shown:
-                self.progress_window.update_idletasks()  # Calculate widgets first
+                if not is_macos_sequoia_or_older():
+                    self.progress_window.update_idletasks()
                 self.progress_window.deiconify()
                 self._center_progress_window()
                 self.progress_window.lift()
                 if getattr(self, "_is_aqua", False):
-                    self.progress_window.update()  # macOS needs this to paint pixels NOW
+                    self.progress_window.update()
                 self._shown = True
+                if not is_macos_sequoia_or_older():
+                    self.progress_window.update_idletasks()
 
             # Additional safety checks before updating widgets
             if (
@@ -161,12 +168,11 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
                 # Update the progress message
                 self.progress_label.config(text=self.message.format(current_value, max_value))
 
-                # update_idletasks() repaints the bar/label without re-entering
-                # the event loop. The plain update() variant processes pending
-                # user events (clicks, keypresses) which can fire callbacks on
-                # other windows while a blocking upload/download is in flight.
+                # Defer rendering on Sequoia and older; idle updates on other
+                # platforms repaint without dispatching pending user events.
+                if not is_macos_sequoia_or_older():
+                    self.progress_window.update_idletasks()
                 self.progress_bar.update_idletasks()
-
                 if getattr(self, "_is_aqua", False):
                     self.progress_window.update()
 
@@ -291,6 +297,76 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
         """Handle external destruction as well as explicit popup cleanup."""
         if event.widget is self.progress_window:
             self._cancel_transfer_refresh()
+
+    def run_task(self, task: Callable[[Callable[[int, int], None]], _TaskResult]) -> _TaskResult:
+        """
+        Run blocking work on a worker while Tk renders progress on its own thread.
+
+        The task receives a queue-backed progress callback and must not touch Tk.
+        Parent controls and close handlers are suspended until the result is
+        delivered, preventing a second operation during the nested wait.
+        Exceptions are re-raised on the caller's thread after restoring the UI.
+        """
+        if self._task_active:
+            message = "A progress task is already running"
+            raise RuntimeError(message)
+
+        parent = cast("tk.Tk | tk.Toplevel", self.parent.winfo_toplevel())
+        completed = tk.BooleanVar(master=parent, value=False)
+        result: list[object] = []
+        errors: list[BaseException] = []
+        runner = BackgroundTaskRunner(parent.after)
+
+        def work(report: Callable[[int, int], None]) -> None:
+            try:
+                result.append(task(report))
+            except BaseException as error:  # pylint: disable=broad-exception-caught
+                # SystemExit must also reach the caller instead of stranding the wait.
+                errors.append(error)
+
+        def finish(_result: object, _error: Exception | None) -> None:
+            completed.set(True)
+
+        self._task_active = True
+        try:
+            with self._suspend_parent_interaction(parent):
+                runner.start(work, self.update_progress_bar, finish)
+                parent.wait_variable(completed)
+        finally:
+            self._task_active = False
+
+        if errors:
+            raise errors[0]
+        return cast("_TaskResult", result[0])
+
+    @contextlib.contextmanager
+    def _suspend_parent_interaction(self, parent: tk.Tk | tk.Toplevel) -> Generator[None, None, None]:
+        """Preserve control and close-handler states while a worker owns the UI."""
+        lock = NavigationLock()
+        pending = list(parent.winfo_children())
+        while pending:
+            widget = pending.pop()
+            if isinstance(widget, tk.Toplevel):
+                continue
+            if isinstance(widget, ttk.Widget):
+                lock.register(widget)
+            pending.extend(widget.winfo_children())
+
+        close_handlers: list[tuple[tk.Tk | tk.Toplevel, str, str]] = []
+        try:
+            lock.acquire(self)
+            for window in (parent, self.progress_window):
+                previous = window.protocol("WM_DELETE_WINDOW")
+                window.protocol("WM_DELETE_WINDOW", lambda: None)
+                close_handlers.append((window, previous, window.protocol("WM_DELETE_WINDOW")))
+            yield
+        finally:
+            lock.release(self)
+            for window, previous, temporary in close_handlers:
+                with contextlib.suppress(tk.TclError):
+                    window.protocol("WM_DELETE_WINDOW", previous)
+                with contextlib.suppress(tk.TclError):
+                    window.deletecommand(temporary)
 
     def destroy(self) -> None:
         self._cancel_transfer_refresh()

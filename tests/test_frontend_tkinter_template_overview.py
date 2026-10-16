@@ -734,29 +734,23 @@ class TestWindowInitialization:
 class TestWindowApplicationRunner:
     """Test window application running behavior."""
 
-    def test_toplevel_window_runs_with_update_loop(self, template_window) -> None:
+    def test_toplevel_window_waits_for_close(self, template_window) -> None:
         """
-        Toplevel window should run with proper update loop.
+        Toplevel window should wait for its close through Tk's event loop.
 
         GIVEN: A window is created as Toplevel
         WHEN: run_app is called
-        THEN: Update loop should run properly
+        THEN: Tk waits for the window without forcing a nested update
         """
         # Arrange: Mock Toplevel window
         template_window.root = MagicMock(spec=tk.Toplevel)
-        # Start with children, will be cleared to exit loop
-        template_window.root.children = {"child1": MagicMock()}
-
-        def clear_children_after_call() -> None:
-            template_window.root.children = {}
-
-        template_window.root.update_idletasks.side_effect = clear_children_after_call
-
         # Act: Run the app
         template_window.run_app()
 
-        # Assert: Update methods were called
-        template_window.root.update_idletasks.assert_called()
+        # Assert: Tk owns the event loop until the window is closed
+        template_window.root.wait_window.assert_called_once_with()
+        template_window.root.update.assert_not_called()
+        template_window.root.update_idletasks.assert_not_called()
 
     def test_tk_window_runs_with_mainloop(self, template_window) -> None:
         """
@@ -785,8 +779,7 @@ class TestWindowApplicationRunner:
         """
         # Arrange: Mock Toplevel with TclError
         template_window.root = MagicMock(spec=tk.Toplevel)
-        template_window.root.children = {"child1": MagicMock()}
-        template_window.root.update_idletasks.side_effect = tk.TclError("Test error")
+        template_window.root.wait_window.side_effect = tk.TclError("Test error")
 
         # Act: Run the app (should not raise exception)
         try:
@@ -1117,17 +1110,16 @@ class TestRunAppBehavior:
 
     def test_run_app_catches_tcl_error_in_toplevel_loop(self, template_window) -> None:
         """
-        run_app silently swallows TclError raised during the Toplevel event loop.
+        run_app silently swallows TclError raised while waiting for the Toplevel.
 
         GIVEN: A TemplateOverviewWindow whose root is a tk.Toplevel
-          AND: root.update() raises TclError (e.g. window destroyed mid-loop)
+          AND: root.wait_window() raises TclError (e.g. window destroyed mid-loop)
         WHEN: run_app() is called
         THEN: The TclError is caught and execution continues without raising
         """
-        # Make root look like a Toplevel with one child so the while-loop body executes
+        # Make root look like a Toplevel whose wait fails during teardown
         template_window.root = MagicMock(spec=tk.Toplevel)
-        template_window.root.children = {"child1": MagicMock()}  # non-empty → enters loop
-        template_window.root.update.side_effect = tk.TclError("application has been destroyed")
+        template_window.root.wait_window.side_effect = tk.TclError("application has been destroyed")
 
         # Should not raise — the except block has a bare `pass`
         template_window.run_app()  # must return without exception

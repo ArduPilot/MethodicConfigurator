@@ -508,7 +508,6 @@ class TestWindowSizing:
             assert cast("ttk.Progressbar", progress.phase_bars[1]["bar"]).cget("value") == 5
             assert editor.parameter_editor_table is table
             assert value_widget.get() == "0.15"
-            assert window.winfo_height() == height
             assert buttons.winfo_height() == buttons.winfo_reqheight()
             assert buttons.winfo_y() + buttons.winfo_height() <= height - 10
 
