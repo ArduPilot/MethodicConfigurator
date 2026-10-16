@@ -29,6 +29,7 @@ from ardupilot_methodic_configurator.plugins.frontend_tkinter_helpers import (
 )
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_COMPASS_CALIBRATION
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginPauseReason
 
 
 class CompassCalibrationInstructionsPopup(BaseWindow):
@@ -426,6 +427,12 @@ class CompassCalibrationView(ttk.Frame):
         self._calibration_popup: CompassCalibrationPopup | None = None
         self._calibration_active = False
         self._setup_ui()
+
+    def on_suspend(self, reason: PluginPauseReason = PluginPauseReason.EXCLUSIVE_OPERATION) -> None:
+        """Yield FC reception; an open calibration popup keeps recovery deferred until it closes."""
+
+    def on_resume(self) -> None:
+        """Resume after FC reception is available; calibration popups own their separate polling lifecycle."""
 
     def _setup_ui(self) -> None:
         main_frame = ttk.Frame(self)

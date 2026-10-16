@@ -14,7 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from collections.abc import Generator
-from types import SimpleNamespace
+from types import MethodType, SimpleNamespace
 from typing import cast
 from unittest.mock import MagicMock, patch
 
@@ -23,6 +23,7 @@ from pytest_mock import MockerFixture
 
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
+from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 from ardupilot_methodic_configurator.plugins import frontend_tkinter_compass_calibration as frontend
 from ardupilot_methodic_configurator.plugins.data_model_compass_calibration import CompassCalibrationDataModel
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration import (
@@ -421,7 +422,7 @@ def test_registered_compass_plugin_creates_the_user_start_control(tk_root: tk.Tk
 
     GIVEN: A controller and isolated plugin registry
     WHEN: Both registered factories create the assistant
-    THEN: A real compass model and enabled Start control are available
+    THEN: A real compass model and enabled Start control survive a connection recovery pause
     """
     # Given: External dependencies are isolated while factories remain real.
     factory = PluginFactory()
@@ -437,6 +438,11 @@ def test_registered_compass_plugin_creates_the_user_start_control(tk_root: tk.Tk
     assert isinstance(view, CompassCalibrationView)
     assert isinstance(model, CompassCalibrationDataModel)
     try:
+        editor = SimpleNamespace(current_plugin_view=view, root=tk_root)
+        editor._pause_plugin_receiver = MethodType(ParameterEditorWindow._pause_plugin_receiver, editor)
+        resume = ParameterEditorWindow._pause_connection_plugin(editor)
+        assert callable(resume)
+        resume()
         assert view.start_button.instate(["!disabled"])
         assert model.flight_controller is controller
     finally:

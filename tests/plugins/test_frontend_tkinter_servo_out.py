@@ -13,13 +13,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Generator
 from tkinter import ttk
-from types import SimpleNamespace
+from types import MethodType, SimpleNamespace
 from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock
 
 import pytest
 from pytest_mock import MockerFixture
 
+from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 from ardupilot_methodic_configurator.plugins.data_model_servo_out import ServoOutDataModel, ServoOutRecommendationStatus
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_servo_out import ServoOutView, register_servo_out_plugin
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_SERVO_OUT
@@ -69,6 +70,19 @@ def servo_out_view(tk_root, mocker) -> Generator[SimpleNamespace, None, None]:
 
 class TestServoOutputView:
     """Test user feedback while applying servo-output recommendations."""
+
+    def test_connection_recovery_can_pause_and_resume_the_view(self, servo_out_view: SimpleNamespace) -> None:
+        """GIVEN a servo output view, WHEN recovery pauses it, THEN it can resume with its recommendation intact."""
+        view = servo_out_view.view
+        summary = view._summary.get()
+        editor = SimpleNamespace(current_plugin_view=view, root=view.winfo_toplevel())
+        editor._pause_plugin_receiver = MethodType(ParameterEditorWindow._pause_plugin_receiver, editor)
+
+        resume = ParameterEditorWindow._pause_connection_plugin(editor)
+
+        assert callable(resume)
+        resume()
+        assert view._summary.get() == summary
 
     def test_registration_allows_offline_servo_output_editing(self, mocker) -> None:
         """The real registration must mark this plugin as usable without an FC."""

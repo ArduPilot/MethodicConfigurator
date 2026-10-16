@@ -563,6 +563,7 @@ def test_parameter_editor_propagates_external_workflow_failure() -> None:
     THEN it returns False to its modal caller.
     """
     editor = ParameterEditorWindow.__new__(ParameterEditorWindow)
+    editor._connection_recovery = None
     editor.navigation_lock = MagicMock(locked=False)
     editor.current_plugin_view = None
     editor.root = MagicMock()

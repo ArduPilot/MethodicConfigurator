@@ -138,6 +138,56 @@ This architecture provides:
   - `FlightControllerInfo` for metadata storage
   - `time` and `logging` for operations
 
+#### Automatic reconnection in the parameter editor
+
+`backend_flightcontroller_reconnect.py` keeps the original nonempty FC hardware UID,
+selected endpoint and active baud rate for one editor session. Its PyMAVLink message
+hook only timestamps heartbeats from the selected system and component. Hooks run
+before receive filters, so plugin reads continue to receive their expected replies.
+
+`frontend_tkinter_connection_recovery.py` owns the timer, recovery worker and lifecycle
+states: `MONITORING`, `RECOVERING`, `STOPPING` and `STOPPED`. The editor supplies typed
+callbacks for receiver suspension, control locking, status display and parameter-cell
+refresh. Worker threads perform backend I/O; UI callbacks run on the Tk thread.
+
+The coordinator checks once per second. It reads a bounded batch only when no plugin
+or sub-application owns reception. Synchronous operations retain an `operation()` lease
+across nested Tk event loops; the file browser holds an `acquire_operation()` lease
+until its close callback runs. Parameter upload previews and export windows retain
+a lease until their root is destroyed, including when withdrawn or running without
+a modal grab. Releases are idempotent, and the last release renews the heartbeat
+grace period. Navigation locks and modal grabs remain defensive checks for callers
+without an explicit lease. Window visibility alone does not imply receive ownership;
+tools that outlive their opening callback must retain a lease for their full lifetime.
+
+With an active plugin, checks are passive. After eight seconds without an observed
+target heartbeat, the coordinator pauses the plugin and checks buffered packets before reconnecting.
+The optional `SuspendablePlugin` protocol accepts a `PluginPauseReason`:
+`EXCLUSIVE_OPERATION` stops actuators before FC tools take reception;
+`CONNECTION_RECOVERY` yields reception without sending actuator commands.
+`resolve_plugin_lifecycle()` selects the same paired hooks for recovery eligibility
+and suspension, preferring suspend/resume over the legacy hide/show pair.
+Plugins must stop receive timers when suspended or deactivated; a view without either
+paired lifecycle interface retains ownership and defers reconnection.
+
+During recovery, navigation and plugin controls are disabled. One worker attempts the
+original endpoint at the original baud rate; USB metadata can locate renumbered
+interfaces. The original endpoint is preferred when available. If metadata is shared
+or the USB interface description changes, other matching interfaces are tried too,
+and each failed attempt logs its reason. The hardware UID and original MAVLink system/component
+IDs must match before downloading fresh parameters. This prevents a routed version message
+from the original FC from authorizing a different target.
+Changed or unknown IDs, connection failures and incomplete downloads leave the editor
+waiting and retrying. A missing original UID disables automatic recovery. Hardware
+identification uses `uid2`, falling back to `uid`, as decoded by the connection manager.
+
+Refresh downloads use temporary files. Local parameter edits and the selected step
+remain intact; interrupted uploads and commands are never replayed. The editor resumes
+the plugin after a verified recovery. Closing cancels retries, waits for an in-flight
+worker to return from backend I/O and removes only the editor's observer hook. The
+coordinator retains control ownership until that worker yields, discards late success
+after cancellation, and never resumes the plugin while closing.
+
 #### Parameters Manager
 
 - **File**: `backend_flightcontroller_params.py`

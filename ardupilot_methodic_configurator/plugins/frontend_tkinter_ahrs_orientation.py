@@ -30,6 +30,7 @@ from ardupilot_methodic_configurator.plugins.imu_helpers import (
 )
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_AHRS_ORIENTATION
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginPauseReason
 
 if TYPE_CHECKING:
     from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
@@ -333,7 +334,8 @@ class AhrsOrientationView(Frame):  # pylint: disable=too-many-instance-attribute
         self._wizard_active = False
         self._continue_btn.configure(state="disabled")
 
-    def on_suspend(self) -> None:
+    # pylint: disable-next=unused-argument
+    def on_suspend(self, reason: PluginPauseReason = PluginPauseReason.EXCLUSIVE_OPERATION) -> None:  # noqa: ARG002
         """Yield telemetry to diagnostics without discarding poses, progress, or recommendations."""
         self._stop_imu_polling()
         self.model.stop_imu_monitoring()

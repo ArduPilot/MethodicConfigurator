@@ -10,17 +10,65 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from types import MethodType, SimpleNamespace
+from typing import get_type_hints
 from unittest.mock import MagicMock, patch
 
 import pytest
+from pytest_mock import MockerFixture
 
+from ardupilot_methodic_configurator.__main__ import register_plugins
+from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
+from ardupilot_methodic_configurator.plugins import plugin_constants
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory, PluginModelContext, plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginPauseReason
 
 # pylint: disable=protected-access
 
 
 class TestPluginFactory:
     """Test plugin factory functionality for dependency injection."""
+
+    def test_every_registered_view_declares_a_connection_recovery_lifecycle(self, mocker: MockerFixture) -> None:
+        """
+        Every plugin declares a lifecycle that lets the editor recover its connection.
+
+        This is an interface check; real polling views separately exercise timer and receiver cleanup.
+
+        GIVEN: All plugins are registered through the application's startup path
+        WHEN: The editor pauses each view through its connection recovery entry point
+        THEN: Recovery receives a callable that resumes the same view exactly once
+        """
+        for registry in (
+            plugin_factory._creators,
+            plugin_factory._model_creators,
+            plugin_factory._flight_controller_requirements,
+        ):
+            mocker.patch.dict(registry, clear=True)
+        register_plugins()
+        expected = {
+            value for name, value in vars(plugin_constants).items() if name.startswith("PLUGIN_") and isinstance(value, str)
+        }
+        assert set(plugin_factory.available_plugins()) == expected
+
+        for name in plugin_factory.available_plugins():
+            # Enforce the real registered view's method surface without constructing its UI.
+            view_type = get_type_hints(plugin_factory._creators[name])["return"]
+            view = MagicMock(spec_set=view_type)
+            editor = SimpleNamespace(current_plugin_view=view, root=MagicMock())
+            editor._pause_plugin_receiver = MethodType(ParameterEditorWindow._pause_plugin_receiver, editor)
+
+            resume = ParameterEditorWindow._pause_connection_plugin(editor)
+
+            assert callable(resume), f"{name} blocks connection recovery"
+            resume()
+            resume()
+            if callable(getattr(view, "on_suspend", None)) and callable(getattr(view, "on_resume", None)):
+                view.on_suspend.assert_called_once_with(PluginPauseReason.CONNECTION_RECOVERY)
+                view.on_resume.assert_called_once_with()
+            else:
+                view.on_deactivate.assert_called_once_with()
+                view.on_activate.assert_called_once_with()
 
     def test_user_is_told_once_about_each_unavailable_configured_plugin(self, caplog: pytest.LogCaptureFixture) -> None:
         """

@@ -13,11 +13,31 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol
+from enum import Enum, auto
+from functools import partial
+from typing import TYPE_CHECKING, Protocol, cast
 
 if TYPE_CHECKING:
     import tkinter as tk
+    from collections.abc import Callable
     from tkinter import ttk
+
+
+class PluginPauseReason(Enum):
+    """Why another owner needs the shared FC connection."""
+
+    EXCLUSIVE_OPERATION = auto()
+    CONNECTION_RECOVERY = auto()
+
+
+class SuspendablePlugin(Protocol):
+    """Optional paired lifecycle for yielding reception without hiding a view."""
+
+    def on_suspend(self, reason: PluginPauseReason = PluginPauseReason.EXCLUSIVE_OPERATION) -> None:
+        """Yield reception; stop actuators for tools and avoid commands during recovery."""
+
+    def on_resume(self) -> None:
+        """Resume polling idempotently, retaining workflow state and discarding stale samples."""
 
 
 class PluginView(Protocol):
@@ -37,12 +57,11 @@ class PluginView(Protocol):
         This ensures plugins don't leak resources when hidden or removed.
 
     Temporary Diagnostics Pause:
-        Views may optionally implement a paired on_suspend()/on_resume() interface
-        to yield the shared telemetry receiver without running hide/show logic.
-        Suspend must cancel receiver timers; resume must restart them idempotently,
-        preserving workflow state and avoiding stale telemetry samples.
-        Both hooks are required for this optional interface. Otherwise diagnostics
-        uses on_deactivate()/on_activate(), retaining safety cleanup such as stopping motors.
+        Views may implement SuspendablePlugin to preserve workflow state while
+        yielding reception. PluginPauseReason distinguishes exclusive FC tools
+        (stop actuators before blocking their controls) from passive connection
+        checks and recovery (avoid sending commands). Both hooks are required.
+        Other views use on_deactivate()/on_activate() for safety cleanup.
     """
 
     def __init__(
@@ -117,3 +136,16 @@ class PluginView(Protocol):
                 self._timer_id = None
 
         """
+
+
+def resolve_plugin_lifecycle(
+    plugin: object, reason: PluginPauseReason
+) -> tuple[Callable[[], None], Callable[[], None]] | None:
+    """Prefer paired suspend/resume hooks, falling back to paired hide/show hooks."""
+    if callable(getattr(plugin, "on_suspend", None)) and callable(getattr(plugin, "on_resume", None)):
+        suspendable = cast("SuspendablePlugin", plugin)
+        return partial(suspendable.on_suspend, reason), suspendable.on_resume
+    if callable(getattr(plugin, "on_deactivate", None)) and callable(getattr(plugin, "on_activate", None)):
+        view = cast("PluginView", plugin)
+        return view.on_deactivate, view.on_activate
+    return None

@@ -15,11 +15,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 import re
+import threading
 import tkinter as tk
 from contextlib import contextmanager, nullcontext
 from functools import partial
+from threading import Event
 from tkinter import font as tkfont
 from tkinter import ttk
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, cast
 from unittest.mock import ANY, MagicMock, patch
 from unittest.mock import call as mock_call
@@ -28,15 +31,22 @@ import pytest
 
 import ardupilot_methodic_configurator.frontend_tkinter_parameter_editor as parameter_editor_module
 from ardupilot_methodic_configurator.backend_filesystem import Par
+from ardupilot_methodic_configurator.backend_flightcontroller_reconnect import FlightControllerReconnect
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_parameter_editor import LogAnalysisInputs, ParameterEditor
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_connection_recovery import (
+    ConnectionRecovery,
+    RecoveryCallbacks,
+    RecoveryState,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (
     ParameterEditorAction,
     ParameterEditorUiServices,
     ParameterEditorWindow,
 )
+from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import MonitorBounds
 from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
@@ -51,9 +61,12 @@ from ardupilot_methodic_configurator.plugins.plugin_constants import (
     PLUGIN_RC_CALIBRATION,
 )
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory
+from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginPauseReason
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Iterator
+
+    from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginView
 
 # pylint: disable=too-many-lines, redefined-outer-name, protected-access
 
@@ -136,6 +149,7 @@ def _configure_layout_stubs(editor: ParameterEditorWindow) -> None:
 def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:  # noqa: PLR0915, RUF100 # pylint: disable=too-many-statements
     editor = ParameterEditorWindow.__new__(ParameterEditorWindow)
     editor.navigation_lock = NavigationLock()
+    editor._connection_recovery = None
     editor.parameter_editor = parameter_editor
     editor.root = MagicMock()
     _configure_root_stubs(editor.root)
@@ -198,6 +212,7 @@ def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:  # noq
     editor._configured_upload_active = False
     editor._param_file_change_active = False
     editor._close_after_configured_upload = False
+    editor._close_pending = False
     editor._tempcal_imu_progress_window = None
     _configure_layout_stubs(editor)
     parameter_area_container = _build_parameter_area_container()
@@ -1516,7 +1531,7 @@ class TestWidgetFactoryMethods:
         editor.root.wait_window.side_effect = remove_owner
         with patch.object(parameter_editor_module, "FlightControllerBannerWindow"):
             editor.on_fc_banner_click()
-        plugin.on_suspend.assert_called_once_with()
+        plugin.on_suspend.assert_called_once_with(PluginPauseReason.EXCLUSIVE_OPERATION)
         plugin.on_resume.assert_not_called()
         plugin.on_deactivate.assert_not_called()
         plugin.on_activate.assert_not_called()
@@ -4468,3 +4483,451 @@ class TestInlineComponentEditorCallbacks:
         parameter_editor.update_vehicle_components.assert_not_called()
         parameter_editor.refresh_current_step_computed_parameters.assert_not_called()
         editor.repopulate_parameter_table.assert_not_called()
+
+
+@pytest.fixture
+def monitored_editor(parameter_editor_window: ParameterEditorWindow) -> ParameterEditorWindow:
+    """Supply an editor with a controllable connection monitor and no live transport."""
+    editor = parameter_editor_window
+    monitor = MagicMock(spec=FlightControllerReconnect)
+    monitor.cancelled = Event()
+    monitor.poll.return_value = True
+    monitor.reconnect.return_value = ""
+    editor._connection_recovery = ConnectionRecovery(
+        editor.root,
+        monitor,
+        RecoveryCallbacks(
+            reader_busy=editor._connection_reader_busy,
+            can_read=lambda: editor.current_plugin_view is None,
+            pause_receiver=editor._pause_connection_plugin,
+            lock_controls=editor._lock_connection_plugin,
+            show_status=editor._show_connection_status,
+            on_recovered=editor._finish_connection_recovery,
+        ),
+    )
+    editor._connection_status = MagicMock()
+    editor._file_browser_window = None
+    editor.root.winfo_children.return_value = []
+    editor.root.tk.call.return_value = ""
+    return editor
+
+
+def test_active_plugin_keeps_sole_receive_ownership(monitored_editor: ParameterEditorWindow) -> None:
+    """GIVEN an active plugin, WHEN the timer runs, THEN the monitor observes without reading."""
+    editor = monitored_editor
+    editor.current_plugin_view = MagicMock()
+    editor._connection_recovery.check()
+    editor._connection_recovery._monitor.poll.assert_called_once_with(read=False)
+    editor.current_plugin_view.on_suspend.assert_not_called()
+
+
+@pytest.mark.parametrize("owner", ["upload", "navigation", "browser", "native_dialog"])
+def test_other_owners_defer_connection_checks(monitored_editor: ParameterEditorWindow, owner: str) -> None:
+    """GIVEN another receive owner, WHEN the timer fires, THEN no receive or reconnect operation starts."""
+    editor = monitored_editor
+    if owner == "upload":
+        editor._connection_recovery.acquire_operation()
+    elif owner == "navigation":
+        editor.navigation_lock.acquire(object())
+    elif owner == "browser":
+        editor._file_browser_window = MagicMock()
+    elif owner == "native_dialog":
+        editor.root.tk.call.return_value = ".__tk__messagebox"
+    editor._connection_recovery.check()
+    editor._connection_recovery._monitor.poll.assert_not_called()
+    editor._connection_recovery._monitor.reconnect.assert_not_called()
+    editor._connection_recovery._monitor.defer.assert_called_once()
+
+
+def test_nested_upload_event_loop_cannot_start_monitor_reads(monitored_editor: ParameterEditorWindow) -> None:
+    """GIVEN an upload pumps Tk events, WHEN its timer fires, THEN upload replies remain exclusively owned."""
+    editor = monitored_editor
+
+    def upload(*_args: object) -> bool:
+        editor._connection_recovery.check()
+        return True
+
+    editor.ui.upload_params_with_progress = upload
+    assert editor.upload_selected_params({})
+    editor._connection_recovery._monitor.poll.assert_not_called()
+    assert not editor._connection_recovery.operation_active
+
+
+def test_paused_plugin_with_buffered_heartbeat_resumes_without_reconnection(monitored_editor: ParameterEditorWindow) -> None:
+    """GIVEN a plugin stopped reading, WHEN a buffered heartbeat proves liveness, THEN its state resumes unchanged."""
+    editor = monitored_editor
+    plugin = MagicMock(spec=["on_suspend", "on_resume"])
+    editor.current_plugin_view = plugin
+    editor._connection_recovery._monitor.poll.side_effect = [False, True]
+    editor._connection_recovery.check()
+    plugin.on_suspend.assert_called_once()
+    plugin.on_resume.assert_called_once()
+    editor._connection_recovery._monitor.reconnect.assert_not_called()
+    assert not editor.navigation_lock.locked
+
+
+@pytest.mark.parametrize("operation", ["inspector", "upload", "banner", "logs"])
+def test_fc_tools_use_safety_pause_before_taking_reception(monitored_editor: ParameterEditorWindow, operation: str) -> None:
+    """GIVEN an actuator plugin, WHEN an FC tool opens, THEN safety cleanup precedes the exclusive operation."""
+    editor = monitored_editor
+    plugin = MagicMock(spec=["on_suspend", "on_resume"])
+    editor.current_plugin_view = plugin
+    popup = MagicMock()
+
+    def open_tool(*_args: object, **_kwargs: object) -> MagicMock:
+        plugin.on_suspend.assert_called_once_with(PluginPauseReason.EXCLUSIVE_OPERATION)
+        plugin.on_resume.assert_not_called()
+        return popup
+
+    with (
+        patch.object(parameter_editor_module, "open_mavlink_inspector_window", side_effect=open_tool),
+        patch.object(parameter_editor_module, "FlightControllerBannerWindow", side_effect=open_tool),
+        patch.object(parameter_editor_module, "FileBrowserWindow", side_effect=open_tool),
+    ):
+        if operation == "inspector":
+            editor.on_mavlink_inspector_click()
+        elif operation == "upload":
+            editor.ui.upload_params_with_progress = open_tool
+            editor.upload_selected_params({})
+        elif operation == "banner":
+            editor.on_fc_banner_click()
+        else:
+            editor.on_download_bin_logs_click()
+            popup.set_closed_callback.call_args.args[0]()
+
+    plugin.on_suspend.assert_called_once_with(PluginPauseReason.EXCLUSIVE_OPERATION)
+    plugin.on_resume.assert_called_once_with()
+
+
+def test_connection_check_uses_passive_pause_when_available(monitored_editor: ParameterEditorWindow) -> None:
+    """GIVEN an actuator plugin, WHEN checking buffered heartbeats, THEN no safety-stop command is requested."""
+    editor = monitored_editor
+    plugin = MagicMock(spec=["on_suspend", "on_resume"])
+    editor.current_plugin_view = plugin
+    editor._connection_recovery._monitor.poll.side_effect = [False, True]
+
+    editor._connection_recovery.check()
+
+    plugin.on_suspend.assert_called_once_with(PluginPauseReason.CONNECTION_RECOVERY)
+    plugin.on_resume.assert_called_once_with()
+
+
+@pytest.mark.parametrize("creation_fails", [False, True])
+def test_log_browser_retains_an_explicit_lease_until_close(
+    monitored_editor: ParameterEditorWindow, creation_fails: bool
+) -> None:
+    """GIVEN asynchronous browsing, WHEN opening returns or fails, THEN ownership follows the tool's actual lifetime."""
+    editor = monitored_editor
+    recovery = editor._connection_recovery
+    popup = MagicMock()
+    error = OSError("Browser unavailable")
+    with patch.object(
+        parameter_editor_module, "FileBrowserWindow", side_effect=error if creation_fails else None, return_value=popup
+    ):
+        if creation_fails:
+            with pytest.raises(OSError, match="Browser unavailable"):
+                editor.on_download_bin_logs_click()
+        else:
+            editor.on_download_bin_logs_click()
+            assert recovery.operation_active
+            popup.set_closed_callback.call_args.args[0]()
+    assert not recovery.operation_active
+
+
+@pytest.mark.parametrize("tool", ["preview", "export"])
+def test_parameter_tool_retains_reception_until_its_root_is_destroyed(
+    monitored_editor: ParameterEditorWindow, root: tk.Tk, tool: str
+) -> None:
+    """
+    Keep asynchronous parameter tools protected independently of window visibility.
+
+    GIVEN: A preview or export tool that does not use a modal grab
+    WHEN: Its opening callback returns, a child closes, and its root is withdrawn
+    THEN: It retains reception until its root closes, after which monitoring resumes
+    """
+    editor = monitored_editor
+    recovery = editor._connection_recovery
+    popup_root = tk.Toplevel(root)
+    popup = SimpleNamespace(root=popup_root)
+    child = ttk.Label(popup_root)
+    editor.ui.askopenfilename = MagicMock(return_value="tune.param")
+    try:
+        with (
+            patch.object(parameter_editor_module, "ParameterFileUploadWindow", return_value=popup),
+            patch.object(parameter_editor_module, "ParameterExportWindow", return_value=popup),
+        ):
+            if tool == "preview":
+                editor.on_compare_and_upload_parameter_file_click()
+            else:
+                editor.on_export_parameters_click()
+        assert recovery.operation_active
+        child.destroy()
+        popup_root.withdraw()
+        recovery.check()
+        assert recovery.operation_active
+        recovery._monitor.poll.assert_not_called()
+    finally:
+        popup_root.destroy()
+    assert not recovery.operation_active
+    recovery.check()
+    recovery._monitor.poll.assert_called_once_with(read=True)
+
+
+def test_overlapping_parameter_tools_release_only_their_own_lease(
+    monitored_editor: ParameterEditorWindow, root: tk.Tk
+) -> None:
+    """GIVEN two tool windows, WHEN one closes twice, THEN the other keeps ownership until it closes."""
+    editor = monitored_editor
+    first, second = tk.Toplevel(root), tk.Toplevel(root)
+    try:
+        editor._retain_fc_operation_until_closed(first)
+        editor._retain_fc_operation_until_closed(second)
+        first.destroy()
+        first.destroy()
+        assert editor._connection_recovery.operation_active
+    finally:
+        if first.winfo_exists():
+            first.destroy()
+        second.destroy()
+    assert not editor._connection_recovery.operation_active
+
+
+def test_parameter_tool_bind_failure_does_not_leak_receive_ownership(monitored_editor: ParameterEditorWindow) -> None:
+    """GIVEN a tool that cannot bind cleanup, WHEN ownership setup fails, THEN the lease is released."""
+    root = MagicMock(spec=tk.Toplevel)
+    root.bind.side_effect = tk.TclError("window destroyed")
+    with pytest.raises(tk.TclError, match="window destroyed"):
+        monitored_editor._retain_fc_operation_until_closed(root)
+    assert not monitored_editor._connection_recovery.operation_active
+
+
+def test_reconnection_retries_off_gui_thread_and_preserves_local_edits(monitored_editor: ParameterEditorWindow) -> None:
+    """GIVEN an outage, WHEN retries eventually succeed, THEN the plugin resumes and pending widget edits are committed."""
+    editor = monitored_editor
+    plugin = MagicMock(spec=["on_suspend", "on_resume"])
+    editor.current_plugin_view = plugin
+    monitor = editor._connection_recovery._monitor
+    monitor.poll.return_value = False
+    attempts = iter(["Unavailable", "Different hardware ID", ""])
+    worker_threads: list[int] = []
+
+    def reconnect() -> str:
+        worker_threads.append(threading.get_ident())
+        return next(attempts)
+
+    monitor.reconnect.side_effect = reconnect
+    editor._connection_recovery.check()
+    for _attempt in range(3):
+        assert editor.navigation_lock.locked
+        assert editor._connection_recovery._worker is not None
+        editor._connection_recovery._worker.join(timeout=1)
+        assert not editor._connection_recovery._worker.is_alive()
+        editor._connection_recovery.check()
+
+    assert len(worker_threads) == 3
+    assert all(thread != threading.get_ident() for thread in worker_threads)
+    assert not editor.navigation_lock.locked
+    plugin.on_suspend.assert_called_once()
+    plugin.on_resume.assert_called_once()
+    editor.parameter_editor_table.view_port.focus_get().event_generate.assert_called_once_with("<FocusOut>", when="now")
+    editor.parameter_editor.handle_write_changes_workflow.assert_not_called()
+    editor.parameter_editor_table.repopulate_table.assert_called_once()
+
+
+def test_editor_shutdown_retains_ownership_until_worker_finishes(monitored_editor: ParameterEditorWindow) -> None:
+    """GIVEN a running reconnect, WHEN the editor closes, THEN the connection cannot leak into the next sub-application."""
+    editor = monitored_editor
+    monitor = editor._connection_recovery._monitor
+    worker = MagicMock()
+    editor._connection_recovery._worker = worker
+    editor._connection_recovery._unlock = editor._lock_connection_plugin(editor._connection_recovery)
+    assert not editor._stop_connection_monitor()
+    assert monitor.cancelled.is_set()
+    worker.join.assert_not_called()
+    monitor.close.assert_not_called()
+    assert editor.navigation_lock.locked
+
+    worker.is_alive.return_value = False
+    assert editor._stop_connection_monitor()
+    monitor.close.assert_called_once()
+    assert editor._connection_recovery is None
+    assert not editor.navigation_lock.locked
+
+
+def test_recovery_locks_plugin_buttons_until_the_connection_owner_releases_them(
+    monitored_editor: ParameterEditorWindow, root: tk.Tk
+) -> None:
+    """GIVEN a paused plugin with clickable controls, WHEN recovery owns reception, THEN the user cannot send commands."""
+    editor = monitored_editor
+    plugin = ttk.Frame(root)
+    button = ttk.Button(plugin, text="Start calibration")
+    disabled_button = ttk.Button(plugin, text="Unavailable", state="disabled")
+    editor.current_plugin_view = cast("PluginView", plugin)
+    try:
+        unlock = editor._lock_connection_plugin(editor._connection_recovery._monitor)
+        assert button.instate(("disabled",))
+        unlock()
+        assert not button.instate(("disabled",))
+        assert disabled_button.instate(("disabled",))
+        editor.navigation_lock.acquire(object())
+        assert not button.instate(("disabled",))
+    finally:
+        plugin.destroy()
+
+
+@pytest.mark.parametrize("visible", [False, True])
+def test_report_visibility_does_not_prevent_idle_connection_monitoring(
+    monitored_editor: ParameterEditorWindow, visible: bool
+) -> None:
+    """GIVEN a report without FC access, WHEN monitoring, THEN visibility does not imply receive ownership."""
+    editor = monitored_editor
+    report = MagicMock(spec=tk.Toplevel)
+    report.winfo_viewable.return_value = visible
+    editor.root.winfo_children.return_value = [report]
+    editor._connection_recovery.check()
+    editor._connection_recovery._monitor.poll.assert_called_once_with(read=True)
+
+
+def test_close_during_configured_upload_keeps_monitor_until_upload_finishes(
+    parameter_editor_window: ParameterEditorWindow,
+) -> None:
+    """GIVEN an active configured upload, WHEN closing, THEN defer shutdown until the upload yields the connection."""
+    editor = parameter_editor_window
+    editor._configured_upload_active = True
+    with (
+        patch.object(editor, "_stop_connection_monitor", return_value=True) as stop_monitor,
+        patch.object(editor, "_commit_focused_edit_and_offer_save") as save,
+    ):
+        editor.close_connection_and_quit()
+        assert editor._close_after_configured_upload
+        stop_monitor.assert_not_called()
+        save.assert_not_called()
+        editor.root.quit.assert_not_called()
+
+        editor._configured_upload_active = False
+        editor.close_connection_and_quit()
+        stop_monitor.assert_called_once()
+        save.assert_called_once()
+        editor.root.quit.assert_called_once()
+
+
+@pytest.mark.parametrize("error", [KeyError("__tk__messagebox"), tk.TclError("bad window path name")])
+def test_closing_still_saves_when_tk_focus_has_no_python_widget(
+    parameter_editor_window: ParameterEditorWindow, error: Exception
+) -> None:
+    """GIVEN a native or destroyed popup owns focus, WHEN closing, THEN saving and quitting still complete."""
+    editor = parameter_editor_window
+    editor.parameter_editor_table.view_port.focus_get.side_effect = error
+    editor.close_connection_and_quit()
+    editor.parameter_editor.handle_write_changes_workflow.assert_called_once()
+    editor.root.quit.assert_called_once()
+
+
+def test_recovery_resumes_plugin_when_tk_focus_points_to_a_destroyed_popup(monitored_editor: ParameterEditorWindow) -> None:
+    """GIVEN stale focus after recovery, WHEN completion renders, THEN the plugin resumes and navigation unlocks."""
+    editor = monitored_editor
+    editor._connection_recovery._worker = MagicMock()
+    editor._connection_recovery._worker.is_alive.return_value = False
+    editor._connection_recovery._state = RecoveryState.RECOVERING
+    resume_plugin = MagicMock()
+    editor._connection_recovery._resume = resume_plugin
+    editor._connection_recovery._unlock = editor._lock_connection_plugin(editor._connection_recovery)
+    editor.parameter_editor_table.view_port.focus_get.side_effect = KeyError("missing-popup")
+    editor._connection_recovery.check()
+    resume_plugin.assert_called_once()
+    assert not editor.navigation_lock.locked
+    editor.parameter_editor_table.repopulate_table.assert_called_once()
+
+
+@pytest.mark.parametrize("new_value", [1.0, 2.0, 3.0])
+@pytest.mark.parametrize("refreshed_value", [2.0, None])
+def test_recovery_refreshes_fc_cells_without_advancing_or_overwriting_edits(
+    monitored_editor: ParameterEditorWindow, root: tk.Tk, new_value: float, refreshed_value: float | None
+) -> None:
+    """GIVEN edited parameters, WHEN recovery downloads new FC values, THEN repaint preserves the step and local edits."""
+    editor = monitored_editor
+    parameter = ArduPilotParameter("TEST_GAIN", Par(new_value, "Keep this reason"), fc_value=1.0)
+    parameters = {parameter.name: parameter}
+    editor.parameter_editor.current_step_parameters = parameters
+    editor.parameter_editor.flight_controller.fc_parameters = (
+        {parameter.name: refreshed_value} if refreshed_value is not None else {"OTHER_GAIN": 4.0}
+    )
+    editor.show_only_differences.get.return_value = True
+    table = ParameterEditorTable(root, editor.parameter_editor, editor, parameters=parameters)
+    editor.parameter_editor_table = table
+    editor._connection_recovery._worker = MagicMock()
+    editor._connection_recovery._worker.is_alive.return_value = False
+    editor._connection_recovery._state = RecoveryState.RECOVERING
+    with patch.object(editor, "on_skip_click") as skip:
+        try:
+            editor._connection_recovery.check()
+            assert parameter.has_fc_value is (refreshed_value is not None)
+            assert parameter.fc_value_as_string == ("2" if refreshed_value is not None else "N/A")
+            assert parameter.value_as_string == str(int(new_value))
+            assert parameter.change_reason == "Keep this reason"
+            assert table.options.skip_when_no_differences
+            skip.assert_not_called()
+            if new_value != refreshed_value:
+                expected_text = "2" if refreshed_value is not None else "N/A"
+                assert str(table.view_port.grid_slaves(row=1, column=2)[0].cget("text")) == expected_text
+        finally:
+            table.destroy()
+
+
+@pytest.mark.parametrize("owner_gone", ["plugin", "window"])
+def test_recovery_does_not_resume_a_replaced_plugin(monitored_editor: ParameterEditorWindow, owner_gone: str) -> None:
+    """GIVEN a paused plugin, WHEN its owner is replaced or destroyed before recovery finishes, THEN it stays stopped."""
+    editor = monitored_editor
+    plugin = MagicMock()
+    editor.current_plugin_view = plugin
+    resume = editor._pause_connection_plugin()
+    assert resume is not None
+    if owner_gone == "plugin":
+        editor.current_plugin_view = MagicMock()
+    else:
+        editor.root.winfo_exists.return_value = False
+    resume()
+    plugin.on_resume.assert_not_called()
+
+
+def test_close_during_recovery_keeps_tk_responsive_until_worker_yields(monitored_editor: ParameterEditorWindow) -> None:
+    """GIVEN a blocked connection attempt, WHEN closing, THEN Tk schedules completion and keeps the FC locked meanwhile."""
+    editor = monitored_editor
+    worker = MagicMock()
+    editor._connection_recovery._worker = worker
+    editor._connection_recovery._unlock = editor._lock_connection_plugin(editor._connection_recovery)
+    editor.close_connection_and_quit()
+    editor.close_connection_and_quit()
+    editor.close_connection_and_quit()
+    editor.root.after.assert_called_once_with(50, editor._finish_pending_close)
+    worker.join.assert_not_called()
+    assert editor.navigation_lock.locked
+    editor.root.quit.assert_not_called()
+    worker.is_alive.return_value = False
+    retry = editor.root.after.call_args.args[1]
+    retry()
+    editor.close_connection_and_quit()
+    assert not editor.navigation_lock.locked
+    editor.root.quit.assert_called_once()
+    editor.parameter_editor.handle_write_changes_workflow.assert_called_once()
+
+
+def test_inspector_disables_plugin_controls_without_a_modal_grab(monitored_editor: ParameterEditorWindow, root: tk.Tk) -> None:
+    """GIVEN macOS permits input outside the inspector, WHEN it opens, THEN plugin controls stay disabled until it closes."""
+    editor = monitored_editor
+    plugin = ttk.Frame(root)
+    button = ttk.Button(plugin, text="Start motor")
+    editor.current_plugin_view = cast("PluginView", plugin)
+
+    def wait(_window: object) -> None:
+        assert button.instate(("disabled",))
+        assert editor.navigation_lock.locked
+
+    editor.root.wait_window.side_effect = wait
+    with patch.object(parameter_editor_module, "open_mavlink_inspector_window"):
+        try:
+            editor.on_mavlink_inspector_click()
+            assert not button.instate(("disabled",))
+            assert not editor.navigation_lock.locked
+        finally:
+            plugin.destroy()

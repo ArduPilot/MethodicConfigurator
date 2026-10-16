@@ -11,7 +11,8 @@ SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from collections.abc import Generator
+import tkinter as tk
+from collections.abc import Callable, Generator
 from tkinter import ttk
 from types import SimpleNamespace
 from unittest.mock import MagicMock
@@ -90,6 +91,63 @@ def level_calibration_view(tk_root, mocker) -> Generator[SimpleNamespace, None, 
 
 class TestLevelCalibrationView:
     """Test the user feedback displayed by the level calibration view."""
+
+    def test_recovery_cancels_the_real_trim_timer_and_resumes_the_pending_result(
+        self,
+        level_calibration_view: SimpleNamespace,
+        mocker: MockerFixture,
+        pause_polling_plugin_for_recovery: Callable[[tk.Misc], Callable[[], None]],
+        fire_tk_timer: Callable[[tk.Misc, str], None],
+    ) -> None:
+        """
+        Preserve an active trim while recovery owns reception.
+
+        GIVEN: A level trim with a real pending Tk timer
+        WHEN: The editor pauses and resumes it through the recovery entry point
+        THEN: Polling stops during the pause and resumes without starting a new calibration
+        """
+        context = level_calibration_view
+        mocker.stop(context.after)
+        mocker.stop(context.after_cancel)
+        context.model.start_level_calibration.return_value = (True, "")
+        context.model.poll_level_calibration.return_value = None
+        view = context.view
+        view._on_level_calibration()
+        assert view._poll_job is not None
+
+        resume = pause_polling_plugin_for_recovery(view)
+
+        assert view._poll_job is None
+        context.model.poll_level_calibration.assert_not_called()
+        resume()
+        timer = view._poll_job
+        assert timer is not None
+        resume()
+        assert view._poll_job == timer
+        fire_tk_timer(view, timer)
+        context.model.poll_level_calibration.assert_called_once_with()
+        context.model.start_level_calibration.assert_called_once_with()
+        assert view._poll_job is not None
+
+    def test_recovery_pause_only_reschedules_an_active_calibration(self, level_calibration_view) -> None:
+        """GIVEN no running trim, WHEN recovery yields and restores reception, THEN no calibration poll is scheduled."""
+        fixture = level_calibration_view
+        fixture.view.on_suspend()
+        fixture.view.on_resume()
+        fixture.after.assert_not_called()
+
+    def test_recovery_resume_restores_a_pending_calibration_poll(self, level_calibration_view) -> None:
+        """GIVEN a suspended trim poll, WHEN reception resumes, THEN the trim continues polling."""
+        fixture = level_calibration_view
+        fixture.view._calibration_in_progress = True
+        fixture.view._poll_job = "pending-poll"
+
+        fixture.view.on_suspend()
+        fixture.view.on_resume()
+
+        fixture.after_cancel.assert_called_once_with("pending-poll")
+        fixture.after.assert_called_once()
+        assert fixture.view._poll_job == "after-id"
 
     def test_layout_matches_the_accelerometer_calibration_rows(self, level_calibration_view) -> None:
         """

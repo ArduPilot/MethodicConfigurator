@@ -126,6 +126,7 @@ def test_every_requested_editor_control_is_locked_and_restored(root, mocker, gui
     """
     module = "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor"
     window = ParameterEditorWindow.__new__(ParameterEditorWindow)
+    window._connection_recovery = None
     window.root = root
     window.main_frame = ttk.Frame(root)
     window.navigation_lock = NavigationLock()
@@ -208,6 +209,7 @@ def test_queued_editor_actions_cannot_bypass_calibration_lock(action: str) -> No
     THEN: It returns before accessing the data model, writing files, or opening dialogs
     """
     window = ParameterEditorWindow.__new__(ParameterEditorWindow)
+    window._connection_recovery = None
     window.navigation_lock = NavigationLock()
     window.navigation_lock.acquire(window)
 
@@ -225,6 +227,7 @@ def test_queued_step_selection_and_external_upload_cannot_bypass_calibration_loc
     THEN: Selection resets to the current step and uploads are refused
     """
     window = ParameterEditorWindow.__new__(ParameterEditorWindow)
+    window._connection_recovery = None
     window.navigation_lock = NavigationLock()
     window.navigation_lock.acquire(window)
     window.parameter_editor = SimpleNamespace(current_file="14_calibration.param")
