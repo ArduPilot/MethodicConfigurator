@@ -259,9 +259,9 @@ class TestConfigurationStepIntegration:
         config = json.loads(config_path.read_text(encoding="utf-8"))
         step = config["steps"]["09_esc_telemetry.param"]
 
-        assert step["plugin"]["name"] == PLUGIN_ESC_RPM_SCALE
-        assert step["plugin"]["placement"] == "left"
-        assert step["plugin"].get("if") == "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'Scripting'"
+        assert step["plugin"]["name"] == "esc_telemetry"
+        assert step["plugin"]["placement"] == "top"
+        assert "if" not in step["plugin"]
         scripting_condition = step["derived_parameters"]["SCR_ENABLE"]["if"]
         assert scripting_condition == "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'Scripting'"
 

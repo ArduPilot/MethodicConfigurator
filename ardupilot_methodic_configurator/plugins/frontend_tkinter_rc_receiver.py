@@ -46,10 +46,10 @@ class RCReceiverView(ttk.Frame):  # pylint: disable=too-many-ancestors,too-many-
         self.instructions = ttk.Label(
             content,
             text=_(
+                "If necessary change the parameters on the right and press 'Upload selected params to FC' to activate them."
                 "Move the sticks and switches on the RC controller to test that at least the first five channels are working. "
                 "Power off the RC transmitter (controller) and check that RC failsafe is detected, "
                 "then power it back on to check recovery. "
-                "If necessary change the parameters on the right and press 'Upload selected params to FC' to activate them."
             ),
             wraplength=400,
             justify="left",
