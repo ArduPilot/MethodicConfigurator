@@ -14,13 +14,19 @@ from tkinter import ttk
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_file_browser_tasks import BackgroundTaskRunner
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
+from ardupilot_methodic_configurator.macos_utilities import is_macos_sequoia_or_older
 
 
 class UpdateDialog(BaseWindow):  # pylint: disable=too-many-instance-attributes
     """Dialog for displaying software update information and handling user interaction."""
 
-    def __init__(self, version_info: str, download_callback: Callable[[], bool] | None = None) -> None:
+    def __init__(
+        self,
+        version_info: str,
+        download_callback: Callable[[Callable[[float, str], None]], bool] | None = None,
+    ) -> None:
         super().__init__()
         self.root.title(
             _("Amilcar Lucas's - ArduPilot methodic configurator {version} - New version available").format(
@@ -30,6 +36,7 @@ class UpdateDialog(BaseWindow):  # pylint: disable=too-many-instance-attributes
         self.root.geometry(self.calculate_scaled_geometry(700, 600))
         self.center_window_on_screen(self.root)
         self.download_callback = download_callback
+        self._download_runner = BackgroundTaskRunner(self.root.after)
         self.root.protocol("WM_DELETE_WINDOW", self.on_cancel)
 
         self.frame = ttk.Frame(self.main_frame, padding="10")
@@ -79,31 +86,40 @@ class UpdateDialog(BaseWindow):  # pylint: disable=too-many-instance-attributes
         self.progress["value"] = value
         if status:
             self.status_label["text"] = status
-        self.root.update()
+        if not is_macos_sequoia_or_older():
+            self.root.update_idletasks()
 
     def on_yes(self) -> None:
+        if self._download_runner.active:
+            return
         self.progress.grid()
         self.status_label.grid()
         self.yes_btn.config(state="disabled")
         self.no_btn.config(state="disabled")
 
         if self.download_callback:
-            success = self.download_callback()
-            if success:
-                self.status_label["text"] = _("Update complete! Please restart the application.")
-                self.result = True
-            else:
-                self.status_label["text"] = _("Update failed!")
-                self.yes_btn.config(state="normal")
-                self.no_btn.config(state="normal")
-                self.result = False
-            self.root.after(4000, self.root.destroy)
+            self._download_runner.start(self.download_callback, self.update_progress, self._on_download_complete)
+
+    def _on_download_complete(self, result: object | None, error: Exception | None) -> None:
+        """Display the worker's result on the Tk thread."""
+        self.result = bool(result) and error is None
+        if self.result:
+            self.status_label["text"] = _("Update complete! Please restart the application.")
+        else:
+            self.status_label["text"] = _("Update failed!")
+            self.yes_btn.config(state="normal")
+            self.no_btn.config(state="normal")
+        self.root.after(4000, self.root.destroy)
 
     def on_no(self) -> None:
+        if self._download_runner.active:
+            return
         self.result = False
         self.root.destroy()
 
     def on_cancel(self) -> None:
+        if self._download_runner.active:
+            return
         self.result = False
         self.root.destroy()
 

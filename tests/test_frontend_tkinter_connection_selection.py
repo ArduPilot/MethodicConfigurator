@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from collections.abc import Callable
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -32,6 +33,11 @@ from ardupilot_methodic_configurator.frontend_tkinter_firmware_upload import Fir
 # ---------------------------------------------------------------------------
 
 _MOD = "ardupilot_methodic_configurator.frontend_tkinter_connection_selection"
+
+
+def _configure_progress_task(window: MagicMock) -> None:
+    """Execute worker tasks inline in tests of connection choices and error handling."""
+    window.run_task.side_effect = lambda task: task(window.update_progress_bar)
 
 
 def _mock_basewindow_init(self, root_tk=None) -> None:  # noqa: ARG001 # pylint: disable=unused-argument
@@ -371,13 +377,14 @@ class TestConnectionSelectionWidgets:
             patch(f"{_MOD}.ProgressWindow", return_value=mock_progress_instance) as mock_progress_window,
             patch(f"{_MOD}.show_no_connection_error") as mock_show_error,
         ):
+            _configure_progress_task(mock_progress_window.return_value)
             result = widget.reconnect("COM1")
 
         mock_progress_window.assert_called_once()
         mock_fc.connect.assert_called_once_with("COM1", mock_progress_instance.update_progress_bar, baudrate=115200)
         mock_show_error.assert_called_once_with("Connection error")
         assert result
-        mock_progress_instance.destroy.assert_not_called()
+        mock_progress_instance.destroy.assert_called_once()
 
     def test_reconnect_success_destroy_parent(
         self,
@@ -398,6 +405,7 @@ class TestConnectionSelectionWidgets:
             patch(f"{_MOD}.show_no_connection_error") as mock_show_error,
             patch(f"{_MOD}.ProgramSettings.store_connection", return_value="COM1"),
         ):
+            _configure_progress_task(mock_progress_window.return_value)
             result = widget.reconnect("COM1")
 
         mock_progress_window.assert_called_once()
@@ -424,9 +432,10 @@ class TestConnectionSelectionWidgets:
         mock_parent.download_flight_controller_parameters = MagicMock()
 
         with (
-            patch(f"{_MOD}.ProgressWindow", return_value=mock_progress_instance),
+            patch(f"{_MOD}.ProgressWindow", return_value=mock_progress_instance) as mock_progress_window,
             patch(f"{_MOD}.ProgramSettings.store_connection", return_value="COM1"),
         ):
+            _configure_progress_task(mock_progress_window.return_value)
             result = widget.reconnect("COM1")
 
         mock_parent.download_flight_controller_parameters.assert_called_once_with(redownload=False)
@@ -702,9 +711,10 @@ class TestBaudrateSelectionBehavior:
         baudrate_widget._mock_fc.connect.return_value = None  # type: ignore[attr-defined]
 
         with (
-            patch(f"{_MOD}.ProgressWindow"),
+            patch(f"{_MOD}.ProgressWindow") as mock_progress_window,
             patch(f"{_MOD}.messagebox.showerror"),
         ):
+            _configure_progress_task(mock_progress_window.return_value)
             baudrate_widget.reconnect("COM1")
 
         baudrate_widget._mock_fc.connect.assert_called_once()  # type: ignore[attr-defined]
@@ -725,7 +735,8 @@ class TestBaudrateSelectionBehavior:
         baudrate_widget._mock_baudrate_var.get.return_value = custom_baudrate  # type: ignore[attr-defined]
         baudrate_widget._mock_fc.connect.return_value = None  # type: ignore[attr-defined]
 
-        with patch(f"{_MOD}.ProgressWindow"):
+        with patch(f"{_MOD}.ProgressWindow") as mock_progress_window:
+            _configure_progress_task(mock_progress_window.return_value)
             baudrate_widget.reconnect("COM1")
 
         baudrate_widget._mock_fc.connect.assert_called_once()  # type: ignore[attr-defined]
@@ -750,7 +761,8 @@ class TestBaudrateSelectionBehavior:
         mock_comport.device = selected_port
         baudrate_widget._mock_fc.comport = mock_comport  # type: ignore[attr-defined]
 
-        with patch(f"{_MOD}.ProgressWindow"):
+        with patch(f"{_MOD}.ProgressWindow") as mock_progress_window:
+            _configure_progress_task(mock_progress_window.return_value)
             result = baudrate_widget.reconnect(selected_port)
 
         baudrate_widget._mock_fc.connect.assert_called_once()  # type: ignore[attr-defined]
@@ -962,6 +974,7 @@ class TestPeriodicPortRefresh:
             patch(f"{_MOD}.show_no_connection_error"),
             patch(f"{_MOD}.ProgramSettings.store_connection", return_value="COM1") as mock_store,
         ):
+            _configure_progress_task(mock_progress_window.return_value)
             mock_progress_window.return_value.destroy = MagicMock()
             result = periodic_widget.reconnect("COM1")
 
@@ -1331,9 +1344,10 @@ class TestPersistAndCacheConnectionBehavior:
         mock_fc.connect.return_value = ""
 
         with (
-            patch(f"{_MOD}.ProgressWindow"),
+            patch(f"{_MOD}.ProgressWindow") as mock_progress_window,
             patch(f"{_MOD}.ProgramSettings.store_connection", return_value="COM3"),
         ):
+            _configure_progress_task(mock_progress_window.return_value)
             widget.reconnect("  COM3  ")
 
         assert widget.previous_selection == "COM3"
@@ -1357,9 +1371,10 @@ class TestPersistAndCacheConnectionBehavior:
         mock_fc.add_connection.reset_mock()
 
         with (
-            patch(f"{_MOD}.ProgressWindow"),
+            patch(f"{_MOD}.ProgressWindow") as mock_progress_window,
             patch(f"{_MOD}.ProgramSettings.store_connection", return_value="COM3"),
         ):
+            _configure_progress_task(mock_progress_window.return_value)
             widget.reconnect("  COM3  ")
 
         mock_fc.add_connection.assert_called_with("COM3")
@@ -1491,10 +1506,11 @@ class TestReconnectBaudrateValidation:
 
         with (
             patch(f"{_MOD}.logging_warning") as mock_warn,
-            patch(f"{_MOD}.ProgressWindow"),
+            patch(f"{_MOD}.ProgressWindow") as mock_progress_window,
             patch.object(periodic_widget._mock_fc, "connect", return_value="") as mock_connect,  # type: ignore[attr-defined]
             patch(f"{_MOD}.messagebox"),
         ):
+            _configure_progress_task(mock_progress_window.return_value)
             periodic_widget.reconnect("COM1")
 
         # Warning should have been emitted for unsupported baudrate
@@ -1518,11 +1534,12 @@ class TestReconnectBaudrateValidation:
         periodic_widget.default_baudrate = 115200
 
         with (
-            patch(f"{_MOD}.ProgressWindow"),
+            patch(f"{_MOD}.ProgressWindow") as mock_progress_window,
             patch(f"{_MOD}.messagebox") as mock_msgbox,
             patch.object(periodic_widget._mock_fc, "connect", return_value="") as mock_connect,  # type: ignore[attr-defined]
             patch(f"{_MOD}.logging_error"),
         ):
+            _configure_progress_task(mock_progress_window.return_value)
             periodic_widget.reconnect("COM1")
 
         # baudrate_var should be reset to the default
@@ -1649,3 +1666,36 @@ class TestConnectionSelectionWindowColonBranch:
         assert any(label == "Connection successful" for label in captured_labels), (
             f"Plain text label not found. Labels: {captured_labels}"
         )
+
+
+@pytest.mark.parametrize("raises", [False, True])
+def test_nested_reconnect_is_ignored_and_next_attempt_is_allowed(
+    basic_widget: tuple[ConnectionSelectionWidgets, MagicMock, MagicMock], raises: bool
+) -> None:
+    """Nested events cannot create another worker, and failure releases the reconnect guard."""
+    widget, _, _ = basic_widget
+    widget.destroy_parent_on_connect = False
+    widget.download_params_on_connect = False
+    with patch(f"{_MOD}.ProgressWindow") as progress, patch(f"{_MOD}.show_no_connection_error"):
+        window = progress.return_value
+
+        def connect_once(_task: Callable[..., object]) -> str:
+            assert widget.reconnect("COM2") is True
+            if raises:
+                message = "Connection failed"
+                raise RuntimeError(message)
+            return "No heartbeat"
+
+        window.run_task.side_effect = connect_once
+        if raises:
+            with pytest.raises(RuntimeError, match="Connection failed"):
+                widget.reconnect("COM1")
+        else:
+            assert widget.reconnect("COM1") is True
+        progress.assert_called_once()
+        window.destroy.assert_called_once()
+
+        window.run_task.side_effect = None
+        window.run_task.return_value = ""
+        assert widget.reconnect("COM1") is False
+        assert progress.call_count == 2

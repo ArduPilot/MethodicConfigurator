@@ -53,6 +53,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import 
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import (  # pylint: disable=cyclic-import
     display_bitmask_parameters_editor_usage_popup,
 )
+from ardupilot_methodic_configurator.macos_utilities import is_macos_sequoia_or_older
 
 NEW_VALUE_WIDGET_WIDTH = 9
 NEW_VALUE_DIFFERENT_STR = "\u2260" if platform_system() == "Windows" else "!="
@@ -331,7 +332,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
 
     def _apply_scroll_position(self, scroll_to_bottom: bool) -> None:
         """Apply the requested scroll position to the canvas."""
-        self.update_idletasks()
+        if not is_macos_sequoia_or_older():
+            self.update_idletasks()
         position = 1.0 if scroll_to_bottom else 0.0
         self.canvas.yview_moveto(position)
 
@@ -354,8 +356,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
                 if should_display_bitmask_usage:
                     should_try_to_display_bitmask_parameter_editor_usage = True
                 self._grid_column_widgets(row_widgets, i, show_upload_column)
-                if i % 20 == 0:
-                    self.view_port.update_idletasks()  # yield to the event loop periodically to keep the UI responsive
+                if i % 20 == 0 and not is_macos_sequoia_or_older():
+                    self.view_port.update_idletasks()
 
             if self.options.show_parameter_actions:
                 # Add the "Add" button at the bottom of the table
@@ -403,7 +405,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         for row in range(1, len(parameter_items) + 1):
             self.view_port.grid_rowconfigure(row, minsize=20)
         self._reserved_table_rows = len(parameter_items)
-        self.view_port.update_idletasks()
+        if not is_macos_sequoia_or_older():
+            self.view_port.update_idletasks()
 
         def render_batch(start: int) -> None:
             nonlocal should_try_to_display_bitmask_parameter_editor_usage
@@ -895,7 +898,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
             # Issue a FocusIn event on something else than new_value_entry to prevent endless looping
             self.main_frame.focus_set()
             # Run the Tk event loop once to process the event
-            self.main_frame.update_idletasks()
+            if not is_macos_sequoia_or_older():
+                self.main_frame.update_idletasks()
             # Re-bind the FocusIn event to new_value_entry
             if event.widget.winfo_exists():
                 event.widget.bind(
@@ -1327,7 +1331,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
     def _center_and_focus_window(self, window: tk.Toplevel | tk.Tk) -> None:
         BaseWindow.center_window(window, self._get_parent_toplevel())
         window.lift()
-        window.update()  # Ensure the window is fully rendered before setting focus
+        if not is_macos_sequoia_or_older():
+            window.update_idletasks()
 
         # On macOS, grab_set() causes UI freeze (issue #1264), so skip it
         if sys_platform != "darwin":

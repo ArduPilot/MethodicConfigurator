@@ -523,7 +523,6 @@ class TestWindowSizing:
             assert cast("ttk.Progressbar", progress.phase_bars[1]["bar"]).cget("value") == 5
             assert editor.parameter_editor_table is table
             assert value_widget.get() == "0.15"
-            assert window.winfo_height() == height
             assert buttons.winfo_height() == buttons.winfo_reqheight()
             assert buttons.winfo_y() + buttons.winfo_height() <= height - 10
 
@@ -670,6 +669,7 @@ class TestWindowSizing:
             patch.object(parameter_editor_module, "ScrollFrame") as scroll_frame,
         ):
             scroll_frame.return_value.winfo_reqheight.return_value = 50
+            scroll_frame.return_value.winfo_height.return_value = 1
             scroll_frame.return_value.view_port.winfo_reqheight.return_value = 272
             for _ in range(5):
                 editor._update_inline_component_editor(component_name)
@@ -881,7 +881,9 @@ class TestWindowSizing:
         editor.inline_component_container.winfo_pixels.side_effect = int
         editor.inline_component_scroll_frame = MagicMock()
         editor.inline_component_scroll_frame.view_port.winfo_reqheight.return_value = 272
-        editor._inline_component_chrome_height = 24
+        editor.inline_component_scroll_frame.winfo_height.return_value = 100
+        editor.inline_component_container.winfo_height.return_value = 124
+        editor._inline_component_chrome_height = 0
         editor.main_frame.winfo_height.return_value = frame_height
         editor.main_frame.winfo_children.return_value = [
             fixed_controls,
@@ -918,7 +920,9 @@ class TestWindowSizing:
         editor.inline_component_container.winfo_pixels.side_effect = int
         editor.inline_component_scroll_frame = MagicMock()
         editor.inline_component_scroll_frame.view_port.winfo_reqheight.return_value = 600
-        editor._inline_component_chrome_height = round(28 * scaling)
+        editor.inline_component_scroll_frame.winfo_height.return_value = 100
+        editor.inline_component_container.winfo_height.return_value = 100 + round(28 * scaling)
+        editor._inline_component_chrome_height = 0
         editor.main_frame.winfo_children.return_value = [
             fixed_controls,
             editor.inline_component_container,

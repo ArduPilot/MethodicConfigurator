@@ -493,7 +493,8 @@ def test_clicking_upload_header_hides_tooltip_and_cancels_pending_show(
     tooltip.schedule_show()
     header.event_generate("<Button-1>")
 
-    visible_tooltip.destroy.assert_called_once_with()
+    visible_tooltip.withdraw.assert_called_once_with()
+    visible_tooltip.after.assert_called_once_with(50, visible_tooltip.destroy)
     assert tooltip.tooltip is None
     assert "show" not in tooltip.timers
     assert not table.upload_checkbutton_var["PARAM"].get()

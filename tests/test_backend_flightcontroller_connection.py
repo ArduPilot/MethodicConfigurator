@@ -2855,7 +2855,12 @@ class TestFlightControllerConnectionAutoDetectWithMavlink:
         tty_path.touch()
         by_id_path = tmp_path / "serial" / "by-id" / "flight-controller"
         by_id_path.parent.mkdir(parents=True)
-        by_id_path.symlink_to(tty_path)
+        try:
+            by_id_path.symlink_to(tty_path)
+        except OSError as error:
+            if getattr(error, "winerror", None) == 1314:
+                pytest.skip("Creating symbolic links requires Windows Developer Mode or elevated privileges")
+            raise
 
         discovery = FakeSerialPortDiscovery()
         fc_port = serial.tools.list_ports_common.ListPortInfo(str(tty_path))

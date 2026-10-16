@@ -57,7 +57,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             if flight_controller.comport and hasattr(flight_controller.comport, "device")
             else None
         )
-        self.connection_progress_window: ProgressWindow
+        self._reconnect_in_progress = False
         self._refresh_timer_id: str | None = None
         self._is_refreshing = False
 
@@ -251,9 +251,18 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         return selected_connection
 
     def reconnect(self, selected_connection: str = "") -> bool:  # Default is auto-connect
-        self.connection_progress_window = ProgressWindow(
-            self.parent.root, _("Connecting with the FC"), _("Connection step {} of {}")
-        )
+        """Ignore nested connection requests while the current operation pumps Tk events."""
+        if self._reconnect_in_progress:
+            return True
+        self._reconnect_in_progress = True
+        try:
+            return self._reconnect(selected_connection)
+        finally:
+            self._reconnect_in_progress = False
+
+    def _reconnect(self, selected_connection: str) -> bool:
+        """Connect once, retaining ownership of this operation's progress window."""
+        progress_window = ProgressWindow(self.parent.root, _("Connecting with the FC"), _("Connection step {} of {}"))
         # Get the current baudrate from the combobox
         selected_baudrate = "unknown"  # Initialize with default value for error handling
         try:
@@ -274,15 +283,21 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             self.baudrate_var.set(str(self.default_baudrate))
             current_baudrate = self.default_baudrate
 
-        error_message = self.flight_controller.connect(
-            selected_connection, self.connection_progress_window.update_progress_bar, baudrate=current_baudrate
-        )
+        refresh_was_running = self._refresh_timer_id is not None
+        self.stop_periodic_refresh()
+        connected = False
+        try:
+            error_message = progress_window.run_task(
+                lambda report: self.flight_controller.connect(selected_connection, report, baudrate=current_baudrate)
+            )
+            connected = not error_message
+        finally:
+            progress_window.destroy()
+            if refresh_was_running and not connected:
+                self.start_periodic_refresh()
         if error_message:
             show_no_connection_error(error_message)
             return True
-        self.connection_progress_window.destroy()
-        # Stop periodic refresh when connection is established
-        self.stop_periodic_refresh()
         # Store the current connection as the previous selection
         if self.flight_controller.comport and hasattr(self.flight_controller.comport, "device"):
             device: str = self.flight_controller.comport.device
