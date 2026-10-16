@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # from sys import exit as sys_exit
 from argparse import Action, ArgumentParser, Namespace
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from copy import deepcopy
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -816,6 +816,29 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                     new_value = fc_parameters[param_name]
                     if not is_within_tolerance(param.value, new_value):
                         param.value = new_value
+
+    def retain_unrepresented_fc_parameters(
+        self,
+        vehicle_dir: str,
+        fc_parameters: dict[str, float],
+        next_filename: Callable[[str, str], str],
+    ) -> None:
+        """Preserve source-only settings in a final editable step without loading or modifying the current project."""
+        copied_filesystem = LocalFilesystem(
+            vehicle_dir,
+            self.vehicle_type,
+            "",
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
+            load_project=False,
+        )
+        copied_filesystem.file_parameters = copied_filesystem.read_params_from_files()
+        represented, _first_step = copied_filesystem.compound_params()
+        remaining = ParDict.from_fc_parameters(
+            {name: value for name, value in fc_parameters.items() if name not in represented}
+        )
+        if remaining:
+            copied_filesystem.export_to_param(remaining, next_filename(vehicle_dir, "flight_controller"), annotate_doc=False)
 
     def remove_created_files_and_vehicle_dir(self) -> str:
         # Remove the created files and the vehicle directory itself
