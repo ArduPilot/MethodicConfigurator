@@ -65,12 +65,21 @@ def extract_result_strings_from_conditional(change_reason: str) -> list[str]:
     return result_strings
 
 
-def process_configuration_steps(text_fields: list[str], extracted_strings: dict[str, set[str]], data: dict[str, Any]) -> None:
+def process_configuration_steps(  # pylint: disable=too-many-branches
+    text_fields: list[str], extracted_strings: dict[str, set[str]], data: dict[str, Any]
+) -> None:
     for step_data in data["steps"].values():  # pylint: disable=too-many-nested-blocks
         # Extract standard text fields
         for field in text_fields:
             if field in step_data and isinstance(step_data[field], str) and step_data[field].strip():
                 extracted_strings[field].add(step_data[field])
+
+        # Only the popup message is user-facing; its type selects the dialog style.
+        popup = step_data.get("instructions_popup")
+        if isinstance(popup, dict):
+            message = popup.get("msg")
+            if isinstance(message, str) and message.strip():
+                extracted_strings["instructions_popup"].add(message)
 
         # Special handling for jump_possible messages
         if "jump_possible" in step_data:
@@ -110,6 +119,7 @@ def extract_strings_from_config_steps(config_file: str) -> dict[str, set[str]]:
     # Store unique strings by category
     extracted_strings: dict[str, set[str]] = {field: set() for field in text_fields}
     extracted_strings["jump_messages"] = set()  # Special handling for jump_possible messages
+    extracted_strings["instructions_popup"] = set()
 
     try:
         with open(config_file, encoding="utf-8") as f:
@@ -322,8 +332,8 @@ def main() -> None:
     # Configure logging
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
-    # Base directory for scanning
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    # Base directory for scanning (the script lives in the scripts/ subdirectory)
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     config_dir = os.path.join(base_dir, "ardupilot_methodic_configurator")
     schema_file = os.path.join(config_dir, "configuration_steps_schema.json")
     output_file = os.path.join(config_dir, "configuration_steps_strings.py")
