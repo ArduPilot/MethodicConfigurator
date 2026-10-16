@@ -204,6 +204,9 @@ def test_same_hardware_reconnects_at_selected_baudrate_and_refreshes_values(link
     assert monitor.poll(read=False)
     fc.set_param.assert_not_called()
     fc.download_params.assert_called_once()
+    # Recovery must use the backend's link-aware budget, including slow serial links.
+    assert fc.download_params.call_args.kwargs.get("response_timeout") is None
+    assert fc.download_params.call_args.kwargs["cancellation_requested"] == monitor.cancelled.is_set
 
 
 @pytest.mark.parametrize("uid", ["replacement-uid", ""])

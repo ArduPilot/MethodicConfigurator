@@ -13,17 +13,213 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from collections.abc import Callable
 from pathlib import Path
+from threading import Event
+from types import SimpleNamespace
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import DEVICE_FC_PARAM_FROM_FILE
 from ardupilot_methodic_configurator.backend_flightcontroller_params import FlightControllerParams
+from ardupilot_methodic_configurator.backend_mavftp import FTP_OP, OP_Ack, OP_ResetSessions
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 
 # pylint: disable=too-many-lines
+
+
+class TestParameterDownloadCancellation:
+    """Recovery can relinquish the transport without publishing partial parameters."""
+
+    @pytest.mark.parametrize("reset_acknowledged", [False, True], ids=["reset-timeout", "reset-acknowledged"])
+    def test_closing_during_mavftp_initialization_does_not_start_a_download(self, reset_acknowledged: bool) -> None:
+        """
+        Closing during session initialization must prevent subsequent transport work.
+
+        GIVEN: The real FTP factory is waiting for a session-reset reply
+        WHEN: Closing cancels recovery before that reset completes or times out
+        THEN: No parameter download or MAVLink fallback starts and cached values stay intact
+        """
+        cancelled = Event()
+        clock = [0.0]
+        master = Mock(baud=57600, target_system=1, target_component=1, source_system=255, source_component=190)
+        info = FlightControllerInfo()
+        info.is_mavftp_supported = True
+        manager = FlightControllerParams(connection_manager=Mock(master=master, info=info), fc_parameters={"OLD": 1.0})
+        reply = Mock(target_system=255, target_component=190)
+        reply.get_type.return_value = "FILE_TRANSFER_PROTOCOL"
+        reply.get_srcSystem.return_value = 1
+        reply.get_srcComponent.return_value = 1
+        reply.payload = FTP_OP(1, 0, OP_Ack, 0, OP_ResetSessions, 0, 0, None).pack()
+
+        def receive(**_kwargs: object) -> Mock | None:
+            clock[0] += 0.25
+            cancelled.set()
+            return reply if reset_acknowledged else None
+
+        master.recv_match.side_effect = receive
+        with patch(
+            "ardupilot_methodic_configurator.backend_mavftp.time",
+            SimpleNamespace(time=lambda: clock[0], monotonic=lambda: clock[0]),
+        ):
+            values, defaults = manager.download_params(cancellation_requested=cancelled.is_set)
+
+        assert values == {}
+        assert not defaults
+        assert manager.fc_parameters == {"OLD": 1.0}
+        sent_opcodes = [call.args[3][3] for call in master.mav.file_transfer_protocol_send.call_args_list]
+        assert sent_opcodes == [OP_ResetSessions]
+        master.mav.param_request_list_send.assert_not_called()
+
+    @pytest.mark.parametrize("late_parameter", [False, True], ids=["silence", "late-parameter"])
+    def test_duplicate_near_mavlink_deadline_does_not_grant_another_full_wait(self, late_parameter: bool) -> None:
+        """
+        The receive wait must fit inside the remaining no-progress budget.
+
+        GIVEN: An incomplete download with a one-second no-progress deadline
+        WHEN: A duplicate arrives just before expiry and the missing value is silent or late
+        THEN: The download expires at the deadline without updating cached parameters
+        """
+        clock = [0.0]
+        message = Mock(param_count=2)
+        message.to_dict.return_value = {"param_id": "ONE", "param_value": 1.0}
+        missing = Mock(param_count=2)
+        missing.to_dict.return_value = {"param_id": "TWO", "param_value": 2.0}
+        replies = iter([(0.0, message), (0.9, message)])
+
+        def receive(*, timeout: float, **_kwargs: object) -> Mock | None:
+            next_reply = next(replies, None)
+            if next_reply is not None:
+                clock[0], response = next_reply
+                return response
+            deadline = clock[0] + timeout
+            if late_parameter and deadline >= 1.5:
+                clock[0] = 1.5
+                return missing
+            clock[0] = deadline
+            return None
+
+        master = Mock(recv_match=Mock(side_effect=receive))
+        manager = FlightControllerParams(
+            connection_manager=Mock(master=master, info=FlightControllerInfo()), fc_parameters={"OLD": 1.0}
+        )
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_params.time_monotonic", side_effect=lambda: clock[0]
+        ):
+            values, defaults = manager.download_params(response_timeout=1.0)
+
+        assert values == {}
+        assert not defaults
+        assert manager.fc_parameters == {"OLD": 1.0}
+        assert clock[0] == pytest.approx(1.0)
+
+    @pytest.mark.parametrize("mavftp_supported", [False, True])
+    def test_cancelled_download_does_not_start_transport_io(self, mavftp_supported: bool) -> None:
+        """GIVEN cancelled recovery, WHEN downloading, THEN neither protocol starts and cached values stay intact."""
+        connection = Mock(master=MagicMock(), info=FlightControllerInfo())
+        connection.info.is_mavftp_supported = mavftp_supported
+        manager = FlightControllerParams(connection_manager=connection, fc_parameters={"OLD": 1.0})
+        cancelled = Event()
+        cancelled.set()
+
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_params.create_mavftp") as factory:
+            values, defaults = manager.download_params(cancellation_requested=cancelled.is_set)
+
+        assert values == {}
+        assert not defaults
+        assert manager.fc_parameters == {"OLD": 1.0}
+        connection.master.mav.param_request_list_send.assert_not_called()
+        factory.assert_not_called()
+
+    @pytest.mark.parametrize("reply", ["duplicate", "silence", "complete"])
+    def test_closing_interrupts_mavlink_reception(self, reply: str) -> None:
+        """GIVEN an active download, WHEN closing during reception, THEN even silence or repeated replies yield promptly."""
+        cancelled = Event()
+        master = MagicMock()
+        manager = FlightControllerParams(connection_manager=Mock(master=master, info=FlightControllerInfo()))
+        message = Mock(param_count=1 if reply == "complete" else 2)
+        message.to_dict.return_value = {"param_id": "TEST", "param_value": 2.0}
+
+        def receive(*, blocking: bool, timeout: float, **kwargs: object) -> Mock | None:
+            assert kwargs["type"] == "PARAM_VALUE"
+            assert blocking
+            assert 0 < timeout <= 0.1
+            cancelled.set()
+            return None if reply == "silence" else message
+
+        recv_match = Mock(side_effect=receive)
+        master.recv_match = recv_match
+        values, defaults = manager.download_params(cancellation_requested=cancelled.is_set)
+
+        assert values == {}
+        assert not defaults
+        assert manager.fc_parameters == {}
+        recv_match.assert_called_once()
+
+    def test_duplicate_replies_do_not_extend_the_progress_deadline(self) -> None:
+        """GIVEN one missing parameter, WHEN duplicates keep arriving, THEN the download times out without caching it."""
+        clock = [0.0]
+        master = MagicMock()
+        manager = FlightControllerParams(connection_manager=Mock(master=master, info=FlightControllerInfo()))
+        message = Mock(param_count=2)
+        message.to_dict.return_value = {"param_id": "TEST", "param_value": 2.0}
+
+        def receive(**_kwargs: object) -> Mock:
+            clock[0] += 1.0
+            if clock[0] > 5.0:
+                pytest.fail("Duplicate parameters kept an incomplete download alive")
+            return message
+
+        recv_match = Mock(side_effect=receive)
+        master.recv_match = recv_match
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_params.time_monotonic", side_effect=lambda: clock[0]
+        ):
+            values, defaults = manager.download_params(response_timeout=2.0)
+
+        assert values == {}
+        assert not defaults
+        assert manager.fc_parameters == {}
+        assert recv_match.call_count == 3
+
+    def test_cancelled_mavftp_does_not_start_mavlink_fallback(self) -> None:
+        """GIVEN a MAVFTP transfer, WHEN shutdown cancels it, THEN cancellation reaches FTP and no fallback starts."""
+        cancelled = Event()
+        connection = Mock(master=MagicMock(), info=FlightControllerInfo())
+        connection.info.is_mavftp_supported = True
+        manager = FlightControllerParams(connection_manager=connection)
+        mavftp = MagicMock()
+
+        def process(_operation: str, *, cancellation_requested: Callable[[], bool], **_kwargs: object) -> Mock:
+            assert not cancellation_requested()
+            cancelled.set()
+            assert cancellation_requested()
+            return Mock(error_code=5)
+
+        mavftp.process_ftp_reply.side_effect = process
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_params.create_mavftp", return_value=mavftp):
+            values, defaults = manager.download_params(cancellation_requested=cancelled.is_set)
+
+        assert values == {}
+        assert not defaults
+        assert manager.fc_parameters == {}
+        connection.master.mav.param_request_list_send.assert_not_called()
+
+    def test_brief_receive_gaps_do_not_abort_cancellable_downloads(self) -> None:
+        """GIVEN recovery polls in short slices, WHEN one slice is empty, THEN later complete values are still cached."""
+        connection = Mock(master=MagicMock(), info=FlightControllerInfo())
+        manager = FlightControllerParams(connection_manager=connection)
+        message = Mock(param_count=1)
+        message.to_dict.return_value = {"param_id": "TEST", "param_value": 2.0}
+        connection.master.recv_match.side_effect = [None, message]
+
+        values, defaults = manager.download_params(cancellation_requested=lambda: False)
+
+        assert values == {"TEST": 2.0}
+        assert manager.fc_parameters == values
+        assert not defaults
 
 
 class TestFlightControllerParamsInitialization:
@@ -774,7 +970,8 @@ class TestFlightControllerParamsDownload:
         connection = Mock(master=master, info=FlightControllerInfo())
         params = FlightControllerParams(connection_manager=connection)
 
-        values, complete = params._download_params_via_mavlink(response_timeout=2.0)  # pylint: disable=protected-access
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_params.time_monotonic", return_value=0.0):
+            values, complete = params._download_params_via_mavlink(response_timeout=2.0)  # pylint: disable=protected-access
 
         assert not values
         assert complete is False
@@ -795,9 +992,10 @@ class TestFlightControllerParamsDownload:
         assert mock_mavftp.call_args.kwargs["response_timeout"] == 2.0
         assert mock_mavlink.call_args.kwargs["response_timeout"] == 2.0
 
-    def test_mavftp_uses_the_requested_response_timeout(self) -> None:
-        """MAVFTP processing must not replace a caller's timeout with forty seconds."""
-        mock_conn_mgr = Mock(master=MagicMock(), info=FlightControllerInfo())
+    @pytest.mark.parametrize("baud", [57600, 115200])
+    def test_mavftp_uses_the_requested_response_timeout(self, baud: int) -> None:
+        """MAVFTP processing must preserve a caller's timeout on both telemetry and USB."""
+        mock_conn_mgr = Mock(master=MagicMock(baud=baud), info=FlightControllerInfo())
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
         reply = MagicMock(error_code=5)
         mavftp = MagicMock()
@@ -809,7 +1007,30 @@ class TestFlightControllerParamsDownload:
         ):
             params_mgr._download_params_via_mavftp(response_timeout=2.0)  # pylint: disable=protected-access
 
-        mavftp.process_ftp_reply.assert_called_once_with("getparams", timeout=2.0)
+        mavftp.process_ftp_reply.assert_called_once_with("getparams", timeout=2.0, cancellation_requested=None)
+
+    @pytest.mark.parametrize(("baud", "timeout"), [(57600, 120.0), (115200, 40.0), (None, 40.0)])
+    def test_parameter_download_budget_matches_the_transport(self, baud: int | None, timeout: float) -> None:
+        """
+        Parameter downloads get a longer default budget only on slow serial links.
+
+        GIVEN: A controller connected over telemetry, USB, or a network transport
+        WHEN: Parameters are downloaded without an explicit timeout
+        THEN: FTP receives the appropriate total download budget
+        """
+        master = MagicMock(baud=baud)
+        connection = Mock(master=master, info=FlightControllerInfo())
+        params = FlightControllerParams(connection_manager=connection)
+        mavftp = MagicMock()
+        mavftp.process_ftp_reply.return_value.error_code = 5
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_params.create_mavftp", return_value=mavftp),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_params.time_sleep"),
+        ):
+            params._download_params_via_mavftp()  # pylint: disable=protected-access
+
+        mavftp.process_ftp_reply.assert_called_once_with("getparams", timeout=timeout, cancellation_requested=None)
 
     def test_download_params_falls_back_to_mavlink_when_mavftp_returns_no_data(self) -> None:
         """

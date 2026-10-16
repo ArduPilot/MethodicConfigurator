@@ -15,13 +15,14 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from math import nan
 from pathlib import Path
+from time import monotonic as time_monotonic
 from time import sleep as time_sleep
 from time import time as time_time
 from typing import TYPE_CHECKING, Any, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import DEVICE_FC_PARAM_FROM_FILE
-from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp import create_mavftp
+from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp import create_mavftp, is_slow_serial_link
 from ardupilot_methodic_configurator.backend_mavftp import FtpError
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, validate_param_name
@@ -71,6 +72,7 @@ class FlightControllerParams:
     PARAM_FETCH_POLL_DELAY: float = 0.01
     PARAM_RESET_TIMEOUT: float = 10.0
     MAVFTP_GETPARAMS_TIMEOUT: float = 40.0
+    MAVFTP_GETPARAMS_TELEMETRY_TIMEOUT: float = 120.0
 
     def __init__(
         self,
@@ -114,6 +116,7 @@ class FlightControllerParams:
         parameter_defaults_filename: Path | None = None,
         *,
         response_timeout: float | None = None,
+        cancellation_requested: Callable[[], bool] | None = None,
     ) -> tuple[dict[str, float], ParDict]:
         """
         Requests all flight controller parameters from a MAVLink connection.
@@ -123,6 +126,7 @@ class FlightControllerParams:
             parameter_values_filename: The filename to save the parameter values
             parameter_defaults_filename: The filename to save the parameter defaults
             response_timeout: Optional maximum response wait in seconds for either download protocol
+            cancellation_requested: Optional shutdown check; cancelled downloads do not update cached values
 
         Returns:
             tuple[dict[str, float], ParDict]: (parameter_values, default_parameters)
@@ -130,6 +134,10 @@ class FlightControllerParams:
                 default_parameters is a ParDict of default parameter values
 
         """
+        if (cancellation_requested is not None and cancellation_requested()) or (
+            self.master is None and self.comport_device != DEVICE_FC_PARAM_FROM_FILE
+        ):
+            return {}, ParDict()
         if self.master is None and self.comport_device == DEVICE_FC_PARAM_FROM_FILE:
             filename = "params.param"
             logging_warning(_("Testing active, will load all parameters from the %s file"), filename)
@@ -137,9 +145,6 @@ class FlightControllerParams:
             param_dict = {k: v.value for k, v in par_dict_with_comments.items()}
             self.fc_parameters = param_dict
             return param_dict, ParDict()
-
-        if self.master is None:
-            return {}, ParDict()
 
         progress_reporter = _ProgressReporter(progress_callback)
 
@@ -151,8 +156,11 @@ class FlightControllerParams:
                 progress_reporter,
                 parameter_values_filename,
                 parameter_defaults_filename,
-                response_timeout=self.MAVFTP_GETPARAMS_TIMEOUT if response_timeout is None else response_timeout,
+                response_timeout=response_timeout,
+                cancellation_requested=cancellation_requested,
             )
+            if cancellation_requested is not None and cancellation_requested():
+                return {}, ParDict()
             if param_dict:
                 self.fc_parameters = param_dict
                 return param_dict, default_param_dict
@@ -160,9 +168,11 @@ class FlightControllerParams:
         else:
             logging_info(_("MAVFTP is not supported by the %s flight controller, fallback to MAVLink"), self.comport_device)
         param_dict, download_complete = self._download_params_via_mavlink(
-            progress_reporter, response_timeout=10.0 if response_timeout is None else response_timeout
+            progress_reporter,
+            response_timeout=10.0 if response_timeout is None else response_timeout,
+            cancellation_requested=cancellation_requested,
         )
-        if not download_complete:
+        if not download_complete or (cancellation_requested is not None and cancellation_requested()):
             logging_error(_("Incomplete parameter download from the %s flight controller"), self.comport_device)
             return {}, ParDict()
         self.fc_parameters = param_dict
@@ -171,7 +181,11 @@ class FlightControllerParams:
         return param_dict, ParDict()
 
     def _download_params_via_mavlink(
-        self, progress_callback: Callable[[int, int], None] | None = None, *, response_timeout: float = 10.0
+        self,
+        progress_callback: Callable[[int, int], None] | None = None,
+        *,
+        response_timeout: float = 10.0,
+        cancellation_requested: Callable[[], bool] | None = None,
     ) -> tuple[dict[str, float], bool]:
         """
         Requests all flight controller parameters via MAVLink PARAM_REQUEST_LIST.
@@ -180,7 +194,8 @@ class FlightControllerParams:
 
         Args:
             progress_callback: A callback function to report download progress
-            response_timeout: Maximum wait between parameter responses, in seconds
+            response_timeout: Maximum wait without a new parameter, in seconds
+            cancellation_requested: Optional shutdown check, polled at least every 0.1 seconds
 
         Returns:
             A tuple containing the parameter dictionary and whether all advertised
@@ -196,20 +211,32 @@ class FlightControllerParams:
         parameters: dict[str, float] = {}
 
         # Request all parameters
-        if self.master is None:
+        if self.master is None or (cancellation_requested is not None and cancellation_requested()):
             return parameters, False
 
         self.master.mav.param_request_list_send(self.master.target_system, self.master.target_component)
 
+        progress_deadline = time_monotonic() + response_timeout
         try:
             # Loop to receive all parameters
             while True:
-                m = self.master.recv_match(type="PARAM_VALUE", blocking=True, timeout=response_timeout)
+                remaining = progress_deadline - time_monotonic()
+                if remaining <= 0 or (cancellation_requested is not None and cancellation_requested()):
+                    return parameters, False
+                # Bound every receive by the deadline; poll recovery shutdown in short slices.
+                wait = min(0.1, remaining) if cancellation_requested is not None else remaining
+                m = self.master.recv_match(type="PARAM_VALUE", blocking=True, timeout=wait)
+                if cancellation_requested is not None and cancellation_requested():
+                    return parameters, False
                 if m is None:
+                    if cancellation_requested is not None:
+                        continue
                     return parameters, False
                 message = m.to_dict()
                 param_id = message["param_id"]
                 param_value = message["param_value"]
+                if param_id not in parameters:
+                    progress_deadline = time_monotonic() + response_timeout
                 parameters[param_id] = param_value
                 logging_debug(_("Received parameter: %s = %s"), param_id, param_value)
                 progress_reporter(len(parameters), m.param_count)
@@ -228,7 +255,8 @@ class FlightControllerParams:
         parameter_values_filename: Path | None = None,
         parameter_defaults_filename: Path | None = None,
         *,
-        response_timeout: float = MAVFTP_GETPARAMS_TIMEOUT,
+        response_timeout: float | None = None,
+        cancellation_requested: Callable[[], bool] | None = None,
     ) -> tuple[dict[str, float], ParDict]:
         """
         Requests all flight controller parameters via MAVFTP protocol.
@@ -239,19 +267,29 @@ class FlightControllerParams:
             progress_callback: A callback function to report download progress
             parameter_values_filename: The filename to save the parameter values
             parameter_defaults_filename: The filename to save the parameter defaults
-            response_timeout: Maximum wait for the MAVFTP parameter response, in seconds
+            response_timeout: Maximum wait for the MAVFTP parameter response, in seconds.
+                Defaults to 120 seconds for slow serial links and 40 seconds otherwise.
+            cancellation_requested: Optional shutdown check forwarded to the FTP reply loop
 
         Returns:
             tuple[dict[str, float], ParDict]: (parameter_values, default_parameters)
 
         """
-        if self.master is None:
+        if self.master is None or (cancellation_requested is not None and cancellation_requested()):
             return {}, ParDict()
         progress_reporter = (
             progress_callback if isinstance(progress_callback, _ProgressReporter) else _ProgressReporter(progress_callback)
         )
         try:
             mavftp = create_mavftp(self.master)
+            if cancellation_requested is not None and cancellation_requested():
+                return {}, ParDict()
+            if response_timeout is None:
+                response_timeout = (
+                    self.MAVFTP_GETPARAMS_TELEMETRY_TIMEOUT
+                    if is_slow_serial_link(self.master)
+                    else self.MAVFTP_GETPARAMS_TIMEOUT
+                )
 
             def get_params_progress_callback(completion: float) -> None:
                 if progress_callback is not None and completion is not None:
@@ -263,15 +301,18 @@ class FlightControllerParams:
                 [complete_param_filename, default_param_filename], progress_callback=get_params_progress_callback
             )
             # On slow links parameter download might take a long time.
-            ret = mavftp.process_ftp_reply("getparams", timeout=response_timeout)
+            ret = mavftp.process_ftp_reply(
+                "getparams", timeout=response_timeout, cancellation_requested=cancellation_requested
+            )
+            if cancellation_requested is not None and cancellation_requested():
+                return {}, ParDict()
             pdict: dict[str, float] = {}
             defdict = ParDict()
 
             # Add a file sync operation to ensure the file is completely written.
             time_sleep(self.FILE_SYNC_DELAY)
             if ret.error_code == FtpError.Success:
-                par_dict = ParDict.from_file(complete_param_filename)
-                pdict = {name: data.value for name, data in par_dict.items()}
+                pdict = {name: data.value for name, data in ParDict.from_file(complete_param_filename).items()}
                 defdict = ParDict.from_file(default_param_filename)
             else:
                 ret.display_message()

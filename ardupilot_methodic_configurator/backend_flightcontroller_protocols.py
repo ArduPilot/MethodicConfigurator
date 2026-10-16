@@ -234,6 +234,7 @@ class FlightControllerParamsProtocol(Protocol):
         parameter_defaults_filename: Path | None,
         *,
         response_timeout: float | None = None,
+        cancellation_requested: Callable[[], bool] | None = None,
     ) -> tuple[dict[str, float], ParDict]: ...
 
     def set_param(self, param_name: str, param_value: float) -> tuple[bool, str]: ...

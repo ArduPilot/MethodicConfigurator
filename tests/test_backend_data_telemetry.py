@@ -522,6 +522,32 @@ def test_reconnect_and_counter_reset_never_create_negative_rates(telemetry_link:
     assert model.update(TelemetrySample(connection, 5)).rx_rate is None
 
 
+@pytest.mark.parametrize("errors_per_report", [0, 6])
+def test_radio_error_rate_remains_available_between_two_second_reports(
+    telemetry_link: SimpleNamespace, errors_per_report: int
+) -> None:
+    """
+    Keep the measured radio error rate visible between modem reports.
+
+    GIVEN: A modem reporting every two seconds and a monitor polling every second
+    WHEN: Polls reuse a fresh report between consecutive modem updates
+    THEN: The last measured rate remains visible until the report becomes stale
+    """
+    model = DataTelemetryDataModel(telemetry_link.controller)
+    connection = object()
+    radio = RadioSample((51, 68), 0, 30, 40, 0, 0, 100, 10, 2)
+    model.update(TelemetrySample(connection, 0, radio=radio))
+    for tick in range(1, 8):
+        if tick % 2 == 0:
+            radio = replace(radio, time=tick, rxerrors=radio.rxerrors + errors_per_report)
+        state = model.update(TelemetrySample(connection, tick, radio=radio))
+        if tick >= 2:
+            assert state.radio_error_rate == errors_per_report / 2
+    stale = model.update(TelemetrySample(connection, 9, radio=radio))
+    assert stale.radio is None
+    assert stale.radio_error_rate is None
+
+
 @pytest.mark.parametrize(("source", "errors"), [((51, 68), 1), ((52, 68), 100)])
 def test_radio_counter_changes_clear_the_displayed_rate_immediately(
     telemetry_link: SimpleNamespace, source: tuple[int, int], errors: int
