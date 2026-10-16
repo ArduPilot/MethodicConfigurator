@@ -216,6 +216,9 @@ All applications use one or more of the following shared libraries:
    - Protocol definitions enable dependency injection for testing
    - Connection manager is the source of truth for connection state (`master`, `comport`, `info`)
    - Other managers query connection manager for current state rather than caching it
+   - `backend_flightcontroller_factory_mavftp.py` owns baud detection and link-specific MAVFTP timing settings.
+     Both factory entry points inject settings before session initialization. The protocol implementation provides
+     transport-neutral defaults and handles progress-aware idle detection and bounded session cleanup.
 
    **Error Handling Standards:**
 

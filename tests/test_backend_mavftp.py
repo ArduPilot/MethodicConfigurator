@@ -24,8 +24,12 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
+import pytest
 from pymavlink import mavutil
 from pymavlink.dialects.v20 import ardupilotmega as mavlink_v2
+
+from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp import create_mavftp_settings
+from ardupilot_methodic_configurator.backend_flightcontroller_params import FlightControllerParams
 
 # from ardupilot_methodic_configurator.backend_mavftp import FtpError
 from ardupilot_methodic_configurator.backend_mavftp import (
@@ -33,6 +37,7 @@ from ardupilot_methodic_configurator.backend_mavftp import (
     MAVFTP,
     FtpError,
     MAVFTPReturn,
+    MAVFTPSettings,
     OP_Ack,
     OP_BurstReadFile,
     OP_CreateFile,
@@ -1433,6 +1438,218 @@ class TestMAVFTPWritePathCrashes(unittest.TestCase):
             self.mav_ftp._MAVFTP__send_more_writes()  # pylint: disable=protected-access
         except TypeError as e:
             self.fail(f"__send_more_writes raised TypeError at len(write_list) guard: {e}")
+
+
+@pytest.fixture(name="slow_serial_mavftp")
+def _slow_serial_mavftp() -> MAVFTP:
+    """Provide an FTP client with only the external 57600-baud transport mocked."""
+    master = Mock(baud=57600, source_system=255, source_component=190)
+    return MAVFTP(master, target_system=1, target_component=1, settings=create_mavftp_settings(master), reset_sessions=False)
+
+
+def _ftp_reply_packet(client: MAVFTP, operation: FTP_OP) -> Mock:
+    """Wrap a real encoded FTP operation in an incoming MAVLink envelope."""
+    message = Mock(
+        target_system=client.master.source_system,
+        target_component=client.master.source_component,
+        payload=operation.pack(),
+    )
+    message.get_type.return_value = "FILE_TRANSFER_PROTOCOL"
+    message.get_srcSystem.return_value = client.target_system
+    message.get_srcComponent.return_value = client.target_component
+    return message
+
+
+@pytest.mark.parametrize("baud", [57600, 115200, None])
+def test_protocol_defaults_are_transport_neutral(baud: int | None) -> None:
+    """
+    The standalone protocol leaves application-specific link policy to its callers.
+
+    GIVEN: A slow serial, fast serial, or network connection
+    WHEN: The protocol client is constructed directly without injected settings
+    THEN: The same transport-neutral timing defaults are used
+    """
+    client = MAVFTP(Mock(baud=baud), 1, 1, reset_sessions=False)
+
+    assert (
+        client.ftp_settings.idle_detection_time,
+        client.ftp_settings.read_retry_time,
+        client.ftp_settings.retry_time,
+    ) == (3.7, 1.0, 0.5)
+
+
+def test_slow_serial_link_preserves_explicit_ftp_settings() -> None:
+    """
+    Caller-provided settings remain authoritative even on telemetry.
+
+    GIVEN: A slow serial connection and explicitly chosen FTP timing
+    WHEN: An FTP client is constructed with those settings
+    THEN: Automatic defaults do not overwrite the caller's configuration
+    """
+    settings = MAVFTPSettings(
+        [
+            ("idle_detection_time", float, 4.0),
+            ("read_retry_time", float, 1.5),
+            ("retry_time", float, 0.75),
+            ("burst_read_size", int, 80),
+            ("write_qsize", int, 5),
+        ]
+    )
+
+    client = MAVFTP(Mock(baud=57600), 1, 1, settings=settings, reset_sessions=False)
+
+    assert client.ftp_settings is settings
+    assert client.ftp_settings.retry_time == 0.75
+
+
+def test_user_can_download_parameters_over_a_delayed_telemetry_burst(slow_serial_mavftp: MAVFTP, tmp_path: Path) -> None:
+    """
+    A delayed open, long incoming burst, and delayed cleanup complete successfully.
+
+    GIVEN: A 57600-baud link with a fast previous RTT and buffered telemetry replies
+    WHEN: Packed parameters arrive over a burst longer than the idle threshold
+    THEN: Values and defaults are saved without retransmitting the progressing burst
+    """
+    client = slow_serial_mavftp
+    client.update_rtt(0.01)
+    packed = PARAM_HEADER_STRUCT.pack(PARAM_MAGIC_WITH_DEFAULTS, 1, 1)
+    packed += b"\x14\x30RATE" + struct.pack("<ff", 12.5, 10.0)
+    values = tmp_path / "values.param"
+    defaults = tmp_path / "defaults.param"
+    clock = [0.0]
+    state = SimpleNamespace(offset=0, next_data=6.0, terminate_started=None)
+    params = FlightControllerParams(connection_manager=Mock(master=client.master))
+
+    def receive(**_kwargs: object) -> Mock | None:
+        clock[0] += 0.25
+        request = client.last_op
+        assert request is not None
+        if request.opcode == OP_OpenFileRO:
+            if clock[0] < 4.0:
+                return None
+            operation = FTP_OP(
+                request.seq + 1, client.session, OP_Ack, 4, OP_OpenFileRO, 0, 0, bytearray(struct.pack("<I", len(packed)))
+            )
+        elif request.opcode == OP_BurstReadFile:
+            if clock[0] < state.next_data:
+                return None
+            state.next_data += 2.0
+            eof = state.offset == len(packed)
+            payload = bytearray([FtpError.EndOfFile]) if eof else bytearray(packed[state.offset : state.offset + 1])
+            assert client.pending_burst_seq is not None
+            operation = FTP_OP(
+                client.pending_burst_seq + state.offset,
+                client.session,
+                OP_Nack if eof else OP_Ack,
+                len(payload),
+                OP_BurstReadFile,
+                0,
+                state.offset,
+                payload,
+            )
+            state.offset += not eof
+        elif request.opcode == OP_TerminateSession:
+            if state.terminate_started is None:
+                state.terminate_started = clock[0]
+            if clock[0] - state.terminate_started < 1.25:
+                return None
+            operation = FTP_OP(request.seq + 1, client.session, OP_Ack, 0, OP_TerminateSession, 0, 0, None)
+        else:
+            message = f"Unexpected FTP request: {request.opcode}"
+            raise AssertionError(message)
+        return _ftp_reply_packet(client, operation)
+
+    with (
+        patch(
+            "ardupilot_methodic_configurator.backend_mavftp.time",
+            SimpleNamespace(time=lambda: clock[0], monotonic=lambda: clock[0]),
+        ),
+        patch("ardupilot_methodic_configurator.backend_flightcontroller_params.create_mavftp", return_value=client),
+        patch("ardupilot_methodic_configurator.backend_flightcontroller_params.time_sleep"),
+    ):
+        client.master.recv_match.side_effect = receive
+        downloaded, default_params = params._download_params_via_mavftp(  # pylint: disable=protected-access
+            parameter_values_filename=values, parameter_defaults_filename=defaults
+        )
+
+    assert downloaded == {"RATE": 12.5}
+    assert default_params["RATE"].value == 10.0
+    sent_opcodes = [call.args[3][3] for call in client.master.mav.file_transfer_protocol_send.call_args_list]
+    assert sent_opcodes.count(OP_BurstReadFile) == 1
+    assert sent_opcodes.count(OP_TerminateSession) == 1
+    assert clock[0] > params.MAVFTP_GETPARAMS_TIMEOUT
+
+
+def test_explicit_timeout_still_bounds_a_silent_telemetry_download(slow_serial_mavftp: MAVFTP) -> None:
+    """
+    Longer automatic timing does not override a caller's short deadline.
+
+    GIVEN: A silent telemetry link and a two-second total timeout
+    WHEN: A file download receives no reply
+    THEN: The client returns a timeout and clears transfer state
+    """
+    client = slow_serial_mavftp
+    clock = [0.0]
+
+    def receive(**_kwargs: object) -> None:
+        clock[0] += 0.25
+
+    with patch(
+        "ardupilot_methodic_configurator.backend_mavftp.time",
+        SimpleNamespace(time=lambda: clock[0], monotonic=lambda: clock[0]),
+    ):
+        client.master.recv_match.side_effect = receive
+        client.cmd_get(["@PARAM/param.pck"], callback=Mock())
+        result = client.process_ftp_reply("getparams", timeout=2.0)
+
+    assert result.error_code == FtpError.RemoteReplyTimeout
+    assert client.fh is None
+    assert client.op_start is None
+    assert client.request_cancelled
+    # The transfer deadline plus at most two bounded cleanup attempts.
+    assert clock[0] <= 2.25 + 2 * (client.retry_timeout() + 0.25)
+
+
+@pytest.mark.parametrize("foreign", [False, True])
+def test_duplicate_or_foreign_packets_do_not_postpone_telemetry_idle_detection(
+    slow_serial_mavftp: MAVFTP, foreign: bool
+) -> None:
+    """
+    Only forward progress on this client's transfer keeps a telemetry download alive.
+
+    GIVEN: A download with one accepted byte followed by duplicates or foreign traffic
+    WHEN: More than the idle interval passes without useful data
+    THEN: The idle detector still reports silence rather than extending the wait
+    """
+    client = slow_serial_mavftp
+    clock = [0.0]
+    with patch(
+        "ardupilot_methodic_configurator.backend_mavftp.time",
+        SimpleNamespace(time=lambda: clock[0], monotonic=lambda: clock[0]),
+    ):
+        client.cmd_get(["@PARAM/param.pck"], callback=Mock())
+        request = client.last_op
+        assert request is not None
+        client.mavlink_packet(
+            _ftp_reply_packet(
+                client, FTP_OP(request.seq + 1, 0, OP_Ack, 4, OP_OpenFileRO, 0, 0, bytearray(struct.pack("<I", 10)))
+            )
+        )
+        clock[0] = 1.0
+        assert client.pending_burst_seq is not None
+        packet = _ftp_reply_packet(
+            client, FTP_OP(client.pending_burst_seq, 0, OP_Ack, 1, OP_BurstReadFile, 0, 0, bytearray(b"x"))
+        )
+        client.mavlink_packet(packet)
+        assert client.last_reply_time == 1.0
+        clock[0] = 12.0
+        if foreign:
+            packet.target_system = 42
+        client.mavlink_packet(packet)
+
+        assert client.last_reply_time == 1.0
+        assert client._MAVFTP__link_is_idle(clock[0])  # type: ignore[attr-defined] # pylint: disable=protected-access
+        assert client.read_total == 1
 
 
 if __name__ == "__main__":

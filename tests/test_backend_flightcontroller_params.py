@@ -795,9 +795,10 @@ class TestFlightControllerParamsDownload:
         assert mock_mavftp.call_args.kwargs["response_timeout"] == 2.0
         assert mock_mavlink.call_args.kwargs["response_timeout"] == 2.0
 
-    def test_mavftp_uses_the_requested_response_timeout(self) -> None:
-        """MAVFTP processing must not replace a caller's timeout with forty seconds."""
-        mock_conn_mgr = Mock(master=MagicMock(), info=FlightControllerInfo())
+    @pytest.mark.parametrize("baud", [57600, 115200])
+    def test_mavftp_uses_the_requested_response_timeout(self, baud: int) -> None:
+        """MAVFTP processing must preserve a caller's timeout on both telemetry and USB."""
+        mock_conn_mgr = Mock(master=MagicMock(baud=baud), info=FlightControllerInfo())
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
         reply = MagicMock(error_code=5)
         mavftp = MagicMock()
@@ -810,6 +811,29 @@ class TestFlightControllerParamsDownload:
             params_mgr._download_params_via_mavftp(response_timeout=2.0)  # pylint: disable=protected-access
 
         mavftp.process_ftp_reply.assert_called_once_with("getparams", timeout=2.0)
+
+    @pytest.mark.parametrize(("baud", "timeout"), [(57600, 120.0), (115200, 40.0), (None, 40.0)])
+    def test_parameter_download_budget_matches_the_transport(self, baud: int | None, timeout: float) -> None:
+        """
+        Parameter downloads get a longer default budget only on slow serial links.
+
+        GIVEN: A controller connected over telemetry, USB, or a network transport
+        WHEN: Parameters are downloaded without an explicit timeout
+        THEN: FTP receives the appropriate total download budget
+        """
+        master = MagicMock(baud=baud)
+        connection = Mock(master=master, info=FlightControllerInfo())
+        params = FlightControllerParams(connection_manager=connection)
+        mavftp = MagicMock()
+        mavftp.process_ftp_reply.return_value.error_code = 5
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_params.create_mavftp", return_value=mavftp),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_params.time_sleep"),
+        ):
+            params._download_params_via_mavftp()  # pylint: disable=protected-access
+
+        mavftp.process_ftp_reply.assert_called_once_with("getparams", timeout=timeout)
 
     def test_download_params_falls_back_to_mavlink_when_mavftp_returns_no_data(self) -> None:
         """

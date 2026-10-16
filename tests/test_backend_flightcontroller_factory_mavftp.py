@@ -12,15 +12,17 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from unittest.mock import MagicMock, patch
+from collections.abc import Callable
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp import (
     create_mavftp,
     create_mavftp_safe,
+    create_mavftp_settings,
 )
-from ardupilot_methodic_configurator.backend_mavftp import FTP_OP, OP_Ack, OP_ResetSessions
+from ardupilot_methodic_configurator.backend_mavftp import FTP_OP, MAVFTP, OP_Ack, OP_ResetSessions
 
 
 def _mock_master() -> MagicMock:
@@ -28,6 +30,9 @@ def _mock_master() -> MagicMock:
     master = MagicMock()
     master.source_system = 1
     master.source_component = 1
+    master.target_system = 1
+    master.target_component = 1
+    master.baud = None
     reply = FTP_OP(
         seq=1,
         session=0,
@@ -40,6 +45,8 @@ def _mock_master() -> MagicMock:
     )
     packet = MagicMock()
     packet.get_type.return_value = "FILE_TRANSFER_PROTOCOL"
+    packet.get_srcSystem.side_effect = lambda: master.target_system
+    packet.get_srcComponent.side_effect = lambda: master.target_component
     packet.target_system = 1
     packet.target_component = 1
     packet.payload = reply.pack()
@@ -361,3 +368,81 @@ class TestCreateMavftpEdgeCases:
             assert mavftp is not None
         except AttributeError as e:
             pytest.fail(f"Factory should access target_system and target_component attributes: {e}")
+
+
+@pytest.mark.parametrize("factory", [create_mavftp, create_mavftp_safe], ids=["strict", "safe"])
+@pytest.mark.parametrize(
+    ("baud", "expected"),
+    [
+        (57600, (10.0, 3.0, 2.0)),
+        (38400, (10.0, 3.0, 2.0)),
+        (115200, (3.7, 1.0, 0.5)),
+        (921600, (3.7, 1.0, 0.5)),
+        (None, (3.7, 1.0, 0.5)),
+        (0, (3.7, 1.0, 0.5)),
+        (-1, (3.7, 1.0, 0.5)),
+        (True, (3.7, 1.0, 0.5)),
+        (Mock(), (3.7, 1.0, 0.5)),
+    ],
+)
+def test_factories_inject_link_timing_before_session_initialization(
+    factory: Callable[[MagicMock], MAVFTP | None], baud: object, expected: tuple[float, float, float]
+) -> None:
+    """
+    Both application factories configure slow links before the protocol starts.
+
+    GIVEN: A connection with a known or unavailable baud rate
+    WHEN: Either factory constructs an FTP client and resets its sessions
+    THEN: Link-specific settings are supplied to the constructor
+    AND: USB and network defaults remain unchanged
+    """
+    master = _mock_master()
+    master.baud = baud
+
+    with patch("ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp.MAVFTP", wraps=MAVFTP) as initialize:
+        client = factory(master)
+
+    assert client is not None
+    assert initialize.call_args.kwargs["settings"] is client.ftp_settings
+    assert (
+        client.ftp_settings.idle_detection_time,
+        client.ftp_settings.read_retry_time,
+        client.ftp_settings.retry_time,
+    ) == expected
+    assert client.target_system == master.target_system
+    assert client.target_component == master.target_component
+    assert client.pending_reset_seq is None
+    master.mav.file_transfer_protocol_send.assert_called_once()
+    assert master.mav.file_transfer_protocol_send.call_args.args[3][3] == OP_ResetSessions
+
+
+def test_link_settings_are_independent_between_clients() -> None:
+    """
+    Tuning one client must not change another client's timing or protocol defaults.
+
+    GIVEN: Independent settings for telemetry and USB connections
+    WHEN: One telemetry client's retry setting is changed
+    THEN: Other clients keep their own defaults
+    """
+    telemetry = create_mavftp_settings(Mock(baud=57600))
+    usb = create_mavftp_settings(Mock(baud=115200))
+
+    telemetry.retry_time = 4.0
+
+    assert usb.retry_time == 0.5
+    assert create_mavftp_settings(Mock(baud=57600)).retry_time == 2.0
+    assert telemetry.burst_read_size == usb.burst_read_size == 80
+    assert telemetry.write_qsize == usb.write_qsize == 5
+    assert telemetry.initial_retries == usb.initial_retries == 0
+
+
+def test_safe_factory_returns_none_when_protocol_class_is_unavailable() -> None:
+    """
+    Shared creation must preserve the safe factory's availability guard.
+
+    GIVEN: An unavailable protocol implementation
+    WHEN: The safe factory receives a connection
+    THEN: It returns None without attempting construction
+    """
+    with patch("ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp.MAVFTP", None):
+        assert create_mavftp_safe(_mock_master()) is None

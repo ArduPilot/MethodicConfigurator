@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import DEVICE_FC_PARAM_FROM_FILE
-from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp import create_mavftp
+from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp import create_mavftp, is_slow_serial_link
 from ardupilot_methodic_configurator.backend_mavftp import FtpError
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, validate_param_name
@@ -71,6 +71,7 @@ class FlightControllerParams:
     PARAM_FETCH_POLL_DELAY: float = 0.01
     PARAM_RESET_TIMEOUT: float = 10.0
     MAVFTP_GETPARAMS_TIMEOUT: float = 40.0
+    MAVFTP_GETPARAMS_TELEMETRY_TIMEOUT: float = 120.0
 
     def __init__(
         self,
@@ -151,7 +152,7 @@ class FlightControllerParams:
                 progress_reporter,
                 parameter_values_filename,
                 parameter_defaults_filename,
-                response_timeout=self.MAVFTP_GETPARAMS_TIMEOUT if response_timeout is None else response_timeout,
+                response_timeout=response_timeout,
             )
             if param_dict:
                 self.fc_parameters = param_dict
@@ -228,7 +229,7 @@ class FlightControllerParams:
         parameter_values_filename: Path | None = None,
         parameter_defaults_filename: Path | None = None,
         *,
-        response_timeout: float = MAVFTP_GETPARAMS_TIMEOUT,
+        response_timeout: float | None = None,
     ) -> tuple[dict[str, float], ParDict]:
         """
         Requests all flight controller parameters via MAVFTP protocol.
@@ -239,7 +240,8 @@ class FlightControllerParams:
             progress_callback: A callback function to report download progress
             parameter_values_filename: The filename to save the parameter values
             parameter_defaults_filename: The filename to save the parameter defaults
-            response_timeout: Maximum wait for the MAVFTP parameter response, in seconds
+            response_timeout: Maximum wait for the MAVFTP parameter response, in seconds.
+                Defaults to 120 seconds for slow serial links and 40 seconds otherwise.
 
         Returns:
             tuple[dict[str, float], ParDict]: (parameter_values, default_parameters)
@@ -252,6 +254,12 @@ class FlightControllerParams:
         )
         try:
             mavftp = create_mavftp(self.master)
+            if response_timeout is None:
+                response_timeout = (
+                    self.MAVFTP_GETPARAMS_TELEMETRY_TIMEOUT
+                    if is_slow_serial_link(self.master)
+                    else self.MAVFTP_GETPARAMS_TIMEOUT
+                )
 
             def get_params_progress_callback(completion: float) -> None:
                 if progress_callback is not None and completion is not None:
