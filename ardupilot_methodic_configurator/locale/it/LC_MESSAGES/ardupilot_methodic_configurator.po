@@ -14439,82 +14439,82 @@ msgid ""
 "and check that RC failsafe is detected, then power it back on to check "
 "recovery. If necessary change the parameters on the right and press 'Upload "
 "selected params to FC' to activate them."
-msgstr ""
+msgstr "Muovi gli stick e gli interruttori sul radiocomando per verificare che almeno i primi cinque canali funzionino. Spegni il trasmettitore RC (radiocomando) e verifica che il failsafe RC venga rilevato, quindi riaccendilo per verificare il ripristino. Se necessario, modifica i parametri a destra e premi 'Carica i parametri selezionati sul FC' per attivarli."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:62
 msgid "CH%(channel)d"
-msgstr ""
+msgstr "CH%(channel)d"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:67
 msgid ""
 "Live RC input in microseconds (800-2200 µs). Move this channel to check "
 "reception."
-msgstr ""
+msgstr "Ingresso RC in tempo reale in microsecondi (800-2200 µs). Muovi questo canale per verificare la ricezione."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:73
 msgid "RSSI"
-msgstr ""
+msgstr "RSSI"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:76
 msgid ""
 "Receiver signal strength as reported by the FC (0-254, device-dependent "
 "scale)."
-msgstr ""
+msgstr "Intensità del segnale del ricevitore come riportata dal FC (0-254, scala dipendente dal dispositivo)."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:99
 msgid "%(pwm)d µs"
-msgstr ""
+msgstr "%(pwm)d µs"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:99
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:101
 msgid "Unavailable"
-msgstr ""
+msgstr "Non disponibile"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:103
 msgid "Flight controller disconnected."
-msgstr ""
+msgstr "Flight controller disconnesso."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:106
 msgid "RC channel data received from the flight controller."
-msgstr ""
+msgstr "Dati dei canali RC ricevuti dal flight controller."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:109
 msgid ""
 "No current RC channel data. Check receiver wiring, power and transmitter "
 "binding."
-msgstr ""
+msgstr "Nessun dato attuale dei canali RC. Controlla il cablaggio del ricevitore, l'alimentazione e l'associazione del trasmettitore."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:113
 msgid "Receiver status: unknown."
-msgstr ""
+msgstr "Stato del ricevitore: sconosciuto."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:116
 msgid "Receiver: RC input has been detected by the flight controller."
-msgstr ""
+msgstr "Ricevitore: l'ingresso RC è stato rilevato dal flight controller."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:119
 msgid "Receiver: no RC input detected by the flight controller yet."
-msgstr ""
+msgstr "Ricevitore: nessun ingresso RC ancora rilevato dal flight controller."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:123
 msgid "RC failsafe: unknown (status unavailable)."
-msgstr ""
+msgstr "Failsafe RC: sconosciuto (stato non disponibile)."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:125
 msgid "RC failsafe: DETECTED."
-msgstr ""
+msgstr "Failsafe RC: RILEVATO."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:127
 msgid "RC failsafe: not active."
-msgstr ""
+msgstr "Failsafe RC: non attivo."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:130
 msgid "RC failsafe detected during this test."
-msgstr ""
+msgstr "Failsafe RC rilevato durante questo test."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:132
 msgid "RC failsafe has not been detected during this test."
-msgstr ""
+msgstr "Il failsafe RC non è stato rilevato durante questo test."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_servo_out.py:37
 msgid ""
