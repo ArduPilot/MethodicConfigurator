@@ -40,6 +40,8 @@ A failed/cancelled connection or offline mode does not open an inspector.
 The frontend reuses `backend_data_telemetry.py` and
 `data_model_data_telemetry.py`, which implement message observations and
 pure rate calculations independently of plugin registration.
+These modules are shared with the data_telemetry plugin; their measurement semantics and limits
+are documented in [the telemetry architecture](ARCHITECTURE_data_telemetry.md).
 The shared `frontend_tkinter_radio_status.py` frame renders active
 connection status, RX/TX rates and parser errors above three-column radio
 name/value/unit tuples below the decoded message fields. It contains no
@@ -59,10 +61,17 @@ The Tk frontend only renders these ordered rows and preserves the selected item.
 `MavlinkInspectorWindow` derives from `BaseWindow`. It owns one 250 ms timer,
 one backend observer, the shared telemetry rate model and the inspector message
 model. Each tick loads a bounded snapshot, computes rates and refreshes the table.
-The shared backend uses `backend_radio_status.py` to send a GCS heartbeat
+The shared backend asks the connection manager to use `backend_radio_status.py` to send a GCS heartbeat
 immediately and then at most once per second. This enables local SiK radio
 status injection; transmitted heartbeat bytes are included in TX measurements.
-Closing or suspending monitoring stops the heartbeat along with polling.
+Closing or suspending monitoring preserves the heartbeat until the FC disconnects,
+including while other FC operations block the UI. This avoids a GCS failsafe caused
+by closing an embedded inspector. Sends share a lock around PyMAVLink's encoder,
+transport write and sequence/signing updates with other connection users.
+MAVFTP holds the same encoder's `amc_send_lock` while packing and flushing a
+batch, including paths that write directly to the transport. Disconnect cancels
+serial writes where supported and bounds the worker join to one second before
+transport cleanup; a stopped worker cannot send on a replacement connection.
 No second connection, parameter download, command
 or stream-rate request is made by the inspector.
 All three areas describe the same active transport. There is no link selector

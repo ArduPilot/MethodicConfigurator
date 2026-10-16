@@ -41,6 +41,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_factory_serial imp
     SerialPortDiscovery,
     SystemSerialPortDiscovery,
 )
+from ardupilot_methodic_configurator.backend_radio_status import RadioStatusBackend
 from ardupilot_methodic_configurator.data_model_fc_diagnostics import StatusTextAssembler, message_source
 from ardupilot_methodic_configurator.data_model_fc_ids import VID_PID_PRODUCT_DICT, VID_VENDOR_DICT
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
@@ -220,6 +221,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         self._status_text_buffer: deque[tuple[datetime, str]] = deque(maxlen=FC_STATUS_TEXT_BUFFER_LIMIT)
         self._status_text_assembler = StatusTextAssembler()
         self._receiving_banner = False
+        self._radio_status = RadioStatusBackend()
 
     @property
     def banner_text_buffer(self) -> list[str]:
@@ -371,8 +373,14 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
         self._logged_connection_tuples = list(current)
 
+    def start_gcs_heartbeat(self) -> None:
+        """Keep GCS heartbeats alive until disconnect once a telemetry host requests them."""
+        if self.master is not None:
+            self._radio_status.start(self.master)
+
     def disconnect(self) -> None:
         """Close the connection to the flight controller."""
+        self._radio_status.close()
         if self.master is not None:
             with contextlib.suppress(Exception):
                 self.master.close()  # pyright: ignore[reportAttributeAccessIssue]
@@ -1067,6 +1075,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                 if reconnect_progress_callback:
                     attempt_progress = 30 + int((attempt - 1) * 40 / max(1, attempts - 1))
                     reconnect_progress_callback(attempt_progress, 100)
+                self._radio_status.close()
                 self.master = self._create_mavlink_connection(
                     device=comport.device,
                     baudrate=baudrate,
@@ -1166,6 +1175,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             master: The MAVLink connection object or None
 
         """
+        self._radio_status.close()
         self.master = master
         if master is not None:
             self._register_status_text_hook(master)
