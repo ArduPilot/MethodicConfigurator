@@ -19,15 +19,19 @@ from gettext_capture_helper import capture_gettext_calls
 from ardupilot_methodic_configurator import configuration_steps_strings as config_strings
 
 
+# pylint: disable=duplicate-code
 def _load_translation_update_script() -> ModuleType:
-    """Load the root-level translation updater without relying on the current working directory."""
-    script_path = Path(__file__).parent.parent / "update_configuration_steps_translation.py"
+    """Load the scripts-directory translation updater without relying on the current working directory."""
+    script_path = Path(__file__).parent.parent / "scripts" / "update_configuration_steps_translation.py"
     module_spec = spec_from_file_location("update_configuration_steps_translation", script_path)
     assert module_spec
     assert module_spec.loader
     module = module_from_spec(module_spec)
     module_spec.loader.exec_module(module)
     return module
+
+
+# pylint: enable=duplicate-code
 
 
 class TestConfigurationStepsStringsModule:
