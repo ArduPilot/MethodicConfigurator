@@ -10,7 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from tkinter import ttk
 from types import SimpleNamespace
 from typing import cast
@@ -45,7 +45,6 @@ def receiver_view(root: tk.Tk) -> Generator[RCReceiverView, None, None]:
         patch("tkinter.Misc.wait_visibility"),
         patch("tkinter.Misc.wait_window"),
     ):
-        # pylint: enable=duplicate-code
         parent = ttk.Frame(root)
         view = RCReceiverView(parent, RCReceiverDataModel(controller), MagicMock(spec=BaseWindow))
         try:
@@ -53,6 +52,37 @@ def receiver_view(root: tk.Tk) -> Generator[RCReceiverView, None, None]:
         finally:
             view.destroy()
             parent.destroy()
+        # pylint: enable=duplicate-code
+
+
+def test_recovery_cancels_the_real_receiver_timer_and_resumes_one_polling_loop(
+    receiver_view: RCReceiverView,
+    pause_polling_plugin_for_recovery: Callable[[tk.Misc], Callable[[], None]],
+    fire_tk_timer: Callable[[tk.Misc, str], None],
+) -> None:
+    """
+    Yield the receiver plugin through its legacy lifecycle.
+
+    GIVEN: A receiver view actively reading RC telemetry
+    WHEN: The editor pauses it for connection recovery and later resumes it
+    THEN: Every polling timer is cancelled and reception restarts once
+    """
+    view = receiver_view
+    view.on_activate()
+    assert view._timer_id is not None
+    fire_tk_timer(view, view._timer_id)
+    controller = view.model.flight_controller
+    reads = controller.master.recv_match.call_count
+    assert reads > 0
+
+    resume = pause_polling_plugin_for_recovery(view)
+
+    assert view._timer_id is None
+    assert controller.master.recv_match.call_count == reads
+    resume()
+    assert view._timer_id is not None
+    fire_tk_timer(view, view._timer_id)
+    assert controller.master.recv_match.call_count > reads
 
 
 def _label_texts(widget: tk.Misc) -> list[str]:
@@ -297,6 +327,7 @@ def test_upload_yields_receiver_and_restores_navigation(
     receiver_view.model._failsafe_detected = True
     old_timer = receiver_view._timer_id
     editor = ParameterEditorWindow.__new__(ParameterEditorWindow)
+    editor._connection_recovery = None
     editor.root = MagicMock()
     editor.navigation_lock = NavigationLock()
     editor.parameter_editor = MagicMock()
@@ -336,6 +367,7 @@ def test_file_browser_pauses_the_real_receiver_timer_until_closed(receiver_view:
     receiver_view.model._failsafe_detected = True
     old_timer = receiver_view._timer_id
     editor = ParameterEditorWindow.__new__(ParameterEditorWindow)
+    editor._connection_recovery = None
     editor.root = MagicMock()
     editor.navigation_lock = MagicMock(locked=False)
     editor.parameter_editor = MagicMock()

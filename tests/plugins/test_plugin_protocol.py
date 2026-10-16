@@ -11,13 +11,55 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
 
-from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginView
+from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginPauseReason, PluginView, resolve_plugin_lifecycle
 
 # pylint: disable=unused-argument
+
+
+@pytest.mark.parametrize("reason", list(PluginPauseReason))
+@pytest.mark.parametrize("incomplete_suspend", [False, True])
+def test_lifecycle_prefers_complete_suspend_hooks_and_falls_back_to_hide_show(
+    reason: PluginPauseReason, incomplete_suspend: bool
+) -> None:
+    """
+    Use one lifecycle selection rule for recovery eligibility and suspension.
+
+    GIVEN: A plugin with legacy hooks and optionally complete suspend/resume hooks
+    WHEN: Its lifecycle is resolved and invoked for an FC operation
+    THEN: Complete suspend hooks get the reason; otherwise hide/show handles the pause
+    """
+    plugin = SimpleNamespace(
+        on_suspend=MagicMock(),
+        on_resume=None if incomplete_suspend else MagicMock(),
+        on_deactivate=MagicMock(),
+        on_activate=MagicMock(),
+    )
+    lifecycle = resolve_plugin_lifecycle(plugin, reason)
+    assert lifecycle is not None
+    suspend, resume = lifecycle
+    suspend()
+    resume()
+    if incomplete_suspend:
+        plugin.on_deactivate.assert_called_once_with()
+        plugin.on_activate.assert_called_once_with()
+        plugin.on_suspend.assert_not_called()
+    else:
+        plugin.on_suspend.assert_called_once_with(reason)
+        plugin.on_resume.assert_called_once_with()
+        plugin.on_deactivate.assert_not_called()
+        plugin.on_activate.assert_not_called()
+
+
+@pytest.mark.parametrize("bad_hook", [None, "not callable"])
+def test_incomplete_lifecycles_cannot_yield_reception(bad_hook: object) -> None:
+    """GIVEN no complete callable hook pair, WHEN resolving a plugin, THEN recovery cannot take its receiver."""
+    plugin = SimpleNamespace(on_suspend=MagicMock(), on_resume=bad_hook, on_deactivate=bad_hook, on_activate=MagicMock())
+    assert resolve_plugin_lifecycle(plugin, PluginPauseReason.CONNECTION_RECOVERY) is None
 
 
 class TestPluginViewProtocol:

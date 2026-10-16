@@ -34,6 +34,7 @@ from ardupilot_methodic_configurator.data_model_data_telemetry import (
 from ardupilot_methodic_configurator.frontend_tkinter_mavlink_inspector import MavlinkInspectorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
+from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginPauseReason
 
 # pylint: disable=protected-access,redefined-outer-name
 
@@ -709,6 +710,7 @@ def test_header_launch_pauses_plugin_and_restores_it_after_close(paired: bool) -
     THEN the plugin pauses and resumes around the shared-connection inspection.
     """
     editor = MagicMock(spec=ParameterEditorWindow)
+    editor._connection_recovery = None
     editor.navigation_lock = NavigationLock()
     editor._file_browser_window = None
     plugin = MagicMock(spec=["on_suspend", "on_resume"] if paired else ["on_activate", "on_deactivate"])
@@ -720,7 +722,9 @@ def test_header_launch_pauses_plugin_and_restores_it_after_close(paired: bool) -
 
     def open_window(*_args: object) -> MagicMock:
         assert editor.navigation_lock.locked
-        (plugin.on_suspend if paired else plugin.on_deactivate).assert_called_once_with()
+        (plugin.on_suspend if paired else plugin.on_deactivate).assert_called_once_with(
+            *((PluginPauseReason.EXCLUSIVE_OPERATION,) if paired else ())
+        )
         (plugin.on_resume if paired else plugin.on_activate).assert_not_called()
         return window
 
@@ -746,6 +750,7 @@ def test_inspector_failure_restores_plugin_and_navigation(paired: bool, failure_
     THEN the plugin resumes exactly once and navigation is released.
     """
     editor = MagicMock(spec=ParameterEditorWindow)
+    editor._connection_recovery = None
     editor.navigation_lock = NavigationLock()
     editor._file_browser_window = None
     plugin = MagicMock(spec=["on_suspend", "on_resume"] if paired else ["on_activate", "on_deactivate"])
@@ -769,7 +774,7 @@ def test_inspector_failure_restores_plugin_and_navigation(paired: bool, failure_
         pytest.raises(RuntimeError, match="inspector launch failed"),
     ):
         ParameterEditorWindow.on_mavlink_inspector_click(editor)
-    pause.assert_called_once_with()
+    pause.assert_called_once_with(*((PluginPauseReason.EXCLUSIVE_OPERATION,) if paired else ()))
     resume.assert_called_once_with()
     assert not editor.navigation_lock.locked
     if failure_stage == "pause":
@@ -790,6 +795,7 @@ def test_inspector_does_not_resume_a_plugin_whose_owner_is_gone(plugin_replaced:
     THEN closing the inspector leaves the old receiver stopped.
     """
     editor = MagicMock(spec=ParameterEditorWindow)
+    editor._connection_recovery = None
     editor.navigation_lock = NavigationLock()
     editor._file_browser_window = None
     plugin = MagicMock(spec=["on_suspend", "on_resume"])
@@ -806,7 +812,7 @@ def test_inspector_does_not_resume_a_plugin_whose_owner_is_gone(plugin_replaced:
     editor.root.wait_window.side_effect = remove_owner
     with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.open_mavlink_inspector_window"):
         ParameterEditorWindow.on_mavlink_inspector_click(editor)
-    plugin.on_suspend.assert_called_once_with()
+    plugin.on_suspend.assert_called_once_with(PluginPauseReason.EXCLUSIVE_OPERATION)
     plugin.on_resume.assert_not_called()
     assert not editor.navigation_lock.locked
 
@@ -821,6 +827,7 @@ def test_inspector_opens_for_plugins_without_paired_lifecycle_hooks(hooks: list[
     THEN the inspector opens and releases the navigation lock when closed.
     """
     editor = MagicMock(spec=ParameterEditorWindow)
+    editor._connection_recovery = None
     editor.navigation_lock = NavigationLock()
     editor._file_browser_window = None
     plugin = MagicMock(spec=hooks) if hooks is not None else None
@@ -851,6 +858,7 @@ def test_header_button_is_below_forum_zip_button(inspector: MavlinkInspectorWind
     THEN the inspector follows the forum zip button and is available only with a live link.
     """
     editor = MagicMock(spec=ParameterEditorWindow)
+    editor._connection_recovery = None
     editor.navigation_lock = NavigationLock()
     editor.parameter_editor = MagicMock(is_fc_link_connected=connected)
     parent = tk.Frame(inspector.root)

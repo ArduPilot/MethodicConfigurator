@@ -74,8 +74,7 @@ It allows users to test motor functionality, verify motor order and direction, a
 - ✅ First-time safety confirmation popup
 - ✅ Keyboard shortcuts for critical functions:
   - Escape: Emergency stop all motors
-  - Ctrl+A: Test all motors simultaneously
-  - Ctrl+Q: Test motors in sequence
+  - Ctrl+S: Emergency stop all motors
 - ✅ Settings persistence for test duration and throttle percentage
 - ✅ Enhanced error handling and user feedback messages
 - ✅ PNG diagram display with improved compatibility (no external tksvg dependency required)
@@ -348,8 +347,7 @@ def motor_diagram_exists(frame_class: int, frame_type: int) -> bool
 - ✅ **Input validation and recovery** - Invalid inputs gracefully handled with model fallback
 - ✅ Keyboard shortcuts:
   - Escape: Emergency stop all motors
-  - Ctrl+A: Test all motors simultaneously
-  - Ctrl+Q: Test motors in sequence
+  - Ctrl+S: Emergency stop all motors
 - ✅ Settings persistence for user preferences
 - ✅ Enhanced error handling and logging
 - ✅ **Comprehensive test coverage** - 34 BDD pytest tests ensuring reliability

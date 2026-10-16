@@ -556,6 +556,9 @@ def test_apply_button_stages_values_and_refreshes_the_table(tk_root, model_facto
             refresh.assert_called_with(base_window)
             expected_names = "ATC_ANG_RLL_P, ATC_RAT_RLL_D, ATC_RAT_RLL_I, ATC_RAT_RLL_P"
             assert view.status.get() == f"Updated gains: {expected_names}"
+            view.on_suspend()
+            view.on_resume()
+            assert view.status.get() == f"Updated gains: {expected_names}"
             error.assert_not_called()
             before_error = parameter_snapshot(model)
             previous_status = view.status.get()

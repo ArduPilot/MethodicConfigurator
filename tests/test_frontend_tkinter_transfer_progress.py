@@ -346,12 +346,14 @@ def _configured_upload_editor(root, tmp_path: Path, mode: str) -> tuple[Paramete
     source = tmp_path / "script.lua"
     source.write_bytes(b"x" * 4096)
     editor = ParameterEditorWindow.__new__(ParameterEditorWindow)
+    editor._connection_recovery = None  # pylint: disable=protected-access
     editor.root = root
     editor.navigation_lock = NavigationLock()
     editor.file_upload_progress_window = None
     editor.current_plugin_view = None
     editor._configured_upload_active = False  # pylint: disable=protected-access
     editor._close_after_configured_upload = False  # pylint: disable=protected-access
+    editor._close_pending = False  # pylint: disable=protected-access
     observations["button"] = ttk.Button(root, text="Next")
     editor.navigation_lock.register(observations["button"])
 
@@ -449,11 +451,13 @@ def test_configured_upload_honors_close_after_transport(root, monkeypatch, mode:
     """
     gc.collect()
     editor = ParameterEditorWindow.__new__(ParameterEditorWindow)
+    editor._connection_recovery = None  # pylint: disable=protected-access
     editor.root = root
     editor.navigation_lock = NavigationLock()
     editor.file_upload_progress_window = None
     editor._configured_upload_active = False  # pylint: disable=protected-access
     editor._close_after_configured_upload = False  # pylint: disable=protected-access
+    editor._close_pending = False  # pylint: disable=protected-access
     editor.current_plugin_view = None
     save = MagicMock()
     quit_application = MagicMock()
@@ -491,6 +495,7 @@ def _outgoing_motor_upload(root, monkeypatch) -> Iterator[SimpleNamespace]:
     """Start a step transition with real motor widgets and a configured-upload popup."""
     gc.collect()
     editor = ParameterEditorWindow.__new__(ParameterEditorWindow)
+    editor._connection_recovery = None  # pylint: disable=protected-access
     editor.root = root
     host = DummyBaseWindow(root)
     editor.navigation_lock = NavigationLock()
@@ -518,6 +523,7 @@ def _outgoing_motor_upload(root, monkeypatch) -> Iterator[SimpleNamespace]:
     editor.file_upload_progress_window = None
     editor._configured_upload_active = False  # pylint: disable=protected-access
     editor._close_after_configured_upload = False  # pylint: disable=protected-access
+    editor._close_pending = False  # pylint: disable=protected-access
     model = FakeMotorTestModel()
     parent = ttk.Frame(root)
     editor.parameter_area_container = parent

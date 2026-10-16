@@ -67,6 +67,9 @@ from ardupilot_methodic_configurator.plugins.data_model_motor_test import (
 )
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_MOTOR_TEST
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginPauseReason
+
+# pylint: disable=too-many-lines
 
 
 class DelayedProgressCallback:  # pylint: disable=too-few-public-methods
@@ -129,6 +132,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         self._content_frame: ttk.Frame | None = None  # Store reference to content frame for widget searches
         self._motor_grid_frame: ttk.Frame | None = None  # Direct handle for motor grid frame
         self._timer_id: str | None = None  # Track scheduled update timer for cleanup
+        self._suspended = False
         self._keyboard_bindings: list[tuple[str, str, str]] = []
 
         self._create_widgets()
@@ -354,7 +358,8 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
     def _update_view(self) -> None:
         """Update the view with data from the model."""
-        # Update diagram only when needed (not every second)
+        if self._suspended:
+            return
         if self._diagram_needs_update:
             self._update_diagram()
             self._diagram_needs_update = False
@@ -362,7 +367,13 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         self._update_motor_buttons_layout()
         self._update_battery_status()
         self._update_spinbox_values()
-        self._timer_id = self.after(1000, self._update_view)  # Schedule periodic update
+        if self._timer_id is None:
+            self._timer_id = self.after(1000, self._on_update_timer)
+
+    def _on_update_timer(self) -> None:
+        """Consume the pending timer before scheduling the next update."""
+        self._timer_id = None
+        self._update_view()
 
     def _update_spinbox_values(self) -> None:
         """Update spinbox values from the data model only if not currently being edited."""
@@ -387,8 +398,8 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         except KeyError:
             pass
 
-    def _update_motor_buttons_layout(self) -> None:
-        """Re-create motor buttons if motor count changes."""
+    def _update_motor_buttons_layout(self, *, force: bool = False) -> None:
+        """Re-create motor buttons when their count or frame layout changes."""
         motor_grid = self._motor_grid_frame
         if motor_grid is None:
             logging_error(_("Could not find motor grid frame"))
@@ -397,7 +408,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         current_count = len(self.motor_buttons)
         required_count = self.model.motor_count
 
-        if current_count == required_count:
+        if current_count == required_count and not force:
             return
 
         for child in motor_grid.winfo_children():
@@ -753,8 +764,6 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         shortcuts = {
             "<Escape>": self._stop_all_motors,
             "<Control-s>": self._stop_all_motors,
-            "<Control-a>": self._test_all_motors,
-            "<Control-q>": self._test_motors_in_sequence,
         }
         for sequence, action in shortcuts.items():
             previous_binding = str(self.root_window.tk.call("bind", str(self.root_window), sequence))
@@ -775,20 +784,37 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
     def _handle_keyboard_shortcut(self, action: Callable[[], None]) -> str:
         """Run a keyboard shortcut and stop Tk from processing the event further."""
-        action()
+        if not self._suspended and not self.base_window.navigation_lock.locked:
+            action()
         return "break"
 
-    def on_activate(self) -> None:
-        """
-        Called when the plugin becomes active (visible).
+    def on_suspend(self, reason: PluginPauseReason = PluginPauseReason.EXCLUSIVE_OPERATION) -> None:
+        """Stop actuators for FC tools; yield silently for connection checks and recovery."""
+        if reason is PluginPauseReason.EXCLUSIVE_OPERATION:
+            self.on_deactivate()
+        self._suspended = True
+        if self._timer_id is not None:
+            self.after_cancel(self._timer_id)
+            self._timer_id = None
 
-        Refreshes the frame configuration from the flight controller
-        to ensure the display is up-to-date.
-        """
-        # Refresh frame configuration when becoming active
+    def on_resume(self) -> None:
+        """Refresh the frame from cached FC values and resume polling without motor commands."""
+        self._suspended = False
+        previous_frame = (self.model.frame_class, self.model.frame_type)
         if not self.model.refresh_from_flight_controller():
             logging_warning(_("Could not refresh frame configuration from flight controller"))
+        elif previous_frame != (self.model.frame_class, self.model.frame_type):
+            self.frame_type_combobox.set_entries_tuple(
+                self.model.get_frame_type_pairs(), self.model.get_current_frame_selection_key()
+            )
+            self._diagrams_path = ""
+            self._diagram_needs_update = True
+            self._update_motor_buttons_layout(force=True)
         self._update_view()
+
+    def on_activate(self) -> None:
+        """Refresh frame configuration and polling when the view becomes visible."""
+        self.on_resume()
 
     def on_deactivate(self) -> None:
         """

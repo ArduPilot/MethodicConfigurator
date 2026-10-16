@@ -132,6 +132,18 @@ Forced step refreshes follow the same lifecycle. If the workflow raises an excep
 the plugin for the current step before propagating the error. A failed safety stop prevents the workflow
 from starting. Diagnostics temporarily suspend plugin receivers while preserving the active view.
 
+The editor delegates connection timers, retries and worker cancellation to `ConnectionRecovery`
+in `frontend_tkinter_connection_recovery.py`. UI callbacks display connection status and refresh
+FC cells while preserving local edits. FC operations retain explicit leases through nested Tk event
+loops; tools whose lifetime outlasts their opening callback release their lease when they close.
+Parameter upload previews and export windows use `_retain_fc_operation_until_closed()`
+to bind lease release to destruction of their root, rather than infer ownership from
+visibility. Unrelated report windows do not block recovery.
+`SuspendablePlugin.on_suspend(reason)` distinguishes exclusive operations from connection recovery;
+motor tests stop before exclusive tools take reception and yield without commands during recovery.
+Both recovery eligibility and suspension use `resolve_plugin_lifecycle()` to select
+the preferred paired suspend/resume hooks or the legacy hide/show pair.
+
 #### Calibration Navigation Lock
 
 - **File**: `frontend_tkinter_navigation_lock.py`

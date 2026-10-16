@@ -24,7 +24,7 @@ from ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibratio
     CompassCalibrationView,
 )
 
-# pylint: disable=protected-access, redefined-outer-name, too-few-public-methods
+# pylint: disable=protected-access, redefined-outer-name
 
 
 @pytest.fixture
@@ -721,6 +721,11 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
 
 class TestCompassCalibrationViewInternals:
     """Verify view setup helpers without exercising the whole workflow."""
+
+    def test_receiver_lifecycle_hooks_are_paired_for_recovery(self, calibration_view: CompassCalibrationView) -> None:
+        """GIVEN an idle compass view, WHEN recovery suspends it, THEN its lifecycle pair is available."""
+        calibration_view.on_suspend()
+        calibration_view.on_resume()
 
     def test_user_sees_the_view_layout_created_with_a_start_button(self, calibration_view: CompassCalibrationView) -> None:
         """

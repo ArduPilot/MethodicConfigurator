@@ -92,6 +92,7 @@ def test_rc_monitor_yields_its_timer_to_diagnostics_and_resumes_once(rc_navigati
     view = rc_navigation_view.view
     initial_timer = view._timer_id
     host = SimpleNamespace(
+        _connection_recovery=None,
         root=MagicMock(),
         current_plugin_view=view,
         navigation_lock=rc_navigation_view.host.navigation_lock,

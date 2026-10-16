@@ -37,7 +37,7 @@ from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_AHRS
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory, PluginModelContext
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Callable, Generator
 
     from pytest_mock import MockerFixture
 
@@ -53,6 +53,7 @@ def diagnostics_orientation_view(tk_root) -> Generator[SimpleNamespace, None, No
     model = AhrsOrientationDataModel(controller)
     parent = ttk.Frame(tk_root)
     host = SimpleNamespace(root=MagicMock(), navigation_lock=NavigationLock(), parameter_editor=MagicMock())
+    host._connection_recovery = None
     host.root.winfo_exists.return_value = True
     view = AhrsOrientationView(parent, model, cast("BaseWindow", host))
     host.current_plugin_view = view
@@ -61,6 +62,41 @@ def diagnostics_orientation_view(tk_root) -> Generator[SimpleNamespace, None, No
     finally:
         view.destroy()
         parent.destroy()
+
+
+def test_recovery_cancels_real_imu_polling_without_discarding_captured_poses(
+    diagnostics_orientation_view: SimpleNamespace,
+    pause_polling_plugin_for_recovery: Callable[[tk.Misc], Callable[[], None]],
+    fire_tk_timer: Callable[[tk.Misc, str], None],
+) -> None:
+    """
+    Preserve orientation progress while yielding actual polling to recovery.
+
+    GIVEN: An orientation wizard with one captured pose and a pending IMU timer
+    WHEN: The editor pauses and resumes its receiver for connection recovery
+    THEN: All timers stop during the pause and one loop resumes with the pose intact
+    """
+    context = diagnostics_orientation_view
+    view = context.view
+    view.on_activate()
+    view._handle_live_imu_sample((0.0, 0.0, -1000.0))
+    view._on_continue()
+    samples = dict(context.model._samples)
+    assert view._imu_poll_job is not None
+
+    resume = pause_polling_plugin_for_recovery(view)
+
+    assert view._imu_poll_job is None
+    assert view._latest_imu is None
+    assert context.model._samples == samples
+    resume()
+    timer = view._imu_poll_job
+    assert timer is not None
+    resume()
+    assert view._imu_poll_job == timer
+    fire_tk_timer(view, timer)
+    assert view._imu_poll_job is not None
+    assert context.model._samples == samples
 
 
 @pytest.mark.parametrize("popup_fails", [False, True])

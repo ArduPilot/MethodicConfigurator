@@ -44,6 +44,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_file_browser_tasks import 
 from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
+from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginPauseReason
 
 # pylint: disable=too-many-lines, too-few-public-methods, too-many-public-methods, protected-access
 
@@ -2471,6 +2472,7 @@ class TestFileBrowserWindow:
         THEN: A modal is opened with the editor model and UI services
         """
         editor = ParameterEditorWindow.__new__(ParameterEditorWindow)
+        editor._connection_recovery = None
         editor.navigation_lock = MagicMock(locked=False)
         editor.root = MagicMock()
         editor.parameter_editor = MagicMock()
@@ -2493,6 +2495,7 @@ class TestFileBrowserWindow:
         THEN the plugin pauses once and resumes once after the browser closes.
         """
         editor = ParameterEditorWindow.__new__(ParameterEditorWindow)
+        editor._connection_recovery = None
         editor.navigation_lock = NavigationLock()
         editor.root = MagicMock()
         editor.parameter_editor = MagicMock()
@@ -2504,7 +2507,7 @@ class TestFileBrowserWindow:
         browser = MagicMock()
 
         def open_browser(*_args: object) -> MagicMock:
-            pause.assert_called_once_with()
+            pause.assert_called_once_with(*((PluginPauseReason.EXCLUSIVE_OPERATION,) if paired_hooks else ()))
             resume.assert_not_called()
             assert editor.navigation_lock.locked
             editor.on_skip_click()
@@ -2524,7 +2527,7 @@ class TestFileBrowserWindow:
 
         assert editor._file_browser_window is None
         assert not editor.navigation_lock.locked
-        pause.assert_called_once_with()
+        pause.assert_called_once_with(*((PluginPauseReason.EXCLUSIVE_OPERATION,) if paired_hooks else ()))
         resume.assert_called_once_with()
 
     @pytest.mark.parametrize("plugin_replaced", [False, True])
@@ -2537,6 +2540,7 @@ class TestFileBrowserWindow:
         THEN the old plugin stays paused.
         """
         editor = ParameterEditorWindow.__new__(ParameterEditorWindow)
+        editor._connection_recovery = None
         editor.navigation_lock = MagicMock(locked=False)
         editor.root = MagicMock()
         editor.parameter_editor = MagicMock()
@@ -2555,6 +2559,7 @@ class TestFileBrowserWindow:
     def test_plugin_resumes_if_file_browser_cannot_open(self) -> None:
         """Given a polling plugin, when browser creation fails, monitoring resumes."""
         editor = ParameterEditorWindow.__new__(ParameterEditorWindow)
+        editor._connection_recovery = None
         editor.navigation_lock = NavigationLock()
         editor.root = MagicMock()
         editor.parameter_editor = MagicMock()

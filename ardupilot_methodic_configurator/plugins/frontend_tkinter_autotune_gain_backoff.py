@@ -20,6 +20,7 @@ from ardupilot_methodic_configurator.plugins.data_model_autotune_gain_backoff im
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_helpers import refresh_parameter_editor_table
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_AUTOTUNE_GAIN_BACKOFF
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginPauseReason
 
 
 class AutotuneGainBackoffView(ttk.Frame):  # pylint: disable=too-many-ancestors
@@ -91,6 +92,12 @@ class AutotuneGainBackoffView(ttk.Frame):  # pylint: disable=too-many-ancestors
 
     def on_deactivate(self) -> None:
         """No timers or external resources need cleanup."""
+
+    def on_suspend(self, reason: PluginPauseReason = PluginPauseReason.EXCLUSIVE_OPERATION) -> None:
+        """Keep staged-gain feedback while another owner checks or uses the FC."""
+
+    def on_resume(self) -> None:
+        """No receiver needs restarting; retain feedback until the step changes."""
 
 
 def _create_view(parent: tk.Frame | ttk.Frame, model: object, base_window: object) -> AutotuneGainBackoffView:

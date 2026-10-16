@@ -19,7 +19,7 @@ import threading
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
 from enum import Enum, auto
-from functools import partial
+from functools import partial, wraps
 
 # from logging import debug as logging_debug
 from logging import basicConfig as logging_basicConfig
@@ -29,7 +29,7 @@ from logging import warning as logging_warning
 from sys import exit as sys_exit
 from sys import platform as sys_platform
 from tkinter import filedialog, simpledialog, ttk
-from typing import TYPE_CHECKING, Optional, Protocol, Union, cast
+from typing import TYPE_CHECKING, Concatenate, Optional, ParamSpec, Protocol, TypeVar, Union, cast
 
 # from logging import critical as logging_critical
 from ardupilot_methodic_configurator import _, __version__
@@ -38,6 +38,7 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_freedesktop import FreeDesktop
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.backend_flightcontroller_reconnect import FlightControllerReconnect
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.data_model_parameter_editor import (
     ComponentEditorDeps,
@@ -57,6 +58,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
     show_warning_popup,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
+from ardupilot_methodic_configurator.frontend_tkinter_connection_recovery import ConnectionRecovery, RecoveryCallbacks
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 from ardupilot_methodic_configurator.frontend_tkinter_fc_banner_window import FlightControllerBannerWindow
 from ardupilot_methodic_configurator.frontend_tkinter_file_browser import FileBrowserWindow
@@ -64,6 +66,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_file_browser_tasks import 
 from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_config
 from ardupilot_methodic_configurator.frontend_tkinter_log_availability import LogAvailabilityReportWindow
 from ardupilot_methodic_configurator.frontend_tkinter_mavlink_inspector import open_mavlink_inspector_window
+from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload import ParameterFileUploadWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame import DocumentationFrame
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
@@ -85,6 +88,7 @@ from ardupilot_methodic_configurator.log_analysis.backend_data_sources import lo
 from ardupilot_methodic_configurator.log_analysis.backend_log_analysis import analyze_log_data
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import LogSummary, validate_log_matches_vehicle
 from ardupilot_methodic_configurator.plugins.plugin_factory import plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginPauseReason, resolve_plugin_lifecycle
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -305,6 +309,24 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
                 download_progress_window.destroy()
 
 
+_P = ParamSpec("_P")
+_R = TypeVar("_R")
+
+
+def _with_fc_operation(
+    method: Callable[Concatenate[ParameterEditorWindow, _P], _R],
+) -> Callable[Concatenate[ParameterEditorWindow, _P], _R]:
+    """Retain an operation lease across nested Tk event loops."""
+
+    @wraps(method)
+    def guarded(self: ParameterEditorWindow, *method_args: _P.args, **kwargs: _P.kwargs) -> _R:
+        recovery = self._connection_recovery  # pylint: disable=protected-access
+        with recovery.operation() if recovery is not None else contextlib.nullcontext():
+            return method(self, *method_args, **kwargs)
+
+    return guarded
+
+
 class ParameterEditorAction(Enum):
     """Describe the action requested when the parameter editor window closes."""
 
@@ -328,6 +350,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         super().__init__()
         self.parameter_editor = parameter_editor
         self.ui = ui_services or ParameterEditorUiServices.default()
+        self._connection_recovery: ConnectionRecovery | None = None
+        self._connection_status: ttk.Label
 
         self.file_selection_combobox: AutoResizeCombobox
         self.show_only_differences: tk.BooleanVar
@@ -345,6 +369,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._configured_upload_active = False
         self._param_file_change_active = False
         self._close_after_configured_upload = False
+        self._close_pending = False
         self._param_download_progress_window: ProgressWindow | None = None
         self._log_availability_report_window: LogAvailabilityReportWindow | None = None
         self._log_analysis_running = False
@@ -409,8 +434,123 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             The action requested by the user when the event loop ends.
 
         """
-        self.root.mainloop()
+        self._start_connection_monitor()
+        try:
+            self.root.mainloop()
+        finally:
+            self._stop_connection_monitor()
         return self._requested_action
+
+    def _start_connection_monitor(self) -> None:
+        """Start one monitor for this editor, retaining the originally selected hardware UID."""
+        flight_controller = self.parameter_editor.flight_controller
+        if not isinstance(flight_controller.info.hw_unique_id, str) or not flight_controller.info.hw_unique_id:
+            return
+        self._connection_status = ttk.Label(self.main_frame)
+        show_tooltip(self._connection_status, _("Waiting for the original flight controller before resuming FC operations."))
+        self._connection_recovery = ConnectionRecovery(
+            self.root,
+            FlightControllerReconnect(flight_controller),
+            RecoveryCallbacks(
+                reader_busy=self._connection_reader_busy,
+                can_read=lambda: self.current_plugin_view is None,
+                pause_receiver=self._pause_connection_plugin,
+                lock_controls=self._lock_connection_plugin,
+                show_status=self._show_connection_status,
+                on_recovered=self._finish_connection_recovery,
+            ),
+        )
+        self._connection_recovery.start()
+        self.root.bind("<Destroy>", self._on_connection_monitor_destroy, add="+")
+
+    def _on_connection_monitor_destroy(self, event: tk.Event) -> None:
+        if event.widget is self.root:
+            self._stop_connection_monitor()
+
+    def _stop_connection_monitor(self) -> bool:
+        """Cancel recovery, retaining ownership until the worker yields without blocking Tk."""
+        recovery = self._connection_recovery
+        if recovery is None:
+            return True
+        if not recovery.stop():
+            return False
+        self._connection_recovery = None
+        return True
+
+    def _connection_reader_busy(self) -> bool:
+        """Open sub-applications and nested editor operations retain exclusive reception."""
+        # Explicit operation leases are checked by ConnectionRecovery first.
+        # These checks retain protection for external and native Tk dialogs.
+        if self.navigation_lock.locked:
+            return True
+        if self._file_browser_window is not None:
+            return True
+        # Native Tk message boxes need not have a Python Toplevel wrapper.
+        return bool(self.root.tk.call("grab", "current", str(self.root)))
+
+    def _retain_fc_operation_until_closed(self, root: tk.Misc) -> None:
+        """Retain receive ownership for a tool whose window outlives its opening callback."""
+        recovery = self._connection_recovery
+        if recovery is None:
+            return
+        release = recovery.acquire_operation()
+
+        def on_destroy(event: tk.Event) -> None:
+            if event.widget is root:
+                release()
+
+        try:
+            root.bind("<Destroy>", on_destroy, add="+")
+        except Exception:
+            release()
+            raise
+
+    def _pause_connection_plugin(self) -> Callable[[], None] | None:
+        plugin = self.current_plugin_view
+        if plugin is None:
+            return self._pause_plugin_receiver(reason=PluginPauseReason.CONNECTION_RECOVERY)
+        if resolve_plugin_lifecycle(plugin, PluginPauseReason.CONNECTION_RECOVERY) is None:
+            return None
+        return self._pause_plugin_receiver(reason=PluginPauseReason.CONNECTION_RECOVERY)
+
+    def _lock_connection_plugin(self, owner: object) -> Callable[[], None]:
+        # Lifecycle hooks stop timers but need not disable plugin buttons.
+        # Keep user actions from entering the worker's connection too.
+        plugin_lock = NavigationLock()
+        widgets: list[object] = [self.current_plugin_view]
+        while widgets:
+            widget = widgets.pop()
+            if isinstance(widget, tk.Misc):
+                widgets.extend(widget.winfo_children())
+                if isinstance(widget, ttk.Widget):
+                    plugin_lock.register(widget)
+        plugin_lock.acquire(owner)
+        self.navigation_lock.acquire(owner)
+
+        def unlock() -> None:
+            plugin_lock.release(owner)
+            self.navigation_lock.release(owner)
+
+        return unlock
+
+    def _show_connection_status(self, message: str) -> None:
+        self._connection_status.configure(text=message)
+        self._connection_status.pack(side=tk.TOP, fill=tk.X, before=self.parameter_area_container)
+
+    def _finish_connection_recovery(self) -> None:
+        """Refresh FC cells on Tk without saving edits or advancing the configuration step."""
+        self._connection_status.pack_forget()
+        self._commit_focused_parameter_edit()
+        fc_parameters = self.parameter_editor.flight_controller.fc_parameters
+        for name, parameter in self.parameter_editor.current_step_parameters.items():
+            parameter.set_fc_value(fc_parameters.get(name))
+        options = self.parameter_editor_table.options
+        skip_when_no_differences = options.skip_when_no_differences
+        options.skip_when_no_differences = False
+        try:
+            self.repopulate_parameter_table()
+        finally:
+            options.skip_when_no_differences = skip_when_no_differences
 
     def _create_progress_and_documentation_widgets(self) -> None:
         """Create independently collapsible information sections above the table."""
@@ -1527,6 +1667,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         return report_bytes
 
+    @_with_fc_operation
     def on_param_file_combobox_change(self, _event: Union[tk.Event, None], forced: bool = False) -> None:  # noqa: UP007
         if self.navigation_lock.locked:
             self.file_selection_combobox.set(self.parameter_editor.current_file)
@@ -1612,9 +1753,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 msg = _("Failed to update progress bar, {selected_file} does not start with two digits like it should: {_e}")
                 logging_error(msg.format(**locals()))
 
+    @_with_fc_operation
     def download_flight_controller_parameters(
         self, redownload: bool = False, *, response_timeout: float | None = None
-    ) -> tuple[dict, dict]:
+    ) -> tuple[dict[str, float], dict[str, object]]:
         operation_string = _("Re-downloading FC parameters") if redownload else _("Downloading FC parameters")
 
         def get_progress_callback() -> Callable | None:
@@ -1878,6 +2020,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def on_show_only_changed_checkbox_change(self) -> None:
         self.repopulate_parameter_table()
 
+    @_with_fc_operation
     def on_compare_and_upload_parameter_file_click(self) -> None:
         """Select an external parameter file and open its upload preview."""
         if self.navigation_lock.locked:
@@ -1901,15 +2044,19 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.ui.show_error(_("Parameter file error"), str(exc))
             return
 
-        ParameterFileUploadWindow(self, filepath, parameters)
+        window = ParameterFileUploadWindow(self, filepath, parameters)
+        self._retain_fc_operation_until_closed(window.root)
 
+    @_with_fc_operation
     def on_export_parameters_click(self) -> None:
         """Open the parameter export window for the current FC values."""
         if self.navigation_lock.locked:
             return
         parameters = self.parameter_editor.get_fc_parameters_for_export()
-        ParameterExportWindow(self, parameters)
+        window = ParameterExportWindow(self, parameters)
+        self._retain_fc_operation_until_closed(window.root)
 
+    @_with_fc_operation
     def on_mavlink_inspector_click(self) -> None:
         """Give the embedded inspector exclusive access until its window closes."""
         if self.navigation_lock.locked or not self.parameter_editor.is_fc_link_connected:
@@ -1923,7 +2070,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         resume_plugin: Callable[[], None] | None = None
         owner = object()
         window = None
-        self.navigation_lock.acquire(owner)
+        unlock = ParameterEditorWindow._lock_connection_plugin(self, owner)
         try:
             resume_plugin = ParameterEditorWindow._pause_plugin_receiver(self)
             window = open_mavlink_inspector_window(self.root, self.parameter_editor.flight_controller)
@@ -1931,7 +2078,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         finally:
             if window is not None:
                 window.close()
-            self.navigation_lock.release(owner)
+            unlock()
             if resume_plugin is not None:
                 resume_plugin()
 
@@ -1989,7 +2136,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         """Upload parameters without recording progress for the current AMC configuration step."""
         return self._upload_params(selected_params, self.parameter_editor.upload_external_params_workflow)
 
-    def _upload_params(self, selected_params: dict, upload_callback: Callable[..., bool]) -> bool:
+    @_with_fc_operation
+    def _upload_params(self, selected_params: dict, upload_callback: Callable[..., bool]) -> bool:  # type: ignore[misc]
         """Run a parameter upload callback with shared progress and error handling."""
         if self.navigation_lock.locked:
             return False
@@ -2010,6 +2158,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.navigation_lock.release(upload_owner)
             resume_plugin()
 
+    @_with_fc_operation
     def on_download_bin_logs_click(self) -> None:
         """Open the modal window for browsing and downloading FC log files."""
         existing_window = getattr(self, "_file_browser_window", None)
@@ -2027,11 +2176,16 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         resume_plugin = ParameterEditorWindow._pause_plugin_receiver(self)
         browser_owner = object()
         self.navigation_lock.acquire(browser_owner)
+        recovery = self._connection_recovery
+        release_access = recovery.acquire_operation() if recovery is not None else lambda: None
 
         def on_browser_closed() -> None:
             self._file_browser_window = None
             self.navigation_lock.release(browser_owner)
-            resume_plugin()
+            try:
+                resume_plugin()
+            finally:
+                release_access()
 
         try:
             download_window = FileBrowserWindow(self.root, self.parameter_editor, self.ui)
@@ -2041,10 +2195,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             on_browser_closed()
             raise
 
-    def _pause_plugin_receiver(self) -> Callable[[], None]:
+    def _pause_plugin_receiver(
+        self, *, reason: PluginPauseReason = PluginPauseReason.EXCLUSIVE_OPERATION
+    ) -> Callable[[], None]:
         """Pause the receiver, recovering on failure, and return an idempotent, owner-checked resume callback."""
         plugin_view = getattr(self, "current_plugin_view", None)
-        resume_plugin: Callable[[], object] | None = None
+        resume_plugin: Callable[[], None] | None = None
 
         def resume_receiver() -> None:
             nonlocal resume_plugin
@@ -2058,27 +2214,23 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 callback()
 
         try:
-            if plugin_view is not None:
-                suspend = getattr(plugin_view, "on_suspend", None)
-                resume = getattr(plugin_view, "on_resume", None)
-                if callable(suspend) and callable(resume):
-                    resume_plugin = resume
-                    suspend()
-                elif hasattr(plugin_view, "on_deactivate") and hasattr(plugin_view, "on_activate"):
-                    resume_plugin = plugin_view.on_activate
-                    plugin_view.on_deactivate()
+            lifecycle = resolve_plugin_lifecycle(plugin_view, reason)
+            if lifecycle is not None:
+                suspend, resume_plugin = lifecycle
+                suspend()
         except Exception:
             resume_receiver()
             raise
 
         return resume_receiver
 
+    @_with_fc_operation
     def on_fc_banner_click(self) -> None:
         """
         Display diagnostics with plugin receivers paused until the popup closes.
 
         Prefer paired on_suspend/on_resume hooks for state-preserving pauses.
-        Legacy views use their hide/show hooks, including the motor-test safety stop.
+        Legacy views use their hide/show hooks.
         """
         if self.navigation_lock.locked:
             return
@@ -2184,6 +2336,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.ui.ask_yesno,
         )
 
+    @_with_fc_operation
     def reset_all_parameters_to_default(self) -> bool:
         """Reset all flight-controller parameters to defaults with a progress window."""
         success = self.ui.reset_all_parameters_to_default_with_progress(
@@ -2196,6 +2349,16 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def close_connection_and_quit(self) -> None:
         if self._configured_upload_active:
             self._close_after_configured_upload = True
+            return
+        if self._close_pending:
+            return
+        self._close_pending = True
+        self._finish_pending_close()
+
+    def _finish_pending_close(self) -> None:
+        """Wait for recovery through one retry chain, then offer to save once."""
+        if not self._stop_connection_monitor():
+            self.root.after(50, self._finish_pending_close)
             return
         self._commit_focused_edit_and_offer_save()
         self.root.quit()  # Then stop the Tkinter event loop
@@ -2225,15 +2388,23 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         self._commit_focused_edit_and_offer_save()
         self._requested_action = ParameterEditorAction.EDIT_COMPONENTS
+        self._stop_connection_monitor()
         self._cleanup_plugin_views()
         self.root.destroy()
 
     def _commit_focused_edit_and_offer_save(self) -> None:
         """Commit the focused widget and offer to save changes in the current step."""
-        focused_widget = self.parameter_editor_table.view_port.focus_get()
-        if focused_widget is not None:
-            focused_widget.event_generate("<FocusOut>", when="now")  # trigger a sync between GUI and data-model values
+        self._commit_focused_parameter_edit()
         self.write_changes_to_intermediate_parameter_file()
+
+    def _commit_focused_parameter_edit(self) -> None:
+        """Commit a pending edit even when Tk focus belongs to an unregistered or destroyed popup."""
+        # Native Tk dialogs and transient widgets can have Tcl paths without a
+        # Python widget. Losing their focus must not prevent saving or closing.
+        with contextlib.suppress(KeyError, tk.TclError):
+            focused_widget = self.parameter_editor_table.view_port.focus_get()
+            if focused_widget is not None:
+                focused_widget.event_generate("<FocusOut>", when="now")
 
     @staticmethod
     def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:

@@ -22,6 +22,7 @@ from ardupilot_methodic_configurator.plugins.data_model_servo_out import (
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_helpers import refresh_parameter_editor_table
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_SERVO_OUT
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginPauseReason
 
 
 class ServoOutView(ttk.Frame):  # pylint: disable=too-many-ancestors
@@ -56,6 +57,12 @@ class ServoOutView(ttk.Frame):  # pylint: disable=too-many-ancestors
     def on_activate(self) -> None:
         """Refresh the recommendation when the user returns after editing parameters."""
         self._refresh_summary()
+
+    def on_suspend(self, reason: PluginPauseReason = PluginPauseReason.EXCLUSIVE_OPERATION) -> None:
+        """Yield FC reception; the view has no background receiver to stop."""
+
+    def on_resume(self) -> None:
+        """Resume with no background receiver; activation refreshes the recommendation summary."""
 
     def _on_apply(self) -> None:
         applied, message, status = self.model.apply_recommendations()

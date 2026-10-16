@@ -26,6 +26,7 @@ from ardupilot_methodic_configurator.plugins.frontend_tkinter_helpers import (
 from ardupilot_methodic_configurator.plugins.imu_helpers import stop_periodic_polling
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_LEVEL_CALIBRATION
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginPauseReason
 
 _LEVEL_CALIBRATION_POLL_INTERVAL_MS = 100
 
@@ -82,6 +83,17 @@ class LevelCalibrationView(Frame):
         finally:
             if not started:
                 self._restore_calibration_controls()
+
+    # pylint: disable-next=unused-argument
+    def on_suspend(self, reason: PluginPauseReason = PluginPauseReason.EXCLUSIVE_OPERATION) -> None:  # noqa: ARG002
+        """Pause a pending calibration poll while another owner uses FC reception."""
+        stop_periodic_polling(self.after_cancel, self._poll_job)
+        self._poll_job = None
+
+    def on_resume(self) -> None:
+        """Resume polling only when a level calibration is still in progress."""
+        if self._calibration_in_progress and self._poll_job is None:
+            self._poll_job = self.after(_LEVEL_CALIBRATION_POLL_INTERVAL_MS, self._poll_level_calibration)
 
     def _poll_level_calibration(self) -> None:
         """Poll the backend once without blocking Tk's event loop."""

@@ -382,17 +382,18 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
         """Return an error message if the FC value has unknown bits set."""
         return self.has_unknown_bits_set(int(self._fc_value)) if self._fc_value is not None else ""
 
-    def set_fc_value(self, new_fc_value: float) -> None:
+    def set_fc_value(self, new_fc_value: float | None) -> None:
         """
         Update the flight controller value for this parameter.
 
         This method sets the FC value directly without validation because it receives
         data that has already been validated and confirmed by the flight controller itself.
-        The value comes from the FC's parameter download/refresh after an upload operation,
-        so it represents the actual state stored in the flight controller.
+        The value comes from the FC's parameter download/refresh, so it represents
+        the actual state stored in the flight controller. None clears a stale FC
+        value when the parameter is absent from the refreshed download.
 
         Args:
-            new_fc_value: The new FC value to set (already validated by the FC)
+            new_fc_value: The new FC value (already validated by the FC), or None if absent
 
         """
         self._fc_value = new_fc_value

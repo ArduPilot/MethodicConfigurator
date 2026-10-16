@@ -15,6 +15,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from collections.abc import Callable
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -57,6 +58,42 @@ def mock_flight_controller() -> MagicMock:
 
 class TestTimerLifecycle:
     """Test timer lifecycle and edge cases."""
+
+    def test_recovery_cancels_real_battery_polling_and_resumes_one_loop(
+        self,
+        tk_root: tk.Tk,
+        mock_flight_controller: MagicMock,
+        mock_base_window: MagicMock,
+        pause_polling_plugin_for_recovery: Callable[[tk.Misc], Callable[[], None]],
+        fire_tk_timer: Callable[[tk.Misc, str], None],
+    ) -> None:
+        """
+        Yield the real battery receiver through the legacy lifecycle.
+
+        GIVEN: A battery view with an active polling timer
+        WHEN: The editor pauses and resumes it for recovery
+        THEN: All timers stop during the pause and one loop resumes reading battery values
+        """
+        view = BatteryMonitorView(tk_root, BatteryMonitorDataModel(mock_flight_controller), mock_base_window)
+        try:
+            view.on_activate()
+            assert view._timer_id is not None
+            reads = mock_flight_controller.get_battery_statuses.call_count
+
+            resume = pause_polling_plugin_for_recovery(view)
+
+            assert view._timer_id is None
+            assert mock_flight_controller.get_battery_statuses.call_count == reads
+            resume()
+            timer = view._timer_id
+            assert timer is not None
+            resume()
+            assert view._timer_id == timer
+            fire_tk_timer(view, timer)
+            assert mock_flight_controller.get_battery_statuses.call_count > reads
+            assert view._timer_id is not None
+        finally:
+            view.destroy()
 
     def test_on_activate_does_not_create_second_timer_if_already_running(
         self, tk_root: tk.Tk, mock_flight_controller: MagicMock, mock_base_window: MagicMock
