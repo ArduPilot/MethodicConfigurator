@@ -218,6 +218,7 @@ def test_simple_parameter_editor_capture_suppresses_external_documentation(tmp_p
 
     with (
         patch("ardupilot_methodic_configurator.data_model_parameter_editor.webbrowser_open_url") as open_browser,
+        patch.object(screenshot_generator.ProgramSettings, "_user_config_dir", return_value=str(tmp_path)),
         patch.object(screenshot_generator, "capture_widget"),
     ):
         screenshot_generator._capture_parameter_editor(

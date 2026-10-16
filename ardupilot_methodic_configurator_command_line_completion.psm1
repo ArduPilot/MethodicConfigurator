@@ -45,7 +45,8 @@ $commands = @(
     'extract_param_defaults',
     'annotate_params',
     'param_pid_adjustment_update',
-    'mavftp'
+    'mavftp',
+    'amc_mavlink_inspector'
 )
 
 foreach ($command in $commands) {

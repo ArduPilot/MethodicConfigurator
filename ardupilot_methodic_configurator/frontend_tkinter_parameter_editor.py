@@ -63,6 +63,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_file_browser import FileBr
 from ardupilot_methodic_configurator.frontend_tkinter_file_browser_tasks import BackgroundTaskRunner
 from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_config
 from ardupilot_methodic_configurator.frontend_tkinter_log_availability import LogAvailabilityReportWindow
+from ardupilot_methodic_configurator.frontend_tkinter_mavlink_inspector import open_mavlink_inspector_window
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload import ParameterFileUploadWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame import DocumentationFrame
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
@@ -574,6 +575,17 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             if self.parameter_editor.parameter_files()
             else _("No intermediate parameter files available"),
         )
+
+        inspector_button = ttk.Button(
+            logo_and_forum_frame,
+            text=_("MAVLink inspector"),
+            command=self.on_mavlink_inspector_click,
+            style=button_style,
+        )
+        inspector_button.configure(state="normal" if self.parameter_editor.is_fc_link_connected else "disabled")
+        self.navigation_lock.register(inspector_button)
+        inspector_button.pack(side=tk.TOP, fill="x", pady=(3, 0))
+        show_tooltip(inspector_button, _("Inspect received MAVLink messages, datarates and decoded fields."))
 
     def legend_frame(self, config_subframe: ttk.Frame) -> None:  # pylint: disable=too-many-locals
         font_family, font_size = get_widget_font_family_and_size(config_subframe)
@@ -1898,6 +1910,31 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         parameters = self.parameter_editor.get_fc_parameters_for_export()
         ParameterExportWindow(self, parameters)
 
+    def on_mavlink_inspector_click(self) -> None:
+        """Give the embedded inspector exclusive access until its window closes."""
+        if self.navigation_lock.locked or not self.parameter_editor.is_fc_link_connected:
+            return
+        browser = getattr(self, "_file_browser_window", None)
+        if browser is not None and browser.root.winfo_exists():
+            self.ui.show_error(
+                _("File browser is open"), _("Close the flight-controller file browser before opening the inspector.")
+            )
+            return
+        resume_plugin: Callable[[], None] | None = None
+        owner = object()
+        window = None
+        self.navigation_lock.acquire(owner)
+        try:
+            resume_plugin = ParameterEditorWindow._pause_plugin_receiver(self)
+            window = open_mavlink_inspector_window(self.root, self.parameter_editor.flight_controller)
+            self.root.wait_window(window.root)
+        finally:
+            if window is not None:
+                window.close()
+            self.navigation_lock.release(owner)
+            if resume_plugin is not None:
+                resume_plugin()
+
     def on_upload_selected_and_stay_click(self) -> None:
         """Upload selected parameters and remain on the current parameter file."""
         if self.navigation_lock.locked:
@@ -2005,18 +2042,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             raise
 
     def _pause_plugin_receiver(self) -> Callable[[], None]:
-        """Pause the current receiver and return an idempotent, owner-checked resume callback."""
+        """Pause the receiver, recovering on failure, and return an idempotent, owner-checked resume callback."""
         plugin_view = getattr(self, "current_plugin_view", None)
         resume_plugin: Callable[[], object] | None = None
-        if plugin_view is not None:
-            suspend = getattr(plugin_view, "on_suspend", None)
-            resume = getattr(plugin_view, "on_resume", None)
-            if callable(suspend) and callable(resume):
-                resume_plugin = resume
-                suspend()
-            elif hasattr(plugin_view, "on_deactivate") and hasattr(plugin_view, "on_activate"):
-                resume_plugin = plugin_view.on_activate
-                plugin_view.on_deactivate()
 
         def resume_receiver() -> None:
             nonlocal resume_plugin
@@ -2028,6 +2056,20 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 and self.root.winfo_exists()
             ):
                 callback()
+
+        try:
+            if plugin_view is not None:
+                suspend = getattr(plugin_view, "on_suspend", None)
+                resume = getattr(plugin_view, "on_resume", None)
+                if callable(suspend) and callable(resume):
+                    resume_plugin = resume
+                    suspend()
+                elif hasattr(plugin_view, "on_deactivate") and hasattr(plugin_view, "on_activate"):
+                    resume_plugin = plugin_view.on_activate
+                    plugin_view.on_deactivate()
+        except Exception:
+            resume_receiver()
+            raise
 
         return resume_receiver
 
