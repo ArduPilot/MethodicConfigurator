@@ -10001,7 +10001,7 @@ msgid ""
 "This makes the file easier to understand and does not change parameter "
 "values.\n"
 "It will dramatically increase the file size though."
-msgstr ""
+msgstr "エクスポートしたファイルに、ArduPilot のドキュメントに基づく人が読みやすいコメントを追加します。\nこれによりファイルの内容を理解しやすくなりますが、パラメータ値は変更されません。\nただし、ファイルサイズは大幅に増加します。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:237
 msgid ""
@@ -10070,43 +10070,43 @@ msgstr "プログレスウィジェットを更新中: {_e}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:245
 msgid "Uploaded {current:.1f} of {total:.1f} MiB"
-msgstr ""
+msgstr "{total:.1f} MiB 中 {current:.1f} MiB をアップロード済み"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:247
 msgid "Downloaded {current:.1f} of {total:.1f} MiB"
-msgstr ""
+msgstr "{total:.1f} MiB 中 {current:.1f} MiB をダウンロード済み"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:251
 msgid "Uploaded {current:.1f} MiB"
-msgstr ""
+msgstr "{current:.1f} MiB をアップロード済み"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:253
 msgid "Downloaded {current:.1f} MiB"
-msgstr ""
+msgstr "{current:.1f} MiB をダウンロード済み"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:258
 msgid "Verifying uploaded files…"
-msgstr ""
+msgstr "アップロードしたファイルを検証しています…"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:260
 msgid "Verifying downloaded files…"
-msgstr ""
+msgstr "ダウンロードしたファイルを検証しています…"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:263
 msgid "Upload complete"
-msgstr ""
+msgstr "アップロード完了"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:265
 msgid "Estimating…"
-msgstr ""
+msgstr "推定しています…"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:267
 msgid "{rate:.1f} KiB/s · Remaining time unknown"
-msgstr ""
+msgstr "{rate:.1f} KiB/s · 残り時間は不明です"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:272
 msgid "{rate:.1f} KiB/s · About {time} remaining"
-msgstr ""
+msgstr "{rate:.1f} KiB/s · 残り約 {time}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:309
 msgid "Waiting for flight controller restart"
