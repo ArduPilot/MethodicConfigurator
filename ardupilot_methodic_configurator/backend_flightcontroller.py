@@ -439,6 +439,10 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
             progress_callback=progress_callback, preserved_connections=preserved_connections
         )
 
+    def start_gcs_heartbeat(self) -> None:
+        """Enable periodic GCS heartbeats for the remaining lifetime of this connection."""
+        self._connection_manager.start_gcs_heartbeat()
+
     def disconnect(self) -> None:
         """Close the connection to the flight controller - delegates to connection manager."""
         self._connection_manager.disconnect()
