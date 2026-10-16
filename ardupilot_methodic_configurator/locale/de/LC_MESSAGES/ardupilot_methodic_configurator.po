@@ -10341,7 +10341,7 @@ msgid ""
 "This makes the file easier to understand and does not change parameter "
 "values.\n"
 "It will dramatically increase the file size though."
-msgstr ""
+msgstr "Füge der exportierten Datei menschenlesbare Kommentare mit ArduPilot-Dokumentation hinzu.\nDadurch wird die Datei leichter verständlich und die Parameterwerte werden nicht verändert.\nDie Dateigröße wird dadurch allerdings deutlich zunehmen."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py:237
 msgid ""
@@ -10411,43 +10411,43 @@ msgstr "Aktualisiere Fortschritts-Widgets: {_e}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:245
 msgid "Uploaded {current:.1f} of {total:.1f} MiB"
-msgstr ""
+msgstr "{current:.1f} von {total:.1f} MiB hochgeladen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:247
 msgid "Downloaded {current:.1f} of {total:.1f} MiB"
-msgstr ""
+msgstr "{current:.1f} von {total:.1f} MiB heruntergeladen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:251
 msgid "Uploaded {current:.1f} MiB"
-msgstr ""
+msgstr "{current:.1f} MiB hochgeladen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:253
 msgid "Downloaded {current:.1f} MiB"
-msgstr ""
+msgstr "{current:.1f} MiB heruntergeladen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:258
 msgid "Verifying uploaded files…"
-msgstr ""
+msgstr "Hochgeladene Dateien werden überprüft…"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:260
 msgid "Verifying downloaded files…"
-msgstr ""
+msgstr "Heruntergeladene Dateien werden überprüft…"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:263
 msgid "Upload complete"
-msgstr ""
+msgstr "Hochladen abgeschlossen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:265
 msgid "Estimating…"
-msgstr ""
+msgstr "Wird geschätzt…"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:267
 msgid "{rate:.1f} KiB/s · Remaining time unknown"
-msgstr ""
+msgstr "{rate:.1f} KiB/s · Verbleibende Zeit unbekannt"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:272
 msgid "{rate:.1f} KiB/s · About {time} remaining"
-msgstr ""
+msgstr "{rate:.1f} KiB/s · Noch etwa {time}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:309
 msgid "Waiting for flight controller restart"
