@@ -282,6 +282,17 @@ you can skip some steps now.
 
 Jump to '60_position_controller.param' file?""")
 
+    # instructions_popup
+    _config_steps_strings = _("""After the flight, analyze the .bin in the filter review tool, change the values here and upload to the FC.
+Repeat the procedure until all post-filter noise peaks are below -50dB.""")
+    _config_steps_strings = _("""Configuring and tuning a vehicle for the first time requires a RC-controller.
+Connect the RC-receiver to the FC, power on the RC-controller and bind them.
+Once the vehicle is tuned, you can remove it and operate the vehicle without it.""")
+    _config_steps_strings = _("Only do this step once. It sets initial values that later steps will improve.")
+    _config_steps_strings = _("This step is optional, only perform it if your vehicle is tiny, huge, or its motor outputs oscillate")
+    _config_steps_strings = _("""This step is optional, only perform it if your vehicle is tiny, huge, or its motor outputs oscillate.
+It must be repeated multiple times until outputs no longer oscillate.""")
+
     # change_reasons
     _config_steps_strings = _("'Use EKF primary acc and gyro batch logging on F4 processors or big props' if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 'EKF primary gyro raw logging'")
     _config_steps_strings = _("'Use throttle-based dynamic notch filter to reduce propeller noise' if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 'Use ESC telemetry RPM to dynamically adjust the propeller notch filter'")
