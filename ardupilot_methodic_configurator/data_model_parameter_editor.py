@@ -232,6 +232,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
     # frontend_tkinter_parameter_editor.py API start
     @property
+    def flight_controller(self) -> FlightController:
+        """Shared connection facade for embedded flight-controller sub-applications."""
+        return self._flight_controller
+
+    @property
     def connected_vehicle_type(self) -> str:
         return (
             getattr(self._flight_controller.info, "vehicle_type", "")
