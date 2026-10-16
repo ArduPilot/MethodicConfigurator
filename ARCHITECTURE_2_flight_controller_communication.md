@@ -186,7 +186,14 @@ remain intact; interrupted uploads and commands are never replayed. The editor r
 the plugin after a verified recovery. Closing cancels retries, waits for an in-flight
 worker to return from backend I/O and removes only the editor's observer hook. The
 coordinator retains control ownership until that worker yields, discards late success
-after cancellation, and never resumes the plugin while closing.
+after cancellation, and never resumes the plugin while closing. Recovery passes its
+cancellation event through the parameter facade to both download protocols. MAVLink
+reception checks cancellation in short (at most 100 ms) receive slices; only new
+parameter names renew its no-progress deadline, so repeated replies cannot retain
+ownership indefinitely. MAVFTP checks cancellation inside its reply loop and performs
+session cleanup on the worker before yielding. Normal transport-specific download
+budgets remain unchanged. A single pending-close chain keeps Tk responsive, displays
+the shutdown wait status, and offers to save only after the worker exits.
 
 #### Parameters Manager
 

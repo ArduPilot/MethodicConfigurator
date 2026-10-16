@@ -5084,6 +5084,35 @@ def test_editor_shutdown_retains_ownership_until_worker_finishes(monitored_edito
     assert not editor.navigation_lock.locked
 
 
+def test_closing_during_recovery_keeps_tk_responsive_until_worker_yields(monitored_editor: ParameterEditorWindow) -> None:
+    """
+    Close safely while a slow telemetry recovery still owns the connection.
+
+    GIVEN: A recovery worker is waiting for a parameter download
+    WHEN: The user closes the editor and the worker later finishes
+    THEN: Tk schedules another close attempt without joining and quits only after ownership is released
+    """
+    editor = monitored_editor
+    worker = MagicMock()
+    editor._connection_recovery._worker = worker
+    with (
+        patch.object(editor, "_commit_focused_edit_and_offer_save") as save,
+        patch.object(editor, "_show_connection_status") as status,
+    ):
+        editor.close_connection_and_quit()
+        worker.join.assert_not_called()
+        editor.root.after.assert_called_once_with(50, editor._finish_pending_close)
+        status.assert_called_once_with("Closing… Waiting for flight-controller recovery to stop.")
+        editor.root.quit.assert_not_called()
+        save.assert_not_called()
+
+        worker.is_alive.return_value = False
+        editor.root.after.call_args.args[1]()
+        save.assert_called_once()
+        editor.root.quit.assert_called_once()
+        assert editor._connection_recovery is None
+
+
 def test_recovery_locks_plugin_buttons_until_the_connection_owner_releases_them(
     monitored_editor: ParameterEditorWindow, root: tk.Tk
 ) -> None:

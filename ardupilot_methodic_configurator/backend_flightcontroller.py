@@ -738,6 +738,7 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         parameter_defaults_filename: Path | None = None,
         *,
         response_timeout: float | None = None,
+        cancellation_requested: Callable[[], bool] | None = None,
     ) -> tuple[dict[str, float], ParDict]:
         """Download all parameters from flight controller - delegates to params manager."""
         params, defaults = self._params_manager.download_params(
@@ -745,6 +746,7 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
             parameter_values_filename,
             parameter_defaults_filename,
             response_timeout=response_timeout,
+            cancellation_requested=cancellation_requested,
         )
         # params_manager updates its fc_parameters internally, which we access via property
         return params, defaults

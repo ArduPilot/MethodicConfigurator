@@ -132,7 +132,9 @@ class DataTelemetryDataModel:
                 )
             )
             old_radio = previous.radio if same_counter else None
-            radio_error_rate = None
+            # Polling the same fresh report must retain its last measured rate.
+            if radio is None or old_radio is None or radio.time != old_radio.time:
+                radio_error_rate = None
             # Never carry an old rate through a counter reset, source change or stale interval.
             if (
                 radio

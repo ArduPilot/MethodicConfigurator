@@ -261,6 +261,41 @@ class MAVFTPSettings:
             self.append(v)
         self.validate()
 
+    @classmethod
+    def defaults(cls) -> "MAVFTPSettings":
+        """Return independent, transport-neutral defaults for a new client."""
+        return cls(
+            [
+                ("debug", int, 0),
+                # Timestamp listings are opt-in until they are implemented
+                # by released flight-controller firmware.
+                ("list_time", int, 0),
+                # Some older servers silently discard unknown opcodes.
+                ("list_time_timeout", float, 3.0),
+                ("list_retries", int, 3),
+                # Retransmitting one-reply commands can repeat mutations
+                # on servers without a transaction-reply cache.
+                ("initial_retries", int, 0),
+                ("pkt_loss_tx", int, 0),
+                ("pkt_loss_rx", int, 0),
+                # Optional link simulation. Delays are in milliseconds,
+                # matching MAVProxy's FTP module settings.
+                ("pkt_lag_tx", float, 0.0),
+                ("pkt_lag_rx", float, 0.0),
+                ("pkt_lag_jitter_tx", float, 0.0),
+                ("pkt_lag_jitter_rx", float, 0.0),
+                ("loss_seed", int, 0),
+                ("crccmp_timeout", float, 120.0),
+                ("max_backlog", int, 5),
+                ("burst_read_size", int, 80),
+                ("write_size", int, 80),
+                ("write_qsize", int, 5),
+                ("idle_detection_time", float, 3.7),
+                ("read_retry_time", float, 1.0),
+                ("retry_time", float, 0.5),
+            ]
+        )
+
     def append(
         self, v: Union[MAVFTPSetting, Tuple[str, type, SettingValue]]
     ) -> None:
@@ -499,37 +534,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         source_component: Optional[int] = None,
     ) -> None:
         if settings is None:
-            settings = MAVFTPSettings(
-                [
-                    ("debug", int, 0),
-                    # Timestamp listings are opt-in until they are implemented
-                    # by released flight-controller firmware.
-                    ("list_time", int, 0),
-                    # Some older servers silently discard unknown opcodes.
-                    ("list_time_timeout", float, 3.0),
-                    ("list_retries", int, 3),
-                    # Retransmitting one-reply commands can repeat mutations
-                    # on servers without a transaction-reply cache.
-                    ("initial_retries", int, 0),
-                    ("pkt_loss_tx", int, 0),
-                    ("pkt_loss_rx", int, 0),
-                    # Optional link simulation. Delays are in milliseconds,
-                    # matching MAVProxy's FTP module settings.
-                    ("pkt_lag_tx", float, 0.0),
-                    ("pkt_lag_rx", float, 0.0),
-                    ("pkt_lag_jitter_tx", float, 0.0),
-                    ("pkt_lag_jitter_rx", float, 0.0),
-                    ("loss_seed", int, 0),
-                    ("crccmp_timeout", float, 120.0),
-                    ("max_backlog", int, 5),
-                    ("burst_read_size", int, 80),
-                    ("write_size", int, 80),
-                    ("write_qsize", int, 5),
-                    ("idle_detection_time", float, 3.7),
-                    ("read_retry_time", float, 1.0),
-                    ("retry_time", float, 0.5),
-                ]
-            )
+            settings = MAVFTPSettings.defaults()
         self.ftp_settings = settings
         self.seq = 0
         self.session = session % FTP_SESSION_MODULUS
@@ -561,6 +566,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
             self.session_waiting = False
         self.network = 0
         self.last_op: Union[None, FTP_OP] = None
+        self.last_reply_time: float | None = None
         self.fh: Union[None, SIO, BufferedReader, BufferedWriter, BufferedRandom] = None
         self.filename: Union[None, str] = None
         self.callback = None
@@ -1576,7 +1582,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         termination_result = MAVFTPReturn("TerminateSession", FtpError.RemoteReplyTimeout)
         try:
             if self.master is not None and not termination_send_failed:
-                termination_timeout = min(1.0, self.retry_timeout())
+                termination_timeout = self.retry_timeout()
                 termination_result = self.process_ftp_reply(
                     "TerminateSession", timeout=termination_timeout
                 )
@@ -4376,6 +4382,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
                 self._event_generation == operation_generation
                 and (op.req_opcode not in {OP_BurstReadFile, OP_ReadFile} or read_progressed)
             ):
+                self.last_reply_time = now
                 self.accepted_reply_generation += 1
 
     def __send_gap_read(self, g) -> None:
@@ -4725,7 +4732,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         # must retain idle detection when process_ftp_reply is unbounded.
         if initial_request_pending:
             if crc_request_pending and self.crc_unbounded_wait:
-                return self.__last_send_time_was_more_than_idle_detection_time_ago(now)
+                return self.__link_is_idle(now)
             return False
 
         if (
@@ -4733,10 +4740,10 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
             and self.last_burst_read is None
             and self.write_list is None
         ):
-            return self.__last_send_time_was_more_than_idle_detection_time_ago(now)
+            return self.__link_is_idle(now)
 
         if self.fh is None:
-            return self.__last_send_time_was_more_than_idle_detection_time_ago(now)
+            return self.__link_is_idle(now)
 
         # see if burst read has stalled
         if (
@@ -4786,14 +4793,16 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         if self.write_list is not None:
             self.__send_more_writes()
 
-        return self.__last_send_time_was_more_than_idle_detection_time_ago(now)
+        return self.__link_is_idle(now)
 
-    def __last_send_time_was_more_than_idle_detection_time_ago(
-        self, now: float
-    ) -> bool:
-        return self.last_send_time is not None and now - self.last_send_time > float(
-            self.ftp_settings.idle_detection_time
-        )
+    def __link_is_idle(self, now: float) -> bool:
+        """Count accepted reply progress as activity during a long incoming burst."""
+        if self.last_send_time is None:
+            return False
+        last_activity = self.last_send_time
+        if self.last_reply_time is not None:
+            last_activity = max(last_activity, self.last_reply_time)
+        return now - last_activity > float(self.ftp_settings.idle_detection_time)
 
     def __handle_reset_sessions_reply(self, op: FTP_OP, _m) -> MAVFTPReturn:
         """Handle reset sessions reply."""
@@ -4825,7 +4834,11 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
             self._next_list_timeout_refresh = previous_list_refresh
 
     def process_ftp_reply(  # pylint: disable=too-many-branches,too-many-locals,too-many-statements,too-many-nested-blocks,too-many-return-statements
-        self, operation_name: str, timeout: Optional[float] = None
+        self,
+        operation_name: str,
+        timeout: Optional[float] = None,
+        *,
+        cancellation_requested: Optional[Callable[[], bool]] = None,
     ) -> MAVFTPReturn:
         """Execute an FTP operation that requires processing a MAVLink response.
 
@@ -4837,6 +4850,8 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         ``cmd_list`` also preserves whether its timeout was omitted through
         ``_next_list_timeout_refresh``. Only default listing deadlines restart
         after accepted pages; explicit blocking timeouts remain total budgets.
+        An optional cancellation check stops the transfer on this same worker,
+        preserving exclusive transport ownership through session cleanup.
         """
         start_time = time.time()
         generation = self._event_generation
@@ -4912,12 +4927,18 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         self._ftp_reply_processing_depth += 1
         try:
             while True:  # an FTP operation can have multiple responses
+                if cancellation_requested is not None and cancellation_requested():
+                    self.cmd_cancel()
+                    return MAVFTPReturn(operation_name, FtpError.Fail)
                 accepted_before_receive = self.accepted_reply_generation
                 list_offset_before_receive = self.dir_offset
                 m = self.master.recv_match(
                     type=["FILE_TRANSFER_PROTOCOL"], timeout=recv_timeout
                 )
                 if self._event_generation != generation:
+                    return MAVFTPReturn(operation_name, FtpError.Fail)
+                if cancellation_requested is not None and cancellation_requested():
+                    self.cmd_cancel()
                     return MAVFTPReturn(operation_name, FtpError.Fail)
                 if m is not None:
                     # A recipient check does not require decoding the FTP

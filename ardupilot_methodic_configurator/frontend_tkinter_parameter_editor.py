@@ -2428,6 +2428,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def _finish_pending_close(self) -> None:
         """Wait for recovery through one retry chain, then offer to save once."""
         if not self._stop_connection_monitor():
+            self._show_connection_status(_("Closing… Waiting for flight-controller recovery to stop."))
             self.root.after(50, self._finish_pending_close)
             return
         self._commit_focused_edit_and_offer_save()

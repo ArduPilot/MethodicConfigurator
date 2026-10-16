@@ -192,7 +192,7 @@ class FlightControllerReconnect:  # pylint: disable=too-many-instance-attributes
                 parameters, _defaults = self._fc.download_params(
                     parameter_values_filename=Path(directory) / "complete.param",
                     parameter_defaults_filename=Path(directory) / "00_default.param",
-                    response_timeout=5.0,
+                    cancellation_requested=self.cancelled.is_set,
                 )
             if not parameters:
                 return _("Could not refresh flight-controller parameters. Retrying.")
@@ -206,6 +206,6 @@ class FlightControllerReconnect:  # pylint: disable=too-many-instance-attributes
                 self._fc.disconnect()
 
     def close(self) -> None:
-        """Cancel further attempts; the caller joins any worker before releasing the FC."""
+        """Cancel further attempts; the caller waits for any worker to yield before releasing the FC."""
         self.cancelled.set()
         self._detach()
