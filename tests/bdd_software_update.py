@@ -159,7 +159,7 @@ class TestWindowsUserInstallsUpdate:
         update_manager.dialog = MagicMock()
 
         # Act
-        update_manager._perform_download(mock_release_info)
+        update_manager._perform_download(mock_release_info, update_manager.dialog.update_progress)
 
         # Assert
         call_kwargs = mock_download.call_args.kwargs

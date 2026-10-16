@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import argparse
+import contextlib
 import tkinter as tk
 from logging import basicConfig as logging_basicConfig
 from logging import info as logging_info
@@ -188,12 +189,8 @@ class TemplateOverviewWindow(BaseWindow):  # pylint: disable=too-many-instance-a
     def run_app(self) -> None:
         """Run the TemplateOverviewWindow application."""
         if isinstance(self.root, tk.Toplevel):
-            try:
-                while self.root.children:
-                    self.root.update_idletasks()
-                    self.root.update()
-            except tk.TclError as _exp:
-                pass
+            with contextlib.suppress(tk.TclError):
+                self.root.wait_window()
         elif isinstance(self.root, tk.Tk):
             self.root.mainloop()
 

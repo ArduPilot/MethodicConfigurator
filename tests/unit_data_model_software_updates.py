@@ -556,7 +556,7 @@ def test_update_manager_perform_download_mac_with_dmg(update_manager, mock_dialo
             return_value=expected_sha,
         ),
     ):
-        assert update_manager._perform_download(latest_release) is True
+        assert update_manager._perform_download(latest_release, mock_dialog.update_progress) is True
         mock_dmg_install.assert_called_once_with(
             download_url=dmg_url,
             file_name=dmg_name,
@@ -824,7 +824,7 @@ def test_update_manager_perform_download_windows_asset_selection(update_manager,
             "ardupilot_methodic_configurator.data_model_software_updates.get_expected_sha256_from_release", return_value=None
         ),
     ):
-        assert update_manager._perform_download(latest_release) is True
+        assert update_manager._perform_download(latest_release, mock_dialog.update_progress) is True
         # Should have chosen the .exe file
         mock_download.assert_called_once_with(
             download_url="https://example.com/setup.exe",

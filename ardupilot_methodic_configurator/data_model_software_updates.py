@@ -113,8 +113,11 @@ class UpdateManager:
             return download_and_install_pip_release(progress_callback=progress_callback) == 0
         return _install_from_asset(asset, latest_release, download_and_install_on_macos, progress_callback)
 
-    def _perform_download(self, latest_release: dict[str, Any]) -> bool:
-        progress_callback = self.dialog.update_progress if self.dialog else None
+    def _perform_download(
+        self,
+        latest_release: dict[str, Any],
+        progress_callback: Callable[[float, str], None] | None = None,
+    ) -> bool:
         handlers: dict[str, Callable[[], bool]] = {
             "Windows": lambda: self._install_windows(latest_release, progress_callback),
             "Darwin": lambda: self._install_macos(latest_release, progress_callback),
@@ -147,7 +150,9 @@ class UpdateManager:
             url = "https://github.com/ArduPilot/MethodicConfigurator/releases"
             webbrowser_open_url(url=url, new=0, autoraise=True)
 
-            self.dialog = UpdateDialog(version_info, download_callback=lambda: self._perform_download(latest_release))
+            self.dialog = UpdateDialog(
+                version_info, download_callback=lambda report: self._perform_download(latest_release, report)
+            )
             return self.dialog.show()
 
         except KeyError as ke:

@@ -559,3 +559,22 @@ def test_user_sees_the_entire_download_label_at_the_required_popup_size(tk_root)
         assert label_bottom <= window.progress_window.winfo_height()
     finally:
         window.destroy()
+
+
+def test_sequoia_progress_defers_all_rendering(
+    lazy_progress_window: ProgressWindow,  # pylint: disable=redefined-outer-name
+) -> None:
+    """Progress values change without entering either Tk event pump on older macOS."""
+    window = lazy_progress_window
+    window._is_aqua = True  # pylint: disable=protected-access
+    with (
+        patch("ardupilot_methodic_configurator.frontend_tkinter_progress_window.is_macos_sequoia_or_older", return_value=True),
+        patch.object(window.progress_window, "update") as update,
+        patch.object(window.progress_window, "update_idletasks") as idle,
+        patch.object(window.progress_bar, "update_idletasks") as bar_idle,
+    ):
+        window.update_progress_bar(30, 100)
+        assert window.progress_bar["value"] == 30
+        update.assert_not_called()
+        idle.assert_not_called()
+        bar_idle.assert_not_called()
