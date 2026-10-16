@@ -40,6 +40,8 @@ A failed/cancelled connection or offline mode does not open an inspector.
 The frontend reuses `backend_data_telemetry.py` and
 `data_model_data_telemetry.py`, which implement message observations and
 pure rate calculations independently of plugin registration.
+These modules are shared with the data_telemetry plugin; their measurement semantics and limits
+are documented in [the telemetry architecture](ARCHITECTURE_data_telemetry.md).
 The shared `frontend_tkinter_radio_status.py` frame renders active
 connection status, RX/TX rates and parser errors above three-column radio
 name/value/unit tuples below the decoded message fields. It contains no

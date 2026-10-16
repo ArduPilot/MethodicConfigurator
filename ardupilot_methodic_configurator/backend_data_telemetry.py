@@ -56,16 +56,6 @@ class DataTelemetryBackend:
             return
         now = self._clock()
         source = (int(message.get_srcSystem()), int(message.get_srcComponent()))
-        key = (*source, name)
-        old = self._messages.get(key)
-        if old is None and len(self._messages) >= _MAX_MESSAGE_TYPES:
-            return
-        self._messages[key] = MessageSample(
-            count=(old.count if old else 0) + 1,
-            size=(old.size if old else 0) + len(message.get_msgbuf()),
-            last_seen=now,
-            fields=tuple((key, str(value)[:512]) for key, value in message.to_dict().items() if key != "mavpackettype"),
-        )
         if name in {"RADIO", "RADIO_STATUS"}:
             # These are injected by the radio on this transport. Source IDs are not link IDs.
             self._radio = RadioSample(
@@ -79,6 +69,16 @@ class DataTelemetryBackend:
                 rxerrors=int(message.rxerrors),
                 fixed=int(message.fixed),
             )
+        key = (*source, name)
+        old = self._messages.get(key)
+        if old is None and len(self._messages) >= _MAX_MESSAGE_TYPES:
+            return
+        self._messages[key] = MessageSample(
+            count=(old.count if old else 0) + 1,
+            size=(old.size if old else 0) + len(message.get_msgbuf()),
+            last_seen=now,
+            fields=tuple((key, str(value)[:512]) for key, value in message.to_dict().items() if key != "mavpackettype"),
+        )
 
     @staticmethod
     def _radio_value(value: int, maximum: int) -> int | None:

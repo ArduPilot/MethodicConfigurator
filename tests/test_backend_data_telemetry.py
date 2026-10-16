@@ -10,16 +10,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from dataclasses import replace
-from io import BytesIO
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
-from pymavlink import mavutil
 from pymavlink.dialects.v20 import ardupilotmega as mavlink
+from telemetry_test_helpers import create_telemetry_link, feed
 
 from ardupilot_methodic_configurator.backend_data_telemetry import DataTelemetryBackend
-from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.data_model_data_telemetry import (
     DataTelemetryDataModel,
     MessageSample,
@@ -32,35 +30,8 @@ from ardupilot_methodic_configurator.data_model_data_telemetry import (
 
 @pytest.fixture
 def telemetry_link() -> SimpleNamespace:
-    """Exercise the real MAVLink parser and hooks with only byte transport replaced."""
-    controller = MagicMock(spec=FlightController)
-    master = mavutil.mavfile(None, "telemetry-test", input=False)
-    master.first_byte = False
-    master.mav = mavlink.MAVLink(master, srcSystem=255, srcComponent=190)
-    master.mav.robust_parsing = True
-    incoming = BytesIO()
-    master.recv = incoming.read
-    master.write = MagicMock()
-    controller.master = master
-    return SimpleNamespace(
-        controller=controller,
-        master=master,
-        incoming=incoming,
-        now=0.0,
-        sender=mavlink.MAVLink(None, srcSystem=1, srcComponent=1),
-    )
-
-
-def _feed(link: SimpleNamespace, message: mavlink.MAVLink_message, system: int = 1, component: int = 1) -> bytes:
-    link.sender.srcSystem = system
-    link.sender.srcComponent = component
-    packet = message.pack(link.sender)
-    link.sender.seq = (link.sender.seq + 1) % 256
-    position = link.incoming.tell()
-    link.incoming.seek(0, 2)
-    link.incoming.write(packet)
-    link.incoming.seek(position)
-    return bytes(packet)
+    """Provide an isolated real MAVLink parser with an in-memory transport."""
+    return create_telemetry_link()
 
 
 @pytest.mark.parametrize("message_type", [mavlink.MAVLink_radio_message, mavlink.MAVLink_radio_status_message])
@@ -73,7 +44,7 @@ def test_user_sees_radio_values_from_modem_sources(telemetry_link: SimpleNamespa
     THEN zero is valid, unknown RSSI stays unavailable and counts/fields retain their meaning.
     """
     backend = DataTelemetryBackend(telemetry_link.controller, lambda: telemetry_link.now)
-    packet = _feed(telemetry_link, message_type(0, 255, 80, 40, 50, 7, 9), 51, 68)
+    packet = feed(telemetry_link, message_type(0, 255, 80, 40, 50, 7, 9), 51, 68)
     try:
         sample = backend.poll()
         assert sample.radio == RadioSample((51, 68), 0.0, 0, None, 40, 50, 80, 7, 9)
@@ -100,8 +71,8 @@ def test_user_can_measure_rx_tx_and_message_rates(telemetry_link: SimpleNamespac
     try:
         assert model.update(backend.poll()).rx_rate is None
         baseline_tx = telemetry_link.master.mav.total_bytes_sent
-        packet = _feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
-        other = _feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3), 2, 1)
+        packet = feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
+        other = feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3), 2, 1)
         telemetry_link.master.mav.heartbeat_send(6, 8, 0, 0, 0)
         telemetry_link.now = 2.0
         state = model.update(backend.poll())
@@ -135,7 +106,7 @@ def test_local_radio_starts_reporting_after_a_gcs_heartbeat(telemetry_link: Simp
         assert heartbeat.autopilot == mavlink.MAV_AUTOPILOT_INVALID
         assert heartbeat.base_mode == heartbeat.custom_mode == 0
         assert heartbeat.system_status == mavlink.MAV_STATE_ACTIVE
-        _feed(telemetry_link, message_type(100, 90, 80, 30, 40, 0, 0), 51, 68)
+        feed(telemetry_link, message_type(100, 90, 80, 30, 40, 0, 0), 51, 68)
 
     telemetry_link.master.write.side_effect = modem_write
     backend = DataTelemetryBackend(telemetry_link.controller, lambda: telemetry_link.now)
@@ -290,7 +261,7 @@ def test_observer_preserves_other_consumers_and_detaches_on_reconnect(telemetry_
     backend.poll()
     backend.poll()
     assert len(telemetry_link.master.message_hooks) == 2
-    _feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
+    feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
     assert telemetry_link.master.recv_match(blocking=False) is not None
     assert backend.poll().messages[(1, 1, "HEARTBEAT")].count == 1
     observer.assert_called_once()
@@ -329,7 +300,7 @@ def test_malformed_packets_never_appear_as_received_message_types(telemetry_link
     backend = DataTelemetryBackend(telemetry_link.controller, lambda: telemetry_link.now)
     try:
         backend.poll()
-        _feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
+        feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
         before = backend.poll()
         malformed = mavlink.MAVLink_bad_data(b"noise", "invalid MAVLink data")
         for hook in telemetry_link.master.message_hooks:
@@ -349,9 +320,37 @@ def test_radio_fields_preserve_valid_limits_and_hide_unknown_or_invalid_readings
     """
     backend = DataTelemetryBackend(telemetry_link.controller, lambda: telemetry_link.now)
     try:
-        _feed(telemetry_link, mavlink.MAVLink_radio_status_message(254, 255, 101, 255, 254, 0, 0), 51, 68)
+        feed(telemetry_link, mavlink.MAVLink_radio_status_message(254, 255, 101, 255, 254, 0, 0), 51, 68)
         sample = backend.poll()
         assert sample.radio == RadioSample((51, 68), 0, 254, None, None, 254, None, 0, 0)
+    finally:
+        backend.close()
+
+
+@pytest.mark.parametrize("message_type", [mavlink.MAVLink_radio_message, mavlink.MAVLink_radio_status_message])
+def test_radio_updates_when_message_table_is_full(telemetry_link: SimpleNamespace, message_type: type) -> None:
+    """
+    Keep radio measurements current even when no more message rows fit.
+
+    GIVEN a message table filled with heartbeat sources,
+    WHEN radio reports arrive from previously unseen modem sources,
+    THEN the latest radio readings update while the table remains bounded.
+    """
+    backend = DataTelemetryBackend(telemetry_link.controller, lambda: telemetry_link.now)
+    try:
+        backend.poll()
+        for index in range(512):
+            message = mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3)
+            message.pack(mavlink.MAVLink(None, srcSystem=index // 250, srcComponent=index % 250))
+            backend._capture(telemetry_link.master, message)
+        before = backend.poll().messages
+        assert len(before) == 512
+        for source in (51, 52):
+            telemetry_link.now += 1
+            feed(telemetry_link, message_type(100, 90, 80, 30, 40, 7, 9), source, 68)
+            sample = backend.poll()
+            assert sample.radio == RadioSample((source, 68), telemetry_link.now, 100, 90, 30, 40, 80, 7, 9)
+            assert sample.messages == before
     finally:
         backend.close()
 
@@ -367,7 +366,7 @@ def test_busy_stream_and_source_count_are_bounded(telemetry_link: SimpleNamespac
     backend = DataTelemetryBackend(telemetry_link.controller, lambda: 0.0)
     try:
         for _index in range(250):
-            _feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
+            feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
         assert backend.poll().messages[(1, 1, "HEARTBEAT")].count == 200
         assert backend.poll().messages[(1, 1, "HEARTBEAT")].count == 250
         for index in range(600):
