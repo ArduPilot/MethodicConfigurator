@@ -108,6 +108,7 @@ def test_plugin_validation_registers_expected_plugins_without_creating_windows()
             "autotune_gain_backoff",
             "battery_monitor",
             "compass_calibration",
+            "data_telemetry",
             "esc_rpm_scale",
             "level_calibration",
             "motor_test",

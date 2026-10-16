@@ -1236,7 +1236,14 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
                 return
             offset += written
 
-    def __send_batch(  # pylint: disable=too-many-branches,too-many-locals,too-many-return-statements
+    def __send_batch(self, operations: List[FTP_OP]) -> None:
+        """Hold AMC's encoder lock through packing and flushing the entire batch."""
+        mav = getattr(self.master, "mav", None)
+        send_lock = getattr(mav, "amc_send_lock", None)
+        with send_lock if send_lock is not None else contextlib.nullcontext():
+            self.__send_batch_locked(operations)
+
+    def __send_batch_locked(  # pylint: disable=too-many-branches,too-many-locals,too-many-return-statements
         self, operations: List[FTP_OP]
     ) -> None:
         """Send several requests in one underlying link write when possible."""

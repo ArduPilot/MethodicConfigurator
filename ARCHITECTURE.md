@@ -102,6 +102,7 @@ Each sub-application has detailed architecture documentation covering requiremen
      - save them to file
    - [`frontend_tkinter_parameter_editor.py`](ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py)
      - [MAVFTP file-browser architecture](ARCHITECTURE_file_browser.md)
+     - [Data telemetry and MAVLink inspector architecture](ARCHITECTURE_data_telemetry.md)
      - [Standalone and embedded MAVLink inspector](ARCHITECTURE_mavlink_inspector.md)
      - [External parameter file upload architecture](ARCHITECTURE_parameter_upload.md)
        - [Flight-controller parameter export architecture](ARCHITECTURE_fc_param_export.md)
