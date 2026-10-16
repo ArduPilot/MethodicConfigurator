@@ -171,7 +171,7 @@ def test_uploads_suspend_monitor_until_replies_are_consumed(telemetry_view: Data
     editor.navigation_lock = NavigationLock()
     editor.current_plugin_view = telemetry_view
     editor.root = telemetry_view.base_window.root
-    editor._pause_plugin_receiver = lambda: ParameterEditorWindow._pause_plugin_receiver(editor)
+    editor._pause_plugin_receiver.side_effect = lambda: ParameterEditorWindow._pause_plugin_receiver(editor)
     telemetry_view.backend.poll()
     suspension_states = []
 
@@ -211,37 +211,18 @@ def test_modal_tools_and_locked_operations_keep_their_receive_stream(
     if not modal:
         telemetry_view.base_window.navigation_lock.acquire(object())
     telemetry_view.after_cancel(telemetry_view._timer_id)
-    with patch.object(telemetry_view, "grab_current", return_value=telemetry_view if modal else None):
+    dialog = tk.Toplevel(telemetry_view) if modal else None
+    try:
+        if dialog is not None:
+            dialog.tk.call("update", "idletasks")
+            dialog.grab_set()
         telemetry_view._check_telemetry()
+    finally:
+        if dialog is not None:
+            dialog.destroy()
     assert telemetry_link.master.mav.total_bytes_received == 0
     assert telemetry_view._timer_id is not None
     assert telemetry_link.master.recv_match(blocking=False).get_type() == "HEARTBEAT"
-
-
-def test_native_message_box_pauses_telemetry_and_monitoring_recovers(
-    telemetry_view: DataTelemetryView,
-    telemetry_link: SimpleNamespace,
-) -> None:
-    """
-    Keep monitoring scheduled while a native Tk message box holds the grab.
-
-    GIVEN a queued packet and a native dialog without a Python widget,
-    WHEN Tkinter cannot resolve the grab owner and the dialog later closes,
-    THEN polling waits without consuming the packet and resumes afterward.
-    """
-    feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
-    telemetry_view.after_cancel(telemetry_view._timer_id)
-    with patch.object(telemetry_view, "grab_current", side_effect=KeyError("__tk__messagebox")):
-        telemetry_view._check_telemetry()
-    assert telemetry_link.master.mav.total_bytes_received == 0
-    assert telemetry_view._timer_id is not None
-    assert not telemetry_link.master.message_hooks
-
-    telemetry_view.after_cancel(telemetry_view._timer_id)
-    telemetry_view._check_telemetry()
-    assert telemetry_link.master.mav.total_bytes_received > 0
-    assert telemetry_view._timer_id is not None
-    assert len(telemetry_link.master.message_hooks) == 1
 
 
 @pytest.mark.parametrize("vehicle", ["ArduCopter", "ArduPlane", "Heli", "Rover"])
@@ -261,3 +242,37 @@ def test_each_vehicle_has_schema_valid_step_08_telemetry(vehicle: str) -> None:
         "name": "data_telemetry",
         "placement": "top",
     }
+
+
+def test_native_tk_modal_defers_telemetry_and_polling_resumes_after_close(
+    telemetry_view: DataTelemetryView, telemetry_link: SimpleNamespace
+) -> None:
+    """
+    Native dialogs must not terminate the telemetry timer or consume another owner's packets.
+
+    GIVEN a Tcl dialog with no Python widget wrapper holding the grab,
+    WHEN telemetry polling fires and the dialog subsequently closes,
+    THEN polling defers without an exception and resumes after the grab is released.
+    """
+    view = telemetry_view
+    dialog_path = ".native_telemetry_modal"
+    view.tk.call("toplevel", dialog_path)
+    try:
+        view.tk.call("update", "idletasks")
+        view.tk.call("grab", "set", dialog_path)
+        # Reproduce the exact failure in tkinter's widget-name conversion.
+        with pytest.raises(KeyError):
+            view.grab_current()
+        feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
+        view.after_cancel(view._timer_id)
+        view._check_telemetry()
+        assert telemetry_link.master.mav.total_bytes_received == 0
+        assert view._timer_id is not None
+    finally:
+        view.tk.call("grab", "release", dialog_path)
+        view.tk.call("destroy", dialog_path)
+
+    view.after_cancel(view._timer_id)
+    view._check_telemetry()
+    assert telemetry_link.master.mav.total_bytes_received > 0
+    assert view._timer_id is not None

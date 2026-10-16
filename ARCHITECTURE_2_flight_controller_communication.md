@@ -138,6 +138,35 @@ This architecture provides:
   - `FlightControllerInfo` for metadata storage
   - `time` and `logging` for operations
 
+#### Automatic reconnection in the parameter editor
+
+`backend_flightcontroller_reconnect.py` keeps the original nonempty FC hardware UID,
+selected endpoint and active baud rate for one editor session. Its PyMAVLink message
+hook only timestamps heartbeats from the selected system and component. Hooks run
+before receive filters, so plugin reads continue to receive their expected replies.
+
+The editor checks once per second. It reads a bounded batch only when no plugin or
+sub-application owns reception. Uploads, downloads, modal dialogs and the file browser
+defer checks and renew the heartbeat grace period. With an active plugin, checks are
+passive. After eight seconds without an observed target heartbeat, the editor pauses
+the plugin through its lifecycle hooks and checks buffered packets before reconnecting.
+Plugins must stop receive timers when suspended or deactivated; a view without either
+paired lifecycle interface retains ownership and defers reconnection.
+
+During recovery, navigation and plugin controls are disabled. One worker attempts the
+original endpoint at the original baud rate; USB metadata can locate renumbered
+interfaces. The original endpoint is preferred when available. If metadata is shared
+or the USB interface description changes, other matching interfaces are tried too,
+and each failed attempt logs its reason. The MAVLink hardware UID must match before downloading fresh parameters.
+Changed or unknown IDs, connection failures and incomplete downloads leave the editor
+waiting and retrying. A missing original UID disables automatic recovery. Hardware
+identification uses `uid2`, falling back to `uid`, as decoded by the connection manager.
+
+Refresh downloads use temporary files. Local parameter edits and the selected step
+remain intact; interrupted uploads and commands are never replayed. The editor resumes
+the plugin after a verified recovery. Closing cancels retries, waits for an in-flight
+worker to return from backend I/O and removes only the editor's observer hook.
+
 #### Parameters Manager
 
 - **File**: `backend_flightcontroller_params.py`

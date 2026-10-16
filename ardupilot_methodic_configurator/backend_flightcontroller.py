@@ -354,6 +354,11 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         return self._connection_manager.baudrate
 
     @property
+    def active_baudrate(self) -> int:
+        """Baud rate used by the current connection, including a user override."""
+        return self._connection_manager.active_baudrate
+
+    @property
     def PARAM_FETCH_POLL_DELAY(self) -> float:  # noqa: N802 # pylint: disable=invalid-name
         """Get parameter fetch poll delay - delegates to params manager."""
         return self._params_manager.PARAM_FETCH_POLL_DELAY

@@ -68,11 +68,10 @@ class DataTelemetryView(ttk.Frame):  # pylint: disable=too-many-ancestors
     def _check_telemetry(self) -> None:
         self._timer_id = None
         # Modal FC tools (including the file browser) own their receive loop.
-        try:
-            modal_open = self.grab_current() is not None  # type: ignore[no-untyped-call]
-        except KeyError:
-            # Native Tk dialogs hold grabs without a corresponding Python widget.
-            modal_open = True
+        # Native Tk dialogs may hold the grab without a Python widget wrapper.
+        # Query the Tcl path directly; grab_current() tries to resolve that path
+        # to a Python widget and raises KeyError for such dialogs.
+        modal_open = bool(self.tk.call("grab", "current", str(self)))
         if modal_open or self.base_window.navigation_lock.locked:
             self._timer_id = self.after(250, self._check_telemetry)
             return
