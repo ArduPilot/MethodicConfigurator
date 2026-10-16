@@ -13180,82 +13180,82 @@ msgid ""
 "and check that RC failsafe is detected, then power it back on to check "
 "recovery. If necessary change the parameters on the right and press 'Upload "
 "selected params to FC' to activate them."
-msgstr ""
+msgstr "移动遥控器上的摇杆和开关，测试前五个通道至少都能正常工作。关闭 RC 发射机（遥控器）电源并检查是否检测到 RC 失控保护，然后重新打开电源以检查是否恢复。如有必要，请更改右侧参数并按“将选定参数上传到飞控”以启用它们。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:62
 msgid "CH%(channel)d"
-msgstr ""
+msgstr "通道%(channel)d"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:67
 msgid ""
 "Live RC input in microseconds (800-2200 µs). Move this channel to check "
 "reception."
-msgstr ""
+msgstr "实时 RC 输入，单位为微秒（800-2200 µs）。移动此通道以检查接收情况。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:73
 msgid "RSSI"
-msgstr ""
+msgstr "RSSI"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:76
 msgid ""
 "Receiver signal strength as reported by the FC (0-254, device-dependent "
 "scale)."
-msgstr ""
+msgstr "飞控报告的接收机信号强度（0-254，比例因设备而异）。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:99
 msgid "%(pwm)d µs"
-msgstr ""
+msgstr "%(pwm)d µs"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:99
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:101
 msgid "Unavailable"
-msgstr ""
+msgstr "不可用"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:103
 msgid "Flight controller disconnected."
-msgstr ""
+msgstr "飞行控制器已断开连接。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:106
 msgid "RC channel data received from the flight controller."
-msgstr ""
+msgstr "已从飞行控制器接收到 RC 通道数据。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:109
 msgid ""
 "No current RC channel data. Check receiver wiring, power and transmitter "
 "binding."
-msgstr ""
+msgstr "当前没有 RC 通道数据。请检查接收机接线、电源和发射机绑定。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:113
 msgid "Receiver status: unknown."
-msgstr ""
+msgstr "接收机状态：未知。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:116
 msgid "Receiver: RC input has been detected by the flight controller."
-msgstr ""
+msgstr "接收机：飞行控制器已检测到 RC 输入。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:119
 msgid "Receiver: no RC input detected by the flight controller yet."
-msgstr ""
+msgstr "接收机：飞行控制器尚未检测到 RC 输入。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:123
 msgid "RC failsafe: unknown (status unavailable)."
-msgstr ""
+msgstr "RC 失控保护：未知（状态不可用）。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:125
 msgid "RC failsafe: DETECTED."
-msgstr ""
+msgstr "RC 失控保护：已检测到。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:127
 msgid "RC failsafe: not active."
-msgstr ""
+msgstr "RC 失控保护：未激活。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:130
 msgid "RC failsafe detected during this test."
-msgstr ""
+msgstr "在此测试期间检测到了 RC 失控保护。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:132
 msgid "RC failsafe has not been detected during this test."
-msgstr ""
+msgstr "在此测试期间未检测到 RC 失控保护。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_servo_out.py:37
 msgid ""
