@@ -21,60 +21,71 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-DefaultDirName={commonpf}\{#MyAppName}
-; DefaultDirName={code:GetDefaultDirName}
+; AI-EDIT (2026-10-16): Default to a non-elevated user install; allow explicit /ALLUSERS deployment.
+PrivilegesRequired=lowest
+PrivilegesRequiredOverridesAllowed=commandline
+UsePreviousPrivileges=no
+DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 LicenseFile=..\LICENSE.md
 OutputBaseFilename=ardupilot_methodic_configurator_{#MyAppVersion}_windows_setup
 Compression=lzma
 SolidCompression=yes
 ChangesEnvironment=yes
+; AI-EDIT (2026-10-16): Enable Authenticode signing only when the publisher supplies a configured signing tool.
+#ifdef MyAppSignTool
+SignTool={#MyAppSignTool}
+SignedUninstaller=yes
+#endif
 
 [InstallDelete]
-; Remove main application files
-Type: filesandordirs; Name: {commonpf}\{#MyAppName}
+; AI-EDIT (2026-10-16): Do not recursively delete the application directory or another installation scope.
 
+; AI-EDIT (2026-10-16): Clean obsolete bundled templates only within the selected installation scope.
 ; Remove ArduCopter template files
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.3.8-params"
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.4.4-params"
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.1-params"
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.2-params"
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.3-params"
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.6.0-DEV-params"
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.x-params"
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.6.x-params"
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\empty_4.5.x"
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\empty_4.6.x"
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\X11_plus";
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Marmotte5v2";
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Chimera7";
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\ReadyToSkyZD550";
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\FETtec-5";
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Tarot_X4";
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\TarotFY680Hexacopter";
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\GazeboIrisWithTargetFollow";
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Hoverit_X11+";
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Hoverit_X13";
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Holybro_X500";
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Holybro_X500_V2";
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Holybro_X650_LTE";
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Demo32Motor_PeterHall";
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\ESM450X-Des";
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.3.8-params"
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.4.4-params"
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.1-params"
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.2-params"
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.3-params"
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.6.0-DEV-params"
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.x-params"
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.6.x-params"
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\empty_4.5.x"
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\empty_4.6.x"
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\X11_plus";
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Marmotte5v2";
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Chimera7";
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\ReadyToSkyZD550";
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\FETtec-5";
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Tarot_X4";
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\TarotFY680Hexacopter";
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\GazeboIrisWithTargetFollow";
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Hoverit_X11+";
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Hoverit_X13";
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Holybro_X500";
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Holybro_X500_V2";
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Holybro_X650_LTE";
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Demo32Motor_PeterHall";
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\ESM450X-Des";
 
 
 ; Remove Heli template files
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\Heli\Allister";
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\Heli\OMP_M4";
+; AI-EDIT (2026-10-16): Keep Heli cleanup in the selected installation scope.
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\Heli\Allister";
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\Heli\OMP_M4";
 
 ; Remove Rover template files
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\Rover\AION_R1";
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\Rover\Carisma_SCA-1E";
+; AI-EDIT (2026-10-16): Keep Rover cleanup in the selected installation scope.
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\Rover\AION_R1";
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\Rover\Carisma_SCA-1E";
 
 ; Remove Outdated files
 Type: filesandordirs; Name: "{app}\_internal\ardupilot_methodic_configurator\ArduCopter_configuration_steps.json";
 Type: filesandordirs; Name: "{app}\_internal\ardupilot_methodic_configurator\ArduPlane_configuration_steps.json";
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\version.txt";
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\git_hash.txt";
+; AI-EDIT (2026-10-16): Do not delete another scope's metadata during a user install.
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\version.txt";
+Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\git_hash.txt";
 
 [Languages]
 Name: "en"; MessagesFile: "compiler:Default.isl"
@@ -87,13 +98,15 @@ Name: "ja"; MessagesFile: "compiler:Languages\Japanese.isl"
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 Name: "modifypath"; Description: "&Add application directory to environmental path for current user. For command line use"; Flags: unchecked checkablealone
-Name: "modifypath\system"; Description: Add application directory to environmental path for all users. For command line use; Flags: unchecked
+; AI-EDIT (2026-10-16): Never offer machine-wide PATH changes during a user install.
+Name: "modifypath\system"; Description: Add application directory to environmental path for all users. For command line use; Flags: unchecked; Check: IsAdminInstallMode
 
 [Files]
 Source: "..\ardupilot_methodic_configurator\dist\ardupilot_methodic_configurator\ardupilot_methodic_configurator.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\ardupilot_methodic_configurator\dist\ardupilot_methodic_configurator\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
-Source: "..\ardupilot_methodic_configurator\vehicle_templates\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates"; Flags: ignoreversion recursesubdirs createallsubdirs
+; AI-EDIT (2026-10-16): Install templates into the same scope used by the runtime.
+Source: "..\ardupilot_methodic_configurator\vehicle_templates\*.*"; DestDir: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\git_hash.txt"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
 Source: "..\windows\ardupilot_methodic_configurator.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\ardupilot_methodic_configurator\images\*.png"; DestDir: "{app}\_internal\ardupilot_methodic_configurator\images"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -110,10 +123,21 @@ Source: "..\ardupilot_methodic_configurator_command_line_completion.psm1"; DestD
 [Dirs]
 Name: "{userappdata}\.ardupilot_methodic_configurator\vehicles"; Flags: uninsneveruninstall
 
+[INI]
+; AI-EDIT (2026-10-16): Persist original scope and owner; uninstaller elevation must not change PATH cleanup scope.
+Filename: "{app}\installation-scope.ini"; Section: "Installation"; Key: "Mode"; String: "{code:GetInstallScope}"; Flags: uninsdeleteentry uninsdeletesectionifempty
+Filename: "{app}\installation-scope.ini"; Section: "Installation"; Key: "User"; String: "{username}"; Flags: uninsdeleteentry uninsdeletesectionifempty
+
+[UninstallDelete]
+; AI-EDIT (2026-10-16): INI has no file-deletion flag; remove only this dedicated installation marker.
+Type: files; Name: "{app}\installation-scope.ini"
+
 [Icons]
-Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{userappdata}\.ardupilot_methodic_configurator"; Tasks: desktopicon; IconFilename: "{app}\ardupilot_methodic_configurator.ico"; Parameters: "--language {language}"
+; AI-EDIT (2026-10-16): Create shortcuts only for the selected installation scope.
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{userappdata}\.ardupilot_methodic_configurator"; Tasks: desktopicon; IconFilename: "{app}\ardupilot_methodic_configurator.ico"; Parameters: "--language {language}"
 Name: "{group}\Documentation"; Filename: "https://github.com/ArduPilot/MethodicConfigurator/blob/master/USERMANUAL.md"
-Name: "{group}\Vehicle Templates"; Filename: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates"
+; AI-EDIT (2026-10-16): Point the template shortcut at the scoped template directory.
+Name: "{group}\Vehicle Templates"; Filename: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates"
 Name: "{group}\ArduPilot Methodic Configurator Forum"; Filename: "https://discuss.ardupilot.org/t/new-ardupilot-methodic-configurator-gui/115038/"
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{userappdata}\.ardupilot_methodic_configurator"; IconFilename: "{app}\ardupilot_methodic_configurator.ico"; Parameters: "--language {language}"
 
@@ -124,25 +148,29 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 const
 	ModPathName = 'modifypath';
 	ModPathPath = '{app}';
+	// AI-EDIT (2026-10-16): Share the persisted scope file with the PATH uninstall helper.
+	ModPathInstallScopeFile = '{app}\installation-scope.ini';
 
 var
 	ModPathType: String;
 
-function GetDefaultDirName(Dummy: string): string;
+// AI-EDIT (2026-10-16): Record Setup's selected mode instead of inferring it from future uninstall privileges.
+function GetInstallScope(Param: string): string;
 begin
-	if IsAdminLoggedOn then begin
-		Result := ExpandConstant('{pf}\{#MyAppName}');
-	end else begin
-		Result := ExpandConstant('{userpf}\{#MyAppName}');
-	end;
+	if IsAdminInstallMode then
+		Result := 'allusers'
+	else
+		Result := 'currentuser';
 end;
 
+// AI-EDIT (2026-10-16): Auto constants select paths by install mode, not by account group membership.
 #include "modpath.iss"
 
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
 	if CurStep = ssPostInstall then begin
-		if IsTaskSelected(ModPathName + '\system') then begin
+		// AI-EDIT (2026-10-16): Guard HKLM writes even when tasks are supplied on the command line.
+		if IsAdminInstallMode and IsTaskSelected(ModPathName + '\system') then begin
 			ModPathType := 'system';
 		end else begin
 			ModPathType := 'user';
