@@ -505,7 +505,29 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
         package_path = importlib_files("ardupilot_methodic_configurator")
         logging_debug("current script directory1: %s", package_path)
         if platform_system() == "Windows":
-            package_path = Path(ProgramSettings._site_config_dir())
+            # AI-EDIT (2026-10-16): Prefer user templates and read legacy shared templates without creating ProgramData.
+            user_templates = (
+                Path(user_config_dir(".ardupilot_methodic_configurator", appauthor=False, roaming=True, ensure_exists=False))
+                / "vehicle_templates"
+            )
+            if user_templates.is_dir():
+                return str(user_templates)
+            # AI-EDIT (2026-10-16): An unreadable legacy shared directory must not break source/user installations.
+            with contextlib_suppress(OSError):
+                shared_templates = (
+                    Path(
+                        site_config_dir(
+                            ".ardupilot_methodic_configurator",
+                            appauthor=False,
+                            version=None,
+                            multipath=False,
+                            ensure_exists=False,
+                        )
+                    )
+                    / "vehicle_templates"
+                )
+                if shared_templates.is_dir():
+                    return str(shared_templates)
         logging_debug("current script directory2: %s", package_path)
 
         logging_debug(_("site_directory: %s"), package_path)

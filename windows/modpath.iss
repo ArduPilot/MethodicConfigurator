@@ -42,6 +42,7 @@
 //			Result[0] := ExpandConstant('{app}');
 //		end;
 //		#include "modpath.iss"
+// AI-EDIT (2026-10-16): This integration also declares ModPathInstallScopeFile and records Mode/User in that INI file.
 // ----------------------------------------------------------------------------
 
 function ModPathDir(): TArrayOfString;
@@ -185,6 +186,11 @@ var
 	regpath:		String;
 	regstring:		String;
 	appid:			String;
+	// AI-EDIT (2026-10-16): Read uninstall tasks from the selected installation scope only.
+	regroot:		Integer;
+	// AI-EDIT (2026-10-16): Preserve installation scope independently of an elevated uninstall process.
+	installscope:	String;
+	installuser:	String;
 begin
 	// only run during actual uninstall
 	if CurUninstallStep = usUninstall then begin
@@ -192,13 +198,28 @@ begin
 		appid := '{#emit SetupSetting("AppId")}';
 		if appid = '' then appid := '{#emit SetupSetting("AppName")}';
 		regpath := ExpandConstant('Software\Microsoft\Windows\CurrentVersion\Uninstall\'+appid+'_is1');
-		RegQueryStringValue(HKLM, regpath, 'Inno Setup: Selected Tasks', regstring);
-		if regstring = '' then RegQueryStringValue(HKCU, regpath, 'Inno Setup: Selected Tasks', regstring);
+		// AI-EDIT (2026-10-16): A per-user uninstall must not consume another installation's HKLM task list.
+		installscope := GetIniString('Installation', 'Mode', '', ExpandConstant(ModPathInstallScopeFile));
+		installuser := GetIniString('Installation', 'User', '', ExpandConstant(ModPathInstallScopeFile));
+		regroot := HKCU;
+		if installscope = 'allusers' then begin
+			regroot := HKLM;
+		end else if (installscope <> 'currentuser') or (CompareText(installuser, GetUserNameString) <> 0) then begin
+			Log('Skipping PATH cleanup: installation scope is unknown or this is not the installing user.');
+			Exit;
+		end;
+		RegQueryStringValue(regroot, regpath, 'Inno Setup: Selected Tasks', regstring);
 
 		// check each task; if matches modpath taskname, trigger patch removal
 		if regstring <> '' then begin
 			taskname := ModPathName;
 			MPExplode(aSelectedTasks, regstring, ',');
+			// AI-EDIT (2026-10-16): Restore the original PATH scope before removing the optional entry.
+			ModPathType := 'user';
+			for i := 0 to GetArrayLength(aSelectedTasks)-1 do begin
+				if (installscope = 'allusers') and (CompareText(aSelectedTasks[i], ModPathName + '\system') = 0) then
+					ModPathType := 'system';
+			end;
 			if GetArrayLength(aSelectedTasks) > 0 then begin
 				for i := 0 to GetArrayLength(aSelectedTasks)-1 do begin
 					if comparetext(aSelectedTasks[i], taskname) = 0 then
