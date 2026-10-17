@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import json
 import platform
 from os import path as os_path
+
 # AI-EDIT (2026-10-16): Use isolated real directories for the legacy Windows template regression.
 from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
