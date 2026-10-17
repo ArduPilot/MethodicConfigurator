@@ -23,13 +23,15 @@ def _find_tcl_tk_library(directory: Path, prefix: str) -> Path:
 # Set both variables before PyInstaller analyses tkinter so its built-in hook
 # collects the library data into _tcl_data and _tk_data. Without this, the
 # frozen application contains the DLLs but fails during the tkinter runtime hook.
-tcl_root = Path(sys.base_prefix) / "tcl"
-os.environ["TCL_LIBRARY"] = str(_find_tcl_tk_library(tcl_root, "tcl"))
-os.environ["TK_LIBRARY"] = str(_find_tcl_tk_library(tcl_root, "tk"))
+tcl_root = Path(os.environ.get("AMC_TCL_TK_ROOT", str(Path(sys.base_prefix) / "tcl")))
+tcl_library = _find_tcl_tk_library(tcl_root, "tcl")
+tk_library = _find_tcl_tk_library(tcl_root, "tk")
+os.environ["TCL_LIBRARY"] = str(tcl_library)
+os.environ["TK_LIBRARY"] = str(tk_library)
 
 # Path to certifi's CA bundle
 certifi_cacert = certifi.where()
-datas = [(certifi_cacert, "certifi")]
+datas = [(certifi_cacert, "certifi"), (str(tcl_library), "_tcl_data"), (str(tk_library), "_tk_data")]
 
 ardupilot_methodic_configuratorAny = Analysis(['__main__.py'],
              pathex=[os.path.abspath('.')],
@@ -51,7 +53,9 @@ ardupilot_methodic_configurator_exe = EXE(ardupilot_methodic_configurator_pyz,
           debug=False,
           strip=None,
           upx=True,
-          console=True)
+          console=True,
+          uac_admin=False,
+          uac_uiaccess=False)
 
 ardupilot_methodic_configurator_coll = COLLECT(ardupilot_methodic_configurator_exe,
                ardupilot_methodic_configuratorAny.binaries,

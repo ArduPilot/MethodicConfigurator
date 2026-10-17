@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import json
 import platform
 from os import path as os_path
+from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
@@ -1321,29 +1322,37 @@ class TestInternalConfigurationMethods:
             assert result == "/mock/package/path/vehicle_templates"
             mock_importlib.assert_called_once_with("ardupilot_methodic_configurator")
 
-    def test_get_templates_base_dir_uses_site_config_on_windows(self) -> None:
+    def test_get_templates_base_dir_uses_site_config_on_windows(self, tmp_path: Path) -> None:
         """
-        Templates base directory uses site config directory on Windows.
+        Existing shared templates remain available to Windows users.
 
-        GIVEN: A Windows platform environment
+        GIVEN: A Windows environment with shared templates and no user templates
         WHEN: The templates base directory is requested
-        THEN: The site configuration directory should be used as the base
+        THEN: The existing shared templates are returned without creating directories
         """
-        # Arrange: Mock Windows platform and site config
+        # Arrange: Isolate legacy shared resources from the user's real settings.
+        shared_config = tmp_path / "shared"
+        user_config = tmp_path / "user"
+        templates = shared_config / "vehicle_templates"
+        templates.mkdir(parents=True)
         with (
-            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.platform_system") as mock_platform,
             patch(
-                "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings._site_config_dir"
-            ) as mock_site_config,
+                "ardupilot_methodic_configurator.backend_filesystem_program_settings.platform_system",
+                return_value="Windows",
+            ),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_program_settings.user_config_dir",
+                return_value=str(user_config),
+            ),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_program_settings.site_config_dir",
+                return_value=str(shared_config),
+            ),
+            patch.object(ProgramSettings, "_site_config_dir", side_effect=AssertionError("Must not create shared settings")),
         ):
-            mock_platform.return_value = "Windows"
-            mock_site_config.return_value = "C:\\Program Files\\App"
-
             # Act: Get templates base directory
             result = ProgramSettings.get_templates_base_dir()
 
-            # Assert: Windows path logic is used correctly
-            mock_site_config.assert_called_once()
-            # Use os.path.join to handle platform-specific path separators
-            expected_path = os_path.join("C:\\Program Files\\App", "vehicle_templates")
-            assert result == expected_path
+            # Assert: Existing templates are readable without a per-user directory being created.
+            assert result == str(templates)
+            assert not user_config.exists()

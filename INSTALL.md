@@ -39,8 +39,18 @@ Download the latest
 Ignore the `ardupilot_methodic_configurator_x.x.x_windows_setup.exe.bundle` and `ardupilot_methodic_configurator_x.x.x_windows_setup.exe.sig`
 files - they are just cryptographic signatures for cyber security applications.
 
-If you have an anti-virus program running, it may prompt you to allow the download and installation.
-Please tell it to allow the download and installation.
+The installer defaults to installation for the current user without requesting administrator privileges.
+Program files are installed under `%LOCALAPPDATA%\Programs\ardupilot_methodic_configurator`.
+Vehicle templates and settings use `%APPDATA%\.ardupilot_methodic_configurator`.
+Start the installer normally, not with **Run as administrator**.
+An administrator can explicitly request a machine-wide installation with `/ALLUSERS`;
+use `/CURRENTUSER` to explicitly select a user installation.
+Upgrading an existing machine-wide installation requires the same explicit `/ALLUSERS` selection.
+The application's **Update Now** action preserves the scope of the running installation automatically.
+
+If Windows or your organization's security policy blocks the installer or application,
+ask your IT team to approve or distribute it. A user installation does not bypass
+application-control policies, and digital signing does not guarantee approval.
 Github also runs [ClamAV to scan the AMC software for virus](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/gitavscan.yml).
 
 Execute the downloaded file and do the steps highlighted in red.

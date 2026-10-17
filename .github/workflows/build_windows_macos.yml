@@ -55,6 +55,9 @@ jobs:
         run: |
           uv pip install .[win_dist]
 
+      - name: Check non-elevated Windows installation contract
+        run: python -m unittest discover -s tests -p test_windows_user_installation.py -v
+
       - name: Restore Inno Setup installer from cache
         id: cache-innosetup
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

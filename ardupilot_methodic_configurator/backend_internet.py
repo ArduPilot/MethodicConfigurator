@@ -19,12 +19,15 @@ import sys
 import tempfile
 import time
 from collections.abc import Callable
+from configparser import ConfigParser
+from configparser import Error as ConfigParserError
 from datetime import datetime, timezone
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
 from logging import shutdown as logging_shutdown
 from logging import warning as logging_warning
+from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin, urlparse
 from webbrowser import open as webbrowser_open
@@ -412,6 +415,37 @@ def _validate_download_file(path: str, magic_bytes: bytes | None = None, magic_e
         return False
 
 
+def _windows_installation_scope() -> str:
+    """Preserve the running Windows installation's scope, including legacy installs."""
+    if not getattr(sys, "frozen", False):
+        return "/CURRENTUSER"
+
+    installation_directory = Path(sys.executable).resolve().parent
+    marker = ConfigParser(interpolation=None)
+    with contextlib.suppress(OSError, UnicodeError, ConfigParserError):
+        marker.read(installation_directory / "installation-scope.ini", encoding="utf-8")
+        mode = marker.get("Installation", "Mode", fallback="")
+        if mode == "allusers":
+            return "/ALLUSERS"
+        if mode == "currentuser":
+            return "/CURRENTUSER"
+
+    # Installers predating the scope marker registered their directory in HKLM.
+    try:
+        import winreg  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+    except ImportError:
+        return "/CURRENTUSER"
+
+    uninstall_key = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\{F13FF76D-C9FC-47F0-BCE3-A2E0ED2859F6}_is1"
+    for registry_view in (winreg.KEY_WOW64_32KEY, winreg.KEY_WOW64_64KEY):
+        with contextlib.suppress(OSError):
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, uninstall_key, 0, winreg.KEY_READ | registry_view) as key:
+                location, _value_type = winreg.QueryValueEx(key, "InstallLocation")
+            if isinstance(location, str) and location and Path(location).resolve() == installation_directory:
+                return "/ALLUSERS"
+    return "/CURRENTUSER"
+
+
 def _create_installer_batch_file(temp_dir: str, installer_path: str) -> str:
     """Create a batch file to run the installer after the process exits."""
     batch_file_path = os.path.join(temp_dir, "run_installer.bat")
@@ -420,7 +454,7 @@ def _create_installer_batch_file(temp_dir: str, installer_path: str) -> str:
         batch_file.write("@echo off\n")
         batch_file.write("ping 127.0.0.1 -n 2 > nul\n")  # Wait ~1 second
         batch_file.write(f'if exist "{installer_path}" (\n')  # Check if installer still exists
-        batch_file.write(f'  start "" "{installer_path}"\n')  # Run the installer
+        batch_file.write(f'  start "" "{installer_path}" {_windows_installation_scope()}\n')
         batch_file.write(") else (\n")
         batch_file.write("  echo Installer not found\n")
         batch_file.write(")\n")
