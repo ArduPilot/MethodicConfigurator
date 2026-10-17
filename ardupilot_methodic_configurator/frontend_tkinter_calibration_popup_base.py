@@ -14,6 +14,7 @@ from tkinter import ttk
 from typing import Generic, TypeVar, cast
 
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow, center_over_parent
+from ardupilot_methodic_configurator.macos_utilities import is_macos_sequoia_or_older
 
 _ModelT = TypeVar("_ModelT")
 
@@ -92,15 +93,19 @@ class CalibrationPopupBase(BaseWindow, Generic[_ModelT]):  # pylint: disable=too
         self.root.geometry(f"+{x}+{y}")
 
     def _resize_and_center(self) -> None:
-        self.root.update_idletasks()
         self.root.minsize(self._MIN_WIDTH, self._MIN_HEIGHT)
 
-        width = max(self.root.winfo_reqwidth(), self._MIN_WIDTH)
-        height = max(self.root.winfo_reqheight(), self._MIN_HEIGHT)
-        self.root.geometry(f"{width}x{height}")
-        self.root.update_idletasks()
+        def resize_and_center() -> None:
+            width = max(self.root.winfo_reqwidth(), self._MIN_WIDTH)
+            height = max(self.root.winfo_reqheight(), self._MIN_HEIGHT)
+            self.root.geometry(f"{width}x{height}")
+            center_over_parent(self.root, self._parent, width, height)
 
-        center_over_parent(self.root, self._parent, width, height)
+        if is_macos_sequoia_or_older():
+            self._run_when_idle(self.root, lambda: self._run_when_idle(self.root, resize_and_center))
+        else:
+            self.root.update_idletasks()
+            resize_and_center()
 
     def _stop_polling(self) -> None:
         """Cancel the periodic polling callback if it is active."""

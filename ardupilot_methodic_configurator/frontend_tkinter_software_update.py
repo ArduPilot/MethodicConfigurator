@@ -15,6 +15,7 @@ from tkinter import ttk
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
+from ardupilot_methodic_configurator.macos_utilities import is_macos_sequoia_or_older
 
 
 class UpdateDialog(BaseWindow):  # pylint: disable=too-many-instance-attributes
@@ -79,7 +80,8 @@ class UpdateDialog(BaseWindow):  # pylint: disable=too-many-instance-attributes
         self.progress["value"] = value
         if status:
             self.status_label["text"] = status
-        self.root.update()
+        if not is_macos_sequoia_or_older():
+            self.root.update_idletasks()
 
     def on_yes(self) -> None:
         self.progress.grid()

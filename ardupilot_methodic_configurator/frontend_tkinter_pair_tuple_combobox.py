@@ -25,6 +25,7 @@ from tkinter import Label, Toplevel, ttk
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import update_combobox_width
+from ardupilot_methodic_configurator.macos_utilities import is_macos_sequoia_or_older
 
 
 def setup_combobox_mousewheel_handling(combobox: ttk.Combobox) -> None:
@@ -192,7 +193,8 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
                 # Highlight the text to show selection
                 self.selection_range(0, tk.END)
                 # Force the combobox to update visually
-                self.update_idletasks()
+                if not is_macos_sequoia_or_older():
+                    self.update_idletasks()
                 # Generate a virtual ComboboxSelected event to trigger callbacks
                 self.event_generate("<<ComboboxSelected>>")
 
@@ -200,7 +202,8 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
             # Current selection not found or invalid, select first item
             if self.list_keys:
                 self.current(0)
-                self.update_idletasks()
+                if not is_macos_sequoia_or_older():
+                    self.update_idletasks()
                 self.event_generate("<<ComboboxSelected>>")
 
         # Prevent the default behavior
@@ -220,7 +223,8 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
                 # Highlight the text to show selection
                 self.selection_range(0, tk.END)
                 # Force the combobox to update visually
-                self.update_idletasks()
+                if not is_macos_sequoia_or_older():
+                    self.update_idletasks()
                 # Generate a virtual ComboboxSelected event to trigger callbacks
                 self.event_generate("<<ComboboxSelected>>")
 
@@ -230,7 +234,8 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
                 self.current(0)
                 # Highlight the text to show selection
                 self.selection_range(0, tk.END)
-                self.update_idletasks()
+                if not is_macos_sequoia_or_older():
+                    self.update_idletasks()
                 self.event_generate("<<ComboboxSelected>>")
 
         # Prevent the default behavior

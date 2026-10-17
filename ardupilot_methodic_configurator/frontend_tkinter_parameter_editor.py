@@ -84,6 +84,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import
 from ardupilot_methodic_configurator.log_analysis.backend_data_sources import load_apm_pdef
 from ardupilot_methodic_configurator.log_analysis.backend_log_analysis import analyze_log_data
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import LogSummary, validate_log_matches_vehicle
+from ardupilot_methodic_configurator.macos_utilities import is_macos_sequoia_or_older
 from ardupilot_methodic_configurator.plugins.plugin_factory import plugin_factory
 
 if TYPE_CHECKING:
@@ -1411,9 +1412,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
             # Center the dialog on the parent window
             dialog.deiconify()
-            dialog.update_idletasks()
+            if not is_macos_sequoia_or_older():
+                dialog.update_idletasks()
             dialog_width = dialog.winfo_width()
             dialog_height = dialog.winfo_height()
+            if dialog_width <= 1:
+                dialog_width = dialog.winfo_reqwidth()
+            if dialog_height <= 1:
+                dialog_height = dialog.winfo_reqheight()
             parent_x = self.root.winfo_rootx()
             parent_y = self.root.winfo_rooty()
             parent_width = self.root.winfo_width()
@@ -1422,8 +1428,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             y = parent_y + (parent_height - dialog_height) // 2
             dialog.geometry(f"+{x}+{y}")
             dialog.lift()
-            dialog.update()  # Ensure the window is fully rendered before setting focus
-
             # Show dialog at correct position and make it modal
             # On macOS, grab_set() causes UI freeze (issue #1264), so skip it
             if sys_platform != "darwin":
@@ -1721,7 +1725,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         editor.populate_single_component(component_name)
         self.inline_component_editor = editor
         self._inline_component_name = component_name
-        self.root.update_idletasks()
+        if not is_macos_sequoia_or_older():
+            self.root.update_idletasks()
         self._inline_component_chrome_height = (
             self.inline_component_container.winfo_reqheight() - scroll_frame.winfo_reqheight()
         )
@@ -1742,7 +1747,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def _fit_window_to_screen_height(self, *, initialize: bool = False) -> None:
         """Set the startup size, then preserve user sizing unless it exceeds the monitor."""
-        self.root.update_idletasks()
+        if not is_macos_sequoia_or_older():
+            self.root.update_idletasks()
         if self._window_manager_controls_geometry():
             self._resize_parameter_area_to_fit()
             return
@@ -1776,7 +1782,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     window_y = f"-{int(window_y[1:]) + current_height - window_height - displacement}"
                 self.root.geometry(f"{window_width}x{window_height}{window_x}{window_y}")
 
-        self.root.update_idletasks()
+        if not is_macos_sequoia_or_older():
+            self.root.update_idletasks()
         self._resize_parameter_area_to_fit()
 
     def _bind_parameter_layout_events(self) -> None:
@@ -1805,7 +1812,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 minimum_height += plugin_height + 6
         return minimum_height
 
-    def _resize_parameter_area_to_fit(self) -> None:  # pylint: disable=too-many-locals,too-many-branches
+    def _resize_parameter_area_to_fit(self) -> None:  # noqa: PLR0915  # pylint: disable=too-many-locals,too-many-branches
         """Give the parameter area the height left after all fixed controls are placed."""
         if self._parameter_area_resize_running:
             return
@@ -1816,7 +1823,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             # table has a requested width when the PanedWindow first lays out.
             self._parameter_area_resize_running = True
             try:
-                self.parameter_area_container.update_idletasks()
+                if not is_macos_sequoia_or_older():
+                    self.parameter_area_container.update_idletasks()
             finally:
                 self._parameter_area_resize_running = False
 

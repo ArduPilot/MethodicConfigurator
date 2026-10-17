@@ -113,7 +113,9 @@ def _resizable_banner_window(
     if sys.platform == "darwin":
         pytest.skip("Real widget geometry updates are unsafe on headless macOS runners.")
     monkeypatch.setattr(banner_window.BaseWindow, "_get_dpi_scaling_factor", lambda _self: 1.0)
-    monkeypatch.setattr(banner_window.BaseWindow, "center_window", Mock())
+    # BaseWindow creates child windows withdrawn; its real centering helper also
+    # maps them, so preserve that behavior while keeping test geometry off-screen.
+    monkeypatch.setattr(banner_window.BaseWindow, "center_window", lambda window, _parent: window.deiconify())
     parameters = {f"COMPASS_DEV_ID{instance if instance > 1 else ''}": 423425 + instance * 256 for instance in range(1, 9)}
     window = banner_window.FlightControllerBannerWindow(root, ["ArduCopter V4.6.3"], fc_parameters=parameters)
     try:
