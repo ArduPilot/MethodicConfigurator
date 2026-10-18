@@ -8770,199 +8770,199 @@ msgid ""
 "Each row is a received message type from one sender. Select a row to read "
 "its latest fields. Click a heading to sort; click it again to reverse the "
 "order."
-msgstr ""
+msgstr "各行は、1つの送信元から受信したメッセージ種別です。行を選択すると、その最新フィールドを確認できます。見出しをクリックすると並べ替えられ、もう一度クリックすると順序が逆になります。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:53
 msgid ""
 "The sender's MAVLink system number identifies a vehicle or other system, not "
 "a serial port."
-msgstr ""
+msgstr "送信元のMAVLinkシステム番号は、シリアルポートではなく、機体または他のシステムを識別します。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:54
 msgid ""
 "The sender's component number identifies a part of that system, such as its "
 "flight controller or radio."
-msgstr ""
+msgstr "送信元のコンポーネント番号は、フライトコントローラや無線機など、そのシステムの一部を識別します。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:57
 msgid ""
 "The message name describes the information received. HEARTBEAT announces a "
 "sender; ATTITUDE reports orientation."
-msgstr ""
+msgstr "メッセージ名は受信した情報の内容を示します。HEARTBEATは送信元を通知し、ATTITUDEは姿勢を報告します。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:60
 msgid ""
 "How many messages of this type AMC has observed from this sender during "
 "monitoring. This is not a lost-packet count."
-msgstr ""
+msgstr "監視中に、この送信元からAMCが観測したこの種別のメッセージ数です。これはロストパケット数ではありません。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:64
 msgid ""
 "Hz means messages per second. For example, 10 Hz means about ten messages "
 "arrive each second."
-msgstr ""
+msgstr "Hzは1秒あたりのメッセージ数を意味します。たとえば10 Hzは、毎秒およそ10件のメッセージが到着することを意味します。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:65
 msgid ""
 "B/s means received bytes per second for this message type, including MAVLink "
 "headers. It is traffic, not maximum link speed."
-msgstr ""
+msgstr "B/sは、このメッセージ種別について1秒あたりに受信したバイト数を意味し、MAVLinkヘッダーを含みます。これはトラフィック量であり、最大リンク速度ではありません。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:69
 msgid ""
 "Seconds since AMC last received this message from this sender. A growing age "
 "means no fresh message; rates become zero after about three seconds."
-msgstr ""
+msgstr "AMCがこの送信元からこのメッセージを最後に受信してからの秒数です。経過時間が増え続ける場合は新しいメッセージがなく、約3秒後にはレートが0になります。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:77
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:450
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:581
 msgid "MAVLink inspector"
-msgstr ""
+msgstr "MAVLinkインスペクター"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:97
 msgid ""
 "A USB connection measures USB traffic, not the telemetry radio link. Connect "
 "through the telemetry link you want to test."
-msgstr ""
+msgstr "USB接続では、テレメトリ無線リンクではなくUSBトラフィックを測定します。テストしたいテレメトリリンク経由で接続してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:142
 msgid "Age (s)"
-msgstr ""
+msgstr "経過時間 (s)"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:142
 msgid "B/s"
-msgstr ""
+msgstr "B/s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:142
 msgid "Component"
-msgstr ""
+msgstr "コンポーネント"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:142
 msgid "Count"
-msgstr ""
+msgstr "件数"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:142
 msgid "Hz"
-msgstr ""
+msgstr "Hz"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:142
 msgid "Message"
-msgstr ""
+msgstr "メッセージ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:142
 msgid "System"
-msgstr ""
+msgstr "システム"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:157
 msgid "MAVLink message contents"
-msgstr ""
+msgstr "MAVLinkメッセージの内容"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:193
 msgid ""
 "Latest decoded fields of the selected message. These are received data, not "
 "editable parameters. Field units depend on the message; Help links to the "
 "reference."
-msgstr ""
+msgstr "選択したメッセージの最新のデコード済みフィールドです。これらは受信データであり、編集可能なパラメータではありません。フィールドの単位はメッセージによって異なります。Helpからリファレンスを参照できます。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:197
 msgid ""
 "Drag the horizontal divider to give more height to the message table or "
 "decoded fields. The status footer stays visible."
-msgstr ""
+msgstr "水平の仕切りをドラッグすると、メッセージテーブルまたはデコード済みフィールドの高さを大きくできます。ステータスフッターは表示されたままです。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:204
 msgid ""
 "Monitor messages reaching AMC through its active connection. Use Help for a "
 "step-by-step introduction."
-msgstr ""
+msgstr "有効な接続を通じてAMCに届くメッセージを監視します。手順を追った説明はHelpを使ってください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:208
 msgid ""
 "Shows whether recent MAVLink messages are arriving. Increasing counts and "
 "small ages indicate fresh data."
-msgstr ""
+msgstr "最近のMAVLinkメッセージが到着しているかどうかを示します。件数が増え、経過時間が小さいほど新しいデータであることを示します。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:212
 msgid ""
 "To test a wireless telemetry link, connect AMC through that link. Direct USB "
 "traffic measures the USB path."
-msgstr ""
+msgstr "無線テレメトリリンクをテストするには、そのリンク経由でAMCを接続してください。直接のUSBトラフィックはUSB経路を測定します。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:222
 msgid ""
 "Drag to scroll through received message types. Scrolling does not change the "
 "selected message."
-msgstr ""
+msgstr "ドラッグして受信したメッセージ種別をスクロールします。スクロールしても選択中のメッセージは変わりません。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:230
 msgid ""
 "Scroll through all decoded fields of the selected message. Select another "
 "table row to inspect a different message."
-msgstr ""
+msgstr "選択したメッセージのデコード済みフィールドをすべてスクロールして確認します。別のメッセージを調べるには、表の別の行を選択してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:237
 msgid ""
 "Connection traffic and radio readings stay visible here while the message "
 "table and decoded fields are resized."
-msgstr ""
+msgstr "メッセージテーブルとデコード済みフィールドのサイズを変更している間も、接続トラフィックと無線の読み取り値はここに表示されたままです。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:244
 msgid ""
 "Help opens the beginner's manual. Close returns to AMC, or ends the "
 "standalone inspector."
-msgstr ""
+msgstr "［ヘルプ］で入門マニュアルを開きます。［閉じる］でAMCに戻るか、スタンドアロンのインスペクターを終了します。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:248
 msgid ""
 "Open the MAVLink inspector beginner's manual in your web browser. It "
 "explains the columns, radio readings and connection checks; internet access "
 "is needed."
-msgstr ""
+msgstr "Webブラウザーで MAVLink インスペクターの入門マニュアルを開きます。列、無線の読み取り値、接続確認について説明しています。インターネット接続が必要です。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:255
 msgid ""
 "Stop monitoring and close this window. AMC keeps its connection; the "
 "standalone inspector closes its own connection."
-msgstr ""
+msgstr "監視を停止してこのウィンドウを閉じます。AMC は接続を維持し、スタンドアロンのインスペクターは自身の接続を閉じます。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:263
 msgid ""
 "Click to hide or restore decoded message fields and give the table more "
 "room. You can also focus this title with Tab and press Enter or Space."
-msgstr ""
+msgstr "クリックしてデコード済みメッセージフィールドを隠すか元に戻し、テーブルの表示領域を広げます。Tab でこのタイトルにフォーカスし、Enter または Space を押すこともできます。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:286
 msgid ""
 "Drag this divider to change the column width. Click a column heading to sort "
 "its values."
-msgstr ""
+msgstr "この区切りをドラッグして列幅を変更します。列見出しをクリックすると、その値で並べ替えます。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:289
 msgid "Click to sort; click again to reverse the order."
-msgstr ""
+msgstr "クリックして並べ替えます。もう一度クリックすると順序が逆になります。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:291
 msgid "Select a row to read its latest decoded fields below."
-msgstr ""
+msgstr "行を選択すると、下に最新のデコード済みフィールドが表示されます。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:339
 msgid ""
 "Received messages: select a row to view fields. Rates update every second; "
 "age reveals stale messages."
-msgstr ""
+msgstr "受信メッセージ: 行を選択してフィールドを表示します。レートは毎秒更新され、経過時間で古いメッセージが分かります。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:341
 msgid "No current MAVLink messages. Check the telemetry connection."
-msgstr ""
+msgstr "現在の MAVLink メッセージはありません。テレメトリー接続を確認してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:428
 msgid "Inspect live MAVLink messages and their datarates."
-msgstr ""
+msgstr "ライブの MAVLink メッセージとそのデータレートを確認します。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py:450
 msgid "A live flight-controller connection is required."
-msgstr ""
+msgstr "ライブのフライトコントローラー接続が必要です。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:127
 msgid "list_pair_tuple must be a list of tuples or a dictionary, not %s"
@@ -9202,7 +9202,7 @@ msgstr "中間パラメータファイルが利用できません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:588
 msgid "Inspect received MAVLink messages, datarates and decoded fields."
-msgstr ""
+msgstr "受信した MAVLink メッセージ、データレート、デコード済みフィールドを確認します。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:597
 msgid "the meaning of the text background colors"
@@ -9565,7 +9565,7 @@ msgstr "FCパラメータをダウンロード中"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1920
 msgid "Close the flight-controller file browser before opening the inspector."
-msgstr ""
+msgstr "インスペクターを開く前に、フライトコントローラーのファイルブラウザーを閉じてください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1920
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:2090
@@ -10626,166 +10626,166 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:36
 msgid "RX rate"
-msgstr ""
+msgstr "RX レート"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:37
 msgid "TX rate"
-msgstr ""
+msgstr "TX レート"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:38
 msgid "Parse errors"
-msgstr ""
+msgstr "解析エラー"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:38
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:43
 msgid "errors/s"
-msgstr ""
+msgstr "エラー/秒"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:41
 msgid "Local RX RSSI"
-msgstr ""
+msgstr "ローカル RX RSSI"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:41
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:42
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:44
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:45
 msgid "raw"
-msgstr ""
+msgstr "raw"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:42
 msgid "Remote RX RSSI"
-msgstr ""
+msgstr "リモート RX RSSI"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:43
 msgid "RX errors"
-msgstr ""
+msgstr "RX エラー"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:44
 msgid "Local noise"
-msgstr ""
+msgstr "ローカル ノイズ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:45
 msgid "Remote noise"
-msgstr ""
+msgstr "リモート ノイズ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:46
 msgid "RX errors total"
-msgstr ""
+msgstr "RX エラー合計"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:46
 msgid "errors"
-msgstr ""
+msgstr "エラー"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:47
 msgid "Corrected packets"
-msgstr ""
+msgstr "訂正済みパケット"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:47
 msgid "packets"
-msgstr ""
+msgstr "パケット"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:48
 msgid "TX buffer free"
-msgstr ""
+msgstr "TX バッファ空き"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:51
 msgid ""
 "Bytes received by AMC each second on its active connection. B/s means bytes "
 "per second. USB measures USB traffic; connect through a telemetry radio to "
 "test that path."
-msgstr ""
+msgstr "AMC のアクティブ接続で 1 秒ごとに受信したバイト数です。B/s は 1 秒あたりのバイト数を意味します。USB は USB トラフィックを測定します。この経路をテストするにはテレメトリー無線経由で接続してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:55
 msgid ""
 "Bytes sent by AMC each second. TX means transmit; B/s means bytes per "
 "second. Zero can be normal when the inspector is only listening."
-msgstr ""
+msgstr "AMC が 1 秒ごとに送信したバイト数です。TX は送信、B/s は 1 秒あたりのバイト数を意味します。インスペクターが受信だけしている場合、ゼロでも正常なことがあります。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:59
 msgid ""
 "MAVLink decoding errors observed by AMC per second. This is not a packet-"
 "loss percentage. Increasing errors can indicate a poor link or incorrect "
 "serial settings."
-msgstr ""
+msgstr "AMC で 1 秒あたりに観測された MAVLink のデコードエラーです。これはパケット損失率ではありません。エラーの増加は、リンク品質の低下やシリアル設定の誤りを示している可能性があります。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:63
 msgid ""
 "Received signal strength at the reporting radio. The raw scale depends on "
 "the radio; it is not a percentage or automatically dBm. Consult your radio's "
 "documentation."
-msgstr ""
+msgstr "報告元の無線機で受信した信号強度です。生のスケールは無線機に依存し、パーセンテージでも自動的に dBm でもありません。無線機のドキュメントを参照してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:67
 msgid ""
 "Received signal strength at the far end of the telemetry link. This uses the "
 "radio's raw scale and describes reception in the opposite direction."
-msgstr ""
+msgstr "テレメトリーリンクの遠端で受信した信号強度です。これは無線機の生のスケールを使用し、反対方向での受信状態を示します。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:71
 msgid ""
 "Background noise at the reporting radio, in device-dependent raw units. "
 "Compare it using the same radio equipment and its manufacturer's guidance."
-msgstr ""
+msgstr "報告元の無線機でのバックグラウンドノイズです。単位はデバイス依存の生値です。同じ無線機器とそのメーカーの指針を使って比較してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:75
 msgid ""
 "Background noise at the far end of the telemetry link, in that radio's raw "
 "units. It is not a signal-strength percentage."
-msgstr ""
+msgstr "テレメトリーリンクの遠端でのバックグラウンドノイズです。単位はその無線機の生値です。信号強度のパーセンテージではありません。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:79
 msgid ""
 "Increase in the radio's receive-error counter per second. Errors/s is a "
 "count rate, not percent packet loss. It needs two suitable radio reports."
-msgstr ""
+msgstr "無線機の受信エラーカウンターが 1 秒あたりに増加した量です。Errors/s はカウント率であり、パケット損失率ではありません。これには適切な無線レポートが 2 件必要です。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:83
 msgid ""
 "Total receive errors reported by the radio. The counter can restart after a "
 "radio reboot; it is not the number of MAVLink messages received by AMC."
-msgstr ""
+msgstr "無線機が報告した受信エラー総数です。無線機の再起動後にカウンターが再開されることがあります。これは AMC が受信した MAVLink メッセージ数ではありません。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:87
 msgid ""
 "Number of radio packets recovered by error correction, as reported by the "
 "modem. This is a cumulative packet count, separate from receive errors."
-msgstr ""
+msgstr "モデムが報告した、エラー訂正によって回復した無線パケット数です。これは受信エラーとは別の累積パケット数です。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:91
 msgid ""
 "Percentage of the radio's transmit buffer that is free. For example, 90% "
 "means most queue space is available. This is not signal strength or percent "
 "delivery success."
-msgstr ""
+msgstr "無線機の送信バッファの空き割合です。たとえば 90% は、キュー領域の大半が利用可能であることを意味します。これは信号強度や配信成功率ではありません。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:105
 msgid "Radio Link status"
-msgstr ""
+msgstr "無線リンクの状態"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:115
 msgid ""
 "Traffic is measured on AMC's active connection. Radio readings describe the "
 "latest modem report on that connection, not the RC receiver setup."
-msgstr ""
+msgstr "トラフィックは AMC のアクティブ接続で測定されます。無線の読み取り値は、その接続における最新のモデムレポートを示すものであり、RC 受信機の設定を示すものではありません。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:122
 msgid ""
 "Shows whether AMC has a live connection and recent received messages. "
 "Unavailable means no current measurement; zero is a measured value."
-msgstr ""
+msgstr "AMC にライブ接続があり、最近受信したメッセージがあるかどうかを示します。利用不可は現在の測定値がないことを意味し、ゼロは測定された値です。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:129
 msgid ""
 "Telemetry modem readings require RADIO or RADIO_STATUS messages. They do not "
 "identify individual flight-controller serial ports."
-msgstr ""
+msgstr "テレメトリーモデムの読み取りには RADIO または RADIO_STATUS メッセージが必要です。これらはフライトコントローラーの個別のシリアルポートを識別するものではありません。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:136
 msgid ""
 "Missing radio reports can be normal over USB. Radio columns appear with "
 "fresh reports and hide when those reports become stale; other MAVLink "
 "traffic may still be arriving."
-msgstr ""
+msgstr "USB 経由では無線レポートが欠けていても正常な場合があります。無線列は新しいレポートが届くと表示され、それらのレポートが古くなると非表示になります。他の MAVLink トラフィックは引き続き到着している場合があります。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:145
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:222
@@ -10796,7 +10796,7 @@ msgstr "利用不可"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:199
 msgid "Unable to read telemetry. Check the connection."
-msgstr ""
+msgstr "テレメトリーを読み取れません。接続を確認してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:201
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_receiver.py:103
@@ -10805,26 +10805,26 @@ msgstr "フライトコントローラーが切断されました。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:203
 msgid "Traffic received on the active connection"
-msgstr ""
+msgstr "アクティブ接続で受信したトラフィック"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:205
 msgid ""
 "No current MAVLink data. Check telemetry power, wiring and connection "
 "selection."
-msgstr ""
+msgstr "現在の MAVLink データがありません。テレメトリーの電源、配線、接続先の選択を確認してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:210
 msgid ""
 "Radio link metrics cannot be presented. They require RADIO or RADIO_STATUS "
 "MAVLink messages."
-msgstr ""
+msgstr "無線リンクのメトリクスを表示できません。RADIO または RADIO_STATUS の MAVLink メッセージが必要です。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_radio_status.py:212
 msgid ""
 "RSSI and noise are device-dependent raw values. Remote RX RSSI describes "
 "reception at the far end. RX errors/s is a counter rate, not a loss "
 "percentage."
-msgstr ""
+msgstr "RSSI とノイズはデバイス依存の生値です。Remote RX RSSI は遠端での受信を示します。RX errors/s はカウンターの増加率であり、損失率ではありません。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_show.py:475
 msgid ""
@@ -13838,7 +13838,7 @@ msgid ""
 "telemetry link briefly, check that readings become unavailable, then restore "
 "it and check recovery. Press 'MAVLink inspector' above to check messages and "
 "their rates."
-msgstr ""
+msgstr "必要に応じて以下のパラメータを変更し、'Upload selected params to FC' を押して有効化してください。USB 接続で測定されるのは無線リンクではなく USB 通信量です。テレメトリの設定が完了したら、プロペラを取り外し、機体をディスアームした状態で、テストしたいテレメトリリンク経由で AMC を接続してください。安全なベンチテスト範囲内でアンテナの向きや間隔を変えながら、RX/TX データレートとローカル/リモート RSSI を確認してください。テレメトリリンクを短時間遮断し、値が取得できなくなることを確認したあと、リンクを復旧して回復することを確認してください。メッセージとそのレートを確認するには、上の 'MAVLink inspector' を押してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_esc_rpm_scale.py:45
 msgid "ESC RPM scaling"
