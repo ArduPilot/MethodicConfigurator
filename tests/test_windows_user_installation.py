@@ -10,16 +10,18 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import ast
+import json
 import os
 import re
 import unittest
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
+from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 SETTINGS_MODULE = "ardupilot_methodic_configurator.backend_filesystem_program_settings"
@@ -38,7 +40,7 @@ def _installer_section(section: str) -> str:
 
 
 @contextmanager
-def _template_locations(system: str = "Windows") -> Iterator[tuple[Path, Path, Path]]:
+def _template_locations(system: str = "Windows") -> Generator[tuple[Path, Path, Path], None, None]:
     """Isolate user, shared and packaged resources without writing to real settings."""
     with TemporaryDirectory() as directory:
         root = Path(directory)
@@ -165,6 +167,25 @@ class TestWindowsInstallationScope(unittest.TestCase):
             r"#ifdef MyAppSignTool\s+SignTool=\{#MyAppSignTool\}\s+SignedUninstaller=yes\s+#endif", _installer_section("Setup")
         )
 
+    def test_legacy_machine_installation_requires_an_explicit_scope(self) -> None:
+        """
+        An old updater cannot silently create a second per-user installation.
+
+        GIVEN: Released clients run setup without a scope argument.
+        WHEN: Setup finds the legacy application uninstall key in either HKLM view.
+        THEN: It stops with guidance unless an installation scope was explicitly chosen.
+        """
+        code = _installer_section("Code")
+        initialization = code.split("function InitializeSetup", 1)[1].split("function GetInstallScope", 1)[0]
+        assert "if IsAdminInstallMode or HasExplicitInstallScope then" in initialization
+        assert "RegKeyExists(HKLM32, UninstallKey)" in initialization
+        assert "IsWin64 and RegKeyExists(HKLM64, UninstallKey)" in initialization
+        assert "{F13FF76D-C9FC-47F0-BCE3-A2E0ED2859F6}_is1" in initialization
+        assert "SuppressibleMsgBox(CustomMessage('LegacyMachineInstall')" in initialization
+        assert "Result := False;" in initialization
+        assert "CompareText(ParamStr(Index), '/ALLUSERS')" in code
+        assert "CompareText(ParamStr(Index), '/CURRENTUSER')" in code
+
 
 class TestWindowsTemplateDiscovery(unittest.TestCase):
     """Verify resource discovery using isolated real directories, not administrator access."""
@@ -180,6 +201,8 @@ class TestWindowsTemplateDiscovery(unittest.TestCase):
         with _template_locations() as (user, shared, package):
             for location in (user, shared, package):
                 (location / "vehicle_templates").mkdir(parents=True)
+            (user / "vehicle_templates" / "ArduCopter").mkdir()
+            (user / "vehicle_templates" / "system_vehicle_components_template.json").write_text("{}", encoding="utf-8")
             assert ProgramSettings.get_templates_base_dir() == str(user / "vehicle_templates")
 
     def test_legacy_shared_templates_remain_readable_without_creating_user_directories(self) -> None:
@@ -236,7 +259,7 @@ class TestWindowsTemplateDiscovery(unittest.TestCase):
         """
         with (
             _template_locations() as (_user, _shared, package),
-            patch.object(Path, "is_dir", side_effect=[False, PermissionError("Shared templates are not readable")]),
+            patch.object(Path, "is_dir", side_effect=PermissionError("Shared templates are not readable")),
         ):
             assert ProgramSettings.get_templates_base_dir() == str(package / "vehicle_templates")
 
@@ -254,6 +277,87 @@ class TestWindowsTemplateDiscovery(unittest.TestCase):
             patch(f"{SETTINGS_MODULE}.user_config_dir", side_effect=AssertionError("Override should short-circuit")),
         ):
             assert ProgramSettings.get_templates_base_dir() == "/isolated/templates"
+
+    def test_user_json_alone_does_not_hide_bundled_vehicle_templates(self) -> None:
+        """
+        Saving components does not replace the bundled vehicle-template location.
+
+        GIVEN: A user directory contains only saved components and shared vehicle templates exist.
+        WHEN: Vehicle templates are requested.
+        THEN: The shared vehicle templates remain visible.
+        """
+        with _template_locations() as (user, shared, _package):
+            user_templates = user / "vehicle_templates"
+            user_templates.mkdir(parents=True)
+            (user_templates / "user_vehicle_components_template.json").write_text("{}", encoding="utf-8")
+            (shared / "vehicle_templates" / "ArduCopter").mkdir(parents=True)
+            assert ProgramSettings.get_templates_base_dir() == str(shared / "vehicle_templates")
+
+    def test_legacy_components_are_merged_with_current_user_components(self) -> None:
+        """
+        Installing user templates preserves components saved by the legacy installation.
+
+        GIVEN: Legacy and current-user files contain distinct components and a shared name.
+        WHEN: Component templates are loaded using the real filesystem implementation.
+        THEN: Both sets survive and the current user's version wins for the shared name.
+        """
+        with _template_locations() as (user, shared, _package):
+            for location in (user, shared):
+                templates = location / "vehicle_templates"
+                (templates / "ArduCopter").mkdir(parents=True)
+                (templates / "system_vehicle_components_template.json").write_text("{}", encoding="utf-8")
+            legacy_file = shared / "vehicle_templates" / "user_vehicle_components_template.json"
+            legacy_file.write_text(
+                json.dumps({"Motor": [{"name": "legacy"}, {"name": "duplicate", "data": {"value": "old"}}]}),
+                encoding="utf-8",
+            )
+            current_file = user / "vehicle_templates" / "user_vehicle_components_template.json"
+            current_file.write_text(
+                json.dumps({"Motor": [{"name": "current"}, {"name": "duplicate", "data": {"value": "new"}}]}),
+                encoding="utf-8",
+            )
+            components = VehicleComponents()
+            loaded = components.load_component_templates()
+            by_name = {template["name"]: template for template in loaded["Motor"]}
+            assert set(by_name) == {"legacy", "current", "duplicate"}
+            assert by_name["duplicate"]["data"] == {"value": "new"}
+            assert not components.save_component_templates(loaded)[0]
+            saved = json.loads(current_file.read_text(encoding="utf-8"))
+            assert {template["name"] for template in saved["Motor"]} == {"legacy", "current", "duplicate"}
+            assert len(json.loads(legacy_file.read_text(encoding="utf-8"))["Motor"]) == 2
+
+    def test_standard_user_saves_components_without_writing_shared_resources(self) -> None:
+        """
+        Standard users save components in their own writable settings directory.
+
+        GIVEN: Only a legacy shared template installation exists.
+        WHEN: A component is saved.
+        THEN: The new JSON is written under the user profile, not ProgramData.
+        """
+        with _template_locations() as (user, shared, _package):
+            (shared / "vehicle_templates").mkdir(parents=True)
+            error, _message = VehicleComponents().save_component_templates({"Motor": [{"name": "custom"}]})
+            assert not error
+            assert (user / "vehicle_templates" / "user_vehicle_components_template.json").is_file()
+            assert not (shared / "vehicle_templates" / "user_vehicle_components_template.json").exists()
+
+    def test_shared_components_remain_available_when_user_json_is_invalid(self) -> None:
+        """
+        Invalid user JSON does not erase readable legacy components.
+
+        GIVEN: The current-user file is invalid and a legacy component file is valid.
+        WHEN: Component templates are loaded.
+        THEN: The legacy component remains available.
+        """
+        with _template_locations() as (user, shared, _package):
+            for location in (user, shared):
+                (location / "vehicle_templates").mkdir(parents=True)
+            (shared / "vehicle_templates" / "user_vehicle_components_template.json").write_text(
+                '{"Motor": [{"name": "legacy"}]}', encoding="utf-8"
+            )
+            (user / "vehicle_templates" / "user_vehicle_components_template.json").write_text("{", encoding="utf-8")
+            loaded = VehicleComponents().load_component_templates()
+            assert loaded["Motor"][0]["name"] == "legacy"
 
 
 if __name__ == "__main__":

@@ -213,11 +213,31 @@ def test_screenshot_generator_registers_application_plugins_before_capture(tmp_p
 
 
 def test_simple_parameter_editor_capture_suppresses_external_documentation(tmp_path) -> None:
-    """Simple-mode capture does not launch a browser while settling the editor."""
-    screenshot_generator.register_plugins()
+    """
+    Simple-mode capture suppresses documentation without creating a native GUI.
+
+    GIVEN: A real parameter-editor model and a window/layout boundary without native Tk.
+    WHEN: Layout requests documentation during screenshot setup.
+    THEN: No browser opens, and the suppression ends when setup finishes.
+    """
+    window = MagicMock()
+    window.current_plugin_view = None
+
+    def request_documentation_during_layout(_root: object, *, cycles: int, delay: float) -> None:
+        assert cycles == 8
+        assert delay == 0.05
+        editor = create_window.call_args.args[0]
+        editor.open_documentation_in_browser("05_board_orientation.param")
 
     with (
         patch("ardupilot_methodic_configurator.data_model_parameter_editor.webbrowser_open_url") as open_browser,
+        patch.object(
+            screenshot_generator.ParameterEditor,
+            "get_documentation_text_and_url",
+            return_value=("Documentation", "https://ardupilot.org/"),
+        ),
+        patch.object(screenshot_generator, "ParameterEditorWindow", return_value=window) as create_window,
+        patch.object(screenshot_generator, "settle_tk", side_effect=request_documentation_during_layout) as settle,
         patch.object(screenshot_generator.ProgramSettings, "_user_config_dir", return_value=str(tmp_path)),
         patch.object(screenshot_generator, "capture_widget"),
     ):
@@ -231,7 +251,12 @@ def test_simple_parameter_editor_capture_suppresses_external_documentation(tmp_p
             scale=0.666,
         )
 
-    open_browser.assert_not_called()
+        settle.assert_called_once_with(window.root, cycles=8, delay=0.05)
+        open_browser.assert_not_called()
+        # Positive control: the same real model opens documentation after the temporary suppression.
+        create_window.call_args.args[0].open_documentation_in_browser("05_board_orientation.param")
+        assert open_browser.call_count == 3
+    window.root.destroy.assert_called_once_with()
 
 
 def test_motor_test_capture_uses_registered_plugin_with_fake_connection(tmp_path) -> None:

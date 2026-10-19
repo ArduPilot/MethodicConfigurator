@@ -11,16 +11,25 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import os.path
+from collections.abc import Generator
 from json.decoder import JSONDecodeError as RealJSONDecodeError
 from unittest.mock import mock_open, patch
 
 import pytest
 from test_backend_safe_file_io_write_capture import make_capture_safe_write
 
+from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.data_model_template_overview import TemplateOverview
 
 # pylint: disable=too-many-lines,too-many-public-methods,attribute-defined-outside-init
+
+
+@pytest.fixture(autouse=True)
+def isolate_legacy_templates() -> Generator[None, None, None]:
+    """Keep single-location unit tests independent of installed legacy Windows files."""
+    with patch.object(ProgramSettings, "get_legacy_component_templates_dir", return_value=None):
+        yield
 
 
 class TestVehicleComponents:
@@ -467,7 +476,9 @@ class TestVehicleComponents:
         mock_file.assert_called_once_with(expected_path, encoding="utf-8-sig")
         mock_json_load.assert_called_once()
 
-    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch(
+        "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_user_component_templates_dir"
+    )
     @patch("builtins.open", new_callable=mock_open)
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_load")
     def test_load_user_templates(self, mock_json_load, mock_file, mock_get_base_dir) -> None:  # type: ignore[misc]
@@ -636,7 +647,9 @@ class TestVehicleComponents:
     @patch.object(VehicleComponents, "_load_user_templates")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
-    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch(
+        "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_user_component_templates_dir"
+    )
     def test_save_component_templates_basic(  # type: ignore[misc]
         self, mock_get_base_dir, mock_makedirs, mock_safe_write, mock_load_user, mock_load_system
     ) -> None:
@@ -681,7 +694,9 @@ class TestVehicleComponents:
     @patch.object(VehicleComponents, "_load_user_templates")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
-    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch(
+        "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_user_component_templates_dir"
+    )
     def test_save_component_templates_only_modified(  # type: ignore[misc]
         self,
         mock_get_base_dir,
@@ -736,7 +751,9 @@ class TestVehicleComponents:
     @patch.object(VehicleComponents, "_load_user_templates")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
-    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch(
+        "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_user_component_templates_dir"
+    )
     def test_save_component_templates_different_data(  # type: ignore[misc]
         self,
         mock_get_base_dir,
@@ -785,7 +802,9 @@ class TestVehicleComponents:
     @patch.object(VehicleComponents, "_load_user_templates")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
-    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch(
+        "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_user_component_templates_dir"
+    )
     def test_save_component_templates_not_in_system(  # type: ignore[misc]
         self,
         mock_get_base_dir,
@@ -834,7 +853,9 @@ class TestVehicleComponents:
     @patch.object(VehicleComponents, "_load_system_templates")
     @patch.object(VehicleComponents, "_load_user_templates")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
-    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch(
+        "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_user_component_templates_dir"
+    )
     def test_save_component_templates_directory_error(  # type: ignore[misc]
         self, mock_get_base_dir, mock_makedirs, mock_load_user, mock_load_system
     ) -> None:
@@ -864,7 +885,9 @@ class TestVehicleComponents:
     @patch.object(VehicleComponents, "_load_user_templates")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
-    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch(
+        "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_user_component_templates_dir"
+    )
     def test_save_component_templates_directory_creation_error(  # type: ignore[misc]
         self, mock_get_base_dir, mock_makedirs, mock_safe_write, mock_load_user, mock_load_system
     ) -> None:
@@ -895,7 +918,9 @@ class TestVehicleComponents:
     @patch.object(VehicleComponents, "_load_user_templates")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
-    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch(
+        "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_user_component_templates_dir"
+    )
     def test_save_component_templates_file_errors(  # type: ignore[misc]
         self,
         mock_get_base_dir,
@@ -931,7 +956,9 @@ class TestVehicleComponents:
     @patch.object(VehicleComponents, "_load_user_templates")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
-    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch(
+        "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_user_component_templates_dir"
+    )
     def test_save_component_templates_empty_input(  # type: ignore[misc]
         self,
         mock_get_base_dir,
@@ -969,7 +996,9 @@ class TestVehicleComponents:
     @patch.object(VehicleComponents, "_load_user_templates")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
-    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch(
+        "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_user_component_templates_dir"
+    )
     def test_save_component_templates_json_error(  # type: ignore[misc]
         self,
         mock_get_base_dir,
@@ -1052,7 +1081,9 @@ class TestVehicleComponents:
     @patch.object(VehicleComponents, "_load_user_templates")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
-    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch(
+        "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_user_component_templates_dir"
+    )
     def test_save_component_templates_preserves_existing_user_components(  # type: ignore[misc]
         self,
         mock_get_base_dir,

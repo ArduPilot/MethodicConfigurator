@@ -45,8 +45,11 @@ Vehicle templates and settings use `%APPDATA%\.ardupilot_methodic_configurator`.
 Start the installer normally, not with **Run as administrator**.
 An administrator can explicitly request a machine-wide installation with `/ALLUSERS`;
 use `/CURRENTUSER` to explicitly select a user installation.
-Upgrading an existing machine-wide installation requires the same explicit `/ALLUSERS` selection.
-The application's **Update Now** action preserves the scope of the running installation automatically.
+If a machine-wide installation already exists, a normal setup run stops with guidance
+instead of silently creating a second installation. Use `/ALLUSERS` to upgrade it
+(administrator approval is required), or `/CURRENTUSER` to explicitly install a separate user copy.
+Older applications' **Update Now** action may show that guidance because their updater
+does not select a scope. Applications built with this change preserve their running installation's scope automatically.
 
 If Windows or your organization's security policy blocks the installer or application,
 ask your IT team to approve or distribute it. A user installation does not bypass

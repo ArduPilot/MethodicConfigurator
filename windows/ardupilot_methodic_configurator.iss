@@ -88,6 +88,10 @@ Name: "de"; MessagesFile: "compiler:Languages\German.isl"
 Name: "it"; MessagesFile: "compiler:Languages\Italian.isl"
 Name: "ja"; MessagesFile: "compiler:Languages\Japanese.isl"
 
+[CustomMessages]
+LegacyMachineInstall=An existing installation for all users was found. Setup has stopped to avoid creating a second installation. Run this installer with /ALLUSERS to upgrade it (administrator approval is required), or explicitly use /CURRENTUSER to install a separate copy for your user account.
+de.LegacyMachineInstall=Eine vorhandene Installation für alle Benutzer wurde gefunden. Setup wurde beendet, damit keine zweite Installation entsteht. Starten Sie diesen Installer mit /ALLUSERS für ein Upgrade (Administratorfreigabe erforderlich) oder ausdrücklich mit /CURRENTUSER für eine separate Installation in Ihrem Benutzerkonto.
+
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 Name: "modifypath"; Description: "&Add application directory to environmental path for current user. For command line use"; Flags: unchecked checkablealone
@@ -139,6 +143,33 @@ const
 
 var
 	ModPathType: String;
+
+function HasExplicitInstallScope: Boolean;
+var
+	Index: Integer;
+begin
+	Result := False;
+	for Index := 1 to ParamCount do
+		if (CompareText(ParamStr(Index), '/ALLUSERS') = 0) or
+		   (CompareText(ParamStr(Index), '/CURRENTUSER') = 0) then
+			Result := True;
+end;
+
+function InitializeSetup: Boolean;
+var
+	UninstallKey: String;
+begin
+	Result := True;
+	if IsAdminInstallMode or HasExplicitInstallScope then
+		Exit;
+	UninstallKey := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{F13FF76D-C9FC-47F0-BCE3-A2E0ED2859F6}_is1';
+	if RegKeyExists(HKLM32, UninstallKey) or
+	   (IsWin64 and RegKeyExists(HKLM64, UninstallKey)) then begin
+		Log('Existing machine-wide installation detected; an explicit installation scope is required.');
+		SuppressibleMsgBox(CustomMessage('LegacyMachineInstall'), mbError, MB_OK, IDOK);
+		Result := False;
+	end;
+end;
 
 function GetInstallScope(Param: string): string;
 begin
