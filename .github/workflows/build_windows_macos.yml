@@ -174,21 +174,40 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ChineseSimplified.isl
-          key: chinese-simplified-isl-6.5
+          key: chinese-simplified-isl-6.7.1-cfdf48923178-v2
 
       - name: Download ChineseSimplified.isl
         if: steps.cache-chinese-isl.outputs.cache-hit != 'true'
         run: |
-          curl -L -o ChineseSimplified.isl https://raw.githubusercontent.com/jrsoftware/issrc/refs/heads/main/Files/Languages/Unofficial/ChineseSimplified.isl
+          # Pin the translation to the Inno Setup 6.7.1 source commit.
+          curl --fail --location --retry 3 -o ChineseSimplified.isl https://raw.githubusercontent.com/jrsoftware/issrc/cfdf48923178df4b4f040e038b423aa555a61ffc/Files/Languages/Unofficial/ChineseSimplified.isl
+          if ($LASTEXITCODE -ne 0) {
+            throw "Downloading ChineseSimplified.isl failed with exit code $LASTEXITCODE."
+          }
 
       - name: Build installer
         run: |
+          $translation = Get-Content -LiteralPath "ChineseSimplified.isl" -Raw
+          if ($translation -notmatch '(?m)^\[LanguageOptions\]\s*$' -or
+              $translation -notmatch '(?m)^\[Messages\]\s*$') {
+            throw "ChineseSimplified.isl is not a valid Inno Setup translation."
+          }
           New-Item -ItemType Directory -Force -Path "inst\Languages"
           Copy-Item "ChineseSimplified.isl" -Destination "inst\Languages\ChineseSimplified.isl"
           cd windows
-          $env:VERSION=$(python return_version.py)
-          Start-Process -FilePath "..\inst\ISCC.exe" -ArgumentList "/dMyAppVersion=$env:VERSION", "ardupilot_methodic_configurator.iss" -Wait -NoNewWindow
-          Get-ChildItem Output
+          $version = python return_version.py
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($version)) {
+            throw "Could not determine the installer version."
+          }
+          & "..\inst\ISCC.exe" "/dMyAppVersion=$version" "ardupilot_methodic_configurator.iss"
+          if ($LASTEXITCODE -ne 0) {
+            throw "Inno Setup compilation failed with exit code $LASTEXITCODE."
+          }
+          $installers = @(Get-ChildItem -LiteralPath "Output" -Filter "*.exe" -File)
+          if ($installers.Count -eq 0) {
+            throw "Inno Setup produced no installer EXE in windows/Output."
+          }
+          $installers
 
       # https://github.com/slsa-framework/slsa-github-generator/blob/main/internal/builders/generic/README.md
       - name: Generate hashes
