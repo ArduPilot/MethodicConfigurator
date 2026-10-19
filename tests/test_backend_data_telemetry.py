@@ -9,17 +9,20 @@ SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from collections.abc import Generator
 from dataclasses import replace
-from io import BytesIO
+from threading import Event, Thread
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
+import serial
 from pymavlink import mavutil
 from pymavlink.dialects.v20 import ardupilotmega as mavlink
+from telemetry_test_helpers import connected_telemetry_link, create_telemetry_link, feed
 
 from ardupilot_methodic_configurator.backend_data_telemetry import DataTelemetryBackend
-from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.backend_mavftp import FTP_OP, MAVFTP, OP_WriteFile
 from ardupilot_methodic_configurator.data_model_data_telemetry import (
     DataTelemetryDataModel,
     MessageSample,
@@ -31,36 +34,9 @@ from ardupilot_methodic_configurator.data_model_data_telemetry import (
 
 
 @pytest.fixture
-def telemetry_link() -> SimpleNamespace:
-    """Exercise the real MAVLink parser and hooks with only byte transport replaced."""
-    controller = MagicMock(spec=FlightController)
-    master = mavutil.mavfile(None, "telemetry-test", input=False)
-    master.first_byte = False
-    master.mav = mavlink.MAVLink(master, srcSystem=255, srcComponent=190)
-    master.mav.robust_parsing = True
-    incoming = BytesIO()
-    master.recv = incoming.read
-    master.write = MagicMock()
-    controller.master = master
-    return SimpleNamespace(
-        controller=controller,
-        master=master,
-        incoming=incoming,
-        now=0.0,
-        sender=mavlink.MAVLink(None, srcSystem=1, srcComponent=1),
-    )
-
-
-def _feed(link: SimpleNamespace, message: mavlink.MAVLink_message, system: int = 1, component: int = 1) -> bytes:
-    link.sender.srcSystem = system
-    link.sender.srcComponent = component
-    packet = message.pack(link.sender)
-    link.sender.seq = (link.sender.seq + 1) % 256
-    position = link.incoming.tell()
-    link.incoming.seek(0, 2)
-    link.incoming.write(packet)
-    link.incoming.seek(position)
-    return bytes(packet)
+def telemetry_link() -> Generator[SimpleNamespace, None, None]:
+    """Provide a parser and sender with connection cleanup after each test."""
+    yield from connected_telemetry_link()
 
 
 @pytest.mark.parametrize("message_type", [mavlink.MAVLink_radio_message, mavlink.MAVLink_radio_status_message])
@@ -73,7 +49,7 @@ def test_user_sees_radio_values_from_modem_sources(telemetry_link: SimpleNamespa
     THEN zero is valid, unknown RSSI stays unavailable and counts/fields retain their meaning.
     """
     backend = DataTelemetryBackend(telemetry_link.controller, lambda: telemetry_link.now)
-    packet = _feed(telemetry_link, message_type(0, 255, 80, 40, 50, 7, 9), 51, 68)
+    packet = feed(telemetry_link, message_type(0, 255, 80, 40, 50, 7, 9), 51, 68)
     try:
         sample = backend.poll()
         assert sample.radio == RadioSample((51, 68), 0.0, 0, None, 40, 50, 80, 7, 9)
@@ -100,8 +76,8 @@ def test_user_can_measure_rx_tx_and_message_rates(telemetry_link: SimpleNamespac
     try:
         assert model.update(backend.poll()).rx_rate is None
         baseline_tx = telemetry_link.master.mav.total_bytes_sent
-        packet = _feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
-        other = _feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3), 2, 1)
+        packet = feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
+        other = feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3), 2, 1)
         telemetry_link.master.mav.heartbeat_send(6, 8, 0, 0, 0)
         telemetry_link.now = 2.0
         state = model.update(backend.poll())
@@ -135,7 +111,7 @@ def test_local_radio_starts_reporting_after_a_gcs_heartbeat(telemetry_link: Simp
         assert heartbeat.autopilot == mavlink.MAV_AUTOPILOT_INVALID
         assert heartbeat.base_mode == heartbeat.custom_mode == 0
         assert heartbeat.system_status == mavlink.MAV_STATE_ACTIVE
-        _feed(telemetry_link, message_type(100, 90, 80, 30, 40, 0, 0), 51, 68)
+        feed(telemetry_link, message_type(100, 90, 80, 30, 40, 0, 0), 51, 68)
 
     telemetry_link.master.write.side_effect = modem_write
     backend = DataTelemetryBackend(telemetry_link.controller, lambda: telemetry_link.now)
@@ -148,38 +124,44 @@ def test_local_radio_starts_reporting_after_a_gcs_heartbeat(telemetry_link: Simp
         backend.close()
 
 
-def test_radio_heartbeats_are_rate_limited_and_restart_after_monitoring_resumes(telemetry_link: SimpleNamespace) -> None:
+def test_gcs_heartbeats_continue_after_monitoring_closes_until_disconnect(telemetry_link: SimpleNamespace) -> None:
     """
     Keep radio reports active without flooding a slow telemetry link.
 
-    GIVEN the shared backend polled every quarter second,
-    WHEN monitoring runs, pauses and resumes on the same connection,
-    THEN heartbeats are sent immediately and at most once per second, without catch-up bursts.
+    GIVEN a connection that sends no heartbeats until monitoring starts,
+    WHEN monitoring closes and another host starts and closes on the same connection,
+    THEN one heartbeat schedule continues independently until disconnect.
     """
     backend = DataTelemetryBackend(telemetry_link.controller, lambda: telemetry_link.now)
-    try:
-        for now in (0, 0.25, 0.5, 0.75):
-            telemetry_link.now = now
-            backend.poll()
-        assert telemetry_link.master.write.call_count == 1
-        telemetry_link.now = 1
+    heartbeat = Event()
+    packets = []
+
+    def capture(packet: bytes) -> None:
+        packets.append(packet)
+        heartbeat.set()
+
+    telemetry_link.master.write.side_effect = capture
+    original_send = telemetry_link.master.mav.send
+    assert not packets
+    for _tick in range(4):
         backend.poll()
-        assert telemetry_link.master.write.call_count == 2
-        telemetry_link.now = 20
-        backend.poll()
-        assert telemetry_link.master.write.call_count == 3
-        backend.close()
-        telemetry_link.now = 20.25
-        backend.poll()
-        assert telemetry_link.master.write.call_count == 4
-        telemetry_link.controller.master = None
-        backend.poll()
-        assert telemetry_link.master.write.call_count == 4
-        telemetry_link.controller.master = telemetry_link.master
-        backend.poll()
-        assert telemetry_link.master.write.call_count == 5
-    finally:
-        backend.close()
+    assert len(packets) == 1
+    backend.close()
+    other_host = DataTelemetryBackend(telemetry_link.controller)
+    other_host.poll()
+    other_host.close()
+    assert len(packets) == 1
+    assert not telemetry_link.master.message_hooks
+    heartbeat.clear()
+    assert heartbeat.wait(3), "Closing both telemetry hosts must leave GCS heartbeats running"
+    telemetry_link.controller.disconnect()
+    assert telemetry_link.master.mav.send == original_send
+    decoder = mavlink.MAVLink(None)
+    messages = [decoder.parse_char(packet) for packet in packets]
+    assert all(message.get_type() == "HEARTBEAT" and message.get_srcSystem() == 255 for message in messages)
+    assert [message.get_seq() for message in messages] == list(range(len(messages)))
+    heartbeat.clear()
+    assert not heartbeat.wait(1.1), "Disconnect must stop the heartbeat sender"
 
 
 def test_heartbeat_write_failure_reports_unavailable_and_can_recover(telemetry_link: SimpleNamespace) -> None:
@@ -201,6 +183,297 @@ def test_heartbeat_write_failure_reports_unavailable_and_can_recover(telemetry_l
         assert len(telemetry_link.master.message_hooks) == 1
     finally:
         backend.close()
+
+
+def test_gcs_heartbeat_recovers_from_a_write_failure_after_monitoring_closes(telemetry_link: SimpleNamespace) -> None:
+    """
+    Keep the GCS alive after a transient transport failure without reopening monitoring.
+
+    GIVEN a heartbeat sender started by a now-closed monitor,
+    WHEN a scheduled write fails and the next one succeeds,
+    THEN periodic heartbeats recover without a GUI poll.
+    """
+    backend = DataTelemetryBackend(telemetry_link.controller)
+    backend.poll()
+    backend.close()
+    recovered = Event()
+    writes = 0
+
+    def flaky_write(_packet: bytes) -> None:
+        nonlocal writes
+        writes += 1
+        if writes == 1:
+            message = "temporary link failure"
+            raise OSError(message)
+        recovered.set()
+
+    telemetry_link.master.write.side_effect = flaky_write
+    assert recovered.wait(4), "Heartbeat writes must retry while monitoring remains closed"
+
+
+def test_replacing_connection_stops_old_heartbeats_and_waits_for_monitoring(telemetry_link: SimpleNamespace) -> None:
+    """
+    Isolate GCS heartbeat schedules across connections.
+
+    GIVEN monitoring started heartbeats on the old connection,
+    WHEN that transport is replaced and monitoring later resumes,
+    THEN the old sender stops and only monitoring starts the new sender.
+    """
+    backend = DataTelemetryBackend(telemetry_link.controller)
+    backend.poll()
+    backend.close()
+    old_packet = Event()
+    telemetry_link.master.write.side_effect = lambda _packet: old_packet.set()
+    replacement = create_telemetry_link()
+    telemetry_link.connection.set_master_for_testing(replacement.master)
+    telemetry_link.controller.master = replacement.master
+    assert not old_packet.wait(1.1)
+    replacement.master.write.assert_not_called()
+    try:
+        backend.poll()
+        assert replacement.master.write.call_count == 1
+    finally:
+        backend.close()
+
+
+def test_other_fc_operations_share_the_encoder_safely_with_heartbeats(telemetry_link: SimpleNamespace) -> None:
+    """
+    Preserve complete packets and sequence numbers when tools transmit alongside heartbeats.
+
+    GIVEN a scheduled heartbeat partway through its transport write,
+    WHEN another FC operation tries to transmit,
+    THEN it waits until the heartbeat's write and sequence update finish.
+    """
+    backend = DataTelemetryBackend(telemetry_link.controller)
+    backend.poll()
+    backend.close()
+    heartbeat_writing = Event()
+    release_heartbeat = Event()
+    operation_started = Event()
+    operation_sent = Event()
+    packets = []
+
+    def slow_write(packet: bytes) -> None:
+        if not packets:
+            heartbeat_writing.set()
+            assert release_heartbeat.wait(3)
+        packets.append(packet)
+
+    def send_operation() -> None:
+        operation_started.set()
+        telemetry_link.master.mav.request_data_stream_send(1, 1, 0, 1, 1)
+        operation_sent.set()
+
+    telemetry_link.master.write.side_effect = slow_write
+    operation = Thread(target=send_operation)
+    try:
+        assert heartbeat_writing.wait(3)
+        operation.start()
+        assert operation_started.wait(1)
+        assert not operation_sent.wait(0.1)
+    finally:
+        release_heartbeat.set()
+        if operation.ident is not None:
+            operation.join(3)
+    assert operation_sent.is_set()
+    telemetry_link.controller.disconnect()
+    decoder = mavlink.MAVLink(None)
+    messages = [decoder.parse_char(packet) for packet in packets]
+    assert [message.get_type() for message in messages[:2]] == ["HEARTBEAT", "REQUEST_DATA_STREAM"]
+    assert [message.get_seq() for message in messages] == list(range(1, len(messages) + 1))
+
+
+@pytest.mark.parametrize("cancellable", [True, False])
+def test_disconnect_returns_when_a_heartbeat_write_stalls(telemetry_link: SimpleNamespace, cancellable: bool) -> None:
+    """
+    Let the user disconnect even when the transport stalls during a heartbeat.
+
+    GIVEN an in-flight heartbeat write and a transport that may support cancellation,
+    WHEN the user disconnects,
+    THEN shutdown cancels the write when possible and returns within a bounded time.
+    """
+    backend = DataTelemetryBackend(telemetry_link.controller)
+    backend.poll()
+    backend.close()
+    writing = Event()
+    release = Event()
+    disconnected = Event()
+    master = telemetry_link.master
+    master.autoreconnect = True
+    master.close = MagicMock()
+
+    def stalled_write(_packet: bytes) -> None:
+        writing.set()
+        release.wait()
+
+    def cancel_write() -> None:
+        if cancellable:
+            release.set()
+
+    def disconnect() -> None:
+        telemetry_link.controller.disconnect()
+        disconnected.set()
+
+    master.port = SimpleNamespace(cancel_write=cancel_write)
+    master.write.side_effect = stalled_write
+    closer = Thread(target=disconnect, daemon=True)
+    try:
+        assert writing.wait(3)
+        closer.start()
+        assert disconnected.wait(2.5), "A stalled heartbeat must not prevent disconnect"
+        master.close.assert_called_once()
+        assert telemetry_link.connection.master is None
+        assert not master.autoreconnect, "An interrupted write must not reopen a disconnected transport"
+        if cancellable:
+            assert release.is_set(), "Disconnect should cancel an in-flight serial write"
+    finally:
+        release.set()
+        if closer.ident is not None:
+            closer.join(3)
+
+
+def test_mavftp_batches_wait_for_heartbeat_writes_and_preserve_sequences(telemetry_link: SimpleNamespace) -> None:
+    """
+    Serialize real MAVFTP batches with the background heartbeat sender.
+
+    GIVEN a scheduled heartbeat paused inside its transport write,
+    WHEN MAVFTP sends a batch of file-write requests,
+    THEN the batch waits and all packets retain ordered, unique MAVLink sequences.
+    """
+    ftp = MAVFTP(telemetry_link.master, 1, 1, reset_sessions=False)
+    backend = DataTelemetryBackend(telemetry_link.controller)
+    backend.poll()
+    backend.close()
+    writing = Event()
+    release = Event()
+    batch_started = Event()
+    batch_sent = Event()
+    packets = []
+
+    def slow_write(packet: bytes) -> int:
+        messages = mavlink.MAVLink(None).parse_buffer(packet)
+        assert messages is not None
+        assert messages
+        if messages[0].get_type() == "HEARTBEAT":
+            writing.set()
+            assert release.wait(3)
+        packets.extend(messages)
+        return len(packet)
+
+    def send_batch() -> None:
+        batch_started.set()
+        ftp._MAVFTP__send_batch(
+            [
+                FTP_OP(0, 0, OP_WriteFile, 1, 0, 0, 0, bytearray(b"x")),
+                FTP_OP(1, 0, OP_WriteFile, 1, 0, 0, 1, bytearray(b"y")),
+            ]
+        )
+        batch_sent.set()
+
+    telemetry_link.master.write.side_effect = slow_write
+    batch = Thread(target=send_batch)
+    try:
+        assert writing.wait(3)
+        batch.start()
+        assert batch_started.wait(1)
+        assert not batch_sent.wait(0.1), "MAVFTP must share the heartbeat's send lock"
+    finally:
+        release.set()
+        if batch.ident is not None:
+            batch.join(3)
+    assert batch_sent.is_set()
+    telemetry_link.controller.disconnect()
+    assert [message.get_type() for message in packets[:3]] == ["HEARTBEAT", "FILE_TRANSFER_PROTOCOL", "FILE_TRANSFER_PROTOCOL"]
+    assert [message.get_seq() for message in packets] == list(range(1, len(packets) + 1))
+
+
+def test_timed_out_heartbeat_worker_cannot_restart_on_a_replacement_connection(telemetry_link: SimpleNamespace) -> None:
+    """
+    Keep an uncancellable old write isolated when the user reconnects.
+
+    GIVEN a sender that outlives the bounded disconnect wait,
+    WHEN a new connection starts heartbeats and the old write eventually returns,
+    THEN the old worker exits and only the new connection's worker remains active.
+    """
+    backend = DataTelemetryBackend(telemetry_link.controller)
+    backend.poll()
+    backend.close()
+    writing = Event()
+    release = Event()
+    old_worker = telemetry_link.connection._radio_status._thread
+
+    def stalled_write(_packet: bytes) -> None:
+        writing.set()
+        release.wait()
+
+    telemetry_link.master.write.side_effect = stalled_write
+    try:
+        assert writing.wait(3)
+        telemetry_link.controller.disconnect()
+        assert old_worker.is_alive()
+        replacement = create_telemetry_link()
+        telemetry_link.connection.set_master_for_testing(replacement.master)
+        telemetry_link.controller.master = replacement.master
+        telemetry_link.controller.start_gcs_heartbeat()
+        release.set()
+        old_worker.join(1)
+        assert not old_worker.is_alive(), "A stopped worker must retain its old stop event across reconnects"
+        assert telemetry_link.master.write.call_count == 2
+        replacement.master.write.assert_called_once()
+    finally:
+        release.set()
+        old_worker.join(1)
+
+
+def test_disconnect_closes_a_serial_port_reopened_after_shutdown(
+    telemetry_link: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """
+    Release a serial port even when an automatic reopen outlives disconnect.
+
+    GIVEN a failed heartbeat write whose pymavlink reset is still opening a port,
+    WHEN disconnect returns before the reopen completes,
+    THEN the stopped worker closes the late port despite pymavlink retaining the master.
+    """
+    reopening = Event()
+    release = Event()
+    # Use real serial transports without depending on physical hardware or Unix ptys.
+    with serial.serial_for_url("loop://") as original_port, serial.serial_for_url("loop://") as reopened_port:
+        monkeypatch.setattr(mavutil, "mavfile_global", mavutil.mavfile_global)
+        with patch("serial.Serial", return_value=original_port):
+            master = mavutil.mavserial("slow-reopen-test", autoreconnect=True)
+        telemetry_link.connection.set_master_for_testing(master)
+        telemetry_link.controller.start_gcs_heartbeat()
+        worker = telemetry_link.connection._radio_status._thread
+        assert worker is not None
+
+        def failed_write(_packet: bytes) -> int:
+            message = "serial link lost"
+            raise serial.SerialException(message)
+
+        def slow_open(*_args: object, **_kwargs: object) -> serial.SerialBase:
+            reopening.set()
+            assert release.wait(5), "The test must release the pending serial open"
+            return reopened_port
+
+        monkeypatch.setattr(original_port, "write", failed_write)
+        with patch("serial.Serial", side_effect=slow_open):
+            try:
+                assert reopening.wait(3)
+                telemetry_link.controller.disconnect()
+                assert telemetry_link.connection.master is None
+                assert worker.is_alive(), "Disconnect must return while the serial open is pending"
+                assert not master.autoreconnect
+                assert not original_port.is_open
+                assert mavutil.mavfile_global is master
+                release.set()
+                worker.join(3)
+                assert not worker.is_alive()
+                assert master.port is reopened_port, "Exercise pymavlink's real reset and port swap"
+                assert not reopened_port.is_open, "A port reopened after disconnect must be closed by its worker"
+            finally:
+                release.set()
+                worker.join(3)
 
 
 def test_stale_radio_and_message_rates_expire_and_recover(telemetry_link: SimpleNamespace) -> None:
@@ -290,7 +563,7 @@ def test_observer_preserves_other_consumers_and_detaches_on_reconnect(telemetry_
     backend.poll()
     backend.poll()
     assert len(telemetry_link.master.message_hooks) == 2
-    _feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
+    feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
     assert telemetry_link.master.recv_match(blocking=False) is not None
     assert backend.poll().messages[(1, 1, "HEARTBEAT")].count == 1
     observer.assert_called_once()
@@ -329,7 +602,7 @@ def test_malformed_packets_never_appear_as_received_message_types(telemetry_link
     backend = DataTelemetryBackend(telemetry_link.controller, lambda: telemetry_link.now)
     try:
         backend.poll()
-        _feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
+        feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
         before = backend.poll()
         malformed = mavlink.MAVLink_bad_data(b"noise", "invalid MAVLink data")
         for hook in telemetry_link.master.message_hooks:
@@ -349,9 +622,37 @@ def test_radio_fields_preserve_valid_limits_and_hide_unknown_or_invalid_readings
     """
     backend = DataTelemetryBackend(telemetry_link.controller, lambda: telemetry_link.now)
     try:
-        _feed(telemetry_link, mavlink.MAVLink_radio_status_message(254, 255, 101, 255, 254, 0, 0), 51, 68)
+        feed(telemetry_link, mavlink.MAVLink_radio_status_message(254, 255, 101, 255, 254, 0, 0), 51, 68)
         sample = backend.poll()
         assert sample.radio == RadioSample((51, 68), 0, 254, None, None, 254, None, 0, 0)
+    finally:
+        backend.close()
+
+
+@pytest.mark.parametrize("message_type", [mavlink.MAVLink_radio_message, mavlink.MAVLink_radio_status_message])
+def test_radio_updates_when_message_table_is_full(telemetry_link: SimpleNamespace, message_type: type) -> None:
+    """
+    Keep radio measurements current even when no more message rows fit.
+
+    GIVEN a message table filled with heartbeat sources,
+    WHEN radio reports arrive from previously unseen modem sources,
+    THEN the latest radio readings update while the table remains bounded.
+    """
+    backend = DataTelemetryBackend(telemetry_link.controller, lambda: telemetry_link.now)
+    try:
+        backend.poll()
+        for index in range(512):
+            message = mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3)
+            message.pack(mavlink.MAVLink(None, srcSystem=index // 250, srcComponent=index % 250))
+            backend._capture(telemetry_link.master, message)
+        before = backend.poll().messages
+        assert len(before) == 512
+        for source in (51, 52):
+            telemetry_link.now += 1
+            feed(telemetry_link, message_type(100, 90, 80, 30, 40, 7, 9), source, 68)
+            sample = backend.poll()
+            assert sample.radio == RadioSample((source, 68), telemetry_link.now, 100, 90, 30, 40, 80, 7, 9)
+            assert sample.messages == before
     finally:
         backend.close()
 
@@ -367,7 +668,7 @@ def test_busy_stream_and_source_count_are_bounded(telemetry_link: SimpleNamespac
     backend = DataTelemetryBackend(telemetry_link.controller, lambda: 0.0)
     try:
         for _index in range(250):
-            _feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
+            feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
         assert backend.poll().messages[(1, 1, "HEARTBEAT")].count == 200
         assert backend.poll().messages[(1, 1, "HEARTBEAT")].count == 250
         for index in range(600):

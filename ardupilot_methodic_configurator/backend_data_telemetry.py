@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING, Any, cast
 
 from serial import SerialException
 
-from ardupilot_methodic_configurator.backend_radio_status import RadioStatusBackend
 from ardupilot_methodic_configurator.data_model_data_telemetry import (
     MessageKey,
     MessageSample,
@@ -38,7 +37,6 @@ class DataTelemetryBackend:
         self._master: Any = None
         self._messages: dict[MessageKey, MessageSample] = {}
         self._radio: RadioSample | None = None
-        self._radio_status = RadioStatusBackend(clock)
 
     def close(self) -> None:
         """Detach only our observer and discard data at lifecycle boundaries."""
@@ -47,7 +45,6 @@ class DataTelemetryBackend:
         self._master = None
         self._messages.clear()
         self._radio = None
-        self._radio_status.close()
 
     def _capture(self, _master: object, message: Any) -> None:  # noqa: ANN401
         """Count all sources independently, including modem-injected RADIO messages."""
@@ -56,16 +53,6 @@ class DataTelemetryBackend:
             return
         now = self._clock()
         source = (int(message.get_srcSystem()), int(message.get_srcComponent()))
-        key = (*source, name)
-        old = self._messages.get(key)
-        if old is None and len(self._messages) >= _MAX_MESSAGE_TYPES:
-            return
-        self._messages[key] = MessageSample(
-            count=(old.count if old else 0) + 1,
-            size=(old.size if old else 0) + len(message.get_msgbuf()),
-            last_seen=now,
-            fields=tuple((key, str(value)[:512]) for key, value in message.to_dict().items() if key != "mavpackettype"),
-        )
         if name in {"RADIO", "RADIO_STATUS"}:
             # These are injected by the radio on this transport. Source IDs are not link IDs.
             self._radio = RadioSample(
@@ -79,13 +66,23 @@ class DataTelemetryBackend:
                 rxerrors=int(message.rxerrors),
                 fixed=int(message.fixed),
             )
+        key = (*source, name)
+        old = self._messages.get(key)
+        if old is None and len(self._messages) >= _MAX_MESSAGE_TYPES:
+            return
+        self._messages[key] = MessageSample(
+            count=(old.count if old else 0) + 1,
+            size=(old.size if old else 0) + len(message.get_msgbuf()),
+            last_seen=now,
+            fields=tuple((key, str(value)[:512]) for key, value in message.to_dict().items() if key != "mavpackettype"),
+        )
 
     @staticmethod
     def _radio_value(value: int, maximum: int) -> int | None:
         return int(value) if 0 <= value <= maximum else None
 
     def poll(self) -> TelemetrySample:
-        """Send a GCS heartbeat and drain at most 200 packets/10 ms without altering stream rates."""
+        """Enable connection-owned heartbeats and drain at most 200 packets/10 ms."""
         master = cast("Any", self.flight_controller.master)
         if master is not self._master:
             self.close()
@@ -95,7 +92,7 @@ class DataTelemetryBackend:
         if master is None:
             return TelemetrySample(None, self._clock())
         try:
-            self._radio_status.poll(master)
+            self.flight_controller.start_gcs_heartbeat()
             deadline = self._clock() + 0.01
             for _index in range(200):
                 if self._clock() >= deadline or master.recv_match(blocking=False) is None:

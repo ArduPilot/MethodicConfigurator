@@ -230,6 +230,10 @@
             "old_filenames": []
         },
         "08_telemetry.param": {
+            "plugin": {
+                "name": "data_telemetry",
+                "placement": "top"
+            },
             "why": "Telemetry allows the ground control station to monitor the vehicle's status in real-time, providing flight information for safe and efficient operation.",
             "why_now": "Sometimes it depends on the remote controller. Configuring telemetry early allows vehicle configuration and sensor calibration in later steps without requiring a USB cable connection to the autopilot",
             "blog_text": "Configure telemetry connection, data protocol and settings between the autopilot and the ground control station(s)",
