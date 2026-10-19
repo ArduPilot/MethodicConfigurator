@@ -90,7 +90,6 @@ Name: "ja"; MessagesFile: "compiler:Languages\Japanese.isl"
 
 [CustomMessages]
 LegacyMachineInstall=An existing installation for all users was found. Setup has stopped to avoid creating a second installation. Run this installer with /ALLUSERS to upgrade it (administrator approval is required), or explicitly use /CURRENTUSER to install a separate copy for your user account.
-de.LegacyMachineInstall=Eine vorhandene Installation für alle Benutzer wurde gefunden. Setup wurde beendet, damit keine zweite Installation entsteht. Starten Sie diesen Installer mit /ALLUSERS für ein Upgrade (Administratorfreigabe erforderlich) oder ausdrücklich mit /CURRENTUSER für eine separate Installation in Ihrem Benutzerkonto.
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
