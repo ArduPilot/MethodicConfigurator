@@ -14,6 +14,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import sys
 import tkinter as tk
 from collections.abc import Generator
 from tkinter import TclError
@@ -1292,7 +1293,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             # As it destroys immediately, check if active_tooltip is cleared
             assert Tooltip._active_tooltip is None
             mock_toplevel.withdraw.assert_called_once()
-            mock_toplevel.tk.call.assert_any_call("after", 50, ("destroy", str(mock_toplevel)))
+            mock_toplevel.after.assert_called_once_with(50, mock_toplevel.destroy)
 
     def test_tooltip_cancel_timer_removes_arbitrary_timer(self, mock_widget) -> None:
         """
@@ -1330,7 +1331,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             tooltip.destroy_hide()
 
             mock_toplevel.withdraw.assert_called_once()
-            mock_toplevel.tk.call.assert_any_call("after", 50, ("destroy", str(mock_toplevel)))
+            mock_toplevel.after.assert_called_once_with(50, mock_toplevel.destroy)
             assert tooltip.tooltip is None
 
     def test_tooltip_schedule_show_on_macos(self, mock_widget: MagicMock) -> None:
@@ -1437,7 +1438,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             tooltip.force_hide()
 
             assert mock_toplevel.withdraw.called
-            mock_toplevel.tk.call.assert_any_call("after", 50, ("destroy", str(mock_toplevel)))
+            mock_toplevel.after.assert_called_once_with(50, mock_toplevel.destroy)
             assert tooltip.tooltip is None
 
     def test_tooltip_force_hide_suppresses_tcl_error_when_already_destroyed(
@@ -1654,7 +1655,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             mock_widget.after_cancel.assert_any_call("alpha_timer")
             # Tooltip destroyed
             mock_toplevel.withdraw.assert_called_once()
-            mock_toplevel.tk.call.assert_any_call("after", 50, ("destroy", str(mock_toplevel)))
+            mock_toplevel.after.assert_called_once_with(50, mock_toplevel.destroy)
             assert tooltip.tooltip is None
 
     def test_tooltip_timer_cancellation_handles_already_fired_timers(self, mock_widget: MagicMock) -> None:
@@ -1849,4 +1850,33 @@ def test_closing_owner_during_tooltip_hide_has_no_tcl_background_error(tk_root: 
     finally:
         tk_root.tk.call("interp", "bgerror", "", previous_handler)
         tk_root.deletecommand(handler)
+        owner.destroy()
+
+
+@pytest.mark.skipif(sys.platform == "darwin", reason="Real event-loop regression runs under Xvfb; Aqua CI cannot render")
+def test_repeated_tooltip_hides_release_widgets_and_registered_commands(tk_root: tk.Tk) -> None:
+    """
+    Repeated hovering does not accumulate hidden tooltip resources.
+
+    GIVEN: A live owner whose tooltip is repeatedly shown
+    WHEN: Each tooltip is hidden and its destruction delay expires
+    THEN: Python child widgets and their registered Tcl commands are released
+    """
+    owner = tk.Toplevel(tk_root)
+    tooltip = Tooltip(owner, "Help")
+    commands: list[str] = []
+    completed = tk.BooleanVar(master=tk_root, value=False)
+    try:
+        for _ in range(20):
+            window = tk.Toplevel(owner)
+            commands.append(window.register(lambda: None))
+            tooltip.tooltip = window
+            tooltip.force_hide()
+
+        tk_root.after(100, lambda: completed.set(True))
+        tk_root.wait_variable(completed)
+
+        assert not owner.children
+        assert all(not tk_root.tk.call("info", "commands", command) for command in commands)
+    finally:
         owner.destroy()

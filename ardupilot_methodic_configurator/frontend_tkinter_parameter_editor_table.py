@@ -332,10 +332,21 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
 
     def _apply_scroll_position(self, scroll_to_bottom: bool) -> None:
         """Apply the requested scroll position to the canvas."""
-        if not is_macos_sequoia_or_older():
-            self.update_idletasks()
         position = 1.0 if scroll_to_bottom else 0.0
-        self.canvas.yview_moveto(position)
+
+        def scroll() -> None:
+            self.canvas.yview_moveto(position)
+
+        if is_macos_sequoia_or_older():
+            # Row geometry and the canvas scroll region settle in successive
+            # idle passes. Cancel deferred scrolling if the table is closed.
+            BaseWindow._run_when_idle(  # noqa: SLF001 # pylint: disable=protected-access
+                self,
+                lambda: BaseWindow._run_when_idle(self, scroll),  # noqa: SLF001 # pylint: disable=protected-access
+            )
+        else:
+            self.update_idletasks()
+            scroll()
 
     def _update_table(self, params: dict[str, ArduPilotParameter], gui_complexity: str) -> None:
         """Update the parameter table with the given parameters."""
