@@ -12,7 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import datetime
-import importlib.util
+import importlib.metadata
 import os
 import shutil
 import subprocess
@@ -44,21 +44,19 @@ old_cwd = os.getcwd()
 
 def ensure_dependencies() -> None:
     """Check for and install required dependencies if they're missing."""
-    required_packages = ["lxml==6.1.2"]
+    required_package = "lxml==6.1.3"
+    required_version = "6.1.3"
 
-    for package in required_packages:
-        module_name = (
-            package.split("==", maxsplit=1)[0]
-            .split(">=", maxsplit=1)[0]
-            .split("<=", maxsplit=1)[0]
-            .split("!=", maxsplit=1)[0]
-            .split("~=", maxsplit=1)[0]
-        )
-        if importlib.util.find_spec(module_name) is None:
-            print(f"Installing required dependency: {package}")  # noqa: T201
-            # This is safe as we're only installing known packages defined in the code
-            subprocess.check_call([sys.executable, "-m", "pip", "install", package])  # noqa: S603
-            print(f"Successfully installed {package}")  # noqa: T201
+    try:
+        installed_version = importlib.metadata.version("lxml")
+    except importlib.metadata.PackageNotFoundError:
+        installed_version = None
+
+    if installed_version != required_version:
+        print(f"Installing required dependency: {required_package}")  # noqa: T201
+        # This is safe as we're only installing a known package defined in the code
+        subprocess.check_call([sys.executable, "-m", "pip", "install", required_package])  # noqa: S603
+        print(f"Successfully installed {required_package}")  # noqa: T201
 
 
 def get_vehicle_tags(vehicle_type: str) -> list[str]:
