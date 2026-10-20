@@ -25,8 +25,7 @@ jobs:
     runs-on: 'windows-latest'
     strategy:
       matrix:
-        # An exact version keeps the packaged Windows artifact reproducible.
-        python-version: ['3.14.6']
+        python-version: ['3.15.0']
 
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
@@ -86,11 +85,26 @@ jobs:
           cd ardupilot_methodic_configurator
           copy ..\\windows\\ardupilot_methodic_configurator.spec
           pyinstaller --clean ardupilot_methodic_configurator.spec
-          if (-not (Test-Path "dist\\ardupilot_methodic_configurator\\_internal\\_tcl_data\\init.tcl") -or
-              -not (Test-Path "dist\\ardupilot_methodic_configurator\\_internal\\_tk_data\\tk.tcl")) {
-            throw "PyInstaller did not bundle the Tcl/Tk library data."
+          if ($LASTEXITCODE -ne 0) {
+            throw "PyInstaller failed with exit code $LASTEXITCODE."
           }
           del ardupilot_methodic_configurator.spec
+
+      - name: Smoke-test frozen Tcl/Tk initialization
+        shell: pwsh
+        timeout-minutes: 2
+        run: |
+          $app = Join-Path $PWD "ardupilot_methodic_configurator/dist/ardupilot_methodic_configurator/ardupilot_methodic_configurator.exe"
+          Remove-Item Env:TCL_LIBRARY, Env:TK_LIBRARY -ErrorAction SilentlyContinue
+          Push-Location $env:RUNNER_TEMP
+          try {
+            & $app --validate-tkinter
+            if ($LASTEXITCODE -ne 0) {
+              throw "Frozen Tcl/Tk initialization failed with exit code $LASTEXITCODE."
+            }
+          } finally {
+            Pop-Location
+          }
 
       - name: Verify frozen plugin and log-analysis modules
         run: python scripts/verify_packaged_modules.py ardupilot_methodic_configurator/build/ardupilot_methodic_configurator/PYZ-00.pyz
@@ -208,7 +222,7 @@ jobs:
     runs-on: 'macos-latest'
     strategy:
       matrix:
-        python-version: ['3.13']
+        python-version: ['3.15.0']
 
     permissions:
       contents: write
@@ -312,7 +326,7 @@ jobs:
     runs-on: 'ubuntu-22.04'  # Use a consistent Linux environment for building the AppImage
     strategy:
       matrix:
-        python-version: ['3.14']
+        python-version: ['3.15.0']
 
     permissions:
       contents: write
