@@ -25,7 +25,6 @@ from argcomplete.completers import FilesCompleter
 if __package__ in {None, ""}:  # pragma: no cover
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-# pylint: disable=wrong-import-position
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_firmware_upload import (
     FirmwareBoardInfo,
@@ -59,8 +58,6 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_application impo
     create_argument_parser as create_parameter_application_argument_parser,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
-
-# pylint: enable=wrong-import-position
 
 
 def _show_firmware_tooltip(widget: tk.Widget, text: str) -> None:

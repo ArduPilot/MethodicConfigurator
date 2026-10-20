@@ -23,7 +23,6 @@ from typing import TYPE_CHECKING, Protocol
 if __package__ in {None, ""}:  # pragma: no cover
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-# pylint: disable=wrong-import-position
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
@@ -43,8 +42,6 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_application impo
     create_argument_parser as create_parameter_application_argument_parser,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_show import Tooltip, position_tooltip_at_pointer, show_tooltip
-
-# pylint: enable=wrong-import-position
 
 if TYPE_CHECKING:
     from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorUiServices

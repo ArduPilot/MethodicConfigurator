@@ -19,7 +19,6 @@ from tkinter import ttk
 from typing import TYPE_CHECKING, Protocol
 
 # Keep the direct-execution bootstrap before package imports.
-# pylint: disable=wrong-import-position
 # Support direct execution from the repository root as well as package imports.
 if __package__ in {None, ""}:  # pragma: no cover
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -46,8 +45,6 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table imp
     ParameterTableOptions,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
-
-# pylint: enable=wrong-import-position
 
 if TYPE_CHECKING:
     from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorUiServices

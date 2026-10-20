@@ -45,7 +45,8 @@ class TestVehicleComponents:
         self.invalid_component_data: dict[str, dict] = {"WrongKey": {"Flight Controller": {}}}
 
         # Detailed schema with MCU Series for testing modify_schema_for_mcu_series
-        self.schema_with_mcu_series = {  # pylint: disable=duplicate-code  # Schema fixture for MCU tests
+        # pylint: disable=duplicate-code
+        self.schema_with_mcu_series = {  # Schema fixture for MCU tests
             "$schema": "http://json-schema.org/draft-07/schema#",
             "definitions": {
                 "flightController": {

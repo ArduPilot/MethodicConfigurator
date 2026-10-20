@@ -1275,7 +1275,6 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
                     return
             self._bulk_add_parameters_and_show_feedback(selected, add_parameter_window)
 
-        # pylint: disable=line-too-long
         # Bind events
         search_var.trace_add("write", refresh_list)
         search_entry.bind(
@@ -1302,7 +1301,6 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         listbox.bind("<Control-A>", lambda _: (listbox.selection_set(0, tk.END), update_selection_info(), "break")[2])  # type: ignore[func-returns-value]
         listbox.bind("<Control-d>", lambda _: (listbox.selection_clear(0, tk.END), update_selection_info(), "break")[2])  # type: ignore[func-returns-value]
         listbox.bind("<Control-D>", lambda _: (listbox.selection_clear(0, tk.END), update_selection_info(), "break")[2])  # type: ignore[func-returns-value]
-        # pylint: enable=line-too-long
         add_parameter_window.root.bind("<Return>", lambda _: add_selected())
 
         def on_escape(_event: tk.Event) -> None:
