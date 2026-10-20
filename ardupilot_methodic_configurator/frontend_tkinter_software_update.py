@@ -37,6 +37,7 @@ class UpdateDialog(BaseWindow):  # pylint: disable=too-many-instance-attributes
         self.center_window_on_screen(self.root)
         self.download_callback = download_callback
         self._download_runner = BackgroundTaskRunner(self.root.after)
+        self._close_timer_id: str | None = None
         self.root.protocol("WM_DELETE_WINDOW", self.on_cancel)
 
         self.frame = ttk.Frame(self.main_frame, padding="10")
@@ -92,6 +93,7 @@ class UpdateDialog(BaseWindow):  # pylint: disable=too-many-instance-attributes
     def on_yes(self) -> None:
         if self._download_runner.active:
             return
+        self._cancel_pending_close()
         self.progress.grid()
         self.status_label.grid()
         self.yes_btn.config(state="disabled")
@@ -109,17 +111,26 @@ class UpdateDialog(BaseWindow):  # pylint: disable=too-many-instance-attributes
             self.status_label["text"] = _("Update failed!")
             self.yes_btn.config(state="normal")
             self.no_btn.config(state="normal")
-        self.root.after(4000, self.root.destroy)
+        self._cancel_pending_close()
+        self._close_timer_id = self.root.after(4000, self.root.destroy)
+
+    def _cancel_pending_close(self) -> None:
+        """Keep a previous attempt's close deadline from interrupting a retry."""
+        if self._close_timer_id is not None:
+            self.root.after_cancel(self._close_timer_id)
+            self._close_timer_id = None
 
     def on_no(self) -> None:
         if self._download_runner.active:
             return
+        self._cancel_pending_close()
         self.result = False
         self.root.destroy()
 
     def on_cancel(self) -> None:
         if self._download_runner.active:
             return
+        self._cancel_pending_close()
         self.result = False
         self.root.destroy()
 

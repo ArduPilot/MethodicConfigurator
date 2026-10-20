@@ -718,10 +718,19 @@ class Tooltip:
         self._cancel_timer("position")
         self._cancel_timer("alpha")
         if self.tooltip:
+            tooltip = self.tooltip
             with contextlib.suppress(tk.TclError):
-                self.tooltip.withdraw()
-                # A Tcl script survives the owner deleting Python callback commands.
-                self.tooltip.tk.call("after", 50, ("destroy", str(self.tooltip)))
+                tooltip.withdraw()
+                destroy_timer_id = tooltip.after(50, tooltip.destroy)
+
+                def cancel_destroy_timer(event: tk.Event) -> None:
+                    if event.widget is tooltip:
+                        with contextlib.suppress(tk.TclError):
+                            tooltip.after_cancel(destroy_timer_id)
+
+                # Python destroy releases child widgets and registered commands.
+                # Cancel its timer before owner teardown can delete the callback.
+                tooltip.bind("<Destroy>", cancel_destroy_timer, add="+")
             self.tooltip = None
         if Tooltip._active_tooltip is self:
             Tooltip._active_tooltip = None

@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar Lucas
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import sys
 import tkinter as tk
 from collections.abc import Callable, Generator
 from tkinter import ttk
@@ -2776,3 +2777,37 @@ class TestManualUploadSelection:
         configured_parameter_editor_table.parameters = None
 
         assert configured_parameter_editor_table.get_unselected_manually_edited_different_parameter_names() == []
+
+
+@pytest.mark.skipif(sys.platform == "darwin", reason="Real geometry regression runs under Xvfb; Aqua CI cannot render")
+def test_older_macos_scrolls_to_new_rows_after_layout_settles(tk_root: tk.Tk) -> None:
+    """
+    Newly added parameters remain visible when rendering is deferred.
+
+    GIVEN: A parameter table whose original rows fit without scrolling
+    WHEN: New rows overflow the viewport and the user requests the bottom on older macOS
+    THEN: The settled view shows the final rows without a synchronous rendering update
+    """
+    parent = tk.Toplevel(tk_root)
+    parent.geometry("300x150")
+    table = ParameterEditorTable(parent, MagicMock(), MagicMock())
+    table.pack(fill="both", expand=True)
+    try:
+        ttk.Label(table.view_port, text="Original parameter").pack()
+        parent.update_idletasks()
+        for number in range(100):
+            ttk.Label(table.view_port, text=f"New parameter {number}").pack()
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.is_macos_sequoia_or_older",
+                return_value=True,
+            ),
+            patch.object(table, "update_idletasks") as forced_render,
+        ):
+            table._apply_scroll_position(scroll_to_bottom=True)
+            parent.update_idletasks()
+            assert table.canvas.yview()[1] == pytest.approx(1.0)
+            forced_render.assert_not_called()
+    finally:
+        parent.destroy()

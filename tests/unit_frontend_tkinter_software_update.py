@@ -22,7 +22,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_file_browser_tasks import 
 from ardupilot_methodic_configurator.frontend_tkinter_software_update import UpdateDialog
 
 
-class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-attributes
+class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
     """Test cases for the UpdateDialog class."""
 
     def setUp(self) -> None:
@@ -147,6 +147,42 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
         # Second update attempt should not change result
         dialog.on_yes()
         assert dialog.result
+
+    def test_retry_keeps_dialog_open_past_previous_failure_close_deadline(self) -> None:
+        """
+        Retrying a failed download keeps its dialog available until the retry finishes.
+
+        GIVEN: A failed update has enabled retry and scheduled the dialog to close
+        WHEN: The user starts another download before that deadline
+        THEN: Advancing past the old deadline cannot destroy the active dialog
+        """
+        pending: dict[str, Callable[[], None]] = {}
+
+        def schedule(_milliseconds: int, callback: Callable[[], None]) -> str:
+            timer_id = f"close-{len(pending)}"
+            pending[timer_id] = callback
+            return timer_id
+
+        def cancel(timer_id: str) -> None:
+            pending.pop(timer_id)
+
+        self.download_callback.return_value = False
+        dialog = UpdateDialog(self.version_info, self.download_callback)
+        with (
+            patch.object(self.root, "after", side_effect=schedule),
+            patch.object(self.root, "after_cancel", side_effect=cancel),
+        ):
+            dialog.on_yes()
+            assert dialog.result is False
+            assert pending
+
+            # The runner accepts the retry but leaves its download pending.
+            dialog._download_runner.start.side_effect = None  # pylint: disable=protected-access
+            dialog.on_yes()
+            for callback in list(pending.values()):
+                callback()
+
+            self.root.destroy.assert_not_called()
 
     def test_init_window_config(self) -> None:
         """Test window configuration during initialization."""
@@ -465,6 +501,7 @@ def test_download_keeps_tk_responsive_and_delivers_progress_on_tk_thread() -> No
         dialog.yes_btn = ttk.Button(parent)
         dialog.no_btn = ttk.Button(parent)
         dialog.result = None
+        dialog._close_timer_id = None  # pylint: disable=protected-access
         dialog.download_callback = download
         dialog._download_runner = BackgroundTaskRunner(parent.after)  # pylint: disable=protected-access
         original_progress = dialog.update_progress

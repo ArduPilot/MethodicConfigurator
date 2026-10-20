@@ -421,7 +421,7 @@ class BaseWindow:
             BaseWindow._position_window_on_screen(window)
 
     @staticmethod
-    def _run_when_idle(window: tk.Toplevel | tk.Tk, callback: Callable[[], None]) -> None:
+    def _run_when_idle(window: tk.Misc, callback: Callable[[], None]) -> None:
         """Run deferred window work, cancelling it if the window is destroyed."""
         timer_id: str | None = None
 
