@@ -40,9 +40,8 @@ from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
 # The versioned, vehicle-specific migration tables intentionally live together.
 # pylint: disable=too-many-lines
 
-# V2 rules target the draft reordered templates, but automatic V2 migration
-# remains disabled until the production configuration sequence is released.
-VEHICLE_COMPONENTS_FORMAT_VERSION = 1
+# Opening an older project automatically applies migrations up to this version.
+VEHICLE_COMPONENTS_FORMAT_VERSION = 2
 _VEHICLE_COMPONENTS_JSON_FILENAME = "vehicle_components.json"
 _PACKAGE_DIR = Path(__file__).resolve().parent
 
@@ -374,6 +373,12 @@ _PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str], bool]]] = {
             True,
         ),
         (
+            "17_remote_id.param",
+            "22_flight_modes.param",
+            [r"FLTMODE[1-6]"],
+            True,
+        ),
+        (
             "14_mp_setup_mandatory_hardware.param",
             "06_remote_controller_controller.param",
             [r"RC\d+_(?:MIN|MAX|TRIM|OPTION)"],
@@ -396,6 +401,30 @@ _PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str], bool]]] = {
             "24_safety_setup.param",
             ["FENCE_ALT_MAX", "FENCE_RADIUS"],
             False,
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "24_safety_setup.param",
+            ["FENCE_ACTION", "FENCE_ENABLE"],
+            True,
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "11_servo_outputs.param",
+            ["FRAME_TYPE"],
+            True,
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "10_battery.param",
+            ["MOT_BAT_VOLT_MAX", "MOT_BAT_VOLT_MIN"],
+            True,
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "13_initial_atc.param",
+            ["MOT_THST_HOVER"],
+            True,
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
@@ -584,17 +613,11 @@ _PARAM_DELETES_V1_TO_V2: dict[str, list[tuple[str, list[str]]]] = {
                 "ATC_RAT_RLL_FLTT",
                 "ATC_RAT_YAW_FLTE",
                 "ATC_RAT_YAW_FLTT",
-                "FENCE_ACTION",
-                "FENCE_ENABLE",
-                "FRAME_TYPE",
                 "INS_GYRO_FILTER",
-                "MOT_BAT_VOLT_MAX",
-                "MOT_BAT_VOLT_MIN",
                 "MOT_SPIN_ARM",
                 "MOT_SPIN_MAX",
                 "MOT_SPIN_MIN",
                 "MOT_THST_EXPO",
-                "MOT_THST_HOVER",
             ],
         ),
     ],
@@ -1070,8 +1093,12 @@ def _merge_migrated_parameter_lines(existing: list[str], moved: list[str], force
     return [line if line.endswith(("\n", "\r")) else line + "\n" for line in merged_lines]
 
 
-def _migrate_v1_to_v2(vehicle_path: Path, vehicle_type: str) -> set[str]:  # noqa: PLR0915  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+def _migrate_v1_to_v2(  # noqa: PLR0915  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    vehicle_path: Path, vehicle_type: str, *, preexisting_filenames: set[str] | None = None
+) -> set[str]:
     """Move hardware settings to the matching vehicle layout."""
+    if preexisting_filenames is None:
+        preexisting_filenames = {path.name for path in vehicle_path.glob("*.param")}
     deleted_filenames: set[str] = set()
     accumulated: dict[str, list[str]] = {}
     forced_parameters: dict[str, set[str]] = {}
@@ -1095,7 +1122,17 @@ def _migrate_v1_to_v2(vehicle_path: Path, vehicle_type: str) -> set[str]:  # noq
                 continue
 
             accumulated.setdefault(dst_name, []).extend(extracted)
-            if force:
+            destination_name = destination_paths.get(dst_name, vehicle_path / dst_name).name
+            # An existing later safety step supplied the effective V1 fence value.
+            # A safety step newly restored from the template contains only defaults.
+            preserve_existing_safety = (
+                vehicle_type == "ArduCopter"
+                and src_name.endswith("_mp_setup_mandatory_hardware.param")
+                and dst_name == "24_safety_setup.param"
+                and src_name < destination_name
+                and destination_name in preexisting_filenames
+            )
+            if force and not preserve_existing_safety:
                 forced_parameters.setdefault(dst_name, set()).update(
                     name for line in extracted if (name := _param_name_from_line(line))
                 )
@@ -1231,13 +1268,16 @@ def migrate_vehicle_project_if_needed(vehicle_dir: str) -> bool:  # pylint: disa
                 for migration_key in ["all"] + ([vehicle_type] if vehicle_type in _PARAM_MOVES_V1_TO_V2 else [])
                 for src_name, _dst_name, _patterns, _force in _PARAM_MOVES_V1_TO_V2[migration_key]
             }
+            preexisting_filenames = {path.name for path in vehicle_path.glob("*.param")}
             _restore_missing_configuration_step_files(
                 vehicle_path,
                 vehicle_type,
                 firmware_version,
                 deleted_filenames_to_skip_restore | v2_source_filenames,
             )
-            deleted_filenames = _migrate_v1_to_v2(vehicle_path, vehicle_type) or set()
+            deleted_filenames = (
+                _migrate_v1_to_v2(vehicle_path, vehicle_type, preexisting_filenames=preexisting_filenames) or set()
+            )
         else:
             logging.error(_("No migration path is defined from format version %d"), format_version)
             break
