@@ -265,9 +265,9 @@ def only_upload_changed_parameters_usage_popup(parent: tk.Tk) -> BaseWindow | No
         font=create_scaled_font(get_safe_font_config(), 1.5),
     )
 
-    # pylint: disable=line-too-long, import-outside-toplevel
+    # pylint: disable=import-outside-toplevel
     from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import NEW_VALUE_DIFFERENT_STR  # noqa: PLC0415, I001
-    # pylint: enable=line-too-long, import-outside-toplevel
+    # pylint: enable=import-outside-toplevel
 
     instructions_text.insert(tk.END, _("Only"), "bold")
     instructions_text.insert(tk.END, _(" changed parameters (marked by " + NEW_VALUE_DIFFERENT_STR + ") and\n"))
