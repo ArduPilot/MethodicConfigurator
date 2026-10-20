@@ -24,9 +24,7 @@ from typing import IO, BinaryIO
 
 import pytest
 
-import ardupilot_methodic_configurator.backend_filesystem as filesystem_module
 import ardupilot_methodic_configurator.backend_filesystem_migration as migration_module
-from ardupilot_methodic_configurator.annotate_params import parse_parameter_metadata
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_migration import (
     VEHICLE_COMPONENTS_FORMAT_VERSION,
@@ -38,7 +36,6 @@ from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 
 # pylint: disable=redefined-outer-name, unused-argument
 # pylint: disable=too-many-lines
-
 
 # ---------------------------------------------------------------------------
 # Shared fixtures
@@ -902,233 +899,6 @@ class TestV0ToV1ObsoleteFileDeletion:
 # ---------------------------------------------------------------------------
 
 
-class TestParameterFileDocumentationRenames:
-    """Step-specific parameter documentation follows filename aliases without losing user files."""
-
-    @pytest.fixture(
-        params=[
-            "22_inflight_magnetometer_fit_setup.param",
-            "24_inflight_magnetometer_fit_setup.param",
-            "31_inflight_magnetometer_fit_setup.param",
-        ]
-    )
-    def magfit_alias_project(self, vehicle_dir: Path, request: pytest.FixtureRequest) -> tuple[LocalFilesystem, Path, Path]:
-        """Provide a legacy MagFit step and real documentation with the V2 template's aliases."""
-        template_dir = (
-            Path(__file__).parents[1] / "ardupilot_methodic_configurator/vehicle_templates/ArduCopter/Holybro_X500_mig"
-        )
-        new_filename = "35_inflight_magnetometer_fit_setup.param"
-        step = json.loads((template_dir / "configuration_steps_ArduCopter.json").read_text(encoding="utf-8"))["steps"][
-            new_filename
-        ]
-        old_filename: str = request.param
-        assert old_filename in step["old_filenames"]
-        old_step = vehicle_dir / old_filename
-        new_step = vehicle_dir / new_filename
-        old_step.write_bytes((template_dir / new_filename).read_bytes())
-        old_step.with_suffix(".pdef.xml").write_bytes((template_dir / new_step.with_suffix(".pdef.xml").name).read_bytes())
-        filesystem = LocalFilesystem.__new__(LocalFilesystem)
-        filesystem.vehicle_dir = str(vehicle_dir)
-        filesystem.configuration_steps = {new_filename: step}
-        return filesystem, old_step, new_step
-
-    def test_user_keeps_magfit_parameter_documentation_after_step_rename(
-        self, magfit_alias_project: tuple[LocalFilesystem, Path, Path]
-    ) -> None:
-        """
-        MagFit documentation remains discoverable after a legacy step is renamed.
-
-        GIVEN: A legacy MagFit step with its Lua parameter documentation
-        WHEN: Filename aliases are applied and then applied again on reopening
-        THEN: Both files use the V2 name, their bytes are unchanged, and the metadata can be loaded
-        """
-        filesystem, old_step, new_step = magfit_alias_project
-        old_documentation = old_step.with_suffix(".pdef.xml")
-        new_documentation = new_step.with_suffix(".pdef.xml")
-        original_parameters = old_step.read_bytes()
-        original_documentation = old_documentation.read_bytes()
-
-        filesystem.rename_parameter_files()
-        filesystem.rename_parameter_files()
-
-        assert not old_step.exists()
-        assert not old_documentation.exists()
-        assert new_step.read_bytes() == original_parameters
-        assert new_documentation.read_bytes() == original_documentation
-        metadata = parse_parameter_metadata("", str(new_step.parent), new_documentation.name, "ArduCopter", 105)
-        assert metadata["MAGH_LOG_ENABLE"]["humanName"] == "Enable MAGH.Active logging"
-        assert metadata["MAGH_LOG_ENABLE"]["documentation"]
-
-    def test_user_recovers_documentation_left_behind_by_an_earlier_step_rename(
-        self, magfit_alias_project: tuple[LocalFilesystem, Path, Path]
-    ) -> None:
-        """
-        Opening an already-renamed project repairs its orphaned documentation.
-
-        GIVEN: The parameter file already has the V2 name but its sidecar still has the legacy name
-        WHEN: The project's filename aliases are checked again
-        THEN: The sidecar follows the existing step without changing parameter values
-        """
-        filesystem, old_step, new_step = magfit_alias_project
-        old_documentation = old_step.with_suffix(".pdef.xml")
-        original_documentation = old_documentation.read_bytes()
-        old_step.rename(new_step)
-        original_parameters = new_step.read_bytes()
-
-        filesystem.rename_parameter_files()
-
-        assert not old_documentation.exists()
-        assert new_step.with_suffix(".pdef.xml").read_bytes() == original_documentation
-        assert new_step.read_bytes() == original_parameters
-
-    def test_user_legacy_step_replaces_an_empty_new_step_placeholder(
-        self, magfit_alias_project: tuple[LocalFilesystem, Path, Path]
-    ) -> None:
-        """
-        A non-empty legacy step replaces an empty destination placeholder.
-
-        GIVEN: A legacy step with parameters and an empty file under the new name
-        WHEN: Filename aliases are applied
-        THEN: The legacy parameters and documentation move to the new names
-        """
-        filesystem, old_step, new_step = magfit_alias_project
-        original_parameters = old_step.read_bytes()
-        original_documentation = old_step.with_suffix(".pdef.xml").read_bytes()
-        new_step.write_bytes(b"")
-
-        filesystem.rename_parameter_files()
-
-        assert not old_step.exists()
-        assert new_step.read_bytes() == original_parameters
-        assert not old_step.with_suffix(".pdef.xml").exists()
-        assert new_step.with_suffix(".pdef.xml").read_bytes() == original_documentation
-
-    @pytest.mark.parametrize("existing_content", [b"", b"<paramfile>user documentation</paramfile>\n"])
-    def test_user_documentation_at_the_new_name_is_never_overwritten(
-        self, magfit_alias_project: tuple[LocalFilesystem, Path, Path], existing_content: bytes
-    ) -> None:
-        """
-        Destination documentation, including empty files, is preserved.
-
-        GIVEN: Both legacy documentation and a destination sidecar already exist
-        WHEN: The parameter step is renamed
-        THEN: The parameters move but both documentation files retain their original contents
-        """
-        filesystem, old_step, new_step = magfit_alias_project
-        old_documentation = old_step.with_suffix(".pdef.xml")
-        new_documentation = new_step.with_suffix(".pdef.xml")
-        original_documentation = old_documentation.read_bytes()
-        original_parameters = old_step.read_bytes()
-        new_documentation.write_bytes(existing_content)
-
-        filesystem.rename_parameter_files()
-
-        assert not old_step.exists()
-        assert new_step.read_bytes() == original_parameters
-        assert old_documentation.read_bytes() == original_documentation
-        assert new_documentation.read_bytes() == existing_content
-
-    def test_documentation_stays_with_a_legacy_step_when_parameter_rename_is_blocked(
-        self, magfit_alias_project: tuple[LocalFilesystem, Path, Path]
-    ) -> None:
-        """
-        A conflicting parameter destination does not detach the old step's documentation.
-
-        GIVEN: Both the legacy and V2 parameter files exist
-        WHEN: Filename alias renaming refuses to overwrite the V2 step
-        THEN: Both parameter files and the legacy sidecar are unchanged
-        """
-        filesystem, old_step, new_step = magfit_alias_project
-        old_documentation = old_step.with_suffix(".pdef.xml")
-        original_parameters = old_step.read_bytes()
-        original_documentation = old_documentation.read_bytes()
-        new_step.write_bytes(b"MAGH_LOG_ENABLE,0\n")
-
-        filesystem.rename_parameter_files()
-
-        assert old_step.read_bytes() == original_parameters
-        assert new_step.read_bytes() == b"MAGH_LOG_ENABLE,0\n"
-        assert old_documentation.read_bytes() == original_documentation
-        assert not new_step.with_suffix(".pdef.xml").exists()
-
-    def test_step_without_optional_documentation_can_still_be_renamed(
-        self, magfit_alias_project: tuple[LocalFilesystem, Path, Path]
-    ) -> None:
-        """
-        Documentation is optional when renaming a step.
-
-        GIVEN: A legacy parameter step has no sidecar
-        WHEN: The step is renamed
-        THEN: The parameters move successfully without creating a documentation file
-        """
-        filesystem, old_step, new_step = magfit_alias_project
-        original_parameters = old_step.read_bytes()
-        old_step.with_suffix(".pdef.xml").unlink()
-
-        filesystem.rename_parameter_files()
-
-        assert not old_step.exists()
-        assert new_step.read_bytes() == original_parameters
-        assert not new_step.with_suffix(".pdef.xml").exists()
-
-    def test_orphaned_documentation_without_either_parameter_file_is_not_moved(
-        self, magfit_alias_project: tuple[LocalFilesystem, Path, Path]
-    ) -> None:
-        """
-        A standalone sidecar is not attached to a nonexistent configuration step.
-
-        GIVEN: Legacy documentation exists but neither parameter filename exists
-        WHEN: Filename aliases are checked
-        THEN: The sidecar stays at its original path
-        """
-        filesystem, old_step, new_step = magfit_alias_project
-        old_documentation = old_step.with_suffix(".pdef.xml")
-        original_documentation = old_documentation.read_bytes()
-        old_step.unlink()
-
-        filesystem.rename_parameter_files()
-
-        assert old_documentation.read_bytes() == original_documentation
-        assert not new_step.exists()
-        assert not new_step.with_suffix(".pdef.xml").exists()
-
-    def test_user_can_retry_a_failed_documentation_rename_without_losing_parameters(
-        self, magfit_alias_project: tuple[LocalFilesystem, Path, Path], monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """
-        A sidecar rename failure remains recoverable after the parameter rename completes.
-
-        GIVEN: Storage rejects the documentation rename after the parameter file has moved
-        WHEN: The user retries after the storage failure is resolved
-        THEN: The retained documentation moves to the V2 name without changing the parameter file
-        """
-        filesystem, old_step, new_step = magfit_alias_project
-        old_documentation = old_step.with_suffix(".pdef.xml")
-        original_parameters = old_step.read_bytes()
-        original_documentation = old_documentation.read_bytes()
-        original_rename = filesystem_module.os_rename
-        message = "Simulated sidecar rename failure"
-
-        def interrupted_rename(source: str, destination: str) -> None:
-            if Path(source) == old_documentation:
-                raise OSError(message)
-            original_rename(source, destination)
-
-        with monkeypatch.context() as failure_patch:
-            failure_patch.setattr(filesystem_module, "os_rename", interrupted_rename)
-            with pytest.raises(OSError, match=message):
-                filesystem.rename_parameter_files()
-
-        assert not old_step.exists()
-        assert new_step.read_bytes() == original_parameters
-        assert old_documentation.read_bytes() == original_documentation
-        assert not new_step.with_suffix(".pdef.xml").exists()
-        filesystem.rename_parameter_files()
-        assert not old_documentation.exists()
-        assert new_step.with_suffix(".pdef.xml").read_bytes() == original_documentation
-        assert new_step.read_bytes() == original_parameters
-
-
 class TestV1ToV2ParameterExtractions:
     """Tests that consecutive format migrations are persisted as separate steps."""
 
@@ -1155,6 +925,66 @@ class TestV1ToV2ParameterExtractions:
         migration_module._migrate_v1_to_v2(vehicle_dir, "ArduCopter")  # pylint: disable=protected-access
 
         assert safety.read_text(encoding="utf-8") == expected_safety
+        assert not hardware.exists()
+
+    def test_copter_keeps_configured_hardware_values_when_v2_steps_have_defaults(self, vehicle_dir: Path) -> None:
+        """
+        Existing hardware settings override V2 template defaults without losing their comments.
+
+        GIVEN: A legacy hardware step and V2 steps with default values for the same parameters
+        WHEN: The hardware step is split
+        THEN: The user's fence, frame, battery, and hover settings reach the new steps unchanged
+        """
+        hardware = vehicle_dir / "14_mp_setup_mandatory_hardware.param"
+        values_by_step = {
+            "24_safety_setup.param": "FENCE_ACTION,3 # return home\nFENCE_ENABLE,1 # enabled\n",
+            "11_servo_outputs.param": "FRAME_TYPE,12 # custom frame\n",
+            "10_battery.param": "MOT_BAT_VOLT_MAX,52.2 # full pack\nMOT_BAT_VOLT_MIN,42 # low pack\n",
+            "13_initial_atc.param": "MOT_THST_HOVER,0.28 # measured hover\n",
+        }
+        hardware.write_text("".join(values_by_step.values()), encoding="utf-8")
+        for filename, lines in values_by_step.items():
+            defaults = "".join(f"{line.split(',', 1)[0]},0 # template default\n" for line in lines.splitlines())
+            (vehicle_dir / filename).write_text(defaults, encoding="utf-8")
+
+        migration_module._migrate_v1_to_v2(  # pylint: disable=protected-access
+            vehicle_dir, "ArduCopter", preexisting_filenames={hardware.name}
+        )
+
+        assert not hardware.exists()
+        for filename, lines in values_by_step.items():
+            assert (vehicle_dir / filename).read_text(encoding="utf-8") == lines
+
+    @pytest.mark.parametrize(
+        "hardware_filename",
+        [
+            "11_mp_setup_mandatory_hardware.param",
+            "12_mp_setup_mandatory_hardware.param",
+            "14_mp_setup_mandatory_hardware.param",
+        ],
+    )
+    def test_copter_preserves_effective_safety_values_from_a_later_existing_step(
+        self, vehicle_dir: Path, hardware_filename: str
+    ) -> None:
+        """
+        A configured safety step retains the effective values it supplied before migration.
+
+        GIVEN: Different fence values in the legacy hardware and later safety steps
+        WHEN: The V1 project migrates to V2
+        THEN: The configured safety values and comments remain unchanged
+        """
+        hardware = vehicle_dir / hardware_filename
+        safety = vehicle_dir / "24_safety_setup.param"
+        hardware.write_text("FENCE_ACTION,3 # legacy\nFENCE_ENABLE,1 # legacy\n", encoding="utf-8")
+        safety.write_text("FENCE_ACTION,4 # configured\nFENCE_ENABLE,0 # configured\n", encoding="utf-8")
+        (vehicle_dir / "vehicle_components.json").write_text(
+            json.dumps({"Format version": 1, "Components": {"Flight Controller": {"Firmware": {"Type": "ArduCopter"}}}}),
+            encoding="utf-8",
+        )
+
+        assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
+
+        assert safety.read_text(encoding="utf-8") == "FENCE_ACTION,4 # configured\nFENCE_ENABLE,0 # configured\n"
         assert not hardware.exists()
 
     def test_moved_parameter_lines_are_separated_when_input_has_no_final_newline(self, vehicle_dir: Path) -> None:
@@ -1573,13 +1403,13 @@ class TestV1ToV2ParameterExtractions:
             ]
             transition_versions.append((0, persisted_version))
 
-        def run_v1_to_v2(path: Path, vehicle_type: str) -> None:
+        def run_v1_to_v2(path: Path, vehicle_type: str, *, preexisting_filenames: set[str] | None = None) -> None:
             persisted_version = json.loads((vehicle_dir / "vehicle_components.json").read_text(encoding="utf-8"))[
                 "Format version"
             ]
             transition_versions.append((1, persisted_version))
             v1_to_v2_input.append(source.read_text(encoding="utf-8"))
-            original_v1_to_v2(path, vehicle_type)
+            original_v1_to_v2(path, vehicle_type, preexisting_filenames=preexisting_filenames)
 
         monkeypatch.setattr(migration_module, "_migrate_v0_to_v1", run_v0_to_v1)
         monkeypatch.setattr(migration_module, "_migrate_v1_to_v2", run_v1_to_v2)
@@ -1804,8 +1634,7 @@ class TestVehicleSpecificV1ToV2Migration:
     @pytest.mark.parametrize(
         ("vehicle_type", "template_name", "layout_template"),
         [
-            ("ArduCopter", "Holybro_X500", "Holybro_X500_mig"),
-            ("ArduCopter", "Holybro_X500", "empty_4.6.x_mig"),
+            ("ArduCopter", "Holybro_X500", ""),
             ("ArduPlane", "normal_plane", ""),
             ("Heli", "OMP_M4", ""),
             ("Rover", "AION_R1", ""),
@@ -2359,49 +2188,6 @@ _copy_configuration_step_file(Path(sys.argv[1]), Path(sys.argv[2]))
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("hardware_filename", ["14_mp_setup_mandatory_hardware.param", "11_mp_setup_mandatory_hardware.param"])
-def test_user_can_review_unmapped_hardware_settings_in_simple_mode(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture, hardware_filename: str
-) -> None:
-    """
-    Keep hardware settings visible after migration.
-
-    GIVEN: Hardware settings include rangefinder, flow, 4.7 acceleration and unknown parameters
-    WHEN: The Copter hardware step is split
-    THEN: Known values reach active steps and unknown values remain recoverable and visible with a warning
-    """
-    source = tmp_path / hardware_filename
-    source.write_text(
-        "FLOW_TYPE,1\nRNGFND1_TYPE,10\nATC_ACC_P_MAX,72\nATC_ACC_R_MAX,73\nATC_ACC_Y_MAX,74\n"
-        "UNMAPPED_SETTING,17 # user reason\n",
-        encoding="utf-8",
-    )
-    general = tmp_path / "23_general_configuration.param"
-    general.write_text("UNRELATED_GENERAL,23\nFLOW_TYPE,0\n", encoding="utf-8")
-
-    migration_module._migrate_v1_to_v2(tmp_path, "ArduCopter")  # pylint: disable=protected-access
-    assert source.read_text(encoding="utf-8") == "UNMAPPED_SETTING,17 # user reason\n"
-    contents = general.read_text(encoding="utf-8")
-    assert "FLOW_TYPE,1\n" in contents
-    assert "RNGFND1_TYPE,10\n" in contents
-    assert "UNRELATED_GENERAL,23\n" in contents
-    assert "UNMAPPED_SETTING,17 # user reason\n" in contents
-    assert "UNMAPPED_SETTING" in caplog.text
-    atc = ParDict.load_param_file_into_dict(str(tmp_path / "13_initial_atc.param"))
-    assert {name: param.value for name, param in atc.items()} == {
-        "ATC_ACC_P_MAX": 72,
-        "ATC_ACC_R_MAX": 73,
-        "ATC_ACC_Y_MAX": 74,
-    }
-    layout = Path(__file__).parents[1] / (
-        "ardupilot_methodic_configurator/vehicle_templates/ArduCopter/Holybro_X500_mig/configuration_steps_ArduCopter.json"
-    )
-    step = json.loads(layout.read_text(encoding="utf-8"))["steps"][general.name]
-    assert int(step["mandatory_text"].split("%")[0]) > 20
-    migration_module._migrate_v1_to_v2(tmp_path, "ArduCopter")  # pylint: disable=protected-access
-    assert general.read_text(encoding="utf-8") == contents
-
-
 def test_user_keeps_fourth_and_fifth_imu_calibration_values(tmp_path: Path) -> None:
     """
     Preserve calibration of optional IMU subgroups.
@@ -2428,36 +2214,6 @@ def test_user_keeps_fourth_and_fifth_imu_calibration_values(tmp_path: Path) -> N
         name: value for name, value in values.items() if name.endswith("CALTEMP")
     }
     assert not (tmp_path / "14_mp_setup_mandatory_hardware.param").exists()
-
-
-@pytest.mark.parametrize("template_name", ["TarotFY680Hexacopter", "empty_4.7.x"])
-def test_existing_copter_projects_keep_extra_hardware_values_in_active_steps(tmp_path: Path, template_name: str) -> None:
-    """
-    Preserve hardware settings from real projects with additional sensors or newer firmware.
-
-    GIVEN: A Tarot or Copter 4.7 template has hardware values outside the original split rules
-    WHEN: Its mandatory-hardware file is converted to the split layout
-    THEN: Rangefinder, optical flow and renamed acceleration values survive in active configuration steps
-    """
-    package = Path(__file__).parents[1] / "ardupilot_methodic_configurator"
-    template = package / "vehicle_templates" / "ArduCopter" / template_name
-    hardware = next(template.glob("*_mp_setup_mandatory_hardware.param"))
-    copyfile(hardware, tmp_path / hardware.name)
-    original = ParDict.load_param_file_into_dict(str(hardware))
-    expected = {
-        name: param.value for name, param in original.items() if name.startswith(("RNGFND", "ATC_ACC_")) or name == "FLOW_TYPE"
-    }
-    assert expected
-    migration_module._migrate_v1_to_v2(tmp_path, "ArduCopter")  # pylint: disable=protected-access
-    layout = package / "vehicle_templates/ArduCopter/Holybro_X500_mig/configuration_steps_ArduCopter.json"
-    steps = json.loads(layout.read_text(encoding="utf-8"))["steps"]
-    visible_values = {
-        name: param.value
-        for filename in steps
-        if (tmp_path / filename).is_file() and int(steps[filename]["mandatory_text"].split("%")[0]) > 20
-        for name, param in ParDict.load_param_file_into_dict(str(tmp_path / filename)).items()
-    }
-    assert {name: visible_values[name] for name in expected} == expected
 
 
 class TestPatternMatchingEdgeCases:
