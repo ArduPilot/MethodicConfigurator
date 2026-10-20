@@ -1,5 +1,5 @@
 {
-    "Format version": 1,
+    "Format version": 2,
     "Components": {
         "Flight Controller": {
             "Product": {
@@ -190,5 +190,5 @@
             "Notes": "100mW at 433MHz, 13.6g without antenna + \n7.4g for 433MHz antenna"
         }
     },
-    "Program version": "4.4.4"
+    "Program version": "4.4.3"
 }

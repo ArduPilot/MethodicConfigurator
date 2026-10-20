@@ -1,5 +1,5 @@
 {
-    "Format version": 1,
+    "Format version": 2,
     "Components": {
         "Flight Controller": {
             "Product": {
@@ -10,7 +10,7 @@
             },
             "Firmware": {
                 "Type": "ArduCopter",
-                "Version": "4.6.3 beta"
+                "Version": "4.6.3"
             },
             "Specifications": {
                 "MCU Series": "STM32H7xx"
@@ -58,9 +58,9 @@
             "Specifications": {
                 "Chemistry": "Lipo",
                 "Volt per cell max": 4.2,
-                "Volt per cell arm": 3.925,
+                "Volt per cell arm": 3.75,
                 "Volt per cell low": 3.6,
-                "Volt per cell crit": 3.55,
+                "Volt per cell crit": 3.5,
                 "Volt per cell min": 3.3,
                 "Number of cells": 4,
                 "Capacity mAh": 1800
