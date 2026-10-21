@@ -45,6 +45,7 @@ class RecoveryCallbacks:
     lock_controls: Callable[[object], Callable[[], None]]
     show_status: Callable[[str], None]
     on_recovered: Callable[[], None]
+    can_refresh: Callable[[], bool] = lambda: True
 
 
 class ConnectionRecovery:  # pylint: disable=too-many-instance-attributes
@@ -132,7 +133,7 @@ class ConnectionRecovery:  # pylint: disable=too-many-instance-attributes
 
     def _check_connection(self) -> None:
         if self._worker is not None:
-            if self._worker.is_alive():
+            if self._worker.is_alive() or (not self._error and not self._callbacks.can_refresh()):
                 return
             self._worker = None
             if not self._error:

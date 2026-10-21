@@ -1256,6 +1256,41 @@ class TestHeaderCreationBehavior:
 class TestBitmaskFunctionalityBehavior:
     """Test the behavior of bitmask functionality."""
 
+    def test_bitmask_dialog_retains_rows_until_its_close_handler_finishes(
+        self, parameter_editor_table: ParameterEditorTable
+    ) -> None:
+        """
+        An ungrabbed bitmask dialog retains row ownership while applying edits.
+
+        GIVEN: A bitmask row and macOS dialog behavior
+        WHEN: The dialog opens and its close handler updates the row
+        THEN: Row ownership lasts through the close handler and is released afterwards
+        """
+        table = parameter_editor_table
+        parameter = create_mock_data_model_ardupilot_parameter(is_bitmask=True, value=5)
+        entry = ttk.Entry(table.view_port)
+        entry.insert(0, "5")
+        label = ttk.Label(table.view_port)
+        event = tk.Event()
+        event.widget = entry
+
+        def close_dialog(window: tk.Toplevel, _target: tk.Misc | None = None) -> None:
+            assert table.bitmask_editor_open
+            window.tk.call(window.protocol("WM_DELETE_WINDOW"))
+            assert not window.winfo_exists()
+            assert table.bitmask_editor_open
+            assert entry.get() == "5"
+            assert entry.bind("<Double-Button-1>")
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.sys_platform", "darwin"),
+            patch.object(table, "_center_and_focus_window"),
+            patch.object(tk.Toplevel, "wait_window", autospec=True, side_effect=close_dialog),
+        ):
+            table._open_bitmask_selection_window(event, parameter, None, label)
+
+        assert not table.bitmask_editor_open
+
     def test_bitmask_window_creation(self, parameter_editor_table: ParameterEditorTable) -> None:
         """
         User interface creates bitmask selection window for bitmask parameters.

@@ -475,15 +475,15 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
             assert dialog.show() is False  # None should convert to False
 
 
-def test_download_keeps_tk_responsive_and_delivers_progress_on_tk_thread() -> None:
+def test_download_keeps_tk_responsive_and_delivers_progress_on_tk_thread(root: tk.Tk) -> None:
     """A slow update pumps GUI events while all widget changes stay on Tk's thread."""
-    tk_root = tk.Tk()
-    parent = tk_root
+    parent = tk.Toplevel(root)
+    parent.withdraw()
     ui_thread = get_ident()
     heartbeat = Event()
     worker_threads: list[int] = []
     progress_threads: list[int] = []
-    completed = tk.BooleanVar(master=tk_root, value=False)
+    completed = tk.BooleanVar(master=parent, value=False)
 
     def download(report: Callable[[float, str], None]) -> bool:
         worker_threads.append(get_ident())
@@ -491,7 +491,7 @@ def test_download_keeps_tk_responsive_and_delivers_progress_on_tk_thread() -> No
         report(55.0, "Downloading")
         return True
 
-    timeout = tk_root.after(3000, lambda: completed.set(True))
+    timeout = parent.after(3000, lambda: completed.set(True))
     try:
         # Exercise the download with real widgets without involving release-note layout.
         dialog = object.__new__(UpdateDialog)
@@ -529,8 +529,8 @@ def test_download_keeps_tk_responsive_and_delivers_progress_on_tk_thread() -> No
             dialog.on_yes()
             dialog.on_cancel()
             destroy.assert_not_called()
-            tk_root.after(0, heartbeat.set)
-            tk_root.wait_variable(completed)
+            parent.after(0, heartbeat.set)
+            parent.wait_variable(completed)
 
         assert dialog.result is True
         assert len(worker_threads) == 1
@@ -538,5 +538,5 @@ def test_download_keeps_tk_responsive_and_delivers_progress_on_tk_thread() -> No
         assert progress_threads == [ui_thread]
         assert dialog.progress["value"] == 55.0
     finally:
-        tk_root.after_cancel(timeout)
+        parent.after_cancel(timeout)
         parent.destroy()

@@ -33,13 +33,14 @@ from ardupilot_methodic_configurator.plugins.frontend_tkinter_accelerometer_cali
 )
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_ACCELEROMETER_CALIBRATION
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory, PluginModelContext
+from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginPauseReason
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
     from pytest_mock import MockerFixture
 
-# pylint: disable=protected-access,redefined-outer-name
+# pylint: disable=protected-access,redefined-outer-name,too-many-lines
 
 _FRONTEND = "ardupilot_methodic_configurator.plugins.frontend_tkinter_accelerometer_calibration"
 
@@ -771,6 +772,46 @@ class TestFullCalibrationContinueAndCancel:
 
 class TestPluginLifecycle:
     """Test the plugin lifecycle hooks that keep the view reusable."""
+
+    @pytest.mark.parametrize("reason", list(PluginPauseReason))
+    def test_temporary_pause_preserves_active_calibration(
+        self, view_with_model: SimpleNamespace, reason: PluginPauseReason
+    ) -> None:
+        """
+        Temporarily yielding the connection preserves the active wizard.
+
+        GIVEN: Full calibration owns navigation and is waiting for a requested pose
+        WHEN: IMU reception is suspended and resumed more than once
+        THEN: Only the IMU timer changes; wizard progress, controls and ownership survive
+        """
+        context = view_with_model
+        view = context.view
+        context.base_window.navigation_lock = NavigationLock()
+        context.model.start_full_calibration.return_value = (True, "Started")
+        view._on_start_full_calibration()
+        view._waiting_for_position = True
+        view._expected_position_name = "LEVEL"
+        calibration_job = view._poll_job
+
+        for _ in range(2):
+            view.on_suspend(reason)
+            assert view._imu_poll_job is None
+            assert view._poll_job == calibration_job
+            assert view._wizard_frame.winfo_manager() == "pack"
+            assert view._waiting_for_position
+            assert view._expected_position_name == "LEVEL"
+            assert view._simple_btn.instate(["disabled"])
+            assert view._full_btn.instate(["disabled"])
+            assert context.base_window.navigation_lock.locked
+
+        context.model.stop_imu_monitoring.assert_not_called()
+        for _ in range(2):
+            view.on_resume()
+            assert view._imu_poll_job is not None
+            assert view._poll_job == calibration_job
+            assert view._waiting_for_position
+            assert view._expected_position_name == "LEVEL"
+            assert context.base_window.navigation_lock.locked
 
     def test_on_deactivate_hides_active_wizard_and_restores_buttons(self, tk_root, mocker) -> None:
         """

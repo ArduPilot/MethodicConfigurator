@@ -13,6 +13,7 @@ import tempfile
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
 from functools import partial
+from logging import warning as logging_warning
 from pathlib import Path
 from sys import platform as sys_platform
 from tkinter import ttk
@@ -209,8 +210,14 @@ class ParameterFileUploadWindow(BaseWindow):
 class StandaloneUploadHost(ParameterApplicationHost):
     """Add upload operations to the shared parameter dialog host."""
 
+    _fc_operation_active = False
+
     def upload_external_params(self, selected_params: dict) -> bool:
         """Upload selected parameters using the editor's progress UI."""
+        if self._fc_operation_active:
+            logging_warning("A flight-controller operation is already in progress")
+            return False
+        self._fc_operation_active = True
         try:
             return self.ui.upload_params_with_progress(
                 self.root,
@@ -220,12 +227,21 @@ class StandaloneUploadHost(ParameterApplicationHost):
         except Exception as exc:  # pylint: disable=broad-exception-caught
             self.ui.show_error(_("Upload Error"), f"{_('Failed to upload parameters:')} {exc}")
             return False
+        finally:
+            self._fc_operation_active = False
 
     def reset_all_parameters_to_default(self) -> bool:
         """Reset the FC with shared progress UI without writing AMC project defaults."""
-        return self.ui.reset_all_parameters_to_default_with_progress(
-            self.root, partial(self.parameter_editor.reset_all_parameters_to_default, persist_project_state=False)
-        )
+        if self._fc_operation_active:
+            logging_warning("A flight-controller operation is already in progress")
+            return False
+        self._fc_operation_active = True
+        try:
+            return self.ui.reset_all_parameters_to_default_with_progress(
+                self.root, partial(self.parameter_editor.reset_all_parameters_to_default, persist_project_state=False)
+            )
+        finally:
+            self._fc_operation_active = False
 
 
 def create_argument_parser() -> ArgumentParser:  # pragma: no cover

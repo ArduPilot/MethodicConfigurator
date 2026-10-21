@@ -131,6 +131,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         self._value_is_different_labels: dict[str, ttk.Label] = {}
         self._table_render_generation = 0
         self._reserved_table_rows = 0
+        self._open_bitmask_editors = 0
 
         # Track last return values to prevent duplicate event processing
         self._last_return_values: dict[tk.Misc, str] = {}
@@ -138,6 +139,11 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
 
         style = ttk.Style()
         style.configure("narrow.TButton", padding=0, width=4, border=(0, 0, 0, 0))
+
+    @property
+    def bitmask_editor_open(self) -> bool:
+        """Whether a bitmask dialog still holds references to this table's rows."""
+        return self._open_bitmask_editors > 0
 
     def _get_parent_root(self) -> tk.Tk | None:
         """Return the closest tk.Tk ancestor if available."""
@@ -987,9 +993,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         window.transient(self._get_parent_toplevel())
         window.deiconify()
 
-        self._center_and_focus_window(window)
-
-        window.wait_window()  # Wait for the window to be closed
+        self._open_bitmask_editors += 1
+        try:
+            self._center_and_focus_window(window)
+            window.wait_window()
+        finally:
+            self._open_bitmask_editors -= 1
 
     def _create_unit_label(self, param: ArduPilotParameter) -> ttk.Label:
         """Create a label displaying the parameter unit."""
