@@ -872,35 +872,41 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
             bitmask_value = BitmaskHelper.get_value_from_keys(checked_keys)
             valid = self._handle_parameter_value_update(param, str(bitmask_value), include_range_check=True)
 
-            if valid and change_reason_widget is not None:
+            # Recovery can repaint rows while this dialog's nested event loop runs.
+            value_widget = self._new_value_widgets.get(param.name, event.widget)
+            difference_label = self._value_is_different_labels.get(param.name, value_is_different_label)
+            if valid and change_reason_widget is not None and change_reason_widget.winfo_exists():
                 show_tooltip(change_reason_widget, param.tooltip_change_reason)
-            if valid:
-                value_is_different_label.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
+            if valid and difference_label.winfo_exists():
+                difference_label.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
             # Update new_value_entry with the new decimal value
             # For bitmask windows, event.widget should always be ttk.Entry (not PairTupleCombobox)
             # since bitmasks are only created for Entry widgets, not Comboboxes
-            if isinstance(event.widget, ttk.Entry):
-                self._update_new_value_entry_text(event.widget, param)
+            if isinstance(value_widget, ttk.Entry) and value_widget.winfo_exists():
+                self._update_new_value_entry_text(value_widget, param)
 
             # Release the modal grab and destroy the window
             if sys_platform != "darwin":
                 window.grab_release()
             window.destroy()
+            if not self.main_frame.winfo_exists():
+                return
             # Issue a FocusIn event on something else than new_value_entry to prevent endless looping
             self.main_frame.focus_set()
             # Run the Tk event loop once to process the event
             self.main_frame.update_idletasks()
             # Re-bind the FocusIn event to new_value_entry
-            event.widget.bind(
-                "<Double-Button-1>",
-                lambda event: self._open_bitmask_selection_if_editable(
-                    event,
-                    param,
-                    change_reason_widget,
-                    value_is_different_label,
-                ),
-            )
+            if event.widget.winfo_exists():
+                event.widget.bind(
+                    "<Double-Button-1>",
+                    lambda event: self._open_bitmask_selection_if_editable(
+                        event,
+                        param,
+                        change_reason_widget,
+                        value_is_different_label,
+                    ),
+                )
 
         def is_widget_visible(widget: tk.Misc | None) -> bool:
             return bool(widget and widget.winfo_ismapped())

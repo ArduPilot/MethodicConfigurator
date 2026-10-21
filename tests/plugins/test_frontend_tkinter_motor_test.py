@@ -24,6 +24,12 @@ import pytest
 import ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test as motor_test_module
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.backend_flightcontroller_reconnect import FlightControllerReconnect
+from ardupilot_methodic_configurator.frontend_tkinter_connection_recovery import (
+    ConnectionRecovery,
+    RecoveryCallbacks,
+    RecoveryState,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 from ardupilot_methodic_configurator.plugins.data_model_motor_test import (
@@ -353,6 +359,36 @@ def motor_view_with_controller(
         parent.destroy()
 
 
+@pytest.fixture
+def motor_connection_recovery(motor_view_with_controller: MotorTestView) -> Generator[ConnectionRecovery, None, None]:
+    """Monitor the motor view using the real editor's ownership gate and FC liveness checks."""
+    view = motor_view_with_controller
+    fc = cast("MagicMock", view.model.flight_controller)
+    fc.master = MagicMock(message_hooks=[], portdead=False)
+    fc.info = SimpleNamespace(hw_unique_id="original-fc", system_id=1, component_id=1)
+    fc.comport_device = "/dev/ttyACM0"
+    fc.active_baudrate = 115200
+    fc.get_serial_ports.return_value = []
+    editor = object.__new__(ParameterEditorWindow)
+    editor.root = view.root_window
+    editor.navigation_lock = view.base_window.navigation_lock
+    editor._file_browser_window = None
+    callbacks = RecoveryCallbacks(
+        reader_busy=editor._connection_reader_busy,
+        can_read=lambda: False,
+        pause_receiver=MagicMock(return_value=lambda: None),
+        lock_controls=MagicMock(return_value=lambda: None),
+        show_status=MagicMock(),
+        on_recovered=MagicMock(),
+    )
+    recovery = ConnectionRecovery(MagicMock(), FlightControllerReconnect(fc), callbacks)
+    recovery.start()
+    try:
+        yield recovery
+    finally:
+        recovery.stop()
+
+
 class TestDelayedProgressCallback:
     """Exercises the delayed progress helper used by long-running operations."""
 
@@ -516,6 +552,99 @@ class TestMotorTestView:
         fake_model.raise_frame_error = ValidationError("invalid selection")
         motor_view._on_frame_type_change(object())
 
+    def test_spin_arm_update_holds_navigation_lock_during_progress_window_creation(
+        self,
+        motor_view: MotorTestView,
+        fake_model: FakeMotorTestModel,
+        dummy_base_window: DummyBaseWindow,
+        dialog_spies: SimpleNamespace,
+        mocker: MockerFixture,
+    ) -> None:
+        """
+        Keep recovery blocked throughout the spin-arm update.
+
+        GIVEN: An accepted spin-arm value
+        WHEN: The progress window is created, the value is updated, and the window is destroyed
+        THEN: Navigation stays locked until cleanup completes
+        """
+        lock_states: list[bool] = []
+
+        def destroy_progress_window() -> None:
+            lock_states.append(dummy_base_window.navigation_lock.locked)
+
+        progress_stub = SimpleNamespace(update_progress_bar=lambda *_a: None, destroy=destroy_progress_window)
+
+        def create_progress_window(*_args: object, **_kwargs: object) -> SimpleNamespace:
+            lock_states.append(dummy_base_window.navigation_lock.locked)
+            return progress_stub
+
+        mocker.patch(
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test.ProgressWindow",
+            side_effect=create_progress_window,
+        )
+        mocker.patch.object(
+            fake_model,
+            "set_motor_spin_arm_value",
+            side_effect=lambda *_args: lock_states.append(dummy_base_window.navigation_lock.locked),
+        )
+        dialog_spies.askfloat.return_value = 0.2
+
+        motor_view._set_motor_spin_arm()
+
+        assert lock_states == [True, True, True]
+        assert not dummy_base_window.navigation_lock.locked
+
+    @pytest.mark.parametrize("failure_stage", ["construction", "update", "destruction"])
+    def test_spin_arm_update_releases_navigation_lock_after_unexpected_failure(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+        self,
+        failure_stage: str,
+        motor_view: MotorTestView,
+        fake_model: FakeMotorTestModel,
+        dummy_base_window: DummyBaseWindow,
+        dialog_spies: SimpleNamespace,
+        mocker: MockerFixture,
+    ) -> None:
+        """
+        Restore navigation even when the spin-arm workflow raises an unexpected error.
+
+        GIVEN: A failure in progress-window construction, parameter updating, or window destruction
+        WHEN: The operator accepts a spin-arm value
+        THEN: Cleanup runs while locked, navigation is released, and the original error propagates
+        """
+        error = RuntimeError(f"spin-arm {failure_stage} failed")
+        lock_states: list[bool] = []
+        progress_window = MagicMock()
+
+        def create_progress_window(*_args: object, **_kwargs: object) -> MagicMock:
+            lock_states.append(dummy_base_window.navigation_lock.locked)
+            if failure_stage == "construction":
+                raise error
+            return progress_window
+
+        def destroy_progress_window() -> None:
+            lock_states.append(dummy_base_window.navigation_lock.locked)
+            if failure_stage == "destruction":
+                raise error
+
+        mocker.patch.object(motor_test_module, "ProgressWindow", side_effect=create_progress_window)
+        progress_window.destroy.side_effect = destroy_progress_window
+        if failure_stage == "update":
+            fake_model.raise_spin_arm_error = error
+        dialog_spies.askfloat.return_value = 0.2
+
+        with pytest.raises(RuntimeError) as raised:
+            motor_view._set_motor_spin_arm()
+
+        assert raised.value is error
+        assert lock_states == ([True] if failure_stage == "construction" else [True, True])
+        assert not dummy_base_window.navigation_lock.locked
+        if failure_stage == "construction":
+            progress_window.destroy.assert_not_called()
+        else:
+            progress_window.destroy.assert_called_once_with()
+        assert fake_model.parameters["MOT_SPIN_ARM"] == (0.2 if failure_stage == "destruction" else 0.1)
+        dialog_spies.showerror.assert_not_called()
+
     @pytest.mark.parametrize("handler", ["frame", "spin_arm"])
     def test_progress_window_is_destroyed_when_parameter_update_fails(
         self,
@@ -542,6 +671,7 @@ class TestMotorTestView:
             motor_view._set_motor_spin_arm()
 
         progress_window.destroy.assert_called_once_with()
+        assert not motor_view.base_window.navigation_lock.locked
 
     def test_throttle_change_paths(
         self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace
@@ -1333,6 +1463,75 @@ def test_non_battery_motor_safety_failures_show_the_specific_check_reason(
 
 class TestMotorTestConnectionOwnership:
     """Motor operations preserve the exclusive connection owner."""
+
+    @pytest.mark.parametrize("reconnect_fails", [False, True])
+    def test_frame_type_reboot_keeps_recovery_from_reconnecting_at_the_same_time(
+        self,
+        motor_view_with_controller: MotorTestView,
+        motor_connection_recovery: ConnectionRecovery,
+        mocker: MockerFixture,
+        dialog_spies: SimpleNamespace,
+        reconnect_fails: bool,
+    ) -> None:
+        """
+        Keep the frame-type reboot exclusive while its progress window processes events.
+
+        GIVEN: Connection recovery is monitoring a motor-test view
+        WHEN: Changing frame type clears the connection and progress runs a recovery check
+        THEN: No background reconnect starts until the frame-change callback finishes
+        """
+        # Given: Real frame-change and recovery logic share the editor's navigation lock.
+        view = motor_view_with_controller
+        fc = cast("MagicMock", view.model.flight_controller)
+        master = fc.master
+        view.model.filesystem.doc_dict = {"FRAME_TYPE": {"RebootRequired": True}}
+        fc.set_param.return_value = (True, "")
+        fc.fetch_param.return_value = 0.0
+        recovery = motor_connection_recovery
+        worker = mocker.patch("ardupilot_methodic_configurator.frontend_tkinter_connection_recovery.Thread")
+        worker.return_value.is_alive.return_value = False
+        progress_window = MagicMock()
+        mocker.patch.object(motor_test_module, "ProgressWindow", return_value=progress_window)
+        progress_window.update_progress_bar_with_message.side_effect = lambda *_args: recovery.check()
+        ticks = iter([0.0, 2.0])
+        mocker.patch.object(motor_test_module, "time", SimpleNamespace(time=lambda: next(ticks)))
+
+        def reboot(progress: Callable[[int, int], None], extra_sleep_time: int) -> str:
+            assert extra_sleep_time == 2
+            fc.master = None
+            # Simulate the due recovery timer inside the progress window's nested event loop.
+            progress(20, 100)
+            assert recovery.state is RecoveryState.MONITORING
+            worker.assert_not_called()
+            if reconnect_fails:
+                message = "Controller unavailable"
+                raise OSError(message)
+            fc.master = master
+            fc.fc_parameters["FRAME_TYPE"] = 0.0
+            return ""
+
+        fc.reset_and_reconnect.side_effect = reboot
+        view.frame_type_combobox.current(0)
+        assert view.frame_type_combobox.get_selected_key() == "0"
+
+        # When: Select Quad Plus instead of Quad X, requiring a reboot.
+        view._on_frame_type_change(None)
+
+        # Then: Cleanup releases ownership on both success and failure; monitoring can resume.
+        fc.reset_and_reconnect.assert_called_once()
+        progress_window.update_progress_bar_with_message.assert_called_once()
+        progress_window.destroy.assert_called_once()
+        assert not view.base_window.navigation_lock.locked
+        worker.assert_not_called()
+        recovery.check()
+        if reconnect_fails:
+            dialog_spies.showerror.assert_called_once()
+            assert recovery.state is RecoveryState.RECOVERING
+            worker.assert_called_once()
+        else:
+            assert view.model.frame_type == 0
+            assert recovery.state is RecoveryState.MONITORING
+            worker.assert_not_called()
 
     def test_activation_keeps_one_polling_loop_and_suspend_stops_pending_updates(
         self,

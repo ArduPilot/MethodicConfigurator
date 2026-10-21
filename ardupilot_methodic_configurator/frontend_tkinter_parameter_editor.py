@@ -544,6 +544,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         fc_parameters = self.parameter_editor.flight_controller.fc_parameters
         for name, parameter in self.parameter_editor.current_step_parameters.items():
             parameter.set_fc_value(fc_parameters.get(name))
+        # A component edit during recovery may have left only a connection placeholder.
+        if self.current_plugin is not None and self.current_plugin_view is None:
+            self._update_plugin_layout(self.current_plugin, force_reload=True)
         options = self.parameter_editor_table.options
         skip_when_no_differences = options.skip_when_no_differences
         options.skip_when_no_differences = False
@@ -1189,7 +1192,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         Args:
             plugin: Plugin configuration dict with 'name' and 'placement' keys, or None
-            force_reload: Reload after step navigation has deactivated the previous view.
+            force_reload: Retry loading a missing view or reload after step navigation.
 
         """
         # If plugin configuration hasn't changed at all, do nothing

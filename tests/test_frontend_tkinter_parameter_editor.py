@@ -4874,6 +4874,110 @@ def test_recovery_refreshes_fc_cells_without_advancing_or_overwriting_edits(
             table.destroy()
 
 
+@pytest.mark.parametrize("platform", ["linux", "darwin"])
+def test_user_can_close_bitmask_editor_after_recovery_repaints_rows(
+    monitored_editor: ParameterEditorWindow, root: tk.Tk, platform: str
+) -> None:
+    """
+    Checkbox edits remain usable after a recovery repaint.
+
+    GIVEN a bitmask dialog opened during recovery with unsaved checkbox edits
+    WHEN recovery repaints the table before the user closes the dialog
+    THEN the dialog closes and its saved value appears in the replacement row.
+    """
+    editor = monitored_editor
+    parameter = ArduPilotParameter(
+        "TEST_OPTIONS", Par(1, "Keep this reason"), metadata={"Bitmask": {0: "First", 1: "Second"}}, fc_value=1
+    )
+    parameters = {parameter.name: parameter}
+    editor.parameter_editor.current_step_parameters = parameters
+    editor.parameter_editor.flight_controller.fc_parameters = {parameter.name: 3}
+    editor.parameter_editor.update_parameter_object.side_effect = ParameterEditor.update_parameter_object
+    with patch(
+        "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.UsagePopupWindow.should_display",
+        return_value=False,
+    ):
+        table = ParameterEditorTable(root, editor.parameter_editor, editor, parameters=parameters)
+        editor.parameter_editor_table = table
+        table.repopulate_table(show_only_differences=False, gui_complexity=editor.gui_complexity)
+        entry = table._new_value_widgets[parameter.name]
+        difference_label = table._value_is_different_labels[parameter.name]
+        reason_entry = cast("ttk.Entry", table.view_port.grid_slaves(row=1, column=7)[0])
+        event = tk.Event()
+        event.widget = entry
+        recovery = editor._connection_recovery
+        recovery._state = RecoveryState.RECOVERING
+        recovery._worker = MagicMock()
+        recovery._worker.is_alive.return_value = False
+
+        def recover_and_close(window: tk.Toplevel) -> None:
+            checkbox = cast("ttk.Checkbutton", window.winfo_children()[0].winfo_children()[1])
+            checkbox.invoke()
+            recovery.check()
+            assert not entry.winfo_exists()
+            assert not reason_entry.winfo_exists()
+            window.tk.call(window.protocol("WM_DELETE_WINDOW"))
+            assert not window.winfo_exists()
+
+        try:
+            with (
+                patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.sys_platform", platform),
+                patch.object(table, "_center_and_focus_window"),
+                patch.object(tk.Misc, "update_idletasks"),
+                patch.object(tk.Misc, "wait_window", autospec=True, side_effect=recover_and_close),
+            ):
+                table._open_bitmask_selection_window(event, parameter, reason_entry, difference_label)
+            assert parameter.value_as_string == "3"
+            assert parameter.change_reason == "Keep this reason"
+            assert table._new_value_widgets[parameter.name].get() == "3"
+            assert table._value_is_different_labels[parameter.name].cget("text") == " "
+        finally:
+            table.destroy()
+
+
+def test_recovery_retries_plugin_enabled_by_component_edit(monitored_editor: ParameterEditorWindow, root: tk.Tk) -> None:
+    """
+    Recovery replaces a connection placeholder with the newly enabled plugin.
+
+    GIVEN a component edit enables a plugin while recovery has no FC parameter cache
+    WHEN the connection recovers and its parameter cache is available again
+    THEN the placeholder is replaced by the plugin without navigating to another step.
+    """
+    editor = monitored_editor
+    plugin = {"name": "esc_rpm_scale", "placement": "left"}
+    editor.inline_component_editor = MagicMock()
+    editor.inline_component_editor.get_component_data.return_value = {"Components": {"ESC": {}}}
+    editor.parameter_editor.get_plugin.return_value = plugin
+    editor.parameter_editor.create_plugin_data_model.return_value = None
+    editor.parameter_editor.current_step_parameters = {}
+    editor.parameter_editor.flight_controller.fc_parameters = {}
+    editor.main_frame = ttk.Frame(root)
+    editor.parameter_area_container = ttk.Frame(editor.main_frame)
+    plugin_view = MagicMock()
+    try:
+        with (
+            patch.object(parameter_editor_module.plugin_factory, "is_registered", return_value=True),
+            patch.object(parameter_editor_module.plugin_factory, "create", return_value=plugin_view),
+        ):
+            editor._on_component_data_changed()
+            parent = editor.parameter_area_paned.nametowidget(editor.parameter_area_paned.panes()[0])
+            placeholder = parent.winfo_children()[0]
+            assert editor.current_plugin == plugin
+            assert editor.current_plugin_view is None
+            editor.parameter_editor.create_plugin_data_model.return_value = object()
+            editor.parameter_editor.flight_controller.fc_parameters = {"TEST_OPTIONS": 3}
+            editor._connection_recovery._state = RecoveryState.RECOVERING
+            editor._connection_recovery._worker = MagicMock()
+            editor._connection_recovery._worker.is_alive.return_value = False
+            editor._connection_recovery.check()
+
+        assert not placeholder.winfo_exists()
+        assert editor.current_plugin_view is plugin_view
+        plugin_view.on_activate.assert_called_once()
+    finally:
+        editor.main_frame.destroy()
+
+
 @pytest.mark.parametrize("owner_gone", ["plugin", "window"])
 def test_recovery_does_not_resume_a_replaced_plugin(monitored_editor: ParameterEditorWindow, owner_gone: str) -> None:
     """GIVEN a paused plugin, WHEN its owner is replaced or destroyed before recovery finishes, THEN it stays stopped."""
