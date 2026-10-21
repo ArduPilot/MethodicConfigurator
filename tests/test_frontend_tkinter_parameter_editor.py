@@ -19,6 +19,7 @@ import threading
 import tkinter as tk
 from contextlib import contextmanager, nullcontext
 from functools import partial
+from sys import platform as sys_platform
 from threading import Event, get_ident
 from tkinter import font as tkfont
 from tkinter import ttk
@@ -51,8 +52,10 @@ from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import Scroll
 from ardupilot_methodic_configurator.frontend_tkinter_show import MonitorBounds
 from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
 from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
+from ardupilot_methodic_configurator.plugins.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
 from ardupilot_methodic_configurator.plugins.data_model_ahrs_orientation import AhrsOrientationDataModel
 from ardupilot_methodic_configurator.plugins.data_model_autotune_gain_backoff import AutotuneGainBackoffDataModel
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_accelerometer_calibration import AccelerometerCalibrationView
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_ahrs_orientation import AhrsOrientationView
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_autotune_gain_backoff import AutotuneGainBackoffView
 from ardupilot_methodic_configurator.plugins.plugin_constants import (
@@ -71,6 +74,30 @@ if TYPE_CHECKING:
 # pylint: disable=too-many-lines, redefined-outer-name, protected-access
 
 # ============================== SHARED FIXTURES ==============================
+
+
+def _wait_for_layout(window: tk.Toplevel, ready: Callable[[], bool]) -> None:
+    """Let Windows deliver geometry events, with a deadline so broken layouts still fail."""
+    completed = tk.BooleanVar(master=window, value=False)
+    poll_job: str | None = None
+
+    def check() -> None:
+        nonlocal poll_job
+        if ready():
+            completed.set(True)
+        else:
+            poll_job = window.after(10, check)
+
+    timeout_job = window.after(2000, lambda: completed.set(False))
+    # Always service the event queue before sampling newly mapped child geometry.
+    poll_job = window.after(0, check)
+    try:
+        window.wait_variable(completed)
+        assert completed.get(), "Window geometry did not settle before the layout check"
+    finally:
+        window.after_cancel(timeout_job)
+        if poll_job is not None:
+            window.after_cancel(poll_job)
 
 
 def _set_layout_dpi(root: tk.Tk, dpi: int) -> None:
@@ -161,6 +188,7 @@ def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:  # noq
     editor.documentation_frame.refresh_documentation_labels = MagicMock()
     editor.documentation_frame.update_why_why_now_tooltip = MagicMock()
     editor.parameter_editor_table = MagicMock()
+    editor.parameter_editor_table.bitmask_editor_open = False
     editor.parameter_editor_table.repopulate = MagicMock()
     editor.parameter_editor_table.get_upload_selected_params = MagicMock(return_value={})
     editor.parameter_editor_table.view_port = MagicMock()
@@ -2273,6 +2301,147 @@ class TestProgressBarUpdates:
 class TestParameterDownloads:
     """Exercise FC parameter download flows."""
 
+    @pytest.mark.parametrize("worker_download", [False, True], ids=["synchronous", "sequoia-worker"])
+    @pytest.mark.parametrize("fails", [False, True], ids=["success", "failure"])
+    def test_calibration_readback_keeps_controls_locked_until_completion(
+        self,
+        parameter_editor_window: ParameterEditorWindow,
+        root: tk.Tk,
+        monkeypatch: pytest.MonkeyPatch,
+        worker_download: bool,
+        fails: bool,
+    ) -> None:
+        """
+        Calibration readback yields telemetry without releasing calibration ownership.
+
+        GIVEN: Full accelerometer calibration has completed with navigation locked
+        WHEN: Its parameter readback reports progress and succeeds or raises
+        THEN: Calibration and upload remain blocked until readback and result handling finish
+        """
+        editor = parameter_editor_window
+        editor.root = root
+        model = MagicMock(spec=AccelerometerCalibrationDataModel)
+        model.start_full_calibration.return_value = (True, "Started")
+        view = AccelerometerCalibrationView(ttk.Frame(root), model, editor)
+        editor.current_plugin_view = view
+        backend = cast("MagicMock", editor.parameter_editor)
+        backend.fc_parameters = {}
+        progress_window = MagicMock()
+        editor.ui.create_progress_window = MagicMock(return_value=progress_window)
+        monkeypatch.setattr(parameter_editor_module, "is_macos_sequoia_or_older", lambda: worker_download)
+        monkeypatch.setattr(tk.Misc, "update", lambda _self: None)
+        monkeypatch.setattr(tk.Misc, "update_idletasks", lambda _self: None)
+
+        def check_locked(*_args: object) -> None:
+            assert editor.navigation_lock.locked
+            assert view._simple_btn.instate(["disabled"])
+            assert view._full_btn.instate(["disabled"])
+            assert editor.upload_selected_params({"TEST": 1.0}) is False
+
+        def check_paused(*args: object) -> None:
+            check_locked(*args)
+            assert view._imu_poll_job is None
+
+        progress_window.update_progress_bar.side_effect = check_paused
+        progress_window.destroy.side_effect = check_paused
+
+        def download(get_progress: Callable[[], Callable], *, response_timeout: float | None) -> tuple[dict, dict]:
+            assert response_timeout is None
+            get_progress()(1, 2)
+            if fails:
+                message = "Calibration readback failed"
+                raise OSError(message)
+            return {"TEST": 1.0}, {}
+
+        backend.download_flight_controller_parameters.side_effect = download
+        try:
+            view._on_start_full_calibration()
+            with (
+                pytest.raises(OSError, match="Calibration readback failed") if fails else nullcontext(),
+                patch(
+                    "ardupilot_methodic_configurator.plugins.frontend_tkinter_accelerometer_calibration.showinfo",
+                    side_effect=check_locked,
+                ) as show_result,
+            ):
+                view._end_full_calibration(success=True)
+
+            assert show_result.call_count == (0 if fails else 1)
+            progress_window.update_progress_bar.assert_called_once_with(1, 2)
+            progress_window.destroy.assert_called_once()
+            backend.upload_selected_params_workflow.assert_not_called()
+            assert not editor.navigation_lock.locked
+            assert view._simple_btn.instate(["!disabled"])
+            assert view._full_btn.instate(["!disabled"])
+            assert view._imu_poll_job is not None
+        finally:
+            view.master.destroy()
+
+    @pytest.mark.parametrize("worker_download", [False, True], ids=["synchronous", "sequoia-worker"])
+    @pytest.mark.parametrize("fails", [False, True], ids=["success", "failure"])
+    def test_parameter_download_pauses_plugin_reception_until_cleanup(
+        self,
+        parameter_editor_window: ParameterEditorWindow,
+        root: tk.Tk,
+        monkeypatch: pytest.MonkeyPatch,
+        worker_download: bool,
+        fails: bool,
+    ) -> None:
+        """
+        Preserve parameter replies while downloading with a telemetry plugin active.
+
+        GIVEN: A plugin owns MAVLink reception and a parameter download is requested
+        WHEN: The download reports progress, then succeeds or fails
+        THEN: Plugin reception stays paused through progress cleanup and resumes on Tk
+        """
+        editor = parameter_editor_window
+        editor.root = root
+        ui_thread = get_ident()
+        paused = Event()
+        plugin = MagicMock(spec=["on_suspend", "on_resume"])
+
+        def suspend(reason: PluginPauseReason) -> None:
+            assert get_ident() == ui_thread
+            assert reason is PluginPauseReason.EXCLUSIVE_OPERATION
+            paused.set()
+
+        def resume() -> None:
+            assert get_ident() == ui_thread
+            paused.clear()
+
+        plugin.on_suspend.side_effect = suspend
+        plugin.on_resume.side_effect = resume
+        editor.current_plugin_view = plugin
+        progress_window = MagicMock()
+        progress_window.destroy.side_effect = lambda: paused.is_set() or pytest.fail("Plugin resumed before cleanup")
+        editor.ui.create_progress_window = MagicMock(return_value=progress_window)
+        monkeypatch.setattr(parameter_editor_module, "is_macos_sequoia_or_older", lambda: worker_download)
+        monkeypatch.setattr(tk.Misc, "update", lambda _self: None)
+        monkeypatch.setattr(tk.Misc, "update_idletasks", lambda _self: None)
+
+        def download(get_progress: Callable[[], Callable], *, response_timeout: float | None) -> tuple[dict, dict]:
+            assert paused.is_set(), "Plugin reception would consume parameter replies"
+            assert (get_ident() != ui_thread) == worker_download
+            assert response_timeout == 5.0
+            get_progress()(1, 2)
+            if fails:
+                message = "Parameter download failed"
+                raise RuntimeError(message)
+            return {"TEST": 1.0}, {}
+
+        cast("MagicMock", editor.parameter_editor).download_flight_controller_parameters.side_effect = download
+
+        if fails:
+            with pytest.raises(RuntimeError, match="Parameter download failed"):
+                editor.download_flight_controller_parameters(redownload=True, response_timeout=5.0)
+        else:
+            assert editor.download_flight_controller_parameters(redownload=True, response_timeout=5.0) == ({"TEST": 1.0}, {})
+
+        plugin.on_suspend.assert_called_once()
+        plugin.on_resume.assert_called_once()
+        assert not paused.is_set()
+        progress_window.destroy.assert_called_once()
+        assert editor._param_download_progress_window is None
+
     def test_user_downloads_parameters_with_progress_window(self, parameter_editor_window: ParameterEditorWindow) -> None:
         progress_window = MagicMock()
         progress_window.update_progress_bar = MagicMock()
@@ -3085,7 +3254,7 @@ class TestPluginLayoutRebuild:
 
     @pytest.mark.parametrize("defer_geometry", [False, True], ids=["immediate", "sequoia"])
     @pytest.mark.parametrize(("width", "height"), [(990, 600), (1100, 500), (990, 440)])
-    def test_user_can_read_parameters_after_revisiting_a_left_plugin_step(
+    def test_user_can_read_parameters_after_revisiting_a_left_plugin_step(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         parameter_editor_window: ParameterEditorWindow,
         parameter_editor: MagicMock,
@@ -3122,6 +3291,12 @@ class TestPluginLayoutRebuild:
         registry.register(PLUGIN_RC_CALIBRATION, plugin_creator)
 
         try:
+            if sys_platform == "win32":
+                window.wait_visibility()
+                _wait_for_layout(
+                    window,
+                    lambda: editor.main_frame.winfo_width() == width,
+                )
             root.update_idletasks()
             editor._bind_parameter_layout_events()
             with patch.object(parameter_editor_module, "plugin_factory", registry):
@@ -3131,6 +3306,14 @@ class TestPluginLayoutRebuild:
                     editor.parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="normal")
                     root.update_idletasks()
 
+                    if sys_platform == "win32":
+                        _wait_for_layout(
+                            window,
+                            lambda: (
+                                editor.parameter_container.winfo_width() > 1
+                                and editor.parameter_editor_table.winfo_width() > 1
+                            ),
+                        )
                     assert editor.parameter_container.winfo_width() > 100
                     assert editor.parameter_editor_table.winfo_width() > 100
                     assert buttons.winfo_height() == buttons.winfo_reqheight()
@@ -3901,7 +4084,7 @@ class TestParameterUploads:
 
 @pytest.mark.parametrize("operation", ["upload", "reset", "download"])
 @pytest.mark.parametrize("fails", [False, True], ids=["success", "failure"])
-def test_sequoia_parameter_workflows_keep_tk_callbacks_on_the_ui_thread(  # noqa: PLR0915
+def test_sequoia_parameter_workflows_keep_tk_callbacks_on_the_ui_thread(  # pylint: disable=too-many-locals,too-many-statements # noqa: PLR0915
     parameter_editor_window: ParameterEditorWindow,
     root: tk.Tk,
     monkeypatch: pytest.MonkeyPatch,
@@ -4608,6 +4791,7 @@ def monitored_editor(parameter_editor_window: ParameterEditorWindow) -> Paramete
             lock_controls=editor._lock_connection_plugin,
             show_status=editor._show_connection_status,
             on_recovered=editor._finish_connection_recovery,
+            can_refresh=lambda: not editor.parameter_editor_table.bitmask_editor_open,
         ),
     )
     editor._connection_status = MagicMock()
@@ -4626,7 +4810,7 @@ def test_active_plugin_keeps_sole_receive_ownership(monitored_editor: ParameterE
     editor.current_plugin_view.on_suspend.assert_not_called()
 
 
-@pytest.mark.parametrize("owner", ["upload", "navigation", "browser", "native_dialog"])
+@pytest.mark.parametrize("owner", ["upload", "navigation", "browser", "native_dialog", "bitmask_dialog"])
 def test_other_owners_defer_connection_checks(monitored_editor: ParameterEditorWindow, owner: str) -> None:
     """GIVEN another receive owner, WHEN the timer fires, THEN no receive or reconnect operation starts."""
     editor = monitored_editor
@@ -4636,6 +4820,8 @@ def test_other_owners_defer_connection_checks(monitored_editor: ParameterEditorW
         editor.navigation_lock.acquire(object())
     elif owner == "browser":
         editor._file_browser_window = MagicMock()
+    elif owner == "bitmask_dialog":
+        cast("MagicMock", editor.parameter_editor_table).bitmask_editor_open = True
     elif owner == "native_dialog":
         editor.root.tk.call.return_value = ".__tk__messagebox"
     editor._connection_recovery.check()
@@ -4656,6 +4842,45 @@ def test_nested_upload_event_loop_cannot_start_monitor_reads(monitored_editor: P
     assert editor.upload_selected_params({})
     editor._connection_recovery._monitor.poll.assert_not_called()
     assert not editor._connection_recovery.operation_active
+
+
+@pytest.mark.parametrize("fails", [False, True], ids=["success", "failure"])
+def test_reset_prevents_reentry_and_restores_plugin_and_navigation(
+    monitored_editor: ParameterEditorWindow, fails: bool
+) -> None:
+    """
+    Parameter reset retains exclusive ownership while its event loop is running.
+
+    GIVEN: An active plugin and a parameter reset that services Tk events
+    WHEN: Another reset is requested during the reset, which then succeeds or raises
+    THEN: Only one reset runs, and plugin reception and navigation resume afterward.
+    """
+    editor = monitored_editor
+    plugin = MagicMock(spec=["on_suspend", "on_resume"])
+    editor.current_plugin_view = plugin
+
+    def reset(*_args: object) -> bool:
+        assert editor.navigation_lock.locked
+        assert editor._connection_recovery.operation_active
+        plugin.on_suspend.assert_called_once()
+        assert not editor.reset_all_parameters_to_default()
+        editor._connection_recovery.check()
+        if fails:
+            message = "reset failed"
+            raise RuntimeError(message)
+        return True
+
+    editor.ui.reset_all_parameters_to_default_with_progress = MagicMock(side_effect=reset)
+    if fails:
+        with pytest.raises(RuntimeError, match="reset failed"):
+            editor.reset_all_parameters_to_default()
+    else:
+        assert editor.reset_all_parameters_to_default()
+    editor.ui.reset_all_parameters_to_default_with_progress.assert_called_once()
+    editor._connection_recovery._monitor.poll.assert_not_called()
+    assert not editor.navigation_lock.locked
+    assert not editor._connection_recovery.operation_active
+    plugin.on_resume.assert_called_once()
 
 
 def test_paused_plugin_with_buffered_heartbeat_resumes_without_reconnection(monitored_editor: ParameterEditorWindow) -> None:
@@ -4928,6 +5153,43 @@ def test_closing_still_saves_when_tk_focus_has_no_python_widget(
     editor.root.quit.assert_called_once()
 
 
+def test_recovery_waits_for_bitmask_edits_before_repainting(monitored_editor: ParameterEditorWindow) -> None:
+    """
+    Recovery preserves rows referenced by an open bitmask dialog without a grab.
+
+    GIVEN: A bitmask editor is open while a reconnect worker succeeds
+    WHEN: The connection timer checks completion before and after the dialog closes
+    THEN: The table is repainted once, only after the dialog releases its rows
+    """
+    editor = monitored_editor
+    recovery = editor._connection_recovery
+    assert recovery is not None
+    table = cast("MagicMock", editor.parameter_editor_table)
+    worker = MagicMock()
+    worker.is_alive.return_value = False
+    recovery._worker = worker
+    recovery._state = RecoveryState.RECOVERING
+    recovery._unlock = editor._lock_connection_plugin(recovery)
+    resume = MagicMock()
+    recovery._resume = resume
+    table.bitmask_editor_open = True
+
+    for _ in range(2):
+        recovery.check()
+        assert recovery.state is RecoveryState.RECOVERING
+        assert editor.navigation_lock.locked
+        table.repopulate_table.assert_not_called()
+        resume.assert_not_called()
+
+    table.bitmask_editor_open = False
+    recovery.check()
+
+    assert recovery.state is RecoveryState.MONITORING
+    assert not editor.navigation_lock.locked
+    table.repopulate_table.assert_called_once()
+    resume.assert_called_once()
+
+
 def test_recovery_resumes_plugin_when_tk_focus_points_to_a_destroyed_popup(monitored_editor: ParameterEditorWindow) -> None:
     """GIVEN stale focus after recovery, WHEN completion renders, THEN the plugin resumes and navigation unlocks."""
     editor = monitored_editor
@@ -5010,15 +5272,12 @@ def test_user_can_close_bitmask_editor_after_recovery_repaints_rows(
         reason_entry = cast("ttk.Entry", table.view_port.grid_slaves(row=1, column=7)[0])
         event = tk.Event()
         event.widget = entry
-        recovery = editor._connection_recovery
-        recovery._state = RecoveryState.RECOVERING
-        recovery._worker = MagicMock()
-        recovery._worker.is_alive.return_value = False
 
         def recover_and_close(window: tk.Toplevel) -> None:
             checkbox = cast("ttk.Checkbutton", window.winfo_children()[0].winfo_children()[1])
             checkbox.invoke()
-            recovery.check()
+            # Exercise stale-row cleanup directly: real recovery defers while this dialog is open.
+            editor._finish_connection_recovery()
             assert not entry.winfo_exists()
             assert not reason_entry.winfo_exists()
             window.tk.call(window.protocol("WM_DELETE_WINDOW"))

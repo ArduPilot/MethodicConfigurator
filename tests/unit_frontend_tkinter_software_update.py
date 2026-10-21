@@ -12,10 +12,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 import unittest
-from collections.abc import Callable
+from collections import deque
+from collections.abc import Callable, Generator
 from threading import Event, get_ident
 from tkinter import ttk
 from unittest.mock import MagicMock, call, patch
+
+import pytest
 
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_file_browser_tasks import BackgroundTaskRunner
@@ -475,25 +478,12 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
             assert dialog.show() is False  # None should convert to False
 
 
-def test_download_keeps_tk_responsive_and_delivers_progress_on_tk_thread() -> None:
-    """A slow update pumps GUI events while all widget changes stay on Tk's thread."""
-    tk_root = tk.Tk()
-    parent = tk_root
-    ui_thread = get_ident()
-    heartbeat = Event()
-    worker_threads: list[int] = []
-    progress_threads: list[int] = []
-    completed = tk.BooleanVar(master=tk_root, value=False)
-
-    def download(report: Callable[[float, str], None]) -> bool:
-        worker_threads.append(get_ident())
-        assert heartbeat.wait(2)
-        report(55.0, "Downloading")
-        return True
-
-    timeout = tk_root.after(3000, lambda: completed.set(True))
+@pytest.fixture(name="download_dialog")
+def fixture_download_dialog(root: tk.Tk) -> Generator[UpdateDialog, None, None]:
+    """Provide real download widgets without release-note layout or event-loop rendering."""
+    parent = tk.Toplevel(root)
+    parent.withdraw()
     try:
-        # Exercise the download with real widgets without involving release-note layout.
         dialog = object.__new__(UpdateDialog)
         dialog.root = parent
         dialog.progress = ttk.Progressbar(parent)
@@ -502,24 +492,49 @@ def test_download_keeps_tk_responsive_and_delivers_progress_on_tk_thread() -> No
         dialog.no_btn = ttk.Button(parent)
         dialog.result = None
         dialog._close_timer_id = None  # pylint: disable=protected-access
+        yield dialog
+    finally:
+        parent.destroy()
+
+
+def test_download_keeps_tk_responsive_and_delivers_progress_on_tk_thread(download_dialog: UpdateDialog) -> None:
+    """
+    A slow update yields to UI callbacks and delivers progress on Tk's thread.
+
+    GIVEN: A download worker waits for a heartbeat scheduled on the UI thread
+    WHEN: UI callbacks run while the download is pending
+    THEN: The UI stays available and progress reaches widgets on the UI thread
+    """
+    dialog = download_dialog
+    parent = dialog.root
+    ui_thread = get_ident()
+    heartbeat = Event()
+    worker_threads: list[int] = []
+    progress_threads: list[int] = []
+    scheduled: deque[Callable[[], None]] = deque()
+
+    def download(report: Callable[[float, str], None]) -> bool:
+        worker_threads.append(get_ident())
+        assert heartbeat.wait(2)
+        report(55.0, "Downloading")
+        return True
+
+    # Drive scheduled callbacks explicitly: a native Tk event loop can abort
+    # the interpreter on headless macOS runners, even with withdrawn windows.
+    runner = BackgroundTaskRunner(lambda _delay, callback: scheduled.append(callback))
+    try:
         dialog.download_callback = download
-        dialog._download_runner = BackgroundTaskRunner(parent.after)  # pylint: disable=protected-access
+        dialog._download_runner = runner  # pylint: disable=protected-access
         original_progress = dialog.update_progress
-        original_complete = dialog._on_download_complete  # pylint: disable=protected-access
 
         def on_progress(value: float, status: str = "") -> None:
             progress_threads.append(get_ident())
             assert (value, status) == (55.0, "Downloading")
             original_progress(value, status)
 
-        def on_complete(result: object | None, error: Exception | None) -> None:
-            with patch.object(parent, "after"):
-                original_complete(result, error)
-            completed.set(True)
-
         with (
             patch.object(dialog, "update_progress", side_effect=on_progress),
-            patch.object(dialog, "_on_download_complete", side_effect=on_complete),
+            patch.object(parent, "after"),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_software_update.is_macos_sequoia_or_older", return_value=True
             ),
@@ -529,8 +544,15 @@ def test_download_keeps_tk_responsive_and_delivers_progress_on_tk_thread() -> No
             dialog.on_yes()
             dialog.on_cancel()
             destroy.assert_not_called()
-            tk_root.after(0, heartbeat.set)
-            tk_root.wait_variable(completed)
+            scheduled.append(heartbeat.set)
+            scheduled.popleft()()  # The first poll yields while the worker waits.
+            assert dialog.result is None
+            scheduled.popleft()()  # The UI heartbeat releases the worker.
+            worker = runner.thread
+            assert worker is not None
+            worker.join(timeout=2)
+            assert not worker.is_alive()
+            scheduled.popleft()()  # Deliver progress and completion on the UI thread.
 
         assert dialog.result is True
         assert len(worker_threads) == 1
@@ -538,5 +560,6 @@ def test_download_keeps_tk_responsive_and_delivers_progress_on_tk_thread() -> No
         assert progress_threads == [ui_thread]
         assert dialog.progress["value"] == 55.0
     finally:
-        tk_root.after_cancel(timeout)
-        parent.destroy()
+        heartbeat.set()
+        if runner.thread is not None:
+            runner.thread.join(timeout=2)

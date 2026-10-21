@@ -525,6 +525,7 @@ def test_finalize_setup_popupwindow_handles_destroyed_tk() -> None:
 def test_macos_popup_defers_sizing_and_centering_without_forcing_tk_events() -> None:
     """A macOS popup fits its layout when Tk's normal event loop runs."""
     popup = Mock()
+    popup.root.bind.return_value = ""
     parent = Mock()
     popup.root.winfo_reqwidth.return_value = 700
     popup.root.winfo_reqheight.return_value = 300

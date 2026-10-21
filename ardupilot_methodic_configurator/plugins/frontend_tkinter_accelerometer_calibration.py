@@ -41,6 +41,7 @@ from ardupilot_methodic_configurator.plugins.imu_helpers import (
 )
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_ACCELEROMETER_CALIBRATION
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginPauseReason
 
 _POLL_INTERVAL_MS = 100  # tkinter polling interval during full calibration
 _IMU_POLL_INTERVAL_MS = 200  # tkinter polling interval for live IMU monitor
@@ -483,6 +484,16 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
 
     def on_activate(self) -> None:
         """Called when the plugin view is displayed (lifecycle method)."""
+        self._start_imu_polling()
+
+    # pylint: disable-next=unused-argument
+    def on_suspend(self, reason: PluginPauseReason = PluginPauseReason.EXCLUSIVE_OPERATION) -> None:  # noqa: ARG002
+        """Pause live IMU reception without changing the wizard or its navigation lock."""
+        self._stop_imu_polling()
+        self.model.stop_imu_monitoring()
+
+    def on_resume(self) -> None:
+        """Resume live IMU polling without restarting calibration."""
         self._start_imu_polling()
 
     def on_deactivate(self) -> None:

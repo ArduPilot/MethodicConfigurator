@@ -302,6 +302,9 @@ The following invariants define the boundary between external upload and project
 - The external upload path never calls `on_skip_click()` or changes `current_file`.
 - Cancel always destroys the modal without file or project mutations.
 - Only the checked Upload parameters are converted to the upload payload.
+- The standalone host admits only one reset or upload at a time, including while
+  worker progress runs a nested Tk event loop. Its operation guard is released on
+  success, failure, or exception so retries remain available.
 
 ## Error Handling
 

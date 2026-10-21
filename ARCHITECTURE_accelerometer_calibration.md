@@ -163,6 +163,11 @@ arrives after the complete 6-position exchange (potentially minutes later).  Ins
   re-enabled only when a new `ACCELCAL_VEHICLE_POS` message arrives.
 - `_stop_polling()` is called from `on_deactivate()` and `destroy()` to cancel any
   pending `after()` job and prevent dangling callbacks after the plugin is hidden or removed.
+- Temporary `on_suspend()` / `on_resume()` hooks stop and restart only the live IMU
+  poll. They preserve the wizard state and calibration navigation lock, keeping the
+  Simple/Full controls disabled and uploads blocked through calibration readback,
+  progress cleanup, and result handling. Deactivation still closes the wizard and
+  releases its navigation lock.
 
 ## Data Flow
 
