@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import tkinter as tk
 from importlib import import_module
+from threading import Event as ThreadEvent
+from threading import get_ident
 from tkinter import Event, ttk
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, cast
@@ -672,6 +674,72 @@ class TestMotorTestView:
 
         progress_window.destroy.assert_called_once_with()
         assert not motor_view.base_window.navigation_lock.locked
+
+    @pytest.mark.parametrize("handler", ["frame", "spin_arm"])
+    @pytest.mark.parametrize("fails", [False, True])
+    def test_sequoia_restart_yields_to_tk_without_competing_link_operations(
+        self,
+        motor_view: MotorTestView,
+        dialog_spies: SimpleNamespace,
+        mocker: MockerFixture,
+        handler: str,
+        fails: bool,
+    ) -> None:
+        """
+        Restarting from motor configuration keeps progress and errors on Tk.
+
+        GIVEN: Sequoia and a frame or spin-arm edit requiring a restart
+        WHEN: The restart runs while Tk services a timer and progress updates
+        THEN: Telemetry and shortcuts wait, UI updates stay on Tk, and polling resumes
+        """
+        ui_thread = get_ident()
+        heartbeat = ThreadEvent()
+        rendered: list[int] = []
+        mocker.patch("tkinter.Misc.update")
+        mocker.patch("tkinter.Misc.update_idletasks")
+        # The general view fixture stubs after(); this integration case needs real polling.
+        mocker.patch.object(
+            motor_view.root_window, "after", new=tk.Misc.after.__get__(motor_view.root_window, type(motor_view.root_window))
+        )
+        mocker.patch.object(motor_test_module, "is_macos_sequoia_or_older", return_value=True)
+        mocker.patch.object(motor_test_module, "DelayedProgressCallback", side_effect=lambda callback, _delay: callback)
+
+        def tick() -> None:
+            assert motor_view._restart_active
+            assert motor_view._timer_id is None
+            shortcut = MagicMock()
+            motor_view._handle_keyboard_shortcut(shortcut)
+            shortcut.assert_not_called()
+            heartbeat.set()
+
+        def render(_window: object, current: int, _total: int) -> None:
+            assert get_ident() == ui_thread
+            rendered.append(current)
+
+        def restart(_value: object, report: Callable[[int, int], None], **_kwargs: object) -> bool:
+            assert get_ident() != ui_thread
+            assert heartbeat.wait(2)
+            report(50, 100)
+            if fails:
+                message = "restart failed"
+                raise ParameterError(message)
+            return True
+
+        mocker.patch.object(motor_test_module, "update_flight_controller_restart_progress", side_effect=render)
+        method = "update_frame_type_by_key" if handler == "frame" else "set_motor_spin_arm_value"
+        mocker.patch.object(motor_view.model, method, side_effect=restart)
+        motor_view.root_window.after(0, tick)
+        if handler == "frame":
+            motor_view.frame_type_combobox.current(0)
+            motor_view._on_frame_type_change(None)
+        else:
+            dialog_spies.askfloat.return_value = 0.2
+            motor_view._set_motor_spin_arm()
+
+        assert rendered == [50]
+        assert not motor_view._restart_active
+        assert motor_view._timer_id is not None
+        assert dialog_spies.showerror.call_count == int(fails)
 
     def test_throttle_change_paths(
         self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace

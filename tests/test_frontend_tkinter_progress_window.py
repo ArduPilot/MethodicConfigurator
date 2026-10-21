@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import contextlib
 import tkinter as tk
 from collections.abc import Generator
+from threading import Event, get_ident
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -20,6 +21,7 @@ import pytest
 from ardupilot_methodic_configurator.data_model_transfer_progress import TransferProgress
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import (
     ProgressWindow,
+    TkThreadCallbacks,
     update_flight_controller_restart_progress,
 )
 
@@ -578,3 +580,55 @@ def test_sequoia_progress_defers_all_rendering(
         update.assert_not_called()
         idle.assert_not_called()
         bar_idle.assert_not_called()
+
+
+@pytest.mark.parametrize("fail_dialog", [False, True])
+@pytest.mark.parametrize("fail_progress", [False, True])
+def test_workflow_keeps_timers_dialogs_and_progress_on_the_ui_thread(
+    tk_root: tk.Tk, monkeypatch: pytest.MonkeyPatch, fail_dialog: bool, fail_progress: bool
+) -> None:
+    """
+    Interactive work yields to Tk while callbacks preserve their owning thread.
+
+    GIVEN: A blocking workflow with many progress reports and a confirmation dialog
+    WHEN: The workflow runs in a worker, including a possible dialog failure
+    THEN: Timers run, callbacks stay on Tk, and the result or exception reaches the caller
+    """
+    callbacks = TkThreadCallbacks()
+    monkeypatch.setattr(tk.Misc, "update", lambda _self: None)
+    monkeypatch.setattr(tk.Misc, "update_idletasks", lambda _self: None)
+    ui_thread = get_ident()
+    heartbeat = Event()
+    rendered: list[int] = []
+    tk_root.after(0, heartbeat.set)
+
+    def render(current: int, _total: int) -> None:
+        assert get_ident() == ui_thread
+        rendered.append(current)
+        if fail_progress:
+            message = "paint failed"
+            raise ValueError(message)
+
+    def confirm() -> bool:
+        assert get_ident() == ui_thread
+        assert rendered[-1] == 999
+        if fail_dialog:
+            message = "dialog failed"
+            raise ValueError(message)
+        return True
+
+    report = callbacks.progress(render)
+
+    def workflow() -> bool:
+        assert get_ident() != ui_thread
+        assert heartbeat.wait(2), "Tk must service timers while the worker waits"
+        for current in range(1000):
+            report(current, 1000)
+        return callbacks.call(confirm)
+
+    if fail_dialog:
+        with pytest.raises(ValueError, match="dialog failed"):
+            callbacks.run(tk_root, workflow)
+    else:
+        assert callbacks.run(tk_root, workflow)
+    assert len(rendered) < 1000

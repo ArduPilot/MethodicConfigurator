@@ -73,6 +73,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table imp
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_export import ParameterExportWindow
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import (
     ProgressWindow,
+    TkThreadCallbacks,
     update_flight_controller_restart_progress,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText, get_widget_font_family_and_size
@@ -191,6 +192,8 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
         parent_window: tk.Misc,
         upload_callback: Callable[..., bool],
         selected_params: dict,
+        *,
+        _ui_callbacks: TkThreadCallbacks | None = None,
     ) -> bool:
         """
         Handle parameter upload with progress windows.
@@ -206,6 +209,14 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
             selected_params: Dictionary of parameters to upload
 
         """
+        callbacks = _ui_callbacks or TkThreadCallbacks()
+        if _ui_callbacks is None and is_macos_sequoia_or_older():
+            return callbacks.run(
+                parent_window,
+                lambda: self.upload_params_with_progress(
+                    parent_window, upload_callback, selected_params, _ui_callbacks=callbacks
+                ),
+            )
         upload_progress_window: ProgressWindow | None = None
         reset_reconnect_progress_window: ProgressWindow | None = None
         download_progress_window: ProgressWindow | None = None
@@ -214,19 +225,21 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
             """Create and return progress window callback for parameter upload only when needed."""
             nonlocal upload_progress_window
             show_only_on_update = True
-            upload_progress_window = self.create_progress_window(
+            upload_progress_window = callbacks.call(
+                self.create_progress_window,
                 parent_window,
                 _("Uploading FC parameters"),
                 _("Uploaded {} of {} parameters"),
                 show_only_on_update,
             )
-            return upload_progress_window.update_progress_bar
+            return callbacks.progress(upload_progress_window.update_progress_bar)
 
         def get_connection_progress_callback() -> Callable[[int, int], None] | None:
             """Create and return the shared reset/reconnect progress callback."""
             nonlocal reset_reconnect_progress_window
             if reset_reconnect_progress_window is None:
-                reset_reconnect_progress_window = self.create_progress_window(
+                reset_reconnect_progress_window = callbacks.call(
+                    self.create_progress_window,
                     parent_window,
                     _("Restarting Flight Controller"),
                     _("Reset command sent"),
@@ -238,27 +251,28 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
             def update_connection_progress(current: int, total: int) -> None:
                 update_flight_controller_restart_progress(progress_window, current, total)
 
-            return update_connection_progress
+            return callbacks.progress(update_connection_progress)
 
         def get_download_progress_callback() -> Callable[[int, int], None] | None:
             """Create and return progress window callback for parameter download only when needed."""
             nonlocal download_progress_window
             show_immediately = False
-            download_progress_window = self.create_progress_window(
+            download_progress_window = callbacks.call(
+                self.create_progress_window,
                 parent_window,
                 _("Re-downloading FC parameters"),
                 _("Downloaded {} of {} parameters"),
                 show_immediately,
             )
-            return download_progress_window.update_progress_bar
+            return callbacks.progress(download_progress_window.update_progress_bar)
 
         try:
             return bool(
                 upload_callback(
                     selected_params,
-                    ask_confirmation=self.ask_yesno,
-                    ask_retry_cancel=self.ask_retry_cancel,
-                    show_error=self.show_error,
+                    ask_confirmation=callbacks.wrap(self.ask_yesno),
+                    ask_retry_cancel=callbacks.wrap(self.ask_retry_cancel),
+                    show_error=callbacks.wrap(self.show_error),
                     get_upload_progress_callback=get_upload_progress_callback,
                     get_connection_progress_callback=get_connection_progress_callback,
                     get_download_progress_callback=get_download_progress_callback,
@@ -267,31 +281,43 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
         finally:
             # Clean up progress windows if they were created
             if upload_progress_window is not None:
-                upload_progress_window.destroy()
+                callbacks.call(upload_progress_window.destroy)
             if reset_reconnect_progress_window is not None:
-                reset_reconnect_progress_window.destroy()
+                callbacks.call(reset_reconnect_progress_window.destroy)
             if download_progress_window is not None:
-                download_progress_window.destroy()
+                callbacks.call(download_progress_window.destroy)
 
     def reset_all_parameters_to_default_with_progress(
         self,
         parent_window: tk.Misc,
         reset_callback: Callable[..., bool],
+        *,
+        _ui_callbacks: TkThreadCallbacks | None = None,
     ) -> bool:
         """Run a parameter reset with shared restart and download progress windows."""
+        callbacks = _ui_callbacks or TkThreadCallbacks()
+        if _ui_callbacks is None and is_macos_sequoia_or_older():
+            return callbacks.run(
+                parent_window,
+                lambda: self.reset_all_parameters_to_default_with_progress(
+                    parent_window, reset_callback, _ui_callbacks=callbacks
+                ),
+            )
         download_progress_window: ProgressWindow | None = None
 
         def get_download_progress_callback() -> Callable[[int, int], None]:
             nonlocal download_progress_window
-            download_progress_window = self.create_progress_window(
+            download_progress_window = callbacks.call(
+                self.create_progress_window,
                 parent_window,
                 _("Re-downloading FC parameters"),
                 _("Downloaded {} of {} parameters"),
                 False,  # noqa: FBT003
             )
-            return download_progress_window.update_progress_bar
+            return callbacks.progress(download_progress_window.update_progress_bar)
 
-        reset_progress_window = self.create_progress_window(
+        reset_progress_window = callbacks.call(
+            self.create_progress_window,
             parent_window,
             _("Restarting Flight Controller"),
             _("Reset command sent"),
@@ -303,11 +329,15 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
             update_flight_controller_restart_progress(reset_progress_window, current, total)
 
         try:
-            return bool(reset_callback(self.show_error, update_progress, get_download_progress_callback))
+            return bool(
+                reset_callback(
+                    callbacks.wrap(self.show_error), callbacks.progress(update_progress), get_download_progress_callback
+                )
+            )
         finally:
-            reset_progress_window.destroy()
+            callbacks.call(reset_progress_window.destroy)
             if download_progress_window is not None:
-                download_progress_window.destroy()
+                callbacks.call(download_progress_window.destroy)
 
 
 _P = ParamSpec("_P")
@@ -1322,7 +1352,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
             # Create right pane for parameter table (gets remaining space)
             right_frame = ttk.Frame(self.parameter_area_paned)
-            self.parameter_area_paned.add(right_frame, stretch="always")
+            self.parameter_area_paned.add(right_frame, minsize=round(300 * self.dpi_scaling_factor), stretch="always")
             self._set_pane_sticky(self.parameter_area_paned, right_frame)
 
             self.parameter_container = right_frame
@@ -1765,11 +1795,13 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self, redownload: bool = False, *, response_timeout: float | None = None
     ) -> tuple[dict[str, float], dict[str, object]]:
         operation_string = _("Re-downloading FC parameters") if redownload else _("Downloading FC parameters")
+        callbacks = TkThreadCallbacks()
 
         def get_progress_callback() -> Callable | None:
             """Create and return progress window callback for parameter download."""
             show_when_downloading = False
-            param_download_progress_window = self.ui.create_progress_window(
+            param_download_progress_window = callbacks.call(
+                self.ui.create_progress_window,
                 self.root,
                 operation_string,
                 _("Downloaded {} of {} parameters"),
@@ -1777,18 +1809,20 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             )
             # Store reference for cleanup
             self._param_download_progress_window = param_download_progress_window
-            return param_download_progress_window.update_progress_bar
+            return callbacks.progress(param_download_progress_window.update_progress_bar)
 
         # Download parameters using the lazy factory callback
-        download_result = self.parameter_editor.download_flight_controller_parameters(
-            get_progress_callback, response_timeout=response_timeout
-        )
+        def download() -> tuple[dict, dict]:
+            return self.parameter_editor.download_flight_controller_parameters(
+                get_progress_callback, response_timeout=response_timeout
+            )
 
-        # Clean up progress window if it was created
-        if self._param_download_progress_window is not None:
-            # for the case that '--device test' and there is no real FC connected
-            self._param_download_progress_window.destroy()
-            self._param_download_progress_window = None
+        try:
+            download_result = callbacks.run(self.root, download) if is_macos_sequoia_or_older() else download()
+        finally:
+            if self._param_download_progress_window is not None:
+                self._param_download_progress_window.destroy()
+                self._param_download_progress_window = None
         if not redownload:
             self.on_param_file_combobox_change(None, forced=True)  # the initial param read will trigger a table update
         return download_result
@@ -1870,11 +1904,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         editor.populate_single_component(component_name)
         self.inline_component_editor = editor
         self._inline_component_name = component_name
-        if not is_macos_sequoia_or_older():
+        if is_macos_sequoia_or_older():
+            # Measure this component's chrome on Configure, after Tk has laid it out.
+            self._inline_component_chrome_height = 0
+        else:
             self.root.update_idletasks()
-        self._inline_component_chrome_height = (
-            self.inline_component_container.winfo_reqheight() - scroll_frame.winfo_reqheight()
-        )
+            self._inline_component_chrome_height = (
+                self.inline_component_container.winfo_reqheight() - scroll_frame.winfo_reqheight()
+            )
         self.inline_component_scroll_frame = scroll_frame
         scroll_frame.view_port.bind("<Configure>", self._on_main_frame_resize, add="+")
         self._fit_window_to_screen_height()

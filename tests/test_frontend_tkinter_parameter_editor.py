@@ -19,7 +19,7 @@ import threading
 import tkinter as tk
 from contextlib import contextmanager, nullcontext
 from functools import partial
-from threading import Event
+from threading import Event, get_ident
 from tkinter import font as tkfont
 from tkinter import ttk
 from types import SimpleNamespace
@@ -1026,6 +1026,7 @@ class TestWindowSizing:
                 )
             previous_heights = panel_heights
 
+    @pytest.mark.parametrize("defer_geometry", [False, True], ids=["immediate", "sequoia"])
     @pytest.mark.parametrize("field_count", [3, 40], ids=["fitting-fields", "scrolling-fields"])
     @pytest.mark.parametrize(
         ("width", "height", "dpi"),
@@ -1039,7 +1040,7 @@ class TestWindowSizing:
             pytest.param(1280, 636, 96, id="1280x720"),
         ],
     )
-    def test_real_component_fields_remain_accessible_after_rebuilding(  # pylint: disable=too-many-locals,too-many-arguments,too-many-positional-arguments
+    def test_real_component_fields_remain_accessible_after_rebuilding(  # noqa: PLR0915 # pylint: disable=too-many-locals,too-many-arguments,too-many-positional-arguments
         self,
         parameter_editor_window: ParameterEditorWindow,
         layout_root: tk.Tk,
@@ -1047,6 +1048,8 @@ class TestWindowSizing:
         height: int,
         dpi: int,
         field_count: int,
+        defer_geometry: bool,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """
         A scrolling component editor keeps both fields and parameter rows accessible.
@@ -1056,6 +1059,7 @@ class TestWindowSizing:
         THEN: Fitting fields stay fully visible, overflowing fields scroll, and buttons remain visible
         """
         root = layout_root
+        monkeypatch.setattr(parameter_editor_module, "is_macos_sequoia_or_older", lambda: defer_geometry)
         editor = parameter_editor_window
         _set_layout_dpi(root, dpi)
         field_font = tkfont.Font(root=root, family="Arial", size=10)
@@ -1079,7 +1083,8 @@ class TestWindowSizing:
             def populate(_name: str) -> None:
                 for _ in range(field_count):
                     ttk.Entry(embedded_parent_frame, font=field_font).pack(side="top", fill="x")
-                embedded_parent_frame.update_idletasks()
+                if not defer_geometry:
+                    embedded_parent_frame.update_idletasks()
 
             return MagicMock(populate_single_component=MagicMock(side_effect=populate))
 
@@ -2090,7 +2095,7 @@ class TestTemperatureCalibrationWorkflows:
             assert ask_user_confirmation is parameter_editor_window.ui.ask_yesno
             assert callable(select_file)
             assert show_warning is parameter_editor_window.ui.show_warning
-            assert show_error is parameter_editor_window.ui.show_error
+            assert callable(show_error)
             callback = get_progress_callback()
             assert callback is progress_window.update_progress_bar_300_pct
             assert callback is not None
@@ -2126,7 +2131,7 @@ class TestTemperatureCalibrationWorkflows:
             assert ask_user_confirmation is parameter_editor_window.ui.ask_yesno
             assert callable(select_file)
             assert show_warning is parameter_editor_window.ui.show_warning
-            assert show_error is parameter_editor_window.ui.show_error
+            assert callable(show_error)
             callback = get_progress_callback()
             assert callback is progress_window.update_progress_bar_300_pct
             assert callback is not None
@@ -2164,8 +2169,8 @@ class TestFileUploadHelpers:
             **_execution: object,
         ) -> bool:
             assert selected_file == "01_initial.param"
-            assert ask_confirmation is parameter_editor_window.ui.ask_yesno
-            assert show_error is parameter_editor_window.ui.show_error
+            assert callable(ask_confirmation)
+            assert callable(show_error)
             assert show_warning is parameter_editor_window.ui.show_warning
             callback = get_progress_callback()
             assert callback is not None
@@ -2203,8 +2208,8 @@ class TestFileUploadHelpers:
             **_execution: object,
         ) -> None:
             assert selected_file == "01_initial.param"
-            assert ask_confirmation is parameter_editor_window.ui.ask_yesno
-            assert show_error is parameter_editor_window.ui.show_error
+            assert callable(ask_confirmation)
+            assert callable(show_error)
             assert show_warning is parameter_editor_window.ui.show_warning
             callback = get_progress_callback()
             assert callback is not None
@@ -2309,7 +2314,9 @@ class TestUploadSelectedParameters:
             nonlocal download_callback
             progress_callback = cast("Callable[[int, int], None]", args[1])
             download_callback = cast("Callable[[], Callable | None]", args[2])
-            assert download_callback() == download_progress_window.update_progress_bar
+            download_progress = download_callback()
+            assert download_progress is not None
+            download_progress(3, 4)
             progress_callback(10, 100)
             progress_callback(30, 100)
             progress_callback(90, 100)
@@ -2346,7 +2353,7 @@ class TestUploadSelectedParameters:
         reset_reconnect_progress_window.destroy.assert_called_once_with()
         download_progress_window.destroy.assert_called_once_with()
         reset_call = parameter_editor_window.parameter_editor.reset_all_parameters_to_default.call_args
-        assert reset_call.args[0] is parameter_editor_window.ui.show_error
+        assert callable(reset_call.args[0])
         assert callable(reset_call.args[1])
         assert reset_call.args[2] is download_callback
         parameter_editor_window.repopulate_parameter_table.assert_called_once_with()
@@ -2384,14 +2391,12 @@ class TestUploadSelectedParameters:
             get_download_progress_callback: Callable[[], Callable | None],
         ) -> None:
             assert selected_params == {"ROLL_P": 0.12}
-            assert ask_confirmation is parameter_editor_window.ui.ask_yesno
-            assert ask_retry_cancel is parameter_editor_window.ui.ask_retry_cancel
-            assert show_error is parameter_editor_window.ui.show_error
+            assert callable(ask_confirmation)
+            assert callable(ask_retry_cancel)
+            assert callable(show_error)
             upload_cb = get_upload_progress_callback()
             connection_cb = get_connection_progress_callback()
             download_cb = get_download_progress_callback()
-            assert upload_cb is upload_window.update_progress_bar
-            assert download_cb is download_window.update_progress_bar
             assert upload_cb is not None
             assert connection_cb is not None
             assert download_cb is not None
@@ -2451,14 +2456,12 @@ class TestUploadSelectedParameters:
             get_download_progress_callback: Callable[[], Callable | None],
         ) -> None:
             assert selected_params == {}
-            assert ask_confirmation is parameter_editor_window.ui.ask_yesno
-            assert ask_retry_cancel is parameter_editor_window.ui.ask_retry_cancel
-            assert show_error is parameter_editor_window.ui.show_error
+            assert callable(ask_confirmation)
+            assert callable(ask_retry_cancel)
+            assert callable(show_error)
             upload_cb = get_upload_progress_callback()
             connection_cb = get_connection_progress_callback()
             download_cb = get_download_progress_callback()
-            assert upload_cb is upload_window.update_progress_bar
-            assert download_cb is download_window.update_progress_bar
             assert upload_cb is not None
             assert connection_cb is not None
             assert download_cb is not None
@@ -3080,6 +3083,7 @@ class TestPluginLayoutRebuild:
         mock_load.assert_called_once_with(created_frames[1], plugin)
         table.pack.assert_called_once_with(side="top", fill="both", expand=True)
 
+    @pytest.mark.parametrize("defer_geometry", [False, True], ids=["immediate", "sequoia"])
     @pytest.mark.parametrize(("width", "height"), [(990, 600), (1100, 500), (990, 440)])
     def test_user_can_read_parameters_after_revisiting_a_left_plugin_step(
         self,
@@ -3088,6 +3092,8 @@ class TestPluginLayoutRebuild:
         root: tk.Tk,
         width: int,
         height: int,
+        defer_geometry: bool,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """
         Left plugin steps preserve usable parameter table width and visible buttons.
@@ -3097,6 +3103,7 @@ class TestPluginLayoutRebuild:
         THEN: The real parameter table remains readable and the Skip button stays visible
         """
         editor = parameter_editor_window
+        monkeypatch.setattr(parameter_editor_module, "is_macos_sequoia_or_older", lambda: defer_geometry)
         window = tk.Toplevel(root)
         window.geometry(f"{width}x{height}+0+0")
         editor.root = window
@@ -3115,14 +3122,14 @@ class TestPluginLayoutRebuild:
         registry.register(PLUGIN_RC_CALIBRATION, plugin_creator)
 
         try:
-            root.update()
+            root.update_idletasks()
             editor._bind_parameter_layout_events()
             with patch.object(parameter_editor_module, "plugin_factory", registry):
                 for _ in range(2):
                     editor._on_main_frame_resize(tk.Event())
                     editor._rebuild_plugin_layout({"name": PLUGIN_RC_CALIBRATION, "placement": "left"})
                     editor.parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="normal")
-                    root.update()
+                    root.update_idletasks()
 
                     assert editor.parameter_container.winfo_width() > 100
                     assert editor.parameter_editor_table.winfo_width() > 100
@@ -3890,6 +3897,100 @@ class TestParameterUploads:
 
 
 # ============================== FILE DOWNLOADS ==============================
+
+
+@pytest.mark.parametrize("operation", ["upload", "reset", "download"])
+@pytest.mark.parametrize("fails", [False, True], ids=["success", "failure"])
+def test_sequoia_parameter_workflows_keep_tk_callbacks_on_the_ui_thread(  # noqa: PLR0915
+    parameter_editor_window: ParameterEditorWindow,
+    root: tk.Tk,
+    monkeypatch: pytest.MonkeyPatch,
+    operation: str,
+    fails: bool,
+) -> None:
+    """
+    Blocking parameter workflows leave Tk free to deliver timers and dialogs.
+
+    GIVEN: Sequoia rendering and a parameter upload, reset or download
+    WHEN: A worker reports progress, opens dialogs, and succeeds or fails
+    THEN: All UI callbacks stay on Tk, windows are cleaned up, and results propagate
+    """
+    editor = parameter_editor_window
+    editor.root = root
+    ui_thread = get_ident()
+    heartbeat = Event()
+    root.after(0, heartbeat.set)
+    monkeypatch.setattr(parameter_editor_module, "is_macos_sequoia_or_older", lambda: True)
+    monkeypatch.setattr(tk.Misc, "update", lambda _self: None)
+    monkeypatch.setattr(tk.Misc, "update_idletasks", lambda _self: None)
+    created: list[MagicMock] = []
+    rendered: list[tuple[int, int]] = []
+
+    def render(current: int, total: int, *_message: str) -> None:
+        assert get_ident() == ui_thread
+        rendered.append((current, total))
+
+    def destroy() -> None:
+        assert get_ident() == ui_thread
+
+    def create_window(*_args: object, **_kwargs: object) -> MagicMock:
+        assert get_ident() == ui_thread
+        window = MagicMock()
+        window.update_progress_bar.side_effect = render
+        window.update_progress_bar_with_message.side_effect = render
+        window.destroy.side_effect = destroy
+        created.append(window)
+        return window
+
+    def show_dialog(*_args: str) -> bool:
+        assert get_ident() == ui_thread
+        assert rendered
+        return True
+
+    editor.ui.create_progress_window = create_window
+    editor.ui.ask_yesno = show_dialog
+    editor.ui.ask_retry_cancel = show_dialog
+    editor.ui.show_error = show_dialog
+
+    def workflow(*args: object, **kwargs: object) -> object:
+        assert get_ident() != ui_thread
+        assert heartbeat.wait(2)
+        if operation == "upload":
+            for name in ("get_upload_progress_callback", "get_connection_progress_callback", "get_download_progress_callback"):
+                report = cast("Callable", kwargs[name])()
+                report(50, 100)
+            assert cast("Callable", kwargs["ask_confirmation"])("Confirm", "Continue?")
+            assert cast("Callable", kwargs["ask_retry_cancel"])("Retry", "Continue?")
+            cast("Callable", kwargs["show_error"])("Error", "Example")
+        elif operation == "reset":
+            cast("Callable", args[1])(50, 100)
+            cast("Callable", args[2])()(50, 100)
+            cast("Callable", args[0])("Error", "Example")
+        else:
+            cast("Callable", args[0])()(50, 100)
+        if fails:
+            message = "transport failed"
+            raise RuntimeError(message)
+        return ({"TEST": 1}, {}) if operation == "download" else True
+
+    def run() -> object:
+        if operation == "upload":
+            return editor.ui.upload_params_with_progress(root, workflow, {"TEST": 1})
+        if operation == "reset":
+            return editor.ui.reset_all_parameters_to_default_with_progress(root, workflow)
+        cast("MagicMock", editor.parameter_editor).download_flight_controller_parameters.side_effect = workflow
+        return editor.download_flight_controller_parameters(redownload=True)
+
+    if fails:
+        with pytest.raises(RuntimeError, match="transport failed"):
+            run()
+    else:
+        assert run() == (({"TEST": 1}, {}) if operation == "download" else True)
+    assert len(rendered) == len(created)
+    assert len(created) == {"upload": 3, "reset": 2, "download": 1}[operation]
+    for window in created:
+        window.destroy.assert_called_once()
+    assert editor._param_download_progress_window is None
 
 
 class TestFlightLogDownloads:  # pylint: disable=too-few-public-methods

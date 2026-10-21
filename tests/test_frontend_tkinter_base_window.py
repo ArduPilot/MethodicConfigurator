@@ -2243,9 +2243,12 @@ def test_deferred_window_work_preserves_existing_destroy_handlers(tk_root: tk.Tk
         callback = MagicMock()
         on_destroy = MagicMock()
         child.bind("<Destroy>", on_destroy, add="+")
-        BaseWindow._run_when_idle(child, callback)  # pylint: disable=protected-access
-        tk_root.update_idletasks()
-        callback.assert_called_once()
+        original_binding = child.bind("<Destroy>")
+        for _ in range(100):
+            BaseWindow._run_when_idle(child, callback)  # pylint: disable=protected-access
+            tk_root.update_idletasks()
+            assert child.bind("<Destroy>") == original_binding
+        assert callback.call_count == 100
         child.destroy()
         on_destroy.assert_called_once()
     finally:

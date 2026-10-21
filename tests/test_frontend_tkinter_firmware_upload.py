@@ -35,6 +35,7 @@ from ardupilot_methodic_configurator.data_model_firmware_upload import (
     UploadStage,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 
 # pylint: disable=protected-access,too-many-lines
 
@@ -561,6 +562,67 @@ def test_close_disconnects_owned_controller_and_cancels_pending_callbacks() -> N
     window.flight_controller.disconnect.assert_called_once_with()
     assert [call.args[0] for call in window.root.after_cancel.call_args_list] == ["connection-timer", "event-poll"]
     window.root.destroy.assert_called_once_with()
+
+
+@pytest.mark.parametrize("operation", ["uploading", "connecting"])
+def test_close_waits_until_the_owned_operation_finishes(operation: str) -> None:
+    """
+    Closing firmware upload cannot interrupt an active operation.
+
+    GIVEN: The firmware window owns a controller and is uploading or connecting
+    WHEN: The user tries to close it
+    THEN: The controller and all windows remain alive until the operation finishes
+    """
+    window = _headless_firmware_window()
+    window.owns_connection = True
+    setattr(window, operation, True)
+    with patch.object(firmware_upload.messagebox, "showinfo") as notice:
+        window.close()
+    notice.assert_called_once()
+    window.flight_controller.disconnect.assert_not_called()
+    window.root.destroy.assert_not_called()
+    window.root.after_cancel.assert_not_called()
+
+
+@pytest.mark.timeout(5)
+def test_closing_firmware_during_connect_keeps_the_selector_task_running(
+    tk_root: tk.Tk, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """
+    A firmware close attempt cannot destroy the connection task's polling owner.
+
+    GIVEN: Real nested firmware, selector and progress windows with a pending worker
+    WHEN: The user closes the firmware window while connecting
+    THEN: The selector survives, the link stays owned, and the task returns normally
+    """
+    monkeypatch.setattr(tk.Misc, "update", lambda _self: None)
+    monkeypatch.setattr(tk.Misc, "update_idletasks", lambda _self: None)
+    window = _headless_firmware_window()
+    window.root = tk.Toplevel(tk_root)
+    window.owns_connection = True
+    window.connecting = True
+    selector = tk.Toplevel(window.root)
+    release = Event()
+    survived: list[bool] = []
+    progress = ProgressWindow(selector, "Connecting", auto_close_on_complete=False)
+
+    def close_while_connecting() -> None:
+        try:
+            window.close()
+            survived.append(bool(selector.winfo_exists()))
+        finally:
+            release.set()
+
+    try:
+        with patch.object(firmware_upload.messagebox, "showinfo"):
+            tk_root.after(0, close_while_connecting)
+            assert progress.run_task(lambda _report: release.wait(2))
+        assert survived == [True]
+        window.flight_controller.disconnect.assert_not_called()
+    finally:
+        release.set()
+        progress.destroy()
+        window.root.destroy()
 
 
 @pytest.mark.parametrize(
@@ -1331,6 +1393,7 @@ def firmware_window_fixture(
             yield window
         finally:
             window.uploading = False
+            window.connecting = False
             # Teardown must not block on the real AMC exit notice.
             window.restart_notified = True
             if window.root.winfo_exists():
