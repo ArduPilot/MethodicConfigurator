@@ -39,7 +39,7 @@ class AutotuneGainBackoffDataModel:
         """Resolve the tuned axes without depending on the step number."""
         match = fullmatch(
             r"\d+_autotune_(roll|pitch|yaw|yawd|roll_pitch_retune|roll_RatePD|pitch_RatePD|"
-            r"roll_pitch_AngleP|yaw_AngleP)_results\.param",
+            r"roll_pitch_AngleP|yaw_AngleP|roll_rate_pd|pitch_rate_pd|roll_pitch_angle_p|yaw_angle_p)_results\.param",
             filename,
         )
         if match is None:
@@ -54,6 +54,10 @@ class AutotuneGainBackoffDataModel:
             "pitch_RatePD": ("PIT",),
             "roll_pitch_AngleP": ("RLL", "PIT"),
             "yaw_AngleP": ("YAW",),
+            "roll_rate_pd": ("RLL",),
+            "pitch_rate_pd": ("PIT",),
+            "roll_pitch_angle_p": ("RLL", "PIT"),
+            "yaw_angle_p": ("YAW",),
         }[match[1]]
 
     def affected_parameter_names(self) -> list[str]:

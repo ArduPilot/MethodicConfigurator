@@ -257,7 +257,7 @@ class TestConfigurationStepIntegration:
         package_dir = Path(ardupilot_methodic_configurator.__file__).resolve().parent
         config_path = package_dir / f"configuration_steps_{vehicle_type}.json"
         config = json.loads(config_path.read_text(encoding="utf-8"))
-        step = config["steps"]["09_esc_telemetry.param"]
+        step = next(step for name, step in config["steps"].items() if name.endswith("_esc_telemetry.param"))
 
         assert step["plugin"]["name"] == PLUGIN_ESC_RPM_SCALE
         assert step["plugin"]["placement"] == "left"

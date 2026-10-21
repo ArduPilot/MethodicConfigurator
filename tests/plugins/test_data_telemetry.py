@@ -256,22 +256,24 @@ def test_modal_tools_and_locked_operations_keep_their_receive_stream(
 
 
 @pytest.mark.parametrize("vehicle", ["ArduCopter", "ArduPlane", "Heli", "Rover"])
-def test_each_vehicle_has_schema_valid_step_08_telemetry(vehicle: str) -> None:
+def test_each_vehicle_has_schema_valid_telemetry_step(vehicle: str) -> None:
     """
     Make the protocol-only telemetry monitor available for all bundled vehicle families.
 
     GIVEN a bundled vehicle configuration and the shared schema,
-    WHEN step 08 is loaded,
+    WHEN the telemetry step is loaded,
     THEN the telemetry plugin is selected at the top and the entire configuration is valid.
     """
     package = Path(__file__).resolve().parents[2] / "ardupilot_methodic_configurator"
     config = json.loads((package / f"configuration_steps_{vehicle}.json").read_text(encoding="utf-8"))
     schema = json.loads((package / "configuration_steps_schema.json").read_text(encoding="utf-8"))
     jsonschema.validate(config, schema)
-    assert config["steps"]["08_telemetry.param"]["plugin"] == {
-        "name": "data_telemetry",
-        "placement": "top",
-    }
+    telemetry_step = next(
+        step
+        for name, step in config["steps"].items()
+        if name.endswith("_telemetry.param") and not name.endswith("_esc_telemetry.param")
+    )
+    assert telemetry_step["plugin"] == {"name": "data_telemetry", "placement": "top"}
 
 
 def test_native_tk_modal_defers_telemetry_and_polling_resumes_after_close(

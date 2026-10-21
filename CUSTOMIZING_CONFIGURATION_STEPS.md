@@ -387,7 +387,7 @@ Start with the **Required Fields** for every step, then add **Optional Fields** 
 - **Example**:
 
   ```json
-  "old_filenames": ["11_mp_setup_mandatory_hardware.param"]
+  "old_filenames": ["04_board_orientation.param"]
   ```
 
 **`rename_connection`**: Expression to dynamically rename a connection based on component data.

@@ -10,6 +10,8 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar Lucas
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import csv
+import json
 from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
@@ -17,6 +19,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 
+from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_flightcontroller_protocols import FileUploadCheckStatus, FileUploadResult
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ArduPilotParameter,
@@ -143,7 +146,7 @@ def test_level_trim_warns_about_stale_values_in_other_step_without_changing_proj
     parameter_editor: ParameterEditor, mock_local_filesystem: MagicMock, tmp_path: Path
 ) -> None:
     """GIVEN trims in a different step, WHEN calibrated, THEN name the step without writing its file."""
-    other_step = "14_mp_setup_mandatory_hardware.param"
+    other_step = "16_accelerometer_calibration.param"
     original_step = "02_accelerometer.param"
     original = ParDict({"AHRS_TRIM_X": Par(0.0, "roll trim"), "AHRS_TRIM_Y": Par(0.0, "pitch trim")})
     original.export_to_param(str(tmp_path / other_step))
@@ -181,26 +184,26 @@ def test_level_trim_warns_about_stale_values_in_other_step_without_changing_proj
 def test_level_trim_does_not_warn_when_other_step_matches_fc(parameter_editor, mock_local_filesystem) -> None:
     """GIVEN a matching trim in another step, WHEN checking, THEN do not warn or change files."""
     original = ParDict({"AHRS_TRIM_X": Par(0.01, "original trim")})
-    mock_local_filesystem.file_parameters = {"14_mp_setup_mandatory_hardware.param": original}
+    mock_local_filesystem.file_parameters = {"16_accelerometer_calibration.param": original}
     parameter_editor.current_file = "02_accelerometer.param"
 
     stale_files = parameter_editor.find_other_steps_with_stale_calibration_values({"AHRS_TRIM_X": 0.01})
 
     assert stale_files == []
-    assert mock_local_filesystem.file_parameters["14_mp_setup_mandatory_hardware.param"] is original
+    assert mock_local_filesystem.file_parameters["16_accelerometer_calibration.param"] is original
     mock_local_filesystem.export_to_param.assert_not_called()
 
 
 def test_level_trim_does_not_warn_about_float32_rounding(parameter_editor, mock_local_filesystem) -> None:
     """MAVLink float32 round-off must not make an equivalent saved trim look stale."""
     original = ParDict({"AHRS_TRIM_X": Par(0.01, "original trim")})
-    mock_local_filesystem.file_parameters = {"14_mp_setup_mandatory_hardware.param": original}
+    mock_local_filesystem.file_parameters = {"16_accelerometer_calibration.param": original}
     parameter_editor.current_file = "02_accelerometer.param"
 
     stale_files = parameter_editor.find_other_steps_with_stale_calibration_values({"AHRS_TRIM_X": 0.009999999776482582})
 
     assert stale_files == []
-    assert mock_local_filesystem.file_parameters["14_mp_setup_mandatory_hardware.param"] is original
+    assert mock_local_filesystem.file_parameters["16_accelerometer_calibration.param"] is original
     mock_local_filesystem.export_to_param.assert_not_called()
 
 
@@ -7609,3 +7612,176 @@ class TestPluginModelFactoryContract:  # pylint: disable=too-few-public-methods
             mock_factory.create_model.return_value = None
             with pytest.raises(ValueError, match=PLUGIN_MOTOR_TEST):
                 parameter_editor.create_plugin_data_model(PLUGIN_MOTOR_TEST)
+
+
+@pytest.mark.parametrize(
+    ("vehicle_type", "parameter_name"),
+    [
+        ("ArduCopter", "ATC_RAT_RLL_P"),
+        ("ArduPlane", "ATC_RAT_RLL_P"),
+        ("Heli", "ATC_RAT_RLL_P"),
+        ("Heli", "ATC_RAT_RLL_FF"),
+        ("Rover", "ATC_RAT_RLL_P"),
+    ],
+)
+def test_user_can_read_all_tuning_results_in_csv(
+    parameter_editor: ParameterEditor,
+    mock_local_filesystem: MagicMock,
+    tmp_path: Path,
+    vehicle_type: str,
+    parameter_name: str,
+) -> None:
+    """
+    The tuning report includes the results saved in the vehicle configuration steps.
+
+    GIVEN: Distinct gains in the default, initial, QuickTune and AutoTune results
+    WHEN: The user generates the tuning report
+    THEN: Every result column contains its saved gain in workflow order
+    """
+    filenames = [
+        "13_initial_atc.param",
+        "27_optional_pid_adjustment.param",
+        "34_quick_tune_results.param",
+        "40_autotune_roll_results.param",
+        "42_autotune_pitch_results.param",
+        "44_autotune_yaw_results.param",
+        "46_autotune_yawd_results.param",
+        "48_autotune_roll_pitch_retune_results.param",
+    ]
+    if vehicle_type == "Heli":
+        config_path = Path(__file__).resolve().parent.parent / "ardupilot_methodic_configurator/configuration_steps_Heli.json"
+        steps = json.loads(config_path.read_text(encoding="utf-8"))["steps"]
+        filenames = sorted(
+            name
+            for name in steps
+            if name.endswith(("_initial_atc.param", "_optional_pid_adjustment.param", "_quick_tune_results.param"))
+            or ("_autotune_" in name and name.endswith("_results.param"))
+        )
+    elif vehicle_type == "Rover":
+        filenames[0] = "17_initial_atc.param"
+    mock_local_filesystem.vehicle_type = vehicle_type
+    mock_local_filesystem.vehicle_dir = str(tmp_path)
+    mock_local_filesystem.param_default_dict = ParDict({parameter_name: Par(0.1)})
+    mock_local_filesystem.file_parameters = {
+        name: ParDict({parameter_name: Par(index / 10)}) for index, name in enumerate(filenames, start=2)
+    }
+
+    parameter_editor._update_tuning_report()
+
+    with (tmp_path / "tuning_report.csv").open(encoding="utf-8", newline="") as report:
+        rows = list(csv.reader(report))
+    assert rows[0] == ["param", "00_default.param", *filenames]
+    gains = next(row for row in rows if row[0] == parameter_name)
+    assert [float(value) for value in gains[1:]] == pytest.approx([index / 10 for index in range(1, len(filenames) + 2)])
+
+
+@pytest.mark.parametrize(
+    ("filename", "gain_names"),
+    [
+        ("43_autotune_roll_pitch_ff_results.param", ("ATC_RAT_PIT_FF", "ATC_RAT_RLL_FF")),
+        ("47_autotune_pitch_rate_pd_results.param", ("ATC_RAT_PIT_P", "ATC_RAT_PIT_I", "ATC_RAT_PIT_D")),
+        ("51_autotune_roll_rate_pd_results.param", ("ATC_RAT_RLL_P", "ATC_RAT_RLL_I", "ATC_RAT_RLL_D")),
+        (
+            "55_autotune_roll_pitch_angle_p_results.param",
+            ("ATC_ANG_PIT_P", "ATC_ANG_RLL_P", "ATC_ACCEL_P_MAX", "ATC_ACCEL_R_MAX"),
+        ),
+        ("63_autotune_yaw_angle_p_results.param", ("ATC_ANG_YAW_P", "ATC_ACCEL_Y_MAX")),
+        (
+            "64_autotune_roll_results.param",
+            ("ATC_ANG_RLL_P", "ATC_RAT_RLL_P", "ATC_RAT_RLL_I", "ATC_RAT_RLL_D", "ATC_RAT_RLL_FF", "ATC_ACCEL_R_MAX"),
+        ),
+        (
+            "66_autotune_pitch_results.param",
+            ("ATC_ANG_PIT_P", "ATC_RAT_PIT_P", "ATC_RAT_PIT_I", "ATC_RAT_PIT_D", "ATC_RAT_PIT_FF", "ATC_ACCEL_P_MAX"),
+        ),
+        (
+            "68_autotune_yaw_results.param",
+            ("ATC_ANG_YAW_P", "ATC_RAT_YAW_P", "ATC_RAT_YAW_I", "ATC_RAT_YAW_D", "ATC_RAT_YAW_FF", "ATC_ACCEL_Y_MAX"),
+        ),
+        (
+            "70_autotune_yawd_results.param",
+            ("ATC_ANG_YAW_P", "ATC_RAT_YAW_P", "ATC_RAT_YAW_I", "ATC_RAT_YAW_D", "ATC_RAT_YAW_FF", "ATC_ACCEL_Y_MAX"),
+        ),
+        (
+            "72_autotune_roll_pitch_retune_results.param",
+            (
+                "ATC_ANG_PIT_P",
+                "ATC_RAT_PIT_P",
+                "ATC_RAT_PIT_I",
+                "ATC_RAT_PIT_D",
+                "ATC_RAT_PIT_FF",
+                "ATC_ANG_RLL_P",
+                "ATC_RAT_RLL_P",
+                "ATC_RAT_RLL_I",
+                "ATC_RAT_RLL_D",
+                "ATC_RAT_RLL_FF",
+                "ATC_ACCEL_P_MAX",
+                "ATC_ACCEL_R_MAX",
+            ),
+        ),
+    ],
+)
+@pytest.mark.parametrize("acceleration_prefix", ["ATC_ACCEL", "ATC_ACC"], ids=["4.6", "4.7"])
+def test_user_can_capture_and_refresh_heli_autotune_results_from_empty_template(  # pylint: disable=too-many-locals
+    tmp_path: Path,
+    mock_flight_controller: MagicMock,
+    filename: str,
+    gain_names: tuple[str, ...],
+    acceleration_prefix: str,
+) -> None:
+    """
+    Empty helicopter result steps capture live gains and preserve saved results until readback is confirmed.
+
+    GIVEN: The empty Heli template and a controller with the stage's gains, including unchanged defaults
+    WHEN: The user saves results, reopens the step and confirms refreshing from the controller
+    THEN: Only the stage's supported parameters are saved, and existing results survive until confirmation
+    """
+    package = Path(__file__).resolve().parent.parent / "ardupilot_methodic_configurator"
+    template = package / "vehicle_templates" / "Heli" / "empty_4.7.x"
+    filesystem = LocalFilesystem(
+        str(tmp_path),
+        "Heli",
+        "",
+        allow_editing_template_files=False,
+        save_component_to_system_templates=False,
+        load_project=False,
+    )
+    filesystem.configuration_steps = json.loads((package / "configuration_steps_Heli.json").read_text(encoding="utf-8"))[
+        "steps"
+    ]
+    filesystem.param_default_dict = ParDict.from_file(str(template / "00_default.param"))
+    filesystem.file_parameters = {filename: ParDict.from_file(str(template / filename))}
+    expected_names = tuple(name.replace("ATC_ACCEL_", f"{acceleration_prefix}_") for name in gain_names)
+    initial_values = {name: filesystem.param_default_dict.get(name, Par(10000)).value for name in expected_names}
+    mock_flight_controller.fc_parameters = {name: param.value for name, param in filesystem.param_default_dict.items()}
+    if acceleration_prefix == "ATC_ACCEL":
+        for axis in ("P", "R", "Y"):
+            mock_flight_controller.fc_parameters.pop(f"ATC_ACC_{axis}_MAX")
+            mock_flight_controller.fc_parameters[f"ATC_ACCEL_{axis}_MAX"] = 10000.0
+    mock_flight_controller.fc_parameters.update(initial_values)
+    editor = ParameterEditor(filename, mock_flight_controller, filesystem)
+
+    errors, _infos = editor._repopulate_configuration_step_parameters()
+
+    assert not errors
+    assert set(editor.current_step_parameters) == set(expected_names)
+    editor._export_current_file(annotate_doc=False)
+    saved = ParDict.from_file(str(tmp_path / filename))
+    assert {name: param.value for name, param in saved.items()} == pytest.approx(initial_values)
+
+    updated_values = {name: value * 1.1 + 0.01 for name, value in initial_values.items()}
+    mock_flight_controller.fc_parameters.update(updated_values)
+    filesystem.file_parameters = {filename: saved}
+    editor = ParameterEditor(filename, mock_flight_controller, filesystem)
+    editor._repopulate_configuration_step_parameters()
+    ask_choice = MagicMock(return_value=False)
+    assert editor.handle_copy_fc_values_workflow(filename, ask_choice, MagicMock()) is False
+    assert {name: param.get_new_value() for name, param in editor.current_step_parameters.items()} == pytest.approx(
+        initial_values
+    )
+
+    ask_choice.return_value = True
+    assert editor.handle_copy_fc_values_workflow(filename, ask_choice, MagicMock()) is True
+    editor._export_current_file(annotate_doc=False)
+    saved = ParDict.from_file(str(tmp_path / filename))
+    assert {name: param.value for name, param in saved.items()} == pytest.approx(updated_values)

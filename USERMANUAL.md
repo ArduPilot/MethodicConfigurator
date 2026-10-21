@@ -584,11 +584,13 @@ Once the summary files are written, the application will close the connection to
 4. Edit files to match each vehicle's specific requirements
 
 When manufacturing multiple vehicles of the same model, you can reuse most configuration files across instances.
-If you maintain **high-quality standards that result in the production of multiple, nearly identical vehicles**, only three parameter files are vehicle-specific:
+If you maintain **high-quality standards that result in the production of multiple, nearly identical vehicles**,
+the following settings remain vehicle-specific (step numbers depend on the workflow):
 
-- `03_imu_temperature_calibration_results.param`
-- `14_mp_setup_mandatory_hardware.param`
-- `32_inflight_magnetometer_fit_results.param`
+- IMU temperature calibration results
+- Accelerometer calibration and level trim
+- Compass calibration and in-flight MAGFit results
+- RC calibration and servo output settings
 
 ## Command Line Usage
 

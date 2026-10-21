@@ -38,3 +38,4 @@ sitl/git-version.txt
 
 tuning_report.csv
 .pytest*/
+/migration_test/

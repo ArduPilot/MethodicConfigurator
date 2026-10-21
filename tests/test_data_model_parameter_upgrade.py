@@ -660,135 +660,34 @@ class TestParameterUpgradeIntegration:  # pylint: disable=too-few-public-methods
                 params[param_file.name] = ParDict.load_param_file_into_dict(str(param_file))
         return params
 
-    @staticmethod
-    def _compare_file_parameters(upgraded_dict, expected_dict, filename: str) -> list[str]:
-        """Compare two parameter dictionaries and return list of differences."""
-        differences = []
-        expected_names = set(expected_dict.keys())
-        upgraded_names = set(upgraded_dict.keys())
-
-        missing_in_upgraded = expected_names - upgraded_names
-        extra_in_upgraded = upgraded_names - expected_names
-
-        if missing_in_upgraded:
-            msg = f"{filename}: Parameters in 4.7.x but not in upgraded 4.6.x: "
-            msg += str(sorted(missing_in_upgraded)[:5])
-            if len(missing_in_upgraded) > 5:
-                msg += "..."
-            differences.append(msg)
-
-        if extra_in_upgraded:
-            msg = f"{filename}: Parameters in upgraded 4.6.x but not in 4.7.x: "
-            msg += str(sorted(extra_in_upgraded)[:5])
-            if len(extra_in_upgraded) > 5:
-                msg += "..."
-            differences.append(msg)
-
-        # Compare common parameters' values
-        common_params = expected_names & upgraded_names
-        value_mismatches = []
-        for param_name in sorted(common_params):
-            expected_value = expected_dict[param_name].value
-            upgraded_value = upgraded_dict[param_name].value
-
-            if isinstance(expected_value, float) and isinstance(upgraded_value, float):
-                if abs(expected_value - upgraded_value) > 0.001:
-                    msg = f"{param_name}: expected {expected_value}, got {upgraded_value}"
-                    value_mismatches.append(msg)
-            elif expected_value != upgraded_value:
-                msg = f"{param_name}: expected {expected_value}, got {upgraded_value}"
-                value_mismatches.append(msg)
-
-        if value_mismatches:
-            if len(value_mismatches) <= 10:
-                msg = f"{filename}: Value mismatches:\n  " + "\n  ".join(value_mismatches)
-                differences.append(msg)
-            else:
-                msg = f"{filename}: Value mismatches ({len(value_mismatches)} total):\n  "
-                msg += "\n  ".join(value_mismatches[:10])
-                msg += f"\n  ... and {len(value_mismatches) - 10} more"
-                differences.append(msg)
-
-        return differences
-
     @pytest.mark.integration
-    def test_upgrading_empty_4_6_x_template_matches_empty_4_7_x_template(self, capsys) -> None:  # pylint: disable=too-many-locals
+    def test_user_can_upgrade_v2_template_parameters_without_losing_tuning(self) -> None:
         """
-        Empty 4.6.x template upgraded to 4.7 matches the empty 4.7.x template.
+        A firmware upgrade converts units while retaining the project's tuning.
 
-        GIVEN: All .param files from ardupilot_methodic_configurator/vehicle_templates/ArduCopter/empty_4.6.x
-        WHEN: Parameters are upgraded from 4.6.0 to 4.7.0 using upgrade_parameters_for_firmware_version
-        THEN: Upgraded parameters closely match those in empty_4.7.x template
-        AND: Any differences are documented and minimal (expected: SERIAL4_PROTOCOL-like external additions)
-
-        This test validates the parameter upgrade logic against real template data.
-        This test is quite fast although it is an integration test.
+        GIVEN: The V2 empty Copter template for firmware 4.6 with user tuning
+        WHEN: Its parameters are upgraded for firmware 4.7
+        THEN: Renamed parameters have the correct units and tuning and comments survive
         """
-        # Arrange: Load templates and upgrade
-        template_46_dir = Path("ardupilot_methodic_configurator/vehicle_templates/ArduCopter/empty_4.6.x")
-        template_47_dir = Path("ardupilot_methodic_configurator/vehicle_templates/ArduCopter/empty_4.7.x")
+        template = Path("ardupilot_methodic_configurator/vehicle_templates/ArduCopter/empty_4.6.x")
+        parameters = self._load_template_parameters(template)
+        parameters["15_board_orientation.param"]["AHRS_ORIENTATION"] = Par(4, "measured board orientation")
+        parameters["28_throttle_controller.param"]["PSC_ACCZ_P"] = Par(0.35, "learned hover thrust")
 
-        upgraded_params_46 = self._load_template_parameters(template_46_dir)
-        expected_params_47 = self._load_template_parameters(template_47_dir)
+        upgrade_parameters_for_firmware_version("4.6.0", "4.7.0", parameters)
 
-        if not upgraded_params_46 or not expected_params_47:
-            pytest.skip("Template directories not found or no .param files in template directories")
-
-        # Act: Upgrade 4.6.x parameters to 4.7.0
-        upgrade_parameters_for_firmware_version("4.6.0", "4.7.0", upgraded_params_46)
-
-        # Assert: Compare upgraded parameters with expected 4.7.x parameters
-        differences = []
-        for filename, expected_dict in expected_params_47.items():
-            if filename not in upgraded_params_46:
-                differences.append(f"Missing file in upgraded: {filename}")
-                continue
-
-            upgraded_dict = upgraded_params_46[filename]
-            differences.extend(self._compare_file_parameters(upgraded_dict, expected_dict, filename))
-
-        # Verify that template files are loaded (at minimum they should have parameters)
-        total_upgraded_params = sum(len(params) for params in upgraded_params_46.values())
-        total_expected_params = sum(len(params) for params in expected_params_47.values())
-
-        assert total_upgraded_params > 0, "No parameters found in upgraded 4.6.x template"
-        assert total_expected_params > 0, "No parameters found in 4.7.x template"
-
-        # Assert that upgrade results in reasonable parameter counts
-        param_count_ratio = total_upgraded_params / total_expected_params
-        assert param_count_ratio >= 0.9368, (
-            f"Parameter count too low: upgraded={total_upgraded_params}, "
-            f"expected={total_expected_params}, ratio={param_count_ratio:.2%}"
-        )
-
-        # Assert no regressions in the number of structural differences
-        # (The 4.7.x template intentionally has different default values for some params,
-        # so zero differences is not the goal — but the count must not grow unboundedly.)
-        assert len(differences) <= 40, (
-            f"Too many differences ({len(differences)}) between upgraded 4.6.x and 4.7.x templates:\n"
-            + "\n".join(f"  - {d}" for d in differences)
-        )
-
-        # Capture and output summary
-        summary = "\n".join(
-            [
-                "\n=== Integration Test Summary ===",
-                f"Upgraded parameters: {total_upgraded_params}",
-                f"Expected parameters: {total_expected_params}",
-                f"Coverage ratio: {param_count_ratio:.1%}",
-                "Conclusion: Upgrade successful for firmware version transition.",
-            ]
-        )
-
-        if differences:
-            capsys.readouterr()  # Clear captured output first
-            summary_details = summary + "\n\nDetailed differences:\n"
-            for diff in differences:
-                summary_details += f"  - {diff}\n"
-            print(summary_details)  # noqa: T201
-        else:
-            capsys.readouterr()  # Clear captured output first
-            print(summary)  # noqa: T201
+        assert parameters["00_default.param"]["LAND_SPD_MS"].value == pytest.approx(0.5)
+        assert parameters["00_default.param"]["WP_SPD"].value == pytest.approx(10)
+        assert parameters["70_everyday_use.param"]["RTL_ALT_M"].value == pytest.approx(15)
+        assert parameters["12_motor.param"]["SERVO_BLH_POLES"].value == 14
+        throttle = parameters["28_throttle_controller.param"]
+        assert "PSC_ACCZ_P" not in throttle
+        assert throttle["PSC_D_ACC_P"].value == pytest.approx(0.035)
+        assert throttle["PSC_D_ACC_P"].comment == "learned hover thrust"
+        assert throttle["PSC_D_ACC_I"].value == pytest.approx(0.1)
+        orientation = parameters["15_board_orientation.param"]["AHRS_ORIENTATION"]
+        assert orientation.value == 4
+        assert orientation.comment == "measured board orientation"
 
 
 class TestFloatingPointPrecision:

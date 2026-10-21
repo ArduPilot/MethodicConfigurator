@@ -27,6 +27,8 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
+# Direct execution needs the repository on sys.path before importing the application.
+# pylint: disable=wrong-import-position
 import ardupilot_methodic_configurator.backend_filesystem as filesystem_module  # noqa: E402
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem  # noqa: E402
 from ardupilot_methodic_configurator.backend_filesystem_migration import (  # noqa: E402
@@ -34,6 +36,8 @@ from ardupilot_methodic_configurator.backend_filesystem_migration import (  # no
 )
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict, is_within_tolerance  # noqa: E402
 from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpener  # noqa: E402
+
+# pylint: enable=wrong-import-position
 
 _SOURCE_VEHICLE_TEMPLATES = _PROJECT_ROOT / "ardupilot_methodic_configurator" / "vehicle_templates"
 _VEHICLE_TEMPLATE_CASES = sorted(
@@ -46,7 +50,7 @@ _VEHICLE_TEMPLATE_CASES = sorted(
 )
 
 
-class _MigrationModePlugin:
+class _MigrationModePlugin:  # pylint: disable=too-few-public-methods
     """Carry the CLI mode into the module pytest imports for collection."""
 
     def __init__(self, dry_run: bool) -> None:
@@ -57,14 +61,14 @@ class _MigrationModePlugin:
         config.option.template_migration_dry_run = self.dry_run
 
 
-@pytest.fixture(scope="module")
-def migration_dry_run(request: pytest.FixtureRequest) -> bool:
+@pytest.fixture(scope="module", name="migration_dry_run")
+def _migration_dry_run(request: pytest.FixtureRequest) -> bool:
     """Default to copies when the test module is invoked directly through pytest."""
     return getattr(request.config.option, "template_migration_dry_run", True)
 
 
-@pytest.fixture(scope="module")
-def vehicle_templates_root(migration_dry_run: bool) -> Path:
+@pytest.fixture(scope="module", name="vehicle_templates_root")
+def _vehicle_templates_root(migration_dry_run: bool) -> Path:
     """Return a fresh inspection directory for dry runs, or the source tree for migrations."""
     if not migration_dry_run:
         return _SOURCE_VEHICLE_TEMPLATES
@@ -75,7 +79,7 @@ def vehicle_templates_root(migration_dry_run: bool) -> Path:
     return inspection_root
 
 
-class TestVehicleTemplateMigrationRoundTrip:
+class TestVehicleTemplateMigrationRoundTrip:  # pylint: disable=too-few-public-methods
     """Exercise format migration against every packaged vehicle template."""
 
     @staticmethod
@@ -122,7 +126,7 @@ class TestVehicleTemplateMigrationRoundTrip:
         _VEHICLE_TEMPLATE_CASES,
         ids=[relative_path.as_posix() for relative_path, _ in _VEHICLE_TEMPLATE_CASES],
     )
-    def test_user_keeps_all_parameter_values_when_vehicle_templates_migrate_to_v2(
+    def test_user_keeps_all_parameter_values_when_vehicle_templates_migrate_to_v2(  # pylint: disable=too-many-locals
         self,
         monkeypatch: pytest.MonkeyPatch,
         migration_dry_run: bool,

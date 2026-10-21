@@ -1,0 +1,2 @@
+LOG_DISARMED,1  # allow post flight tuning with Replay
+LOG_REPLAY,1  # allow post flight tuning with Replay

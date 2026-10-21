@@ -14,9 +14,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import contextlib
 import os
+import runpy
 import tempfile
 import unittest
 from collections.abc import Generator
+from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 from unittest.mock import MagicMock, Mock, patch
 from xml.etree import ElementTree as ET
@@ -1018,3 +1021,73 @@ class TestAnnotateParamsExceptionHandling(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@pytest.mark.parametrize(
+    ("vehicle_type", "prefix"), [("ArduCopter", "35"), ("ArduPlane", "35"), ("Heli", "56"), ("Rover", "35")]
+)
+@pytest.mark.parametrize("directory_target", [False, True], ids=["file", "directory"])
+def test_user_can_annotate_magfit_parameters_in_the_active_step(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, vehicle_type: str, prefix: str, directory_target: bool
+) -> None:
+    """
+    MagFit annotations follow each vehicle's current parameter filename.
+
+    GIVEN: A project with the active MagFit parameter file and its Lua metadata
+    WHEN: The user annotates that file or its containing project directory
+    THEN: The MagFit documentation is written into the active parameter file
+    """
+    parameter_file = tmp_path / f"{prefix}_inflight_magnetometer_fit_setup.param"
+    parameter_file.write_text("MAGH_ALT_DELTA,1\n", encoding="utf-8")
+    parameter_file.with_suffix(".pdef.xml").write_text("<paramfile />", encoding="utf-8")
+    args = SimpleNamespace(
+        target=str(tmp_path if directory_target else parameter_file),
+        vehicle_type=vehicle_type,
+        firmware_version="4.7.0",
+        max_line_length=100,
+        sort="none",
+        delete_documentation_annotations=False,
+        verbose=False,
+    )
+    monkeypatch.setattr("ardupilot_methodic_configurator.annotate_params.parse_arguments", lambda: args)
+    metadata = {
+        "MAGH_ALT_DELTA": {"humanName": "MagFit switch", "documentation": ["Enable MagFit"], "fields": {}, "values": {}}
+    }
+    with patch("ardupilot_methodic_configurator.annotate_params.parse_parameter_metadata", side_effect=[{}, metadata]):
+        main()
+
+    assert "Enable MagFit" in parameter_file.read_text(encoding="utf-8")
+
+
+def test_magfit_documentation_refreshes_each_templates_actual_setup_step(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """
+    MagFit updates refresh the numbered sidecar used by each vehicle layout.
+
+    GIVEN: Copter, Plane, Rover and Heli templates with their current MagFit steps
+    WHEN: The documentation distribution script runs twice with updated source XML
+    THEN: Every active sidecar is refreshed and no obsolete numbered sidecars are created
+    """
+    script = Path(__file__).parents[1] / "copy_magfit_pdef_to_template_dirs.py"
+    template_root = tmp_path / "ardupilot_methodic_configurator" / "vehicle_templates"
+    sidecars = []
+    for vehicle_type in ("ArduCopter", "ArduPlane", "Rover", "Heli"):
+        template = template_root / vehicle_type / "example"
+        template.mkdir(parents=True)
+        # Ancillary subdirectories must not prevent updating a template.
+        (template / "logs").mkdir()
+        step = template / f"{'56' if vehicle_type == 'Heli' else '35'}_inflight_magnetometer_fit_setup.param"
+        step.touch()
+        sidecar = step.with_suffix(".pdef.xml")
+        sidecar.write_text("stale metadata", encoding="utf-8")
+        sidecars.append(sidecar)
+    source = tmp_path / "31_inflight_magnetometer_fit_setup.pdef.xml"
+    monkeypatch.chdir(tmp_path)
+
+    for content in ("<parameters>first</parameters>", "<parameters>refreshed</parameters>"):
+        source.write_text(content, encoding="utf-8")
+        runpy.run_path(str(script), run_name="__main__")
+        assert all(sidecar.read_text(encoding="utf-8") == content for sidecar in sidecars)
+
+    assert set(template_root.rglob("*.pdef.xml")) == set(sidecars)

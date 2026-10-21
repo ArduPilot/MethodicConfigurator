@@ -1646,7 +1646,7 @@ class TestParameterEditorStartup:
             return component_window
 
         with (
-            patch.object(filesystem, "get_start_file", return_value="11_battery.param"),
+            patch.object(filesystem, "get_start_file", return_value="10_battery.param"),
             patch("ardupilot_methodic_configurator.__main__.ProgramSettings.get_setting", return_value="normal"),
             patch("ardupilot_methodic_configurator.__main__.ParameterEditorWindow", ParameterWindow),
             patch(

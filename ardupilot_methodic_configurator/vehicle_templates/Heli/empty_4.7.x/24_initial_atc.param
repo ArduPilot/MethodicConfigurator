@@ -1,0 +1,6 @@
+ATC_ANG_YAW_P,6  # Derived from vehicle component editor propeller size
+ATC_RAT_PIT_FLTE,0  # Initial value, will be improved at a later step
+ATC_RAT_RLL_FLTE,0  # Initial value, will be improved at a later step
+ATC_RAT_YAW_FLTD,0  # Initial value, will be improved at a later step
+ATC_RAT_YAW_FLTE,2  # Initial value, will be improved at a later step
+INS_ACCEL_FILTER,10  # The default is 20Hz but that is too high in most situations

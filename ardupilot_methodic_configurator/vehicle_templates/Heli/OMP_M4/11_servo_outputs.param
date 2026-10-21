@@ -1,0 +1,6 @@
+SERVO1_FUNCTION,33  # Swashplate Front Left
+SERVO2_FUNCTION,34  # Swashplate Front Right
+SERVO3_FUNCTION,35  # Swashplate Aft
+SERVO4_FUNCTION,36  # Tailrotor Servo
+SERVO5_FUNCTION,31  # HeliRSC
+SERVO8_FUNCTION,0  # No longer needed
