@@ -1,0 +1,6 @@
+FLTMODE1,0  # Stabilized
+FLTMODE2,2  # Alt-Hold
+FLTMODE3,5  # Loiter
+FLTMODE4,5  # Loiter
+FLTMODE5,15  # Autotune
+FLTMODE6,6  # RTL

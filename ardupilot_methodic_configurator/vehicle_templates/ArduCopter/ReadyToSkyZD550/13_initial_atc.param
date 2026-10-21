@@ -15,4 +15,4 @@ ATC_THR_MIX_MAN,0.1  # Value for the first couple of flights will be changed lat
 INS_ACCEL_FILTER,10  # The default is 20Hz but that is too high in most situations
 INS_GYRO_FILTER,39  # Derived from vehicle component editor propeller size
 MOT_THST_EXPO,0.61  # Derived from vehicle component editor propeller size
-MOT_THST_HOVER,0.2  # Hover learn will improve this initial guess
+MOT_THST_HOVER,0.2
