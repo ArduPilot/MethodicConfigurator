@@ -1,0 +1,27 @@
+AUTO_OPTIONS,0
+BRD_HEAT_TARG,45  # Operate at a constant IMU temperature
+BRD_RTC_TZ_MIN,0  # UTC
+EK3_SRC1_POSZ,1  # Use the default, it is safer, only barometer will be used
+INS_POS1_X,0
+INS_POS1_Y,0
+INS_POS2_X,0
+INS_POS2_Y,0
+RTL_LOIT_TIME,2000  # The default is too long. This reduces the time
+SCHED_LOOP_RATE,400  # Stay on default loop rate, this is a slow vehicle
+SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and wind speed estimation automation
+SERIAL7_PROTOCOL,2  # MavLink 2 is supported.
+BARO1_DEVID,751361
+FS_GCS_ENABLE,1
+INS_ACC_ID,3408650
+INS_ACC2_ID,2687498
+INS_ACCEL_FILTER,10
+INS_GYR_ID,3408650
+INS_GYR1_CALTEMP,10.507246
+INS_GYR2_CALTEMP,3.25
+INS_GYR2_ID,2687242
+INS_GYR2OFFS_X,-0.000361
+INS_GYR2OFFS_Y,0.001531
+INS_GYR2OFFS_Z,0.000067
+INS_GYROFFS_X,0.010204
+INS_GYROFFS_Y,-0.034151
+INS_GYROFFS_Z,0.004063

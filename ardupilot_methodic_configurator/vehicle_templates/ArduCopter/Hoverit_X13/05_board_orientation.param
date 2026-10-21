@@ -1,2 +1,0 @@
-AHRS_ORIENTATION,6  # Point 90* left  in the direction of travel Yaw 270*right
-FRAME_CLASS,1  # Selected in the component editor

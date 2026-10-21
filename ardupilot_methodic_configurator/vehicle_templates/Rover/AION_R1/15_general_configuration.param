@@ -9,3 +9,9 @@ SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and wind
 SERIAL2_BAUD,921
 SERIAL4_BAUD,57
 SERIAL4_PROTOCOL,2
+MODE1,0
+MODE2,0
+MODE3,0
+MODE4,9
+MODE5,0
+MODE6,10
