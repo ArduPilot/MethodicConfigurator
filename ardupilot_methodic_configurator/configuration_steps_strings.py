@@ -23,6 +23,7 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     """
     # why
     _config_steps_strings = _("ATC_THR_MIX_MAX should be increased after autotune to maximize attitude control authority at high throttle")
+    _config_steps_strings = _("Accelerometer calibration values and the accelerometers to use must be configured before the vehicle can be driven.")
     _config_steps_strings = _("Accelerometer calibration values and the accelerometers to use must be configured before the vehicle can be flown.")
     _config_steps_strings = _("Accelerometer level trim values compensate for the vehicle attitude when it is stationary.")
     _config_steps_strings = _("After calibrating the IMU temperature bias, disable disarmed logging (no longer needed) and set board target temperature.")
@@ -296,27 +297,27 @@ Do you want to skip it?""")
     _config_steps_strings = _("""If you are impatient and do not want a fully optimized flight controller
 You can skip some steps now.
 
-Jump to '66_everyday_use.param' file?""")
+Jump to '70_everyday_use.param' file?""")
     _config_steps_strings = _("""If you are impatient and do not want a fully optimized flight controller
 You can skip some steps now.
 
-Jump to '70_everyday_use.param' file?""")
-    _config_steps_strings = _("""If you do not use optical flow
-you can skip some steps now.
-
-Jump to '66_everyday_use.param' file?""")
+Jump to '92_everyday_use.param' file?""")
     _config_steps_strings = _("""If you do not use optical flow
 you can skip some steps now.
 
 Jump to '70_everyday_use.param' file?""")
-    _config_steps_strings = _("""If you do not want an analytical PID optimization
+    _config_steps_strings = _("""If you do not use optical flow
 you can skip some steps now.
 
-Jump to '60_position_controller.param' file?""")
+Jump to '92_everyday_use.param' file?""")
     _config_steps_strings = _("""If you do not want an analytical PID optimization
 you can skip some steps now.
 
 Jump to '64_position_controller.param' file?""")
+    _config_steps_strings = _("""If you do not want an analytical PID optimization
+you can skip some steps now.
+
+Jump to '86_position_controller.param' file?""")
 
     # instructions_popup
     _config_steps_strings = _("""After the flight, analyze the .bin in the filter review tool, change the values here and upload to the FC.
@@ -338,6 +339,7 @@ It must be repeated multiple times until outputs no longer oscillate.""")
     _config_steps_strings = _("Activates the temperature calibration for IMU 3 at the next start")
     _config_steps_strings = _("Add Navigation logging")
     _config_steps_strings = _("After a successful IMU temperature calibration, the FC will automatically set this to 1")
+    _config_steps_strings = _("Angle P")
     _config_steps_strings = _("Autotune pitch axis")
     _config_steps_strings = _("Autotune roll and pitch axis")
     _config_steps_strings = _("Autotune roll axis")
@@ -361,6 +363,7 @@ It must be repeated multiple times until outputs no longer oscillate.""")
     _config_steps_strings = _("ESC RPM telemetry requires lua scripting")
     _config_steps_strings = _("ExpressLRS requires FLTMODE_CH != 5")
     _config_steps_strings = _("ExpressLRS requires RC5 to be used for arming (Arm/Disarm function)")
+    _config_steps_strings = _("Feedforward")
     _config_steps_strings = _("For safety reasons, only start takeoff if all motors spin above this RPM")
     _config_steps_strings = _("Gather data for the offline IMU temperature calibration while the FC is disarmed")
     _config_steps_strings = _("Gyro raw logging no longer required, notch filter setup is complete, this reduces processor load and log file size")
@@ -377,6 +380,10 @@ It must be repeated multiple times until outputs no longer oscillate.""")
     _config_steps_strings = _("Inject chip on the mixer thrust signal")
     _config_steps_strings = _("Inject chip on the mixer yaw signal")
     _config_steps_strings = _("Land ASAP")
+    _config_steps_strings = _("Limit the gain increase for helicopter angle tuning")
+    _config_steps_strings = _("Limit the gain increase for helicopter rate tuning")
+    _config_steps_strings = _("Limit the gain increase for helicopter yaw angle tuning")
+    _config_steps_strings = _("Limit the gain increase for helicopter yaw rate tuning")
     _config_steps_strings = _("Log relevant data for PID notch filters tuning. Later on we'll change this to other subsystems")
     _config_steps_strings = _("Log relevant data for dynamic notch filter tuning. Later on we'll change this to other subsystems")
     _config_steps_strings = _("Low failsafe voltage x nr. of cells")
@@ -393,6 +400,8 @@ It must be repeated multiple times until outputs no longer oscillate.""")
     _config_steps_strings = _("PID notch filters require batch logging, not raw logging")
     _config_steps_strings = _("PID notch filters require batch pre- and post- filters logging")
     _config_steps_strings = _("Perform all arming checks. If you have a problem fix its source. Do NOT change this")
+    _config_steps_strings = _("Pitch")
+    _config_steps_strings = _("Pitch and Roll")
     _config_steps_strings = _("Q_M_SPIN_ARM plus at least 0.03")
     _config_steps_strings = _("Quiktune is now completed. Disable it so that we can use the same RC switch to operate the advance-wp script")
     _config_steps_strings = _("RC receiver on SERIAL1 requires RCIN")
@@ -404,15 +413,20 @@ It must be repeated multiple times until outputs no longer oscillate.""")
     _config_steps_strings = _("RC receiver on SERIAL7 requires RCIN")
     _config_steps_strings = _("RC receiver on SERIAL8 requires RCIN")
     _config_steps_strings = _("RC receiver on SERIAL9 requires RCIN")
+    _config_steps_strings = _("Rate D and Rate P")
     _config_steps_strings = _("Reasonable for most places on this planet")
     _config_steps_strings = _("Reset to default after offline IMU temperature calibration")
     _config_steps_strings = _("Restore value now that system identification is done")
     _config_steps_strings = _("Return and land at home or rally point")
+    _config_steps_strings = _("Roll")
+    _config_steps_strings = _("Roll and Pitch")
     _config_steps_strings = _("Scale the PIDs up when battery voltage is above this threshold")
     _config_steps_strings = _("Scale the PIDs up when battery voltage is below this threshold")
     _config_steps_strings = _("Selected in component editor window")
     _config_steps_strings = _("Selected in the component editor")
     _config_steps_strings = _("So that it can tune the throttle controller on 24_throttle_controller.param file")
+    _config_steps_strings = _("So that it can tune the throttle controller on 28_throttle_controller.param file")
+    _config_steps_strings = _("So that it can tune the throttle controller on 42_throttle_controller.param file")
     _config_steps_strings = _("Specified in component editor window")
     _config_steps_strings = _("Telemetry on SERIAL1 protocol defined in component editor")
     _config_steps_strings = _("Telemetry on SERIAL2 protocol defined in component editor")
@@ -452,6 +466,7 @@ It must be repeated multiple times until outputs no longer oscillate.""")
     _config_steps_strings = _("Use throttle-based dynamic notch filter to reduce propeller noise")
     _config_steps_strings = _("Value for the first couple of flights will be changed later once MOT_THST_HOVER is learned")
     _config_steps_strings = _("Value for the first couple of flights will be changed later once Q_M_THST_HOVER is learned")
+    _config_steps_strings = _("Yaw")
     _config_steps_strings = _("allow post flight tuning with Replay")
     _config_steps_strings = _("re-enable normal operation, activate input shaping")
     _config_steps_strings = _("test the stabilization loops independent of the input shaping")

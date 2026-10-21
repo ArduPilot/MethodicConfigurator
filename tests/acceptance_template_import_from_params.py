@@ -1329,7 +1329,7 @@ class TestParameterDerivationValidation:
             "07_remote_controller_controller.param": rc_params,
             # Initial configuration files have values that get refined
             "13_initial_atc.param": config_params | pid_tuning_params | {"MOT_THST_EXPO"},
-            "14_mp_setup_mandatory_hardware.param": config_params
+            "16_accelerometer_calibration.param": config_params
             | pid_tuning_params
             | {"FLTMODE5", "FLTMODE6", "MOT_THST_EXPO"},
             "15_general_configuration.param": config_params,
@@ -1383,7 +1383,7 @@ class TestParameterDerivationValidation:
         that SHOULD be preserved but aren't. This indicates the project creation
         with use_fc_params=True is not properly preserving FC parameter values,
         possibly being overwritten by empty template defaults in files like
-        12_mp_setup_mandatory_hardware.param. This needs investigation.
+        16_accelerometer_calibration.param. This needs investigation.
         """
         if not compounded_params_files:
             pytest.skip("No compounded params files available")
@@ -1501,7 +1501,7 @@ class TestParameterDerivationValidation:
         # Assert: Vehicle-specific calibration data should be preserved
         # Currently FAILING with ~52 differences - mostly calibration data that SHOULD
         # be preserved from FC parameters but isn't. This indicates:
-        # 1. Empty template defaults (especially in 12_mp_setup_mandatory_hardware.param)
+        # 1. Empty template defaults (especially in 16_accelerometer_calibration.param)
         #    may be overwriting FC parameter values
         #
         # Expected behavior: Calibration parameters (INS_TCAL*, COMPASS_*, RC*, BATT*, SERVO*)
@@ -1515,7 +1515,7 @@ class TestParameterDerivationValidation:
                 "Vehicle-specific calibration data is not being preserved from FC parameters. "
                 "This indicates a bug in project creation with use_fc_params=True where "
                 "empty template defaults are overwriting FC parameter values. "
-                "Investigation needed in VehicleProjectCreator and/or 12_mp_setup_mandatory_hardware.param"
+                "Investigation needed in VehicleProjectCreator and/or 16_accelerometer_calibration.param"
             )
 
         assert len(changed_values) < 55, (

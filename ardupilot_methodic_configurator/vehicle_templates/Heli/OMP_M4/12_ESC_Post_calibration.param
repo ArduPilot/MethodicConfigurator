@@ -1,4 +1,0 @@
-RC3_MAX,2011  # RC3 calibration values
-RC3_MIN,988  # RC3 calibration values
-SERVO5_FUNCTION,31  # HeliRSC
-SERVO8_FUNCTION,0  # No longer needed

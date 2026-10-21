@@ -274,7 +274,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
         self.test_dir = self.test_directory.name
         # Create a default, adjustment and optimized parameter file for testing
         self.default_param_file = os.path.join(self.test_dir, "00_default.param")
-        self.adjustment_param_file = os.path.join(self.test_dir, "23_optional_pid_adjustment.param")
+        self.adjustment_param_file = os.path.join(self.test_dir, "27_optional_pid_adjustment.param")
         self.optimized_param_file = os.path.join(self.test_dir, "optimized_parameter_file.param")
         with open(self.default_param_file, "w", encoding="utf-8") as f:
             f.write("PARAM1,1.0\nPARAM2,2.0\nPARAM3,3.0\n")
@@ -282,6 +282,42 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             f.write("PARAM1,1.5\nPARAM2,2.5\nPARAM3,3.5\n")
         with open(self.optimized_param_file, "w", encoding="utf-8") as f:
             f.write("PARAM1,1.5\nPARAM2,2.5\nPARAM3,3.5\n")
+
+    def test_user_can_update_pid_gains_in_a_legacy_project(self) -> None:
+        """
+        Projects that retain the earlier step numbering still support PID adjustment.
+
+        GIVEN: A project with the PID adjustment file at step 23
+        WHEN: The user applies optimized gains
+        THEN: The existing file is selected and gains receive the requested adjustment
+        """
+        legacy_path = os.path.join(self.test_dir, "23_optional_pid_adjustment.param")
+        os.rename(self.adjustment_param_file, legacy_path)
+
+        parameters, filename, _header = update_pid_adjustment_params(
+            self.test_dir, os.path.basename(self.optimized_param_file), 0.5
+        )
+
+        assert filename == legacy_path
+        assert parameters["PARAM1"].value == pytest.approx(0.75)
+
+    def test_user_can_update_pid_gains_in_the_current_heli_step(self) -> None:
+        """
+        Heli's renumbered PID adjustment step receives optimized gains.
+
+        GIVEN: A Heli project with the PID adjustment file at step 40
+        WHEN: The user applies optimized gains
+        THEN: The current Heli file is selected and receives the requested adjustment
+        """
+        heli_path = os.path.join(self.test_dir, "40_optional_pid_adjustment.param")
+        os.rename(self.adjustment_param_file, heli_path)
+
+        parameters, filename, _header = update_pid_adjustment_params(
+            self.test_dir, os.path.basename(self.optimized_param_file), 0.5
+        )
+
+        assert filename == heli_path
+        assert parameters["PARAM1"].value == pytest.approx(0.75)
 
     def test_all_parameters_present(self) -> None:
         # Remove a parameter from the default parameter file

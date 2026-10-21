@@ -382,7 +382,8 @@ def test_receiver_step_is_wired_and_schema_valid_for_each_vehicle(vehicle: str) 
     schema = json.loads((_PACKAGE / "configuration_steps_schema.json").read_text(encoding="utf-8"))
     validate(configuration, schema)
     steps = configuration["steps"]
-    assert steps["06_remote_controller_receiver.param"]["plugin"] == {"name": "rc_receiver", "placement": "left"}
+    receiver_step = next(step for name, step in steps.items() if name.endswith("_remote_controller_receiver.param"))
+    assert receiver_step["plugin"] == {"name": "rc_receiver", "placement": "left"}
 
 
 @pytest.mark.parametrize("platform", ["windows", "linux", "macos"])

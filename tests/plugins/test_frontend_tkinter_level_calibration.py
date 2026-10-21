@@ -235,7 +235,7 @@ class TestLevelCalibrationView:
         level_calibration_view.model.start_level_calibration.return_value = (True, "Level calibration started")
         level_calibration_view.model.poll_level_calibration.return_value = (True, "Level calibration successful")
         editor = level_calibration_view.base_window.parameter_editor
-        editor.find_other_steps_with_stale_calibration_values.return_value = ["14_mp_setup_mandatory_hardware.param"]
+        editor.find_other_steps_with_stale_calibration_values.return_value = ["16_accelerometer_calibration.param"]
 
         level_calibration_view.view._on_level_calibration()
         level_calibration_view.view._poll_level_calibration()
@@ -245,7 +245,7 @@ class TestLevelCalibrationView:
         )
         level_calibration_view.showinfo.assert_called_once_with(
             "Calibration Result",
-            "Level calibration successful\nReview stale AHRS trim values in: 14_mp_setup_mandatory_hardware.param",
+            "Level calibration successful\nReview stale AHRS trim values in: 16_accelerometer_calibration.param",
         )
 
     def test_user_sees_error_when_level_trim_fails(self, level_calibration_view) -> None:

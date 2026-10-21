@@ -1214,17 +1214,41 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             "INS_ACCEL_FILTER",
             "INS_GYRO_FILTER",
         ]
+        uses_v2_steps = self._local_filesystem.vehicle_type in {"ArduCopter", "ArduPlane", "Rover"}
         report_files = [
             "00_default.param",
-            "13_initial_atc.param",
-            "23_optional_pid_adjustment.param",
-            "30_quick_tune_results.param",
-            "36_autotune_roll_results.param",
-            "38_autotune_pitch_results.param",
-            "40_autotune_yaw_results.param",
-            "42_autotune_yawd_results.param",
-            "44_autotune_roll_pitch_retune_results.param",
+            "17_initial_atc.param" if self._local_filesystem.vehicle_type == "Rover" else "13_initial_atc.param",
+            *[
+                current if uses_v2_steps else legacy
+                for legacy, current in (
+                    ("23_optional_pid_adjustment.param", "27_optional_pid_adjustment.param"),
+                    ("30_quick_tune_results.param", "34_quick_tune_results.param"),
+                    ("36_autotune_roll_results.param", "40_autotune_roll_results.param"),
+                    ("38_autotune_pitch_results.param", "42_autotune_pitch_results.param"),
+                    ("40_autotune_yaw_results.param", "44_autotune_yaw_results.param"),
+                    ("42_autotune_yawd_results.param", "46_autotune_yawd_results.param"),
+                    ("44_autotune_roll_pitch_retune_results.param", "48_autotune_roll_pitch_retune_results.param"),
+                )
+            ],
         ]
+        if self._local_filesystem.vehicle_type == "Heli":
+            report_params.extend(["ATC_RAT_PIT_FF", "ATC_RAT_RLL_FF", "ATC_RAT_YAW_FF"])
+            report_files = [
+                "00_default.param",
+                "24_initial_atc.param",
+                "40_optional_pid_adjustment.param",
+                "43_autotune_roll_pitch_ff_results.param",
+                "47_autotune_pitch_rate_pd_results.param",
+                "51_autotune_roll_rate_pd_results.param",
+                "54_quick_tune_results.param",
+                "55_autotune_roll_pitch_angle_p_results.param",
+                "63_autotune_yaw_angle_p_results.param",
+                "64_autotune_roll_results.param",
+                "66_autotune_pitch_results.param",
+                "68_autotune_yaw_results.param",
+                "70_autotune_yawd_results.param",
+                "72_autotune_roll_pitch_retune_results.param",
+            ]
 
         report_file_path = Path(getattr(self._local_filesystem, "vehicle_dir", ".")) / "tuning_report.csv"
 

@@ -328,9 +328,9 @@ _FILES_TO_DELETE_V0_TO_V1: dict[str, list[str]] = {
 # Format version 1 → 2
 # ---------------------------------------------------------------------------
 
-# Destinations belong to each vehicle's own layout. Only ArduCopter has the
-# split calibration/mode/servo layout used by the v2 migration fixture; the
-# other vehicles retain their combined mandatory-hardware calibration step.
+# Destinations belong to each vehicle's own layout. ArduCopter and ArduPlane
+# split calibration/mode/servo settings into separate steps; Heli and Rover
+# retain their combined mandatory-hardware calibration step.
 # IMUs 4/5 use INS4_/INS5_ subgroups, not suffixes on INS_ACC or INS_USE:
 # https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/libraries/AP_InertialSensor/AP_InertialSensor.cpp
 # The final move flag controls conflicts: forced moves replace destination values;
@@ -513,7 +513,7 @@ _PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str], bool]]] = {
         (
             "14_mp_setup_mandatory_hardware.param",
             "29_motor_notch_filter_results.param",
-            [r"INS_GYRO_FILTER", r"ATC_RAT_(?:PIT|RLL|YAW)_FLT[DT]"],
+            [r"INS_GYRO_FILTER", r"Q_A_RAT_(?:PIT|RLL|YAW)_FLT[DT]"],
             False,
         ),
     ],

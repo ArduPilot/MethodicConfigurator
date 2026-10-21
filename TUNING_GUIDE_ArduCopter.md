@@ -493,8 +493,8 @@ The figure excludes the LiPo battery and the PM02 BEC with a voltage/current mon
 
 # 6. Basic mandatory configuration
 
-> **Work in progress:** This guide follows the draft V2 configuration sequence. Automatic
-> migration to V2 remains disabled until the production sequence is released.
+> This guide follows the V2 configuration sequence. Existing vehicle projects are
+> automatically migrated to V2 when opened.
 
 Follow the steps below in order and keep the propellers removed throughout this chapter.
 The sensor-calibration, flight-mode and servo-output settings now have separate files;

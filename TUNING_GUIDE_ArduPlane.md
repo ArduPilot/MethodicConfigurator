@@ -684,7 +684,6 @@ Now do some general configuration
 
 1. Connect the flight controller to the PC
 1. Start *ArduPilot Methodic Configurator* and select the vehicle directory where you previously stored your *intermediate parameter files*.
-1. When asked *Update file with values from FC?* select `Yes` to copy current FC values to the `14_mp_setup_mandatory_hardware.param` file because you've completed the experiment.
 1. Press `Upload selected params to FC, and advance to next file` button.
 1. Read the documentation links inside the `15_general_configuration.param documentation`
 1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements

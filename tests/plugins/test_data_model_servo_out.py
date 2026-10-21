@@ -239,7 +239,7 @@ class TestServoOutputRecommendations:  # pylint: disable=too-many-public-methods
         model._parameter_editor.fc_parameters.clear()
         model._local_filesystem.file_parameters = {
             "05_board_orientation.param": ParDict({"SERVO1_FUNCTION": Par(70)}),
-            "14_mp_setup_mandatory_hardware.param": ParDict({"SERVO2_FUNCTION": Par(33), "SERVO7_FUNCTION": Par(34)}),
+            "16_accelerometer_calibration.param": ParDict({"SERVO2_FUNCTION": Par(33), "SERVO7_FUNCTION": Par(34)}),
         }
         model._local_filesystem.vehicle_type = "ArduCopter"
         model._local_filesystem.vehicle_components_fs.data["Components"]["Frame"] = {"Specifications": {"Frame class": "Quad"}}
@@ -254,7 +254,7 @@ class TestServoOutputRecommendations:  # pylint: disable=too-many-public-methods
         model = servo_model_factory("Main Out", 1)
         model._local_filesystem.file_parameters = {
             "05_board_orientation.param": ParDict({"SERVO1_FUNCTION": Par(70)}),
-            "14_mp_setup_mandatory_hardware.param": ParDict({"SERVO1_FUNCTION": Par(0)}),
+            "16_accelerometer_calibration.param": ParDict({"SERVO1_FUNCTION": Par(0)}),
         }
 
         recommendations, _message, status = model.get_recommendations()

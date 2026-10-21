@@ -443,7 +443,11 @@ def test_bundled_autotune_results_steps_only_enable_the_plugin_for_supported_veh
     root = Path(__file__).resolve().parents[2] / "ardupilot_methodic_configurator"
     for vehicle in ("ArduCopter", "ArduPlane", "Heli", "Rover"):
         steps = json.loads((root / f"configuration_steps_{vehicle}.json").read_text(encoding="utf-8"))["steps"]
-        results = {name: step for name, step in steps.items() if "_autotune_" in name and name.endswith("_results.param")}
+        results = {
+            name: step
+            for name, step in steps.items()
+            if "_autotune_" in name and name.endswith("_results.param") and not name.endswith("_ff_results.param")
+        }
         assert len(results) == (9 if vehicle == "Heli" else 5)
         for name, step in results.items():
             assert AutotuneGainBackoffDataModel.result_axes(name)
@@ -468,10 +472,10 @@ def test_bundled_autotune_results_steps_only_enable_the_plugin_for_supported_veh
                     assert visible is expected_visible
 
     heli_template_results = {
-        "27_autotune_pitch_RatePD_results.param",
-        "29_autotune_roll_RatePD_results.param",
-        "31_autotune_roll_pitch_AngleP_results.param",
-        "35_autotune_yaw_AngleP_results.param",
+        "47_autotune_pitch_rate_pd_results.param",
+        "51_autotune_roll_rate_pd_results.param",
+        "55_autotune_roll_pitch_angle_p_results.param",
+        "63_autotune_yaw_angle_p_results.param",
     }
     heli_steps = json.loads((root / "configuration_steps_Heli.json").read_text(encoding="utf-8"))["steps"]
     assert all(heli_steps[name]["plugin"]["name"] == PLUGIN_AUTOTUNE_GAIN_BACKOFF for name in heli_template_results)
@@ -491,10 +495,10 @@ def test_heli_staged_results_document_the_matching_autotune_stage() -> None:
     guide = (root / "TUNING_GUIDE_Heli.md").read_text(encoding="utf-8")
     assert "### Template-specific staged AutoTune results" in guide
     for stem, sequence in (
-        ("27_autotune_pitch_RatePD", 2),
-        ("29_autotune_roll_RatePD", 2),
-        ("31_autotune_roll_pitch_AngleP", 4),
-        ("35_autotune_yaw_AngleP", 4),
+        ("47_autotune_pitch_rate_pd", 2),
+        ("51_autotune_roll_rate_pd", 2),
+        ("55_autotune_roll_pitch_angle_p", 4),
+        ("63_autotune_yaw_angle_p", 4),
     ):
         filename = f"{stem}_results.param"
         step = steps[filename]
