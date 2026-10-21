@@ -55,6 +55,7 @@ from ardupilot_methodic_configurator.data_model_parameter_editor import Paramete
 from ardupilot_methodic_configurator.frontend_tkinter_about_popup_window import AboutWindow
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_connection_selection import ConnectionSelectionWindow
+from ardupilot_methodic_configurator.frontend_tkinter_fc_banner_window import FlightControllerBannerWindow
 from ardupilot_methodic_configurator.frontend_tkinter_firmware_upload import FirmwareUploadWindow
 from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_info import FlightControllerInfoWindow
 from ardupilot_methodic_configurator.frontend_tkinter_mavlink_inspector import MavlinkInspectorWindow
@@ -96,6 +97,7 @@ TARGETS: tuple[CaptureTarget, ...] = (
     CaptureTarget("App_screenshot_FC_connection_add_another.png", "connection_add_another"),
     CaptureTarget("App_screenshot_FC_connection_udp_forwarding.png", "connection_udp_forwarding"),
     CaptureTarget("App_screenshot_FC_info_and_param_download.png", "fc_info"),
+    CaptureTarget("App_screenshot_FC_banner.png", "fc_banner"),
     CaptureTarget("App_screenshot_instructions.png", "instructions"),
     CaptureTarget("App_screenshot_motor_test.png", "motor_test"),
     CaptureTarget("App_screenshot_Parameter_export.png", "parameter_export"),
@@ -668,6 +670,40 @@ def _capture_fc_info(output_path: Path, delay: float, padding: int, vehicle_dir:
     finally:
         if window.root.winfo_exists():
             window.root.destroy()
+
+
+def _capture_fc_banner(output_path: Path, delay: float, padding: int) -> None:
+    """Capture the FC diagnostics window with illustrative banner, status and device data."""
+    banner_text = [
+        "ArduPilot V4.6.0 (a1b2c3d4)",
+        "ChibiOS: 2026-06-18",
+        "Free RAM: 123456",
+        "Frame: QUAD/X",
+    ]
+    status_text = [
+        "[2026-06-18 12:34:56] GPS 1: detected as u-blox",
+        "[2026-06-18 12:34:57] EKF3 IMU0 is using GPS",
+        "[2026-06-18 12:34:58] PreArm: Need Position Estimate",
+    ]
+    fc_parameters = {
+        "BARO1_DEVID": 423937,
+        "COMPASS_DEV_ID2": 423681,
+        "COMPASS_PRIO1_ID": 423681,
+        "INS_ACC2_ID": (52 << 16) | (1 << 8) | (3 << 3) | 2,
+    }
+    with hidden_root() as root:
+        root.geometry("1x1+0+0")
+        root.deiconify()
+        window = FlightControllerBannerWindow(root, banner_text, status_text, fc_parameters)
+        try:
+            window.root.geometry("+100+80")
+            window.root.attributes("-topmost", 1)
+            window.root.lift()
+            settle_tk(window.root)
+            capture_widget(window.root, output_path, delay, padding)
+        finally:
+            if window.root.winfo_exists():
+                window.root.destroy()
 
 
 def _capture_instructions(output_path: Path, delay: float, padding: int) -> None:
@@ -1283,6 +1319,8 @@ def capture_target(target: CaptureTarget, output_path: Path, args: argparse.Name
         )
     elif action == "fc_info":
         _capture_fc_info(output_path, args.delay, args.padding, args.vehicle_dir)
+    elif action == "fc_banner":
+        _capture_fc_banner(output_path, args.delay, args.padding)
     elif action == "motor_test":
         _capture_motor_test(output_path, args.delay, args.padding, args.vehicle_dir)
     elif action == "parameter_export":

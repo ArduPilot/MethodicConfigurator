@@ -17,6 +17,7 @@ There are also [quick start instructions](README.md), [specific use case instruc
 1. [MAVFTP File Browser](USERMANUAL_MAVFTP.md)
 1. [MAVLink Inspector](USERMANUAL_MAVLink_inspector.md)
 1. [Firmware Upload](USERMANUAL_firmware_upload.md)
+1. [Flight Controller Banner](USERMANUAL_fc_banner.md)
 1. [Customizing configuration steps](https://ardupilot.github.io/MethodicConfigurator/CUSTOMIZING_CONFIGURATION_STEPS.html) (external document)
 1. [Command Line Usage](#command-line-usage)
 1. [Troubleshooting](#troubleshooting)
