@@ -508,6 +508,10 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             return
 
         progress_window: ProgressWindow | None = None
+        owner = object()
+        # Restart progress can pump Tk's event loop while the FC is disconnected.
+        # Retain ownership so recovery and editor actions cannot use that connection.
+        self.base_window.navigation_lock.acquire(owner)
         try:
             # Only show the shared progress window if restarting takes more than one second.
             progress_window = ProgressWindow(
@@ -538,8 +542,11 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         except (ValidationError, ParameterError, FrameConfigurationError) as e:
             showerror(_("Parameter Update Error"), str(e))
         finally:
-            if progress_window is not None:
-                progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
+            try:
+                if progress_window is not None:
+                    progress_window.destroy()  # also needed when no real FC is connected
+            finally:
+                self.base_window.navigation_lock.release(owner)
 
     def _on_throttle_change(self) -> None:
         """Handle throttle spinbox change."""
@@ -600,6 +607,8 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         )
         if new_val is not None:
             progress_window: ProgressWindow | None = None
+            owner = object()
+            self.base_window.navigation_lock.acquire(owner)
             try:
                 progress_window = ProgressWindow(
                     self.root_window,
@@ -614,8 +623,11 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             except (ParameterError, ValidationError) as e:
                 showerror(_("Error"), str(e))
             finally:
-                if progress_window is not None:
-                    progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
+                try:
+                    if progress_window is not None:
+                        progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
+                finally:
+                    self.base_window.navigation_lock.release(owner)
 
     def _set_motor_spin_min(self) -> None:
         """Open a dialog to set MOT_SPIN_MIN."""
