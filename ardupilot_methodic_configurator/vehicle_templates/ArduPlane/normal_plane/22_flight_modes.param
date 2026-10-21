@@ -1,0 +1,6 @@
+FLTMODE1,4  # We use a tri-state-switch
+FLTMODE2,2  # We use a tri-state-switch
+FLTMODE3,5  # We use a tri-state-switch
+FLTMODE4,6  # We use a tri-state-switch
+FLTMODE5,7  # We use a tri-state-switch
+FLTMODE6,8  # We use a tri-state-switch

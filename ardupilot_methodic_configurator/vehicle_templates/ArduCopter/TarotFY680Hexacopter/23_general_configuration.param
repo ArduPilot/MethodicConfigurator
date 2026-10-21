@@ -1,0 +1,27 @@
+AUTO_OPTIONS,1  # Allow arming in auto to avoid another disaster... WARNING, must be CAREFUL to be away from vehicle
+BRD_RTC_TZ_MIN,0  # UTC
+EK3_SRC1_POSZ,1  # Use the default, it is safer, only barometer will be used
+INS_ACCEL_FILTER,10  # the default is 20 and that lets too much noise in
+INS_POS1_X,0
+INS_POS1_Y,0
+INS_POS2_X,0
+INS_POS2_Y,0
+RTL_LOIT_TIME,5000  # The default is too long. This reduces the time
+SCHED_LOOP_RATE,400  # Stay on default loop rate, this is a slow vehicle
+SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and wind speed estimation automation
+SERIAL7_PROTOCOL,16  # 16, ESC Telemetry
+FLOW_TYPE,0  # Change to 5 to enable Optical Flow
+RNGFND1_MAX_CM,800  # from MicoAir guide
+RNGFND1_MIN_CM,1  # from MicoAir guide
+RNGFND1_ORIENT,25  # 25, Down, for altitude and optical flow.
+RNGFND1_TYPE,10  # 10, MAVLink
+RNGFND2_ADDR,41  # Decimal version of default I2C address
+RNGFND2_GNDCLEAR,10
+RNGFND2_MAX_CM,360  # 3.6m max according to docs
+RNGFND2_MIN_CM,5  # docs say 0.05 but I think that is meters
+RNGFND2_SCALING,1  # Scaling factor between reading and distance (for analog readings?)
+RNGFND2_TYPE,16  # 16, VL531X
+ARMING_CHECK,947710  # 1>947710 Disable rangefinder because of intermittent fault, no safety-switch or camera.
+SERIAL4_BAUD,115  # 115, for MTF-01P
+SERIAL4_PROTOCOL,1  # 1, MAVLink1 for MTF-01P
+SPRAY_ENABLE,1
