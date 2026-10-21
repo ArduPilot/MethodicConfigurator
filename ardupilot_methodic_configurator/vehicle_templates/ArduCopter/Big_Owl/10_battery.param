@@ -1,0 +1,11 @@
+BATT_ARM_VOLT,50.3004  # Only arm above this voltage, to avoid taking off with insufficient battery capacity
+BATT_CAPACITY,17000  # Total battery capacity specified in the component editor
+BATT_CRT_MAH,0  # Energy consumption not measured
+BATT_CRT_VOLT,45.6  # Critical failsafe voltage x nr. of cells
+BATT_FS_CRT_ACT,1  # Land ASAP
+BATT_FS_LOW_ACT,2  # Return and land at home or rally point
+BATT_FS_VOLTSRC,0  # Using only RAW voltage
+BATT_LOW_MAH,0  # Energy consumption not measured
+BATT_LOW_VOLT,46.8  # Low failsafe voltage x nr. of cells
+MOT_BAT_VOLT_MAX,52.200001
+MOT_BAT_VOLT_MIN,45.599998

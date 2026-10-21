@@ -1,2 +1,0 @@
-AHRS_ORIENTATION,0  # Point forward in the direction of travel
-FRAME_CLASS,1  # Selected in the component editor
