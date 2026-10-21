@@ -750,7 +750,7 @@ class FirmwareUploadWindow(BaseWindow):  # pylint: disable=too-many-instance-att
 
     def close(self) -> None:
         """Keep the window alive during a bootloader operation and announce a pending AMC exit."""
-        if self.uploading:
+        if self.uploading or self.connecting:
             messagebox.showinfo(
                 _("Upload ArduPilot firmware"), _("Wait for the current operation to finish"), parent=self.root
             )

@@ -424,6 +424,17 @@ class BaseWindow:
     def _run_when_idle(window: tk.Misc, callback: Callable[[], None]) -> None:
         """Run deferred window work, cancelling it if the window is destroyed."""
         timer_id: str | None = None
+        binding_id: str | None = None
+
+        def remove_binding() -> None:
+            if binding_id is None:
+                return
+            # Remove only our script; Python 3.10's unbind clears all handlers.
+            with contextlib.suppress(tk.TclError):
+                scripts = window.bind("<Destroy>").splitlines()
+                remaining = "\n".join(line for line in scripts if not line.startswith(f'if {{"[{binding_id} ')).strip("\n")
+                window.bind("<Destroy>", remaining + "\n" if remaining else "")
+                window.deletecommand(binding_id)
 
         def cancel_on_destroy(event: tk.Event) -> None:
             if event.widget is window and timer_id is not None:
@@ -433,14 +444,13 @@ class BaseWindow:
         def run() -> None:
             nonlocal timer_id
             timer_id = None
+            remove_binding()
             with contextlib.suppress(tk.TclError):
                 if window.winfo_exists():
                     callback()
 
         with contextlib.suppress(tk.TclError):
-            # Python 3.10 unbind(sequence, funcid) removes other handlers too.
-            # Leave this harmless handler attached until the window is destroyed.
-            window.bind("<Destroy>", cancel_on_destroy, add="+")
+            binding_id = window.bind("<Destroy>", cancel_on_destroy, add="+")
             timer_id = window.after_idle(run)
 
     @staticmethod

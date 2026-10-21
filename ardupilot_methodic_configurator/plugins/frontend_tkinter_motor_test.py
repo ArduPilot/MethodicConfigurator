@@ -20,6 +20,8 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+# pylint: disable=too-many-lines
+
 import sys
 import time
 import tkinter as tk
@@ -52,6 +54,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_progress_window import (
     update_flight_controller_restart_progress,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
+from ardupilot_methodic_configurator.macos_utilities import is_macos_sequoia_or_older
 from ardupilot_methodic_configurator.plugins.data_model_motor_test import (
     DURATION_S_MAX,
     DURATION_S_MIN,
@@ -133,6 +136,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         self._motor_grid_frame: ttk.Frame | None = None  # Direct handle for motor grid frame
         self._timer_id: str | None = None  # Track scheduled update timer for cleanup
         self._suspended = False
+        self._restart_active = False
         self._keyboard_bindings: list[tuple[str, str, str]] = []
 
         self._create_widgets()
@@ -501,6 +505,8 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
     def _on_frame_type_change(self, _event: object) -> None:
         """Handle frame type selection change and immediately upload parameters."""
+        if self._restart_active:
+            return
         # Get the selected frame type code from PairTupleCombobox
         selected_key = self.frame_type_combobox.get_selected_key()
         if selected_key is None:
@@ -525,12 +531,18 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             def update_progress(current: int, total: int) -> None:
                 update_flight_controller_restart_progress(progress_window, current, total)
 
-            progress_callback = DelayedProgressCallback(update_progress, 1.0)
-            self.model.update_frame_type_by_key(
-                selected_key,
-                progress_callback,
-                extra_sleep_time=2,
-            )
+            if is_macos_sequoia_or_older():
+                self._run_restart_task(
+                    progress_window,
+                    lambda report: self.model.update_frame_type_by_key(
+                        selected_key, DelayedProgressCallback(report, 1.0), extra_sleep_time=2
+                    ),
+                    update_progress,
+                )
+            else:
+                self.model.update_frame_type_by_key(
+                    selected_key, DelayedProgressCallback(update_progress, 1.0), extra_sleep_time=2
+                )
 
             # Invalidate diagram cache since frame type changed
             self._diagrams_path = ""
@@ -598,6 +610,8 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
     def _set_motor_spin_arm(self) -> None:
         """Open a dialog to set MOT_SPIN_ARM."""
+        if self._restart_active:
+            return
         # Simple dialog for now, should be a custom Toplevel
         current_val = self.model.get_parameter("MOT_SPIN_ARM")
         new_val = askfloat(
@@ -616,10 +630,16 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
                     _("Reset command sent"),
                     auto_close_on_complete=False,
                 )
-                self.model.set_motor_spin_arm_value(
-                    new_val,
-                    lambda current, total: update_flight_controller_restart_progress(progress_window, current, total),
-                )
+
+                def update_progress(current: int, total: int) -> None:
+                    update_flight_controller_restart_progress(progress_window, current, total)
+
+                if is_macos_sequoia_or_older():
+                    self._run_restart_task(
+                        progress_window, lambda report: self.model.set_motor_spin_arm_value(new_val, report), update_progress
+                    )
+                else:
+                    self.model.set_motor_spin_arm_value(new_val, update_progress)
             except (ParameterError, ValidationError) as e:
                 showerror(_("Error"), str(e))
             finally:
@@ -628,6 +648,25 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
                         progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
                 finally:
                     self.base_window.navigation_lock.release(owner)
+
+    def _run_restart_task(
+        self,
+        window: ProgressWindow,
+        task: Callable[[Callable[[int, int], None]], object],
+        on_progress: Callable[[int, int], None],
+    ) -> None:
+        """Yield to Tk without allowing telemetry or shortcuts to compete for the link."""
+        resume_updates = self._timer_id is not None
+        if self._timer_id is not None:
+            self.after_cancel(self._timer_id)
+            self._timer_id = None
+        self._restart_active = True
+        try:
+            window.run_task(task, on_progress=on_progress)
+        finally:
+            self._restart_active = False
+            if resume_updates and self.winfo_exists():
+                self._timer_id = self.after(1000, self._update_view)
 
     def _set_motor_spin_min(self) -> None:
         """Open a dialog to set MOT_SPIN_MIN."""
@@ -796,7 +835,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
     def _handle_keyboard_shortcut(self, action: Callable[[], None]) -> str:
         """Run a keyboard shortcut and stop Tk from processing the event further."""
-        if not self._suspended and not self.base_window.navigation_lock.locked:
+        if not self._suspended and not self._restart_active and not self.base_window.navigation_lock.locked:
             action()
         return "break"
 

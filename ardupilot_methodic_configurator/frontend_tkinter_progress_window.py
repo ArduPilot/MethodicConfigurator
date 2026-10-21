@@ -13,11 +13,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import contextlib
 import tkinter as tk
 from collections.abc import Callable, Generator
+from concurrent.futures import Future
 from contextlib import suppress
 from logging import error as logging_error
+from queue import Empty, SimpleQueue
+from threading import Lock, get_ident
 from time import monotonic
 from tkinter import ttk
-from typing import Literal, TypeVar, cast
+from typing import Literal, ParamSpec, TypeVar, cast
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_transfer_progress import (
@@ -32,6 +35,79 @@ from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import Nav
 from ardupilot_methodic_configurator.macos_utilities import is_macos_sequoia_or_older
 
 _TaskResult = TypeVar("_TaskResult")
+_UiParameters = ParamSpec("_UiParameters")
+
+
+class TkThreadCallbacks:
+    """Deliver workflow dialogs and coalesced progress on the owning Tk thread."""
+
+    def __init__(self) -> None:
+        self._ui_thread = get_ident()
+        self._requests: SimpleQueue[Callable[[], None]] = SimpleQueue()
+        self._lock = Lock()
+        self._progress: dict[Callable[[int, int], None], tuple[int, int]] = {}
+
+    def call(
+        self, callback: Callable[_UiParameters, _TaskResult], *args: _UiParameters.args, **kwargs: _UiParameters.kwargs
+    ) -> _TaskResult:
+        """Wait for a UI callback without making any Tk calls from the worker."""
+        if get_ident() == self._ui_thread:
+            return callback(*args, **kwargs)
+        result: Future[_TaskResult] = Future()
+
+        def deliver() -> None:
+            try:
+                result.set_result(callback(*args, **kwargs))
+            except BaseException as error:  # pylint: disable=broad-exception-caught
+                result.set_exception(error)
+
+        self._requests.put(deliver)
+        return result.result()
+
+    def wrap(self, callback: Callable[_UiParameters, _TaskResult]) -> Callable[_UiParameters, _TaskResult]:
+        """Adapt a dialog or factory while preserving its signature and return value."""
+
+        def invoke(*args: _UiParameters.args, **kwargs: _UiParameters.kwargs) -> _TaskResult:
+            return self.call(callback, *args, **kwargs)
+
+        return invoke
+
+    def progress(self, callback: Callable[[int, int], None]) -> Callable[[int, int], None]:
+        """Queue only the latest progress snapshot for each phase's window."""
+
+        def report(current: int, total: int) -> None:
+            if get_ident() == self._ui_thread:
+                callback(current, total)
+            else:
+                with self._lock:
+                    self._progress[callback] = (current, total)
+
+        return report
+
+    def poll(self) -> None:
+        """Flush progress before delivering a dialog, phase transition or result."""
+        while True:
+            with self._lock:
+                progress, self._progress = self._progress, {}
+            for callback, (current, total) in progress.items():
+                try:
+                    callback(current, total)
+                except Exception as error:  # noqa: PERF203 # pylint: disable=broad-exception-caught
+                    # A paint failure must not strand a dialog or the task's completion.
+                    logging_error(_("Updating progress widgets: {_e}").format(_e=error))
+            try:
+                request = self._requests.get_nowait()
+            except Empty:
+                return
+            request()
+
+    def run(self, parent: tk.Misc, task: Callable[[], _TaskResult]) -> _TaskResult:
+        """Run an interactive workflow with a hidden task owner and Tk-owned callbacks."""
+        window = ProgressWindow(parent, "", only_show_when_update_progress_called=True, auto_close_on_complete=False)
+        try:
+            return window.run_task(lambda _report: task(), poll_callbacks=self.poll)
+        finally:
+            window.destroy()
 
 
 class ProgressWindow:  # pylint: disable=too-many-instance-attributes
@@ -298,7 +374,13 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
         if event.widget is self.progress_window:
             self._cancel_transfer_refresh()
 
-    def run_task(self, task: Callable[[Callable[[int, int], None]], _TaskResult]) -> _TaskResult:
+    def run_task(
+        self,
+        task: Callable[[Callable[[int, int], None]], _TaskResult],
+        *,
+        on_progress: Callable[[int, int], None] | None = None,
+        poll_callbacks: Callable[[], None] | None = None,
+    ) -> _TaskResult:
         """
         Run blocking work on a worker while Tk renders progress on its own thread.
 
@@ -315,7 +397,16 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
         completed = tk.BooleanVar(master=parent, value=False)
         result: list[object] = []
         errors: list[BaseException] = []
-        runner = BackgroundTaskRunner(parent.after)
+
+        def schedule(delay: int, callback: Callable[[], None]) -> str:
+            def poll() -> None:
+                if poll_callbacks is not None:
+                    poll_callbacks()
+                callback()
+
+            return parent.after(delay, poll)
+
+        runner = BackgroundTaskRunner(schedule)
 
         def work(report: Callable[[int, int], None]) -> None:
             try:
@@ -325,12 +416,14 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
                 errors.append(error)
 
         def finish(_result: object, _error: Exception | None) -> None:
+            if poll_callbacks is not None:
+                poll_callbacks()
             completed.set(True)
 
         self._task_active = True
         try:
             with self._suspend_parent_interaction(parent):
-                runner.start(work, self.update_progress_bar, finish)
+                runner.start(work, on_progress or self.update_progress_bar, finish)
                 parent.wait_variable(completed)
         finally:
             self._task_active = False
