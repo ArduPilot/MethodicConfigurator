@@ -13,10 +13,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import importlib.util
 import sys
+from collections.abc import Generator
+from contextlib import nullcontext
 from pathlib import Path
 from queue import SimpleQueue
 from types import ModuleType, SimpleNamespace
 from unittest.mock import ANY, MagicMock, call, patch
+
+import pytest
 
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_MOTOR_TEST
 
@@ -37,6 +41,114 @@ def _load_screenshot_generator() -> ModuleType:
 
 
 screenshot_generator = _load_screenshot_generator()
+
+
+@pytest.fixture(name="parameter_export_scene")
+def parameter_export_scene_fixture() -> Generator[SimpleNamespace, None, None]:
+    """Provide representative FC values and export controls without opening a display."""
+    controller = MagicMock()
+    controller.fc_parameters = {
+        "WPNAV_SPEED": 500.0,
+        "ANGLE_MAX": 3000.0,
+        "ATC_ANG_RLL_P": 4.5,
+        "RTL_ALT": 1500.0,
+        "WPNAV_RADIUS": 200.0,
+        "INS_ACC_ID": 1.0,
+        "INS_GYR_ID": 2.0,
+    }
+    models = {
+        name: SimpleNamespace(
+            fc_value_equals_default_value=name in ("RTL_ALT", "WPNAV_RADIUS"),
+            is_calibration=name.startswith("INS_"),
+            is_readonly=False,
+        )
+        for name in controller.fc_parameters
+    }
+    editor = MagicMock()
+    editor.parameter_editor.get_fc_parameters_for_export.return_value = models
+    export_window = MagicMock(spec=screenshot_generator.tk.Toplevel)
+    export_window.title.return_value = screenshot_generator.translate("Export parameters")
+    checkboxes = [MagicMock(spec=screenshot_generator.ttk.Checkbutton) for _ in range(2)]
+    for checkbox, label in zip(checkboxes, ("Calibration", "Default value"), strict=True):
+        checkbox.cget.return_value = screenshot_generator.translate(label)
+        checkbox.winfo_children.return_value = []
+    decoy_label = MagicMock(spec=screenshot_generator.ttk.Label)
+    decoy_label.cget.return_value = screenshot_generator.translate("Calibration")
+    decoy_label.winfo_children.return_value = []
+    export_window.winfo_children.return_value = [decoy_label, *checkboxes]
+    editor.root.winfo_children.return_value = [export_window]
+    with (
+        patch.object(screenshot_generator, "_build_parameter_editor", return_value=(editor, controller)),
+        patch.object(screenshot_generator.shutil, "copytree"),
+        patch.object(screenshot_generator, "capture_widget") as capture,
+    ):
+        yield SimpleNamespace(
+            editor=editor, controller=controller, models=models, window=export_window, checkboxes=checkboxes, capture=capture
+        )
+
+
+@pytest.mark.parametrize(
+    ("failure", "message"),
+    [
+        ("missing-copter", "missing representative Copter parameters"),
+        ("missing-defaults", "needs two default and two calibration parameters"),
+        ("missing-calibrations", "needs two default and two calibration parameters"),
+        ("loading-models", "Could not load parameter models"),
+        ("missing-window", "Could not find the parameter export window"),
+        ("capture", "Could not capture the export window"),
+        (None, None),
+    ],
+)
+def test_parameter_export_capture_always_releases_the_editor_and_connection(
+    tmp_path: Path, parameter_export_scene: SimpleNamespace, failure: str | None, message: str | None
+) -> None:
+    """
+    Screenshot preparation must not leak a window or connection when validation fails.
+
+    GIVEN: An editor with downloaded FC values and an export preview
+    WHEN: Fixture validation, preview lookup, or capture fails, or capture succeeds
+    THEN: Owned resources are released and successful captures include representative rows
+    """
+    scene = parameter_export_scene
+    if failure == "missing-copter":
+        del scene.controller.fc_parameters["ANGLE_MAX"]
+    elif failure == "missing-defaults":
+        for name in ("RTL_ALT", "WPNAV_RADIUS"):
+            del scene.models[name]
+    elif failure == "missing-calibrations":
+        for name in ("INS_ACC_ID", "INS_GYR_ID"):
+            del scene.models[name]
+    elif failure == "loading-models":
+        scene.editor.parameter_editor.get_fc_parameters_for_export.side_effect = RuntimeError(message)
+    elif failure == "missing-window":
+        scene.editor.root.winfo_children.return_value = []
+    elif failure == "capture":
+        scene.capture.side_effect = RuntimeError(message)
+
+    with pytest.raises(RuntimeError, match=message) if message is not None else nullcontext():
+        screenshot_generator._capture_parameter_export(tmp_path / "export.png", 0.0, 0, tmp_path)
+
+    scene.editor.current_plugin_view.on_deactivate.assert_called_once_with()
+    scene.editor.current_plugin_view.destroy.assert_called_once_with()
+    scene.editor.root.destroy.assert_called_once_with()
+    scene.controller.disconnect.assert_called_once_with()
+    if failure in (None, "capture"):
+        scene.window.destroy.assert_called_once_with()
+        for checkbox in scene.checkboxes:
+            checkbox.invoke.assert_called_once_with()
+        scene.capture.assert_called_once_with(scene.window, tmp_path / "export.png", 0.0, 0)
+    else:
+        scene.capture.assert_not_called()
+    if failure is None:
+        assert scene.controller.fc_parameters == {
+            "WPNAV_SPEED": 600.0,
+            "ANGLE_MAX": 3500.0,
+            "ATC_ANG_RLL_P": 4.7,
+            "RTL_ALT": 1500.0,
+            "WPNAV_RADIUS": 200.0,
+            "INS_ACC_ID": 1.0,
+            "INS_GYR_ID": 2.0,
+        }
 
 
 def test_firmware_screenshot_capture_uses_sample_catalog_and_optional_progress(tmp_path) -> None:
