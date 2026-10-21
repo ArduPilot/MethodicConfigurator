@@ -17,6 +17,7 @@ from tkinter import scrolledtext, ttk
 from typing import cast
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
 from ardupilot_methodic_configurator.data_model_fc_diagnostics import device_rows
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
@@ -78,8 +79,16 @@ class FlightControllerBannerWindow(BaseWindow):  # pylint: disable=too-many-inst
         self.section_panes.add(devices_frame, minsize=minimum_section_height, stretch="always", sticky="nsew")
         self._create_device_table(devices_frame, fc_parameters or {})
 
-        close_button = ttk.Button(self.main_frame, text=_("Close"), command=self.root.destroy)
-        close_button.pack(pady=(4, 8))
+        buttons_frame = ttk.Frame(self.main_frame)
+        buttons_frame.pack(fill=tk.X, padx=8, pady=(4, 8))
+        help_button = ttk.Button(
+            buttons_frame,
+            text=_("Help"),
+            command=lambda: webbrowser_open_url("https://ardupilot.github.io/MethodicConfigurator/USERMANUAL_fc_banner.html"),
+        )
+        help_button.pack(side=tk.LEFT, padx=4)
+        close_button = ttk.Button(buttons_frame, text=_("Close"), command=self.root.destroy)
+        close_button.pack(side=tk.RIGHT, padx=4)
         self.root.bind("<Destroy>", self._on_destroy, "+")
         self.root.transient(parent)
         # On macOS, grab_set() causes UI freeze (issue #1264), so skip it.
