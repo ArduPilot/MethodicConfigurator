@@ -25,6 +25,7 @@ if __package__ in {None, ""}:  # pragma: no cover
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.data_model_parameter_export import (
@@ -65,7 +66,7 @@ class _ParameterTreeTooltip(Tooltip):
 class ParameterExportWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes
     """Select parameter categories and export the matching FC values."""
 
-    def __init__(  # noqa: PLR0915  # pylint: disable=too-many-statements
+    def __init__(  # noqa: PLR0915  # pylint: disable=too-many-locals,too-many-statements
         self,
         parent: ParameterExportHost,
         parameters: dict[str, ArduPilotParameter],
@@ -220,7 +221,7 @@ class ParameterExportWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             text=_("Annotate parameters with documentation"),
             variable=self.annotate_documentation,
         )
-        annotate_checkbox.pack(side=tk.LEFT)
+        annotate_checkbox.pack(anchor=tk.W)
         show_tooltip(
             annotate_checkbox,
             _(
@@ -229,11 +230,26 @@ class ParameterExportWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 "It will dramatically increase the file size though."
             ),
         )
-        cancel_button = ttk.Button(buttons, text=_("Cancel"), command=self.close)
-        cancel_button.pack(side=tk.RIGHT)
-        show_tooltip(cancel_button, _("Close this window and discard this export selection without creating a file."))
-        export_button = ttk.Button(buttons, text=_("Export"), command=self.export)
-        export_button.pack(side=tk.RIGHT, padx=(0, 8))
+        button_row = ttk.Frame(buttons)
+        button_row.pack(fill=tk.X, pady=(8, 0))
+        for column in (1, 3):
+            button_row.columnconfigure(column, weight=1, uniform="button_spacing")
+
+        help_button = ttk.Button(
+            button_row,
+            text=_("Help"),
+            command=lambda: webbrowser_open_url(
+                "https://ardupilot.github.io/MethodicConfigurator/USERMANUAL_fc_parameter_export.html"
+            ),
+        )
+        help_button.grid(row=0, column=0, sticky=tk.W)
+        show_tooltip(help_button, _("Open the parameter export user manual"))
+
+        close_button = ttk.Button(button_row, text=_("Close"), command=self.close)
+        close_button.grid(row=0, column=4, sticky=tk.E)
+        show_tooltip(close_button, _("Close this window and discard this export selection without creating a file."))
+        export_button = ttk.Button(button_row, text=_("Export"), command=self.export)
+        export_button.grid(row=0, column=2)
         show_tooltip(
             export_button,
             _(
@@ -277,7 +293,8 @@ class ParameterExportWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         }
         for column, label in self._column_labels.items():
             self.parameter_tree.heading(column, text=label, command=partial(self._sort_by_column, column))
-        self.parameter_tree.column("name", width=146, minwidth=120, stretch=False)
+        w_factor = 1.3 if self.root.tk.call("tk", "windowingsystem") != "win32" else 1.0
+        self.parameter_tree.column("name", width=round(146 * w_factor), minwidth=round(132 * w_factor), stretch=False)
         self.parameter_tree.column("fc_value", width=140, minwidth=90, anchor=tk.E, stretch=False)
         self.parameter_tree.column("unit", width=120, minwidth=70, stretch=True)
         scrollbar = ttk.Scrollbar(table_frame, orient=tk.VERTICAL, command=self.parameter_tree.yview)

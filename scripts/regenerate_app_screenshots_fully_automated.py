@@ -28,7 +28,7 @@ import tkinter.font as tk_font
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from tkinter import simpledialog
+from tkinter import simpledialog, ttk
 from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock, patch
 
@@ -1035,7 +1035,9 @@ def _capture_parameter_editor(  # pylint: disable=too-many-arguments, too-many-p
             flight_controller.disconnect()
 
 
-def _capture_parameter_export(output_path: Path, delay: float, padding: int, vehicle_dir: Path) -> None:
+def _capture_parameter_export(  # pylint: disable=too-many-locals
+    output_path: Path, delay: float, padding: int, vehicle_dir: Path
+) -> None:
     """Capture the FC parameter export dialog with representative downloaded values."""
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_vehicle_dir = Path(tmpdir) / vehicle_dir.name
@@ -1045,16 +1047,77 @@ def _capture_parameter_export(output_path: Path, delay: float, padding: int, veh
             tmp_vehicle_dir,
             "normal",
         )
-        if "WPNAV_SPEED" in flight_controller.fc_parameters:
-            flight_controller.fc_parameters["WPNAV_SPEED"] += 100.0
         export_window = None
         try:
+            fc_parameters = flight_controller.fc_parameters
+            parameter_models = editor_window.parameter_editor.get_fc_parameters_for_export()
+            non_default_names = ("WPNAV_SPEED", "ANGLE_MAX", "ATC_ANG_RLL_P")
+            if not all(name in fc_parameters for name in non_default_names):
+                msg = "The parameter export screenshot fixture is missing representative Copter parameters"
+                raise RuntimeError(msg)
+            fc_parameters["WPNAV_SPEED"] += 100.0
+            fc_parameters["ANGLE_MAX"] = 3500.0
+            fc_parameters["ATC_ANG_RLL_P"] = 4.7
+
+            default_names = [
+                name
+                for name in ("RTL_ALT", "WPNAV_RADIUS")
+                if name in parameter_models
+                and parameter_models[name].fc_value_equals_default_value
+                and not parameter_models[name].is_calibration
+            ]
+            default_names.extend(
+                name
+                for name, parameter in parameter_models.items()
+                if len(default_names) < 2
+                and name not in default_names
+                and parameter.fc_value_equals_default_value
+                and not parameter.is_calibration
+                and not parameter.is_readonly
+            )
+            calibration_names = [
+                name
+                for name, parameter in parameter_models.items()
+                if parameter.is_calibration and name.startswith(("COMPASS_", "INS_"))
+            ]
+            if len(calibration_names) < 2:
+                calibration_names.extend(
+                    name
+                    for name, parameter in parameter_models.items()
+                    if len(calibration_names) < 2 and name not in calibration_names and parameter.is_calibration
+                )
+            if len(default_names) < 2 or len(calibration_names) < 2:
+                msg = "The parameter export screenshot fixture needs two default and two calibration parameters"
+                raise RuntimeError(msg)
+
+            selected_names = [*non_default_names, *default_names[:2], *calibration_names[:2]]
+            selected_fc_parameters = {name: fc_parameters[name] for name in selected_names}
+            fc_parameters.clear()
+            fc_parameters.update(selected_fc_parameters)
             editor_window.on_export_parameters_click()
             export_window = next(
-                child
-                for child in editor_window.root.winfo_children()
-                if isinstance(child, tk.Toplevel) and child.title() == translate("Export parameters")
+                (
+                    child
+                    for child in editor_window.root.winfo_children()
+                    if isinstance(child, tk.Toplevel) and child.title() == translate("Export parameters")
+                ),
+                None,
             )
+            if export_window is None:
+                msg = "Could not find the parameter export window for the parameter export screenshot"
+                raise RuntimeError(msg)
+            for checkbox_label in ("Calibration", "Default value"):
+                checkbox = _find_descendant(
+                    export_window,
+                    lambda widget, label=checkbox_label: (
+                        isinstance(widget, (ttk.Checkbutton, tk.Checkbutton)) and _widget_text(widget) == translate(label)
+                    ),
+                )
+                invoke = getattr(checkbox, "invoke", None)
+                if not callable(invoke):
+                    msg = f"Could not find the {checkbox_label} checkbox for the parameter export screenshot"
+                    raise RuntimeError(msg)
+                invoke()
             capture_widget(export_window, output_path, delay, padding)
         finally:
             if export_window is not None and export_window.winfo_exists():
