@@ -132,6 +132,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         self._keyboard_bindings: list[tuple[str, str, str]] = []
 
         self._create_widgets()
+        self.model.set_status_text_logging(True)
 
         # Try to refresh frame configuration from flight controller
         if not self.model.refresh_from_flight_controller():
@@ -354,6 +355,10 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
     def _update_view(self) -> None:
         """Update the view with data from the model."""
+        if self._timer_id:
+            self.after_cancel(self._timer_id)
+            self._timer_id = None
+        self.model.poll_status_text()
         # Update diagram only when needed (not every second)
         if self._diagram_needs_update:
             self._update_diagram()
@@ -785,6 +790,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         Refreshes the frame configuration from the flight controller
         to ensure the display is up-to-date.
         """
+        self.model.set_status_text_logging(True)
         # Refresh frame configuration when becoming active
         if not self.model.refresh_from_flight_controller():
             logging_warning(_("Could not refresh frame configuration from flight controller"))
@@ -819,6 +825,8 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             # We log as error and re-raise to prevent silently continuing with motors potentially running.
             logging_error(_("Critical error during motor stop at deactivation: %(error)s"), {"error": str(e)})
             raise
+        finally:
+            self.model.set_status_text_logging(False)
 
     def destroy(self) -> None:
         """
@@ -827,6 +835,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         Cancels any pending timers to prevent resource leaks and ensure
         no operations continue after the widget is destroyed.
         """
+        self.model.set_status_text_logging(False)
         if self._timer_id:
             self.after_cancel(self._timer_id)
             self._timer_id = None
