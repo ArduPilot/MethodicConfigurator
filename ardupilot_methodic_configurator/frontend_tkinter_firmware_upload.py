@@ -136,7 +136,8 @@ class FirmwareUploadWindow(BaseWindow):  # pylint: disable=too-many-instance-att
         self.board_id: int | None = None
         self._active_progress_stage: UploadStage | None = None
         self.root.title(_("Upload ArduPilot firmware"))
-        window_height = round(328 * 1.3) if self.root.tk.call("tk", "windowingsystem") == "win32" else 328
+        window_height = 328
+        window_height = round(window_height * 1.3) if self.root.tk.call("tk", "windowingsystem") == "win32" else window_height
         self.root.geometry(self.calculate_scaled_geometry(750, window_height))
         self.center_window_on_screen(self.root)
         if parent is not None and parent.winfo_viewable():
@@ -340,11 +341,18 @@ class FirmwareUploadWindow(BaseWindow):  # pylint: disable=too-many-instance-att
         if board_info is None:
             self.board_text.set(_("No flight controller connected"))
         else:
+            info = self.flight_controller.info
+            vehicle_type = info.vehicle_type or _("N/A")
+            firmware_version = info.flight_sw_version or _("N/A")
+            git_hash = info.flight_custom_version or _("N/A")
             self.board_text.set(
-                _("{board_name} (APJ board ID {board_id}) — {device}").format(
+                _("{board_name} (APJ board ID {board_id}) — {device}\n{vehicle_type} {firmware_version} ({git_hash})").format(
                     board_name=board_info.board_name,
                     board_id=board_info.board_id,
                     device=board_info.device,
+                    vehicle_type=vehicle_type,
+                    firmware_version=firmware_version,
+                    git_hash=git_hash,
                 )
             )
         self.connect_button.configure(state="disabled" if connected else "normal")

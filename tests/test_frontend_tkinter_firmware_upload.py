@@ -1065,15 +1065,34 @@ def test_user_can_select_a_local_apj_for_the_connected_board() -> None:
 
 
 @pytest.mark.parametrize("connected", [True, False])
-def test_board_rendering_only_updates_loaded_identity_and_connection_controls(connected: bool) -> None:
+@pytest.mark.parametrize(
+    ("firmware_identity", "expected_firmware_label"),
+    [
+        (("ArduCopter", "4.6.0", "12345678"), "ArduCopter 4.6.0 (12345678)"),
+        (("", "", ""), "N/A N/A (N/A)"),
+        ((None, None, None), "N/A N/A (N/A)"),
+    ],
+    ids=["known-firmware", "empty-firmware", "unknown-firmware"],
+)
+def test_board_rendering_only_updates_loaded_identity_and_connection_controls(
+    connected: bool,
+    firmware_identity: tuple[str | None, str | None, str | None],
+    expected_firmware_label: str,
+) -> None:
     """
     Rendering a board does not perform I/O or change operation status.
 
     GIVEN: Loaded board information or no connected controller.
     WHEN: The board display is rendered directly.
-    THEN: Identity and connection controls reflect it without fetching or clearing a catalog.
+    THEN: Board and firmware identity, including missing-value fallbacks, are shown without I/O.
     """
     window = firmware_upload.FirmwareUploadWindow.__new__(firmware_upload.FirmwareUploadWindow)
+    window.flight_controller = MagicMock()
+    window.flight_controller.info = SimpleNamespace(
+        vehicle_type=firmware_identity[0],
+        flight_sw_version=firmware_identity[1],
+        flight_custom_version=firmware_identity[2],
+    )
     for name in ("board_text", "connect_button", "refresh_button", "custom_button", "status"):
         setattr(window, name, MagicMock())
     window.service = MagicMock()
@@ -1086,8 +1105,8 @@ def test_board_rendering_only_updates_loaded_identity_and_connection_controls(co
 
     assert window.board_id == (50 if connected else None)
     expected_label = (
-        firmware_upload._("{board_name} (APJ board ID {board_id}) — {device}").format(
-            board_name="ExampleBoard", board_id=50, device="/dev/ttyACM1"
+        firmware_upload._("{board_name} (APJ board ID {board_id}) — {device}\n{firmware_label}").format(
+            board_name="ExampleBoard", board_id=50, device="/dev/ttyACM1", firmware_label=expected_firmware_label
         )
         if connected
         else firmware_upload._("No flight controller connected")
@@ -1285,7 +1304,13 @@ def firmware_window_fixture(
     controller = SimpleNamespace(
         master=object(),
         comport_device="COM3",
-        info=SimpleNamespace(apj_board_id=9, firmware_type="fmuv3", vehicle_type="ArduCopter"),
+        info=SimpleNamespace(
+            apj_board_id=9,
+            firmware_type="fmuv3",
+            vehicle_type="ArduCopter",
+            flight_sw_version="4.6.0",
+            flight_custom_version="12345678",
+        ),
         get_serial_ports=MagicMock(return_value=[SimpleNamespace(device="COM3")]),
         disconnect=MagicMock(),
     )
@@ -1324,7 +1349,13 @@ def test_standalone_window_is_not_embedded_and_closes_without_amc_notice() -> No
     controller = SimpleNamespace(
         master=None,
         comport_device="COM3",
-        info=SimpleNamespace(apj_board_id=9, firmware_type="fmuv3", vehicle_type="ArduCopter"),
+        info=SimpleNamespace(
+            apj_board_id=9,
+            firmware_type="fmuv3",
+            vehicle_type="ArduCopter",
+            flight_sw_version="4.6.0",
+            flight_custom_version="12345678",
+        ),
         get_serial_ports=MagicMock(return_value=[]),
         disconnect=MagicMock(),
     )
