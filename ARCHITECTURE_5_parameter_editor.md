@@ -139,6 +139,9 @@ loops; tools whose lifetime outlasts their opening callback release their lease 
 Parameter upload previews and export windows use `_retain_fc_operation_until_closed()`
 to bind lease release to destruction of their root, rather than infer ownership from
 visibility. Unrelated report windows do not block recovery.
+An open bitmask editor blocks new connection checks and defers a successful worker's
+completion through `RecoveryCallbacks.can_refresh` until the dialog closes, keeping
+its row widgets alive even on macOS where the dialog does not take a grab.
 `SuspendablePlugin.on_suspend(reason)` distinguishes exclusive operations from connection recovery;
 motor tests stop before exclusive tools take reception and yield without commands during recovery.
 Both recovery eligibility and suspension use `resolve_plugin_lifecycle()` to select

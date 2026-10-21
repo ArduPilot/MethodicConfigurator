@@ -489,6 +489,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 lock_controls=self._lock_connection_plugin,
                 show_status=self._show_connection_status,
                 on_recovered=self._finish_connection_recovery,
+                can_refresh=lambda: not self.parameter_editor_table.bitmask_editor_open,
             ),
         )
         self._connection_recovery.start()
@@ -515,6 +516,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if self.navigation_lock.locked:
             return True
         if self._file_browser_window is not None:
+            return True
+        if self.parameter_editor_table.bitmask_editor_open:
             return True
         # Native Tk message boxes need not have a Python Toplevel wrapper.
         return bool(self.root.tk.call("grab", "current", str(self.root)))
@@ -1817,12 +1820,16 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 get_progress_callback, response_timeout=response_timeout
             )
 
+        resume_plugin = self._pause_plugin_receiver()
         try:
             download_result = callbacks.run(self.root, download) if is_macos_sequoia_or_older() else download()
         finally:
-            if self._param_download_progress_window is not None:
-                self._param_download_progress_window.destroy()
-                self._param_download_progress_window = None
+            try:
+                if self._param_download_progress_window is not None:
+                    self._param_download_progress_window.destroy()
+                    self._param_download_progress_window = None
+            finally:
+                resume_plugin()
         if not redownload:
             self.on_param_file_combobox_change(None, forced=True)  # the initial param read will trigger a table update
         return download_result
@@ -2393,12 +2400,21 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     @_with_fc_operation
     def reset_all_parameters_to_default(self) -> bool:
         """Reset all flight-controller parameters to defaults with a progress window."""
-        success = self.ui.reset_all_parameters_to_default_with_progress(
-            self.root, self.parameter_editor.reset_all_parameters_to_default
-        )
-        if success:
-            self.repopulate_parameter_table()
-        return success
+        if self.navigation_lock.locked:
+            return False
+        resume_plugin = self._pause_plugin_receiver()
+        reset_owner = object()
+        self.navigation_lock.acquire(reset_owner)
+        try:
+            success = self.ui.reset_all_parameters_to_default_with_progress(
+                self.root, self.parameter_editor.reset_all_parameters_to_default
+            )
+            if success:
+                self.repopulate_parameter_table()
+            return success
+        finally:
+            self.navigation_lock.release(reset_owner)
+            resume_plugin()
 
     def close_connection_and_quit(self) -> None:
         if self._configured_upload_active:

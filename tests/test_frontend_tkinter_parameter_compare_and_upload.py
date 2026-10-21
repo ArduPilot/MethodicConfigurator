@@ -429,6 +429,49 @@ def test_standalone_upload_host_closes_the_event_loop() -> None:
     root.quit.assert_called_once_with()
 
 
+@pytest.mark.parametrize("operation", ["reset", "upload"])
+@pytest.mark.parametrize("outcome", ["success", "failure", "exception"])
+def test_standalone_fc_operations_reject_reentry_and_allow_retry(operation: str, outcome: str) -> None:
+    """
+    Keep standalone FC operations exclusive while progress services Tk callbacks.
+
+    GIVEN: A reset or upload is in progress
+    WHEN: Another reset and upload are requested from a nested event loop
+    THEN: Both are rejected and the original guard is released for retries
+    """
+    ui = MagicMock()
+    host = StandaloneUploadHost(MagicMock(), MagicMock(), ui)
+    progress = ui.reset_all_parameters_to_default_with_progress if operation == "reset" else ui.upload_params_with_progress
+
+    def run() -> bool:
+        return host.reset_all_parameters_to_default() if operation == "reset" else host.upload_external_params({})
+
+    def nested_operation(*_args: object) -> bool:
+        assert host.reset_all_parameters_to_default() is False
+        assert host.upload_external_params({}) is False
+        if outcome == "exception":
+            message = "Transport failed"
+            raise RuntimeError(message)
+        return outcome == "success"
+
+    progress.side_effect = nested_operation
+    if operation == "reset" and outcome == "exception":
+        with pytest.raises(RuntimeError, match="Transport failed"):
+            run()
+    else:
+        assert run() is (outcome == "success")
+    progress.assert_called_once()
+    if operation == "reset":
+        ui.upload_params_with_progress.assert_not_called()
+    else:
+        ui.reset_all_parameters_to_default_with_progress.assert_not_called()
+
+    progress.side_effect = None
+    progress.return_value = True
+    assert run() is True
+    assert progress.call_count == 2
+
+
 def test_closing_external_upload_window_refreshes_parent_table() -> None:
     """Refresh the normal parameter table after the modal is closed."""
     window = _window_without_tk()

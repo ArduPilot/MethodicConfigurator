@@ -20,14 +20,12 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-# pylint: disable=too-many-lines
-
 import sys
 import time
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
 from collections.abc import Callable
-from contextlib import suppress
+from contextlib import nullcontext, suppress
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
@@ -531,18 +529,13 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             def update_progress(current: int, total: int) -> None:
                 update_flight_controller_restart_progress(progress_window, current, total)
 
-            if is_macos_sequoia_or_older():
-                self._run_restart_task(
-                    progress_window,
-                    lambda report: self.model.update_frame_type_by_key(
-                        selected_key, DelayedProgressCallback(report, 1.0), extra_sleep_time=2
-                    ),
-                    update_progress,
-                )
-            else:
-                self.model.update_frame_type_by_key(
-                    selected_key, DelayedProgressCallback(update_progress, 1.0), extra_sleep_time=2
-                )
+            self._run_restart_task(
+                progress_window,
+                lambda report: self.model.update_frame_type_by_key(
+                    selected_key, DelayedProgressCallback(report, 1.0), extra_sleep_time=2
+                ),
+                update_progress,
+            )
 
             # Invalidate diagram cache since frame type changed
             self._diagrams_path = ""
@@ -634,12 +627,9 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
                 def update_progress(current: int, total: int) -> None:
                     update_flight_controller_restart_progress(progress_window, current, total)
 
-                if is_macos_sequoia_or_older():
-                    self._run_restart_task(
-                        progress_window, lambda report: self.model.set_motor_spin_arm_value(new_val, report), update_progress
-                    )
-                else:
-                    self.model.set_motor_spin_arm_value(new_val, update_progress)
+                self._run_restart_task(
+                    progress_window, lambda report: self.model.set_motor_spin_arm_value(new_val, report), update_progress
+                )
             except (ParameterError, ValidationError) as e:
                 showerror(_("Error"), str(e))
             finally:
@@ -662,11 +652,16 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             self._timer_id = None
         self._restart_active = True
         try:
-            window.run_task(task, on_progress=on_progress)
+            recovery = getattr(self.base_window, "_connection_recovery", None)
+            with recovery.operation() if recovery is not None else nullcontext():
+                if is_macos_sequoia_or_older():
+                    window.run_task(task, on_progress=on_progress)
+                else:
+                    task(on_progress)
         finally:
             self._restart_active = False
             if resume_updates and self.winfo_exists():
-                self._timer_id = self.after(1000, self._update_view)
+                self._timer_id = self.after(1000, self._on_update_timer)
 
     def _set_motor_spin_min(self) -> None:
         """Open a dialog to set MOT_SPIN_MIN."""

@@ -375,6 +375,7 @@ def motor_connection_recovery(motor_view_with_controller: MotorTestView) -> Gene
     editor.root = view.root_window
     editor.navigation_lock = view.base_window.navigation_lock
     editor._file_browser_window = None
+    editor.parameter_editor_table = MagicMock(bitmask_editor_open=False)
     callbacks = RecoveryCallbacks(
         reader_busy=editor._connection_reader_busy,
         can_read=lambda: False,
@@ -413,7 +414,7 @@ class TestDelayedProgressCallback:
         assert recorded == [(1, 5)]
 
 
-class TestMotorTestView:
+class TestMotorTestView:  # pylint: disable=too-many-public-methods
     """Covers the Tkinter view widget behavior for the motor test UI."""
 
     def test_initialization_populates_widgets(self, motor_view: MotorTestView, fake_model: FakeMotorTestModel) -> None:
@@ -699,7 +700,9 @@ class TestMotorTestView:
         mocker.patch("tkinter.Misc.update_idletasks")
         # The general view fixture stubs after(); this integration case needs real polling.
         mocker.patch.object(
-            motor_view.root_window, "after", new=tk.Misc.after.__get__(motor_view.root_window, type(motor_view.root_window))
+            motor_view.root_window,
+            "after",
+            new=tk.Misc.after.__get__(motor_view.root_window, type(motor_view.root_window)),  # pylint: disable=no-value-for-parameter
         )
         mocker.patch.object(motor_test_module, "is_macos_sequoia_or_older", return_value=True)
         mocker.patch.object(motor_test_module, "DelayedProgressCallback", side_effect=lambda callback, _delay: callback)
@@ -1527,6 +1530,57 @@ def test_non_battery_motor_safety_failures_show_the_specific_check_reason(
     # Then: Do not substitute irrelevant battery guidance.
     dialog_spies.showwarning.assert_called_once_with("Safety Check Failed", "Vehicle not secured")
     assert motor_view.motor_status_labels[0].cget("text") == "Safety Check Failed"
+
+
+@pytest.mark.parametrize("handler", ["frame", "spin_arm"])
+@pytest.mark.parametrize("worker_restart", [False, True], ids=["synchronous", "sequoia-worker"])
+@pytest.mark.parametrize("fails", [False, True], ids=["success", "failure"])
+def test_motor_restart_retains_recovery_ownership_and_resumes_polling(
+    motor_update_timers: dict[str, Callable[[], None]],
+    motor_view: MotorTestView,
+    handler: str,
+    worker_restart: bool,
+    fails: bool,
+) -> None:
+    """
+    Motor configuration restarts retain the link and resume continuous polling.
+
+    GIVEN: A frame or spin-arm restart that services Tk events
+    WHEN: Recovery checks run during the restart, which succeeds or fails
+    THEN: Recovery cannot read or reconnect, and battery polling resumes for multiple ticks.
+    """
+    recovery = ConnectionRecovery(MagicMock(), MagicMock(spec=FlightControllerReconnect), MagicMock())
+    progress_window = MagicMock()
+    progress_window.run_task.side_effect = lambda task, *, on_progress: task(on_progress)
+
+    def restart(*_args: object, **_kwargs: object) -> None:
+        assert recovery.operation_active
+        recovery.check()
+        recovery._monitor.poll.assert_not_called()
+        recovery._monitor.reconnect.assert_not_called()
+        if fails:
+            message = "restart failed"
+            raise ParameterError(message)
+
+    method = "update_frame_type_by_key" if handler == "frame" else "set_motor_spin_arm_value"
+    with (
+        patch.object(motor_view.base_window, "_connection_recovery", recovery, create=True),
+        patch.object(motor_test_module, "ProgressWindow", return_value=progress_window),
+        patch.object(motor_test_module, "is_macos_sequoia_or_older", return_value=worker_restart),
+        patch.object(motor_test_module, "askfloat", return_value=0.2),
+        patch.object(motor_view.model, method, side_effect=restart),
+        patch.object(motor_view, "_update_battery_status", wraps=motor_view._update_battery_status) as battery_poll,
+    ):
+        if handler == "frame":
+            motor_view.frame_type_combobox.current(0)
+            motor_view._on_frame_type_change(None)
+        else:
+            motor_view._set_motor_spin_arm()
+        assert not recovery.operation_active
+        for _tick in range(2):
+            motor_update_timers.pop(motor_view._timer_id)()
+            assert len(motor_update_timers) == 1
+        assert battery_poll.call_count == 2
 
 
 class TestMotorTestConnectionOwnership:
