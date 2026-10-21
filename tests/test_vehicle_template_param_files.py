@@ -92,12 +92,7 @@ _LEAF_DIRS = _collect_leaf_template_dirs()
 _LEAF_IDS = [d.relative_to(TEMPLATES_ROOT).as_posix() for d in _LEAF_DIRS]
 
 # Template directories whose duplicate-prefix issues are known and not yet fixed.
-_KNOWN_DUPLICATE_PREFIX_TEMPLATES: frozenset[str] = frozenset(
-    {
-        "Heli/OMP_M4",
-        "ArduPlane/normal_plane",
-    }
-)
+_KNOWN_DUPLICATE_PREFIX_TEMPLATES: frozenset[str] = frozenset()
 
 
 @pytest.mark.parametrize("template_dir", _LEAF_DIRS, ids=_LEAF_IDS)
@@ -110,13 +105,15 @@ class TestVehicleTemplateParamFiles:
 
         GIVEN: A vehicle template directory with numbered parameter files
         WHEN: The two-digit numeric prefixes of all .param files are inspected
-        THEN: Every prefix is in 00-66 for formats 0/1, or 00-70 for format 2
+        THEN: Every prefix is in 00-66 for formats 0/1, or the vehicle workflow range for format 2
         """
         # Arrange
         numbered = _numbered_param_files(template_dir)
 
         # Act
-        prefix_max = PREFIX_MAX_V2 if template_format_version >= 2 else PREFIX_MAX
+        prefix_max = PREFIX_MAX
+        if template_format_version >= 2:
+            prefix_max = 92 if template_dir.parent.name == "Heli" else PREFIX_MAX_V2
         out_of_range = [(n, f.name) for n, f in numbered if not PREFIX_MIN <= n <= prefix_max]
 
         # Assert
@@ -207,3 +204,36 @@ class TestVehicleTemplateParamFiles:
         # Act & Assert: each file must load without error
         for _n, f in numbered:
             ParDict.load_param_file_into_dict(str(f))
+
+
+@pytest.mark.parametrize("template_id", ["Heli/OMP_M4", "Rover/AION_R1", "Rover/Carisma_SCA-1E"])
+def test_separate_calibration_steps_preserve_the_existing_vehicle_settings(template_id: str) -> None:
+    """
+    Splitting hardware configuration preserves the vehicle's effective settings.
+
+    GIVEN: An independently captured historical template with measured calibration and output settings
+    WHEN: The packaged template uses separate calibration, output and mode steps
+    THEN: Its final parameter values match the historical vehicle configuration
+    """
+    fixture = Path(__file__).parent / "fixtures" / "vehicle_templates_v1.json"
+    historical_files = json.loads(fixture.read_text(encoding="utf-8"))[template_id]["files"]
+    expected: dict[str, float] = {}
+    for filename, content in sorted(historical_files.items()):
+        if filename == "00_default.param":
+            continue
+        for line in content.splitlines():
+            if line.strip() and not line.startswith("#"):
+                name, _, value = line.partition(",")
+                expected[name] = float(value.partition("#")[0])
+
+    template_dir = TEMPLATES_ROOT / template_id
+    actual: dict[str, float] = {}
+    for parameter_file in sorted(template_dir.glob("*.param")):
+        if parameter_file.name != "00_default.param":
+            actual.update({name: parameter.value for name, parameter in ParDict.from_file(str(parameter_file)).items()})
+
+    assert actual == expected
+    vehicle_type = template_id.split("/", maxsplit=1)[0]
+    configuration = TEMPLATES_ROOT.parent / f"configuration_steps_{vehicle_type}.json"
+    steps = json.loads(configuration.read_text(encoding="utf-8"))["steps"]
+    assert {path.name for path in template_dir.glob("*.param")} - {"00_default.param"} <= set(steps)

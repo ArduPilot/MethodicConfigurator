@@ -225,3 +225,12 @@ SPDX-License-Identifier = "LicenseRef-Inno-Setup"
 path = "tests/fixtures/backend_log_80k.bin"
 SPDX-FileCopyrightText = "2024-2026 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = [
+    "tests/fixtures/vehicle_templates_v1.json",
+    "tests/fixtures/migration_configuration_steps.json",
+    "tests/fixtures/versioned_migration_project.json",
+]
+SPDX-FileCopyrightText = "2024-2026 Amilcar Lucas"
+SPDX-License-Identifier = "GPL-3.0-or-later"

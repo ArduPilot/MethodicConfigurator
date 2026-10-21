@@ -1,0 +1,3 @@
+AUTOTUNE_AXES,3  # Roll and Pitch
+AUTOTUNE_GN_MAX,1.8  # Limit the gain increase for helicopter angle tuning
+AUTOTUNE_SEQ,4  # Angle P

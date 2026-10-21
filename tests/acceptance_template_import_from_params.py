@@ -139,6 +139,7 @@ from pathlib import Path
 
 import pytest
 
+import ardupilot_methodic_configurator.backend_filesystem as filesystem_module
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.backend_flightcontroller import DEVICE_FC_PARAM_FROM_FILE, FlightController
@@ -157,6 +158,48 @@ from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
 # pylint: disable=too-many-lines,too-many-locals,too-many-branches,too-many-statements,redefined-outer-name,too-few-public-methods,unused-argument,broad-exception-caught
 
 logger = logging.getLogger(__name__)
+
+
+@pytest.mark.parametrize("vehicle_type", ["ArduCopter", "ArduPlane", "Heli", "Rover"])
+def test_user_can_compound_uncached_templates_offline(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, vehicle_type: str
+) -> None:
+    """
+    Template parameter compounding needs no firmware metadata.
+
+    GIVEN: A template with parameters and no cached firmware XML
+    WHEN: Acceptance setup compounds its parameters with metadata loading unavailable
+    THEN: The parameter values are available without downloading metadata
+    """
+    (tmp_path / "vehicle_components.json").write_text(
+        json.dumps({"Components": {"Flight Controller": {"Firmware": {"Type": vehicle_type, "Version": "4.8.0"}}}}),
+        encoding="utf-8",
+    )
+    (tmp_path / "06_calibration.param").write_text("RC1_MIN,1100 # measured\n", encoding="utf-8")
+
+    def reject_metadata_load(*_args, **_kwargs) -> dict:
+        pytest.fail("Compounding template parameters must not load firmware metadata")
+
+    monkeypatch.setattr(filesystem_module, "parse_parameter_metadata", reject_metadata_load)
+
+    parameters = _compound_template_parameters(tmp_path, vehicle_type)
+
+    assert parameters["RC1_MIN"].value == 1100
+    assert not (tmp_path / "apm.pdef.xml").exists()
+
+
+def _compound_template_parameters(template_dir: Path, vehicle_type: str) -> ParDict:
+    """Read and compound template files without loading firmware metadata or renaming files."""
+    local_fs = LocalFilesystem(
+        vehicle_dir=str(template_dir),
+        vehicle_type=vehicle_type,
+        fw_version="",
+        allow_editing_template_files=False,
+        save_component_to_system_templates=False,
+        load_project=False,
+    )
+    local_fs.file_parameters = local_fs.read_params_from_files()
+    return local_fs.compound_params(last_filename=None, skip_default=False)[0]
 
 
 def test_offline_metadata_seed_uses_explicit_template_source(tmp_path: Path) -> None:
@@ -451,26 +494,13 @@ def compounded_params_files(tmp_test_dir):
         vehicle_type = template_dir.parts[-3] if "-params" in template_dir.name else template_dir.parts[-2]
         assert vehicle_type in VehicleComponents.supported_vehicles(), f"Unknown vehicle type: {vehicle_type}"
 
-        # Create LocalFilesystem instance
+        # Compounding parameter files does not need project initialization or firmware XML.
         try:
-            local_fs = LocalFilesystem(
-                vehicle_dir=str(template_dir),
-                vehicle_type=vehicle_type,
-                fw_version="",
-                allow_editing_template_files=False,
-                save_component_to_system_templates=False,
-            )
+            compound_params = _compound_template_parameters(template_dir, vehicle_type)
         except (ValueError, SystemExit) as e:
             # Skip templates with invalid configuration
             logger.debug("Skipping template %s: %s", template_dir.name, e)
             continue
-
-        # Verify file_parameters were loaded
-        if len(local_fs.file_parameters) == 0:
-            continue
-
-        # Compound all parameters (including default file)
-        compound_params, _first_config_step = local_fs.compound_params(last_filename=None, skip_default=False)
 
         # Verify parameters were compounded
         if len(compound_params) == 0:
@@ -494,7 +524,7 @@ def compounded_params_files(tmp_test_dir):
 
         # Export compounded parameters to params.param
         output_file = tmp_output_dir / "params.param"
-        local_fs.export_to_param(compound_params, str(output_file), annotate_doc=False)
+        compound_params.export_to_param(str(output_file))
 
         # Verify file was created
         if output_file.exists() and output_file.stat().st_size > 0:
@@ -1329,7 +1359,7 @@ class TestParameterDerivationValidation:
             "07_remote_controller_controller.param": rc_params,
             # Initial configuration files have values that get refined
             "13_initial_atc.param": config_params | pid_tuning_params | {"MOT_THST_EXPO"},
-            "14_mp_setup_mandatory_hardware.param": config_params
+            "16_accelerometer_calibration.param": config_params
             | pid_tuning_params
             | {"FLTMODE5", "FLTMODE6", "MOT_THST_EXPO"},
             "15_general_configuration.param": config_params,
@@ -1383,7 +1413,7 @@ class TestParameterDerivationValidation:
         that SHOULD be preserved but aren't. This indicates the project creation
         with use_fc_params=True is not properly preserving FC parameter values,
         possibly being overwritten by empty template defaults in files like
-        12_mp_setup_mandatory_hardware.param. This needs investigation.
+        16_accelerometer_calibration.param. This needs investigation.
         """
         if not compounded_params_files:
             pytest.skip("No compounded params files available")
@@ -1501,7 +1531,7 @@ class TestParameterDerivationValidation:
         # Assert: Vehicle-specific calibration data should be preserved
         # Currently FAILING with ~52 differences - mostly calibration data that SHOULD
         # be preserved from FC parameters but isn't. This indicates:
-        # 1. Empty template defaults (especially in 12_mp_setup_mandatory_hardware.param)
+        # 1. Empty template defaults (especially in 16_accelerometer_calibration.param)
         #    may be overwriting FC parameter values
         #
         # Expected behavior: Calibration parameters (INS_TCAL*, COMPASS_*, RC*, BATT*, SERVO*)
@@ -1515,7 +1545,7 @@ class TestParameterDerivationValidation:
                 "Vehicle-specific calibration data is not being preserved from FC parameters. "
                 "This indicates a bug in project creation with use_fc_params=True where "
                 "empty template defaults are overwriting FC parameter values. "
-                "Investigation needed in VehicleProjectCreator and/or 12_mp_setup_mandatory_hardware.param"
+                "Investigation needed in VehicleProjectCreator and/or 16_accelerometer_calibration.param"
             )
 
         assert len(changed_values) < 55, (

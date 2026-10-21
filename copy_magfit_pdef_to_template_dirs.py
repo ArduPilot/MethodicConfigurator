@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Copy 31_inflight_magnetometer_fit_setup.pdef.xml file to all vehicle template subdirectories.
+Copy MagFit parameter documentation beside each vehicle template's MagFit setup step.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -33,9 +33,10 @@ if not os.path.exists(source_file_path):
     sys.exit(1)
 
 # Traverse the source directory and copy the file to each subdirectory
-for root, dirs, _files in os.walk(BASE_TARGET_DIR):
-    # If this directory has no subdirectories, copy the file
-    if not dirs:
-        target_file_path = os.path.join(root, FILE_TO_COPY)
-        shutil.copy(source_file_path, target_file_path)
-        logging.info("Copied %s to %s", FILE_TO_COPY, target_file_path)
+for root, _dirs, files in os.walk(BASE_TARGET_DIR):
+    for filename in files:
+        if filename.endswith("_inflight_magnetometer_fit_setup.param"):
+            sidecar_filename = filename.replace(".param", ".pdef.xml")
+            target_file_path = os.path.join(root, sidecar_filename)
+            shutil.copy(source_file_path, target_file_path)
+            logging.info("Copied %s to %s", FILE_TO_COPY, target_file_path)

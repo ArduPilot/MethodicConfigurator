@@ -1,0 +1,1 @@
+INS_ACCEL_FILTER,10  # The default is 20Hz but that is too high in most situations
