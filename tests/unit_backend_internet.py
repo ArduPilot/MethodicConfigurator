@@ -15,8 +15,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
 from collections.abc import Generator
+from pathlib import Path
 from typing import Any
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from requests import HTTPError as requests_HTTPError
@@ -24,6 +25,7 @@ from requests import RequestException as requests_RequestException
 from requests import Timeout as requests_Timeout
 
 from ardupilot_methodic_configurator.backend_internet import (
+    _create_installer_batch_file,
     _get_verify_param,
     _install_app_from_mount,
     _mount_dmg,
@@ -206,6 +208,146 @@ def test_get_release_info_prerelease_mismatch(mock_get) -> None:
 def test_download_and_install_windows_download_failure(mock_download) -> None:
     mock_download.return_value = False
     assert not download_and_install_on_windows("http://test.com", "test.exe")
+
+
+@pytest.fixture
+def frozen_windows_application(tmp_path: Path) -> Generator[Path, None, None]:
+    """Represent a frozen installation in a custom directory without launching it."""
+    installation = tmp_path / "Custom AMC"
+    installation.mkdir()
+    with patch("ardupilot_methodic_configurator.backend_internet.sys") as runtime:
+        runtime.frozen = True
+        runtime.executable = str(installation / "ardupilot_methodic_configurator.exe")
+        yield installation
+
+
+@pytest.fixture
+def windows_uninstall_registry() -> Generator[Mock, None, None]:
+    """Isolate Windows uninstall records without accessing the real registry."""
+    registry = Mock(HKEY_LOCAL_MACHINE=0x80000002, KEY_READ=0x20019, KEY_WOW64_32KEY=0x200, KEY_WOW64_64KEY=0x100)
+    registry.OpenKey = MagicMock(side_effect=FileNotFoundError)
+    with patch.dict("sys.modules", {"winreg": registry}):
+        yield registry
+
+
+class TestWindowsUpdateInstallationScope:
+    """Updates preserve the running application's user or machine installation."""
+
+    @pytest.mark.parametrize(("mode", "expected"), [("allusers", "/ALLUSERS"), ("currentuser", "/CURRENTUSER")])
+    def test_update_preserves_recorded_installation_scope(
+        self, frozen_windows_application: Path, windows_uninstall_registry: Mock, mode: str, expected: str
+    ) -> None:
+        """
+        Updates use the scope recorded by the running application's installer.
+
+        GIVEN: A frozen application has an installation scope marker.
+        WHEN: An update is prepared.
+        THEN: The installer command explicitly preserves that scope without consulting other installations.
+        """
+        (frozen_windows_application / "installation-scope.ini").write_text(f"[Installation]\nMode={mode}\n", encoding="utf-8")
+        windows_uninstall_registry.OpenKey.side_effect = AssertionError("The recorded scope takes precedence")
+        installer = str(frozen_windows_application / "update.exe")
+
+        batch = _create_installer_batch_file(str(frozen_windows_application), installer)
+
+        assert f'start "" "{installer}" {expected}\n' in Path(batch).read_text(encoding="utf-8")
+
+    @pytest.mark.parametrize("registry_view", [0x200, 0x100])
+    def test_update_preserves_legacy_machine_installation_in_either_registry_view(
+        self, frozen_windows_application: Path, windows_uninstall_registry: Mock, registry_view: int
+    ) -> None:
+        """
+        Older machine installations retain their scope without a marker file.
+
+        GIVEN: A legacy machine installation uses a custom directory registered in either Windows registry view.
+        WHEN: An update is prepared from that directory.
+        THEN: Setup receives the machine installation override.
+        """
+
+        def open_registry(_root: int, _key: str, _reserved: int, access: int) -> MagicMock:
+            if access == windows_uninstall_registry.KEY_READ | registry_view:
+                return MagicMock()
+            raise FileNotFoundError
+
+        windows_uninstall_registry.OpenKey.side_effect = open_registry
+        windows_uninstall_registry.QueryValueEx.return_value = (str(frozen_windows_application) + os.sep, 1)
+
+        batch = _create_installer_batch_file(str(frozen_windows_application), "update.exe")
+
+        assert 'start "" "update.exe" /ALLUSERS\n' in Path(batch).read_text(encoding="utf-8")
+        assert windows_uninstall_registry.OpenKey.call_args.args[1] == (
+            r"Software\Microsoft\Windows\CurrentVersion\Uninstall\{F13FF76D-C9FC-47F0-BCE3-A2E0ED2859F6}_is1"
+        )
+
+    def test_update_ignores_another_machine_installation(
+        self, frozen_windows_application: Path, windows_uninstall_registry: Mock
+    ) -> None:
+        """
+        A separate machine installation does not change a user's update scope.
+
+        GIVEN: The machine uninstall record points to a different application directory.
+        WHEN: An update is prepared for an unmarked user copy.
+        THEN: Setup receives the current-user override.
+        """
+        windows_uninstall_registry.OpenKey.side_effect = None
+        windows_uninstall_registry.QueryValueEx.return_value = (str(frozen_windows_application.parent / "Other AMC"), 1)
+
+        batch = _create_installer_batch_file(str(frozen_windows_application), "update.exe")
+
+        assert 'start "" "update.exe" /CURRENTUSER\n' in Path(batch).read_text(encoding="utf-8")
+
+    @pytest.mark.parametrize("registry_error", [FileNotFoundError, PermissionError])
+    def test_unregistered_application_keeps_user_scope_when_registry_is_unavailable(
+        self, frozen_windows_application: Path, windows_uninstall_registry: Mock, registry_error: type[OSError]
+    ) -> None:
+        """
+        Unregistered applications keep the non-administrative default.
+
+        GIVEN: No scope marker exists and the machine uninstall record is missing or unreadable.
+        WHEN: An update is prepared.
+        THEN: Setup stays in current-user mode.
+        """
+        windows_uninstall_registry.OpenKey.side_effect = registry_error
+
+        batch = _create_installer_batch_file(str(frozen_windows_application), "update.exe")
+
+        assert 'start "" "update.exe" /CURRENTUSER\n' in Path(batch).read_text(encoding="utf-8")
+
+    @pytest.mark.parametrize(
+        "marker", ["invalid INI", "[Installation]\nMode=unknown\n", "[Installation]\nMode=allusers\nMode=x\n"]
+    )
+    def test_invalid_scope_marker_falls_back_to_legacy_machine_registration(
+        self, frozen_windows_application: Path, windows_uninstall_registry: Mock, marker: str
+    ) -> None:
+        """
+        A damaged marker does not silently move a machine installation into user scope.
+
+        GIVEN: A machine installation has an invalid scope marker and a matching uninstall record.
+        WHEN: An update is prepared.
+        THEN: Setup retains machine scope using the registry fallback.
+        """
+        (frozen_windows_application / "installation-scope.ini").write_text(marker, encoding="utf-8")
+        windows_uninstall_registry.OpenKey.side_effect = None
+        windows_uninstall_registry.QueryValueEx.return_value = (str(frozen_windows_application), 1)
+
+        batch = _create_installer_batch_file(str(frozen_windows_application), "update.exe")
+
+        assert 'start "" "update.exe" /ALLUSERS\n' in Path(batch).read_text(encoding="utf-8")
+
+    def test_source_installation_keeps_user_scope(self, tmp_path: Path, windows_uninstall_registry: Mock) -> None:
+        """
+        Source installations do not inherit a separately installed application's scope.
+
+        GIVEN: The application is running from Python rather than a frozen executable.
+        WHEN: A Windows installer update is prepared.
+        THEN: Setup uses current-user scope without consulting the registry.
+        """
+        windows_uninstall_registry.OpenKey.side_effect = AssertionError("Source installs have no installer scope")
+        with patch("ardupilot_methodic_configurator.backend_internet.sys") as runtime:
+            runtime.frozen = False
+            batch = _create_installer_batch_file(str(tmp_path), "update.exe")
+
+        assert 'start "" "update.exe" /CURRENTUSER\n' in Path(batch).read_text(encoding="utf-8")
 
 
 @patch("shutil.which", return_value=None)  # No uv available, use pip

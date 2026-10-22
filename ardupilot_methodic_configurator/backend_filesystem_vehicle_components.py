@@ -115,13 +115,37 @@ class VehicleComponents:
         return templates
 
     def _load_user_templates(self) -> dict[str, list[dict]]:
+        """Merge legacy and current-user components without writing shared resources."""
+        templates: dict[str, list[dict]] = {}
+        directories = [
+            ProgramSettings.get_legacy_component_templates_dir(),
+            ProgramSettings.get_user_component_templates_dir(),
+        ]
+        for directory in directories:
+            if directory is None:
+                continue
+            for component, entries in self._load_user_templates_from_dir(directory).items():
+                merged_entries = templates.setdefault(component, [])
+                for entry in entries:
+                    name = entry.get("name")
+                    if not name:
+                        continue
+                    for index, existing in enumerate(merged_entries):
+                        if existing.get("name") == name:
+                            merged_entries[index] = entry
+                            break
+                    else:
+                        merged_entries.append(entry)
+        return templates
+
+    @staticmethod
+    def _load_user_templates_from_dir(templates_dir: str) -> dict[str, list[dict]]:
         """
         Load user component templates.
 
         :return: The user component templates as a dictionary
         """
         templates_filename = "user_vehicle_components_template.json"
-        templates_dir = ProgramSettings.get_templates_base_dir()
         filepath = os_path.join(templates_dir, templates_filename)
 
         templates = {}
@@ -257,6 +281,7 @@ class VehicleComponents:
         else:
             # Save to user templates file, for normal non-developer users.
             # This file will not get deleted when the program is updated or un-installed.
+            templates_dir = ProgramSettings.get_user_component_templates_dir()
             templates_filename = "user_vehicle_components_template.json"
 
             # Create the directory if it doesn't exist

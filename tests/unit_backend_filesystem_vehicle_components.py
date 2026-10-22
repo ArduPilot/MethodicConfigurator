@@ -13,15 +13,24 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from collections.abc import Generator
 from importlib.resources import files as importlib_files
 from json.decoder import JSONDecodeError as RealJSONDecodeError
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
+from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 
 # pylint: disable=protected-access,attribute-defined-outside-init,unused-argument
+
+
+@pytest.fixture(autouse=True)
+def isolate_legacy_templates() -> Generator[None, None, None]:
+    """Keep error-path unit tests independent of installed legacy Windows files."""
+    with patch.object(ProgramSettings, "get_legacy_component_templates_dir", return_value=None):
+        yield
 
 
 class TestVehicleComponentsInternals:
@@ -52,7 +61,9 @@ class TestVehicleComponentsInternals:
 
         assert result == {}
 
-    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch(
+        "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_user_component_templates_dir"
+    )
     @patch("builtins.open", new_callable=mock_open)
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_load")
     def test_load_user_templates_json_decode_error(
@@ -73,7 +84,9 @@ class TestVehicleComponentsInternals:
         assert result == {}
 
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
-    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch(
+        "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_user_component_templates_dir"
+    )
     def test_save_component_templates_to_file_makedirs_error(
         self, mock_get_base_dir: MagicMock, mock_makedirs: MagicMock
     ) -> None:
@@ -96,7 +109,9 @@ class TestVehicleComponentsInternals:
 
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
-    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch(
+        "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_user_component_templates_dir"
+    )
     def test_save_component_templates_to_file_generic_exception(  # type: ignore[misc]
         self, mock_get_base_dir: MagicMock, mock_makedirs: MagicMock, mock_safe_write: MagicMock
     ) -> None:
@@ -120,7 +135,9 @@ class TestVehicleComponentsInternals:
 
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
-    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch(
+        "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_user_component_templates_dir"
+    )
     def test_save_component_templates_to_file_permission_error(  # type: ignore[misc]
         self, mock_get_base_dir: MagicMock, mock_makedirs: MagicMock, mock_safe_write: MagicMock
     ) -> None:
@@ -144,7 +161,9 @@ class TestVehicleComponentsInternals:
 
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
-    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch(
+        "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_user_component_templates_dir"
+    )
     def test_save_component_templates_to_file_os_error(
         self, mock_get_base_dir: MagicMock, mock_makedirs: MagicMock, mock_safe_write: MagicMock
     ) -> None:
@@ -424,7 +443,9 @@ class TestVehicleComponentsTemplateLoadingErrors:
 
         assert result == {}
 
-    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch(
+        "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_user_component_templates_dir"
+    )
     @patch("builtins.open", new_callable=mock_open)
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_load")
     def test_load_user_templates_file_not_found(
@@ -444,7 +465,9 @@ class TestVehicleComponentsTemplateLoadingErrors:
 
         assert result == {}
 
-    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch(
+        "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_user_component_templates_dir"
+    )
     @patch("builtins.open", new_callable=mock_open)
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_load")
     def test_load_user_templates_os_error(
@@ -464,7 +487,9 @@ class TestVehicleComponentsTemplateLoadingErrors:
 
         assert result == {}
 
-    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch(
+        "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_user_component_templates_dir"
+    )
     @patch("builtins.open", new_callable=mock_open)
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_load")
     def test_load_user_templates_unexpected_exception(

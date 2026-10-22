@@ -505,11 +505,66 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
         package_path = importlib_files("ardupilot_methodic_configurator")
         logging_debug("current script directory1: %s", package_path)
         if platform_system() == "Windows":
-            package_path = Path(ProgramSettings._site_config_dir())
+            user_templates = (
+                Path(user_config_dir(".ardupilot_methodic_configurator", appauthor=False, roaming=True, ensure_exists=False))
+                / "vehicle_templates"
+            )
+            # Saving component JSON can create this directory without installing bundled templates.
+            if (user_templates / "system_vehicle_components_template.json").is_file() and any(
+                (user_templates / vehicle_type).is_dir() for vehicle_type in ("ArduCopter", "ArduPlane", "Heli", "Rover")
+            ):
+                return str(user_templates)
+            with contextlib_suppress(OSError):
+                shared_templates = (
+                    Path(
+                        site_config_dir(
+                            ".ardupilot_methodic_configurator",
+                            appauthor=False,
+                            version=None,
+                            multipath=False,
+                            ensure_exists=False,
+                        )
+                    )
+                    / "vehicle_templates"
+                )
+                if shared_templates.is_dir():
+                    return str(shared_templates)
         logging_debug("current script directory2: %s", package_path)
 
         logging_debug(_("site_directory: %s"), package_path)
         return str(package_path / "vehicle_templates")
+
+    @staticmethod
+    def get_user_component_templates_dir() -> str:
+        """Keep Windows user-edited components separate from read-only bundled resources."""
+        test_templates_dir = os.environ.get("AMC_COMPONENT_TEMPLATES_DIR_TEST")
+        if test_templates_dir:
+            return test_templates_dir
+        if platform_system() == "Windows":
+            return str(
+                Path(user_config_dir(".ardupilot_methodic_configurator", appauthor=False, roaming=True, ensure_exists=False))
+                / "vehicle_templates"
+            )
+        return ProgramSettings.get_templates_base_dir()
+
+    @staticmethod
+    def get_legacy_component_templates_dir() -> str | None:
+        """Return the legacy shared Windows directory without creating or modifying it."""
+        if platform_system() == "Windows" and not os.environ.get("AMC_COMPONENT_TEMPLATES_DIR_TEST"):
+            with contextlib_suppress(OSError):
+                return str(
+                    Path(
+                        site_config_dir(
+                            ".ardupilot_methodic_configurator",
+                            appauthor=False,
+                            version=None,
+                            multipath=False,
+                            ensure_exists=False,
+                        )
+                    )
+                    / "vehicle_templates"
+                )
+        return None
 
     @staticmethod
     def get_vehicles_default_dir() -> Path:
