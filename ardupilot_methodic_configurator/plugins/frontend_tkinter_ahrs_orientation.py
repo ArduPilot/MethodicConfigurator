@@ -13,7 +13,7 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import Frame, ttk
 from tkinter.messagebox import askyesno, showerror, showinfo
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_parameter_editor import (
@@ -70,51 +70,30 @@ class AhrsOrientationView(Frame):  # pylint: disable=too-many-instance-attribute
         self._scroll_frame = ScrollFrame(self)
         self._scroll_frame.pack(fill="both", expand=True)
         main_frame = ttk.Frame(self._scroll_frame.view_port)
-        main_frame.pack(fill="both", expand=True)
-
-        manual_option_frame = ttk.LabelFrame(
-            main_frame,
-            text=_("Option 1 - Set AHRS_ORIENTATION manually"),
-            padding=10,
-        )
-        manual_option_frame.pack(fill="x", pady=(2, 2), padx=(4, 4))
-        wraplength = 800
-        ttk.Label(
-            manual_option_frame,
-            text=_(
-                "Use this option if you know the vehicle orientation. "
-                "Set AHRS_ORIENTATION manually in the parameter list below."
-            ),
-            justify="left",
-            wraplength=wraplength,
-        ).pack(anchor="w")
-
-        automated_option_frame = ttk.LabelFrame(
-            main_frame,
-            text=_("Option 2 - Determine AHRS_ORIENTATION automatically"),
-            padding=10,
-        )
-        automated_option_frame.pack(fill="x", pady=(2, 2), padx=(4, 4))
+        main_frame.pack(fill="x", pady=(2, 2), padx=(4, 4))
         info_text = _(
-            "Use this option if you do not know the vehicle orientation. "
-            "This assistant estimates AHRS_ORIENTATION from three vehicle positions:\n"
+            "Manually set AHRS_ORIENTATION in the table below or use this assistant "
+            "to estimate it from three vehicle positions: "
             "LEVEL, NOSE DOWN, and RIGHT SIDE DOWN.\n\n"
             "It compensates for the current preset AHRS_ORIENTATION. If a custom "
             "orientation is active, set AHRS_ORIENTATION to 0 and upload parameters first."
         )
-        ttk.Label(automated_option_frame, text=info_text, justify="left", wraplength=wraplength).pack(anchor="w", pady=(0, 16))
+        info_label = ttk.Label(main_frame, text=info_text, justify="left", wraplength=1)
+        info_label.pack(fill="x", pady=(0, 16))
 
-        self._wizard_frame = ttk.Frame(automated_option_frame)
+        self._wizard_frame = ttk.Frame(main_frame)
         self._wizard_frame.pack(fill="x")
 
         self._wizard_instruction_var = tk.StringVar(value="")
         self._wizard_progress_var = tk.StringVar(value="")
         self._recommendation_var = tk.StringVar(value="")
 
-        ttk.Label(self._wizard_frame, textvariable=self._wizard_instruction_var, wraplength=620, justify="left").pack(
-            anchor="w", pady=(0, 6)
+        instruction_label = ttk.Label(
+            self._wizard_frame, textvariable=self._wizard_instruction_var, wraplength=1, justify="left"
         )
-        ttk.Label(self._wizard_frame, textvariable=self._wizard_progress_var).pack(anchor="w", pady=(0, 10))
+        instruction_label.pack(fill="x", pady=(0, 6))
+        progress_label = ttk.Label(self._wizard_frame, textvariable=self._wizard_progress_var, wraplength=1, justify="left")
+        progress_label.pack(fill="x", pady=(0, 10))
 
         wizard_actions = ttk.Frame(self._wizard_frame)
         wizard_actions.pack(anchor="w")
@@ -125,9 +104,17 @@ class AhrsOrientationView(Frame):  # pylint: disable=too-many-instance-attribute
         self._cancel_btn = ttk.Button(wizard_actions, text=_("Cancel"), command=self._on_cancel)
         self._cancel_btn.pack(side="left")
 
-        ttk.Label(self._wizard_frame, textvariable=self._recommendation_var, justify="left", wraplength=620).pack(
-            anchor="w", pady=(10, 0)
+        recommendation_label = ttk.Label(
+            self._wizard_frame, textvariable=self._recommendation_var, justify="left", wraplength=1
         )
+        recommendation_label.pack(fill="x", pady=(10, 0))
+        for label in (info_label, instruction_label, progress_label, recommendation_label):
+            label.bind("<Configure>", self._on_label_resize)
+
+    def _on_label_resize(self, event: tk.Event) -> None:
+        """Wrap instructions and status messages to their available width."""
+        label = cast("ttk.Label", event.widget)
+        label.configure({"wraplength": max(1, event.width)})
 
     def _on_start_detection(self) -> None:
         if not self.model.is_connected():
