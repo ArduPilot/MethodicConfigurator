@@ -23,8 +23,11 @@ an additional optional renderer module for 3D vehicle attitude visualisation.
 - Paired activation/deactivation hooks cancel telemetry polling during diagnostics and
   resume exactly one timer afterwards, preserving collected and staged calibration values
 - Floating, draggable live-monitor popup (`RCCalibrationPopup`) for real-time feedback
-- Remote controller stick preview with two side-by-side 126×126 white squares (30% smaller than the original)
-  and red circles whose diameter is 1/12 of the square side
+- One frame labelled "Remote controller stick and vehicle attitude preview" combines the RC mapping selector,
+  two 126×126 white stick squares and the central 3D craft preview
+- The left and right stick squares flank the craft, with red circles whose diameter is 1/12 of the square side
+- Telemetry status appears at the upper right, alongside the mapping selector; the graphs have 2-pixel gaps,
+  and wrapped axis labels keep the stick columns compact within the existing plugin window width
 - Channel-function column: channels selected by staged/cached `RCMAP_*` show the primary controls and are fixed;
   the configured `FLTMODE_CH` is marked Mode and fixed; other channels select their firmware-supported `RCx_OPTION`
 - Auxiliary-function choices come from the loaded ArduPilot parameter metadata; selections stage New values and
@@ -35,9 +38,11 @@ an additional optional renderer module for 3D vehicle attitude visualisation.
 - Axis positions respect staged `RCMAP_*` and `RCn_MIN/MAX/TRIM/REVERSED`, falling back to cached FC values
 - Mapping and calibration edits never write to the controller until the existing parameter upload workflow is invoked
 - Scrollable embedded and popup content keeps the 16 channel rows accessible in small windows
-- Compact 4-pixel frame padding, section spacing and outer margins align with the documentation frame;
+- Compact 4-pixel frame padding, 2-pixel graph gaps and outer margins align with the documentation frame;
   the scrollbar sits at the right edge inside that margin, without an extra canvas inset
 - Compact RC-driven craft monitor: proportional roll/pitch lean, continuous yaw rotation and throttle lift
+- A 360×200 rendered craft is cropped to a 288×160 viewport at the center of the preview frame;
+  its background matches the surrounding frame's Tk theme color
 - Projected 3D craft drawing delegated to `renderer_3d_quadcopter.py`, using the existing Pillow dependency
 - Embedded plugin view (`RCCalibrationView`) + standalone dev window (`RCCalibrationWindow`)
 
@@ -55,8 +60,8 @@ an additional optional renderer module for 3D vehicle attitude visualisation.
 │                                                                    │
 │ ┌──────────────────────────────────────────────────────────────┐   │
 │ │ RCCalibrationView (ttk.Frame) — embedded in parameter editor │   │
-│ │  - Two compact white gimbals; red circles show stick positions│  │
-│ │  - RC mapping preset selector; staged New-value edits       │   │
+│ │  - White gimbals flank the cropped central 3D craft preview │   │
+│ │  - Mapping and status at top; sticks flank the craft        │   │
 │ │  - 16 RC status bars with PWM labels and function selectors   │   │
 │ │  - RCMAP / flight-mode roles locked; RCx_OPTION choices staged│   │
 │ │  - Green MIN / blue TRIM / red MAX; CH1-only text legend     │   │
@@ -107,8 +112,8 @@ an additional optional renderer module for 3D vehicle attitude visualisation.
 | ------ | ------ |
 | `plugin_constants.py` | `PLUGIN_RC_CALIBRATION = "rc_calibration"` |
 | `data_model_rc_calibration.py` | MAVLink parsing, extrema tracking, atomic staged calibration and mapping edits |
-| `frontend_tkinter_rc_calibration.py` | Shared `RCCraftPreview`, `RCStickPreview`, `RCChannelBars`, popup/view/window & factories |
-| `renderer_3d_quadcopter.py` | Pure Pillow projected 3D Quad-X renderer |
+| `frontend_tkinter_rc_calibration.py` | Combined `RCCraftPreview` contains borderless `RCStickPreview`; channel bars, popup/view/window & factories |
+| `renderer_3d_quadcopter.py` | Pure Pillow projected 3D Quad-X renderer with configurable background color |
 | `__main__.py` | Lazy plugin registration wires `register_rc_calibration_plugin()` |
 | `plugin_factory.py` | Creates the registered view and model through their factories |
 | `data_model_parameter_editor.py` | Shared dispatch injects editor; owns New values and explicit upload workflow |
@@ -118,7 +123,7 @@ an additional optional renderer module for 3D vehicle attitude visualisation.
 | Both migration templates' `07_remote_controller_controller.param` | Editable Mode-2 default mapping entries |
 | `tests/plugins/conftest.py` | Real editor/parameter staging fixture with mocked external I/O |
 | `tests/plugins/test_data_model_rc_calibration.py` | Telemetry, atomic staging, presets, schema and explicit-upload tests |
-| `tests/plugins/test_frontend_tkinter_rc_calibration.py` | Channel markers, stick geometry/modes, and embedded telemetry-update tests |
+| `tests/plugins/test_frontend_tkinter_rc_calibration.py` | Combined layout, viewport crop/theme background, channel markers, stick geometry/modes and telemetry updates |
 | `tests/plugins/test_renderer_3d_quadcopter.py` | Rotation directions, responsive images, lift, clamping and heading wrapping |
 
 ## Requirements Analysis
@@ -142,7 +147,9 @@ an additional optional renderer module for 3D vehicle attitude visualisation.
    - ✅ During calibration, MIN/MAX use observed extremes; TRIM continues to show the configured value
    - ✅ Invalid/missing cached limits use display-only 1000/2000/1500 µs defaults, not parameter writes
    - ✅ Float-valued parameter-cache entries produce visible markers
-   - ✅ Shared Live monitor replaces the static Preview Stages image in embedded and popup views
+   - ✅ Shared "Remote controller stick and vehicle attitude preview" frame in embedded and popup views
+   - ✅ RC mapping selector above the left stick, central craft preview and right stick in one frame
+   - ✅ Craft viewport cropped from 360×200 to 288×160; background follows the surrounding frame's theme color
    - ✅ Roll/pitch deflection commands ±35° visual lean; yaw deflection drives 120°/s maximum visual rotation
    - ✅ Centered yaw holds the accumulated heading, with a 4% display deadband
    - ✅ Throttle maps from centered travel -1..1 to visual lift 0..1
@@ -184,7 +191,7 @@ an additional optional renderer module for 3D vehicle attitude visualisation.
    - ✅ No-data warning after 50 consecutive empty polls (`_no_telemetry_warning_emitted`)
    - ✅ Disconnected/no-input telemetry does not invent live PWM values; configured/default markers remain visible
    - ✅ Heartbeat-only updates preserve the last channel bars and stick positions
-   - ✅ Live monitor, remote controller stick preview and Channels use 4-pixel padding and gaps with no extra scroll-canvas inset
+   - ✅ Combined stick/attitude preview and Channels use 4-pixel padding and gaps with no extra scroll-canvas inset
    - ✅ Embedded and popup scrollbar use compact 4-pixel outer margins
 
 3. **Reliability**
@@ -215,9 +222,8 @@ RCCalibrationView / RCCalibrationPopup
 
 ### Remote Controller Stick Preview Mapping
 
-The two 126×126 stick boxes are 30% smaller than the original 180×180 preview. The selector applies application
-mapping presets by editing ArduPilot's `RCMAP_*` parameters
-(not `RC_MAP_*`). The presets assume physical channel slots corresponding to a conventional Mode-2
+The preview has two 126×126 white stick boxes. Its selector applies mapping presets by editing ArduPilot's
+`RCMAP_*` parameters. The presets assume physical channel slots corresponding to a conventional Mode-2
 layout: right horizontal CH1, right vertical CH2, left vertical CH3, left horizontal CH4.
 That convention is explicitly stated in the tooltip; verify channel movement against the transmitter before upload.
 Physical transmitter mode cannot be inferred uniquely from RCMAP: a transmitter can emit any channel order.
@@ -272,7 +278,7 @@ Cancel Calibration
 `QuadcopterRenderer` is a pure, UI-independent **auxiliary module** specific to the RC calibration plugin.
 It projects independently generated Quad-X body/stack faces, arms, motor rings, propellers and a nose marker
 from a low rear chase view (17° elevation). Depth-sorted polygons are drawn with Pillow.
-Orange front accents, cyan rear accents, a dark background and a fixed floor/shadow provide direction and lift cues.
+Orange front accents, cyan rear accents, a theme-matched gray background and a fixed floor/shadow provide direction and lift cues.
 No Three.js, OpenGL context, GLTF files or new dependency is needed.
 
 The visual behavior was compared with the local `arduconfigurator` receiver monitor:
@@ -281,8 +287,7 @@ The visual behavior was compared with the local `arduconfigurator` receiver moni
 - `apps/web/src/preview-components.tsx`: `StickCraftPreview` calibrated lean, yaw-rate integration and throttle lift
 - `apps/web/src/flight-deck-preview.tsx`: low rear chase camera and compact craft styling
 
-This is a Tk/Pillow analogue, not a copy of its Three.js renderer or a full Receiver workbench port.
-The existing vertically stacked plugin layout is preserved. Only the Preview Stages section is replaced.
+The rendered craft appears between the two stick previews in the combined attitude preview frame.
 
 `RCCraftPreview` retains axes and heading, renders on the existing 100 ms polling loop, and uses monotonic time
 for yaw integration. Elapsed time is capped at 250 ms to prevent large jumps after UI delays.
@@ -292,9 +297,11 @@ Destroying the embedded view/popup cancels the existing polling timer.
 ### API
 
 ```python
-renderer = QuadcopterRenderer(width=400, height=200)
-img: PIL.Image.Image = renderer.render(roll, pitch, yaw_heading_degrees, throttle_lift)
+renderer = QuadcopterRenderer(width=360, height=200, background_color=frame_background)
+rendered = renderer.render(roll, pitch, yaw_heading_degrees, throttle_lift)
+img: PIL.Image.Image = rendered.crop((36, 20, 324, 180))
 # roll/pitch normalised -1.0 … 1.0; heading degrees; throttle lift 0.0 … 1.0
+# The frame supplies its theme background; the crop is displayed at 288×160.
 ```
 
 ## Validation Notes
@@ -312,8 +319,7 @@ img: PIL.Image.Image = renderer.render(roll, pitch, yaw_heading_degrees, throttl
 - The embedded view is instantiated with a real Tk widget hierarchy to verify initial markers and polling updates.
 - The plugin is registered globally, but a configuration step must reference `rc_calibration` for the view to appear;
   both `*mig` templates now provide step wiring and editable mapping entries.
-- The empty migration template previously inherited the package step JSON. Its new local JSON preserves that
-  definition except for the RC controller step, which now includes the plugin and mapping declarations.
+- Both migration templates define the RC calibration plugin and its editable mapping entries in the controller step.
 - Existing migrated projects acquire missing RCMAP rows from current FC values when the controller step opens;
   filename/format migration does not invent mapping defaults or overwrite custom mappings.
 - No live flight-controller or SITL validation is claimed; the craft remains an illustrative Quad-X rather than measured attitude.

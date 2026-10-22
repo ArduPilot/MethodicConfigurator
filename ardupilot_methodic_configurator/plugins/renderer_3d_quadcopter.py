@@ -21,9 +21,10 @@ Point2D = tuple[float, float]
 class QuadcopterRenderer:  # pylint: disable=too-few-public-methods
     """Render a stylized Quad-X from a low rear chase view; not a flight simulator."""
 
-    def __init__(self, width: int = 400, height: int = 200) -> None:
+    def __init__(self, width: int = 400, height: int = 200, background_color: str = "#101a29") -> None:
         self.width = width
         self.height = height
+        self.background_color = background_color
 
     @staticmethod
     def _clamp(value: float, minimum: float, maximum: float) -> float:
@@ -118,7 +119,7 @@ class QuadcopterRenderer:  # pylint: disable=too-few-public-methods
             radians(yaw % 360 if isfinite(yaw) else 0),
         )
         lift = (self._clamp(throttle, 0, 1) - 0.5) * self.height * 0.3
-        image = Image.new("RGB", (self.width, self.height), "#101a29")
+        image = Image.new("RGB", (self.width, self.height), self.background_color)
         draw = ImageDraw.Draw(image)
         # Fixed floor/shadow makes throttle lift easy to see without suggesting actual altitude.
         floor = round(self.height * 0.86)
