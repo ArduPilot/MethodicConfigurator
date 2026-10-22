@@ -64,7 +64,9 @@ from ardupilot_methodic_configurator.frontend_tkinter_project_creator import Veh
 from ardupilot_methodic_configurator.frontend_tkinter_project_opener import VehicleProjectOpenerWindow
 from ardupilot_methodic_configurator.frontend_tkinter_template_overview import TemplateOverviewWindow
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import display_parameter_editor_usage_popup
-from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_MOTOR_TEST
+from ardupilot_methodic_configurator.plugins.data_model_rc_calibration import RCCalibrationDataModel
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_rc_calibration import RCCalibrationView
+from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_MOTOR_TEST, PLUGIN_RC_CALIBRATION
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
 
 if TYPE_CHECKING:
@@ -100,6 +102,7 @@ TARGETS: tuple[CaptureTarget, ...] = (
     CaptureTarget("App_screenshot_FC_banner.png", "fc_banner"),
     CaptureTarget("App_screenshot_instructions.png", "instructions"),
     CaptureTarget("App_screenshot_motor_test.png", "motor_test"),
+    CaptureTarget("App_screenshot_rc_calibration.png", PLUGIN_RC_CALIBRATION),
     CaptureTarget("App_screenshot_Parameter_export.png", "parameter_export"),
     CaptureTarget("App_screenshot_MAVLink_inspector.png", "mavlink_inspector", variant="radio"),
     CaptureTarget("App_screenshot_MAVLink_inspector_no_radio.png", "mavlink_inspector", variant="no_radio"),
@@ -1307,10 +1310,62 @@ def _capture_motor_test(output_path: Path, delay: float, padding: int, vehicle_d
             flight_controller.disconnect()
 
 
+def _capture_rc_calibration(output_path: Path, delay: float, padding: int) -> None:
+    """Capture the registered RC calibration view with representative live channel input."""
+    fc_params = {
+        "RCMAP_ROLL": 1.0,
+        "RCMAP_PITCH": 2.0,
+        "RCMAP_THROTTLE": 3.0,
+        "RCMAP_YAW": 4.0,
+        "FLTMODE_CH": 5.0,
+    }
+    for channel_number in range(1, 17):
+        fc_params.update(
+            {
+                f"RC{channel_number}_MIN": 1000.0,
+                f"RC{channel_number}_MAX": 2000.0,
+                f"RC{channel_number}_TRIM": 1500.0,
+            }
+        )
+
+    flight_controller = FlightController()
+    _configure_fake_flight_controller(flight_controller, fc_params)
+    model = RCCalibrationDataModel(flight_controller)
+    values = (1710, 1370, 1810, 1580, 1200, 1850, *([1500] * 10))
+    channels = [{**channel, "value": value} for channel, value in zip(model.get_channel_calibration(), values, strict=True)]
+    model.get_rc_telemetry = MagicMock(
+        return_value={
+            "roll": 420.0,
+            "pitch": -260.0,
+            "throttle": 620.0,
+            "yaw": 180.0,
+            "channels": channels,
+        }
+    )
+
+    window = BaseWindow()
+    window.root.title(translate("ArduPilot RC Calibration"))
+    window.root.geometry("850x840")
+    plugin_view = RCCalibrationView(window.main_frame, model, window)
+    plugin_view.pack(fill="both", expand=True)
+    try:
+        capture_widget(window.root, output_path, delay, padding)
+    finally:
+        _cleanup_plugin_view(plugin_view)
+        if window.root.winfo_exists():
+            window.root.destroy()
+        flight_controller.disconnect()
+
+
 def capture_target(target: CaptureTarget, output_path: Path, args: argparse.Namespace) -> None:  # pylint: disable=too-many-branches
     """Capture one screenshot target."""
     action = target.action
-    simple_captures = {"about": _capture_about, "connection": _capture_connection, "instructions": _capture_instructions}
+    simple_captures = {
+        "about": _capture_about,
+        "connection": _capture_connection,
+        "instructions": _capture_instructions,
+        PLUGIN_RC_CALIBRATION: _capture_rc_calibration,
+    }
     if action in simple_captures:
         simple_captures[action](output_path, args.delay, args.padding)
     elif action in ("connection_add_another", "connection_udp_forwarding"):

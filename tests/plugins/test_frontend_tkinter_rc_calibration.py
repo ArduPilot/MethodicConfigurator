@@ -17,6 +17,7 @@ from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
+from PIL import ImageChops, ImageTk
 from pytest_mock import MockerFixture
 
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
@@ -490,7 +491,6 @@ class TestRCStickPreview:
         stick_preview.update_axes({"roll": 0.0, "pitch": 0.0, "throttle": 0.0, "yaw": 0.0})
 
         assert len(stick_preview._canvases) == 2
-        assert stick_preview.cget("text") == "Remote controller stick preview"
         for column, canvas in enumerate(stick_preview._canvases):
             square = canvas.coords(canvas.find_withtag("gimbal")[0])
             circle = canvas.coords(canvas.find_withtag("stick")[0])
@@ -502,7 +502,7 @@ class TestRCStickPreview:
             assert (circle[0] + circle[2]) / 2 == (square[0] + square[2]) / 2
             assert (circle[1] + circle[3]) / 2 == (square[1] + square[3]) / 2
             assert circle[2] - circle[0] == pytest.approx(size / 12)
-            assert int(canvas.grid_info()["column"]) == column
+            assert int(canvas.grid_info()["column"]) == column * 2
 
     @pytest.mark.parametrize(
         ("mode", "left_axes", "right_axes"),
@@ -582,7 +582,7 @@ def test_embedded_monitor_initialises_all_markers_and_preserves_channels_on_hear
     try:
         assert len(view.stick_preview._canvases) == 2
         assert isinstance(view.craft_preview, RCCraftPreview)
-        assert view.craft_preview.cget("text") == "Live monitor"
+        assert view.craft_preview.cget("text") == "Remote controller stick and vehicle attitude preview"
         canvas = view.channel_bars._bar_canvases[1]
         assert len(canvas.find_withtag("calibration_marker")) == 3
         message = MagicMock(chancount=4)
@@ -629,7 +629,9 @@ def test_embedded_monitor_aligns_sections_with_documentation_and_moves_scrollbar
     view.pack(fill="both", expand=True)
     try:
         tk_root.update_idletasks()
-        sections = (view.craft_preview, view.stick_preview, view.channel_bars)
+        sections = (view.craft_preview, view.channel_bars)
+        assert view._scroll_frame.view_port.winfo_children() == list(sections)
+        assert view.stick_preview.master == view.craft_preview
         scrollbar = view._scroll_frame.vsb
         assert view._scroll_frame.canvas.coords(view._scroll_frame.canvas_window) == [0.0, 0.0]
         assert view._scroll_frame.winfo_x() == documentation.winfo_x() == 4
@@ -680,6 +682,9 @@ def test_floating_monitor_shares_the_stick_boxes_and_three_channel_markers(tk_ro
             popup = RCCalibrationPopup(cast("tk.Widget", parent), RCCalibrationDataModel(controller))
         assert len(popup.stick_preview._canvases) == 2
         assert isinstance(popup.craft_preview, RCCraftPreview)
+        assert popup.craft_preview.cget("text") == "Remote controller stick and vehicle attitude preview"
+        assert popup.stick_preview.master == popup.craft_preview
+        assert popup._scroll_frame.view_port.winfo_children() == [popup.craft_preview, popup.channel_bars]
         assert len(popup.channel_bars._bar_canvases) == 16
         assert all(len(canvas.find_withtag("calibration_marker")) == 3 for canvas in popup.channel_bars._bar_canvases.values())
         content_frame = cast("ttk.Frame", popup._scroll_frame.master)
@@ -687,7 +692,7 @@ def test_floating_monitor_shares_the_stick_boxes_and_three_channel_markers(tk_ro
         assert content_frame.pack_info()["pady"] == 4
         assert popup._scroll_frame.vsb.pack_info()["side"] == "right"
         assert popup._scroll_frame.canvas.coords(popup._scroll_frame.canvas_window) == [0.0, 0.0]
-        for section in (popup.craft_preview, popup.stick_preview, popup.channel_bars):
+        for section in (popup.craft_preview, popup.channel_bars):
             assert tuple(int(str(value)) for value in section.cget("padding")) == (4,)
             assert section.pack_info()["pady"] == (0, 4)
         message = MagicMock(chancount=4)
@@ -1022,6 +1027,51 @@ def test_craft_preview_yaw_turns_while_held_and_holds_when_centered_or_stale(
         preview.update_telemetry({})
         assert preview._heading == heading
         assert preview.status_label.cget("text") == "No RC telemetry"
+    finally:
+        preview.destroy()
+
+
+@pytest.mark.parametrize("telemetry", [{}, {"roll": 500, "pitch": -500, "throttle": 1000}])
+def test_craft_preview_shows_sticks_around_a_cropped_drone_on_the_frame_background(
+    tk_root: tk.Tk, telemetry: dict[str, int]
+) -> None:
+    """
+    Mapping and stick positions surround a compact craft preview in one frame.
+
+    GIVEN: A combined preview using the current Tk theme
+    WHEN: The preview opens or receives live axis input
+    THEN: Mapping and upper-right status sit above closely spaced gimbals and a cropped drone within the original width
+    """
+    preview = RCCraftPreview(tk_root)
+    preview.place(x=0, y=0, width=600)
+    try:
+        preview.update_telemetry(telemetry)
+        tk_root.update_idletasks()
+        sticks = preview.stick_preview
+        left, right = sticks._canvases[0], sticks._canvases[1]
+        image_frame = sticks.craft_frame
+        assert sticks.mode_selector.winfo_rooty() < left.winfo_rooty()
+        assert 0 <= image_frame.winfo_rootx() - (left.winfo_rootx() + left.winfo_width()) <= 4
+        assert 0 <= right.winfo_rootx() - (image_frame.winfo_rootx() + image_frame.winfo_width()) <= 4
+        assert preview.winfo_width() == 600
+        assert right.winfo_rootx() + right.winfo_width() < preview.winfo_rootx() + preview.winfo_width()
+        status = preview.status_label
+        assert status.winfo_rooty() == sticks.mapping_frame.winfo_rooty()
+        assert status.winfo_rootx() + status.winfo_width() == (
+            sticks.mapping_frame.winfo_rootx() + sticks.mapping_frame.winfo_width()
+        )
+        assert status.winfo_rootx() >= sticks.mode_selector.winfo_rootx() + sticks.mode_selector.winfo_width()
+        assert left.winfo_rooty() == right.winfo_rooty()
+        assert left.winfo_rooty() <= preview.image_label.winfo_rooty() + preview.image_label.winfo_height() / 2
+        assert left.winfo_rooty() + left.winfo_height() >= preview.image_label.winfo_rooty()
+        image = ImageTk.getimage(preview.image_label.image).convert("RGB")  # type: ignore[attr-defined]
+        assert image.size == (288, 160)
+        background = ttk.Style(preview).lookup("TFrame", "background") or "#d9d9d9"
+        assert image.getpixel((0, 0)) == tuple(component // 256 for component in preview.winfo_rgb(background))
+        full_image = preview.renderer.render(
+            preview._axes["roll"], preview._axes["pitch"], preview._heading, (preview._axes["throttle"] + 1) / 2
+        )
+        assert ImageChops.difference(image, full_image.crop((36, 20, 324, 180))).getbbox() is None
     finally:
         preview.destroy()
 

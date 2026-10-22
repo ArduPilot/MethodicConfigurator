@@ -53,18 +53,29 @@ _RC_FRAME_PADDING = 4
 class RCCraftPreview(ttk.LabelFrame):  # pylint: disable=too-many-ancestors,too-many-instance-attributes
     """Shared RC-driven craft preview with proportional lean, yaw rate and throttle lift."""
 
-    def __init__(self, parent: tk.Misc) -> None:
-        super().__init__(parent, text=_("Live monitor"), padding=_RC_FRAME_PADDING)
-        self.renderer = QuadcopterRenderer(width=360, height=200)
+    def __init__(
+        self,
+        parent: tk.Misc,
+        model: RCCalibrationDataModel | None = None,
+        on_parameters_changed: Callable[[], None] | None = None,
+    ) -> None:
+        super().__init__(parent, text=_("Remote controller stick and vehicle attitude preview"), padding=_RC_FRAME_PADDING)
+        background = ttk.Style(self).lookup("TFrame", "background") or "#d9d9d9"
+        red, green, blue = self.winfo_rgb(background)
+        self.renderer = QuadcopterRenderer(
+            width=360, height=200, background_color=f"#{red // 256:02x}{green // 256:02x}{blue // 256:02x}"
+        )
         self._axes = dict.fromkeys(("roll", "pitch", "yaw", "throttle"), 0.0)
         self._heading = 0.0
         self._last_frame_time = monotonic()
         self._last_rc_time: float | None = None
         self._channel_count = 0
-        self.status_label = ttk.Label(self, text=_("No RC telemetry"), foreground="gray")
-        self.status_label.pack(anchor="w")
-        self.image_label = ttk.Label(self)
+        self.stick_preview = RCStickPreview(self, model, on_parameters_changed)
+        self.stick_preview.pack(fill="x")
+        self.image_label = ttk.Label(self.stick_preview.craft_frame)
         self.image_label.pack(pady=5)
+        self.status_label = ttk.Label(self.stick_preview.mapping_frame, text=_("No RC telemetry"), foreground="gray")
+        self.status_label.pack(side="right", anchor="n")
         ttk.Label(self, text=_("RC input preview — not measured attitude."), wraplength=360).pack()
         show_tooltip(
             self.image_label,
@@ -95,12 +106,15 @@ class RCCraftPreview(ttk.LabelFrame):  # pylint: disable=too-many-ancestors,too-
             foreground="green" if live else "gray",
         )
         image = self.renderer.render(self._axes["roll"], self._axes["pitch"], self._heading, (self._axes["throttle"] + 1) / 2)
+        # Crop 10% from each edge to reduce the viewport by 20% without shrinking the craft.
+        inset_x, inset_y = image.width // 10, image.height // 10
+        image = image.crop((inset_x, inset_y, image.width - inset_x, image.height - inset_y))
         self.image_label.image = ImageTk.PhotoImage(image, master=self)  # type: ignore[attr-defined]
         self.image_label.configure(image=self.image_label.image)  # type: ignore[attr-defined]
 
 
-class RCStickPreview(ttk.LabelFrame):  # pylint: disable=too-many-ancestors,too-many-instance-attributes
-    """Show two white transmitter gimbals with red stick-position circles."""
+class RCStickPreview(ttk.Frame):  # pylint: disable=too-many-ancestors,too-many-instance-attributes
+    """Show mapping controls and white gimbals flanking a central craft preview slot."""
 
     def __init__(
         self,
@@ -108,18 +122,18 @@ class RCStickPreview(ttk.LabelFrame):  # pylint: disable=too-many-ancestors,too-
         model: RCCalibrationDataModel | None = None,
         on_parameters_changed: Callable[[], None] | None = None,
     ) -> None:
-        super().__init__(parent, text=_("Remote controller stick preview"), padding=_RC_FRAME_PADDING)
+        super().__init__(parent)
         self._model = model
         self._on_parameters_changed = on_parameters_changed
         self._axes: dict[str, float] = {}
         mapping_mode = model.get_mapping_mode() if model else 2
         self._mode = tk.IntVar(self, value=mapping_mode or 2)
         self._selected_mode = tk.StringVar(self, value=str(mapping_mode or _("Custom")))
-        mode_row = ttk.Frame(self)
-        mode_row.pack(fill="x", pady=(0, 6))
-        ttk.Label(mode_row, text=_("RC mapping mode:")).pack(side="left")
+        self.mapping_frame = ttk.Frame(self)
+        self.mapping_frame.pack(fill="x", pady=(0, 6))
+        ttk.Label(self.mapping_frame, text=_("RC mapping mode:")).pack(side="left")
         self.mode_selector = ttk.Combobox(
-            mode_row,
+            self.mapping_frame,
             textvariable=self._selected_mode,
             values=tuple(str(mode) for mode in RC_STICK_MODES),
             state="readonly",
@@ -141,9 +155,11 @@ class RCStickPreview(ttk.LabelFrame):  # pylint: disable=too-many-ancestors,too-
             self._mapping_status.configure(text=_("Custom RCMAP mapping retained. Select a preset only to change it."))
         gimbals = ttk.Frame(self)
         gimbals.pack()
+        self.craft_frame = ttk.Frame(gimbals)
+        self.craft_frame.grid(row=0, column=1)
         self._canvases: list[tk.Canvas] = []
         self._axis_labels: list[ttk.Label] = []
-        for column in range(2):
+        for column in (0, 2):
             canvas = tk.Canvas(
                 gimbals,
                 width=_RC_STICK_SQUARE_SIZE,
@@ -152,10 +168,11 @@ class RCStickPreview(ttk.LabelFrame):  # pylint: disable=too-many-ancestors,too-
                 borderwidth=0,
                 highlightthickness=0,
             )
-            canvas.grid(row=0, column=column, padx=8)
+            canvas.grid(row=0, column=column, padx=(0, 2) if column == 0 else (2, 0))
             canvas.bind("<Configure>", self._on_resize)
             self._canvases.append(canvas)
-            label = ttk.Label(gimbals)
+            # Keep long axis labels from widening the stick columns and separating the graphs.
+            label = ttk.Label(gimbals, wraplength=_RC_STICK_SQUARE_SIZE, justify="center")
             label.grid(row=1, column=column, pady=(4, 0))
             self._axis_labels.append(label)
             show_tooltip(canvas, _("The red circle shows the stick position; centered sticks appear in the square center."))
@@ -488,11 +505,9 @@ class RCCalibrationPopup(CalibrationPopupBase["RCCalibrationDataModel"]):
         self._scroll_frame.scroll_to_top()
         content_frame = self._scroll_frame.view_port
 
-        self.craft_preview = RCCraftPreview(content_frame)
+        self.craft_preview = RCCraftPreview(content_frame, self.model, self._refresh_preview)
         self.craft_preview.pack(fill="x", pady=(0, _RC_FRAME_PADDING))
-
-        self.stick_preview = RCStickPreview(content_frame, self.model, self._refresh_preview)
-        self.stick_preview.pack(fill="x", pady=(0, _RC_FRAME_PADDING))
+        self.stick_preview = self.craft_preview.stick_preview
 
         self.channel_bars = RCChannelBars(content_frame, self.model, self._refresh_preview)
         self.channel_bars.pack(fill="x", expand=True, pady=(0, _RC_FRAME_PADDING))
@@ -599,11 +614,9 @@ class RCCalibrationView(ttk.Frame):  # pylint: disable=too-many-ancestors, too-m
         self._scroll_frame.scroll_to_top()
         content_frame = self._scroll_frame.view_port
 
-        self.craft_preview = RCCraftPreview(content_frame)
+        self.craft_preview = RCCraftPreview(content_frame, self.model, self._refresh_parameters)
         self.craft_preview.pack(fill="x", pady=(0, _RC_FRAME_PADDING))
-
-        self.stick_preview = RCStickPreview(content_frame, self.model, self._refresh_parameters)
-        self.stick_preview.pack(fill="x", pady=(0, _RC_FRAME_PADDING))
+        self.stick_preview = self.craft_preview.stick_preview
 
         self.channel_bars = RCChannelBars(content_frame, self.model, self._refresh_parameters)
         self.channel_bars.pack(fill="x", expand=True, pady=(0, _RC_FRAME_PADDING))
