@@ -492,6 +492,8 @@ class VehicleProjectCreator:
         settings: NewVehicleProjectSettings,
         fc_connected: bool = False,
         fc_parameters: dict[str, float] | None = None,
+        *,
+        retain_source_parameters: bool = True,
     ) -> str:
         """
         Create a new vehicle configuration directory from a template.
@@ -503,6 +505,9 @@ class VehicleProjectCreator:
             settings: Configuration settings for the new project
             fc_connected: Whether a flight controller is connected
             fc_parameters: Flight controller parameters if available
+            retain_source_parameters: Preserve source-only values in a final import step.
+                Dedicated FC/bin-log import workflows disable this because they complete
+                their own residual import against the source defaults.
 
         Returns:
             The path to the newly created vehicle directory
@@ -541,6 +546,10 @@ class VehicleProjectCreator:
                 use_fc_params=settings.use_fc_params,
                 fc_parameters=fc_parameters,
             )
+            if not error_msg and settings.use_fc_params and fc_parameters and retain_source_parameters:
+                self.local_filesystem.retain_unrepresented_fc_parameters(
+                    new_vehicle_dir, fc_parameters, self.next_import_filename
+                )
         except Exception as exc:
             shutil_rmtree(new_vehicle_dir, ignore_errors=True)
             raise VehicleProjectCreationError(_("Copying template files"), str(exc)) from exc

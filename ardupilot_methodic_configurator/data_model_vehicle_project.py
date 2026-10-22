@@ -279,6 +279,7 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             settings,
             fc_connected=True,
             fc_parameters=fc_parameters,
+            retain_source_parameters=False,
         )
 
         flight_controller = self._flight_controller
@@ -542,6 +543,7 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
                 settings,
                 fc_connected=False,
                 fc_parameters=fc_parameters,
+                retain_source_parameters=False,
             )
             self._complete_imported_vehicle_project_creation(
                 template_dir,
