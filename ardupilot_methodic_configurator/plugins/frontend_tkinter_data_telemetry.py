@@ -9,7 +9,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
-from contextlib import suppress
 from tkinter import ttk
 
 from ardupilot_methodic_configurator import _
@@ -18,6 +17,7 @@ from ardupilot_methodic_configurator.data_model_data_telemetry import DataTeleme
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_radio_status import RadioStatusView
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_helpers import cancel_plugin_timer
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_DATA_TELEMETRY
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
 from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginPauseReason
@@ -96,10 +96,8 @@ class DataTelemetryView(ttk.Frame):  # pylint: disable=too-many-ancestors
 
     def on_deactivate(self) -> None:
         """Yield the connection, cancel callbacks and close child windows when hidden."""
-        if self._timer_id is not None:
-            with suppress(tk.TclError):
-                self.after_cancel(self._timer_id)
-            self._timer_id = None
+        cancel_plugin_timer(self, self._timer_id)
+        self._timer_id = None
         self.backend.close()
         self.model.clear_live_data()
         self._state = TelemetryState()

@@ -105,11 +105,13 @@ def test_plugin_validation_registers_expected_plugins_without_creating_windows()
         assert set(amc_main.plugin_factory.available_plugins()) == {
             "accelerometer_calibration",
             "ahrs_orientation",
+            "autotune_accel_backoff",
             "autotune_gain_backoff",
             "battery_monitor",
             "compass_calibration",
             "data_telemetry",
             "esc_rpm_scale",
+            "gnss",
             "level_calibration",
             "motor_test",
             "rc_calibration",

@@ -9,7 +9,9 @@ SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import tkinter as tk
 from collections.abc import Callable, Collection
+from contextlib import suppress
 from typing import cast
 
 from ardupilot_methodic_configurator.frontend_tkinter_navigation_lock import NavigationLock
@@ -113,3 +115,10 @@ def _copy_calibration_values(
     if check_other_steps and callable(find_stale_steps) and calibration_values:
         return cast("Callable[[dict[str, float]], list[str]]", find_stale_steps)(calibration_values)
     return []
+
+
+def cancel_plugin_timer(widget: tk.Misc, timer_id: str | None) -> None:
+    """Cancel a pending plugin callback, tolerating an already-destroyed Tk widget."""
+    if timer_id is not None:
+        with suppress(tk.TclError):
+            widget.after_cancel(timer_id)
