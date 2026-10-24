@@ -638,6 +638,7 @@
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
             "component": "GNSS Receiver",
+            "plugin": {"name": "gnss", "placement": "top"},
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["BRD_BOOT_DELAY", "BRD_SAFETY_DEFLT", "CAN_.*", "GPS.*", "GNSS.*", "NTF_LED_TYPES", "SERIAL[34]_PROTOCOL", "(WPNAV_RADIUS|WP_RADIUS_M)$"],
             "derived_parameters": {
