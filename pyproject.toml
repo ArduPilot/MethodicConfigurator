@@ -103,7 +103,7 @@ scripts = [
 pypi_dist = [
     "build==1.6.1",
     "packaging==26.3",
-    "setuptools==84.0.0",
+    "setuptools==84.1.0",
 ]
 
 win_dist = [
