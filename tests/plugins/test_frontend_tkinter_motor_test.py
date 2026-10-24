@@ -22,6 +22,8 @@ from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
+from pymavlink.dialects.v20 import ardupilotmega as mavlink
+from telemetry_test_helpers import create_telemetry_link, feed
 
 import ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test as motor_test_module
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
@@ -66,6 +68,8 @@ class FakeMotorTestModel:  # pylint: disable=too-many-instance-attributes, too-m
     """Minimal stand-in for MotorTestDataModel with controllable behavior."""
 
     def __init__(self) -> None:
+        self.flight_controller = MagicMock(spec=FlightController)
+        self.flight_controller.master = None
         self.frame_class = 1
         self.frame_type = 1
         self.motor_count = 2
@@ -306,7 +310,8 @@ def motor_view(
     try:
         yield view
     finally:
-        view.destroy()
+        if view.winfo_exists():
+            view.destroy()
         parent.destroy()
 
 
@@ -395,6 +400,56 @@ def motor_connection_recovery(motor_view_with_controller: MotorTestView) -> Gene
         yield recovery
     finally:
         recovery.stop()
+
+
+@pytest.mark.parametrize("reason", list(PluginPauseReason))
+def test_motor_view_reuses_live_esc_table_and_cleans_up_its_receiver(
+    motor_view: MotorTestView, fake_model: FakeMotorTestModel, reason: PluginPauseReason
+) -> None:
+    """
+    Keep the embedded table in step with the motor view lifecycle.
+
+    GIVEN motor test controls and a reporting ESC on the shared connection,
+    WHEN the view pauses, resumes, hides and is destroyed,
+    THEN the bottom table displays telemetry and releases its receiver and timer.
+    """
+    link = create_telemetry_link()
+    link.master.target_system = 1
+    link.master.target_component = 1
+    fake_model.flight_controller.master = link.master
+    telemetry = motor_view.esc_telemetry_view
+    assert motor_view._content_frame.pack_slaves()[-1] is telemetry
+    feed(link, mavlink.MAVLink_esc_telemetry_1_to_4_message([40] * 4, [1200] * 4, [0] * 4, [0] * 4, [100] * 4, [1] * 4))
+    telemetry.after_cancel(telemetry._timer_id)
+    telemetry._poll()
+    assert telemetry.table.cget("displaycolumns") == ("1", "2", "3", "4")
+    assert telemetry.table.item("1", "values")[:4] == ("12.00",) * 4
+    assert len(link.master.message_hooks) == 1
+
+    timer = telemetry._timer_id
+    motor_view.on_suspend(reason)
+    assert timer not in telemetry.tk.call("after", "info")
+    assert telemetry._timer_id is None
+    assert not link.master.message_hooks
+    assert not telemetry.table.cget("displaycolumns")
+    assert fake_model.stop_calls == (1 if reason is PluginPauseReason.EXCLUSIVE_OPERATION else 0)
+    telemetry._poll()
+    assert telemetry._timer_id is None
+
+    motor_view.on_resume()
+    timer = telemetry._timer_id
+    motor_view.on_activate()
+    assert telemetry._timer_id == timer
+    motor_view.on_deactivate()
+    assert telemetry._timer_id is None
+    motor_view.on_activate()
+    telemetry.after_cancel(telemetry._timer_id)
+    telemetry._poll()
+    assert len(link.master.message_hooks) == 1
+    timer = telemetry._timer_id
+    motor_view.destroy()
+    assert timer not in telemetry.tk.call("after", "info")
+    assert not link.master.message_hooks
 
 
 class TestDelayedProgressCallback:
@@ -1679,6 +1734,9 @@ def test_motor_restart_retains_recovery_ownership_and_resumes_polling(
 
     def restart(*_args: object, **_kwargs: object) -> None:
         assert recovery.operation_active
+        assert motor_view.esc_telemetry_view._timer_id is None
+        motor_view.esc_telemetry_view._poll()
+        telemetry_poll.assert_not_called()
         recovery.check()
         recovery._monitor.poll.assert_not_called()
         recovery._monitor.reconnect.assert_not_called()
@@ -1694,6 +1752,7 @@ def test_motor_restart_retains_recovery_ownership_and_resumes_polling(
         patch.object(motor_test_module, "askfloat", return_value=0.2),
         patch.object(motor_view.model, method, side_effect=restart),
         patch.object(motor_view, "_update_battery_status", wraps=motor_view._update_battery_status) as battery_poll,
+        patch.object(motor_view.esc_telemetry_view.backend, "poll") as telemetry_poll,
     ):
         if handler == "frame":
             motor_view.frame_type_combobox.current(0)
@@ -1701,6 +1760,7 @@ def test_motor_restart_retains_recovery_ownership_and_resumes_polling(
         else:
             motor_view._set_motor_spin_arm()
         assert not recovery.operation_active
+        assert motor_view.esc_telemetry_view._timer_id is not None
         for _tick in range(2):
             motor_update_timers.pop(motor_view._timer_id)()
             assert len(motor_update_timers) == 1

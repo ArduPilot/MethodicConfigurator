@@ -252,18 +252,22 @@ class TestScriptUpload:
 class TestConfigurationStepIntegration:
     """Verify every vehicle workflow exposes the plugin and enables scripting."""
 
-    @pytest.mark.parametrize("vehicle_type", ["ArduCopter", "ArduPlane", "Heli", "Rover"])
-    def test_esc_telemetry_step_registers_plugin(self, vehicle_type: str) -> None:
+    @pytest.mark.parametrize(
+        ("vehicle_type", "motor_step"), [("ArduCopter", "12"), ("ArduPlane", "12"), ("Heli", "32"), ("Rover", "23")]
+    )
+    def test_telemetry_and_motor_steps_expose_their_respective_plugins(self, vehicle_type: str, motor_step: str) -> None:
         package_dir = Path(ardupilot_methodic_configurator.__file__).resolve().parent
         config_path = package_dir / f"configuration_steps_{vehicle_type}.json"
         config = json.loads(config_path.read_text(encoding="utf-8"))
         step = next(step for name, step in config["steps"].items() if name.endswith("_esc_telemetry.param"))
 
-        assert step["plugin"]["name"] == PLUGIN_ESC_RPM_SCALE
-        assert step["plugin"]["placement"] == "left"
-        assert step["plugin"].get("if") == "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'Scripting'"
+        assert step["plugin"]["name"] == "esc_telemetry"
+        assert step["plugin"]["placement"] == "top"
+        assert "if" not in step["plugin"]
         scripting_condition = step["derived_parameters"]["SCR_ENABLE"]["if"]
         assert scripting_condition == "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'Scripting'"
+        motor_plugin = config["steps"][f"{motor_step}_motor.param"]["plugin"]
+        assert motor_plugin == {"if": scripting_condition, "name": PLUGIN_ESC_RPM_SCALE, "placement": "left"}
 
 
 class TestPluginRegistration:
