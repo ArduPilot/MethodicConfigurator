@@ -21,5 +21,5 @@ BATT5_SERIAL_NUM,103
 BATT6_CAPACITY,0
 BATT6_LOW_VOLT,14
 BATT6_SERIAL_NUM,104
-MOT_BAT_VOLT_MAX,16.8
-MOT_BAT_VOLT_MIN,13.2
+MOT_BAT_VOLT_MAX,16.8  # Scale the PIDs up when battery voltage is below this threshold
+MOT_BAT_VOLT_MIN,13.2  # Scale the PIDs up when battery voltage is above this threshold

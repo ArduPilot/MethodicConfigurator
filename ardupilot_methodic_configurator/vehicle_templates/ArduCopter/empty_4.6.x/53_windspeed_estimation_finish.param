@@ -1,2 +1,2 @@
-LOG_DISARMED,0
-LOG_REPLAY,0
+LOG_DISARMED,0  # was only needed for wind speed estimation
+LOG_REPLAY,0  # was only needed for wind speed estimation
