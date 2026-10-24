@@ -1958,6 +1958,38 @@ class TestMultipleBatteryTelemetry:
     def _battery_message(battery_id: int, voltage: int, current: int = 210) -> mavlink2.MAVLink_battery_status_message:
         return mavlink2.MAVLink_battery_status_message(battery_id, 0, 0, 32767, [voltage] + [65535] * 9, current, -1, -1, -1)
 
+    def test_cached_battery_packets_expire_independently_without_refreshing_their_age(self) -> None:
+        """
+        Preserve per-battery freshness when other readers consume telemetry.
+
+        GIVEN two batteries parsed by another receiver at different times,
+        WHEN the battery cache is read repeatedly and the older sample expires,
+        THEN only the fresh battery remains and reconnecting clears both readings.
+        """
+        master = mavutil.mavfile(None, "battery-test", input=False)
+        master.recv_match = Mock(return_value=None)
+        connection = Mock(master=master)
+        commands = FlightControllerCommands(
+            params_manager=Mock(fc_parameters={"BATT_MONITOR": 4, "BATT2_MONITOR": 4}), connection_manager=connection
+        )
+        with patch("pymavlink.mavutil.time.time", return_value=100):
+            master.post_message(self._battery_message(0, 12400))
+        with patch("pymavlink.mavutil.time.time", return_value=101):
+            master.post_message(self._battery_message(1, 24800))
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time", return_value=101):
+            assert commands.get_battery_statuses() == ({0: (12.4, 2.1), 1: (24.8, 2.1)}, "")
+            assert commands.get_battery_statuses() == ({0: (12.4, 2.1), 1: (24.8, 2.1)}, "")
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time",
+            return_value=100 + commands.BATTERY_STATUS_CACHE_TIME,
+        ):
+            assert commands.get_battery_statuses() == ({1: (24.8, 2.1)}, "")
+        connection.master = mavutil.mavfile(None, "replacement-battery-test", input=False)
+        connection.master.recv_match = Mock(return_value=None)
+        readings, error = commands.get_battery_statuses()
+        assert readings is None
+        assert error
+
     def test_user_receives_all_batteries_through_real_pymavlink_reader(self) -> None:
         """Given queued battery messages, reading telemetry returns every ID with the latest values."""
         master = mavutil.mavfile(None, "battery-test", input=False)

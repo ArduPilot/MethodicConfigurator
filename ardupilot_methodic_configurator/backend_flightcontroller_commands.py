@@ -16,7 +16,7 @@ from logging import error as logging_error
 from logging import info as logging_info
 from time import sleep as time_sleep
 from time import time as time_time
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypedDict, cast  # pylint: disable=unused-import
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypedDict, cast
 
 from pymavlink import mavutil
 
@@ -1123,6 +1123,34 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         time_sleep(self.BATTERY_STATUS_ACTIVATION_WAIT)
         return True, ""
 
+    def _store_battery_status(self, battery_status: Any, received_at: float) -> None:  # noqa: ANN401
+        """Cache one battery measurement with its original receipt time."""
+        battery_id = int(battery_status.id)
+        voltages = cast("Sequence[int]", battery_status.voltages)
+        # Extension fields are absent from MAVLink 1 messages.
+        voltages_ext = cast("Sequence[int]", getattr(battery_status, "voltages_ext", ()))
+        voltage, current = convert_battery_telemetry_units(
+            sum(value for value in voltages if value != 65535)
+            + sum(value for value in voltages_ext if value not in (0, 65535))
+            if voltages[0] != 65535
+            else -1,
+            battery_status.current_battery,
+        )
+        self._last_battery_statuses[battery_id] = (voltage, current, received_at)
+
+    def _read_cached_battery_statuses(self) -> None:
+        """Recover packets parsed by other readers without extending their freshness."""
+        messages = getattr(self.master, "messages", {})
+        if not isinstance(messages, dict):
+            return
+        for battery_id in get_enabled_battery_ids(self._params_manager.fc_parameters):
+            battery_status = messages.get(f"BATTERY_STATUS[{battery_id}]", messages.get("BATTERY_STATUS"))
+            if battery_status is None or battery_status.id != battery_id:
+                continue
+            received_at = getattr(battery_status, "_timestamp", 0)
+            if isinstance(received_at, (int, float)) and received_at > 0:
+                self._store_battery_status(battery_status, received_at)
+
     def get_battery_statuses(self) -> tuple[dict[int, tuple[float, float]] | None, str]:
         """Get recent battery voltage and current readings, keyed by MAVLink battery ID."""
         if self.master is not self._battery_status_connection:
@@ -1138,18 +1166,8 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             while battery_status := self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
                 type="BATTERY_STATUS", blocking=False, timeout=self.BATTERY_STATUS_TIMEOUT
             ):
-                battery_id = int(battery_status.id)
-                voltages = cast("Sequence[int]", battery_status.voltages)
-                # Extension fields are absent from MAVLink 1 messages.
-                voltages_ext = cast("Sequence[int]", getattr(battery_status, "voltages_ext", ()))
-                voltage, current = convert_battery_telemetry_units(
-                    sum(value for value in voltages if value != 65535)
-                    + sum(value for value in voltages_ext if value not in (0, 65535))
-                    if voltages[0] != 65535
-                    else -1,
-                    battery_status.current_battery,
-                )
-                self._last_battery_statuses[battery_id] = (voltage, current, time_time())
+                self._store_battery_status(battery_status, time_time())
+            self._read_cached_battery_statuses()
         except Exception as e:  # pylint: disable=broad-exception-caught
             logging_debug(_("Failed to get battery statuses from telemetry: %(error)s"), {"error": str(e)})
 

@@ -42,9 +42,11 @@ from ardupilot_methodic_configurator.__main__ import (
     setup_logging,
 )
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
+from ardupilot_methodic_configurator.data_model_esc_telemetry import EscTelemetryDataModel
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
     BaseWindow,
 )
+from ardupilot_methodic_configurator.frontend_tkinter_esc_telemetry import EscTelemetryView
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import (
     ProgressWindow,
@@ -255,6 +257,11 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             text=_("Set Motor Spin Min"),
             command=self._set_motor_spin_min,
         ).pack(side="left", padx=5)
+
+        self.esc_telemetry_view = EscTelemetryView(
+            content_frame, EscTelemetryDataModel(self.model.flight_controller), self.base_window
+        )
+        self.esc_telemetry_view.pack(padx=10, pady=5, fill="x")
 
     def _create_motor_buttons(self, parent: Frame | ttk.Frame) -> None:
         """
@@ -650,6 +657,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             self.after_cancel(self._timer_id)
             self._timer_id = None
         self._restart_active = True
+        self.esc_telemetry_view.on_suspend()
         try:
             recovery = getattr(self.base_window, "_connection_recovery", None)
             with recovery.operation() if recovery is not None else nullcontext():
@@ -659,6 +667,8 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
                     task(on_progress)
         finally:
             self._restart_active = False
+            if not self._suspended and self.winfo_exists():
+                self.esc_telemetry_view.on_resume()
             if resume_updates and self.winfo_exists():
                 self._timer_id = self.after(1000, self._on_update_timer)
 
@@ -834,6 +844,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
     def on_suspend(self, reason: PluginPauseReason = PluginPauseReason.EXCLUSIVE_OPERATION) -> None:
         """Stop actuators for FC tools; yield silently for connection checks and recovery."""
+        self.esc_telemetry_view.on_suspend(reason)
         if reason is PluginPauseReason.EXCLUSIVE_OPERATION:
             self.on_deactivate()
         self._suspended = True
@@ -855,6 +866,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             self._diagram_needs_update = True
             self._update_motor_buttons_layout(force=True)
         self._update_view()
+        self.esc_telemetry_view.on_resume()
 
     def on_activate(self) -> None:
         """Refresh frame configuration and polling when the view becomes visible."""
@@ -867,6 +879,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         Stops all running motor tests for safety when switching away from this plugin.
         Also cancels any pending update timers to prevent resource leaks.
         """
+        self.esc_telemetry_view.on_deactivate()
         # Cancel any pending update timer to prevent updating hidden widget
         if self._timer_id:
             self.after_cancel(self._timer_id)

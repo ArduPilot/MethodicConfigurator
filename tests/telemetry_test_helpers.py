@@ -43,6 +43,7 @@ def create_telemetry_link() -> SimpleNamespace:
     master.write = MagicMock()
     controller.master = master
     connection = FlightControllerConnection(FlightControllerInfo())
+    controller.info = connection.info
     connection.master = master
     controller.start_gcs_heartbeat.side_effect = connection.start_gcs_heartbeat
     controller.disconnect.side_effect = connection.disconnect

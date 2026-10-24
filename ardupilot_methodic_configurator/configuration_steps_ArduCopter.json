@@ -289,9 +289,8 @@
             "rename_connection": "vehicle_components['ESC']['ESC->FC Telemetry']['Type']",
             "old_filenames": ["07_esc.param", "09_esc_telemetry.param"],
             "plugin": {
-                "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'Scripting'",
-                "name": "esc_rpm_scale",
-                "placement": "left"
+                "name": "esc_telemetry",
+                "placement": "top"
             },
             "related_bin_messages": {
                 "ESC": { "name": "ESC telemetry", "required": true },
@@ -420,6 +419,11 @@
             "mandatory_text": "40% mandatory (60% optional)",
             "component": "Motors",
             "auto_changed_by": "",
+            "plugin": {
+                "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'Scripting'",
+                "name": "esc_rpm_scale",
+                "placement": "left"
+            },
             "derived_parameters": {
                 "ESC_HW_POLES": { "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'Scripting'", "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" },
                 "SERVO_BLH_POLES": { "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] in ['ESC Telemetry', 'BDShotOnly']", "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" },

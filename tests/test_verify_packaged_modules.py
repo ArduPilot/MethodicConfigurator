@@ -111,6 +111,7 @@ def test_plugin_validation_registers_expected_plugins_without_creating_windows()
             "compass_calibration",
             "data_telemetry",
             "esc_rpm_scale",
+            "esc_telemetry",
             "gnss",
             "level_calibration",
             "motor_test",
