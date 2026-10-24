@@ -11,13 +11,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
 
-from copy import deepcopy
 from math import isfinite
 from re import fullmatch
 from typing import TYPE_CHECKING
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ParameterOutOfRangeError, ParameterUnchangedError
+from ardupilot_methodic_configurator.plugins.data_model_autotune_backoff import prepare_scaled_parameters
 
 if TYPE_CHECKING:
     from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
@@ -78,27 +77,14 @@ class AutotuneGainBackoffDataModel:
             raise ValueError(_("Gain margin back-off must be a finite number between 0.0 and 0.5."))
         if fraction == 0.0:
             return []
-        changes: dict[str, tuple[str, str]] = {}
-        warnings: list[str] = []
         parameters = self.parameter_editor.current_step_parameters
-        for name in self.affected_parameter_names():
-            parameter = parameters[name]
-            if not parameter.is_editable:
-                raise ValueError(_("Parameter {name} is not editable; no gains were changed.").format(name=name))
-            current_value = parameter.get_new_value()
-            old_value = parameter.value_as_string
-            value = current_value * (1.0 - fraction)
-            if not isfinite(value) or value < 0:
-                raise ValueError(_("Parameter {name} must have a finite non-negative gain.").format(name=name))
-            text = str(value)
-            try:
-                deepcopy(parameter).set_new_value(text)
-            except ParameterUnchangedError:
-                continue
-            except ParameterOutOfRangeError as exc:
-                warnings.append(str(exc))
-                deepcopy(parameter).set_new_value(text, ignore_out_of_range=True)
-            changes[name] = (old_value, text)
+        changes, warnings = prepare_scaled_parameters(
+            parameters,
+            self.affected_parameter_names(),
+            1.0 - fraction,
+            not_editable_message=_("Parameter {name} is not editable; no gains were changed."),
+            invalid_value_message=_("Parameter {name} must have a finite non-negative gain."),
+        )
         for name, (old_value, text) in changes.items():
             parameter = parameters[name]
             parameter.set_new_value(text, ignore_out_of_range=True)
