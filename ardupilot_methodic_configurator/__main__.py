@@ -97,6 +97,7 @@ def register_plugins() -> None:
         ("frontend_tkinter_battery_monitor", "register_battery_monitor_plugin"),
         ("frontend_tkinter_compass_calibration", "register_compass_calibration_plugin"),
         ("frontend_tkinter_data_telemetry", "register_data_telemetry_plugin"),
+        ("frontend_tkinter_esc_telemetry", "register_esc_telemetry_plugin"),
         ("frontend_tkinter_esc_rpm_scale", "register_esc_rpm_scale_plugin"),
         ("frontend_tkinter_level_calibration", "register_level_calibration_plugin"),
         ("frontend_tkinter_motor_test", "register_motor_test_plugin"),
