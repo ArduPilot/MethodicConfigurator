@@ -589,6 +589,7 @@
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
             "component": "GNSS Receiver",
+            "plugin": {"name": "gnss", "placement": "top"},
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["BRD_BOOT_DELAY", "GPS.*", "GNSS.*"],
             "derived_parameters": {
@@ -1241,7 +1242,7 @@
         "49_autotune_finish.param": {
             "why": "Q_A_THR_MIX_MAX should be increased after autotune to maximize attitude control authority at high throttle",
             "why_now": "After all autotune flights are complete and the PIDs are finalized",
-            "blog_text": "Finalize autotune by setting the maximum throttle mix parameter",
+            "blog_text": "Finalize autotune by setting the maximum throttle mix and compensating acceleration limits for takeoff weight",
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduPlane#955-roll-and-pitch-axis-re-autotune",
             "wiki_text": "AutoTune",
             "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
@@ -1249,6 +1250,15 @@
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
+            "plugin": {"name": "autotune_accel_backoff", "placement": "top", "if": "vehicle_components['Frame']['Specifications']['Frame class'] != 'Undefined'"},
+            "add_parameters": {
+                "Q_A_ACCEL_R_MAX": { "if": "'Q_A_ACCEL_R_MAX' in fc_parameters and vehicle_components['Frame']['Specifications']['Frame class'] != 'Undefined'", "Change Reason": "AutoTune acceleration limit before takeoff weight compensation" },
+                "Q_A_ACCEL_P_MAX": { "if": "'Q_A_ACCEL_P_MAX' in fc_parameters and vehicle_components['Frame']['Specifications']['Frame class'] != 'Undefined'", "Change Reason": "AutoTune acceleration limit before takeoff weight compensation" },
+                "Q_A_ACCEL_Y_MAX": { "if": "'Q_A_ACCEL_Y_MAX' in fc_parameters and vehicle_components['Frame']['Specifications']['Frame class'] != 'Undefined'", "Change Reason": "AutoTune acceleration limit before takeoff weight compensation" },
+                "Q_A_ACC_R_MAX": { "if": "'Q_A_ACC_R_MAX' in fc_parameters and vehicle_components['Frame']['Specifications']['Frame class'] != 'Undefined'", "Change Reason": "AutoTune acceleration limit before takeoff weight compensation" },
+                "Q_A_ACC_P_MAX": { "if": "'Q_A_ACC_P_MAX' in fc_parameters and vehicle_components['Frame']['Specifications']['Frame class'] != 'Undefined'", "Change Reason": "AutoTune acceleration limit before takeoff weight compensation" },
+                "Q_A_ACC_Y_MAX": { "if": "'Q_A_ACC_Y_MAX' in fc_parameters and vehicle_components['Frame']['Specifications']['Frame class'] != 'Undefined'", "Change Reason": "AutoTune acceleration limit before takeoff weight compensation" }
+            },
             "forced_parameters": {
                 "Q_A_THR_MIX_MAX": { "New Value": 0.9, "Change Reason": "Maximize attitude control authority at high throttle" }
             },

@@ -1097,6 +1097,7 @@
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
             "component": "GNSS Receiver",
+            "plugin": {"name": "gnss", "placement": "top"},
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": [
                 "BRD_BOOT_DELAY",
@@ -2624,7 +2625,7 @@
         "73_autotune_finish.param": {
             "why": "ATC_THR_MIX_MAX should be increased after autotune to maximize attitude control authority at high throttle",
             "why_now": "After all autotune flights are complete and the PIDs are finalized",
-            "blog_text": "Finalize autotune by setting the maximum throttle mix parameter",
+            "blog_text": "Finalize autotune by setting the maximum throttle mix and compensating acceleration limits for takeoff weight",
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli#955-roll-and-pitch-axis-re-autotune",
             "wiki_text": "AutoTune",
             "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
@@ -2632,6 +2633,15 @@
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
+            "plugin": {"name": "autotune_accel_backoff", "placement": "top"},
+            "add_parameters": {
+                "ATC_ACCEL_R_MAX": { "if": "'ATC_ACCEL_R_MAX' in fc_parameters", "Change Reason": "AutoTune acceleration limit before takeoff weight compensation" },
+                "ATC_ACCEL_P_MAX": { "if": "'ATC_ACCEL_P_MAX' in fc_parameters", "Change Reason": "AutoTune acceleration limit before takeoff weight compensation" },
+                "ATC_ACCEL_Y_MAX": { "if": "'ATC_ACCEL_Y_MAX' in fc_parameters", "Change Reason": "AutoTune acceleration limit before takeoff weight compensation" },
+                "ATC_ACC_R_MAX": { "if": "'ATC_ACC_R_MAX' in fc_parameters", "Change Reason": "AutoTune acceleration limit before takeoff weight compensation" },
+                "ATC_ACC_P_MAX": { "if": "'ATC_ACC_P_MAX' in fc_parameters", "Change Reason": "AutoTune acceleration limit before takeoff weight compensation" },
+                "ATC_ACC_Y_MAX": { "if": "'ATC_ACC_Y_MAX' in fc_parameters", "Change Reason": "AutoTune acceleration limit before takeoff weight compensation" }
+            },
             "forced_parameters": {
                 "ATC_THR_MIX_MAX": {
                     "New Value": 0.9,
