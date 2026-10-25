@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from copy import deepcopy
 from logging import ERROR
 from typing import Any
 from unittest.mock import patch
@@ -569,3 +570,283 @@ class TestVehicleComponentsJsonSchemaUncoveredBranches:
 
         assert description == ""
         assert is_optional is False
+
+
+class TestSchemaEditorContracts:
+    """Schema metadata provides usable editor types, descriptions and failure diagnostics."""
+
+    @staticmethod
+    def frame_schema(properties: dict[str, Any]) -> VehicleComponentsJsonSchema:
+        """Create a schema with the supplied frame properties through the public constructor."""
+        return VehicleComponentsJsonSchema(
+            {"properties": {"Components": {"properties": {"Frame": {"properties": properties}}}}}
+        )
+
+    @pytest.mark.parametrize(
+        ("json_type", "expected"),
+        [
+            ("string", str),
+            ("number", float),
+            ("integer", int),
+            ("boolean", bool),
+            ("array", list),
+            ("object", dict),
+            ("null", type(None)),
+            ("vendor-extension", str),
+        ],
+    )
+    def test_editor_receives_the_exact_datatype_of_a_property_composed_with_allof(
+        self, json_type: str, expected: type
+    ) -> None:
+        """
+        A composed property retains its datatype instead of becoming an untyped placeholder.
+
+        GIVEN: A component property whose type is supplied by a single allOf member
+        WHEN: The editor requests all value datatypes
+        THEN: The property maps to its Python type, with string fallback for an unknown type
+        """
+        model = self.frame_schema({"Config": {"allOf": [{"type": json_type}]}})
+
+        assert model.get_all_value_datatypes() == {"Frame": {"Config": expected}}
+
+    def test_editor_retains_an_empty_placeholder_for_an_empty_allof_property(self) -> None:
+        """
+        An unresolved composition remains a dictionary placeholder.
+
+        GIVEN: A component property with an empty allOf list
+        WHEN: The editor requests value datatypes
+        THEN: The field remains present with an empty dictionary rather than None
+        """
+        model = self.frame_schema({"Config": {"allOf": []}})
+
+        assert model.get_all_value_datatypes() == {"Frame": {"Config": {}}}
+
+    def test_editor_handles_a_components_node_without_property_definitions(self) -> None:
+        """
+        Partial component metadata does not prevent the editor from requesting datatypes.
+
+        GIVEN: A nonempty Components schema without properties
+        WHEN: The editor requests all value datatypes
+        THEN: It receives an empty mapping without an exception
+        """
+        model = VehicleComponentsJsonSchema({"properties": {"Components": {"type": "object"}}})
+
+        result = model.get_all_value_datatypes()
+
+        assert isinstance(result, dict)
+        assert not result
+
+    @pytest.mark.parametrize(
+        "schema",
+        [
+            {},
+            {"properties": {}},
+            {"properties": {"Components": {"type": "object"}}},
+            {"properties": {"Components": {"properties": {}}}},
+        ],
+        ids=["empty", "no-components", "no-component-properties", "empty-component-properties"],
+    )
+    @pytest.mark.parametrize(
+        "path",
+        [
+            ("Frame",),
+            ("Frame", "Specifications"),
+            ("Frame", "Specifications", "TOW max Kg"),
+            ("Frame", "Product", "Model"),
+        ],
+        ids=["component", "section", "nested-field", "product-field"],
+    )
+    def test_missing_optional_metadata_returns_defaults_without_logging_an_exception(
+        self, schema: dict[str, Any], path: tuple[str, ...], caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """
+        Expected metadata omissions return quiet defaults instead of disguised exceptions.
+
+        GIVEN: A partial schema missing optional description metadata
+        WHEN: The editor requests a component, section, nested or product description
+        THEN: It receives the empty description and required default without an error log
+        """
+        original = deepcopy(schema)
+        model = VehicleComponentsJsonSchema(deepcopy(schema))
+
+        with caplog.at_level(ERROR):
+            result = model.get_component_property_description(path)
+
+        assert result == ("", False)
+        assert caplog.records == []
+        assert model.schema == original
+
+    def test_missing_product_field_does_not_turn_other_product_metadata_into_an_exception(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """
+        Product metadata may define some fields while omitting the requested field.
+
+        GIVEN: A product definition containing Manufacturer but no Model metadata
+        WHEN: The editor requests the product model description
+        THEN: It receives defaults without logging a lookup error
+        """
+        model = VehicleComponentsJsonSchema(
+            {"definitions": {"product": {"properties": {"Manufacturer": {"description": "Product maker"}}}}}
+        )
+
+        with caplog.at_level(ERROR):
+            result = model.get_component_property_description(("Frame", "Product", "Model"))
+
+        assert result == ("", False)
+        assert caplog.records == []
+
+    def test_missing_section_is_ignored_when_other_allof_members_define_different_sections(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """
+        Unrelated composition members do not cause a missing-section lookup to fail.
+
+        GIVEN: Flight-controller metadata with a referenced Product and direct Specifications section
+        WHEN: The editor requests the absent Firmware section description
+        THEN: It receives defaults without treating Specifications as the requested section
+        """
+        model = VehicleComponentsJsonSchema(
+            make_fc_schema(
+                {
+                    "allOf": [
+                        {"$ref": "#/definitions/identity"},
+                        {"properties": {"Specifications": {"description": "Controller specifications"}}},
+                    ]
+                },
+                definitions={"identity": {"properties": {"Product": {"description": "Product information"}}}},
+            )
+        )
+
+        with caplog.at_level(ERROR):
+            result = model.get_component_property_description(("Flight Controller", "Firmware"))
+
+        assert result == ("", False)
+        assert caplog.records == []
+
+    @pytest.mark.parametrize("composed", [False, True], ids=["direct-properties", "allof-properties"])
+    @pytest.mark.parametrize("optional", [False, True], ids=["required", "optional"])
+    def test_editor_follows_a_reference_alias_to_the_actual_nested_field_metadata(
+        self, composed: bool, optional: bool
+    ) -> None:
+        """
+        A reference alias preserves the description and optional flag of the final field.
+
+        GIVEN: A component reference that points through an alias to direct or composed properties
+        WHEN: The editor requests a nested field's description
+        THEN: It receives the final field's exact description and optional status
+        """
+        properties = {
+            "Specifications": {
+                "properties": {
+                    "TOW max Kg": {"type": "number", "description": "Maximum takeoff weight.", "x-is-optional": optional}
+                }
+            }
+        }
+        component = (
+            {"allOf": [{"properties": {"Product": {}}}, {"properties": properties}]}
+            if composed
+            else {"properties": properties}
+        )
+        model = VehicleComponentsJsonSchema(
+            {
+                "properties": {"Components": {"properties": {"Frame": {"$ref": "#/definitions/frameAlias"}}}},
+                "definitions": {"frameAlias": {"$ref": "#/definitions/frame"}, "frame": component},
+            }
+        )
+
+        assert model.get_component_property_description(("Frame", "Specifications", "TOW max Kg")) == (
+            "Maximum takeoff weight.",
+            optional,
+        )
+
+    @pytest.mark.parametrize(
+        ("schema", "expected_error"),
+        [
+            ({}, "Cannot modify schema: Schema could not be loaded"),
+            ({"title": "Vehicle components"}, "Could not find Specifications in flight controller schema"),
+            ({"definitions": {}}, "Could not find Specifications in flight controller schema"),
+            ({"definitions": {"flightController": {}}}, "Could not find Specifications in flight controller schema"),
+            (
+                {"definitions": {"flightController": {"allOf": [{"$ref": "#/definitions/product"}]}}},
+                "Could not find Specifications in flight controller schema",
+            ),
+            (
+                {"definitions": {"flightController": {"allOf": [{"properties": {"Product": {}}}]}}},
+                "Could not find Specifications in flight controller schema",
+            ),
+        ],
+        ids=["empty", "no-definitions", "no-controller", "no-allof", "reference-only", "unrelated-properties"],
+    )
+    @pytest.mark.parametrize("optional", [False, True], ids=["required", "optional"])
+    def test_unavailable_mcu_schema_reports_the_actual_missing_structure_without_changing_data(
+        self, schema: dict[str, Any], expected_error: str, optional: bool, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """
+        Missing MCU metadata produces actionable diagnostics for either optional-state request.
+
+        GIVEN: An absent or incomplete flight-controller schema
+        WHEN: The editor tries to update MCU Series optional status
+        THEN: The correct missing structure is reported once and the schema remains unchanged
+        """
+        original = deepcopy(schema)
+        model = VehicleComponentsJsonSchema(deepcopy(schema))
+
+        with caplog.at_level(ERROR):
+            model.modify_schema_for_mcu_series(is_optional=optional)
+
+        assert [(record.levelno, record.getMessage()) for record in caplog.records] == [(ERROR, expected_error)]
+        assert model.schema == original
+
+    @pytest.mark.parametrize(("field", "type_name"), [(None, "NoneType"), ("", "str")])
+    @pytest.mark.parametrize("optional", [False, True], ids=["required", "optional"])
+    def test_malformed_mcu_metadata_reports_the_failed_operation_and_retains_its_error_context(
+        self, field: str | None, type_name: str, optional: bool, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """
+        A malformed MCU field is diagnosed without crashing or discarding its data.
+
+        GIVEN: MCU Series metadata that is null or text instead of a property object
+        WHEN: The editor updates its optional status
+        THEN: One error identifies the MCU update and malformed type, preserving the schema
+        """
+        schema = {
+            "definitions": {
+                "flightController": {"allOf": [{"properties": {"Specifications": {"properties": {"MCU Series": field}}}}]}
+            }
+        }
+        original = deepcopy(schema)
+        model = VehicleComponentsJsonSchema(schema)
+
+        with caplog.at_level(ERROR):
+            model.modify_schema_for_mcu_series(is_optional=optional)
+
+        assert len(caplog.records) == 1
+        assert caplog.records[0].levelno == ERROR
+        message = caplog.records[0].getMessage()
+        assert message.startswith("Error modifying schema for MCU Series: ")
+        assert type_name in message
+        assert model.schema == original
+
+    @pytest.mark.parametrize(("components", "type_name"), [(None, "NoneType"), ("not-an-object", "str")])
+    def test_malformed_description_metadata_returns_defaults_and_preserves_diagnostic_context(
+        self, components: str | None, type_name: str, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """
+        Broken component metadata is distinguished from an ordinary missing description.
+
+        GIVEN: A Components schema that is null or text instead of an object
+        WHEN: The editor requests a nested description
+        THEN: It receives safe defaults and one diagnostic identifies the failed lookup and type
+        """
+        model = VehicleComponentsJsonSchema({"properties": {"Components": components}})
+
+        with caplog.at_level(ERROR):
+            result = model.get_component_property_description(("Frame", "Specifications", "TOW max Kg"))
+
+        assert result == ("", False)
+        assert len(caplog.records) == 1
+        assert caplog.records[0].levelno == ERROR
+        message = caplog.records[0].getMessage()
+        assert message.startswith("Exception occurred in get_component_property_description: ")
+        assert type_name in message
