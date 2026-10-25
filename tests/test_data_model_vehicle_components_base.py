@@ -10,6 +10,8 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from copy import deepcopy
+from logging import WARNING
 from math import isnan
 from unittest.mock import MagicMock, Mock
 
@@ -1715,3 +1717,310 @@ class TestComponentReordering:
         rc_fields = list(model_instance._data["Components"]["RC Receiver"].keys())
         assert rc_fields[-1] == "Notes", f"Notes should be last after update_json_structure, got: {rc_fields}"
         assert model_instance._data["Components"]["RC Receiver"]["Notes"] == "FrSky receiver"
+
+
+class TestLegacyBatteryLoading:
+    """Opening a legacy battery configuration derives missing values without losing user data."""
+
+    EXPECTED_ORDER = (
+        "Chemistry",
+        "Volt per cell max",
+        "Volt per cell arm",
+        "Volt per cell low",
+        "Volt per cell crit",
+        "Volt per cell min",
+        "Number of cells",
+        "Capacity mAh",
+        "Calibration note",
+        "Vendor limits",
+    )
+
+    @staticmethod
+    def legacy_specifications(cell_count: str | int | dict[str, str] | None = 3) -> ComponentData:
+        """Provide legacy fields in a noncanonical order, including custom scalar and nested data."""
+        return {
+            "Calibration note": "Keep this calibration",
+            "Capacity mAh": 5000,
+            "Number of cells": cell_count,
+            "Volt per cell crit": 3.3,
+            "Chemistry": "Lipo",
+            "Volt per cell low": 3.6,
+            "Volt per cell max": 4.2,
+            "Vendor limits": {"reserve": 0.15},
+        }
+
+    @staticmethod
+    def load_project(
+        specifications: ComponentData,
+        fc_parameters: dict[str, float] | None = None,
+        file_parameters: dict[str, ParDict] | None = None,
+    ) -> ComponentDataModelBase:
+        """Initialize a saved project once, with parameter sources available before migration runs."""
+        schema = ComponentDataModelFixtures.create_schema()
+        model = ComponentDataModelBase(
+            {"Format version": 1, "Components": {"Battery": {"Specifications": specifications}}},
+            schema.get_all_value_datatypes(),
+            schema,
+        )
+        model.post_init({}, fc_parameters=fc_parameters, file_parameters=file_parameters)
+        return model
+
+    @staticmethod
+    def parameter_sources(source: str, voltages: tuple[float, float]) -> tuple[dict[str, float], dict[str, ParDict]]:
+        """Provide deliberately different controller/file values to make source precedence observable."""
+        arm_voltage, min_voltage = voltages
+        if source == "defaults":
+            return {}, {}
+        file_values = ParDict({"BATT_ARM_VOLT": Par(arm_voltage), "MOT_BAT_VOLT_MIN": Par(min_voltage)})
+        if source == "controller":
+            return (
+                {"BATT_ARM_VOLT": arm_voltage, "MOT_BAT_VOLT_MIN": min_voltage},
+                {"battery.param": ParDict({"BATT_ARM_VOLT": Par(99.0), "MOT_BAT_VOLT_MIN": Par(98.0)})},
+            )
+        if source == "mixed":
+            file_values["BATT_ARM_VOLT"] = Par(99.0)
+            return {"BATT_ARM_VOLT": arm_voltage}, {"battery.param": file_values}
+        return {}, {"unrelated.param": ParDict({"OTHER": Par(1.0)}), "battery.param": file_values}
+
+    @pytest.mark.parametrize("source", ["controller", "files", "mixed", "defaults"])
+    @pytest.mark.parametrize(
+        "battery",
+        [(1, 3.818926, 3.078186), (3, 11.45678, 9.23456), ("3.0", 11.45678, 9.23456)],
+        ids=["single-cell", "three-cells", "legacy-text-cell-count"],
+    )
+    def test_user_loads_missing_voltage_thresholds_from_the_best_available_parameter_source(
+        self, source: str, battery: tuple[int | str, float, float]
+    ) -> None:
+        """
+        Migration prefers controller values, falls back per parameter and rounds pack-to-cell voltages.
+
+        GIVEN: Legacy battery settings and controller, file, mixed or absent voltage parameters
+        WHEN: The project is initialized with one cell, three cells or a legacy numeric-text count
+        THEN: Missing thresholds use the right source, round to four decimals and retain all other data
+        """
+        specifications = self.legacy_specifications(battery[0])
+        original = deepcopy(specifications)
+        fc_parameters, file_parameters = self.parameter_sources(source, (battery[1], battery[2]))
+
+        model = self.load_project(specifications, fc_parameters, file_parameters)
+
+        expected = original | {
+            "Volt per cell arm": 3.8 if source == "defaults" else 3.8189,
+            "Volt per cell min": 3.2 if source == "defaults" else 3.0782,
+        }
+        actual = model.get_component_value(("Battery", "Specifications"))
+        assert actual == expected
+        assert isinstance(actual, dict)
+        assert tuple(actual) == self.EXPECTED_ORDER
+        assert specifications == original
+
+        # Reopening with different parameters must retain the migrated settings and their order.
+        model.post_init({}, fc_parameters={"BATT_ARM_VOLT": 99.0, "MOT_BAT_VOLT_MIN": 98.0})
+
+        reopened = model.get_component_value(("Battery", "Specifications"))
+        assert reopened == expected
+        assert isinstance(reopened, dict)
+        assert tuple(reopened) == self.EXPECTED_ORDER
+
+    @pytest.mark.parametrize("cell_count", [None, {}, "unknown", 0, -1], ids=["missing", "object", "text", "zero", "negative"])
+    def test_user_loads_a_battery_with_an_invalid_cell_count_using_chemistry_defaults(
+        self, cell_count: str | int | dict[str, str] | None
+    ) -> None:
+        """
+        An invalid cell count never becomes a divisor for available pack voltages.
+
+        GIVEN: Legacy battery data with missing, malformed, zero or negative cell-count metadata
+        WHEN: The project opens with valid pack-voltage parameters
+        THEN: Both missing thresholds use chemistry defaults and the original data is preserved
+        """
+        specifications = self.legacy_specifications(cell_count)
+        original = deepcopy(specifications)
+
+        model = self.load_project(specifications, {"BATT_ARM_VOLT": 11.45678, "MOT_BAT_VOLT_MIN": 9.23456})
+
+        actual = model.get_component_value(("Battery", "Specifications"))
+        assert actual == original | {"Volt per cell arm": 3.8, "Volt per cell min": 3.2}
+        assert isinstance(actual, dict)
+        assert tuple(actual) == self.EXPECTED_ORDER
+        assert specifications == original
+
+    @pytest.mark.parametrize("existing", [("Volt per cell arm", 3.75), ("Volt per cell min", 3.15)])
+    def test_user_keeps_an_existing_voltage_when_only_the_other_threshold_needs_migration(
+        self, existing: tuple[str, float]
+    ) -> None:
+        """
+        A partially migrated battery retains the stored threshold and adds only the missing value.
+
+        GIVEN: Legacy data with either arming or minimum cell voltage already set
+        WHEN: The project opens with both pack-voltage parameters available
+        THEN: The existing value survives and the added field appears in canonical voltage order
+        """
+        specifications = self.legacy_specifications()
+        specifications[existing[0]] = existing[1]
+        expected = specifications | {"Volt per cell arm": 3.8189, "Volt per cell min": 3.0782} | {existing[0]: existing[1]}
+
+        model = self.load_project(specifications, {"BATT_ARM_VOLT": 11.45678, "MOT_BAT_VOLT_MIN": 9.23456})
+
+        actual = model.get_component_value(("Battery", "Specifications"))
+        assert actual == expected
+        assert isinstance(actual, dict)
+        assert tuple(actual) == self.EXPECTED_ORDER
+
+    def test_user_reopens_complete_battery_settings_without_reordering_or_rederiving_them(self) -> None:
+        """
+        A complete battery configuration retains its existing values and field order.
+
+        GIVEN: Saved custom threshold values and an existing noncanonical specification order
+        WHEN: The project opens with different controller parameters
+        THEN: No migration is needed and the saved values and order are preserved
+        """
+        specifications = self.legacy_specifications()
+        specifications.update({"Volt per cell arm": 3.75, "Volt per cell min": 3.15})
+        original = deepcopy(specifications)
+
+        model = self.load_project(specifications, {"BATT_ARM_VOLT": 11.45678, "MOT_BAT_VOLT_MIN": 9.23456})
+
+        actual = model.get_component_value(("Battery", "Specifications"))
+        assert actual == original
+        assert isinstance(actual, dict)
+        assert tuple(actual) == tuple(original)
+        assert specifications == original
+
+
+class TestSchemaDrivenComponentValues:
+    """Public setters retain schema datatypes and useful diagnostics when conversion is impossible."""
+
+    @pytest.fixture
+    def editing_model(self) -> ComponentDataModelBase:
+        """Provide editable boolean, structured and numeric fields defined through a real schema object."""
+        schema = VehicleComponentsJsonSchema(
+            {
+                "properties": {
+                    "Components": {
+                        "properties": {
+                            "Accessory": {
+                                "properties": {
+                                    "Specifications": {
+                                        "properties": {
+                                            "Enabled": {"type": "boolean"},
+                                            "Channels": {"type": "array"},
+                                            "Calibration": {"type": "object"},
+                                            "Count": {"type": "integer"},
+                                            "Gain": {"type": "number"},
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+        return ComponentDataModelBase({}, schema.get_all_value_datatypes(), schema)
+
+    @pytest.mark.parametrize(
+        ("entered", "expected"),
+        [
+            ("true", True),
+            ("TRUE", True),
+            ("1", True),
+            ("yes", True),
+            ("YES", True),
+            ("on", True),
+            ("ON", True),
+            ("false", False),
+            ("FALSE", False),
+            ("0", False),
+            ("no", False),
+            ("off", False),
+            ("unknown", False),
+            ("", False),
+            (None, False),
+        ],
+    )
+    def test_user_enters_boolean_text_and_receives_an_actual_boolean(
+        self, editing_model: ComponentDataModelBase, entered: str | None, expected: bool
+    ) -> None:
+        """
+        Supported truthy spellings are case insensitive and other or cleared text is false.
+
+        GIVEN: An editable field declared as a Boolean in the schema
+        WHEN: The user enters a supported value, other text or clears the field
+        THEN: The stored value is the expected Boolean rather than numeric or unconverted text
+        """
+        path = ("Accessory", "Specifications", "Enabled")
+
+        editing_model.set_component_value(path, entered)
+
+        assert editing_model.get_component_value(path) is expected
+
+    def test_user_stores_a_structured_object_without_flattening_it_to_text(
+        self, editing_model: ComponentDataModelBase
+    ) -> None:
+        """
+        A value already matching an object schema retains its contents and datatype.
+
+        GIVEN: An object field with a matching dictionary value
+        WHEN: The value is set through the public component API
+        THEN: The saved component data contains the same dictionary
+        """
+        value = {"offset": 0.125}
+        editing_model.set_component_value(("Accessory", "Specifications", "Calibration"), value)
+
+        actual = editing_model.get_component_data()["Components"]["Accessory"]["Specifications"]["Calibration"]
+        assert actual == value
+        assert isinstance(actual, dict)
+
+    @pytest.mark.parametrize(
+        "case",
+        [
+            ("Channels", "list", "  CH1, CH2  ", "CH1, CH2"),
+            ("Calibration", "dict", "  offset=0.125  ", "offset=0.125"),
+        ],
+    )
+    def test_user_keeps_unstructured_text_and_sees_why_a_structured_field_cannot_cast_it(
+        self, editing_model: ComponentDataModelBase, case: tuple[str, str, str, str], caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """
+        Text cannot silently become a list or dictionary merely because the schema expects one.
+
+        GIVEN: An array or object field receiving unstructured text
+        WHEN: The user sets that value
+        THEN: Trimmed text is preserved and one warning names the value, field, type and structured-data requirement
+        """
+        field, type_name, entered, expected = case
+        path = ("Accessory", "Specifications", field)
+
+        with caplog.at_level(WARNING):
+            editing_model.set_component_value(path, entered)
+
+        assert editing_model.get_component_value(path) == expected
+        reason = "list and dict types require structured data"
+        assert [(record.levelno, record.getMessage()) for record in caplog.records] == [
+            (WARNING, f"Failed to cast value '{entered}' to {type_name} for path {path}: {reason}")
+        ]
+
+    @pytest.mark.parametrize(
+        "case",
+        [("Count", "int", "  not-an-integer  ", "not-an-integer"), ("Gain", "float", "  not-a-gain  ", "not-a-gain")],
+    )
+    def test_user_keeps_invalid_numeric_text_with_the_target_field_and_type_in_the_warning(
+        self, editing_model: ComponentDataModelBase, case: tuple[str, str, str, str], caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """
+        Failed numeric conversion retains the input for correction and identifies the intended datatype.
+
+        GIVEN: An integer or floating-point field receiving nonnumeric text
+        WHEN: The user sets that value
+        THEN: Trimmed text is retained and one warning identifies the original value, target type and field
+        """
+        field, type_name, entered, expected = case
+        path = ("Accessory", "Specifications", field)
+
+        with caplog.at_level(WARNING):
+            editing_model.set_component_value(path, entered)
+
+        assert editing_model.get_component_value(path) == expected
+        assert len(caplog.records) == 1
+        assert caplog.records[0].levelno == WARNING
+        assert caplog.records[0].getMessage().startswith(f"Failed to cast value '{entered}' to {type_name} for path {path}: ")
