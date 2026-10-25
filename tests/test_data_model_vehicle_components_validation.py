@@ -28,6 +28,8 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_validation im
 
 # pylint: disable=too-many-lines,protected-access,too-many-public-methods
 
+ESC_TELEMETRY_SERIAL_PORTS = tuple(f"SERIAL{number}" for number in range(1, 9))
+
 
 class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
     """Tests for the ComponentDataModelValidation class."""
@@ -2264,3 +2266,155 @@ class TestComponentDataModelValidationUncoveredBranches:
         # Error should be returned about arm not being set
         assert not is_valid
         assert len(errors) > 0
+
+
+class TestEscTelemetrySelection:
+    """Users see telemetry choices compatible with their selected ESC connection."""
+
+    @pytest.fixture
+    def esc_model(self) -> ComponentDataModelValidation:
+        """Provide a real component model with schema and offline protocol choices."""
+        return ComponentDataModelFixtures.create_basic_model(ComponentDataModelValidation)
+
+    @staticmethod
+    def select_connection(model: ComponentDataModelValidation, vehicle_type: str, connection_type: str, protocol: str) -> None:
+        """Select a vehicle and ESC connection using the component editor's model APIs."""
+        model.set_component_value(("Flight Controller", "Firmware", "Type"), vehicle_type)
+        model.init_possible_choices({})
+        model.set_component_value(("ESC", "FC->ESC Connection", "Type"), connection_type)
+        model.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), protocol)
+
+    @pytest.mark.parametrize(
+        ("vehicle_type", "connection_type", "protocol", "expected_types", "mirrored"),
+        [
+            ("ArduCopter", "Main Out", "Normal", ("None", *ESC_TELEMETRY_SERIAL_PORTS), False),
+            ("Heli", "AIO", "DShot300", ("None", "AIO", *ESC_TELEMETRY_SERIAL_PORTS), False),
+            ("Rover", "Main Out", "BrushedBiPolar", ("None",), False),
+            ("ArduPlane", "AIO", "DShot600", ("None", "AIO", *ESC_TELEMETRY_SERIAL_PORTS), False),
+            ("ArduCopter", "CAN2", "DroneCAN", ("CAN2",), True),
+            ("ArduPlane", "CAN1", "DroneCAN", ("CAN1",), True),
+            ("ArduCopter", "SERIAL1", "FETtecOneWire", ("SERIAL1",), True),
+            ("Heli", "SERIAL4", "Torqeedo", ("SERIAL4",), True),
+            ("Rover", "SERIAL8", "CoDevESC", ("SERIAL8",), True),
+            ("ArduCopter", "CAN1", "DShot600", ("None",), False),
+            ("ArduCopter", "Main Out", "DroneCAN", ("None",), False),
+            ("ArduPlane", "SERIAL1", "FETtecOneWire", ("None",), False),
+            ("ArduCopter", "None", "None", ("None",), False),
+            ("ArduCopter", "", "", ("None",), False),
+        ],
+    )
+    # Keep each compatibility-matrix input explicit in the parametrized tests.
+    # pylint: disable-next=too-many-arguments,too-many-positional-arguments
+    def test_user_sees_telemetry_ports_and_mirror_state_for_the_selected_connection(
+        self,
+        esc_model: ComponentDataModelValidation,
+        vehicle_type: str,
+        connection_type: str,
+        protocol: str,
+        expected_types: tuple[str, ...],
+        mirrored: bool,
+    ) -> None:
+        """
+        Telemetry choices and editability follow the selected vehicle, port and protocol together.
+
+        GIVEN: A vehicle and an ESC control connection selected without parameter metadata
+        WHEN: The component editor requests valid telemetry ports and mirror state
+        THEN: Only compatible ports appear and only fully mirrored settings are locked
+        """
+        self.select_connection(esc_model, vehicle_type, connection_type, protocol)
+
+        assert esc_model.get_valid_esc_telemetry_types() == expected_types
+        assert esc_model.is_esc_telemetry_type_mirrored() is mirrored
+        assert esc_model.is_esc_telemetry_protocol_mirrored() is mirrored
+
+    @pytest.mark.parametrize(
+        ("vehicle_type", "connection_type", "protocol", "telemetry_type", "expected_protocols"),
+        [
+            ("ArduCopter", "Main Out", "Normal", "SERIAL1", ("Scripting",)),
+            ("ArduCopter", "AIO", "OneShot", "SERIAL8", ("ESC Telemetry",)),
+            ("Heli", "Main Out", "OneShot125", "SERIAL3", ("ESC Telemetry",)),
+            ("ArduCopter", "Main Out", "DShot600", "SERIAL2", ("ESC Telemetry",)),
+            ("ArduPlane", "AIO", "DShot300", "SERIAL7", ("ESC Telemetry",)),
+            ("Rover", "Main Out", "BrushedWithRelay", "SERIAL5", ("None",)),
+            ("Rover", "AIO", "BrushedBiPolar", "SERIAL5", ("None",)),
+            ("ArduCopter", "Main Out", "Brushed", "SERIAL1", ("None",)),
+            ("ArduCopter", "Main Out", "Normal", "SERIAL9", ("None",)),
+            ("ArduCopter", "SERIAL2", "FETtecOneWire", "SERIAL2", ("FETtecOneWire",)),
+            ("Rover", "SERIAL8", "CoDevESC", "SERIAL8", ("CoDevESC",)),
+            ("Heli", "SERIAL4", "Torqeedo", "SERIAL4", ("Torqeedo",)),
+            ("ArduCopter", "SERIAL3", "DShot600", "SERIAL3", ("None",)),
+            ("ArduCopter", "None", "None", "SERIAL1", ("None",)),
+            ("ArduCopter", "Main Out", "DroneCAN", "SERIAL1", ("None",)),
+        ],
+    )
+    # pylint: disable-next=too-many-arguments,too-many-positional-arguments
+    def test_user_sees_only_serial_telemetry_protocols_supported_by_the_control_protocol(
+        self,
+        esc_model: ComponentDataModelValidation,
+        vehicle_type: str,
+        connection_type: str,
+        protocol: str,
+        telemetry_type: str,
+        expected_protocols: tuple[str, ...],
+    ) -> None:
+        """
+        A serial back-channel offers the protocol compatible with the current ESC control mode.
+
+        GIVEN: An ESC control port and protocol for the selected vehicle
+        WHEN: The user selects a serial telemetry port
+        THEN: Scripting, ESC Telemetry or the mirrored protocol is offered only when applicable
+        """
+        self.select_connection(esc_model, vehicle_type, connection_type, protocol)
+
+        esc_model.set_component_value(("ESC", "ESC->FC Telemetry", "Type"), telemetry_type)
+
+        assert esc_model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Protocol")) == expected_protocols
+
+    @pytest.mark.parametrize(
+        ("vehicle_type", "brushed_protocol"),
+        [("ArduCopter", "Brushed"), ("Heli", "Brushed"), ("Rover", "BrushedWithRelay"), ("ArduPlane", "Brushed")],
+    )
+    @pytest.mark.parametrize("pwm_port", ["Main Out", "AIO"])
+    def test_user_switches_from_can_to_pwm_and_receives_current_telemetry_choices(
+        self,
+        esc_model: ComponentDataModelValidation,
+        vehicle_type: str,
+        brushed_protocol: str,
+        pwm_port: str,
+    ) -> None:
+        """
+        Changing the control connection refreshes telemetry choices without stale ports or duplicates.
+
+        GIVEN: A DroneCAN ESC configuration
+        WHEN: The user switches to PWM and then selects DShot, brushed and normal protocols
+        THEN: Choices first include all PWM back-channels, then narrow to the selected protocol
+        """
+        self.select_connection(esc_model, vehicle_type, "CAN2", "DroneCAN")
+        telemetry_type_path = ("ESC", "ESC->FC Telemetry", "Type")
+        telemetry_protocol_path = ("ESC", "ESC->FC Telemetry", "Protocol")
+
+        esc_model.set_component_value(("ESC", "FC->ESC Connection", "Type"), pwm_port)
+
+        assert esc_model.get_combobox_values_for_path(telemetry_type_path) == (
+            "None",
+            *ESC_TELEMETRY_SERIAL_PORTS,
+            pwm_port,
+        )
+        assert esc_model.get_combobox_values_for_path(telemetry_protocol_path) == (
+            "None",
+            "Scripting",
+            "ESC Telemetry",
+            "BDShotOnly",
+        )
+
+        for protocol, expected_types, expected_protocols in (
+            ("DShot300", ("None", pwm_port, *ESC_TELEMETRY_SERIAL_PORTS), ("None", "BDShotOnly", "ESC Telemetry")),
+            (brushed_protocol, ("None",), ("None",)),
+            ("Normal", ("None", *ESC_TELEMETRY_SERIAL_PORTS), ("None", "Scripting")),
+        ):
+            esc_model.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), protocol)
+
+            assert esc_model.get_combobox_values_for_path(telemetry_type_path) == expected_types
+            assert esc_model.get_combobox_values_for_path(telemetry_protocol_path) == expected_protocols
+            assert esc_model.is_esc_telemetry_type_mirrored() is False
+            assert esc_model.is_esc_telemetry_protocol_mirrored() is False
