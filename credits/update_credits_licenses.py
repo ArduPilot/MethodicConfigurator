@@ -44,6 +44,7 @@ direct_dependencies = [
         "license_url": "https://raw.githubusercontent.com/python-jsonschema/jsonschema/refs/heads/main/COPYING",
     },
     {"name": "matplotlib", "license_url": "https://raw.githubusercontent.com/matplotlib/matplotlib/main/LICENSE/LICENSE"},
+    {"name": "mutmut", "license_url": "https://raw.githubusercontent.com/boxed/mutmut/3.8.0/LICENSE"},
     {"name": "numpy", "license_url": "https://raw.githubusercontent.com/numpy/numpy/main/LICENSE.txt"},
     {"name": "pillow", "license_url": "https://raw.githubusercontent.com/python-pillow/Pillow/main/LICENSE"},
     {"name": "platformdirs", "license_url": "https://raw.githubusercontent.com/platformdirs/platformdirs/main/LICENSE"},

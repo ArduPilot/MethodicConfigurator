@@ -5,7 +5,7 @@ max-line-length=127
 # decode_devid.py is synchronized verbatim from ArduPilot by
 # update_flightcontroller_ids.yml. backend_mavftp.py is a maintained MAVProxy
 # adaptation with its own focused tests; do not lint either full copy here.
-ignore=decode_devid.py,backend_mavftp.py
+ignore=decode_devid.py,backend_mavftp.py,mutants
 
 [MESSAGES CONTROL]
 disable=missing-function-docstring
