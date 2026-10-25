@@ -2916,3 +2916,159 @@ class TestSavedConnectionChoices:
             *ESC_TELEMETRY_SERIAL_PORTS,
         )
         assert model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Protocol")) == ("None",)
+
+
+class TestComponentBatchValidation:
+    """Users receive complete validation results for interacting component fields."""
+
+    @pytest.fixture
+    def connection_model(self) -> ComponentDataModelValidation:
+        """Provide real selectors with a bidirectional serial ESC connection."""
+        model = ComponentDataModelFixtures.create_basic_model(ComponentDataModelValidation)
+        model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduCopter")
+        model.set_component_value(("ESC", "FC->ESC Connection", "Type"), "SERIAL4")
+        model.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), "FETtecOneWire")
+        model.set_component_value(("ESC", "ESC->FC Telemetry", "Type"), "SERIAL4")
+        model.set_component_value(("ESC", "ESC->FC Telemetry", "Protocol"), "FETtecOneWire")
+        return model
+
+    @pytest.mark.parametrize(
+        "other_connection",
+        [
+            ("RC Receiver", "FC Connection"),
+            ("Telemetry", "FC Connection"),
+            ("ESC", "FC->ESC Connection"),
+            ("ESC", "ESC->FC Telemetry"),
+        ],
+    )
+    @pytest.mark.parametrize("reverse_order", [False, True])
+    def test_user_sees_each_serial_conflict_and_errors_in_later_fields(
+        self, connection_model: ComponentDataModelValidation, other_connection: tuple[str, str], reverse_order: bool
+    ) -> None:
+        """
+        Independent peripherals cannot use the same serial port, regardless of field order.
+
+        GIVEN: A GNSS receiver and another peripheral assigned to SERIAL4
+        WHEN: The user validates those connections followed by an odd motor-pole count
+        THEN: The conflicting field and the later motor error are both identified
+        """
+        paths = [("GNSS Receiver", "FC Connection", "Type"), (*other_connection, "Type")]
+        if reverse_order:
+            paths.reverse()
+        entries = dict.fromkeys(paths, "SERIAL4")
+        entries[("Motors", "Specifications", "Poles")] = "13"
+
+        is_valid, errors = connection_model.validate_all_data(entries)
+
+        assert is_valid is False
+        assert errors == [
+            f"Duplicate FC connection type 'SERIAL4' for {'>'.join(paths[1])}",
+            "Number of magnetic rotor poles must be even for Motors>Specifications>Poles",
+        ]
+
+    @pytest.mark.parametrize(
+        "connections",
+        [
+            (("RC Receiver", "FC Connection"), ("Telemetry", "FC Connection")),
+            (("ESC", "FC->ESC Connection"), ("ESC", "ESC->FC Telemetry")),
+        ],
+    )
+    @pytest.mark.parametrize("reverse_order", [False, True])
+    def test_user_can_share_supported_serial_connections_without_hiding_later_errors(
+        self,
+        connection_model: ComponentDataModelValidation,
+        connections: tuple[tuple[str, str], tuple[str, str]],
+        reverse_order: bool,
+    ) -> None:
+        """
+        Supported serial sharing does not grant other peripherals access to that port.
+
+        GIVEN: RC/telemetry or ESC control/back-channel sharing SERIAL4 in either order
+        WHEN: The user validates the pair, then adds a GNSS conflict and an invalid motor count
+        THEN: The pair passes alone and both additional errors remain visible
+        """
+        paths = [(*connection, "Type") for connection in connections]
+        if reverse_order:
+            paths.reverse()
+        entries = dict.fromkeys(paths, "SERIAL4")
+
+        assert connection_model.validate_all_data(entries) == (True, [])
+
+        entries[("GNSS Receiver", "FC Connection", "Type")] = "SERIAL4"
+        entries[("Motors", "Specifications", "Poles")] = "13"
+        is_valid, errors = connection_model.validate_all_data(entries)
+
+        assert is_valid is False
+        assert errors == [
+            "Duplicate FC connection type 'SERIAL4' for GNSS Receiver>FC Connection>Type",
+            "Number of magnetic rotor poles must be even for Motors>Specifications>Poles",
+        ]
+
+    @pytest.mark.parametrize("connection_type", ["CAN1", "CAN2", "None"])
+    @pytest.mark.parametrize("reverse_order", [False, True])
+    def test_user_can_share_can_buses_or_disable_multiple_peripherals(
+        self, connection_model: ComponentDataModelValidation, connection_type: str, reverse_order: bool
+    ) -> None:
+        """
+        A shared CAN bus or multiple disabled peripherals are valid configurations.
+
+        GIVEN: A GNSS receiver and battery monitor on either CAN bus or both disabled
+        WHEN: Their connection types are validated in either order
+        THEN: No duplicate-connection error is reported
+        """
+        paths = [("GNSS Receiver", "FC Connection", "Type"), ("Battery Monitor", "FC Connection", "Type")]
+        if reverse_order:
+            paths.reverse()
+
+        assert connection_model.validate_all_data(dict.fromkeys(paths, connection_type)) == (True, [])
+
+    @pytest.mark.parametrize(
+        ("path", "value"),
+        [
+            (("RC Receiver", "FC Connection", "Protocol"), "not-a-protocol"),
+            (("Battery", "Specifications", "Chemistry"), "unknown-chemistry"),
+        ],
+    )
+    def test_user_sees_invalid_selection_context_and_continues_to_later_errors(
+        self, connection_model: ComponentDataModelValidation, path: tuple[str, str, str], value: str
+    ) -> None:
+        """
+        Invalid selections explain the correction and do not stop the rest of validation.
+
+        GIVEN: An unsupported protocol or chemistry followed by an odd motor-pole count
+        WHEN: The user validates the component fields together
+        THEN: The first error names the value, field and allowed choices, followed by the motor error
+        """
+        choices = connection_model.get_combobox_values_for_path(path)
+        assert len(choices) > 1
+        entries = {path: value, ("Motors", "Specifications", "Poles"): "13"}
+
+        is_valid, errors = connection_model.validate_all_data(entries)
+
+        assert is_valid is False
+        assert errors == [
+            f"Invalid value '{value}' for {'>'.join(path)}\nAllowed values are: {', '.join(choices)}",
+            "Number of magnetic rotor poles must be even for Motors>Specifications>Poles",
+        ]
+
+    @pytest.mark.parametrize("reverse_order", [False, True])
+    def test_user_can_select_the_same_protocol_for_components_sharing_a_can_bus(
+        self, connection_model: ComponentDataModelValidation, reverse_order: bool
+    ) -> None:
+        """
+        Protocol names are not exclusive physical connections.
+
+        GIVEN: RC and GNSS receivers selecting CAN2 and DroneCAN in the same batch
+        WHEN: The user validates both type/protocol pairs in either component order
+        THEN: Each protocol is checked against its new connection type and both pairs pass
+        """
+        components = ["RC Receiver", "GNSS Receiver"]
+        if reverse_order:
+            components.reverse()
+        entries = {
+            (component, "FC Connection", field): value
+            for component in components
+            for field, value in (("Type", "CAN2"), ("Protocol", "DroneCAN"))
+        }
+
+        assert connection_model.validate_all_data(entries) == (True, [])
