@@ -2418,3 +2418,261 @@ class TestEscTelemetrySelection:
             assert esc_model.get_combobox_values_for_path(telemetry_protocol_path) == expected_protocols
             assert esc_model.is_esc_telemetry_type_mirrored() is False
             assert esc_model.is_esc_telemetry_protocol_mirrored() is False
+
+
+class TestFirmwareMetadataChoices:
+    """Firmware metadata and offline defaults supply the component editor's choices."""
+
+    @pytest.fixture
+    def choice_model(self) -> ComponentDataModelValidation:
+        """Provide a real model with no saved connection types to override initial choices."""
+        return ComponentDataModelFixtures.create_basic_model(ComponentDataModelValidation)
+
+    @pytest.mark.parametrize(
+        ("component", "section", "expected"),
+        [
+            ("RC Receiver", "FC Connection", ("RCin/SBUS", *ESC_TELEMETRY_SERIAL_PORTS, "CAN1", "CAN2")),
+            ("Telemetry", "FC Connection", ("None", *ESC_TELEMETRY_SERIAL_PORTS, "CAN1", "CAN2")),
+            ("GNSS Receiver", "FC Connection", ("None", *ESC_TELEMETRY_SERIAL_PORTS, "CAN1", "CAN2")),
+            ("ESC", "FC->ESC Connection", ("Main Out", "AIO", *ESC_TELEMETRY_SERIAL_PORTS, "CAN1", "CAN2")),
+        ],
+    )
+    def test_user_can_choose_supported_connection_ports_before_saving_components(
+        self, choice_model: ComponentDataModelValidation, component: str, section: str, expected: tuple[str, ...]
+    ) -> None:
+        """
+        New component selectors expose complete connection choices without duplicates.
+
+        GIVEN: A project without previously saved receiver, telemetry, GNSS or ESC connections
+        WHEN: The component editor initializes offline choices
+        THEN: The corresponding selector exposes exactly its supported ports in order
+        """
+        choice_model.init_possible_choices({})
+
+        assert choice_model.get_combobox_values_for_path((component, section, "Type")) == expected
+
+    @pytest.mark.parametrize(
+        ("component", "protocol"),
+        [
+            ("RC Receiver", "CRSF"),
+            ("Battery Monitor", "Analog Voltage and Current"),
+            ("GNSS Receiver", "uBlox"),
+            ("Telemetry", "MAVLink2"),
+        ],
+    )
+    def test_offline_user_can_choose_full_protocol_names_without_firmware_metadata(
+        self, choice_model: ComponentDataModelValidation, component: str, protocol: str
+    ) -> None:
+        """
+        Offline protocol selectors contain usable full names rather than missing or truncated labels.
+
+        GIVEN: A project opened without firmware metadata or saved connection selections
+        WHEN: The user chooses a supported receiver, monitor, GNSS or telemetry protocol
+        THEN: The full label is available and passes component validation
+        """
+        choice_model.init_possible_choices({})
+        path = (component, "FC Connection", "Protocol")
+
+        assert protocol in choice_model.get_combobox_values_for_path(path)
+        assert choice_model.validate_all_data({path: protocol}) == (True, [])
+
+    @pytest.mark.parametrize(
+        ("vehicle_type", "frame_values", "expected"),
+        [
+            ("ArduCopter", {"0": "Undefined", "1": "Quad", "2": "Hexa"}, ("Quad", "Hexa")),
+            ("Heli", {"0": "Undefined", "6": "Heli", "11": "Heli_Dual"}, ("Heli", "Heli_Dual")),
+            ("Rover", {"0": "Undefined", "1": "Rover", "2": "Boat"}, ("Rover", "Boat")),
+            ("ArduPlane", {"0": "Undefined", "1": "Quad"}, ("Undefined", "Single/Dual")),
+        ],
+    )
+    def test_user_sees_frame_classes_from_the_selected_vehicle_parameter(
+        self,
+        choice_model: ComponentDataModelValidation,
+        vehicle_type: str,
+        frame_values: dict[str, str],
+        expected: tuple[str, ...],
+    ) -> None:
+        """
+        Frame choices use the loaded vehicle's metadata rather than a different firmware's parameter.
+
+        GIVEN: Distinct FRAME_CLASS and Q_FRAME_CLASS metadata
+        WHEN: The component editor initializes choices for a selected vehicle
+        THEN: Plane uses Q_FRAME_CLASS and other vehicles use FRAME_CLASS without Undefined
+        """
+        choice_model.set_component_value(("Flight Controller", "Firmware", "Type"), vehicle_type)
+        metadata = {
+            "FRAME_CLASS": {"values": frame_values},
+            "Q_FRAME_CLASS": {"values": {"0": "Undefined", "10": "Single/Dual"}},
+        }
+
+        choice_model.init_possible_choices(metadata)
+
+        assert choice_model.get_combobox_values_for_path(("Frame", "Specifications", "Frame class")) == expected
+
+    @pytest.mark.parametrize("frame_metadata", [None, {}, {"values": {}}, {"values": {"0": "Undefined"}}])
+    @pytest.mark.parametrize(
+        ("vehicle_type", "expected"),
+        [
+            ("Heli", ("Heli", "SingleCopter", "CoaxCopter", "BiCopter", "Heli_Dual", "HeliQuad")),
+            ("Rover", ("Rover", "Boat", "BalanceBot")),
+        ],
+    )
+    def test_user_keeps_vehicle_frame_choices_when_metadata_has_no_usable_classes(
+        self,
+        choice_model: ComponentDataModelValidation,
+        frame_metadata: dict[str, dict[str, str]] | None,
+        vehicle_type: str,
+        expected: tuple[str, ...],
+    ) -> None:
+        """
+        Missing or unusable frame metadata preserves the selected vehicle's offline frame choices.
+
+        GIVEN: Heli or Rover with absent, empty or Undefined-only frame metadata
+        WHEN: The user opens the component editor
+        THEN: The complete vehicle-specific fallback appears without Undefined
+        """
+        choice_model.set_component_value(("Flight Controller", "Firmware", "Type"), vehicle_type)
+        metadata = {} if frame_metadata is None else {"FRAME_CLASS": frame_metadata}
+
+        choice_model.init_possible_choices(metadata)
+
+        assert choice_model.get_combobox_values_for_path(("Frame", "Specifications", "Frame class")) == expected
+
+    def test_fixed_wing_user_can_keep_undefined_as_the_only_documented_frame_class(
+        self, choice_model: ComponentDataModelValidation
+    ) -> None:
+        """
+        A fixed-wing aircraft can explicitly have no hover frame.
+
+        GIVEN: Plane metadata whose only Q_FRAME_CLASS choice is Undefined
+        WHEN: The component editor initializes the available frames
+        THEN: It preserves that choice without adding multicopter frames
+        """
+        choice_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduPlane")
+
+        choice_model.init_possible_choices({"Q_FRAME_CLASS": {"values": {"0": "Undefined"}}})
+
+        assert choice_model.get_combobox_values_for_path(("Frame", "Specifications", "Frame class")) == ("Undefined",)
+
+    @pytest.mark.parametrize(
+        ("vehicle_type", "metadata", "expected"),
+        [
+            ("ArduCopter", {"MOT_PWM_TYPE": {"values": {"0": "Normal", "6": "DShot600"}}}, ("Normal", "DShot600")),
+            ("ArduPlane", {"Q_M_PWM_TYPE": {"values": {"0": "Normal", "5": "DShot300"}}}, ("Normal", "DShot300")),
+            (
+                "ArduPlane",
+                {
+                    "MOT_PWM_TYPE": {"values": {"0": "Normal", "6": "DShot600"}},
+                    "Q_M_PWM_TYPE": {"values": {"5": "DShot300", "8": "PWMRange"}},
+                },
+                ("DShot300", "PWMRange"),
+            ),
+        ],
+    )
+    def test_user_sees_loaded_motor_protocols_when_selecting_a_pwm_output(
+        self,
+        choice_model: ComponentDataModelValidation,
+        vehicle_type: str,
+        metadata: dict[str, dict[str, dict[str, str]]],
+        expected: tuple[str, ...],
+    ) -> None:
+        """
+        The PWM control selector reflects loaded motor metadata, preferring QuadPlane values when present.
+
+        GIVEN: Firmware motor metadata with a subset of supported PWM protocols
+        WHEN: The user selects a PWM control output after choices are initialized
+        THEN: The selector contains exactly the loaded protocols in their documented order
+        """
+        choice_model.set_component_value(("Flight Controller", "Firmware", "Type"), vehicle_type)
+        choice_model.init_possible_choices(metadata)
+
+        choice_model.set_component_value(("ESC", "FC->ESC Connection", "Type"), "Main Out")
+
+        assert choice_model.get_combobox_values_for_path(("ESC", "FC->ESC Connection", "Protocol")) == expected
+
+    @pytest.mark.parametrize("motor_metadata", [None, {}, {"values": {}}])
+    def test_user_keeps_offline_pwm_protocols_when_motor_metadata_is_missing_or_empty(
+        self, choice_model: ComponentDataModelValidation, motor_metadata: dict[str, dict[str, str]] | None
+    ) -> None:
+        """
+        Incomplete motor metadata does not empty the PWM control selector.
+
+        GIVEN: Copter with absent or empty MOT_PWM_TYPE metadata
+        WHEN: The user selects a PWM control output
+        THEN: All offline Copter PWM protocols remain available without CAN or serial protocols
+        """
+        choice_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduCopter")
+        metadata = {} if motor_metadata is None else {"MOT_PWM_TYPE": motor_metadata}
+        choice_model.init_possible_choices(metadata)
+
+        choice_model.set_component_value(("ESC", "FC->ESC Connection", "Type"), "AIO")
+
+        assert choice_model.get_combobox_values_for_path(("ESC", "FC->ESC Connection", "Protocol")) == (
+            "Normal",
+            "OneShot",
+            "OneShot125",
+            "Brushed",
+            "DShot150",
+            "DShot300",
+            "DShot600",
+            "DShot1200",
+            "PWMRange",
+            "PWMAngle",
+        )
+
+    @pytest.mark.parametrize(
+        ("receiver_metadata", "expected"),
+        [
+            ({"values": {"512": "CRSF", "8": "SBUS"}}, ("CRSF", "SBUS")),
+            ({"Bitmask": {"512": "CRSF", "4096": "FPORT2"}}, ("CRSF", "FPORT2")),
+            ({"values": {}, "Bitmask": {"512": "CRSF"}}, ("CRSF",)),
+            ({"values": {"8": "SBUS"}, "Bitmask": {"512": "CRSF"}}, ("SBUS",)),
+        ],
+    )
+    def test_user_sees_documented_receiver_and_battery_monitor_choices(
+        self,
+        choice_model: ComponentDataModelValidation,
+        receiver_metadata: dict[str, dict[str, str]],
+        expected: tuple[str, ...],
+    ) -> None:
+        """
+        Receiver choices support value and bitmask metadata, with nonempty values taking priority.
+
+        GIVEN: Receiver metadata and battery-monitor enum metadata loaded from firmware
+        WHEN: The component editor initializes its selectors
+        THEN: Both selectors show the documented labels in order without additional fallback entries
+        """
+        metadata = {
+            "RC_PROTOCOLS": receiver_metadata,
+            "BATT_MONITOR": {"values": {"0": "Disabled", "4": "Analog Voltage and Current"}},
+        }
+
+        choice_model.init_possible_choices(metadata)
+
+        assert choice_model.get_combobox_values_for_path(("RC Receiver", "FC Connection", "Protocol")) == expected
+        assert choice_model.get_combobox_values_for_path(("Battery Monitor", "FC Connection", "Protocol")) == (
+            "Disabled",
+            "Analog Voltage and Current",
+        )
+
+    def test_user_loading_new_motor_metadata_replaces_previous_protocol_choices(
+        self, choice_model: ComponentDataModelValidation
+    ) -> None:
+        """
+        Reloading firmware metadata refreshes a saved PWM connection's protocol choices.
+
+        GIVEN: A PWM connection initialized with Copter motor protocols
+        WHEN: The user loads a new motor-protocol list
+        THEN: The selector replaces the old protocols without retaining stale entries
+        """
+        choice_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduCopter")
+        choice_model.init_possible_choices({"MOT_PWM_TYPE": {"values": {"0": "Normal", "6": "DShot600"}}})
+        choice_model.set_component_value(("ESC", "FC->ESC Connection", "Type"), "Main Out")
+        choice_model.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), "DShot600")
+
+        choice_model.init_possible_choices({"MOT_PWM_TYPE": {"values": {"5": "DShot300", "8": "PWMRange"}}})
+
+        assert choice_model.get_combobox_values_for_path(("ESC", "FC->ESC Connection", "Protocol")) == (
+            "DShot300",
+            "PWMRange",
+        )
