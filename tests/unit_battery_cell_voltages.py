@@ -92,16 +92,120 @@ class TestBatteryCell:
         assert not isnan(score)
         assert 0.0 <= score < 0.5  # 16.8 / 4.2 = 4.0 cells → score should be 0.0
 
-    def test_best_chemistry_for_voltage_returns_none_or_valid_chemistry_for_ambiguous_voltage(self) -> None:
-        """best_chemistry_for_voltage may return None or a known chemistry for an ambiguous voltage."""
-        # 10.0 V may be ambiguous depending on scoring; if a match is returned, it must be a known chemistry.
-        result = BatteryCell.best_chemistry_for_voltage(10.0, "Volt per cell max")
-        assert result is None or result in BatteryCell.chemistries()
+    @pytest.mark.parametrize("chemistry", BatteryCell.chemistries())
+    def test_unknown_voltage_recommendations_are_unavailable(self, chemistry: str) -> None:
+        """
+        An unsupported voltage setting has no recommendation for a known chemistry.
 
-    def test_best_chemistry_for_voltage_identifies_chemistry_for_4s_voltage(self) -> None:
-        """best_chemistry_for_voltage returns a chemistry for a classic 4S full-charge voltage."""
+        GIVEN: A supported battery chemistry and an unknown voltage setting
+        WHEN: A recommendation is requested for that setting
+        THEN: The result is NaN, matching other unavailable recommendations
+        """
+        # Act (When): Request a setting absent from the chemistry's recommendations.
+        recommendation = BatteryCell.recommended_cell_voltage(chemistry, "Unknown voltage setting")
+
+        # Assert (Then): Missing recommendations retain the numeric unavailable sentinel.
+        assert isnan(recommendation)
+
+    def test_positive_pack_voltages_below_one_volt_can_be_scored(self) -> None:
+        """
+        Small positive voltage readings remain valid inputs to chemistry scoring.
+
+        GIVEN: A NiMH recommendation of 1.4 volts per cell and a 0.7 volt reading
+        WHEN: The reading is scored against the maximum cell voltage
+        THEN: The half-cell estimate has a distance of 0.5 from a whole cell count
+        """
+        # Act (When): Score a positive reading below one volt.
+        score = BatteryCell.chemistry_voltage_score("NiMH", 0.7, "Volt per cell max")
+
+        # Assert (Then): Positive readings are scored rather than discarded as unavailable.
+        assert score == pytest.approx(0.5)
+
+    def test_one_volt_cell_limits_can_be_used_as_scoring_references(self) -> None:
+        """
+        A one-volt reference remains a valid basis for estimating cell counts.
+
+        GIVEN: NiMH cells with an absolute minimum of one volt per cell
+        WHEN: A four-volt pack is scored against that lower limit
+        THEN: The four-cell estimate is an exact match
+        """
+        # Act (When): Use the chemistry's absolute lower limit as the reference.
+        score = BatteryCell.chemistry_voltage_score("NiMH", 4.0, "absolute_min")
+
+        # Assert (Then): A positive one-volt reference is accepted.
+        assert score == 0.0
+
+    @pytest.mark.parametrize("cell_voltage", [0.0, -1.0])
+    def test_invalid_cell_recommendations_cannot_produce_a_chemistry_score(
+        self, monkeypatch: pytest.MonkeyPatch, cell_voltage: float
+    ) -> None:
+        """
+        Invalid reference data cannot produce a match or cause division by zero.
+
+        GIVEN: A chemistry recommendation contains a non-positive cell voltage
+        WHEN: A positive pack reading is scored against that recommendation
+        THEN: The score is unavailable instead of raising or suggesting a match
+        """
+        # Arrange (Given): Override only the reference data; run the real scoring methods.
+        monkeypatch.setitem(_recommended_battery_cell_voltages["Lipo"], "Volt per cell max", cell_voltage)
+
+        # Act (When): Score the pack using the invalid reference.
+        score = BatteryCell.chemistry_voltage_score("Lipo", 16.8, "Volt per cell max")
+
+        # Assert (Then): Invalid cell voltages cannot participate in chemistry selection.
+        assert isnan(score)
+
+    def test_uncertain_pack_voltages_do_not_suggest_a_chemistry(self) -> None:
+        """
+        A poor match requires the user to select the chemistry explicitly.
+
+        GIVEN: A ten-volt pack with no chemistry closer than 0.03 to a whole cell count
+        WHEN: A chemistry suggestion is requested from the maximum cell voltage
+        THEN: No chemistry is suggested
+        """
+        # Act (When): Request a recommendation for an uncertain pack voltage.
+        result = BatteryCell.best_chemistry_for_voltage(10.0, "Volt per cell max")
+
+        # Assert (Then): An arbitrary known chemistry is not a valid recommendation.
+        assert result is None
+
+    def test_equal_chemistry_matches_preserve_the_first_recommendation(self) -> None:
+        """
+        Equally good matches produce a stable recommendation in chemistry order.
+
+        GIVEN: A 16.8 volt pack matches LiIonSS, Lipo, and LipoHVSS equally well
+        WHEN: A chemistry suggestion is requested from the maximum cell voltage
+        THEN: LiIonSS, the first exact match in chemistry order, is suggested
+        """
+        # Act (When): Request a suggestion where multiple chemistries share the best score.
         result = BatteryCell.best_chemistry_for_voltage(16.8, "Volt per cell max")
-        # 16.8 / 4.2 = exactly 4.0 cells → a clear winner should be found
-        assert result is not None
-        assert isinstance(result, str)
-        assert result in BatteryCell.chemistries()
+
+        # Assert (Then): Later equal or worse matches cannot replace the first best match.
+        assert result == "LiIonSS"
+
+    @pytest.mark.parametrize(
+        ("total_voltage", "expected_chemistry"),
+        [
+            pytest.param(0.1335 - 1e-9, "LiIonSSHV", id="below-threshold"),
+            pytest.param(0.1335, None, id="at-threshold"),
+            pytest.param(0.1335 + 1e-9, None, id="above-threshold"),
+        ],
+    )
+    def test_chemistry_suggestions_require_a_score_strictly_below_the_confidence_limit(
+        self, total_voltage: float, expected_chemistry: str | None
+    ) -> None:
+        """
+        The confidence boundary is exclusive when deciding whether to suggest a chemistry.
+
+        GIVEN: A small reading whose closest match is near the 0.03 score limit
+        WHEN: A chemistry suggestion is requested from the maximum cell voltage
+        THEN: A chemistry is suggested only below the limit, including no match at equality
+        """
+        # Arrange (Given): 0.1335 / 4.45 is exactly the floating-point value 0.03.
+        # This small reading makes the equality case exact, without rounding a multi-cell estimate.
+
+        # Act (When): Apply the real scoring and recommendation logic around the boundary.
+        result = BatteryCell.best_chemistry_for_voltage(total_voltage, "Volt per cell max")
+
+        # Assert (Then): Equality cannot turn an uncertain reading into a recommendation.
+        assert result == expected_chemistry
