@@ -3072,3 +3072,150 @@ class TestComponentBatchValidation:
         }
 
         assert connection_model.validate_all_data(entries) == (True, [])
+
+
+class TestEscConnectionTransitions:
+    """Control-port changes immediately refresh the telemetry selectors."""
+
+    @pytest.fixture
+    def esc_model(self) -> ComponentDataModelValidation:
+        """Provide an independent real model with offline protocol choices."""
+        return ComponentDataModelFixtures.create_basic_model(ComponentDataModelValidation)
+
+    @staticmethod
+    def select_control(model: ComponentDataModelValidation, settings: tuple[str, str, str]) -> None:
+        """Select the firmware, control port and protocol through the public model API."""
+        vehicle, port, protocol = settings
+        model.set_component_value(("Flight Controller", "Firmware", "Type"), vehicle)
+        model.init_possible_choices({})
+        model.set_component_value(("ESC", "FC->ESC Connection", "Type"), port)
+        model.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), protocol)
+
+    @pytest.mark.parametrize(
+        ("firmware", "parameter"),
+        [("ArduCopter", "MOT_PWM_TYPE"), ("Heli", "MOT_PWM_TYPE"), ("Rover", "MOT_PWM_TYPE"), ("ArduPlane", "Q_M_PWM_TYPE")],
+    )
+    @pytest.mark.parametrize("pwm_port", ["Main Out", "AIO"])
+    def test_user_sees_disabled_telemetry_for_a_metadata_pwm_mode_without_a_known_mapping(
+        self, esc_model: ComponentDataModelValidation, firmware: str, parameter: str, pwm_port: str
+    ) -> None:
+        """
+        Firmware metadata can expose a PWM mode before a telemetry mapping is available.
+
+        GIVEN: Metadata containing a new PWM mode absent from the built-in compatibility table
+        WHEN: The user selects that mode on either PWM output
+        THEN: The mode remains selectable and both telemetry selectors offer only None
+        """
+        esc_model.set_component_value(("Flight Controller", "Firmware", "Type"), firmware)
+        esc_model.init_possible_choices({parameter: {"values": {"0": "Normal", "42": "New firmware PWM mode"}}})
+        esc_model.set_component_value(("ESC", "FC->ESC Connection", "Type"), pwm_port)
+
+        esc_model.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), "New firmware PWM mode")
+
+        assert esc_model.get_combobox_values_for_path(("ESC", "FC->ESC Connection", "Protocol")) == (
+            "Normal",
+            "New firmware PWM mode",
+        )
+        assert esc_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) == "New firmware PWM mode"
+        assert esc_model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Type")) == ("None",)
+        assert esc_model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Protocol")) == ("None",)
+        assert esc_model.get_valid_esc_telemetry_types() == ("None",)
+
+    @pytest.mark.parametrize("firmware", ["ArduCopter", "ArduPlane"])
+    @pytest.mark.parametrize("can_port", ["CAN1", "CAN2"])
+    def test_user_moves_a_can_esc_and_immediately_sees_the_matching_telemetry_selectors(
+        self, esc_model: ComponentDataModelValidation, firmware: str, can_port: str
+    ) -> None:
+        """
+        Changing the CAN bus preserves its compatible telemetry protocol.
+
+        GIVEN: A DroneCAN ESC on the other CAN bus
+        WHEN: The user changes only the control port
+        THEN: The telemetry port follows immediately and DroneCAN remains the sole protocol
+        """
+        previous_port = "CAN2" if can_port == "CAN1" else "CAN1"
+        self.select_control(esc_model, (firmware, previous_port, "DroneCAN"))
+
+        esc_model.set_component_value(("ESC", "FC->ESC Connection", "Type"), can_port)
+
+        assert esc_model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Type")) == (can_port,)
+        assert esc_model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Protocol")) == ("DroneCAN",)
+        assert esc_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) == "DroneCAN"
+        assert esc_model.is_esc_telemetry_type_mirrored() is True
+        assert esc_model.is_esc_telemetry_protocol_mirrored() is True
+
+    @pytest.mark.parametrize(
+        "settings",
+        [("ArduCopter", "SERIAL4", "FETtecOneWire"), ("Heli", "SERIAL4", "Torqeedo"), ("Rover", "SERIAL4", "CoDevESC")],
+    )
+    @pytest.mark.parametrize("serial_port", ["SERIAL1", "SERIAL8"])
+    def test_user_moves_a_serial_esc_without_losing_its_mirrored_telemetry_protocol(
+        self, esc_model: ComponentDataModelValidation, settings: tuple[str, str, str], serial_port: str
+    ) -> None:
+        """
+        Same-port serial telemetry follows the new port and retains the selected protocol.
+
+        GIVEN: An ESC using a supported bidirectional serial protocol on SERIAL4
+        WHEN: The user changes only its control port to the first or last serial port
+        THEN: Telemetry offers the new port and the existing protocol without a second field edit
+        """
+        self.select_control(esc_model, settings)
+
+        esc_model.set_component_value(("ESC", "FC->ESC Connection", "Type"), serial_port)
+
+        assert esc_model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Type")) == (serial_port,)
+        assert esc_model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Protocol")) == (settings[2],)
+        assert esc_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) == settings[2]
+        assert esc_model.get_valid_esc_telemetry_types() == (serial_port,)
+        assert esc_model.is_esc_telemetry_type_mirrored() is True
+        assert esc_model.is_esc_telemetry_protocol_mirrored() is True
+
+    @pytest.mark.parametrize("previous", [("CAN2", "DroneCAN"), ("Main Out", "DShot600")])
+    @pytest.mark.parametrize("protocol", ["FETtecOneWire", "Torqeedo", "CoDevESC"])
+    def test_user_switches_to_serial_then_selects_a_compatible_mirrored_protocol(
+        self, esc_model: ComponentDataModelValidation, previous: tuple[str, str], protocol: str
+    ) -> None:
+        """
+        Stale CAN/PWM protocols do not become valid serial telemetry protocols during a transition.
+
+        GIVEN: A CAN or DShot ESC connection
+        WHEN: The user switches to SERIAL4 and then selects a supported serial protocol
+        THEN: Telemetry initially offers None for the stale protocol, then mirrors the new selection
+        """
+        self.select_control(esc_model, ("ArduCopter", *previous))
+
+        esc_model.set_component_value(("ESC", "FC->ESC Connection", "Type"), "SERIAL4")
+
+        assert esc_model.get_combobox_values_for_path(("ESC", "FC->ESC Connection", "Protocol")) == (
+            "FETtecOneWire",
+            "Torqeedo",
+            "CoDevESC",
+        )
+        assert esc_model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Type")) == ("SERIAL4",)
+        assert esc_model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Protocol")) == ("None",)
+        assert esc_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) == previous[1]
+
+        esc_model.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), protocol)
+
+        assert esc_model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Type")) == ("SERIAL4",)
+        assert esc_model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Protocol")) == (protocol,)
+        assert esc_model.get_valid_esc_telemetry_types() == ("SERIAL4",)
+
+    @pytest.mark.parametrize("previous", [("CAN2", "DroneCAN"), ("SERIAL4", "FETtecOneWire"), ("Main Out", "DShot600")])
+    def test_disabled_esc_connection_clears_previous_telemetry_choices(
+        self, esc_model: ComponentDataModelValidation, previous: tuple[str, str]
+    ) -> None:
+        """
+        A disabled ESC connection does not expose stale telemetry options.
+
+        GIVEN: An active CAN, serial or PWM ESC connection
+        WHEN: The model receives a disabled control connection
+        THEN: Control and telemetry protocol choices and telemetry port choices all become None
+        """
+        self.select_control(esc_model, ("ArduCopter", *previous))
+
+        esc_model.set_component_value(("ESC", "FC->ESC Connection", "Type"), "None")
+
+        assert esc_model.get_combobox_values_for_path(("ESC", "FC->ESC Connection", "Protocol")) == ("None",)
+        assert esc_model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Type")) == ("None",)
+        assert esc_model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Protocol")) == ("None",)
