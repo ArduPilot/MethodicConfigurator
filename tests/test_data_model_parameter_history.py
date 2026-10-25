@@ -125,7 +125,16 @@ def test_latest_values_are_derived_from_changes() -> None:
 
 @pytest.mark.parametrize("time_s", [math.nan, math.inf, -math.inf])
 def test_non_finite_query_timestamp_is_rejected(time_s: float) -> None:
+    """
+    Invalid query times produce consistent guidance for parameter-history consumers.
+
+    GIVEN: A parameter history and a NaN or infinite query timestamp
+    WHEN: The parameter value is requested at that timestamp
+    THEN: A ValueError explains exactly that the query time must be finite
+    """
+    # Arrange (Given): Use a valid history so only the query time is invalid.
     history = ParameterHistory({"TEST": 1.0})
 
-    with pytest.raises(ValueError, match="Parameter query time_s must be finite"):
+    # Act (When): Query a non-finite timestamp.
+    with pytest.raises(ValueError, match=r"^Parameter query time_s must be finite$"):
         history.value_at("TEST", time_s)
