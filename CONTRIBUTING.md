@@ -84,6 +84,53 @@ SITL_BINARY="$PWD/sitl/arducopter" PATH="$PWD/.venv/bin:$PATH" \
   xvfb-run -a python -m pytest -m sitl -v
 ```
 
+### Mutation testing
+
+The optional [Mutmut](https://mutmut.readthedocs.io/en/latest/) pilot checks whether
+existing tests detect small changes to battery voltage calculations and parameter
+history queries. It runs on Linux, macOS, or Windows through WSL.
+
+Install it into the project virtual environment:
+
+```bash
+uv pip install --python .venv/bin/python --editable '.[dev,mutation]'
+```
+
+Run the unmodified tests first, then start the mutation pilot. Xvfb is needed on
+Linux because the shared test fixtures import PyAutoGUI during collection:
+
+```bash
+PATH="$PWD/.venv/bin:$PATH" xvfb-run -a python -m pytest -q \
+  tests/unit_battery_cell_voltages.py tests/test_data_model_parameter_history.py
+PATH="$PWD/.venv/bin:$PATH" xvfb-run -a mutmut run --max-children 2
+.venv/bin/mutmut results --all true
+.venv/bin/mutmut browse
+```
+
+On macOS, run `mutmut run --max-children 2` with the virtual environment activated
+and a working desktop display, without `xvfb-run`.
+
+The `[tool.mutmut]` section in `pyproject.toml` selects both the modules to mutate
+and the tests to run. Update those lists together when expanding the pilot, and
+keep the clean-test command in `.github/workflows/mutation.yml` in sync.
+Generated copies and results are stored in the ignored `mutants/` directory;
+Mutmut resumes previous work there. For a fresh baseline, remove that generated
+directory first, especially after changing tests or dependencies. Run from the
+repository root so that Mutmut reads its configuration.
+
+The [mutation workflow](.github/workflows/mutation.yml) runs manually or weekly on
+Ubuntu with Python 3.11. It uploads results without enforcing a mutation score;
+clean-test failures and execution errors still fail the job. Scheduled runs are
+disabled in forks. The existing coverage gate remains independent.
+
+For surviving mutations, inspect the diff with `mutmut show <mutant-name>` and add
+assertions for observable behavior. Some mutations are equivalent; review those
+individually rather than adding broad suppressions. Mutmut 3 primarily mutates
+function bodies, so explicit tests are still needed for module-level constants.
+Timeouts, missing test associations, and execution errors need separate review.
+Type-check filtering and coverage-only filtering are intentionally disabled for
+the initial baseline.
+
 ### Optional local code graph
 
 For faster codebase exploration with Codex, CodeGraph can be installed as an

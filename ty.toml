@@ -5,6 +5,7 @@ invalid-assignment = "ignore"
 
 [src]
 exclude = [
+    "mutants/**",
     "find_exclusive_parameter_names.py",
     "mavproxy_ftp.py",
     "mavproxy_param.py",

@@ -89,6 +89,10 @@ ci_headless_tests = [
     "pytest-xvfb==3.1.1",
 ]
 
+mutation = [
+    "mutmut==3.8.0",
+]
+
 scripts = [
     "bs4==0.0.2",
     "psutil==7.2.2",
@@ -184,6 +188,21 @@ check-filenames = true
 ignore-words-list = "datas,intoto,juli,laf,ned,parm,sade,sitl,thst,sie,mot,carisma,ine,InE"
 skip = "*.pdef.xml,*.pdf,*.po"
 
+[tool.mutmut]
+source_paths = ["ardupilot_methodic_configurator/"]
+# Keep the first mutation baseline small and deterministic.
+only_mutate = [
+    "ardupilot_methodic_configurator/battery_cell_voltages.py",
+    "ardupilot_methodic_configurator/log_analysis/data_model_parameter_history.py",
+]
+pytest_add_cli_args_test_selection = [
+    "tests/unit_battery_cell_voltages.py",
+    "tests/test_data_model_parameter_history.py",
+]
+pytest_add_cli_args = ["-q", "-x"]
+also_copy = ["pytest.ini"]
+process_isolation = "forkserver"
+
 [tool.ruff]
 target-version = "py311"
 exclude = [
@@ -192,6 +211,7 @@ exclude = [
     "__pycache__",
     "__target__",
     "dist",
+    "mutants",
     "scripts/test_gui_environment.py",
     "svg_comparison_demo.py",
     "scripts/show_svg_tk_variants.py",
@@ -255,6 +275,7 @@ max-args = 9       # Default is 5
 max-branches = 24  # Default is 12
 
 [tool.mypy]
+exclude = ['^mutants/']
 ignore_missing_imports = true
 disallow_any_unimported = false
 disallow_any_expr = false
@@ -303,6 +324,7 @@ exclude = [
     "__pycache__",
     "__target__",
     "dist",
+    "mutants",
     "scripts/test_gui_environment.py",
     "svg_comparison_demo.py",
     "scripts/show_svg_tk_variants.py",

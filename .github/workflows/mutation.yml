@@ -1,0 +1,89 @@
+name: Mutation testing
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 5 * * 1'  # Every Monday at 05:23 UTC
+
+concurrency:
+  group: mutation-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  mutation:
+    # Allow manual runs in forks, but avoid unattended weekly runs there.
+    if: github.event_name == 'workflow_dispatch' || !github.event.repository.fork
+    runs-on: ${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 30
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@351661ca32ac09a36dc5ee2d536e3128f2a3c8ed # v2.22.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: '3.11'
+          activate-environment: true
+          enable-cache: true
+          cache-dependency-glob: pyproject.toml
+
+      - name: Install virtual display
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb xauth
+
+      - name: Install dependencies
+        run: uv pip install --editable '.[dev,mutation]'
+
+      - name: Verify unmodified pilot tests
+        shell: bash
+        run: |
+          mkdir -p .cache/mutation
+          xvfb-run -a python -m pytest -q \
+            tests/unit_battery_cell_voltages.py \
+            tests/test_data_model_parameter_history.py \
+            --junit-xml=.cache/mutation/baseline.xml
+
+      - name: Run mutation pilot
+        timeout-minutes: 20
+        shell: bash
+        run: |
+          # Survivors are informational during the pilot; execution errors still fail this step.
+          xvfb-run -a mutmut run --max-children 2 | tee .cache/mutation/run.log
+
+      - name: Report mutation results
+        if: always()
+        shell: bash
+        run: |
+          if [ -d mutants ]; then
+            mutmut results --all true | tee .cache/mutation/results.txt
+            {
+              echo '### Mutation testing pilot'
+              echo 'Survivors are reported for review; no mutation-score threshold is enforced yet.'
+              echo '```text'
+              cat .cache/mutation/results.txt
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload mutation reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: mutation-py311
+          path: |
+            .cache/mutation/
+            mutants/**/*.meta
+            mutants/mutmut-stats.json
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
