@@ -24,7 +24,7 @@ import shutil
 import sys
 import time
 from ctypes import wintypes
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
@@ -45,7 +45,7 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_DIRECTORY = ROOT_DIR / "images"
 DEMO_LOCAL_DIRECTORY = ROOT_DIR / ".mavftp-screenshot-fixtures"
 DEMO_LOCAL_MODIFIED_AT = 1_788_461_700
-SCREENSHOT_TIMEZONE = timezone.utc
+SCREENSHOT_TIMEZONE = UTC
 
 
 class _BitmapInfoHeader(ctypes.Structure):  # pylint: disable=too-few-public-methods

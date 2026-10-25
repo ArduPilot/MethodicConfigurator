@@ -9,10 +9,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 
-class LogAvailabilityState(str, Enum):
+class LogAvailabilityState(StrEnum):
     """Semantic state for a availability-analysis result."""
 
     INFO = "info"

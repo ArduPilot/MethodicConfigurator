@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from enum import Enum, IntEnum
+from enum import IntEnum, StrEnum
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
@@ -115,7 +115,7 @@ def _firmware_flare_values(message: str) -> tuple[float, float, float, float] | 
     return altitude_m, sink_rate_m_s, groundspeed_m_s, distance_to_target_m
 
 
-class PlaneLandingEndReason(str, Enum):
+class PlaneLandingEndReason(StrEnum):
     """Objective evidence that bounded a detected Plane landing attempt."""
 
     ABORT = "abort"

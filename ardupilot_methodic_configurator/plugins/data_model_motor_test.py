@@ -9,7 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from collections.abc import Callable
-from enum import Enum
+from enum import StrEnum
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
@@ -67,7 +67,7 @@ class ValidationError(MotorTestError):
     """Raised when validation of input parameters fails."""
 
 
-class MotorStatusEvent(str, Enum):
+class MotorStatusEvent(StrEnum):
     """Well-known status events published by model motor operations."""
 
     COMMAND_SENT = "command_sent"

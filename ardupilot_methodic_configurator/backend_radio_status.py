@@ -79,7 +79,7 @@ class RadioStatusBackend:
             while not stop.wait(1.0):
                 try:
                     send_heartbeat()
-                except (OSError, SerialException, AttributeError, TypeError, ValueError) as exc:  # noqa: PERF203
+                except (OSError, SerialException, AttributeError, TypeError, ValueError) as exc:
                     logging_debug("Error sending GCS heartbeat: %s", exc)
         finally:
             # An in-flight pymavlink reset can install a new port after close()

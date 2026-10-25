@@ -799,7 +799,7 @@ def _line_matches_any(param_name: str, patterns: list[str]) -> bool:
         try:
             if re.fullmatch(pattern, param_name):
                 return True
-        except re.error:  # noqa: PERF203
+        except re.error:
             logging.warning(_("Skipping malformed regex pattern %r: not a valid regular expression"), pattern)
     return False
 

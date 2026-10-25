@@ -19,7 +19,7 @@ import sys
 import tempfile
 import time
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
@@ -290,7 +290,7 @@ def get_release_info(name: str, should_be_pre_release: bool, timeout: int = 30) 
             # Get the rate limit reset time
             reset_time = int(e.response.headers.get("X-RateLimit-Reset", 0))
             # Create a timezone-aware UTC datetime
-            reset_datetime = datetime.fromtimestamp(reset_time, timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
+            reset_datetime = datetime.fromtimestamp(reset_time, UTC).strftime("%Y-%m-%d %H:%M:%S %Z")
             logging_error(_("Rate limit exceeded. Please try again after: %s (UTC)"), reset_datetime)
         raise
     except RequestException as e:

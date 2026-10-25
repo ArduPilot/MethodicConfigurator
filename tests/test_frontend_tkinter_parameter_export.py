@@ -13,7 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import tkinter as tk
 from argparse import Namespace
 from collections.abc import Iterator
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -731,7 +731,7 @@ def test_export_header_uses_vehicle_name_and_connected_fc_metadata() -> None:
     info.flight_custom_version = "3fc7011a"
 
     info.hw_unique_id = "0x1234ABCDEF567890"
-    header = build_export_header("Holybro X500", info, datetime(2026, 9, 29, 12, 34, 56, tzinfo=timezone.utc))
+    header = build_export_header("Holybro X500", info, datetime(2026, 9, 29, 12, 34, 56, tzinfo=UTC))
 
     assert header == [
         "# Vehicle: Holybro X500",
