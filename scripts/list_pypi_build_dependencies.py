@@ -9,13 +9,8 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import importlib
 import sys
-
-try:
-    import tomllib  # ty: ignore[unresolved-import]
-except ModuleNotFoundError:  # Python 3.10
-    tomllib = importlib.import_module("tomli")
+import tomllib
 
 with open("pyproject.toml", "rb") as f:
     data = tomllib.load(f)

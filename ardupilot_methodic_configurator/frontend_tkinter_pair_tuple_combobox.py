@@ -165,7 +165,7 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         try:
             i_index = self.current()
             # self.current() returns -1 (Tcl 8.6) or "" (Tcl 9.0) if no item is selected.
-            # On some Tcl builds (e.g. Python 3.10 CI) it raises TclError ("expected integer
+            # On some Tcl builds it raises TclError ("expected integer
             # but got "") instead of returning a sentinel, so tk.TclError must be caught too.
             if i_index is None or not isinstance(i_index, int) or i_index < 0:
                 return None

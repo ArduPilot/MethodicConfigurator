@@ -974,37 +974,54 @@ class TestMotorTestView:  # pylint: disable=too-many-public-methods
         assert {call.args[0] for call in bind_spy.call_args_list} == {"<Escape>", "<Control-s>"}
         focus_spy.assert_called_once()
 
-    def test_destroy_unbinds_keyboard_shortcuts(self, motor_view: MotorTestView, mocker) -> None:
+    def test_destroy_unbinds_keyboard_shortcuts(self, motor_view: MotorTestView) -> None:
         """Destroying the view must remove its app-wide actuator shortcuts."""
-        unbind_spy = mocker.patch.object(motor_view.root_window, "unbind")
+        bindings = list(motor_view._keyboard_bindings)
+
+        assert bindings
+        assert all(binding_id in motor_view.root_window.bind(sequence) for sequence, binding_id in bindings)
 
         motor_view.destroy()
 
-        assert unbind_spy.call_count == 2
+        assert all(binding_id not in motor_view.root_window.bind(sequence) for sequence, binding_id in bindings)
 
-    def test_destroy_preserves_preexisting_root_binding(self, motor_view: MotorTestView, mocker) -> None:
-        """Destroying the view must not erase a shortcut owned by another view."""
-        mocker.patch.object(motor_test_module, "sys", SimpleNamespace(version_info=(3, 10)))
+    @pytest.mark.parametrize("legacy_unbind", [False, True])
+    def test_destroy_preserves_preexisting_root_binding(
+        self, motor_view: MotorTestView, mocker: MockerFixture, legacy_unbind: bool
+    ) -> None:
+        """Destroying the view preserves earlier and later shortcuts on all supported Python versions."""
         sequences = ("<Escape>", "<Control-s>", "<Control-a>", "<Control-q>")
         for sequence in sequences:
             motor_view.root_window.unbind(sequence)
-        motor_view.root_window.bind("<Control-s>", lambda _event: "break")
+        earlier_id = motor_view.root_window.bind("<Control-s>", lambda _event: "break")
         motor_view._keyboard_bindings.clear()
         motor_view._setup_keyboard_shortcuts()
+        later_id = motor_view.root_window.bind("<Control-s>", lambda _event: "break", add="+")
+        if legacy_unbind:
+            # Reproduce Python 3.11.0-3.11.7 clearing every handler, even with a callback ID.
+            mocker.patch.object(
+                motor_view.root_window,
+                "unbind",
+                side_effect=lambda sequence, _funcid=None: motor_view.root_window.tk.call(
+                    "bind", str(motor_view.root_window), sequence, ""
+                ),
+            )
 
         motor_view.destroy()
 
-        assert str(motor_view.root_window.bind("<Control-s>")).strip()
+        remaining = motor_view.root_window.bind("<Control-s>")
+        for binding_id in (earlier_id, later_id):
+            assert binding_id in remaining
+            assert motor_view.root_window.tk.call("info", "commands", binding_id)
 
-    def test_destroy_deletes_legacy_tcl_binding_commands(self, motor_view: MotorTestView, mocker) -> None:
-        """Legacy cleanup must delete callback commands as well as binding scripts."""
-        mocker.patch.object(motor_test_module, "sys", SimpleNamespace(version_info=(3, 10)))
+    def test_destroy_deletes_tcl_binding_commands(self, motor_view: MotorTestView) -> None:
+        """Cleanup must delete callback commands as well as binding scripts."""
         sequences = ("<Escape>", "<Control-s>", "<Control-a>", "<Control-q>")
         for sequence in sequences:
             motor_view.root_window.unbind(sequence)
         motor_view._keyboard_bindings.clear()
         motor_view._setup_keyboard_shortcuts()
-        binding_ids = [binding_id for _sequence, binding_id, _previous in motor_view._keyboard_bindings]
+        binding_ids = [binding_id for _sequence, binding_id in motor_view._keyboard_bindings]
 
         assert all(motor_view.root_window.tk.call("info", "commands", binding_id) for binding_id in binding_ids)
 

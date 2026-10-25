@@ -20,7 +20,6 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import sys
 import time
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
@@ -135,7 +134,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         self._timer_id: str | None = None  # Track scheduled update timer for cleanup
         self._suspended = False
         self._restart_active = False
-        self._keyboard_bindings: list[tuple[str, str, str]] = []
+        self._keyboard_bindings: list[tuple[str, str]] = []
 
         self._create_widgets()
 
@@ -812,7 +811,6 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             "<Control-s>": self._stop_all_motors,
         }
         for sequence, action in shortcuts.items():
-            previous_binding = str(self.root_window.tk.call("bind", str(self.root_window), sequence))
             callback = cast(
                 "Callable[[Event], str]",
                 lambda _event, shortcut=action: self._handle_keyboard_shortcut(shortcut),
@@ -823,7 +821,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
                 add="+",
             )
             if isinstance(binding_id, str):
-                self._keyboard_bindings.append((sequence, binding_id, previous_binding))
+                self._keyboard_bindings.append((sequence, binding_id))
 
         # Focus root window to ensure it can capture key events
         self.root_window.focus_set()
@@ -902,17 +900,13 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         if self._timer_id:
             self.after_cancel(self._timer_id)
             self._timer_id = None
-        for sequence, binding_id, previous_binding in self._keyboard_bindings:
+        for sequence, binding_id in self._keyboard_bindings:
             with suppress(tk.TclError):
-                if sys.version_info >= (3, 11):
-                    self.root_window.unbind(sequence, binding_id)
-                else:
-                    # Python 3.10's tkinter.unbind(sequence, funcid) clears the
-                    # complete binding script before deleting funcid. Restore
-                    # the script that was present before this view was bound.
-                    self.root_window.unbind(sequence, binding_id)
-                    if previous_binding:
-                        self.root_window.bind(sequence, previous_binding)
+                # Python before 3.11.8 clears all handlers even when unbind receives a callback ID.
+                scripts = self.root_window.bind(sequence).splitlines()
+                remaining = "\n".join(line for line in scripts if not line.startswith(f'if {{"[{binding_id} ')).strip("\n")
+                self.root_window.bind(sequence, remaining + "\n" if remaining else "")
+                self.root_window.deletecommand(binding_id)
         self._keyboard_bindings.clear()
         super().destroy()
 

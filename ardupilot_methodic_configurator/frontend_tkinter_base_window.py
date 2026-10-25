@@ -429,7 +429,7 @@ class BaseWindow:
         def remove_binding() -> None:
             if binding_id is None:
                 return
-            # Remove only our script; Python 3.10's unbind clears all handlers.
+            # Python before 3.11.8 clears all handlers even when unbind receives a callback ID.
             with contextlib.suppress(tk.TclError):
                 scripts = window.bind("<Destroy>").splitlines()
                 remaining = "\n".join(line for line in scripts if not line.startswith(f'if {{"[{binding_id} ')).strip("\n")
