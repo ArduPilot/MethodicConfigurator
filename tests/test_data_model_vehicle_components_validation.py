@@ -3431,3 +3431,176 @@ class TestNumericValidationFeedback:
         assert numeric_model.validate_all_data({path: entered}) == (False, [expected[0]])
         assert numeric_model.get_component_value(path) == pytest.approx(expected[1])
         assert numeric_model.validate_entry_limits(str(numeric_model.get_component_value(path)), path) == ("", None)
+
+
+class TestBatteryVoltageValidationFeedback:
+    """Battery validation explains chemistry limits and related thresholds before applying corrections."""
+
+    CHEMISTRY_CASES = (
+        pytest.param("LiIon", (2.5, 4.2), id="li-ion"),
+        pytest.param("LiIonSS", (2.4, 4.2), id="li-ion-solid-state"),
+        pytest.param("LiIonSSHV", (2.4, 4.45), id="li-ion-solid-state-high-voltage"),
+        pytest.param("Lipo", (3.0, 4.2), id="lipo"),
+        pytest.param("LipoHV", (3.0, 4.35), id="lipo-high-voltage"),
+        pytest.param("LipoHVSS", (2.9, 4.2), id="lipo-high-voltage-solid-state"),
+        pytest.param("NiCd", (1.0, 1.45), id="nickel-cadmium"),
+        pytest.param("NiMH", (1.0, 1.45), id="nickel-metal-hydride"),
+    )
+
+    @pytest.fixture
+    def voltage_model(self) -> ComponentDataModelValidation:
+        """Provide valid, distinct LiPo thresholds so each related-field constraint is observable."""
+        model = ComponentDataModelFixtures.create_basic_model(ComponentDataModelValidation)
+        model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+        for field, value in (
+            ("Volt per cell max", 4.1),
+            ("Volt per cell arm", 3.8),
+            ("Volt per cell low", 3.6),
+            ("Volt per cell crit", 3.3),
+            ("Volt per cell min", 3.2),
+        ):
+            model.set_component_value(("Battery", "Specifications", field), value)
+        return model
+
+    @pytest.mark.parametrize(("chemistry", "limits"), CHEMISTRY_CASES)
+    @pytest.mark.parametrize("upper", [False, True], ids=["minimum", "maximum"])
+    def test_user_can_enter_the_exact_chemistry_voltage_limits(
+        self, voltage_model: ComponentDataModelValidation, chemistry: str, limits: tuple[float, float], upper: bool
+    ) -> None:
+        """
+        Absolute chemistry limits are inclusive for both voltage endpoints.
+
+        GIVEN: A battery using any supported chemistry and its recommended thresholds
+        WHEN: The user enters the chemistry minimum as minimum voltage or maximum as maximum voltage
+        THEN: Voltage, entry and batch validation accept the exact boundary without a correction
+        """
+        voltage_model.set_component_value(("Battery", "Specifications", "Chemistry"), chemistry)
+        field = "Volt per cell max" if upper else "Volt per cell min"
+        boundary = limits[1] if upper else limits[0]
+        path = ("Battery", "Specifications", field)
+
+        assert voltage_model.validate_cell_voltage(str(boundary), path) == ("", None)
+        assert voltage_model.validate_entry_limits(str(boundary), path) == ("", None)
+        assert voltage_model.validate_all_data({path: str(boundary)}) == (True, [])
+
+    @pytest.mark.parametrize(("chemistry", "limits"), CHEMISTRY_CASES)
+    @pytest.mark.parametrize("upper", [False, True], ids=["below-minimum", "above-maximum"])
+    def test_user_sees_the_chemistry_and_exact_limit_when_voltage_is_out_of_range(
+        self, voltage_model: ComponentDataModelValidation, chemistry: str, limits: tuple[float, float], upper: bool
+    ) -> None:
+        """
+        Chemistry-limit errors identify the battery type and the correction that will be applied.
+
+        GIVEN: A supported battery chemistry with valid related voltage thresholds
+        WHEN: The user enters a minimum below or maximum above its absolute chemistry limit
+        THEN: Both validation APIs name that chemistry and limit and batch validation applies the endpoint
+        """
+        voltage_model.set_component_value(("Battery", "Specifications", "Chemistry"), chemistry)
+        field = "Volt per cell max" if upper else "Volt per cell min"
+        boundary = limits[1] if upper else limits[0]
+        entered = str(round(boundary + 0.1 if upper else boundary - 0.1, 2))
+        description = "above" if upper else "below"
+        limit_name = "maximum" if upper else "minimum"
+        expected_error = f"is {description} the {chemistry} {limit_name} limit of {boundary}"
+        path = ("Battery", "Specifications", field)
+        previous = voltage_model.get_component_value(path)
+
+        assert voltage_model.validate_cell_voltage(entered, path) == (expected_error, boundary)
+        assert voltage_model.validate_entry_limits(entered, path) == (expected_error, boundary)
+        assert voltage_model.get_component_value(path) == previous
+
+        assert voltage_model.validate_all_data({path: entered}) == (False, [expected_error])
+        assert voltage_model.get_component_value(path) == boundary
+        assert voltage_model.validate_entry_limits(str(boundary), path) == ("", None)
+
+    @pytest.mark.parametrize(
+        ("field", "entered", "expected"),
+        [
+            ("Volt per cell max", "3.7", ("is below the Volt per cell arm of 3.8", 3.81)),
+            ("Volt per cell arm", "4.15", ("is above the Volt per cell max of 4.1", 4.09)),
+            ("Volt per cell arm", "3.5", ("is below the Volt per cell low of 3.6", 3.61)),
+            ("Volt per cell low", "3.9", ("is above the Volt per cell arm of 3.8", 3.79)),
+            ("Volt per cell low", "3.25", ("is below the Volt per cell crit of 3.3", 3.31)),
+            ("Volt per cell crit", "3.7", ("is above the Volt per cell low of 3.6", 3.59)),
+            ("Volt per cell min", "3.7", ("is above the Volt per cell low of 3.6", 3.59)),
+        ],
+    )
+    def test_user_sees_the_related_voltage_threshold_and_only_the_edited_field_is_corrected(
+        self, voltage_model: ComponentDataModelValidation, field: str, entered: str, expected: tuple[str, float]
+    ) -> None:
+        """
+        Every voltage relationship names the limiting threshold and preserves the other settings.
+
+        GIVEN: Valid and distinct maximum, arming, low, critical and minimum LiPo thresholds
+        WHEN: The user enters a voltage that crosses one of its related thresholds
+        THEN: The error names that threshold and value and batch validation changes only the edited field
+        """
+        fields = ("Volt per cell max", "Volt per cell arm", "Volt per cell low", "Volt per cell crit", "Volt per cell min")
+        previous = {name: voltage_model.get_component_value(("Battery", "Specifications", name)) for name in fields}
+        path = ("Battery", "Specifications", field)
+
+        error, correction = voltage_model.validate_cell_voltage(entered, path)
+
+        assert error == expected[0]
+        assert correction == pytest.approx(expected[1])
+        assert voltage_model.validate_entry_limits(entered, path) == (error, correction)
+        assert voltage_model.validate_all_data({path: entered}) == (False, [expected[0]])
+        for name in fields:
+            actual = voltage_model.get_component_value(("Battery", "Specifications", name))
+            assert actual == (pytest.approx(expected[1]) if name == field else previous[name])
+        assert voltage_model.validate_entry_limits(str(voltage_model.get_component_value(path)), path) == ("", None)
+
+    @pytest.mark.parametrize(
+        ("field", "recommended"),
+        [
+            ("Volt per cell max", 4.2),
+            ("Volt per cell arm", 3.8),
+            ("Volt per cell low", 3.6),
+            ("Volt per cell crit", 3.3),
+            ("Volt per cell min", 3.2),
+        ],
+    )
+    @pytest.mark.parametrize("entered", ["not-a-number", "", "3,8"], ids=["text", "empty", "decimal-comma"])
+    def test_user_receives_recovery_guidance_and_the_recommended_value_for_invalid_voltage_text(
+        self, voltage_model: ComponentDataModelValidation, field: str, recommended: float, entered: str
+    ) -> None:
+        """
+        Invalid text provides actionable guidance and restores the field's chemistry recommendation.
+
+        GIVEN: A LiPo battery and invalid text for any of its five voltage thresholds
+        WHEN: The user previews the validation result and then validates the batch
+        THEN: The recovery instruction is present and the advertised recommendation is applied
+        """
+        path = ("Battery", "Specifications", field)
+        previous = voltage_model.get_component_value(path)
+
+        error, correction = voltage_model.validate_cell_voltage(entered, path)
+
+        # Check the recovery instruction without depending on Python's conversion-error wording.
+        assert error.endswith("Invalid value. Will be set to the recommended value.")
+        assert correction == recommended
+        assert voltage_model.validate_entry_limits(entered, path) == (error, recommended)
+        assert voltage_model.get_component_value(path) == previous
+
+        assert voltage_model.validate_all_data({path: entered}) == (False, [error])
+        assert voltage_model.get_component_value(path) == recommended
+        assert voltage_model.validate_entry_limits(str(recommended), path) == ("", None)
+
+    @pytest.mark.parametrize(
+        ("path", "value"),
+        [
+            (("Battery", "Specifications", "Capacity mAh"), "1800"),
+            (("Battery", "Product", "Model"), "LiPo 4S"),
+        ],
+    )
+    def test_voltage_validation_leaves_other_battery_fields_to_their_own_validators(
+        self, voltage_model: ComponentDataModelValidation, path: tuple[str, str, str], value: str
+    ) -> None:
+        """
+        Battery fields unrelated to cell voltage must not receive voltage errors or replacement values.
+
+        GIVEN: A battery capacity or product-model value
+        WHEN: The dedicated cell-voltage validator receives that field
+        THEN: It returns no voltage error and no correction
+        """
+        assert voltage_model.validate_cell_voltage(value, path) == ("", None)
