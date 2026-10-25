@@ -1208,7 +1208,6 @@ def test_invalid_board_revision_is_a_typed_file_error() -> None:
         fw.parse_apj(apj(b"four", board_revision="not-a-number"))
 
 
-@pytest.mark.skipif(not hasattr(sys, "get_int_max_str_digits"), reason="CPython integer digit limit was added in Python 3.11")
 def test_parse_apj_wraps_json_integer_digit_limit_as_file_error() -> None:
     """A JSON number beyond CPython's digit limit must not escape untyped."""
     digit_limit = sys.get_int_max_str_digits()

@@ -23,7 +23,7 @@ rm -Rf ~/.local/ardupilot_methodic_configurator
 rm -Rf ~/.local/bin/ardupilot_methodic_configurator
 rm -Rf build dist/ ardupilot_methodic_configurator.egg-info/
 
-uv venv --python 3.10 .venv
+uv venv --python 3.11 .venv
 # shellcheck source=/dev/null
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
     source .venv/Scripts/activate
