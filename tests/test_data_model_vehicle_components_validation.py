@@ -2676,3 +2676,243 @@ class TestFirmwareMetadataChoices:
             "DShot300",
             "PWMRange",
         )
+
+
+class TestSavedConnectionChoices:
+    """Opening a saved project rebuilds choices from its persisted connection settings."""
+
+    @staticmethod
+    def load_project(components: dict[str, dict[str, dict[str, str]]]) -> ComponentDataModelValidation:
+        """Load persisted component data through the real initialization workflow."""
+        return ComponentDataModelFixtures.create_basic_model(
+            ComponentDataModelValidation,
+            data={
+                "Format version": 1,
+                "Components": {"Flight Controller": {"Firmware": {"Type": "ArduCopter"}}, **components},
+            },
+        )
+
+    def test_user_sees_complete_battery_monitor_ports_before_saving_a_connection(self) -> None:
+        """
+        A new battery monitor exposes each supported physical connection once.
+
+        GIVEN: A project without a saved battery-monitor connection
+        WHEN: The user opens the component editor
+        THEN: None, analog, I2C, CAN, virtual, PWM and SPI choices appear in order
+        """
+        model = self.load_project({})
+
+        assert model.get_combobox_values_for_path(("Battery Monitor", "FC Connection", "Type")) == (
+            "None",
+            "Analog",
+            "I2C1",
+            "I2C2",
+            "I2C3",
+            "I2C4",
+            "CAN1",
+            "CAN2",
+            "other",
+            "PWM",
+            "SPI",
+        )
+
+    @pytest.mark.parametrize(
+        ("component", "connection_type", "stored_protocol", "expected"),
+        [
+            ("RC Receiver", "None", "None", ("None",)),
+            ("RC Receiver", "CAN2", "DroneCAN", ("DroneCAN",)),
+            (
+                "RC Receiver",
+                "SERIAL4",
+                "CRSF",
+                (
+                    "All",
+                    "PPM",
+                    "IBUS",
+                    "SBUS",
+                    "SBUS_NI",
+                    "DSM",
+                    "SUMD",
+                    "SRXL",
+                    "SRXL2",
+                    "CRSF",
+                    "ST24",
+                    "FPORT",
+                    "FPORT2",
+                    "FastSBUS",
+                    "Ghost",
+                    "MAVRadio",
+                    "SITL UDP",
+                ),
+            ),
+            ("Telemetry", "None", "None", ("None",)),
+            ("GNSS Receiver", "None", "None", ("None",)),
+            (
+                "GNSS Receiver",
+                "CAN1",
+                "DroneCAN",
+                ("DroneCAN", "DroneCAN-MovingBaseline-Base", "DroneCAN-MovingBaseline-Rover"),
+            ),
+            ("Battery Monitor", "None", "Disabled", ("Disabled",)),
+            (
+                "Battery Monitor",
+                "Analog",
+                "Analog Voltage and Current",
+                (
+                    "Analog Voltage Only",
+                    "Analog Voltage and Current",
+                    "FuelLevelAnalog",
+                    "Synthetic Current and Analog Voltage",
+                    "Analog Current Only",
+                ),
+            ),
+            ("Battery Monitor", "CAN2", "DroneCAN-BatteryInfo", ("DroneCAN-BatteryInfo",)),
+            ("Battery Monitor", "PWM", "FuelLevelPWM", ("FuelLevelPWM",)),
+            ("Battery Monitor", "SPI", "INA239_SPI", ("INA239_SPI",)),
+            ("Battery Monitor", "other", "ESC", ("ESC", "Sum Of Selected Monitors", "Torqeedo", "Scripting")),
+            (
+                "Battery Monitor",
+                "I2C4",
+                "INA2XX",
+                (
+                    "Solo",
+                    "Bebop",
+                    "SMBus-Generic",
+                    "FuelFlow",
+                    "SMBUS-SUI3",
+                    "SMBUS-SUI6",
+                    "NeoDesign",
+                    "SMBus-Maxell",
+                    "Generator-Elec",
+                    "Generator-Fuel",
+                    "Rotoye",
+                    "MPPT",
+                    "INA2XX",
+                    "LTC2946",
+                    "EFI",
+                    "AD7091R5",
+                    "INA3221",
+                    "TIBQ76952-I2C (Periph only)",
+                ),
+            ),
+        ],
+    )
+    def test_user_reopens_project_with_protocols_restricted_to_the_saved_connection(
+        self, component: str, connection_type: str, stored_protocol: str, expected: tuple[str, ...]
+    ) -> None:
+        """
+        Saved connection types narrow protocol choices as soon as the project opens.
+
+        GIVEN: Persisted receiver, telemetry, GNSS or battery-monitor settings
+        WHEN: The user opens that project without editing any connection field
+        THEN: Only compatible protocols appear and the stored settings are preserved
+        """
+        model = self.load_project({component: {"FC Connection": {"Type": connection_type, "Protocol": stored_protocol}}})
+
+        assert model.get_combobox_values_for_path((component, "FC Connection", "Protocol")) == expected
+        assert model.get_component_value((component, "FC Connection", "Type")) == connection_type
+        assert model.get_component_value((component, "FC Connection", "Protocol")) == stored_protocol
+
+    def test_user_sees_all_initial_esc_choices_without_internal_mirror_markers(self) -> None:
+        """
+        Initial ESC selectors contain usable choices before any control or telemetry connection is saved.
+
+        GIVEN: A project without persisted ESC settings
+        WHEN: The component editor initializes its ESC selectors
+        THEN: PWM control and telemetry choices are complete, unique and free of internal mirror markers
+        """
+        model = self.load_project({})
+
+        assert model.get_combobox_values_for_path(("ESC", "FC->ESC Connection", "Protocol")) == (
+            "Normal",
+            "OneShot",
+            "OneShot125",
+            "Brushed",
+            "DShot150",
+            "DShot300",
+            "DShot600",
+            "DShot1200",
+            "PWMRange",
+            "PWMAngle",
+        )
+        assert model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Type")) == (
+            "None",
+            "Main Out",
+            "AIO",
+            *ESC_TELEMETRY_SERIAL_PORTS,
+            "CAN1",
+            "CAN2",
+        )
+        assert model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Protocol")) == (
+            "None",
+            "Scripting",
+            "ESC Telemetry",
+            "BDShotOnly",
+        )
+
+    @pytest.mark.parametrize(
+        ("control", "telemetry", "expected_types", "expected_protocols"),
+        [
+            (
+                ("Main Out", "DShot600"),
+                ("Main Out", "BDShotOnly"),
+                ("None", "Main Out", *ESC_TELEMETRY_SERIAL_PORTS),
+                ("BDShotOnly",),
+            ),
+            (("Main Out", "Normal"), ("SERIAL1", "Scripting"), ("None", *ESC_TELEMETRY_SERIAL_PORTS), ("Scripting",)),
+            (("AIO", "OneShot"), ("SERIAL8", "ESC Telemetry"), ("None", *ESC_TELEMETRY_SERIAL_PORTS), ("ESC Telemetry",)),
+            (("Main Out", "Brushed"), ("None", "None"), ("None",), ("None",)),
+            (("CAN2", "DroneCAN"), ("CAN2", "DroneCAN"), ("CAN2",), ("DroneCAN",)),
+            (("SERIAL4", "FETtecOneWire"), ("SERIAL4", "FETtecOneWire"), ("SERIAL4",), ("FETtecOneWire",)),
+            (("Main Out", "DShot600"), ("None", "None"), ("None", "Main Out", *ESC_TELEMETRY_SERIAL_PORTS), ("None",)),
+        ],
+    )
+    def test_user_reopens_project_with_saved_esc_control_and_telemetry_choices(
+        self,
+        control: tuple[str, str],
+        telemetry: tuple[str, str],
+        expected_types: tuple[str, ...],
+        expected_protocols: tuple[str, ...],
+    ) -> None:
+        """
+        Saved ESC control and back-channel settings both participate in startup choice initialization.
+
+        GIVEN: Persisted PWM, bidirectional, CAN or same-port serial ESC settings
+        WHEN: The project opens without invoking a connection setter
+        THEN: The telemetry selectors match both saved settings without resetting their values
+        """
+        model = self.load_project(
+            {
+                "ESC": {
+                    "FC->ESC Connection": {"Type": control[0], "Protocol": control[1]},
+                    "ESC->FC Telemetry": {"Type": telemetry[0], "Protocol": telemetry[1]},
+                }
+            }
+        )
+
+        assert model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Type")) == expected_types
+        assert model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Protocol")) == expected_protocols
+        for section, saved in (("FC->ESC Connection", control), ("ESC->FC Telemetry", telemetry)):
+            assert model.get_component_value(("ESC", section, "Type")) == saved[0]
+            assert model.get_component_value(("ESC", section, "Protocol")) == saved[1]
+
+    def test_user_reopens_legacy_esc_project_with_telemetry_disabled_and_choices_available(self) -> None:
+        """
+        Projects saved before the telemetry section existed retain usable choices after migration.
+
+        GIVEN: A legacy ESC FC Connection with DShot control and no telemetry section
+        WHEN: The project is loaded through the normal migration and initialization workflow
+        THEN: Control settings survive and telemetry starts disabled with the appropriate port choices
+        """
+        model = self.load_project({"ESC": {"FC Connection": {"Type": "Main Out", "Protocol": "DShot600"}}})
+
+        assert model.get_component_value(("ESC", "FC->ESC Connection", "Type")) == "Main Out"
+        assert model.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) == "DShot600"
+        assert model.get_component_value(("ESC", "ESC->FC Telemetry", "Type")) == "None"
+        assert model.get_component_value(("ESC", "ESC->FC Telemetry", "Protocol")) == "None"
+        assert model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Type")) == (
+            "None",
+            "Main Out",
+            *ESC_TELEMETRY_SERIAL_PORTS,
+        )
+        assert model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Protocol")) == ("None",)
