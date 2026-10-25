@@ -60,6 +60,7 @@ def rc_staging_context() -> tuple[MagicMock, ParameterEditor]:
     """Use real parameter objects and editor APIs; mock only filesystem and FC I/O."""
     controller = MagicMock()
     controller.master.recv_match.return_value = None
+    # pylint: disable=duplicate-code
     controller.fc_parameters = {
         "RCMAP_ROLL": 1.0,
         "RCMAP_PITCH": 2.0,
@@ -68,6 +69,7 @@ def rc_staging_context() -> tuple[MagicMock, ParameterEditor]:
         "FLTMODE_CH": 5.0,
         "ARMING_RUDDER": 2.0,
     }
+    # pylint: enable=duplicate-code
     for channel in range(1, 17):
         for suffix, value in (("MIN", 1000.0), ("MAX", 2000.0), ("TRIM", 1500.0)):
             controller.fc_parameters[f"RC{channel}_{suffix}"] = value
