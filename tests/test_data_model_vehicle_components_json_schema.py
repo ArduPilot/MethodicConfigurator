@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from logging import ERROR
 from typing import Any
 from unittest.mock import patch
 
@@ -314,6 +315,30 @@ class TestVehicleComponentsJsonSchema:
 
         # Assert: MCU Series is not marked as optional
         assert not mcu_series_field.get("x-is-optional", False), "MCU Series should not be marked as optional"
+
+    @pytest.mark.parametrize("optional_states", [(False, False), (True, False, False)])
+    def test_user_can_repeatedly_make_mcu_series_required_without_schema_errors(
+        self,
+        json_schema_instance: VehicleComponentsJsonSchema,
+        caplog: pytest.LogCaptureFixture,
+        optional_states: tuple[bool, ...],
+    ) -> None:
+        """
+        Reapplying a required MCU Series setting preserves the schema without reporting an error.
+
+        GIVEN: A valid MCU Series field, optionally made optional first
+        WHEN: The component editor repeatedly marks the field as required
+        THEN: The optional marker stays absent and the field's description and type remain intact
+        """
+        with caplog.at_level(ERROR):
+            for is_optional in optional_states:
+                json_schema_instance.modify_schema_for_mcu_series(is_optional=is_optional)
+
+        mcu_series_field = json_schema_instance.schema["definitions"]["flightController"]["allOf"][0]["properties"][
+            "Specifications"
+        ]["properties"]["MCU Series"]
+        assert mcu_series_field == {"description": "Microcontroller series", "type": "string"}
+        assert not caplog.records
 
     def test_user_handles_mcu_modification_errors_gracefully(self) -> None:
         """

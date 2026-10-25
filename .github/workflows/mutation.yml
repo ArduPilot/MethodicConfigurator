@@ -17,7 +17,7 @@ jobs:
     # Allow manual runs in forks, but avoid unattended weekly runs there.
     if: github.event_name == 'workflow_dispatch' || !github.event.repository.fork
     runs-on: ${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
-    timeout-minutes: 30
+    timeout-minutes: 240
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -44,20 +44,29 @@ jobs:
       - name: Install dependencies
         run: uv pip install --editable '.[dev,mutation]'
 
-      - name: Verify unmodified pilot tests
+      - name: Verify unmodified selected tests
         shell: bash
         run: |
           mkdir -p .cache/mutation
-          xvfb-run -a python -m pytest -q \
-            tests/unit_battery_cell_voltages.py \
-            tests/test_data_model_parameter_history.py \
-            --junit-xml=.cache/mutation/baseline.xml
+          xvfb-run -a python - <<'PY'
+          import tomllib
 
-      - name: Run mutation pilot
-        timeout-minutes: 20
+          import pytest
+
+          with open("pyproject.toml", "rb") as config_file:
+              config = tomllib.load(config_file)["tool"]["mutmut"]
+          raise SystemExit(pytest.main([
+              *config["pytest_add_cli_args_test_selection"],
+              *config["pytest_add_cli_args"],
+              "--junit-xml=.cache/mutation/baseline.xml",
+          ]))
+          PY
+
+      - name: Run mutation suite
+        timeout-minutes: 230
         shell: bash
         run: |
-          # Survivors are informational during the pilot; execution errors still fail this step.
+          # Survivors are informational; execution errors still fail this step.
           xvfb-run -a mutmut run --max-children 2 | tee .cache/mutation/run.log
 
       - name: Report mutation results
@@ -66,13 +75,24 @@ jobs:
         run: |
           if [ -d mutants ]; then
             mutmut results --all true | tee .cache/mutation/results.txt
-            {
-              echo '### Mutation testing pilot'
-              echo 'Survivors are reported for review; no mutation-score threshold is enforced yet.'
-              echo '```text'
-              cat .cache/mutation/results.txt
-              echo '```'
-            } >> "$GITHUB_STEP_SUMMARY"
+            python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          from collections import Counter, defaultdict
+          from pathlib import Path
+
+          counts = defaultdict(Counter)
+          for line in Path(".cache/mutation/results.txt").read_text().splitlines():
+              mutant, status = line.strip().rsplit(": ", 1)
+              module = mutant.rsplit(".", 1)[0].removeprefix("ardupilot_methodic_configurator.")
+              counts[module][status] += 1
+          statuses = sorted({status for counts_by_status in counts.values() for status in counts_by_status})
+          print("### Mutation testing\n")
+          print("Survivors are reported for review; no mutation-score threshold is enforced yet.\n")
+          print("| Module | " + " | ".join(statuses) + " |")
+          print("| --- | " + " | ".join("---:" for _ in statuses) + " |")
+          for module, counts_by_status in sorted(counts.items()):
+              print(f"| `{module}` | " + " | ".join(str(counts_by_status[status]) for status in statuses) + " |")
+          print("\nDownload the mutation artifact for individual results and execution logs.")
+          PY
           fi
 
       - name: Upload mutation reports

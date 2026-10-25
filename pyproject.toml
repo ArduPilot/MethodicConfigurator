@@ -190,17 +190,100 @@ skip = "*.pdef.xml,*.pdf,*.po"
 
 [tool.mutmut]
 source_paths = ["ardupilot_methodic_configurator/"]
-# Keep the first mutation baseline small and deterministic.
+# Focus on parameter handling, parsing, and calculations with targeted tests.
 only_mutate = [
     "ardupilot_methodic_configurator/battery_cell_voltages.py",
+    "ardupilot_methodic_configurator/data_model_ardupilot_parameter.py",
+    "ardupilot_methodic_configurator/data_model_par_dict.py",
+    "ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py",
+    "ardupilot_methodic_configurator/data_model_vehicle_components_display.py",
+    "ardupilot_methodic_configurator/data_model_vehicle_components_validation.py",
+    "ardupilot_methodic_configurator/data_model_vehicle_components_base.py",
+    "ardupilot_methodic_configurator/data_model_vehicle_components_templates.py",
+    "ardupilot_methodic_configurator/data_model_vehicle_components_import.py",
+    "ardupilot_methodic_configurator/data_model_vehicle_components_json_schema.py",
+    "ardupilot_methodic_configurator/backend_firmware_upload.py",
+    "ardupilot_methodic_configurator/plugins/data_model_motor_test.py",
+    "ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py",
+    "ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py",
+    "ardupilot_methodic_configurator/backend_flightcontroller_connection.py",
+    "ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py",
+    "ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py",
+    "ardupilot_methodic_configurator/log_analysis/data_model_plane_landing.py",
+    "ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py",
+    "ardupilot_methodic_configurator/log_analysis/data_model_firmware_version.py",
     "ardupilot_methodic_configurator/log_analysis/data_model_parameter_history.py",
+    "ardupilot_methodic_configurator/plugins/imu_helpers.py",
+    "ardupilot_methodic_configurator/plugins/data_model_autotune_backoff.py",
+    "ardupilot_methodic_configurator/plugins/data_model_autotune_accel_backoff.py",
+    "ardupilot_methodic_configurator/plugins/data_model_autotune_gain_backoff.py",
+    "ardupilot_methodic_configurator/data_model_firmware_upload.py",
+    "ardupilot_methodic_configurator/log_analysis/backend_log_analysis.py",
+    "ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py",
+    "ardupilot_methodic_configurator/frontend_tkinter_file_browser.py",
+    "ardupilot_methodic_configurator/frontend_tkinter_file_browser_tasks.py",
+    "ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py",
+    "ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py",
+]
+# Keep mutation scope aligned with [report].omit in .coveragerc: these files are
+# generated, synchronized, or maintained in another repository.
+do_not_mutate = [
+    "ardupilot_methodic_configurator/backend_mavftp.py",
+    "ardupilot_methodic_configurator/mavftp_example.py",
+    "ardupilot_methodic_configurator/tempcal_imu.py",
+    "ardupilot_methodic_configurator/data_model_fc_ids.py",
+    "ardupilot_methodic_configurator/configuration_steps_strings.py",
+    "ardupilot_methodic_configurator/vehicle_components.py",
+    "ardupilot_methodic_configurator/decode_devid.py",
 ]
 pytest_add_cli_args_test_selection = [
     "tests/unit_battery_cell_voltages.py",
+    "tests/test_data_model_ardupilot_parameter.py",
+    "tests/test_data_model_par_dict.py",
+    "tests/test_backend_flightcontroller_bootloader.py",
+    "tests/test_bootloader_identity.py",
+    "tests/test_bootloader_partial_read.py",
+    "tests/test_data_model_imu_analysis.py",
+    "tests/test_bus_labels.py",
+    "tests/test_data_model_vehicle_components_display.py",
+    "tests/unit_data_model_vehicle_components_display.py",
+    "tests/test_data_model_vehicle_components_validation.py",
+    "tests/test_data_model_vehicle_components_validation_bdd.py",
+    "tests/unit_data_model_vehicle_components_validation_constants.py",
+    "tests/unit_data_model_vehicle_components_validation.py",
+    "tests/test_data_model_vehicle_components_base.py",
+    "tests/unit_data_model_vehicle_components_base.py",
+    "tests/test_data_model_vehicle_components_templates.py",
+    "tests/test_data_model_vehicle_components_import.py",
+    "tests/unit_data_model_vehicle_components_import.py",
+    "tests/test_data_model_vehicle_components_json_schema.py",
+    "tests/unit_data_model_vehicle_components_json_schema.py",
+    "tests/test_backend_firmware_upload.py",
+    "tests/test_data_model_firmware_upload.py",
+    "tests/plugins/test_data_model_motor_test.py",
+    "tests/test_frontend_tkinter_usage_popup_windows.py",
+    "tests/test_frontend_tkinter_log_analysis.py",
+    "tests/test_backend_flightcontroller_connection.py",
+    "tests/test_frontend_tkinter_fc_banner_window.py",
+    "tests/test_frontend_tkinter_mavlink_inspector.py",
+    "tests/test_data_model_plane_landing.py",
+    "tests/test_data_model_firmware_version.py",
     "tests/test_data_model_parameter_history.py",
+    "tests/plugins/test_imu_helpers.py",
+    "tests/plugins/test_autotune_accel_backoff.py",
+    "tests/plugins/test_autotune_gain_backoff.py",
+    "tests/test_backend_log_analysis.py",
+    "tests/test_backend_fc_diagnostics.py",
+    "tests/test_frontend_tkinter_usage_popup_window.py",
+    "tests/test_frontend_tkinter_file_browser.py",
+    "tests/bdd_frontend_tkinter_file_browser.py",
+    "tests/test_frontend_tkinter_file_browser_tasks.py",
+    "tests/plugins/test_frontend_tkinter_motor_test.py",
+    "tests/test_backend_filesystem_json_with_schema.py",
 ]
-pytest_add_cli_args = ["-q", "-x"]
-also_copy = ["pytest.ini"]
+pytest_add_cli_args = ["-q", "-x", "-p", "tests.plugins.conftest"]
+# The AutoTune tests verify helicopter-stage guidance as well as package data.
+also_copy = ["pytest.ini", "TUNING_GUIDE_Heli.md", "tests", "ardupilot_methodic_configurator_command_line_completion.psm1"]
 process_isolation = "forkserver"
 
 [tool.ruff]

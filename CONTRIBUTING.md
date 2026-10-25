@@ -86,9 +86,14 @@ SITL_BINARY="$PWD/sitl/arducopter" PATH="$PWD/.venv/bin:$PATH" \
 
 ### Mutation testing
 
-The optional [Mutmut](https://mutmut.readthedocs.io/en/latest/) pilot checks whether
-existing tests detect small changes to battery voltage calculations and parameter
-history queries. It runs on Linux, macOS, or Windows through WSL.
+The optional [Mutmut](https://mutmut.readthedocs.io/en/latest/) suite checks whether
+existing tests detect small changes to thirty-two modules covering battery voltages,
+parameter validation and serialization, firmware version parsing, parameter
+history, AutoTune acceleration/gain backoff, IMU helpers, firmware upload,
+log-analysis orchestration, usage popups, file browsing and task scheduling, motor-test UI,
+bootloader protocol handling, schema-validated filesystem IO, IMU log analysis,
+and vehicle-component validation/display. It runs on Linux, macOS, or Windows
+through WSL.
 
 Install it into the project virtual environment:
 
@@ -96,12 +101,11 @@ Install it into the project virtual environment:
 uv pip install --python .venv/bin/python --editable '.[dev,mutation]'
 ```
 
-Run the unmodified tests first, then start the mutation pilot. Xvfb is needed on
-Linux because the shared test fixtures import PyAutoGUI during collection:
+Mutmut verifies the configured tests against unmodified behavior before testing
+mutations. Xvfb is needed on Linux because the shared test fixtures import
+PyAutoGUI during collection:
 
 ```bash
-PATH="$PWD/.venv/bin:$PATH" xvfb-run -a python -m pytest -q \
-  tests/unit_battery_cell_voltages.py tests/test_data_model_parameter_history.py
 PATH="$PWD/.venv/bin:$PATH" xvfb-run -a mutmut run --max-children 2
 .venv/bin/mutmut results --all true
 .venv/bin/mutmut browse
@@ -111,8 +115,18 @@ On macOS, run `mutmut run --max-children 2` with the virtual environment activat
 and a working desktop display, without `xvfb-run`.
 
 The `[tool.mutmut]` section in `pyproject.toml` selects both the modules to mutate
-and the tests to run. Update those lists together when expanding the pilot, and
-keep the clean-test command in `.github/workflows/mutation.yml` in sync.
+and the tests to run. Update those lists together when expanding the suite.
+Include the module's existing behavior, BDD, and unit tests when auditing the
+selection. A "no tests" result can indicate an omitted test file or missing
+association rather than missing tests in the repository.
+Its `do_not_mutate` list mirrors `[report].omit` in `.coveragerc`, keeping generated
+and externally maintained files out of mutation runs.
+CI reads the same configuration for its separate clean-test run, so new test
+selections do not need to be duplicated in the workflow.
+Add repository resources and test helpers used by selected tests to `also_copy`;
+the AutoTune tests need `TUNING_GUIDE_Heli.md`, component-model tests need the
+`tests/` directory for shared fixtures, and MAVLink inspector tests need the
+PowerShell completion module copied into Mutmut's test tree.
 Generated copies and results are stored in the ignored `mutants/` directory;
 Mutmut resumes previous work there. For a fresh baseline, remove that generated
 directory first, especially after changing tests or dependencies. Run from the
@@ -121,7 +135,9 @@ repository root so that Mutmut reads its configuration.
 The [mutation workflow](.github/workflows/mutation.yml) runs manually or weekly on
 Ubuntu with Python 3.11. It uploads results without enforcing a mutation score;
 clean-test failures and execution errors still fail the job. Scheduled runs are
-disabled in forks. The existing coverage gate remains independent.
+disabled in forks. The job summary groups all mutation outcomes by module; the
+artifact retains individual results and execution logs. The existing coverage
+gate remains independent.
 
 For surviving mutations, inspect the diff with `mutmut show <mutant-name>` and add
 assertions for observable behavior. Some mutations are equivalent; review those
@@ -129,7 +145,7 @@ individually rather than adding broad suppressions. Mutmut 3 primarily mutates
 function bodies, so explicit tests are still needed for module-level constants.
 Timeouts, missing test associations, and execution errors need separate review.
 Type-check filtering and coverage-only filtering are intentionally disabled for
-the initial baseline.
+the mutation suite.
 
 ### Optional local code graph
 
