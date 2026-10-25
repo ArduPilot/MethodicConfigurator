@@ -3219,3 +3219,215 @@ class TestEscConnectionTransitions:
         assert esc_model.get_combobox_values_for_path(("ESC", "FC->ESC Connection", "Protocol")) == ("None",)
         assert esc_model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Type")) == ("None",)
         assert esc_model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Protocol")) == ("None",)
+
+
+class TestNumericValidationFeedback:
+    """Users receive precise numeric guidance and corrections when validating component data."""
+
+    RANGE_CASES = (
+        pytest.param(
+            ("Frame", "Specifications", "TOW min Kg"), ("Takeoff Weight", "float", 0.01, 600), id="minimum-takeoff-weight"
+        ),
+        pytest.param(
+            ("Frame", "Specifications", "TOW max Kg"), ("Takeoff Weight", "float", 0.01, 600), id="maximum-takeoff-weight"
+        ),
+        pytest.param(("Battery", "Specifications", "Number of cells"), ("Nr of cells", "int", 1, 50), id="battery-cell-count"),
+        pytest.param(
+            ("Battery", "Specifications", "Capacity mAh"), ("mAh capacity", "int", 100, 1000000), id="battery-capacity"
+        ),
+        pytest.param(("Motors", "Specifications", "Poles"), ("Motor Poles", "int", 2, 100), id="motor-poles"),
+        pytest.param(
+            ("Propellers", "Specifications", "Diameter_inches"),
+            ("Propeller Diameter", "float", 0.3, 400),
+            id="propeller-diameter",
+        ),
+    )
+
+    @pytest.fixture
+    def numeric_model(self) -> ComponentDataModelValidation:
+        """Provide valid takeoff-weight endpoints so each numeric field can be checked independently."""
+        model = ComponentDataModelFixtures.create_basic_model(ComponentDataModelValidation)
+        model.set_component_value(("Frame", "Specifications", "TOW min Kg"), 0.01)
+        model.set_component_value(("Frame", "Specifications", "TOW max Kg"), 600.0)
+        return model
+
+    @pytest.mark.parametrize(("path", "details"), RANGE_CASES)
+    @pytest.mark.parametrize("upper", [False, True], ids=["lower-bound", "upper-bound"])
+    def test_user_can_enter_each_inclusive_numeric_boundary(
+        self,
+        numeric_model: ComponentDataModelValidation,
+        path: tuple[str, str, str],
+        details: tuple[str, str, float, float],
+        upper: bool,
+    ) -> None:
+        """
+        Values at the documented limits do not require correction.
+
+        GIVEN: A component field with a supported numeric range
+        WHEN: The user enters its exact lower or upper bound
+        THEN: Validation accepts it without an error or replacement value
+        """
+        boundary = details[3] if upper else details[2]
+
+        assert numeric_model.validate_entry_limits(str(boundary), path) == ("", None)
+
+    @pytest.mark.parametrize(("path", "details"), RANGE_CASES)
+    @pytest.mark.parametrize("upper", [False, True], ids=["below-range", "above-range"])
+    def test_user_sees_the_numeric_range_and_receives_the_nearest_allowed_value(
+        self,
+        numeric_model: ComponentDataModelValidation,
+        path: tuple[str, str, str],
+        details: tuple[str, str, float, float],
+        upper: bool,
+    ) -> None:
+        """
+        Range errors explain the expected type and limits and clamp to the nearest endpoint.
+
+        GIVEN: A valid project and a value outside a component field's numeric range
+        WHEN: The user previews the validation result and then validates the project data
+        THEN: The preview leaves data unchanged and batch validation applies the advertised correction
+        """
+        label, type_name, minimum, maximum = details
+        boundary = maximum if upper else minimum
+        entered = str(boundary + 1 if upper else boundary - 1)
+        expected_error = f"{label} must be a {type_name} between {minimum} and {maximum}"
+        previous = numeric_model.get_component_value(path)
+
+        error, correction = numeric_model.validate_entry_limits(entered, path)
+
+        assert error == expected_error
+        assert correction == boundary
+        assert numeric_model.get_component_value(path) == previous
+
+        assert numeric_model.validate_all_data({path: entered}) == (False, [expected_error])
+        assert numeric_model.get_component_value(path) == boundary
+        assert numeric_model.validate_entry_limits(str(boundary), path) == ("", None)
+
+    @pytest.mark.parametrize(("path", "details"), RANGE_CASES)
+    def test_user_sees_the_field_and_required_type_when_a_number_cannot_be_parsed(
+        self, numeric_model: ComponentDataModelValidation, path: tuple[str, str, str], details: tuple[str, str, float, float]
+    ) -> None:
+        """
+        Conversion failures identify the field without replacing its existing value.
+
+        GIVEN: A component field with an integer or floating-point requirement
+        WHEN: The user enters text that cannot be converted to that type
+        THEN: Both validation APIs report the field and type and preserve the existing data
+        """
+        label, type_name, _, _ = details
+        expected_error = f"Invalid {type_name} value for {label}"
+        previous = numeric_model.get_component_value(path)
+
+        assert numeric_model.validate_entry_limits("not-a-number", path) == (expected_error, None)
+        assert numeric_model.validate_all_data({path: "not-a-number"}) == (False, [expected_error])
+        assert numeric_model.get_component_value(path) == previous
+
+    @pytest.mark.parametrize(
+        ("field", "entered", "expected"),
+        [
+            ("TOW max Kg", "2.5", ("is below the TOW min Kg of 3.5", 3.51)),
+            ("TOW min Kg", "8.0", ("is above the TOW max Kg of 7.25", 7.24)),
+        ],
+    )
+    def test_user_receives_a_takeoff_weight_correction_one_hundredth_beyond_the_other_endpoint(
+        self, numeric_model: ComponentDataModelValidation, field: str, entered: str, expected: tuple[str, float]
+    ) -> None:
+        """
+        Cross-field errors explain the opposing weight and suggest a correction 0.01 kg beyond it.
+
+        GIVEN: Minimum and maximum takeoff weights of 3.5 kg and 7.25 kg
+        WHEN: The user enters a maximum below the minimum or a minimum above the maximum
+        THEN: The correct opposing field and value appear and only the edited endpoint is corrected
+        """
+        minimum_path = ("Frame", "Specifications", "TOW min Kg")
+        maximum_path = ("Frame", "Specifications", "TOW max Kg")
+        numeric_model.set_component_value(minimum_path, 3.5)
+        numeric_model.set_component_value(maximum_path, 7.25)
+        path = ("Frame", "Specifications", field)
+        other_path = maximum_path if field == "TOW min Kg" else minimum_path
+        other_value = numeric_model.get_component_value(other_path)
+
+        error, correction = numeric_model.validate_entry_limits(entered, path)
+
+        assert error == expected[0]
+        assert correction == pytest.approx(expected[1])
+
+        assert numeric_model.validate_all_data({path: entered}) == (False, [expected[0]])
+        assert numeric_model.get_component_value(path) == pytest.approx(expected[1])
+        assert numeric_model.get_component_value(other_path) == other_value
+        assert numeric_model.validate_entry_limits(str(numeric_model.get_component_value(path)), path) == ("", None)
+
+    @pytest.mark.parametrize("edit", [("TOW min Kg", "TOW max Kg"), ("TOW max Kg", "TOW min Kg")])
+    @pytest.mark.parametrize(
+        "bad_limit",
+        [
+            ({"unexpected": "weight"}, "is not a float nor string"),
+            ("unknown-weight", "is not convertible to float"),
+        ],
+    )
+    def test_user_sees_which_related_weight_is_malformed_without_losing_project_data(
+        self,
+        edit: tuple[str, str],
+        bad_limit: tuple[str | dict[str, str], str],
+    ) -> None:
+        """
+        A malformed related weight is identified without inventing a numeric correction.
+
+        GIVEN: A loaded related takeoff weight with an invalid type or nonnumeric text
+        WHEN: The user validates a numeric value for the other endpoint
+        THEN: The malformed field is named and neither endpoint is overwritten
+        """
+        field, related_field = edit
+        related_value, explanation = bad_limit
+        path = ("Frame", "Specifications", field)
+        related_path = ("Frame", "Specifications", related_field)
+        model = ComponentDataModelFixtures.create_basic_model(
+            ComponentDataModelValidation,
+            data={
+                "Format version": 1,
+                "Components": {"Frame": {"Specifications": {field: 5.0, related_field: related_value}}},
+            },
+        )
+        previous = model.get_component_value(path)
+        expected_error = f"{related_field} {explanation}"
+
+        assert model.validate_entry_limits("5.0", path) == (expected_error, None)
+        assert model.validate_all_data({path: "5.0"}) == (False, [expected_error])
+        assert model.get_component_value(path) == previous
+        assert model.get_component_value(related_path) == related_value
+
+    @pytest.mark.parametrize(
+        ("field", "entered", "expected"),
+        [
+            ("Volt per cell max", "3.7", ("is below the Volt per cell arm of 3.8", 3.81)),
+            ("Volt per cell min", "3.7", ("is above the Volt per cell low of 3.6", 3.59)),
+        ],
+    )
+    def test_user_gets_battery_voltage_constraints_through_the_general_numeric_entry_api(
+        self, numeric_model: ComponentDataModelValidation, field: str, entered: str, expected: tuple[str, float]
+    ) -> None:
+        """
+        The general entry validator retains the battery-specific cross-field rules.
+
+        GIVEN: Valid LiPo cell-voltage thresholds
+        WHEN: The user enters a maximum below arming voltage or a minimum above low voltage
+        THEN: Entry and batch validation report the related threshold and provide the same correction
+        """
+        numeric_model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+        for setting, voltage in (
+            ("Volt per cell max", 4.1),
+            ("Volt per cell arm", 3.8),
+            ("Volt per cell low", 3.6),
+            ("Volt per cell crit", 3.3),
+            ("Volt per cell min", 3.2),
+        ):
+            numeric_model.set_component_value(("Battery", "Specifications", setting), voltage)
+        path = ("Battery", "Specifications", field)
+
+        error, correction = numeric_model.validate_entry_limits(entered, path)
+
+        assert error == expected[0]
+        assert correction == pytest.approx(expected[1])
+        assert numeric_model.validate_all_data({path: entered}) == (False, [expected[0]])
+        assert numeric_model.get_component_value(path) == pytest.approx(expected[1])
+        assert numeric_model.validate_entry_limits(str(numeric_model.get_component_value(path)), path) == ("", None)
