@@ -746,7 +746,7 @@ def _message_values(
     msg: Any,  # noqa: ANN401
     schema: data_model_log_data.MessageSchema,
     payload: dict[str, Any],
-    field_info: Mapping[str, Any],
+    message_dtype: np.dtype[Any],
 ) -> list[Any]:
     """Convert one decoded message into values compatible with its structured-array schema."""
     values: list[Any] = []
@@ -761,13 +761,13 @@ def _message_values(
             multiplier = schema.multipliers[field_index]
             if multiplier is not None:
                 value *= multiplier
-        if field_info[field_name][0].kind == "S" and isinstance(value, str):
+        if message_dtype[field_name].kind == "S" and isinstance(value, str):
             value = value.encode("ascii", "ignore")
         values.append(value)
     return values
 
 
-def _fill_message_arrays(  # pylint: disable=too-many-locals
+def _fill_message_arrays(
     mlog: mavutil.mavfile,
     log_data: data_model_log_data.LogData,
     progress_reporter: _ProgressReporter | None = None,
@@ -806,12 +806,11 @@ def _fill_message_arrays(  # pylint: disable=too-many-locals
         payload = msg.to_dict()
         _validate_message_fields(schema, payload)
 
-        field_info = array.dtype.fields
-        if field_info is None:
+        if array.dtype.fields is None:
             error_message = _("Structured array for {message_type} is missing field metadata").format(message_type=msg_type)
             raise ValueError(error_message)
 
-        array[index] = tuple(_message_values(msg, schema, payload, field_info))
+        array[index] = tuple(_message_values(msg, schema, payload, array.dtype))
         write_positions[msg_type] = index + 1
 
     if progress_reporter is not None:

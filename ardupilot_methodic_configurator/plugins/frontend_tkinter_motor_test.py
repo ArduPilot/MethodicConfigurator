@@ -902,7 +902,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             self._timer_id = None
         for sequence, binding_id in self._keyboard_bindings:
             with suppress(tk.TclError):
-                # Python before 3.11.8 clears all handlers even when unbind receives a callback ID.
+                # Python < 3.11.8 and Python 3.12.0 clear all handlers even when unbind receives a callback ID.
                 scripts = self.root_window.bind(sequence).splitlines()
                 remaining = "\n".join(line for line in scripts if not line.startswith(f'if {{"[{binding_id} ')).strip("\n")
                 self.root_window.bind(sequence, remaining + "\n" if remaining else "")

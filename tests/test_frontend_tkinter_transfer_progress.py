@@ -596,7 +596,7 @@ def test_outgoing_motor_buttons_and_shortcuts_cannot_interrupt_configured_upload
             observations["outgoing_exists"] = bool(view.winfo_exists())
             observations["timer_cancelled"] = view._timer_id is None  # pylint: disable=protected-access
             observations["shortcuts_removed"] = all(
-                not root.tk.call("info", "commands", binding_id) for _sequence, binding_id, _previous in bindings
+                not root.tk.call("info", "commands", binding_id) for _sequence, binding_id in bindings
             )
             observations["single"] = list(model.single_motor_calls)
             observations["all"] = model.all_motor_runs

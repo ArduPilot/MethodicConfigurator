@@ -20,7 +20,7 @@ from collections.abc import Callable
 from copy import deepcopy
 from csv import writer as csv_writer
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from logging import error as logging_error
 from logging import exception as logging_exception
@@ -2012,7 +2012,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 raise FileNotFoundError(msg)
 
             # Generate zip filename with UTC timestamp
-            now_utc = datetime.now(timezone.utc)
+            now_utc = datetime.now(UTC)
             timestamp = now_utc.strftime("%Y%m%d_%H%M%S")
             vehicle_name = vehicle_dir.name
             zip_filename = f"{vehicle_name}_{timestamp}UTC.zip"
@@ -2440,7 +2440,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                     added.append(param_name)
                 else:
                     skipped.append(param_name)
-            except (InvalidParameterNameError, OperationNotPossibleError):  # noqa: PERF203
+            except (InvalidParameterNameError, OperationNotPossibleError):
                 failed.append(param_name)
 
         return added, skipped, failed

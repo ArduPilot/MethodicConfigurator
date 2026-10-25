@@ -65,7 +65,7 @@ def gather_translatable_strings(templates_dir: str) -> list[str]:
                 data = json.load(f)
                 keys = extract_keys_recursively(data)
                 all_keys.update(keys)
-        except json.JSONDecodeError as e:  # noqa: PERF203
+        except json.JSONDecodeError as e:
             logger.error("Error parsing %s: %s", json_file, e)
         except Exception as e:  # pylint: disable=broad-exception-caught
             logger.error("Error processing %s: %s", json_file, e)

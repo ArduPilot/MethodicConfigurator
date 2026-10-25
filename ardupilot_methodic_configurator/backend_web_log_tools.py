@@ -103,7 +103,7 @@ class _BrowserSession:
                 try:
                     driver.switch_to.window(handle)
                     return True
-                except NoSuchWindowException:  # noqa: PERF203 - each remote switch can race with tab closure
+                except NoSuchWindowException:
                     # A tab can close between enumeration and switching.
                     continue
         except (InvalidSessionIdException, NoSuchWindowException):

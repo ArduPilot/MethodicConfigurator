@@ -15,7 +15,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import re
 from collections.abc import Iterator, Mapping
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from types import MethodType, SimpleNamespace
 from typing import Any, cast
@@ -597,7 +597,7 @@ class TestZipVehicleForForumHelpFilenameFormat:
                 "02_second_step.param": {},
             },
         )
-        before_creation = datetime.now(timezone.utc)
+        before_creation = datetime.now(UTC)
 
         # Act: Create zip file
         zip_path = create_forum_help_zip(parameter_editor)
@@ -608,7 +608,7 @@ class TestZipVehicleForForumHelpFilenameFormat:
         assert match is not None, f"Could not extract timestamp from {zip_path.name}"
 
         date_str, time_str = match.groups()
-        file_datetime = datetime.strptime(f"{date_str}{time_str}", "%Y%m%d%H%M%S").replace(tzinfo=timezone.utc)
+        file_datetime = datetime.strptime(f"{date_str}{time_str}", "%Y%m%d%H%M%S").replace(tzinfo=UTC)
 
         # Verify timestamp is within reasonable range (second precision, allowing up to 2 minutes difference)
         time_diff_seconds = abs((file_datetime - before_creation).total_seconds())

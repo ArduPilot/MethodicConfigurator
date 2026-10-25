@@ -998,7 +998,7 @@ class TestMotorTestView:  # pylint: disable=too-many-public-methods
         motor_view._setup_keyboard_shortcuts()
         later_id = motor_view.root_window.bind("<Control-s>", lambda _event: "break", add="+")
         if legacy_unbind:
-            # Reproduce Python 3.11.0-3.11.7 clearing every handler, even with a callback ID.
+            # Reproduce Python 3.11.0-3.11.7 and 3.12.0 clearing every handler, even with a callback ID.
             mocker.patch.object(
                 motor_view.root_window,
                 "unbind",

@@ -92,7 +92,7 @@ class TkThreadCallbacks:
             for callback, (current, total) in progress.items():
                 try:
                     callback(current, total)
-                except Exception as error:  # noqa: PERF203 # pylint: disable=broad-exception-caught
+                except Exception as error:  # pylint: disable=broad-exception-caught
                     # A paint failure must not strand a dialog or the task's completion.
                     logging_error(_("Updating progress widgets: {_e}").format(_e=error))
             try:

@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 import pytest
@@ -137,8 +137,8 @@ def test_display_history_is_newest_first_with_local_arrival_times(
     # Arrange: Use the real MAVLink parser while controlling only the arrival clock.
     connection, enqueue = diagnostics_connection
     received_times = [
-        datetime(2026, 10, 13, 12, 34, 56, tzinfo=timezone.utc),
-        datetime(2026, 10, 13, 12, 34, 58, tzinfo=timezone.utc),
+        datetime(2026, 10, 13, 12, 34, 56, tzinfo=UTC),
+        datetime(2026, 10, 13, 12, 34, 58, tzinfo=UTC),
     ]
 
     # Act: Parse each packet separately so each completed message receives its own timestamp.

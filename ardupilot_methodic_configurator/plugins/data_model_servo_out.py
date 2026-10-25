@@ -10,7 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from collections.abc import Mapping
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -44,7 +44,7 @@ def _as_mapping(value: object) -> Mapping[str, object]:
     return value if isinstance(value, Mapping) else {}
 
 
-class ServoOutRecommendationStatus(str, Enum):
+class ServoOutRecommendationStatus(StrEnum):
     """Semantic outcome of a servo-output recommendation or apply operation."""
 
     RECOMMENDATIONS_AVAILABLE = "recommendations_available"

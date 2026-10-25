@@ -17,7 +17,7 @@ import subprocess
 import sys
 import tkinter as tk
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import partial
 from pathlib import Path
 from tkinter import filedialog, simpledialog, ttk
@@ -634,7 +634,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         if timestamp <= 0:
             return "-"
         try:
-            return datetime.fromtimestamp(timestamp, tz=timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M")
+            return datetime.fromtimestamp(timestamp, tz=UTC).astimezone().strftime("%Y-%m-%d %H:%M")
         except (OverflowError, OSError, ValueError):
             return "-"
 
