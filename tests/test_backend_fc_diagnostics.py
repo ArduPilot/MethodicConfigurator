@@ -61,6 +61,24 @@ def test_opening_diagnostics_receives_queued_messages_without_another_fc_operati
     assert connection.poll_status_text() == ["New critical diagnostic"]
 
 
+def test_diagnostics_poll_reads_without_blocking(
+    diagnostics_connection: tuple[FlightControllerConnection, Callable[..., None]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """GIVEN an idle diagnostics poll, WHEN it reads MAVLink, THEN the read never blocks."""
+    connection, _enqueue = diagnostics_connection
+    received_blocking_arguments: list[bool] = []
+
+    def receive(*, blocking: bool) -> None:
+        received_blocking_arguments.append(blocking)
+
+    assert connection.master is not None
+    monkeypatch.setattr(connection.master, "recv_match", receive)
+
+    assert connection.poll_status_text() == []
+    assert received_blocking_arguments == [False]
+
+
 def test_other_vehicles_and_components_cannot_displace_the_selected_controllers_diagnostics(
     diagnostics_connection: tuple[FlightControllerConnection, Callable[..., None]],
 ) -> None:

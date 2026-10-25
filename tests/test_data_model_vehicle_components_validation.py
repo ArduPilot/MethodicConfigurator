@@ -47,6 +47,20 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         """Create a realistic vehicle data model based on the JSON file."""
         return ComponentDataModelFixtures.create_realistic_model(ComponentDataModelValidation)
 
+    @pytest.fixture
+    def battery_voltage_model(self, realistic_model: ComponentDataModelValidation) -> ComponentDataModelValidation:
+        """Provide independent LiPo voltage settings within the chemistry limits."""
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+        for setting, voltage in (
+            ("Volt per cell max", 4.0),
+            ("Volt per cell arm", 3.8),
+            ("Volt per cell low", 3.6),
+            ("Volt per cell crit", 3.3),
+            ("Volt per cell min", 3.2),
+        ):
+            realistic_model.set_component_value(("Battery", "Specifications", setting), voltage)
+        return realistic_model
+
     # Update the sample_doc_dict fixture to use the common one
     @pytest.fixture
     def sample_doc_dict(self) -> dict:
@@ -470,6 +484,72 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         error_msg, corrected_value = model.validate_cell_voltage("3.7", ("Battery", "Specifications", "Volt per cell crit"))
         assert error_msg != ""
         assert corrected_value is not None
+
+    @pytest.mark.parametrize(
+        ("field", "value", "limit_field", "expected_correction"),
+        [
+            ("Volt per cell max", "3.7", "Volt per cell arm", 3.81),
+            ("Volt per cell arm", "4.1", "Volt per cell max", 3.99),
+            ("Volt per cell arm", "3.5", "Volt per cell low", 3.61),
+            ("Volt per cell low", "3.9", "Volt per cell arm", 3.79),
+            ("Volt per cell low", "3.2", "Volt per cell crit", 3.31),
+            ("Volt per cell crit", "3.7", "Volt per cell low", 3.59),
+            ("Volt per cell min", "3.7", "Volt per cell low", 3.59),
+        ],
+    )
+    def test_user_receives_and_stores_cell_voltage_correction_near_the_conflicting_limit(
+        self,
+        battery_voltage_model: ComponentDataModelValidation,
+        field: str,
+        value: str,
+        limit_field: str,
+        expected_correction: float,
+    ) -> None:
+        """
+        Invalid voltage relationships produce a correction 0.01 V beyond the conflicting limit.
+
+        GIVEN: LiPo voltage limits within the chemistry's supported range
+        WHEN: The user submits a voltage on the wrong side of another voltage setting
+        THEN: Validation identifies that setting and stores the nearby corrected voltage
+        """
+        model = battery_voltage_model
+        path = ("Battery", "Specifications", field)
+
+        is_valid, errors = model.validate_all_data({path: value})
+
+        assert is_valid is False
+        assert len(errors) == 1
+        assert limit_field in errors[0]
+        assert model.get_component_value(path) == pytest.approx(expected_correction)
+
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("Volt per cell max", "3.8"),
+            ("Volt per cell arm", "4.0"),
+            ("Volt per cell arm", "3.6"),
+            ("Volt per cell low", "3.8"),
+            ("Volt per cell low", "3.3"),
+            ("Volt per cell crit", "3.6"),
+            ("Volt per cell min", "3.6"),
+        ],
+    )
+    def test_user_can_enter_cell_voltage_equal_to_a_related_limit(
+        self, battery_voltage_model: ComponentDataModelValidation, field: str, value: str
+    ) -> None:
+        """
+        Voltage relationship boundaries are inclusive.
+
+        GIVEN: LiPo maximum, arming, low and critical voltages of 4.0, 3.8, 3.6 and 3.3 V
+        WHEN: The user enters a voltage equal to its related upper or lower limit
+        THEN: Validation accepts it without proposing a correction
+        """
+        model = battery_voltage_model
+
+        error, correction = model.validate_entry_limits(value, ("Battery", "Specifications", field))
+
+        assert error == ""
+        assert correction is None
 
     def test_validate_cell_voltage_chemistry_limits(self, realistic_model) -> None:
         """

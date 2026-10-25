@@ -1435,10 +1435,13 @@ class TestFlightControllerConnectionBannerMethods:
         with (
             patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.time_time", side_effect=[0, 0, 2]),
             patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.time_sleep"),
+            patch.object(master, "recv_match", wraps=master.recv_match) as recv_match,
         ):
             banner = connection._receive_banner_text()
         assert banner == ["ArduCopter V4.5.0", "ChibiOS: abc1234"]
         assert connection.status_text_buffer == []
+        assert recv_match.call_count > 0
+        assert all(call.kwargs.get("blocking") is False for call in recv_match.call_args_list)
 
     def test_receive_banner_text_returns_empty_list_without_master(self) -> None:
         """
