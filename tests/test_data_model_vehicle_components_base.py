@@ -18,6 +18,7 @@ from unittest.mock import MagicMock, Mock
 import pytest
 from test_data_model_vehicle_components_common import BasicTestMixin, ComponentDataModelFixtures, RealisticDataTestMixin
 
+from ardupilot_methodic_configurator import __version__
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.battery_cell_voltages import BatteryCell
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
@@ -2024,3 +2025,247 @@ class TestSchemaDrivenComponentValues:
         assert len(caplog.records) == 1
         assert caplog.records[0].levelno == WARNING
         assert caplog.records[0].getMessage().startswith(f"Failed to cast value '{entered}' to {type_name} for path {path}: ")
+
+
+class TestSavedComponentStructure:
+    """Loading saved projects supplies defaults and preserves data in a predictable presentation order."""
+
+    @staticmethod
+    def load_project(data: ComponentData) -> ComponentDataModelBase:
+        """Load caller-owned project data through the real public initialization workflow."""
+        schema = ComponentDataModelFixtures.create_schema()
+        model = ComponentDataModelBase(data, schema.get_all_value_datatypes(), schema)
+        model.post_init({})
+        return model
+
+    def test_user_opens_a_sparse_project_with_the_complete_default_structure(self) -> None:
+        """
+        Missing project sections receive the documented neutral defaults.
+
+        GIVEN: A saved project containing only an empty Components mapping
+        WHEN: The user opens the project
+        THEN: Format, program, controller, frame and battery defaults have their exact names and values
+        """
+        data: ComponentData = {"Components": {}}
+
+        model = self.load_project(data)
+        loaded = model.get_component_data()
+
+        assert set(loaded) == {"Format version", "Program version", "Components"}
+        assert loaded["Format version"] == 1
+        assert loaded["Program version"] == __version__
+        components = loaded["Components"]
+        assert tuple(components) == ("Flight Controller", "Frame", "Battery")
+        assert components["Flight Controller"] == {
+            "Product": {},
+            "Firmware": {},
+            "Specifications": {"MCU Series": "Unknown"},
+            "Notes": "",
+        }
+        assert components["Frame"] == {"Specifications": {"TOW min Kg": 1, "TOW max Kg": 1, "Frame class": "Undefined"}}
+        assert components["Battery"]["Specifications"]["Capacity mAh"] == 0
+        assert components["Battery"]["Specifications"]["Chemistry"] == "Lipo"
+        assert data == {"Components": {}}
+
+    def test_user_keeps_saved_values_and_extensions_when_defaults_are_merged(self) -> None:
+        """
+        Loading fills gaps without replacing explicit values or editing caller-owned data.
+
+        GIVEN: A project with saved values, nested extensions and an older program version
+        WHEN: The user opens the project
+        THEN: Only missing defaults and the current program version are supplied
+        """
+        data: ComponentData = {
+            "Format version": 7,
+            "Program version": "older-program-version",
+            "Project notes": {"Owner": "Flight team"},
+            "Components": {
+                "Frame": {
+                    "Specifications": {"TOW min Kg": 0, "TOW max Kg": 12.5, "Frame class": "Hexa", "Arms": 6},
+                    "Notes": "Custom airframe",
+                },
+                "Flight Controller": {
+                    "Product": {"Model": "Cube Orange"},
+                    "Firmware": {"Version": "4.6.2"},
+                    "Specifications": {"MCU Series": "STM32H7", "Storage": {"Size MB": 32}},
+                    "Notes": "Keep this note",
+                },
+                "Battery": {"Specifications": {"Chemistry": "Lipo", "Capacity mAh": 6200, "Voltage max": 4.15}},
+            },
+        }
+        original = deepcopy(data)
+
+        model = self.load_project(data)
+        loaded = model.get_component_data()
+
+        assert loaded == {**original, "Program version": __version__}
+        assert data == original
+        before_reopening = deepcopy(loaded)
+        model.post_init({})
+        assert model.get_component_data() == before_reopening
+        assert data == original
+
+    def test_user_sees_every_standard_component_in_order_before_custom_components(self) -> None:
+        """
+        The complete component sequence is stable regardless of its saved ordering.
+
+        GIVEN: All standard components in reverse order interspersed with custom components
+        WHEN: The user opens the project and opens it again
+        THEN: Standard components follow the presentation sequence and custom data keeps its relative order
+        """
+        expected = (
+            "Flight Controller",
+            "Frame",
+            "Battery Monitor",
+            "Battery",
+            "ESC",
+            "Motors",
+            "Propellers",
+            "GNSS Receiver",
+            "RC Controller",
+            "RC Transmitter",
+            "RC Receiver",
+            "Telemetry",
+        )
+        components: ComponentData = {"Custom Camera": {"Notes": "Nadir", "Calibration": {"Offset": 0.125}}}
+        for name in reversed(expected):
+            components[name] = {"Notes": f"Saved {name}", "Installation": {"Label": name}}
+        components["Custom Sensor"] = {"Notes": "Payload", "Calibration": {"Offset": -0.25}}
+        data: ComponentData = {"Components": components}
+        original = deepcopy(data)
+
+        model = self.load_project(data)
+
+        for _ in range(2):
+            actual = model.get_component_data()["Components"]
+            assert tuple(actual) == (*expected, "Custom Camera", "Custom Sensor")
+            for name in expected:
+                assert actual[name]["Installation"] == {"Label": name}
+                assert actual[name]["Notes"] == f"Saved {name}"
+                assert tuple(actual[name])[-1] == "Notes"
+            for name in ("Custom Camera", "Custom Sensor"):
+                assert actual[name] == original["Components"][name]
+                assert tuple(actual[name]) == ("Calibration", "Notes")
+            model.post_init({})
+        assert data == original
+
+    @pytest.mark.parametrize("identity_fields", [(), ("Manufacturer",), ("Model",), ("Manufacturer", "Model")])
+    def test_user_sees_product_identity_before_version_url_and_custom_fields(self, identity_fields: tuple[str, ...]) -> None:
+        """
+        Complete version and URL metadata receives a canonical order without losing extensions.
+
+        GIVEN: A product with shuffled fields, optional identity fields and custom metadata
+        WHEN: The user opens the saved project
+        THEN: Identity, version and URL precede custom fields while all values and notes survive
+        """
+        product: ComponentData = {"Serial": "SN-42", "URL": "https://example.org/motor", "Version": "2.1"}
+        for field in reversed(identity_fields):
+            product[field] = f"Saved {field}"
+        product["Calibration"] = {"Offset": 0.125}
+        data: ComponentData = {"Components": {"Motors": {"Notes": "Clockwise", "Product": product, "Quantity": 4}}}
+        original = deepcopy(data)
+
+        model = self.load_project(data)
+        motor = model.get_component_data()["Components"]["Motors"]
+
+        assert tuple(motor["Product"]) == (*identity_fields, "Version", "URL", "Serial", "Calibration")
+        assert motor["Product"] == product
+        assert tuple(motor) == ("Product", "Quantity", "Notes")
+        assert motor["Notes"] == "Clockwise"
+        assert motor["Quantity"] == 4
+        assert data == original
+
+    @pytest.mark.parametrize("metadata", [{"Version": "2.1"}, {"URL": "https://example.org/motor"}, {}])
+    def test_user_keeps_partial_product_metadata_in_its_saved_order(self, metadata: ComponentData) -> None:
+        """
+        A product without both version and URL keeps its existing field order.
+
+        GIVEN: A custom-first product missing version, URL or both
+        WHEN: The user opens the saved project
+        THEN: Its contents and order are preserved without introducing absent fields
+        """
+        product = {"Serial": "SN-42", **metadata, "Manufacturer": "Motor supplier", "Model": "M4"}
+        data: ComponentData = {"Components": {"Motors": {"Product": product}}}
+
+        model = self.load_project(data)
+        actual = model.get_component_data()["Components"]["Motors"]["Product"]
+
+        assert actual == product
+        assert tuple(actual) == tuple(product)
+        assert data == {"Components": {"Motors": {"Product": product}}}
+
+    @pytest.mark.parametrize("has_telemetry", [False, True])
+    def test_user_migrates_legacy_esc_connections_without_duplicate_components(self, has_telemetry: bool) -> None:
+        """
+        Legacy control connections merge into the new section and preserve telemetry or supply neutral defaults.
+
+        GIVEN: An ESC containing both connection paths, custom settings and optional telemetry
+        WHEN: The user opens the project twice
+        THEN: Legacy fields override matching connection fields, extras survive and only one ESC remains
+        """
+        telemetry = {"Type": "SERIAL2", "Protocol": "ESC Telemetry", "Rate Hz": 10}
+        esc: ComponentData = {
+            "Notes": "Four motors",
+            "FC Connection": {"Type": "Main", "Protocol": "DShot600", "Outputs": [1, 2, 3, 4]},
+            "FC->ESC Connection": {"Protocol": "PWM", "Custom timing": {"Delay us": 5}},
+            "Product": {"Model": "4-in-1"},
+        }
+        if has_telemetry:
+            esc["ESC->FC Telemetry"] = telemetry
+        data: ComponentData = {"Components": {"ESC": esc}}
+        original = deepcopy(data)
+
+        model = self.load_project(data)
+
+        for _ in range(2):
+            components = model.get_component_data()["Components"]
+            assert set(components) == {"Flight Controller", "Frame", "Battery", "ESC"}
+            actual = components["ESC"]
+            assert set(actual) == {"Product", "FC->ESC Connection", "ESC->FC Telemetry", "Notes"}
+            assert actual["FC->ESC Connection"] == {
+                "Type": "Main",
+                "Protocol": "DShot600",
+                "Outputs": [1, 2, 3, 4],
+                "Custom timing": {"Delay us": 5},
+            }
+            assert actual["ESC->FC Telemetry"] == (telemetry if has_telemetry else {"Type": "None", "Protocol": "None"})
+            assert actual["Product"] == {"Model": "4-in-1"}
+            assert actual["Notes"] == "Four motors"
+            assert tuple(actual)[-1] == "Notes"
+            model.post_init({})
+        assert data == original
+
+    @pytest.mark.parametrize(
+        ("legacy_protocol", "expected_protocol"),
+        [("SBF", "Septentrio(SBF)"), ("GSOF", "Trimble(GSOF)"), ("SBF-DualAntenna", "Septentrio-DualAntenna(SBF)")],
+    )
+    def test_user_migrates_legacy_gnss_names_without_losing_receiver_settings(
+        self, legacy_protocol: str, expected_protocol: str
+    ) -> None:
+        """
+        Renaming a legacy GNSS component and protocol preserves its remaining data.
+
+        GIVEN: A legacy receiver name and protocol with connection, product and custom settings
+        WHEN: The user opens the project twice
+        THEN: Only the canonical receiver and protocol names remain and all other settings survive
+        """
+        receiver: ComponentData = {
+            "Notes": "Roof antenna",
+            "FC Connection": {"Type": "SERIAL3", "Protocol": legacy_protocol, "Baudrate": 115200},
+            "Product": {"Model": "Survey receiver"},
+            "Calibration": {"Offset m": 0.125},
+        }
+        data: ComponentData = {"Components": {"GNSS receiver": receiver}}
+        original = deepcopy(data)
+        expected = deepcopy(receiver)
+        expected["FC Connection"]["Protocol"] = expected_protocol
+
+        model = self.load_project(data)
+
+        for _ in range(2):
+            components = model.get_component_data()["Components"]
+            assert tuple(components) == ("Flight Controller", "Frame", "Battery", "GNSS Receiver")
+            assert components["GNSS Receiver"] == expected
+            assert tuple(components["GNSS Receiver"])[-1] == "Notes"
+            model.post_init({})
+        assert data == original
