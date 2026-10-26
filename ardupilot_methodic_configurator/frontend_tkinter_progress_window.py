@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 # https://wiki.tcl-lang.org/page/Changing+Widget+Colors
 
 import contextlib
+import gc
 import tkinter as tk
 from collections.abc import Callable, Generator
 from concurrent.futures import Future
@@ -423,6 +424,8 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
         self._task_active = True
         try:
             with self._suspend_parent_interaction(parent):
+                # Finalize closed Tk windows here before worker allocations trigger garbage collection.
+                gc.collect()
                 runner.start(work, on_progress or self.update_progress_bar, finish)
                 parent.wait_variable(completed)
         finally:
