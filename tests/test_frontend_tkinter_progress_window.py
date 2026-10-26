@@ -590,25 +590,32 @@ def test_closed_window_resources_are_collected_on_the_ui_thread_before_work_star
     """
     Starting background work safely releases resources left by a closed window.
 
-    GIVEN: A closed window's Tk variable remains in an unreachable reference cycle
+    GIVEN: A closed window, variable and image remain in an unreachable reference cycle
     WHEN: The user starts a progress task
-    THEN: The variable is finalized on the UI thread before the worker starts
+    THEN: All three are finalized on the UI thread before the worker starts
     """
     ui_thread = get_ident()
-    cleanup_threads: list[int] = []
+    cleanup_threads: list[tuple[str, int]] = []
     gc_was_enabled = gc.isenabled()
     gc.disable()
     try:
         closed_window = tk.Toplevel(progress_window.parent)
+        closed_window.withdraw()
         variable = tk.StringVar(master=closed_window, value="Previous window")
-        variable.cycle = variable
-        finalize(variable, lambda: cleanup_threads.append(get_ident()))
+        image = tk.PhotoImage(master=closed_window, width=1, height=1)
+        cycle: list[object] = [closed_window, variable, image]
+        cycle.append(cycle)
+        finalize(closed_window, lambda: cleanup_threads.append(("window", get_ident())))
+        finalize(variable, lambda: cleanup_threads.append(("variable", get_ident())))
+        finalize(image, lambda: cleanup_threads.append(("image", get_ident())))
         closed_window.destroy()
-        del variable
+        del cycle, closed_window, variable, image
+        assert not cleanup_threads
 
-        finalized_before_work = progress_window.run_task(lambda _report: cleanup_threads.copy())
+        finalized_before_work, worker_thread = progress_window.run_task(lambda _report: (cleanup_threads.copy(), get_ident()))
 
-        assert finalized_before_work == [ui_thread]
+        assert worker_thread != ui_thread
+        assert sorted(finalized_before_work) == [("image", ui_thread), ("variable", ui_thread), ("window", ui_thread)]
     finally:
         gc.collect()
         if gc_was_enabled:
