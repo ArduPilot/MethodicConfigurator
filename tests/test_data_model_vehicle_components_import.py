@@ -50,6 +50,114 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         """Create a realistic vehicle data model based on the JSON file."""
         return ComponentDataModelFixtures.create_realistic_model(ComponentDataModelImport)
 
+    @pytest.mark.parametrize(
+        ("voltage", "chemistry", "expected"),
+        [
+            (4.2, "Lipo", 1),
+            (210.0, "Lipo", 50),
+            (214.2, "Lipo", None),
+            (1.0, "Lipo", None),
+            (0.0, "Lipo", None),
+            (-4.2, "Lipo", None),
+            (16.8, "Unknown", None),
+        ],
+    )
+    def test_cell_estimation_accepts_only_reasonable_pack_sizes(
+        self, basic_model: ComponentDataModelImport, voltage: float, chemistry: str, expected: int | None
+    ) -> None:
+        """
+        Estimate pack size only when voltage and chemistry support a reasonable cell count.
+
+        GIVEN: A pack voltage and battery chemistry
+        WHEN: The maximum-voltage parameter is converted to a cell count
+        THEN: One through fifty cells are accepted and invalid estimates are rejected
+        """
+        assert (
+            basic_model._estimate_cells_from_voltage_param_default("MOT_BAT_VOLT_MAX", voltage, "Volt per cell max", chemistry)
+            == expected
+        )
+
+    @pytest.mark.parametrize("invalid_voltage", [0.0, -1.0, "invalid", None])
+    def test_invalid_preferred_voltage_falls_back_to_a_valid_pack_estimate(
+        self, basic_model: ComponentDataModelImport, invalid_voltage: float | str | None
+    ) -> None:
+        """
+        Recover battery cell count from the next valid imported voltage.
+
+        GIVEN: An unusable maximum voltage and a valid low-voltage limit for four LiPo cells
+        WHEN: Battery cells are estimated from the imported parameters
+        THEN: The low-voltage limit supplies four cells and updates the component data
+        """
+        basic_model.set_component_value(("Battery", "Specifications", "Number of cells"), 6)
+
+        count = basic_model._estimate_battery_cell_count({"MOT_BAT_VOLT_MAX": invalid_voltage, "BATT_LOW_VOLT": 14.4}, "Lipo")
+
+        assert count == 4
+        assert basic_model.get_component_value(("Battery", "Specifications", "Number of cells")) == 4
+
+    @pytest.mark.parametrize(
+        ("parameters", "current", "expected"),
+        [
+            ({"MOT_BAT_VOLT_MAX": 16.4}, None, "LiIon"),
+            ({"Q_M_BAT_VOLT_MAX": 17.4}, None, "LipoHV"),
+            ({"BATT_LOW_VOLT": 14.4}, None, "Lipo"),
+            ({"BATT_CRT_VOLT": 13.2}, None, "Lipo"),
+            ({"BATT_ARM_VOLT": 14.4}, None, "LiIon"),
+            ({"MOT_BAT_VOLT_MIN": 12.8}, None, "Lipo"),
+            ({"MOT_BAT_VOLT_MAX": 16.4, "BATT_LOW_VOLT": 14.4}, None, "LiIon"),
+            ({"MOT_BAT_VOLT_MAX": "invalid", "BATT_LOW_VOLT": 14.4}, None, "Lipo"),
+            ({"MOT_BAT_VOLT_MAX": None, "BATT_LOW_VOLT": 14.4}, None, "Lipo"),
+            ({"MOT_BAT_VOLT_MAX": -1.0, "BATT_LOW_VOLT": 14.4}, None, "Lipo"),
+            ({"MOT_BAT_VOLT_MAX": 0.0, "BATT_LOW_VOLT": 14.4}, None, "Lipo"),
+            ({"MOT_BAT_VOLT_MAX": 16.4}, "Unknown", "LiIon"),
+            ({"MOT_BAT_VOLT_MAX": 16.4}, "Lipo", None),
+            ({"MOT_BAT_VOLT_MAX": 0.0}, None, None),
+            ({}, None, None),
+        ],
+    )
+    def test_chemistry_detection_respects_voltage_priority_and_preserves_a_compatible_selection(
+        self, basic_model: ComponentDataModelImport, parameters: dict[str, Any], current: str | None, expected: str | None
+    ) -> None:
+        """
+        Suggest chemistry from valid voltage evidence without replacing a compatible choice.
+
+        GIVEN: Imported voltage limits and an optional existing chemistry
+        WHEN: The model looks for chemistry evidence in parameter priority order
+        THEN: It returns the expected chemistry or preserves the compatible existing choice
+        """
+        assert basic_model._detect_battery_chemistry_from_voltages(parameters, current) == expected
+
+    @pytest.mark.parametrize(
+        ("code_name", "firmware_name"),
+        [
+            ("Septentrio(SBF)", "SBF"),
+            ("Trimble(GSOF)", "GSOF"),
+            ("MAVLink", "MAV"),
+            ("Septentrio-DualAntenna(SBF)", "SBF-DualAntenna"),
+            ("Gimbal", "SToRM32 Gimbal Serial"),
+            ("INA2XX", "INA2XX (INA226 INA228 INA238 INA231 INA260)"),
+        ],
+    )
+    def test_protocol_metadata_accepts_known_renames_and_reports_unrelated_mismatches(
+        self, basic_model: ComponentDataModelImport, code_name: str, firmware_name: str
+    ) -> None:
+        """
+        Recognize documented firmware protocol renames without hiding other mismatches.
+
+        GIVEN: A code protocol and its known firmware metadata spelling
+        WHEN: Metadata is verified with matching and mismatching names
+        THEN: Only the known pair is accepted as a rename
+        """
+        protocols = {"1": {"protocol": code_name}}
+
+        assert basic_model._verify_dict_is_uptodate({"TEST": {"values": {"1": firmware_name}}}, protocols, "TEST", "values")
+        assert not basic_model._verify_dict_is_uptodate(
+            {"TEST": {"values": {"1": "Unrelated protocol"}}}, protocols, "TEST", "values"
+        )
+        assert not basic_model._verify_dict_is_uptodate(
+            {"TEST": {"values": {"1": firmware_name}}}, {"1": {"protocol": "Unrelated protocol"}}, "TEST", "values"
+        )
+
     def test_system_validates_known_fc_manufacturers(self, basic_model) -> None:
         """
         System correctly validates flight controller manufacturer names.

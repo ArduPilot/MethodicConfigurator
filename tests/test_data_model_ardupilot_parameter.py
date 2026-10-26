@@ -28,6 +28,72 @@ from ardupilot_methodic_configurator.data_model_par_dict import Par
 # pylint: disable=redefined-outer-name, protected-access, too-many-lines
 
 
+@pytest.mark.parametrize("value", [1.999, 2.0, 2.001, 7.999, 8.0, 8.001])
+def test_parameter_limits_accept_both_endpoints_and_report_values_outside_them(value: float) -> None:
+    """
+    Accept inclusive parameter limits consistently for staged and explicit values.
+
+    GIVEN: A parameter with a minimum of 2 and a maximum of 8
+    WHEN: Values around each endpoint are validated
+    THEN: Endpoints are accepted and only values beyond them produce guidance
+    """
+    parameter = ArduPilotParameter("TEST_LIMIT", Par(value), {"min": 2.0, "max": 8.0})
+    above = f"The value for TEST_LIMIT ({value}) should be smaller than 8.0\n" if value > 8.0 else ""
+    below = f"The value for TEST_LIMIT ({value}) should be greater than 2.0\n" if value < 2.0 else ""
+
+    assert parameter.is_above_limit() == above
+    assert parameter.is_below_limit() == below
+    parameter = ArduPilotParameter("TEST_LIMIT", Par(5.0), {"min": 2.0, "max": 8.0})
+    assert parameter.is_above_limit(value) == above
+    assert parameter.is_below_limit(value) == below
+    assert parameter.get_new_value() == 5.0
+
+
+@pytest.mark.parametrize("fc_value", [None, 0.0, 2.0, 8.0, 9.0])
+def test_flight_controller_limit_feedback_uses_its_value_without_falling_back_to_staged_edits(
+    fc_value: float | None,
+) -> None:
+    """
+    Validate connected-controller values independently from the staged edit.
+
+    GIVEN: A staged value above the maximum and an optional FC value
+    WHEN: The controller's range feedback is requested
+    THEN: Only the FC value is checked and an unavailable value produces no warning
+    """
+    parameter = ArduPilotParameter("TEST_LIMIT", Par(20.0), {"min": 2.0, "max": 8.0}, fc_value=fc_value)
+
+    assert parameter.fc_value_is_above_limit() == (
+        f"The value for TEST_LIMIT ({fc_value}) should be smaller than 8.0\n"
+        if fc_value is not None and fc_value > 8.0
+        else ""
+    )
+    assert parameter.fc_value_is_below_limit() == (
+        f"The value for TEST_LIMIT ({fc_value}) should be greater than 2.0\n"
+        if fc_value is not None and fc_value < 2.0
+        else ""
+    )
+
+
+def test_discarding_a_value_edit_restores_the_file_value_and_preserves_the_reason() -> None:
+    """
+    Discard a value edit without discarding an independently edited reason.
+
+    GIVEN: A saved value and a different controller value
+    WHEN: The user edits the value and reason and then resets only the value
+    THEN: The saved value is restored and the reason remains dirty until saved
+    """
+    parameter = ArduPilotParameter("TEST_RESET", Par(5.0, "Saved reason"), fc_value=9.0)
+    parameter.set_new_value("7")
+    parameter.set_change_reason("Keep this explanation")
+
+    parameter.reset_new_value_to_file_value()
+
+    assert parameter.get_new_value() == 5.0
+    assert parameter.change_reason == "Keep this explanation"
+    assert parameter.fc_value_as_string == "9"
+    assert parameter.is_dirty
+
+
 @pytest.fixture
 def param_fixture() -> dict[str, Any]:  # pylint: disable=too-many-locals
     """Create parameter fixtures for testing."""

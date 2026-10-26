@@ -239,7 +239,11 @@ do_not_mutate = [
 pytest_add_cli_args_test_selection = [
     "tests/unit_battery_cell_voltages.py",
     "tests/test_data_model_ardupilot_parameter.py",
+    "tests/unit_manual_override.py",
+    "tests/acceptance_manual_override.py",
+    "tests/integration_manual_override.py",
     "tests/test_data_model_par_dict.py",
+    "tests/test_derived_parameter_confirmation.py",
     "tests/test_backend_flightcontroller_bootloader.py",
     "tests/test_bootloader_identity.py",
     "tests/test_bootloader_partial_read.py",
