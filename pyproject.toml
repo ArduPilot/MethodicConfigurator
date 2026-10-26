@@ -81,7 +81,7 @@ dev = [
     "pytest-timeout==2.4.0",
     "python-gettext==5.0",
     "ruff==0.16.9",
-    "types-requests==2.33.0.20260906",
+    "types-requests==2.33.0.20261006",
     "ty==0.0.86",
 ]
 
