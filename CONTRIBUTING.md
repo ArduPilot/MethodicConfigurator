@@ -147,6 +147,40 @@ Timeouts, missing test associations, and execution errors need separate review.
 Type-check filtering and coverage-only filtering are intentionally disabled for
 the mutation suite.
 
+Audit the selected tests before writing replacements: the manual-override unit,
+acceptance and integration tests exercise parameter editability and serialization,
+while `test_derived_parameter_confirmation.py` checks parameter snapshot differences.
+Keep those suites selected when mutating the parameter models.
+
+Review equivalent survivors separately from missing assertions. For example,
+`float("inf")` and `float("INF")` behave identically; changing the split limit in
+`parse_ver_fields()` does not change its first token; and the battery voltage
+helpers' fallback arguments cannot be reached when the preceding indexed lookup
+already requires the same keys. In the template-name helper, missing product
+fields defaulting to either `None` or an empty string are normalized to the same
+empty string. Do not construct unsupported inputs merely to kill these mutants
+or exclude entire functions because some of their mutants are equivalent.
+
+For a focused rerun, pass quoted module or function patterns to `mutmut run`,
+for example:
+
+```bash
+PATH="$PWD/.venv/bin:$PATH" xvfb-run -a mutmut run --max-children 2 \
+  'ardupilot_methodic_configurator.plugins.imu_helpers.*'
+```
+
+Keep a copy of previous results before refreshing `mutants/`, and report killed,
+surviving, unassociated, timed-out and crashed mutants separately. A partial run
+does not establish a new score for the full configured suite.
+
+If a worker crashes or times out while the same mutant fails normally in a direct
+pytest run, compare it in a separate temporary checkout with
+`forkserver_warmup = "none"` under `[tool.mutmut]`. This initializes test-module
+imports inside each worker instead of preloading them in the fork server and
+can distinguish shared GUI import state from an actual mutant-induced hang.
+It adds worker startup cost, so use it for diagnosis before changing the normal
+suite configuration. Retain both runs' execution outcomes in the report.
+
 ### Optional local code graph
 
 For faster codebase exploration with Codex, CodeGraph can be installed as an

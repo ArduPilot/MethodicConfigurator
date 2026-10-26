@@ -12,6 +12,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from collections.abc import Callable
+from math import sqrt
+from types import SimpleNamespace
 from unittest.mock import MagicMock, call
 
 import pytest
@@ -45,17 +47,115 @@ def test_poll_scaled_imu_requests_stream_only_until_request_succeeds() -> None:
     ("sample", "expected"),
     [
         ((0.0, 0.0, -1000.0), "LEVEL"),
+        ((0.0, 1000.0, 0.0), "LEFT"),
         ((0.0, -1000.0, 0.0), "RIGHT"),
+        ((-1000.0, 0.0, 0.0), "NOSE DOWN"),
+        ((1000.0, 0.0, 0.0), "NOSE UP"),
+        ((0.0, 0.0, 1000.0), "BACK"),
         ((1000.0, 1000.0, 0.0), "INDEFINITE"),
         ((0.0, 0.0, 0.0), "INDEFINITE"),
     ],
 )
-def test_compute_detected_position(sample, expected: str) -> None:
+def test_compute_detected_position(sample: tuple[float, float, float], expected: str) -> None:
+    """
+    Identify all supported stationary poses and reject ambiguous acceleration.
+
+    GIVEN: A sensor vector aligned with a supported pose, between poses or at rest
+    WHEN: The monitor interprets the orientation
+    THEN: It reports the matching pose or an indefinite orientation
+    """
     assert compute_detected_position(*sample) == expected
 
 
-def test_compute_movement_magnitude_converts_milligravity_to_metres_per_second_squared() -> None:
-    assert compute_movement_magnitude_ms2(0.0, 0.0, 1000.0) == pytest.approx(9.80665)
+@pytest.mark.parametrize(
+    ("sample", "expected"),
+    [
+        ((1000.0, 0.0, 0.0), 9.80665),
+        ((0.0, 1000.0, 0.0), 9.80665),
+        ((0.0, 0.0, 1000.0), 9.80665),
+        ((-300.0, 400.0, 0.0), 4.903325),
+        ((0.0, 0.0, 0.0), 0.0),
+    ],
+)
+def test_compute_movement_magnitude_converts_milligravity_to_metres_per_second_squared(
+    sample: tuple[float, float, float], expected: float
+) -> None:
+    """
+    Report physical acceleration independently of axis and sign.
+
+    GIVEN: A stationary or moving sensor reporting acceleration in milli-g
+    WHEN: Its movement magnitude is calculated
+    THEN: Every axis contributes to the magnitude in metres per second squared
+    """
+    assert compute_movement_magnitude_ms2(*sample) == pytest.approx(expected)
+
+
+@pytest.mark.parametrize(("magnitude", "expected"), [(0.999, "INDEFINITE"), (1.0, "BACK"), (1.001, "BACK")])
+def test_orientation_requires_a_large_enough_sample(magnitude: float, expected: str) -> None:
+    """
+    Avoid reporting a pose from a near-zero sensor vector.
+
+    GIVEN: A sample aligned with the back orientation
+    WHEN: Its magnitude is below, at or above the detection minimum
+    THEN: Only sufficiently large samples produce an orientation
+    """
+    assert compute_detected_position(0.0, 0.0, magnitude) == expected
+
+
+@pytest.mark.parametrize(
+    ("alignment", "expected", "scale"),
+    [
+        (0.9396, "INDEFINITE", 1.0),
+        (0.9397, "INDEFINITE", 1.0),
+        (0.9398, "BACK", 1.0),
+        (0.9396, "INDEFINITE", 1000.0),
+        (0.9398, "BACK", 1000.0),
+    ],
+)
+def test_orientation_rejects_samples_outside_the_pose_cone(alignment: float, expected: str, scale: float) -> None:
+    """
+    Require alignment with a supported pose rather than just its nearest axis.
+
+    GIVEN: A sensor vector near the supported pose's angular limit
+    WHEN: The orientation is detected
+    THEN: A sample inside the cone is accepted and one outside is indefinite
+    """
+    assert compute_detected_position(scale * sqrt(1.0 - alignment**2), 0.0, scale * alignment) == expected
+
+
+def test_monitor_view_receives_samples_missing_data_and_replacement_timer_ids() -> None:
+    """
+    Wire a monitor's polling handlers to its model and display callbacks.
+
+    GIVEN: A monitor model yielding a sample followed by a telemetry gap
+    WHEN: Two scheduled polling callbacks fire
+    THEN: The view receives the sample, missing-data feedback and current timer ids
+    """
+    sample = (100.0, 200.0, -900.0)
+    on_sample = MagicMock()
+    on_missing = MagicMock()
+    on_scheduled = MagicMock()
+    view = SimpleNamespace(
+        model=SimpleNamespace(poll_imu_raw=MagicMock(side_effect=[sample, None])),
+        _handle_live_imu_sample=on_sample,
+        _handle_no_live_imu_sample=on_missing,
+        _store_imu_poll_job=on_scheduled,
+    )
+    callbacks: list[Callable[[], None]] = []
+
+    def schedule(interval: int, callback: Callable[[], None]) -> str:
+        assert interval == 175
+        callbacks.append(callback)
+        return f"timer-{len(callbacks)}"
+
+    handlers = ImuPollHandlers.for_view(view, 175)
+    assert poll_imu_periodically(schedule, None, handlers) == "timer-1"
+    callbacks[0]()
+    callbacks[1]()
+
+    on_sample.assert_called_once_with(sample)
+    on_missing.assert_called_once_with()
+    assert on_scheduled.call_args_list == [call("timer-1"), call("timer-2"), call("timer-3")]
 
 
 def test_periodic_polling_reports_replacement_job_id_for_cancellation() -> None:

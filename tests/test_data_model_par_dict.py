@@ -6,6 +6,8 @@ Behavior-driven tests for ArduPilot parameter dictionary data model.
 This module contains comprehensive tests for the ParDict class,
 focusing on user workflows and business value rather than implementation details.
 
+This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
+
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
@@ -30,6 +32,55 @@ from ardupilot_methodic_configurator.data_model_par_dict import (
 )
 
 # pylint: disable=redefined-outer-name, too-many-lines
+
+
+def test_editing_a_parameter_copy_preserves_the_original_snapshot() -> None:
+    """
+    Preserve the loaded snapshot while derived parameters are edited independently.
+
+    GIVEN: Saved parameters with values and optional comments
+    WHEN: A deep copy is edited, extended and shortened
+    THEN: The original entries, values and comments remain unchanged
+    """
+    original = ParDict({"P1": Par(1.0, "Original reason"), "P2": Par(2.0, None)})
+
+    working = original.deep_copy()
+
+    assert isinstance(working, ParDict)
+    assert working == original
+    working["P1"].value = 4.0
+    working["P1"].comment = "Updated reason"
+    del working["P2"]
+    working["P3"] = Par(3.0, "New parameter")
+    assert original == {"P1": Par(1.0, "Original reason"), "P2": Par(2.0, None)}
+    assert working == {"P1": Par(4.0, "Updated reason"), "P3": Par(3.0, "New parameter")}
+
+
+@pytest.mark.parametrize(("value", "different"), [(10.0009, False), (10.002, True)])
+def test_snapshot_comparison_ignores_only_value_changes_within_tolerance(value: float, different: bool) -> None:
+    """
+    Avoid prompting to save insignificant floating-point changes.
+
+    GIVEN: A saved parameter and an independently calculated value
+    WHEN: The calculated value is compared with the snapshot
+    THEN: Only changes beyond the documented numeric tolerance are reported
+    """
+    original = ParDict({"P1": Par(10.0, "Reason")})
+    working = ParDict({"P1": Par(value, "Reason")})
+
+    assert working.differs_from(original) is different
+
+
+def test_absolute_tolerance_accepts_its_exact_boundary() -> None:
+    """
+    Treat the configured tolerance as inclusive.
+
+    GIVEN: Two values exactly one unit apart with absolute tolerance one
+    WHEN: They are compared with relative tolerance disabled
+    THEN: The boundary is accepted and a value beyond it is rejected
+    """
+    assert is_within_tolerance(2.0, 1.0, atol=1.0, rtol=0.0)
+    assert not is_within_tolerance(2.001, 1.0, atol=1.0, rtol=0.0)
 
 
 @pytest.fixture

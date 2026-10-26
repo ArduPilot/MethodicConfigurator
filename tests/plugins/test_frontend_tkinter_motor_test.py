@@ -283,6 +283,7 @@ def dummy_base_window(tk_root) -> DummyBaseWindow:
 def dialog_spies(mocker) -> SimpleNamespace:
     """Prevent blocking GUI dialogs during tests and expose spies."""
     return SimpleNamespace(
+        showinfo=mocker.patch.object(motor_test_module, "showinfo"),
         showerror=mocker.patch.object(motor_test_module, "showerror"),
         showwarning=mocker.patch.object(motor_test_module, "showwarning"),
         askyesno=mocker.patch.object(motor_test_module, "askyesno", return_value=True),
@@ -296,13 +297,17 @@ def motor_view(
     fake_model,
     dummy_base_window,
     mocker,
+    motor_update_timers: dict[str, Callable[[], None]],  # noqa: ARG001 # pylint: disable=unused-argument
 ) -> Generator[MotorTestView, None, None]:
     parent = ttk.Frame(tk_root)
     view = MotorTestView(parent, fake_model, dummy_base_window)
     mocker.patch.object(parent, "after")
     mocker.patch.object(tk_root, "after")
-    yield view
-    parent.destroy()
+    try:
+        yield view
+    finally:
+        view.destroy()
+        parent.destroy()
 
 
 @pytest.fixture
@@ -1297,6 +1302,108 @@ class TestMotorTestViewMotorSwapping:
         # Verify the actual error message was passed to the UI
         assert "Mock FC read error" in dialog_spies.showerror.call_args[0][1]
         assert motor_view.detected_comboboxes[0].get() == ""
+
+
+@pytest.mark.parametrize("control", ["throttle", "duration"])
+@pytest.mark.parametrize("error_kind", ["conversion", "validation", "parameter"])
+def test_invalid_motor_settings_restore_the_last_accepted_value_and_explain_the_failure(
+    motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, control: str, error_kind: str
+) -> None:
+    """
+    Keep rejected motor-test input from changing the active test settings.
+
+    GIVEN: An accepted throttle or duration setting
+    WHEN: The user submits a typo or a value rejected by the model
+    THEN: The original setting is restored and the dialog explains the failed input
+    """
+    spinbox = motor_view.throttle_spinbox if control == "throttle" else motor_view.duration_spinbox
+    value = "oops" if error_kind == "conversion" else "77"
+    if error_kind != "conversion":
+        error = (
+            ValidationError("outside the allowed range") if error_kind == "validation" else ParameterError("FC rejected it")
+        )
+        setattr(fake_model, f"raise_{control}_error", error)
+    spinbox.delete(0, "end")
+    spinbox.insert(0, value)
+
+    if control == "throttle":
+        motor_view._on_throttle_change()
+    else:
+        motor_view._on_duration_change()
+
+    expected_value = "25" if control == "throttle" else "3.0"
+    assert spinbox.get() == expected_value
+    assert fake_model.get_test_throttle_pct() == 25
+    assert fake_model.get_test_duration_s() == 3.0
+    title = "Throttle value error" if control == "throttle" else "Duration value error"
+    if error_kind == "conversion":
+        message = (
+            "Invalid throttle value entered, reset to 25%"
+            if control == "throttle"
+            else "Invalid duration value entered, reset to 3 seconds"
+        )
+    else:
+        detail = "outside the allowed range" if error_kind == "validation" else "FC rejected it"
+        message = f"{control.capitalize()} validation failed: {detail}"
+    dialog_spies.showerror.assert_called_once_with(title, message)
+
+
+@pytest.mark.parametrize("action", ["single", "all", "sequence"])
+def test_declining_motor_safety_confirmation_does_not_send_any_test_command(
+    motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, action: str
+) -> None:
+    """
+    Respect refusal of the first motor-test safety confirmation.
+
+    GIVEN: The first-test warning has not been acknowledged
+    WHEN: The user declines a single, simultaneous or sequential motor test
+    THEN: No test command is sent and the warning remains pending
+    """
+    dialog_spies.askyesno.return_value = False
+
+    if action == "single":
+        motor_view._test_motor(0, 1)
+    elif action == "all":
+        motor_view._test_all_motors()
+    else:
+        motor_view._test_motors_in_sequence()
+
+    assert fake_model.single_motor_calls == []
+    assert fake_model.all_motor_runs == 0
+    assert fake_model.sequence_runs == 0
+    assert fake_model.should_show_first_test_warning()
+    dialog_spies.askyesno.assert_called_once_with("Safety Confirmation", fake_model.get_safety_warning_message())
+
+
+@pytest.mark.parametrize(
+    ("event", "status", "color"),
+    [(MotorStatusEvent.COMMAND_SENT, "Command sent", "green"), (MotorStatusEvent.STOP_SENT, "Stop sent", "red")],
+)
+def test_motor_status_updates_only_the_selected_motor_and_returns_to_ready_after_the_delay(
+    motor_view: MotorTestView, mocker: MockerFixture, event: MotorStatusEvent, status: str, color: str
+) -> None:
+    """
+    Show command feedback on the affected motor for the intended interval.
+
+    GIVEN: Two ready motor labels
+    WHEN: The second motor reports a test or stop command
+    THEN: Only that motor changes and the scheduled callback restores Ready after two seconds
+    """
+    schedule = mocker.patch.object(motor_view.root_window, "after")
+
+    motor_view._handle_status_event(2, event)
+
+    first, second = motor_view.motor_status_labels
+    assert first.cget("text") == "Ready"
+    assert second.cget("text") == status
+    assert str(second.cget("foreground")) == color
+    schedule.assert_called_once()
+    delay, callback = schedule.call_args.args
+    assert delay == 2000
+    callback()
+    assert second.cget("text") == "Ready"
+    assert str(second.cget("foreground")) == "blue"
+    assert first.cget("text") == "Ready"
 
 
 def test_motor_diagram_displays_a_real_png_and_reuses_the_resolved_path(

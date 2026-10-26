@@ -611,3 +611,67 @@ class TestFileBrowserUserWorkflows:
         assert browser.remote_tree.names() == ["small.bin", "large.bin"]
         browser.remote_tree.headings["size"]()
         assert browser.remote_tree.names() == ["large.bin", "small.bin"]
+
+    def test_declining_an_upload_preserves_remote_bytes_and_creates_no_progress_window(
+        self, browser: FileBrowserWindow, tmp_path: Path
+    ) -> None:
+        """
+        Cancel an upload before any remote content is overwritten.
+
+        GIVEN: Local and remote files with the same name and different contents
+        WHEN: The user declines the upload confirmation
+        THEN: Both copies survive and no transfer or progress window starts
+        """
+        remote = "/APM/LOGS/log.bin"
+        browser.parameter_editor.files[remote] = b"remote original"
+        (tmp_path / "log.bin").write_bytes(b"local original")
+        browser.refresh_local_panel()
+        browser.local_tree.select_name("log.bin")
+        browser.ui.yesno_answers = [False]
+
+        browser.upload_selected_local_entries()
+
+        assert browser.parameter_editor.files[remote] == b"remote original"
+        assert (tmp_path / "log.bin").read_bytes() == b"local original"
+        assert browser.parameter_editor.upload_attempts == []
+        assert browser.ui.progress == []
+        assert browser.ui.errors == []
+        assert browser.ui.infos == []
+
+    @pytest.mark.parametrize("panel", ["local", "remote"])
+    @pytest.mark.parametrize("new_name", [None, "../outside.bin", ""])
+    def test_cancelled_or_invalid_rename_preserves_files_and_restores_navigation(
+        self, browser: FileBrowserWindow, tmp_path: Path, panel: str, new_name: str | None
+    ) -> None:
+        """
+        Leave a file unchanged after cancelling or entering an invalid rename.
+
+        GIVEN: A selected local or remote log
+        WHEN: The rename is cancelled or contains an invalid target name
+        THEN: Original bytes remain, no success is reported and navigation is enabled
+        """
+        remote = "/APM/LOGS/original.bin"
+        if panel == "local":
+            (tmp_path / "original.bin").write_bytes(b"original")
+            browser.refresh_local_panel()
+            browser.local_tree.select_name("original.bin")
+        else:
+            browser.parameter_editor.files[remote] = b"original"
+            browser.refresh_remote_panel()
+            browser.remote_tree.select_name("original.bin")
+        browser.ui.string_answers = [new_name]
+
+        if panel == "local":
+            browser.rename_selected_local_entry()
+            assert (tmp_path / "original.bin").read_bytes() == b"original"
+            assert browser.local_tree.names() == ["original.bin"]
+        else:
+            browser.rename_selected_remote_entry()
+            assert browser.parameter_editor.files == {remote: b"original"}
+            assert browser.remote_tree.names() == ["original.bin"]
+
+        assert browser._panel_navigation_enabled
+        assert browser.ui.infos == []
+        assert browser.ui.errors == (
+            [] if new_name is None else [("Rename error", "The new name must be one file or directory name.")]
+        )

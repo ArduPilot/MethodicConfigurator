@@ -236,6 +236,63 @@ def test_missing_and_zero_gains_are_not_added_or_changed(model_factory) -> None:
     assert parameters["ATC_RAT_RLL_P"].get_new_value() == 0.12
 
 
+@pytest.mark.parametrize(
+    ("result_name", "expected_axes"),
+    [
+        ("roll", ("RLL",)),
+        ("pitch", ("PIT",)),
+        ("yaw", ("YAW",)),
+        ("yawd", ("YAW",)),
+        ("roll_pitch_retune", ("RLL", "PIT")),
+        ("roll_RatePD", ("RLL",)),
+        ("pitch_RatePD", ("PIT",)),
+        ("roll_pitch_AngleP", ("RLL", "PIT")),
+        ("yaw_AngleP", ("YAW",)),
+        ("roll_rate_pd", ("RLL",)),
+        ("pitch_rate_pd", ("PIT",)),
+        ("roll_pitch_angle_p", ("RLL", "PIT")),
+        ("yaw_angle_p", ("YAW",)),
+    ],
+)
+def test_each_supported_result_filename_selects_exactly_the_tuned_axes(
+    result_name: str, expected_axes: tuple[str, ...]
+) -> None:
+    """
+    Recognize historical and current result filenames without changing tuned axes.
+
+    GIVEN: A supported AutoTune result filename
+    WHEN: The model resolves its tuned axes
+    THEN: The exact roll, pitch or yaw axes are returned in workflow order
+    """
+    assert AutotuneGainBackoffDataModel.result_axes(f"73_autotune_{result_name}_results.param") == expected_axes
+
+
+@pytest.mark.parametrize(
+    ("result_name", "axes"),
+    [("roll_RatePD", ("RLL",)), ("pitch_rate_pd", ("PIT",)), ("roll_pitch_AngleP", ("RLL", "PIT")), ("yaw_angle_p", ("YAW",))],
+)
+def test_result_filename_aliases_reduce_only_the_selected_axis_gains(
+    model_factory: Callable[[str, str], AutotuneGainBackoffDataModel], result_name: str, axes: tuple[str, ...]
+) -> None:
+    """
+    Apply gain back-off consistently across result filename conventions.
+
+    GIVEN: Staged gains for every axis and a historical or current result filename
+    WHEN: The user applies back-off
+    THEN: Only the gains belonging to the resolved axes are changed
+    """
+    model = model_factory("roll", "ATC")
+    model.parameter_editor.current_file = f"73_autotune_{result_name}_results.param"
+    parameters = model.parameter_editor.current_step_parameters
+    before = {name: parameter.get_new_value() for name, parameter in parameters.items()}
+    expected = {f"ATC_RAT_{axis}_{term}" for axis in axes for term in (("P", "I") if axis == "YAW" else ("P", "I", "D"))}
+    expected.update(f"ATC_ANG_{axis}_P" for axis in axes)
+
+    assert set(model.apply_backoff(0.25)) == expected
+    for name, parameter in parameters.items():
+        assert parameter.get_new_value() == pytest.approx(before[name] * (0.75 if name in expected else 1.0))
+
+
 def test_setup_steps_do_not_expose_any_backoff_targets(model_factory) -> None:
     """
     Staged back-off respects the user workflow.
