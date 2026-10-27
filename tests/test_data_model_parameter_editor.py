@@ -5410,6 +5410,7 @@ class TestPluginSelection:
         """
         step_file = "11_battery.param"
         parameter_editor.current_file = step_file
+        parameter_editor._flight_controller.fc_parameters = {}
         parameter_editor._local_filesystem.configuration_steps = {
             step_file: {"derived_parameters": {"MOT_BAT_VOLT_MAX": {"expr": "cells * 4.2", "comment": "Max volts"}}}
         }
@@ -5422,6 +5423,7 @@ class TestPluginSelection:
 
         # Existing parameter objects in the domain model
         existing_derived = MagicMock()
+        existing_derived.is_manual_override = False
         untouched_param = MagicMock()
         parameter_editor.current_step_parameters = {
             "MOT_BAT_VOLT_MAX": existing_derived,
@@ -7419,6 +7421,128 @@ class TestDuplicateParameterRemoval:
 class TestDerivedParameterPatching:
     """Test how derived parameter values are patched into an already loaded step."""
 
+    def test_inline_selection_adds_and_retires_only_automatic_derived_rows(self, parameter_editor: ParameterEditor) -> None:
+        """GIVEN changing ports, WHEN refreshed, THEN only the final derived row is exported."""
+        step_file = "10_telemetry.param"
+        parameter_editor.current_file = step_file
+        parameter_editor._flight_controller.fc_parameters = {}
+        parameter_editor._local_filesystem.configuration_steps = {step_file: {"derived_parameters": {}}}
+        parameter_editor._local_filesystem.file_parameters = {step_file: ParDict()}
+        selection = {"name": "SERIAL2_PROTOCOL"}
+
+        def compute(*_args: object) -> None:
+            name = selection["name"]
+            parameter_editor._local_filesystem.derived_parameters = {
+                step_file: ParDict({name: Par(2.0, "telemetry")}) if name else ParDict()
+            }
+
+        parameter_editor._local_filesystem.compute_parameters.side_effect = compute
+        unrelated = ArduPilotParameter("OTHER", Par(1.0))
+        unrelated.set_new_value("3")
+        parameter_editor.current_step_parameters = {"OTHER": unrelated}
+
+        parameter_editor.refresh_current_step_computed_parameters()
+        assert parameter_editor.current_step_parameters["SERIAL2_PROTOCOL"].get_new_value() == 2.0
+        assert "SERIAL2_PROTOCOL" in parameter_editor._added_parameters
+
+        selection["name"] = "SERIAL3_PROTOCOL"
+        parameter_editor.refresh_current_step_computed_parameters()
+        parameter_editor.refresh_current_step_computed_parameters()
+        assert set(parameter_editor.current_step_parameters) == {"OTHER", "SERIAL3_PROTOCOL"}
+        assert parameter_editor._added_parameters == {"SERIAL3_PROTOCOL"}
+        assert unrelated.get_new_value() == 3.0
+
+        selection["name"] = ""
+        parameter_editor.refresh_current_step_computed_parameters()
+        assert set(parameter_editor.current_step_parameters) == {"OTHER"}
+        assert not parameter_editor._added_parameters
+
+        selection["name"] = "SERIAL3_PROTOCOL"
+        parameter_editor.refresh_current_step_computed_parameters()
+        parameter_editor._export_current_file(annotate_doc=False)
+        exported = parameter_editor._local_filesystem.export_to_param.call_args.args[0]
+        assert set(exported) == {"OTHER", "SERIAL3_PROTOCOL"}
+
+    def test_refresh_preserves_saved_manual_and_user_added_parameters(self, parameter_editor: ParameterEditor) -> None:
+        """GIVEN saved and user owned rows, WHEN derivation ends, THEN their edits survive."""
+        step_file = "10_telemetry.param"
+        parameter_editor.current_file = step_file
+        parameter_editor._flight_controller.fc_parameters = {}
+        parameter_editor._local_filesystem.configuration_steps = {step_file: {"derived_parameters": {}}}
+        parameter_editor._local_filesystem.file_parameters = {step_file: ParDict({"SAVED": Par(1.0)})}
+        parameter_editor._local_filesystem.derived_parameters = {step_file: ParDict({"SAVED": Par(2.0)})}
+        saved = ArduPilotParameter("SAVED", Par(1.0), derived_par=Par(2.0))
+        saved.set_manual_override(True)
+        saved.set_new_value("4")
+        user_added = ArduPilotParameter("USER", Par(5.0))
+        parameter_editor.current_step_parameters = {"SAVED": saved, "USER": user_added}
+        parameter_editor._added_parameters = {"USER"}
+
+        parameter_editor.refresh_current_step_computed_parameters()
+        assert saved.get_new_value() == 4.0
+        parameter_editor._local_filesystem.derived_parameters = {step_file: ParDict()}
+        parameter_editor.refresh_current_step_computed_parameters()
+        assert parameter_editor.current_step_parameters == {"SAVED": saved, "USER": user_added}
+        assert parameter_editor._added_parameters == {"USER"}
+
+    def test_manual_override_of_inserted_row_survives_retirement(self, parameter_editor: ParameterEditor) -> None:
+        """GIVEN an overridden derived row, WHEN its condition ends, THEN it stays user owned."""
+        step_file = "10_telemetry.param"
+        parameter_editor.current_file = step_file
+        parameter_editor._flight_controller.fc_parameters = {}
+        parameter_editor._local_filesystem.configuration_steps = {step_file: {"derived_parameters": {}}}
+        parameter_editor._local_filesystem.derived_parameters = {step_file: ParDict({"SERIAL2_PROTOCOL": Par(2.0)})}
+
+        parameter_editor.refresh_current_step_computed_parameters()
+        overridden = parameter_editor.current_step_parameters["SERIAL2_PROTOCOL"]
+        overridden.set_manual_override(True)
+        overridden.set_new_value("3")
+        parameter_editor._local_filesystem.derived_parameters = {step_file: ParDict()}
+
+        parameter_editor.refresh_current_step_computed_parameters()
+
+        assert parameter_editor.current_step_parameters["SERIAL2_PROTOCOL"] is overridden
+        assert overridden.get_new_value() == 3.0
+        assert "SERIAL2_PROTOCOL" in parameter_editor._added_parameters
+
+    def test_deleted_and_unavailable_derived_rows_do_not_return(self, parameter_editor: ParameterEditor) -> None:
+        """GIVEN deletion and FC availability rules, WHEN refreshed, THEN no row bypasses them."""
+        step_file = "10_telemetry.param"
+        parameter_editor.current_file = step_file
+        parameter_editor._flight_controller.fc_parameters = {"SUPPORTED": 0.0}
+        parameter_editor._local_filesystem.configuration_steps = {step_file: {"derived_parameters": {}}}
+        parameter_editor._local_filesystem.derived_parameters = {
+            step_file: ParDict({"SUPPORTED": Par(2.0), "UNSUPPORTED": Par(3.0)})
+        }
+        parameter_editor._deleted_parameters = {"SUPPORTED"}
+
+        parameter_editor.refresh_current_step_computed_parameters()
+
+        assert not parameter_editor.current_step_parameters
+        assert not parameter_editor._added_parameters
+
+    def test_saved_connection_rename_wins_over_new_derived_destination(self, parameter_editor: ParameterEditor) -> None:
+        """GIVEN a saved serial parameter, WHEN the port changes, THEN it owns the new name."""
+        step_file = "10_telemetry.param"
+        parameter_editor.current_file = step_file
+        parameter_editor._flight_controller.fc_parameters = {}
+        parameter_editor._local_filesystem.configuration_steps = {
+            step_file: {"derived_parameters": {}, "rename_connection": "new_port"}
+        }
+        parameter_editor._local_filesystem.file_parameters = {step_file: ParDict({"SERIAL2_PROTOCOL": Par(5.0, "saved")})}
+        parameter_editor.current_step_parameters = {"SERIAL2_PROTOCOL": ArduPilotParameter("SERIAL2_PROTOCOL", Par(5.0))}
+        parameter_editor._local_filesystem.derived_parameters = {step_file: ParDict({"SERIAL3_PROTOCOL": Par(2.0)})}
+        parameter_editor._config_step_processor.calculate_connection_rename_operations = MagicMock(
+            return_value=(set(), [("SERIAL2_PROTOCOL", "SERIAL3_PROTOCOL")])
+        )
+
+        parameter_editor.refresh_current_step_computed_parameters()
+
+        assert set(parameter_editor.current_step_parameters) == {"SERIAL3_PROTOCOL"}
+        assert parameter_editor.current_step_parameters["SERIAL3_PROTOCOL"].get_new_value() == 2.0
+        assert parameter_editor._connection_renames == {"SERIAL2_PROTOCOL": "SERIAL3_PROTOCOL"}
+        assert "SERIAL3_PROTOCOL" not in parameter_editor._inline_derived_parameters
+
     def test_a_parameter_that_became_derived_is_rebuilt_from_the_file_value(self, parameter_editor: ParameterEditor) -> None:
         """
         A parameter that only became derived after a component edit is rebuilt with the derived flag.
@@ -7429,6 +7553,7 @@ class TestDerivedParameterPatching:
         """
         step_file = "11_battery.param"
         parameter_editor.current_file = step_file
+        parameter_editor._flight_controller.fc_parameters = {}
         parameter_editor._local_filesystem.configuration_steps = {step_file: {"derived_parameters": {"MOT_X": {}}}}
         original_par = Par(4.2, "from file")
         parameter_editor._local_filesystem.file_parameters = {step_file: ParDict({"MOT_X": original_par})}
@@ -7440,6 +7565,8 @@ class TestDerivedParameterPatching:
         plain = MagicMock()
         plain.is_forced = False
         plain.is_derived = False
+        plain.is_manual_override = False
+        plain.is_dirty = False
         parameter_editor.current_step_parameters = {"MOT_X": plain}
 
         rebuilt = MagicMock()
