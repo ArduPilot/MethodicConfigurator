@@ -23,8 +23,8 @@ STEPS_FILE = PACKAGE_DIR / "configuration_steps_ArduPlane.json"
 PLANE_BATTERY_ACTIONS = {"BATT_FS_LOW_ACT": (1, "RTL"), "BATT_FS_CRT_ACT": (2, "Land")}
 
 
-@pytest.fixture
-def template_actions() -> dict[str, int]:
+@pytest.fixture(name="template_actions")
+def plane_template_actions() -> dict[str, int]:
     """Read the two action values proposed by the empty Plane 4.7 template."""
     return {
         name: int(value)
@@ -45,8 +45,8 @@ def _read_parameter_values(parameter_file: Path) -> dict[str, int]:
     }
 
 
-@pytest.fixture
-def forced_actions() -> dict[str, dict[str, int | str]]:
+@pytest.fixture(name="forced_actions")
+def plane_forced_actions() -> dict[str, dict[str, int | str]]:
     """Read the action values and explanations in the Plane battery step."""
     steps = json.loads(STEPS_FILE.read_text(encoding="utf-8"))["steps"]
     return {name: steps["10_battery.param"]["forced_parameters"][name] for name in PLANE_BATTERY_ACTIONS}
