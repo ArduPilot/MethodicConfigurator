@@ -19,6 +19,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from tkinter import TclError
 from types import ModuleType
 from unittest.mock import MagicMock, call, patch
 
@@ -713,6 +714,40 @@ class TestArgumentParser:
             main()
 
         parser_error.assert_called_once_with(f"--vehicle-type {vehicle_type} cannot be used together with --bin-log")
+
+    def test_tkinter_validator_initializes_gui_libraries_in_a_child_process(self) -> None:
+        """
+        The packaging validator initializes Tk and ttk and exits without normal startup.
+
+        GIVEN a Python environment with working Tcl/Tk libraries.
+        WHEN the application runs with --validate-tkinter.
+        THEN the process succeeds without starting the application workflow.
+        """
+        result = subprocess.run(
+            [sys.executable, "-m", "ardupilot_methodic_configurator", "--validate-tkinter"],
+            capture_output=True,
+            check=False,
+            text=True,
+            timeout=20,
+        )
+
+        assert result.returncode == 0, result.stderr
+
+    def test_tkinter_validator_rejects_unusable_gui_libraries(self) -> None:
+        """
+        A missing Tcl/Tk runtime must fail validation rather than start the application.
+
+        GIVEN Tcl/Tk library initialization fails.
+        WHEN the application runs with --validate-tkinter.
+        THEN the initialization error propagates and normal startup is never attempted.
+        """
+        with (
+            patch.object(amc_main.sys, "argv", ["amc.exe", "--validate-tkinter"]),
+            patch.object(amc_main, "Tk", side_effect=TclError("Missing Tcl/Tk library data")),
+            patch.object(amc_main, "create_argument_parser", side_effect=AssertionError("Must not start the application")),
+            pytest.raises(TclError, match="Missing Tcl/Tk library data"),
+        ):
+            main()
 
     def test_frozen_bin_log_validator_dispatches_without_starting_the_gui(self) -> None:
         """The frozen validator command exits before normal application startup."""
