@@ -35,7 +35,7 @@ from ardupilot_methodic_configurator.data_model_parameter_editor import (
     ParameterEditor,
     ParameterValueUpdateStatus,
 )
-from ardupilot_methodic_configurator.data_model_safe_evaluator import ConfigurationStepEvalError
+from ardupilot_methodic_configurator.data_model_safe_evaluator import ConfigurationStepEvalError, safe_evaluate
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_helpers import refresh_parameter_editor_after_calibration
 from ardupilot_methodic_configurator.plugins.plugin_constants import (
     PLUGIN_AHRS_ORIENTATION,
@@ -5506,6 +5506,101 @@ class TestRefreshConnectionRenames:
 
     # ------------------------------------------------------------------ helpers
 
+    @staticmethod
+    def _setup_f17_gnss_step(parameter_editor: ParameterEditor, driver: str, port: str) -> dict[str, str]:
+        """Load F17's real serial rules with mutable inline component selections."""
+        steps_path = Path(__file__).parents[1] / "ardupilot_methodic_configurator" / "configuration_steps_ArduPlane.json"
+        step_info = json.loads(steps_path.read_text(encoding="utf-8"))["steps"]["18_gnss.param"]
+        connection = {"Type": port, "Protocol": driver}
+        components = {"GNSS Receiver": {"FC Connection": connection}}
+        parameter_editor.current_file = "18_gnss.param"
+        parameter_editor._config_step_processor.variables = {"vehicle_components": components}
+        parameter_editor._local_filesystem.configuration_steps = {"18_gnss.param": step_info}
+        parameter_editor._local_filesystem.derived_parameters = {}
+
+        def compute(_filename: str, _step: dict, _kind: str, variables: dict) -> None:
+            derived = ParDict()
+            for name, rule in step_info["derived_parameters"].items():
+                if name.startswith("SERIAL") and safe_evaluate(rule["if"], variables):
+                    derived[name] = Par(float(rule["New Value"]), rule["Change Reason"])
+            parameter_editor._local_filesystem.derived_parameters = {"18_gnss.param": derived}
+
+        parameter_editor._local_filesystem.compute_parameters.side_effect = compute
+        return connection
+
+    def test_saved_physical_gnss_protocol_moves_to_new_port_without_exception(self, parameter_editor: ParameterEditor) -> None:
+        """GIVEN saved SERIAL3 GPS transport, WHEN uBlox moves to SERIAL4, THEN export only SERIAL4=5."""
+        self._setup_f17_gnss_step(parameter_editor, "uBlox", "SERIAL4")
+        saved = Par(5.0, "saved GNSS transport")
+        parameter_editor._local_filesystem.file_parameters = {"18_gnss.param": ParDict({"SERIAL3_PROTOCOL": saved})}
+        parameter_editor.current_step_parameters = {"SERIAL3_PROTOCOL": ArduPilotParameter("SERIAL3_PROTOCOL", saved)}
+
+        parameter_editor.refresh_current_step_computed_parameters()
+
+        assert set(parameter_editor.current_step_parameters) == {"SERIAL4_PROTOCOL"}
+        assert parameter_editor.current_step_parameters["SERIAL4_PROTOCOL"].get_new_value() == 5.0
+        assert parameter_editor._added_parameters == {"SERIAL4_PROTOCOL"}
+        assert parameter_editor._deleted_parameters == {"SERIAL3_PROTOCOL"}
+        parameter_editor._export_current_file(annotate_doc=False)
+        exported = parameter_editor._local_filesystem.export_to_param.call_args.args[0]
+        assert set(exported) == {"SERIAL4_PROTOCOL"}
+        assert exported["SERIAL4_PROTOCOL"].value == 5.0
+
+    @pytest.mark.parametrize("driver", ["MAVLink", "MSP", "ExternalAHRS"])
+    def test_special_gnss_transport_keeps_saved_serial_value(self, parameter_editor: ParameterEditor, driver: str) -> None:
+        """GIVEN a special GNSS driver, WHEN its port moves, THEN serial protocol 5 is not imposed."""
+        self._setup_f17_gnss_step(parameter_editor, driver, "SERIAL4")
+        saved = Par(42.0, "special transport")
+        parameter_editor._local_filesystem.file_parameters = {"18_gnss.param": ParDict({"SERIAL3_PROTOCOL": saved})}
+        parameter_editor.current_step_parameters = {"SERIAL3_PROTOCOL": ArduPilotParameter("SERIAL3_PROTOCOL", saved)}
+
+        parameter_editor.refresh_current_step_computed_parameters()
+
+        assert set(parameter_editor.current_step_parameters) == {"SERIAL4_PROTOCOL"}
+        assert parameter_editor.current_step_parameters["SERIAL4_PROTOCOL"].get_new_value() == 42.0
+        assert not parameter_editor.current_step_parameters["SERIAL4_PROTOCOL"].is_derived
+
+    @pytest.mark.parametrize("origin", ["forced", "derived"])
+    def test_gnss_rename_helper_does_not_edit_managed_destination(
+        self, parameter_editor: ParameterEditor, origin: str
+    ) -> None:
+        """GIVEN a forced or derived destination, WHEN renamed, THEN ordinary editing is skipped."""
+        managed = Par(5.0, "managed")
+        kwargs = {"forced_par": managed} if origin == "forced" else {"derived_par": managed}
+        destination = ArduPilotParameter("SERIAL4_PROTOCOL", Par(3.0), **kwargs)
+        parameter_editor.current_step_parameters = {"SERIAL4_PROTOCOL": destination}
+
+        with patch.object(destination, "set_new_value") as ordinary_edit:
+            parameter_editor._apply_gnss_protocol_value("SERIAL4_PROTOCOL")
+
+        ordinary_edit.assert_not_called()
+        assert destination.get_new_value() == 5.0
+
+    def test_repeated_physical_gnss_port_changes_keep_one_final_rename(self, parameter_editor: ParameterEditor) -> None:
+        """GIVEN repeated inline changes, WHEN exported, THEN only the final serial assignment remains."""
+        connection = self._setup_f17_gnss_step(parameter_editor, "uBlox", "SERIAL4")
+        saved = Par(5.0, "saved GNSS transport")
+        unrelated = ArduPilotParameter("OTHER", Par(1.0))
+        unrelated.set_new_value("2")
+        parameter_editor._local_filesystem.file_parameters = {"18_gnss.param": ParDict({"SERIAL3_PROTOCOL": saved})}
+        parameter_editor.current_step_parameters = {
+            "SERIAL3_PROTOCOL": ArduPilotParameter("SERIAL3_PROTOCOL", saved),
+            "OTHER": unrelated,
+        }
+
+        for port in ("SERIAL4", "SERIAL5", "SERIAL4", "SERIAL4"):
+            connection["Type"] = port
+            parameter_editor.refresh_current_step_computed_parameters()
+            assert set(parameter_editor.current_step_parameters) == {"OTHER", f"{port}_PROTOCOL"}
+
+        assert parameter_editor._connection_renames == {"SERIAL3_PROTOCOL": "SERIAL4_PROTOCOL"}
+        assert parameter_editor._added_parameters == {"SERIAL4_PROTOCOL"}
+        assert parameter_editor._deleted_parameters == {"SERIAL3_PROTOCOL"}
+        assert unrelated.get_new_value() == 2.0
+        parameter_editor._export_current_file(annotate_doc=False)
+        exported = parameter_editor._local_filesystem.export_to_param.call_args.args[0]
+        assert set(exported) == {"OTHER", "SERIAL4_PROTOCOL"}
+
     def _setup_rename_step(self, parameter_editor: ParameterEditor, step_file: str, rename_expr: str) -> None:
         """Configure the editor so the given step file has a rename_connection entry."""
         parameter_editor.current_file = step_file
@@ -7162,10 +7257,13 @@ class TestConnectionRenameGuards:
         THEN: No exception escapes
         """
         param = MagicMock()
+        param.is_forced = False
+        param.is_derived = False
         param.set_new_value.side_effect = ParameterUnchangedError("unchanged")
         parameter_editor.current_step_parameters = {"SERIAL1_PROTOCOL": param}
 
         parameter_editor._apply_gnss_protocol_value("SERIAL1_PROTOCOL")
+        param.set_new_value.assert_called_once_with("5", ignore_out_of_range=True)
 
 
 class TestFlightControllerUploadReporting:

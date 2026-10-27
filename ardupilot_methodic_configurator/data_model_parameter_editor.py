@@ -58,8 +58,8 @@ from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
 from ardupilot_methodic_configurator.tempcal_imu import IMUfit
 
-# GNSS MAVLink protocol default value (ArduPilot GPS_TYPE value 5 = MAVLink GPS)
-_GNSS_MAVLINK_PROTOCOL_VALUE = "5"
+# ArduPilot SERIALn_PROTOCOL value 5 selects GPS serial transport, not a GPS1_TYPE driver.
+_GNSS_SERIAL_GPS_PROTOCOL_VALUE = "5"
 # The rename_connection expression that identifies a GNSS-via-MAVLink step
 _GNSS_FC_CONNECTION_RENAME_EXPR = "vehicle_components['GNSS Receiver']['FC Connection']['Type']"
 
@@ -2806,9 +2806,13 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             self._refresh_current_step_connection_renames(step_info, variables)
 
     def _apply_gnss_protocol_value(self, target_name: str) -> None:
-        """Set the GNSS MAVLink protocol value on a newly renamed _PROTOCOL parameter, ignoring no-op updates."""
+        """Apply the legacy GNSS serial value only when no step rule owns the destination."""
+        parameter = self.current_step_parameters[target_name]
+        step_info = self._local_filesystem.configuration_steps.get(self.current_file, {})
+        if parameter.is_forced or parameter.is_derived or target_name in step_info.get("derived_parameters", {}):
+            return
         with contextlib.suppress(ParameterUnchangedError):
-            self.current_step_parameters[target_name].set_new_value(_GNSS_MAVLINK_PROTOCOL_VALUE, ignore_out_of_range=True)
+            parameter.set_new_value(_GNSS_SERIAL_GPS_PROTOCOL_VALUE, ignore_out_of_range=True)
 
     def _refresh_current_step_connection_renames(self, step_info: dict, variables: dict) -> None:  # pylint: disable=too-many-branches
         """
