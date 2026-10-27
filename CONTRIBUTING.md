@@ -87,12 +87,15 @@ SITL_BINARY="$PWD/sitl/arducopter" PATH="$PWD/.venv/bin:$PATH" \
 ### Mutation testing
 
 The optional [Mutmut](https://mutmut.readthedocs.io/en/latest/) suite checks whether
-existing tests detect small changes to thirty-two modules covering battery voltages,
+existing tests detect small changes to thirty-eight modules covering battery voltages,
 parameter validation and serialization, firmware version parsing, parameter
 history, AutoTune acceleration/gain backoff, IMU helpers, firmware upload,
 log-analysis orchestration, usage popups, file browsing and task scheduling, motor-test UI,
 bootloader protocol handling, schema-validated filesystem IO, IMU log analysis,
-and vehicle-component validation/display. It runs on Linux, macOS, or Windows
+vehicle-component validation/display, flight-controller business rules, transfer
+progress accounting, configuration expression evaluation, firmware parameter
+migrations, battery-monitor telemetry and status handling, and configuration-step
+processing. It runs on Linux, macOS, or Windows
 through WSL.
 
 Install it into the project virtual environment:
@@ -134,8 +137,9 @@ repository root so that Mutmut reads its configuration.
 
 The [mutation workflow](.github/workflows/mutation.yml) runs manually or weekly on
 Ubuntu with Python 3.11. It uploads results without enforcing a mutation score;
-clean-test failures and execution errors still fail the job. Scheduled runs are
-disabled in forks. The job summary groups all mutation outcomes by module; the
+clean-test and framework failures still fail the job. Per-mutant timeouts and
+crashes are reported for review. Scheduled runs are disabled in forks.
+The job summary groups all mutation outcomes by module; the
 artifact retains individual results and execution logs. The existing coverage
 gate remains independent.
 
@@ -160,6 +164,35 @@ already requires the same keys. In the template-name helper, missing product
 fields defaulting to either `None` or an empty string are normalized to the same
 empty string. Do not construct unsupported inputs merely to kill these mutants
 or exclude entire functions because some of their mutants are equivalent.
+
+The flight-controller frame helper's empty default vehicle type and an unknown
+vehicle type both use the standard frame parameters. In transfer accounting,
+the extra zero in `max(previous, current, 0)` is redundant while the previous
+counter starts at zero and never decreases. Changes to the evaluator's
+`typing.cast` type argument also have no runtime effect. Retain these equivalent
+survivors rather than weakening the mutation scope or testing invalid counter states.
+
+For firmware parameter migrations, verify release boundaries and the file,
+parameter names, and version inputs shown in diagnostic warnings. Some survivors
+only change log wording. Others change unused SR helper placeholders, or bypass
+the SERIAL preservation branch and reach the same generic preservation behavior.
+The outer newer-version guard is redundant with the individual migration gates.
+Review these separately from mutations that change migrated tuning.
+
+For battery monitoring, check secondary-battery thresholds and startup recovery
+after reconnecting or re-enabling monitoring. False-valued stream-state resets
+can be equivalent when only their truth value is used. An unset interval of
+`None` or an empty string also compares differently from every positive requested
+interval. Review these and diagnostic wording changes separately from safety
+status and retry behavior.
+
+For configuration steps, exercise computed values with the real expression
+evaluator and check parameter metadata, defaults, identity, and rename feedback.
+Some dictionary fallbacks and empty reasons are normalized to the same domain
+values. Transient-variable cleanup can be redundant with rebuilding the step's
+evaluation context. The current rename planner returns no duplicate removals,
+so that feedback branch is unreachable through normal processing. Review these
+separately from lost metadata, incorrect live inputs, and conflicting renames.
 
 For a focused rerun, pass quoted module or function patterns to `mutmut run`,
 for example:

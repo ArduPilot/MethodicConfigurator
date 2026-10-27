@@ -192,6 +192,12 @@ skip = "*.pdef.xml,*.pdf,*.po"
 source_paths = ["ardupilot_methodic_configurator/"]
 # Focus on parameter handling, parsing, and calculations with targeted tests.
 only_mutate = [
+    "ardupilot_methodic_configurator/data_model_configuration_step.py",
+    "ardupilot_methodic_configurator/plugins/data_model_battery_monitor.py",
+    "ardupilot_methodic_configurator/data_model_parameter_upgrade.py",
+    "ardupilot_methodic_configurator/backend_flightcontroller_business_logic.py",
+    "ardupilot_methodic_configurator/data_model_transfer_progress.py",
+    "ardupilot_methodic_configurator/data_model_safe_evaluator.py",
     "ardupilot_methodic_configurator/battery_cell_voltages.py",
     "ardupilot_methodic_configurator/data_model_ardupilot_parameter.py",
     "ardupilot_methodic_configurator/data_model_par_dict.py",
@@ -237,6 +243,15 @@ do_not_mutate = [
     "ardupilot_methodic_configurator/decode_devid.py",
 ]
 pytest_add_cli_args_test_selection = [
+    "tests/test_data_model_configuration_step.py",
+    "tests/plugins/unit_data_model_battery_monitor.py",
+    "tests/plugins/unit_frontend_tkinter_battery_monitor.py",
+    "tests/plugins/bdd_battery_monitor.py",
+    "tests/plugins/acceptance_battery_monitor.py",
+    "tests/test_data_model_parameter_upgrade.py",
+    "tests/test_backend_flightcontroller_business_logic.py",
+    "tests/test_data_model_transfer_progress.py",
+    "tests/test_data_model_safe_evaluator.py",
     "tests/unit_battery_cell_voltages.py",
     "tests/test_data_model_ardupilot_parameter.py",
     "tests/unit_manual_override.py",

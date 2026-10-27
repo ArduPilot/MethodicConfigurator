@@ -10,19 +10,368 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from logging import INFO
 from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_configuration_step import (
     ConfigurationStepProcessor,
     get_auto_importable_parameter_names,
 )
-from ardupilot_methodic_configurator.data_model_par_dict import Par
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 
 # pylint: disable=redefined-outer-name, protected-access, too-many-lines
+
+
+@pytest.mark.parametrize("creation", ["step", "single"])
+@pytest.mark.parametrize("definition", ["regular", "forced", "derived", "manual"])
+def test_created_parameters_preserve_tuning_metadata_defaults_and_computed_values(
+    processor: ConfigurationStepProcessor, creation: str, definition: str
+) -> None:
+    """
+    Parameters retain the information needed for editing and comparison.
+
+    GIVEN: A saved gain with documentation, a default, live telemetry, and an optional computed definition
+    WHEN: It is created individually or as part of a configuration step
+    THEN: Its value, editability, reason, limits, default comparison, and saved value remain correct.
+    """
+    filesystem = processor.local_filesystem
+    name = "TEST_GAIN"
+    filename = "test_file.param"
+    comment = "@manual_override measured gain" if definition == "manual" else "saved gain"
+    saved = Par(9, comment)
+    filesystem.file_parameters = {filename: ParDict({name: saved})}
+    filesystem.doc_dict = {name: {"min": 0, "max": 30, "doc_tooltip": "Gain documentation"}}
+    filesystem.param_default_dict = {name: Par(7)}
+    if definition in ("forced", "manual"):
+        filesystem.forced_parameters = {filename: ParDict({name: Par(15, "forced gain")})}
+    if definition == "derived":
+        filesystem.derived_parameters = {filename: ParDict({name: Par(17, "derived gain")})}
+
+    if creation == "step":
+        parameter = processor.process_configuration_step(filename, {name: 11})[0][name]
+    else:
+        parameter = processor.create_ardupilot_parameter(name, saved, filename, {name: 11})
+
+    expected_value = {"regular": 9, "forced": 15, "derived": 17, "manual": 9}[definition]
+    expected_reason = {"regular": "saved gain", "forced": "forced gain", "derived": "derived gain", "manual": "measured gain"}
+    assert parameter.name == name
+    assert parameter.get_new_value() == expected_value
+    assert parameter.change_reason == expected_reason[definition]
+    assert parameter.is_forced is (definition in ("forced", "manual"))
+    assert parameter.is_derived is (definition == "derived")
+    assert parameter.is_manual_override is (definition == "manual")
+    assert parameter.is_editable is (definition in ("regular", "manual"))
+    assert parameter.min_value == 0
+    assert parameter.max_value == 30
+    assert parameter.tooltip_new_value == "Gain documentation"
+    assert parameter.fc_value_as_string == "11"
+    parameter.set_fc_value(7)
+    assert parameter.fc_value_equals_default_value is True
+    parameter.reset_new_value_to_file_value()
+    assert parameter.get_new_value() == 9
+
+
+def test_unconfigured_step_returns_empty_operations_even_when_other_steps_are_configured(
+    processor: ConfigurationStepProcessor, fc_parameters: dict[str, float]
+) -> None:
+    """
+    A plain parameter file does not inherit operations from another step.
+
+    GIVEN: Configuration rules exist only for a different file
+    WHEN: The current file is processed
+    THEN: Its parameters are loaded and all operation collections are empty.
+    """
+    processor.local_filesystem.configuration_steps = {"other.param": {"rename_connection": "selected_can"}}
+
+    parameters, errors, infos, duplicates, renames, derived, imported = processor.process_configuration_step(
+        "test_file.param", fc_parameters
+    )
+
+    assert set(parameters) == set(processor.local_filesystem.file_parameters["test_file.param"])
+    assert errors == []
+    assert infos == []
+    assert duplicates == set()
+    assert renames == []
+    assert derived == {}
+    assert imported == set()
+    processor.local_filesystem.compute_forced_and_derived_parameters.assert_not_called()
+    processor.local_filesystem.compute_deletions.assert_not_called()
+    processor.local_filesystem.compute_add_parameters.assert_not_called()
+
+
+@pytest.mark.parametrize("delete_options", [False, True])
+def test_step_evaluates_live_values_and_respects_existing_and_deleted_parameters(
+    processor: ConfigurationStepProcessor, delete_options: bool
+) -> None:
+    """
+    Real configuration expressions receive live values and respect deletion priority.
+
+    GIVEN: Forced, derived, added, deleted, and auto-imported parameters in one step
+    WHEN: The step is evaluated using live flight-controller values
+    THEN: Computed values use those inputs, saved entries are protected, and deletions override additions and imports.
+    """
+    filesystem = processor.local_filesystem
+    calculations = ConfigurationSteps("", "ArduCopter")
+    filename = "test_file.param"
+    filesystem.file_parameters = {
+        filename: ParDict({"CAN_P1_DRIVER": Par(0), "SERIAL1_BAUD": Par(9600), "BATT_MONITOR": Par(4, "saved monitor")})
+    }
+    filesystem.configuration_steps = {
+        filename: {
+            "forced_parameters": {
+                "CAN_P1_DRIVER": {"New Value": "fc_parameters['CAN_P1_DRIVER'] + 2", "Change Reason": "forced"}
+            },
+            "derived_parameters": {
+                "SERIAL1_BAUD": {"New Value": "fc_parameters['SERIAL1_BAUD'] / 2", "Change Reason": "derived"}
+            },
+            "delete_parameters": {"BATT_OPTIONS": {"if": "fc_parameters['CAN_P1_DRIVER'] == 1"}},
+            "add_parameters": {
+                "BATT_MONITOR": {"New Value": 99},
+                "BATT_OPTIONS": {"New Value": "fc_parameters['BATT_OPTIONS'] * 2", "Change Reason": "added"},
+            },
+            "autoimport_nondefault_regexp": ["BATT.*"],
+        }
+    }
+    filesystem.param_default_dict = {"BATT_OPTIONS": Par(0), "BATT_MONITOR": Par(0)}
+    filesystem.forced_parameters = calculations.forced_parameters
+    filesystem.derived_parameters = calculations.derived_parameters
+    filesystem.compute_forced_and_derived_parameters.side_effect = calculations.compute_forced_and_derived_parameters
+    filesystem.compute_deletions.side_effect = calculations.compute_deletions
+    filesystem.compute_add_parameters.side_effect = calculations.compute_add_parameters
+    live = {"CAN_P1_DRIVER": int(delete_options), "SERIAL1_BAUD": 38400, "BATT_OPTIONS": 3, "BATT_MONITOR": 4}
+
+    parameters, errors, _infos, _duplicates, _renames, derived, imported = processor.process_configuration_step(filename, live)
+
+    assert errors == []
+    assert parameters["CAN_P1_DRIVER"].get_new_value() == int(delete_options) + 2
+    assert parameters["CAN_P1_DRIVER"].is_forced is True
+    assert parameters["SERIAL1_BAUD"].get_new_value() == 19200
+    assert parameters["SERIAL1_BAUD"].is_derived is True
+    assert derived == {"SERIAL1_BAUD": Par(19200, "derived")}
+    assert parameters["BATT_MONITOR"].change_reason == "saved monitor"
+    additions = calculations.add_parameters.get(filename, {})
+    if delete_options:
+        assert additions == {}
+        assert "BATT_OPTIONS" not in parameters
+        assert imported == set()
+    else:
+        assert additions == {"BATT_OPTIONS": Par(6, "added")}
+        assert parameters["BATT_OPTIONS"].get_new_value() == 3
+        assert imported == {"BATT_OPTIONS"}
+
+
+@pytest.mark.parametrize(
+    ("prefix", "expected"),
+    [
+        ("SERIAL3", [("BRD_SER1_RTSCTS", "BRD_SER3_RTSCTS"), ("SERIAL1_PROTOCOL", "SERIAL3_PROTOCOL")]),
+        ("SERIAL10", [("BRD_SER1_RTSCTS", "BRD_SER10_RTSCTS"), ("SERIAL1_PROTOCOL", "SERIAL10_PROTOCOL")]),
+        ("CAN2", [("CAN_P1_DRIVER", "CAN_P2_DRIVER")]),
+    ],
+)
+def test_connection_renames_include_board_flow_control_without_touching_other_hardware(
+    prefix: str, expected: list[tuple[str, str]]
+) -> None:
+    """
+    Moving a serial connection also moves its board flow-control setting.
+
+    GIVEN: Serial, CAN, and unrelated board settings in a parameter file
+    WHEN: Serial or CAN connection rename operations are calculated
+    THEN: Only matching connection settings are renamed and the input tuning is unchanged.
+    """
+    parameters = ParDict({"BRD_SER1_RTSCTS": Par(2), "SERIAL1_PROTOCOL": Par(1), "BRD_TYPE": Par(3), "CAN_P1_DRIVER": Par(1)})
+    original = dict(parameters)
+
+    duplicates, renames = ConfigurationStepProcessor.calculate_connection_rename_operations(parameters, prefix)
+
+    assert duplicates == set()
+    assert renames == expected
+    assert dict(parameters) == original
+
+
+def test_difference_filter_includes_changed_and_missing_values_and_excludes_equal_values(
+    processor: ConfigurationStepProcessor,
+) -> None:
+    """
+    The difference view includes every value needing an upload or a missing-FC review.
+
+    GIVEN: Parameters with equal, different, and unavailable live values
+    WHEN: The difference filter is applied
+    THEN: Only the changed and missing parameters remain.
+    """
+    parameters = {
+        "MATCHING": ArduPilotParameter("MATCHING", Par(1), fc_value=1),
+        "CHANGED": ArduPilotParameter("CHANGED", Par(2), fc_value=3),
+        "MISSING": ArduPilotParameter("MISSING", Par(4)),
+    }
+
+    assert processor.filter_different_parameters(parameters) == {name: parameters[name] for name in ("CHANGED", "MISSING")}
+
+
+@pytest.mark.parametrize("definition", ["forced", "derived"])
+def test_auto_imports_keep_parameter_identity_and_the_current_steps_computed_definition(
+    processor: ConfigurationStepProcessor, definition: str
+) -> None:
+    """
+    Auto-imported parameters retain their computed definition and editor identity.
+
+    GIVEN: A non-default live parameter absent from the file with a step-specific computed value
+    WHEN: The configuration step imports it automatically
+    THEN: Its name, live value, metadata, default, computed value, and reason are preserved.
+    """
+    filesystem = processor.local_filesystem
+    calculations = ConfigurationSteps("", "ArduCopter")
+    filename = "test_file.param"
+    filesystem.file_parameters = {filename: ParDict()}
+    filesystem.configuration_steps = {
+        filename: {
+            "autoimport_nondefault_regexp": ["BATT.*"],
+            f"{definition}_parameters": {"BATT_OPTIONS": {"New Value": 5, "Change Reason": "computed options"}},
+        }
+    }
+    filesystem.doc_dict = {"BATT_OPTIONS": {"min": 0, "max": 10}}
+    filesystem.param_default_dict = {"BATT_OPTIONS": Par(0)}
+    filesystem.forced_parameters = calculations.forced_parameters
+    filesystem.derived_parameters = calculations.derived_parameters
+    filesystem.compute_forced_and_derived_parameters.side_effect = calculations.compute_forced_and_derived_parameters
+
+    parameters, errors, _infos, _duplicates, _renames, _derived, imported = processor.process_configuration_step(
+        filename, {"BATT_OPTIONS": 3}
+    )
+
+    assert errors == []
+    assert imported == {"BATT_OPTIONS"}
+    parameter = parameters["BATT_OPTIONS"]
+    assert parameter.name == "BATT_OPTIONS"
+    assert parameter.get_new_value() == 5
+    assert parameter.change_reason == "computed options"
+    assert parameter.fc_value_as_string == "3"
+    assert parameter.is_forced is (definition == "forced")
+    assert parameter.is_derived is (definition == "derived")
+    assert parameter.min_value == 0
+    assert parameter.max_value == 10
+    parameter.set_fc_value(0)
+    assert parameter.fc_value_equals_default_value is True
+    assert filesystem.file_parameters[filename] == {}
+
+
+@pytest.mark.parametrize(
+    ("file_names", "live", "warning_expected"),
+    [
+        (("RC_OPTIONS",), {"RC_OPTIONS": 8192, "FLTMODE_CH": 5}, True),
+        (("FLTMODE_CH",), {"RC_OPTIONS": 8192, "FLTMODE_CH": 5}, True),
+        ((), {"RC_OPTIONS": 8192, "FLTMODE_CH": 5}, False),
+        (("RC_OPTIONS",), {"RC_OPTIONS": 512}, True),
+        (("FLTMODE_CH",), {"FLTMODE_CH": 5}, False),
+        (("RC_OPTIONS",), {"RC_OPTIONS": 16384, "FLTMODE_CH": 5}, False),
+        (("RC_OPTIONS",), {"RC_OPTIONS": 8192, "FLTMODE_CH": 6}, False),
+        (("FLTMODE_CH",), {}, False),
+    ],
+)
+def test_expresslrs_warning_respects_step_relevance_live_bits_and_missing_defaults(
+    processor: ConfigurationStepProcessor, file_names: tuple[str, ...], live: dict[str, float], warning_expected: bool
+) -> None:
+    """
+    ExpressLRS guidance appears only for a relevant step with the channel conflict.
+
+    GIVEN: A step containing either RC setting or neither, with possibly incomplete live data
+    WHEN: The step is processed
+    THEN: Either ExpressLRS bit triggers guidance for channel five, using documented missing-value defaults.
+    """
+    processor.local_filesystem.file_parameters = {"test_file.param": ParDict({name: Par(0) for name in file_names})}
+
+    _parameters, errors, infos, _duplicates, _renames, _derived, _imported = processor.process_configuration_step(
+        "test_file.param", live
+    )
+
+    assert errors == []
+    if warning_expected:
+        assert len(infos) == 1
+        title, message = infos[0]
+        assert title == "ExpressLRS Configuration Warning"
+        assert "FLTMODE_CH" in message
+        assert "RC5 arming channel" in message
+    else:
+        assert infos == []
+
+
+@pytest.mark.parametrize("target_exists", [False, True])
+def test_connection_rename_conflicts_never_schedule_two_sources_for_one_destination(target_exists: bool) -> None:
+    """
+    Connection renames preserve existing targets and avoid competing operations.
+
+    GIVEN: Two source CAN ports that would map to the same target, which may already exist
+    WHEN: Rename operations are calculated
+    THEN: Only the first free target is scheduled, without deleting or modifying saved parameters.
+    """
+    parameters = ParDict({"CAN_P1_DRIVER": Par(1, "first"), "CAN_P2_DRIVER": Par(2, "second")})
+    if target_exists:
+        parameters["CAN_P3_DRIVER"] = Par(3, "target")
+    original = dict(parameters)
+
+    duplicates, renames = ConfigurationStepProcessor.calculate_connection_rename_operations(parameters, "CAN3")
+
+    assert duplicates == set()
+    assert renames == ([] if target_exists else [("CAN_P1_DRIVER", "CAN_P3_DRIVER")])
+    assert dict(parameters) == original
+
+
+def test_connection_rename_feedback_identifies_each_changed_parameter_without_changing_saved_tuning(
+    processor: ConfigurationStepProcessor, fc_parameters: dict[str, float], caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    Users can review every proposed rename before saved tuning is changed.
+
+    GIVEN: A step moving its serial connection to the selected port
+    WHEN: The step is processed
+    THEN: Feedback names each old and new parameter and saved parameters remain untouched.
+    """
+    filesystem = processor.local_filesystem
+    filesystem.configuration_steps = {"test_file.param": {"rename_connection": "selected_serial"}}
+    original = dict(filesystem.file_parameters["test_file.param"])
+
+    with caplog.at_level(INFO):
+        _, errors, infos, duplicates, renames, _, _ = processor.process_configuration_step("test_file.param", fc_parameters)
+
+    assert errors == []
+    assert duplicates == set()
+    assert renames == [("SERIAL1_PROTOCOL", "SERIAL3_PROTOCOL"), ("SERIAL1_BAUD", "SERIAL3_BAUD")]
+    assert len(infos) == 2
+    logged_messages = [record.getMessage() for record in caplog.records if record.levelno == INFO]
+    for (title, message), (old_name, new_name) in zip(infos, renames, strict=True):
+        assert title == "Parameter Renamed"
+        assert f"'{old_name}'" in message
+        assert f"'{new_name}'" in message
+        assert any(old_name in logged and new_name in logged for logged in logged_messages)
+    assert dict(filesystem.file_parameters["test_file.param"]) == original
+
+
+def test_failed_connection_expression_reports_the_missing_input_and_leaves_operations_empty(
+    processor: ConfigurationStepProcessor, fc_parameters: dict[str, float], caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    Missing connection choices produce an actionable diagnostic without proposed changes.
+
+    GIVEN: A rename expression referencing a missing component choice
+    WHEN: The configuration step is processed
+    THEN: The warning names the missing input and no rename or deletion is proposed.
+    """
+    processor.local_filesystem.configuration_steps = {"test_file.param": {"rename_connection": "missing_connection_choice"}}
+
+    _parameters, errors, infos, duplicates, renames, _derived, _imported = processor.process_configuration_step(
+        "test_file.param", fc_parameters
+    )
+
+    assert errors == []
+    assert infos == []
+    assert duplicates == set()
+    assert renames == []
+    assert "missing_connection_choice" in caplog.text
+    assert "NameNotDefined" in caplog.text
 
 
 @pytest.fixture
