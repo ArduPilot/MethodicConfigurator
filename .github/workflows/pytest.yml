@@ -31,8 +31,13 @@ jobs:
           - ${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
           - windows-latest
           - macos-latest
-        python-version: ["3.14"]  # to make sure the latest AMC supported python version does not break
+        python-version: ["3.15.2"]  # to make sure the latest AMC supported python version does not break
+        exclude:
+          - os: macos-latest
+            python-version: "3.15.2"
         include:
+          - os: macos-latest
+            python-version: "3.14"
           - os: ${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
             python-version: "3.11"  # to make sure the minimum AMC supported python version does not break
             # this is also the version used to report test coverage, other versions do not report coverage
@@ -270,7 +275,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           parallel-finished: true
-          carryforward: "run-${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}-py3.11,run-${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}-py3.14,run-windows-latest-py3.14,run-macos-latest-py3.14"
+          carryforward: "run-${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}-py3.11,run-${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}-py3.15.2,run-windows-latest-py3.15.2"
 
       # TODO: create a badge that presents the result of the Upload coverage xml report step
 
