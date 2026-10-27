@@ -132,6 +132,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         self._table_render_generation = 0
         self._reserved_table_rows = 0
         self._open_bitmask_editors = 0
+        self._bitmask_usage_shown = False
 
         # Track last return values to prevent duplicate event processing
         self._last_return_values: dict[tk.Misc, str] = {}
@@ -398,8 +399,10 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         if (
             parent_root
             and should_try_to_display_bitmask_parameter_editor_usage
+            and not self._bitmask_usage_shown
             and UsagePopupWindow.should_display("bitmask_parameter_editor")
         ):
+            self._bitmask_usage_shown = True
             display_bitmask_parameters_editor_usage_popup(parent_root)
 
     def _update_table_in_batches(
@@ -467,8 +470,10 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
             if (
                 parent_root
                 and should_try_to_display_bitmask_parameter_editor_usage
+                and not self._bitmask_usage_shown
                 and UsagePopupWindow.should_display("bitmask_parameter_editor")
             ):
+                self._bitmask_usage_shown = True
                 display_bitmask_parameters_editor_usage_popup(parent_root)
             self._apply_scroll_position(scroll_to_bottom)
             self._notify_render_complete()

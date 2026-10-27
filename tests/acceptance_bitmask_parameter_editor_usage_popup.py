@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional, cast
 from unittest.mock import MagicMock
 
+import pytest
+
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import USAGE_POPUP_WINDOWS
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import (
@@ -82,18 +84,28 @@ def _build_table(tk_root: tk.Tk, parameter_editor: StubParameterEditor) -> Param
     return ParameterEditorTable(tk_root, parameter_editor_obj, parameter_editor_window, dialogs=dialogs)
 
 
-def test_user_sees_popup_when_table_contains_editable_bitmask_parameter(tk_root: tk.Tk, mocker: MockerFixture) -> None:
+@pytest.mark.parametrize("render_batch_size", [None, 1])
+@pytest.mark.parametrize("external_parameters", [False, True], ids=["workflow", "external-file"])
+@pytest.mark.parametrize("is_bitmask", [False, True], ids=["ordinary-choice", "bitmask"])
+def test_table_refresh_only_shows_relevant_bitmask_help_once(
+    root: tk.Tk,
+    mocker: MockerFixture,
+    render_batch_size: int | None,
+    external_parameters: bool,
+    is_bitmask: bool,
+) -> None:
     """
-    Acceptance scenario for showing the popup during table render.
+    Refreshing a parameter table does not interrupt component dropdowns with repeated help.
 
-    GIVEN a table showing an editable bitmask parameter
-    WHEN it renders
-    THEN the popup is displayed.
+    GIVEN a workflow or external-file table showing an editable choice or bitmask
+    WHEN component validation causes the table to render five times
+    THEN only the bitmask shows usage help, and only once.
     """
     # Arrange
     parameter_editor = StubParameterEditor()
-    parameter_editor.current_step_parameters["BITMASK"] = StubStepParameter(is_editable=True, is_bitmask=True)
-    table = _build_table(tk_root, parameter_editor)
+    parameter_editor.current_step_parameters["PARAM"] = StubStepParameter(is_editable=True, is_bitmask=is_bitmask)
+    table = _build_table(root, parameter_editor)
+    table.options.render_batch_size = render_batch_size
 
     mocker.patch.object(table, "_create_column_widgets", return_value=[])
     mocker.patch.object(table, "_grid_column_widgets")
@@ -101,13 +113,23 @@ def test_user_sees_popup_when_table_contains_editable_bitmask_parameter(tk_root:
     mock_display = mocker.patch(f"{MODULE_TABLE}.display_bitmask_parameters_editor_usage_popup")
 
     fake_param = MagicMock(spec=ArduPilotParameter)
+    fake_param.is_editable = True
+    fake_param.is_bitmask = is_bitmask
+    parameters = {"PARAM": fake_param}
+    if external_parameters:
+        table.parameters = parameters
 
     # Act
-    table._update_table({"BITMASK": fake_param}, gui_complexity="simple")  # pylint: disable=protected-access
+    for _ in range(5):
+        table._render_table(parameters, gui_complexity="simple", scroll_to_bottom=False)  # pylint: disable=protected-access
 
     # Assert
-    mock_should_display.assert_called_once_with("bitmask_parameter_editor")
-    mock_display.assert_called_once_with(tk_root)
+    if is_bitmask:
+        mock_display.assert_called_once_with(root)
+        mock_should_display.assert_called_once_with("bitmask_parameter_editor")
+    else:
+        mock_display.assert_not_called()
+        mock_should_display.assert_not_called()
 
 
 def test_user_preference_can_hide_popup_during_table_render(tk_root: tk.Tk, mocker: MockerFixture) -> None:
