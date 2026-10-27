@@ -65,8 +65,12 @@ def test_plane_battery_step_forces_documented_actions_with_accurate_reasons(
         name: value for name, (value, _) in PLANE_BATTERY_ACTIONS.items()
     }
     for name, (_, documented_action) in PLANE_BATTERY_ACTIONS.items():
-        assert documented_action in forced_actions[name]["Change Reason"]
-    assert "DO_LAND" in forced_actions["BATT_FS_CRT_ACT"]["Change Reason"]
+        change_reason = forced_actions[name]["Change Reason"]
+        assert isinstance(change_reason, str)
+        assert documented_action in change_reason
+    critical_change_reason = forced_actions["BATT_FS_CRT_ACT"]["Change Reason"]
+    assert isinstance(critical_change_reason, str)
+    assert "DO_LAND" in critical_change_reason
 
 
 def test_plane_battery_template_and_forced_actions_agree(
