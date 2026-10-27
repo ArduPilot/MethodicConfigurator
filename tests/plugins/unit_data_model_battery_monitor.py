@@ -13,6 +13,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from logging import WARNING
 from math import isnan, nan
 from unittest.mock import MagicMock, patch
 
@@ -87,9 +88,157 @@ def battery_monitor_data_model(
 # ==================== UNIT TESTS ====================
 
 
-@pytest.mark.parametrize("monitor_count", [1, 2, 9, 16])
+@pytest.mark.parametrize("connected", [False, True])
+def test_thresholds_require_both_connection_and_loaded_parameters(
+    connected_flight_controller_with_battery_enabled: MagicMock, connected: bool
+) -> None:
+    """
+    Missing connection or parameter data prevents a misleading safety indication.
+
+    GIVEN: Either a disconnected controller retaining parameters or a connected controller without parameters
+    WHEN: Voltage thresholds are requested
+    THEN: Both thresholds are unavailable and backend thresholds are not used.
+    """
+    fc = connected_flight_controller_with_battery_enabled
+    if connected:
+        fc.fc_parameters.clear()
+    else:
+        fc.master = None
+    model = BatteryMonitorDataModel(fc)
+
+    minimum, maximum = model.get_voltage_thresholds(0)
+
+    assert isnan(minimum)
+    assert isnan(maximum)
+    fc.get_voltage_thresholds.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("battery_id", "parameter_name", "minimum"),
+    [(1, "BATT2_ARM_VOLT", 11.8), (2, "BATT3_ARM_VOLT", 0.5), (9, "BATTA_ARM_VOLT", 14.5)],
+)
+def test_secondary_batteries_use_their_own_minimum_without_the_motor_voltage_ceiling(
+    connected_flight_controller_with_battery_enabled: MagicMock, battery_id: int, parameter_name: str, minimum: float
+) -> None:
+    """
+    Secondary battery safety uses its own arming threshold.
+
+    GIVEN: A secondary battery with an independent arming voltage
+    WHEN: Its voltage exceeds the motor battery's maximum
+    THEN: Its own minimum is used and the motor battery ceiling does not make it critical.
+    """
+    fc = connected_flight_controller_with_battery_enabled
+    fc.fc_parameters[parameter_name] = minimum
+    fc.fc_parameters[parameter_name.replace("_ARM_VOLT", "_MONITOR")] = 4
+    model = BatteryMonitorDataModel(fc)
+
+    assert model.get_voltage_thresholds(battery_id) == (minimum, float("inf"))
+    assert model.get_voltage_status(battery_id, minimum) == "critical"
+    assert model.get_voltage_status(battery_id, 20.0) == "safe"
+    fc.get_voltage_thresholds.assert_not_called()
+
+
+@pytest.mark.parametrize("minimum", [None, 0.0, -1.0])
+def test_secondary_battery_without_a_positive_threshold_has_unavailable_safety_status(
+    connected_flight_controller_with_battery_enabled: MagicMock, minimum: float | None
+) -> None:
+    """
+    An absent or disabled secondary threshold does not imply safe voltage.
+
+    GIVEN: A secondary battery with a missing, zero, or negative arming voltage
+    WHEN: Its thresholds and voltage status are requested
+    THEN: Both thresholds and the safety status are unavailable.
+    """
+    fc = connected_flight_controller_with_battery_enabled
+    fc.fc_parameters["BATT2_MONITOR"] = 4
+    if minimum is not None:
+        fc.fc_parameters["BATT2_ARM_VOLT"] = minimum
+    model = BatteryMonitorDataModel(fc)
+
+    lower, upper = model.get_voltage_thresholds(1)
+
+    assert isnan(lower)
+    assert isnan(upper)
+    assert model.get_voltage_status(1, 12.4) == "unavailable"
+    assert model.get_battery_status_color(1, 12.4) == "gray"
+
+
+@pytest.mark.parametrize("thresholds", [(nan, 16.8), (11.0, nan)])
+def test_either_missing_voltage_limit_makes_the_status_unavailable(
+    connected_flight_controller_with_battery_enabled: MagicMock, thresholds: tuple[float, float]
+) -> None:
+    """
+    Either missing safety limit prevents a safe or critical classification.
+
+    GIVEN: A valid reading but exactly one unavailable voltage threshold
+    WHEN: Battery safety is displayed
+    THEN: The status is unavailable and its color is gray.
+    """
+    fc = connected_flight_controller_with_battery_enabled
+    fc.get_voltage_thresholds.return_value = thresholds
+    model = BatteryMonitorDataModel(fc)
+
+    assert model.get_voltage_status(0, 12.4) == "unavailable"
+    assert model.get_battery_status_color(0, 12.4) == "gray"
+
+
+@pytest.mark.parametrize("voltage", [None, nan])
+def test_missing_battery_reading_is_unavailable_even_with_valid_limits(
+    battery_monitor_data_model: BatteryMonitorDataModel, voltage: float | None
+) -> None:
+    """
+    A missing reading must not appear as a voltage alarm or a safe battery.
+
+    GIVEN: Valid safety limits but no usable voltage reading
+    WHEN: Battery safety is displayed
+    THEN: The status is unavailable and its color is gray.
+    """
+    assert battery_monitor_data_model.get_voltage_status(0, voltage) == "unavailable"
+    assert battery_monitor_data_model.get_battery_status_color(0, voltage) == "gray"
+
+
+@pytest.mark.parametrize("restart", ["reconnect", "re-enable"])
+def test_restarted_monitoring_retries_until_telemetry_arrives_without_a_spurious_loss_warning(
+    connected_flight_controller_with_battery_enabled: MagicMock, restart: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    Restarting monitoring treats pending telemetry as startup rather than a lost stream.
+
+    GIVEN: A previously active monitor that reconnects or is disabled and re-enabled
+    WHEN: New telemetry takes several polls to arrive
+    THEN: Stream requests are retried without loss warnings and stop once readings arrive.
+    """
+    fc = connected_flight_controller_with_battery_enabled
+    model = BatteryMonitorDataModel(fc)
+    assert model.get_battery_statuses() == {0: (12.4, 2.1)}
+    fc.request_periodic_battery_status.reset_mock()
+    if restart == "reconnect":
+        fc.master = MagicMock()
+    else:
+        fc.fc_parameters["BATT_MONITOR"] = 0
+        fc.is_battery_monitoring_enabled.return_value = False
+        fc.get_battery_statuses.reset_mock()
+        assert model.get_battery_statuses() is None
+        fc.get_battery_statuses.assert_not_called()
+        fc.request_periodic_battery_status.assert_not_called()
+        fc.fc_parameters["BATT_MONITOR"] = 4
+        fc.is_battery_monitoring_enabled.return_value = True
+    fc.get_battery_statuses.return_value = (None, "Waiting for battery telemetry")
+
+    assert model.get_battery_statuses() is None
+    assert model.get_battery_statuses() is None
+
+    assert fc.request_periodic_battery_status.call_count == 2
+    assert not [record for record in caplog.records if record.levelno >= WARNING]
+    fc.get_battery_statuses.return_value = ({0: (12.4, 2.1)}, "")
+    assert model.get_battery_statuses() == {0: (12.4, 2.1)}
+    assert model.get_battery_statuses() == {0: (12.4, 2.1)}
+    assert [call.args[0] for call in fc.request_periodic_battery_status.call_args_list] == [500000, 500000, 500000]
+
+
+@pytest.mark.parametrize(("monitor_count", "expected_interval"), [(1, 500000), (2, 250000), (9, 55555), (16, 31250)])
 def test_user_sees_continuous_readings_from_round_robin_battery_telemetry(
-    connected_flight_controller_with_battery_enabled: MagicMock, monitor_count: int
+    connected_flight_controller_with_battery_enabled: MagicMock, monitor_count: int, expected_interval: int
 ) -> None:
     """
     Every enabled battery stays visible while its telemetry stream is active.
@@ -105,7 +254,9 @@ def test_user_sees_continuous_readings_from_round_robin_battery_telemetry(
     model = BatteryMonitorDataModel(fc)
     fc.master.recv_match.return_value = None
     model.get_battery_statuses()
-    interval_seconds = fc.request_periodic_battery_status.call_args.args[0] / 1_000_000
+    interval_microseconds = fc.request_periodic_battery_status.call_args.args[0]
+    assert interval_microseconds == expected_interval
+    interval_seconds = interval_microseconds / 1_000_000
     next_message_time = interval_seconds
     next_battery_id = 0
 

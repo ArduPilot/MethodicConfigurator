@@ -424,3 +424,64 @@ class TestMotorSequenceNumber:
 def test_enabled_battery_ids_follow_ardupilot_parameter_groups(parameter_name: str, battery_id: int) -> None:
     """Given any supported monitor group, its zero-based ID is enabled independently of battery 1."""
     assert get_enabled_battery_ids({parameter_name: 4}) == [battery_id]
+
+
+@pytest.mark.parametrize(
+    ("parameters", "expected"),
+    [
+        ({}, (1, 1)),
+        ({"FRAME_CLASS": 3.0, "FRAME_TYPE": 4.0}, (3, 4)),
+        ({"Q_FRAME_CLASS": 2.0, "FRAME_TYPE": 4.0}, (2, 4)),
+        ({"FRAME_CLASS": 3.0, "Q_FRAME_TYPE": 5.0}, (3, 5)),
+    ],
+)
+def test_plane_frame_info_falls_back_independently_for_missing_q_parameters(
+    parameters: dict[str, float], expected: tuple[int, int]
+) -> None:
+    """
+    Plane frame information remains usable when Q parameters are missing.
+
+    GIVEN: Plane parameters with either or both Q frame settings absent
+    WHEN: Frame information is requested
+    THEN: Each missing setting falls back to its standard setting or the default.
+    """
+    assert get_frame_info(parameters, "ArduPlane") == expected
+
+
+def test_motor_testing_rejects_the_first_throttle_above_the_limit() -> None:
+    """
+    Motor testing rejects even a one-percent throttle excess.
+
+    GIVEN: A throttle request of 101 percent
+    WHEN: The request is validated
+    THEN: It is rejected with guidance about the maximum.
+    """
+    valid, error = validate_throttle_percentage(101)
+    assert valid is False
+    assert error is not None
+    assert "above maximum (100)" in error
+
+
+def test_motor_testing_rejects_the_first_duration_above_the_limit() -> None:
+    """
+    Motor testing rejects a duration one second above the safety limit.
+
+    GIVEN: A motor test requested for 31 seconds
+    WHEN: The duration is validated
+    THEN: It is rejected with guidance about the 30-second maximum.
+    """
+    valid, error = validate_motor_test_duration(31)
+    assert valid is False
+    assert error is not None
+    assert "too long (maximum: 30 seconds)" in error
+
+
+def test_motor_sequence_defaults_to_converting_a_zero_based_index() -> None:
+    """
+    The default sequence conversion addresses the first motor as motor one.
+
+    GIVEN: The first motor's zero-based index
+    WHEN: Its sequence number is requested without an indexing override
+    THEN: The MAVLink sequence number is one.
+    """
+    assert calculate_motor_sequence_number(0) == 1

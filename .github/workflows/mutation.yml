@@ -66,7 +66,8 @@ jobs:
         timeout-minutes: 230
         shell: bash
         run: |
-          # Survivors are informational; execution errors still fail this step.
+          # Clean-test and framework failures fail this step.
+          # Per-mutant survivors, timeouts, and crashes are reported for review.
           xvfb-run -a mutmut run --max-children 2 | tee .cache/mutation/run.log
 
       - name: Report mutation results

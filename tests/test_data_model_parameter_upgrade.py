@@ -28,6 +28,119 @@ from ardupilot_methodic_configurator.data_model_parameter_upgrade import (
 # pylint: disable=redefined-outer-name, too-many-lines
 
 
+@pytest.mark.parametrize(
+    ("source_version", "target_version", "gps_name", "land_name", "land_value"),
+    [
+        ("4.5.9", "4.6", "GPS1_TYPE", "LAND_SPEED", 150.0),
+        ("4.6", "4.7", "GPS_TYPE", "LAND_SPD_MS", 1.5),
+        ("4.7", "4.8", "GPS_TYPE", "LAND_SPEED", 150.0),
+        ("4.6", "4.6.1", "GPS_TYPE", "LAND_SPEED", 150.0),
+        ("4.7", "4.7.1", "GPS_TYPE", "LAND_SPEED", 150.0),
+    ],
+)
+def test_only_migrations_crossed_by_the_version_gap_are_applied(
+    source_version: str, target_version: str, gps_name: str, land_name: str, land_value: float
+) -> None:
+    """
+    Firmware version boundaries determine which legacy entries are migrated.
+
+    GIVEN: A file retaining legacy GPS and landing-speed entries at a known version
+    WHEN: It is upgraded across a release or within the same release series
+    THEN: Only migrations newer than the source and reached by the target are applied.
+    """
+    parameters = {"tuning.param": ParDict({"GPS_TYPE": Par(2, "GPS"), "LAND_SPEED": Par(150, "landing speed")})}
+
+    upgrade_parameters_for_firmware_version(source_version, target_version, parameters)
+
+    assert set(parameters["tuning.param"]) == {gps_name, land_name}
+    assert parameters["tuning.param"][gps_name] == Par(2, "GPS")
+    assert parameters["tuning.param"][land_name].value == pytest.approx(land_value)
+    assert parameters["tuning.param"][land_name].comment == "landing speed"
+
+
+@pytest.mark.parametrize(
+    ("versions", "old_name", "new_name", "conflict_description"),
+    [
+        (("4.5", "4.6"), "GPS_TYPE", "GPS1_TYPE", "both old name 'GPS_TYPE' and new name 'GPS1_TYPE' map to 'GPS1_TYPE'"),
+        (
+            ("4.6", "4.7"),
+            "PSC_ACCZ_P",
+            "PSC_D_ACC_P",
+            "both old name 'PSC_ACCZ_P' and already-present 'PSC_D_ACC_P' map to 'PSC_D_ACC_P'",
+        ),
+        (("4.6", "4.7"), "SR0_EXTRA1", "MAV1_EXTRA1", "both SR param 'SR0_EXTRA1' and already-present 'MAV1_EXTRA1'"),
+    ],
+)
+def test_collision_warnings_identify_the_file_and_preserved_parameter(
+    versions: tuple[str, str],
+    old_name: str,
+    new_name: str,
+    conflict_description: str,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """
+    Users can locate a migration collision and see which entry was retained.
+
+    GIVEN: An already-upgraded entry followed by a conflicting legacy entry
+    WHEN: A firmware migration processes the file
+    THEN: The new entry wins and a warning identifies the file and both conflicting names.
+    """
+    parameters = {
+        "tuning.param": ParDict(
+            {new_name: Par(7, "keep this tuning"), old_name: Par(100, "legacy tuning"), "SERIAL0_PROTOCOL": Par(2)}
+        )
+    }
+
+    upgrade_parameters_for_firmware_version(*versions, parameters)
+
+    assert old_name not in parameters["tuning.param"]
+    assert parameters["tuning.param"][new_name] == Par(7, "keep this tuning")
+    messages = [record.getMessage() for record in caplog.records if "collision" in record.getMessage().lower()]
+    assert len(messages) == 1
+    assert "'tuning.param'" in messages[0]
+    assert conflict_description in messages[0]
+
+
+@pytest.mark.parametrize(("source_version", "target_version"), [("invalid-source", "4.7"), ("4.6", "invalid-target")])
+def test_invalid_version_warnings_identify_both_versions_without_changing_tuning(
+    source_version: str, target_version: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    Invalid version diagnostics identify the inputs that prevented migration.
+
+    GIVEN: An invalid source or target firmware version
+    WHEN: A migration is requested
+    THEN: The warning includes both versions and the original tuning remains unchanged.
+    """
+    original = ParDict({"GPS_TYPE": Par(2, "GPS"), "LAND_SPEED": Par(150, "landing speed")})
+    parameters = {"tuning.param": ParDict(original)}
+
+    upgrade_parameters_for_firmware_version(source_version, target_version, parameters)
+
+    assert parameters["tuning.param"] == original
+    assert f"param_files='{source_version}'" in caplog.text
+    assert f"fc='{target_version}'" in caplog.text
+
+
+def test_mavlink_ports_are_deduplicated_and_sorted_numerically_across_files() -> None:
+    """
+    MAV stream names follow numeric port order regardless of file order.
+
+    GIVEN: Unordered ports including a duplicate MAVLink port in another file
+    WHEN: Stream prefixes are mapped for migration
+    THEN: Each MAVLink port receives one index and non-MAVLink ports are excluded.
+    """
+    parameters = {
+        "radio.param": ParDict({"SERIAL10_PROTOCOL": Par(2), "SERIAL2_PROTOCOL": Par(1)}),
+        "defaults.param": ParDict({"SERIAL2_PROTOCOL": Par(1), "SERIAL0_PROTOCOL": Par(2), "SERIAL1_PROTOCOL": Par(3)}),
+    }
+
+    mapping, ports = build_sr_to_mav_mapping(parameters)
+
+    assert mapping == {"SR0_": "MAV1_", "SR2_": "MAV2_", "SR10_": "MAV3_"}
+    assert ports == {0, 2, 10}
+
+
 @pytest.fixture
 def sample_parameters_45() -> dict[str, ParDict]:
     """

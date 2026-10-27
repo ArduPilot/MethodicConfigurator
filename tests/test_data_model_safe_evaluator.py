@@ -19,6 +19,30 @@ from ardupilot_methodic_configurator.data_model_safe_evaluator import (
 )
 
 
+@pytest.mark.parametrize(
+    ("expression", "expected"),
+    [
+        ("max(2, 7)", 7),
+        ("min(2, 7)", 2),
+        ("round(1.234, 2)", 1.23),
+        ("abs(-3)", 3),
+        ("len([2, 3])", 2),
+        ("log(1)", 0.0),
+        ("Version('4.6') < Version('4.7')", True),
+        ("int(2.9)", 2),
+    ],
+)
+def test_configuration_expressions_can_use_each_supported_helper(expression: str, expected: float) -> None:
+    """
+    Configuration expressions retain access to all explicitly supported helpers.
+
+    GIVEN: An expression using a whitelisted helper and no supplied variables
+    WHEN: The configuration expression is evaluated
+    THEN: Its computed result is returned successfully.
+    """
+    assert safe_evaluate(expression, {}) == expected
+
+
 class TestSafeEvaluateSuccess:
     """Test that successful expressions still return the expected value."""
 

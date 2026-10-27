@@ -113,3 +113,46 @@ def test_upload_batch_counts_only_acknowledged_bytes_and_resolves_empty_files() 
     progress = second.finish()
     assert progress == TransferProgress(289, 289, direction=TransferDirection.UPLOAD)
     assert estimate_transfer(progress, 2).bytes_per_second == 144.5
+
+
+def test_user_gets_an_estimate_after_one_byte_and_exactly_one_second() -> None:
+    """
+    Throughput and ETA become available at the first supported time boundary.
+
+    GIVEN: One byte transferred out of a two-byte file
+    WHEN: Exactly one second has elapsed
+    THEN: Throughput is one byte per second and one second remains.
+    """
+    estimate = estimate_transfer(TransferProgress(1, 2), 1)
+    assert estimate.bytes_per_second == 1
+    assert estimate.remaining_seconds == 1
+
+
+def test_user_gets_a_known_total_for_a_one_byte_download() -> None:
+    """
+    A one-byte download has a known size throughout its lifecycle.
+
+    GIVEN: A directory listing containing a one-byte file
+    WHEN: The file starts, reports its size, and finishes
+    THEN: Its total remains one byte and the acknowledged byte is retained.
+    """
+    batch = TransferBatchAccounting.from_sizes([1])
+    assert batch.snapshot() == TransferProgress(0, 1)
+    file = batch.start_file(1)
+    assert file.update(1, 1) == TransferProgress(1, 1)
+    assert file.finish() == TransferProgress(1, 1)
+
+
+def test_user_gets_no_total_while_a_previously_known_file_size_is_unavailable() -> None:
+    """
+    A missing authoritative size temporarily hides the batch total.
+
+    GIVEN: Two downloads with known listing sizes
+    WHEN: The first loses its size information and later reports it again
+    THEN: The total is hidden until resolved and partial completion retains pending work.
+    """
+    batch = TransferBatchAccounting.from_sizes([100, 300])
+    file = batch.start_file(100)
+    assert file.update(20, 0) == TransferProgress(20, None)
+    assert file.update(30, 100) == TransferProgress(30, 400)
+    assert file.finish() == TransferProgress(30, 330)

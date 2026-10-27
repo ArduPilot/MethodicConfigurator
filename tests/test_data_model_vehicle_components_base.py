@@ -1723,6 +1723,8 @@ class TestComponentReordering:
 class TestLegacyBatteryLoading:
     """Opening a legacy battery configuration derives missing values without losing user data."""
 
+    # Keep this expected sequence independent of the production ordering.
+    # pylint: disable=duplicate-code
     EXPECTED_ORDER = (
         "Chemistry",
         "Volt per cell max",
@@ -1735,6 +1737,7 @@ class TestLegacyBatteryLoading:
         "Calibration note",
         "Vendor limits",
     )
+    # pylint: enable=duplicate-code
 
     @staticmethod
     def legacy_specifications(cell_count: str | int | dict[str, str] | None = 3) -> ComponentData:
@@ -2113,6 +2116,8 @@ class TestSavedComponentStructure:
         WHEN: The user opens the project and opens it again
         THEN: Standard components follow the presentation sequence and custom data keeps its relative order
         """
+        # Keep this expected sequence independent of the production ordering.
+        # pylint: disable=duplicate-code
         expected = (
             "Flight Controller",
             "Frame",
@@ -2127,6 +2132,7 @@ class TestSavedComponentStructure:
             "RC Receiver",
             "Telemetry",
         )
+        # pylint: enable=duplicate-code
         components: ComponentData = {"Custom Camera": {"Notes": "Nadir", "Calibration": {"Offset": 0.125}}}
         for name in reversed(expected):
             components[name] = {"Notes": f"Saved {name}", "Installation": {"Label": name}}
