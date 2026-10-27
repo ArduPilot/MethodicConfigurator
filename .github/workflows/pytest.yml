@@ -31,7 +31,7 @@ jobs:
           - ${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
           - windows-latest
           - macos-latest
-        python-version: ["3.14"]  # to make sure the latest AMC supported python version does not break
+        python-version: ["3.15.2"]  # to make sure the latest AMC supported python version does not break
         include:
           - os: ${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
             python-version: "3.11"  # to make sure the minimum AMC supported python version does not break
@@ -46,14 +46,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Set up Python on macOS
+        if: matrix.os == 'macos-latest'
+        id: macos-python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
       # https://docs.astral.sh/uv/guides/integration/github/
       - name: Install uv and set the Python version
+        if: matrix.os != 'macos-latest'
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           python-version: ${{ matrix.python-version }}
           activate-environment: true
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
+
+      - name: Install uv on macOS
+        if: matrix.os == 'macos-latest'
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+
+      - name: Create macOS virtual environment
+        if: matrix.os == 'macos-latest'
+        env:
+          MACOS_PYTHON: ${{ steps.macos-python.outputs.python-path }}
+        run: |
+          uv venv --python "$MACOS_PYTHON"
+          echo "UV_PYTHON=$MACOS_PYTHON" >> "$GITHUB_ENV"
+          echo "VIRTUAL_ENV=$GITHUB_WORKSPACE/.venv" >> "$GITHUB_ENV"
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Cache apt packages (Linux)
         if: matrix.os == (vars.UBUNTU_RUNNER || 'ubuntu-latest')
@@ -73,19 +98,6 @@ jobs:
           # to avoid version conflicts (system has Tcl 8.6, uv Python links against Tcl 9.0)
           sudo apt-get install -y scrot xdotool x11-utils gnome-screenshot
           python3 --version && python3 -c "import tkinter; print(tkinter.TclVersion, tkinter.TkVersion)"
-
-      - name: Cache Homebrew packages (macOS)
-        if: matrix.os == 'macos-latest'
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/Library/Caches/Homebrew
-          key: brew-${{ runner.os }}-python-tk-${{ hashFiles('.github/workflows/pytest.yml') }}
-          restore-keys: |
-            brew-${{ runner.os }}-python-tk-
-
-      - name: Install system dependencies for GUI testing on macOS
-        if: matrix.os == 'macos-latest'
-        run: brew list python-tk &>/dev/null || brew install python-tk
 
       - name: Ensure Tcl/Tk search paths
         if: matrix.os == (vars.UBUNTU_RUNNER || 'ubuntu-latest')
@@ -270,7 +282,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           parallel-finished: true
-          carryforward: "run-${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}-py3.11,run-${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}-py3.14,run-windows-latest-py3.14,run-macos-latest-py3.14"
+          carryforward: "run-${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}-py3.11,run-${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}-py3.15.2,run-windows-latest-py3.15.2"
 
       # TODO: create a badge that presents the result of the Upload coverage xml report step
 
