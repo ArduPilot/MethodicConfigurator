@@ -88,7 +88,7 @@ def test_user_cannot_upload_a_script_without_an_available_vehicle_directory(
     # Given: No usable destination for the generated script.
     filesystem.vehicle_dir = vehicle_directory
     # When / Then: Fail before controller I/O.
-    with pytest.raises(RuntimeError, match="Vehicle directory is not available"):
+    with pytest.raises(RuntimeError, match=r"^Vehicle directory is not available$"):
         model.generate_and_upload_script(0.714)
     flight_controller.upload_file.assert_not_called()
 
@@ -217,11 +217,11 @@ class TestScriptGeneration:
 
     @pytest.mark.parametrize("scale_factor", [0.0, -1.0, inf, nan])
     def test_rejects_invalid_scale_factors(self, model, scale_factor) -> None:
-        with pytest.raises(ValueError, match="finite positive"):
+        with pytest.raises(ValueError, match=r"^RPM scale factor must be a finite positive number$"):
             model.generate_script(scale_factor, 4)
 
     def test_rejects_non_positive_esc_count(self, model) -> None:
-        with pytest.raises(ValueError, match="output count must be positive"):
+        with pytest.raises(ValueError, match=r"^ESC output count must be positive$"):
             model.generate_script(0.714, 0)
 
     def test_writes_script_to_active_vehicle_directory(self, model, tmp_path: Path) -> None:
@@ -281,3 +281,70 @@ class TestPluginRegistration:
 
         register.assert_called_once()
         assert register.call_args.args[0] == PLUGIN_ESC_RPM_SCALE
+
+
+def test_legacy_component_layout_and_motor_product_still_enable_the_known_esc_correction(model, filesystem) -> None:
+    """
+    Accept legacy component layouts and continue past incomplete ESC product data.
+
+    GIVEN: Unwrapped components with an incomplete ESC product and a Hobbywing motor product
+    WHEN: Correction eligibility and telemetry protocol are checked
+    THEN: The motor identifies the known correction and the scripting protocol remains available
+    """
+    filesystem.vehicle_components_fs.data = {
+        "ESC": {"Product": None, "ESC->FC Telemetry": {"Protocol": "Scripting"}},
+        "Motors": {"Product": {"Manufacturer": "Hobbywing", "Model": "6X SE"}},
+    }
+    assert model.is_hobbywing_6x_se() is True
+    assert model.is_scripting_telemetry_protocol() is True
+
+
+def test_missing_layout_data_returns_unknown_count_instead_of_crashing() -> None:
+    """
+    Tolerate unavailable motor metadata.
+
+    GIVEN: No motor-layout data was loaded
+    WHEN: The frame's ESC count is queried
+    THEN: The count is explicitly unknown
+    """
+    assert EscRpmScaleDataModel.esc_count_for_frame_class(1, {}) is None
+
+
+def test_single_esc_script_targets_only_the_first_output() -> None:
+    """
+    Generate a usable correction for a single ESC.
+
+    GIVEN: A vehicle uses one ESC output
+    WHEN: The correction script is generated
+    THEN: Only ESC index zero is configured before the operator message
+    """
+    assert EscRpmScaleDataModel.generate_script(0.714, 1) == (
+        'esc_telem:set_rpm_scale(0, 0.714)\ngcs:send_text(0, "LUA set RPM scale to 0.714")\n'
+    )
+
+
+def test_esc_count_uses_shipped_nonquad_motor_metadata(model, flight_controller, caplog: pytest.LogCaptureFixture) -> None:
+    """
+    Resolve nonquad motor counts through the shipped metadata and schema.
+
+    GIVEN: A connected hexa with no loader mocks
+    WHEN: The correction determines how many outputs need scaling
+    THEN: Six ESCs are selected without resource-loading diagnostics
+    """
+    flight_controller.fc_parameters = {"FRAME_CLASS": 2}
+    assert model.esc_count() == 6
+    assert caplog.messages == []
+
+
+@pytest.mark.parametrize(("scale", "literal"), [(1 / 3, "0.333333"), (1e-7, "1e-07")])
+def test_generated_script_uses_a_compact_scale_literal_consistently(scale: float, literal: str) -> None:
+    """
+    Keep generated Lua and its operator confirmation readable for precise scale inputs.
+
+    GIVEN: A scale requiring rounding or scientific notation
+    WHEN: A one-output RPM correction script is generated
+    THEN: Both the command and confirmation use the same six-significant-digit literal.
+    """
+    assert EscRpmScaleDataModel.generate_script(scale, 1) == (
+        f'esc_telem:set_rpm_scale(0, {literal})\ngcs:send_text(0, "LUA set RPM scale to {literal}")\n'
+    )

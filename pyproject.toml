@@ -190,10 +190,19 @@ skip = "*.pdef.xml,*.pdf,*.po"
 
 [tool.mutmut]
 source_paths = ["ardupilot_methodic_configurator/"]
-# Focus on parameter handling, parsing, and calculations with targeted tests.
+# Cover parameter handling, parsing, calculations, and every plugin backend/data model.
 only_mutate = [
+    # Globs keep new plugin backends and data models in scope automatically.
+    "ardupilot_methodic_configurator/plugins/backend_*.py",
+    "ardupilot_methodic_configurator/plugins/data_model_*.py",
+    # Shared implementations used by telemetry and calibration plugins.
+    "ardupilot_methodic_configurator/backend_data_telemetry.py",
+    "ardupilot_methodic_configurator/backend_esc_telemetry.py",
+    "ardupilot_methodic_configurator/backend_radio_status.py",
+    "ardupilot_methodic_configurator/backend_flightcontroller_commands.py",
+    "ardupilot_methodic_configurator/data_model_data_telemetry.py",
+    "ardupilot_methodic_configurator/data_model_esc_telemetry.py",
     "ardupilot_methodic_configurator/data_model_configuration_step.py",
-    "ardupilot_methodic_configurator/plugins/data_model_battery_monitor.py",
     "ardupilot_methodic_configurator/data_model_parameter_upgrade.py",
     "ardupilot_methodic_configurator/backend_flightcontroller_business_logic.py",
     "ardupilot_methodic_configurator/data_model_transfer_progress.py",
@@ -209,7 +218,6 @@ only_mutate = [
     "ardupilot_methodic_configurator/data_model_vehicle_components_import.py",
     "ardupilot_methodic_configurator/data_model_vehicle_components_json_schema.py",
     "ardupilot_methodic_configurator/backend_firmware_upload.py",
-    "ardupilot_methodic_configurator/plugins/data_model_motor_test.py",
     "ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py",
     "ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py",
     "ardupilot_methodic_configurator/backend_flightcontroller_connection.py",
@@ -220,9 +228,6 @@ only_mutate = [
     "ardupilot_methodic_configurator/log_analysis/data_model_firmware_version.py",
     "ardupilot_methodic_configurator/log_analysis/data_model_parameter_history.py",
     "ardupilot_methodic_configurator/plugins/imu_helpers.py",
-    "ardupilot_methodic_configurator/plugins/data_model_autotune_backoff.py",
-    "ardupilot_methodic_configurator/plugins/data_model_autotune_accel_backoff.py",
-    "ardupilot_methodic_configurator/plugins/data_model_autotune_gain_backoff.py",
     "ardupilot_methodic_configurator/data_model_firmware_upload.py",
     "ardupilot_methodic_configurator/log_analysis/backend_log_analysis.py",
     "ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py",
@@ -243,11 +248,13 @@ do_not_mutate = [
     "ardupilot_methodic_configurator/decode_devid.py",
 ]
 pytest_add_cli_args_test_selection = [
+    # Include model, backend, unit, behavior, and real-widget plugin regressions.
+    "tests/plugins/",
+    "tests/test_backend_data_telemetry.py",
+    "tests/test_esc_telemetry.py",
+    "tests/test_backend_flightcontroller_commands.py",
+    "tests/unit_backend_flightcontroller_commands.py",
     "tests/test_data_model_configuration_step.py",
-    "tests/plugins/unit_data_model_battery_monitor.py",
-    "tests/plugins/unit_frontend_tkinter_battery_monitor.py",
-    "tests/plugins/bdd_battery_monitor.py",
-    "tests/plugins/acceptance_battery_monitor.py",
     "tests/test_data_model_parameter_upgrade.py",
     "tests/test_backend_flightcontroller_business_logic.py",
     "tests/test_data_model_transfer_progress.py",
@@ -279,7 +286,6 @@ pytest_add_cli_args_test_selection = [
     "tests/unit_data_model_vehicle_components_json_schema.py",
     "tests/test_backend_firmware_upload.py",
     "tests/test_data_model_firmware_upload.py",
-    "tests/plugins/test_data_model_motor_test.py",
     "tests/test_frontend_tkinter_usage_popup_windows.py",
     "tests/test_frontend_tkinter_log_analysis.py",
     "tests/test_backend_flightcontroller_connection.py",
@@ -288,22 +294,30 @@ pytest_add_cli_args_test_selection = [
     "tests/test_data_model_plane_landing.py",
     "tests/test_data_model_firmware_version.py",
     "tests/test_data_model_parameter_history.py",
-    "tests/plugins/test_imu_helpers.py",
-    "tests/plugins/test_autotune_accel_backoff.py",
-    "tests/plugins/test_autotune_gain_backoff.py",
     "tests/test_backend_log_analysis.py",
     "tests/test_backend_fc_diagnostics.py",
     "tests/test_frontend_tkinter_usage_popup_window.py",
     "tests/test_frontend_tkinter_file_browser.py",
     "tests/bdd_frontend_tkinter_file_browser.py",
     "tests/test_frontend_tkinter_file_browser_tasks.py",
-    "tests/plugins/test_frontend_tkinter_motor_test.py",
     "tests/test_backend_filesystem_json_with_schema.py",
 ]
-pytest_add_cli_args = ["-q", "-x", "-p", "tests.plugins.conftest"]
-# The AutoTune tests verify helicopter-stage guidance as well as package data.
-also_copy = ["pytest.ini", "TUNING_GUIDE_Heli.md", "tests", "ardupilot_methodic_configurator_command_line_completion.psm1"]
+pytest_add_cli_args = [
+    "-q", "-x", "-p", "tests.plugins.conftest",
+    # A signal timeout cannot interrupt a blocked Tk C call.
+    "--timeout-method=thread",
+    # Lint the original source in normal pytest/CI, not Mutmut's generated variants.
+    "--deselect=tests/test_backend_flightcontroller_commands.py::test_command_ack_meets_pylint_statement_and_return_limits",
+]
+# Plugin tests also verify helicopter guidance and all three frozen-build specifications.
+also_copy = [
+    "pytest.ini", "TUNING_GUIDE_Heli.md", "tests",
+    "ardupilot_methodic_configurator_command_line_completion.psm1",
+    "windows", "linux", "macos",
+]
 process_isolation = "forkserver"
+# Tk imports must initialize inside each worker, not the fork server.
+forkserver_warmup = "none"
 
 [tool.ruff]
 target-version = "py311"

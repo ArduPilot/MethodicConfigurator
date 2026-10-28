@@ -109,6 +109,7 @@ class TestSendCommandAndWaitAckBranches:
             success, _ = commands_mgr.send_command_and_wait_ack(command=888, timeout=0.3)
 
         assert success is False  # Timed out
+        mock_debug.assert_any_call("Command in progress: %(progress)d%%", {"progress": 50})
         # logging_debug SHOULD have been called with a progress-related message
         progress_log_calls = [c for c in mock_debug.call_args_list if c.args and "progress" in str(c.args[0]).lower()]
         assert progress_log_calls != [], "logging_debug should have logged progress when progress=50"
@@ -322,7 +323,7 @@ class TestCompassCalibrationProgressPolling:
         assert success is False
         assert "No flight controller connection available" in error
 
-    def test_start_compass_calibration_sends_expected_mavlink_command(self) -> None:
+    def test_start_compass_calibration_sends_expected_mavlink_command(self, caplog: pytest.LogCaptureFixture) -> None:
         """
         The backend sends the compass calibration start command with the expected parameters.
 
@@ -341,7 +342,12 @@ class TestCompassCalibrationProgressPolling:
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
         commands_mgr._send_command_and_wait_ack_with_result = MagicMock(return_value=(True, "", 0))
 
-        success, error = commands_mgr.start_compass_calibration()
+        with caplog.at_level("DEBUG"):
+            success, error = commands_mgr.start_compass_calibration()
+        assert caplog.messages == [
+            "Sending compass calibration start command to target 1/1 with params p1=0 p2=1 p3=1",
+            "Compass calibration start command confirmed",
+        ]
 
         commands_mgr._send_command_and_wait_ack_with_result.assert_called_once()
         assert success is True
@@ -351,6 +357,7 @@ class TestCompassCalibrationProgressPolling:
         assert kwargs["param1"] == 0
         assert kwargs["param2"] == 1
         assert kwargs["param3"] == 1
+        assert tuple(kwargs[f"param{i}"] for i in range(1, 8)) == (0, 1, 1, 0, 0, 0, 0)
         assert kwargs["timeout"] == 5.0
         assert kwargs["capture_status_text"] is True
         assert kwargs["start_confirmation"][0] == "MAG_CAL_PROGRESS"
@@ -400,7 +407,7 @@ class TestCompassCalibrationProgressPolling:
         assert success is True
         assert error == ""
 
-    def test_cancel_compass_calibration_returns_clear_error_when_disconnected(self) -> None:
+    def test_cancel_compass_calibration_returns_clear_error_when_disconnected(self, caplog: pytest.LogCaptureFixture) -> None:
         """
         The backend rejects compass calibration cancel requests without a connection.
 
@@ -416,7 +423,8 @@ class TestCompassCalibrationProgressPolling:
         success, error = commands_mgr.cancel_compass_calibration()
 
         assert success is False
-        assert "No flight controller connection available" in error
+        assert error == "No flight controller connection available to cancel compass calibration"
+        assert caplog.messages == [error]
 
     def test_cancel_compass_calibration_sends_expected_mavlink_command(self) -> None:
         """
@@ -442,7 +450,9 @@ class TestCompassCalibrationProgressPolling:
         commands_mgr.send_command_and_wait_ack.assert_called_once()
         assert success is True
         assert error == ""
-        _, kwargs = commands_mgr.send_command_and_wait_ack.call_args
+        args, kwargs = commands_mgr.send_command_and_wait_ack.call_args
+        assert args == (mavutil.mavlink.MAV_CMD_DO_CANCEL_MAG_CAL,)
+        assert tuple(kwargs[f"param{i}"] for i in range(1, 8)) == (0, 0, 0, 0, 0, 0, 0)
         assert kwargs["param1"] == 0
         assert kwargs["timeout"] == 5.0
 
@@ -471,7 +481,7 @@ class TestCompassCalibrationProgressPolling:
         assert "Compass calibration cancel failed" in error
         assert "Rejected" in error
 
-    def test_get_compass_calibration_progress_ignores_non_calibration_messages(self) -> None:
+    def test_get_compass_calibration_progress_ignores_non_calibration_messages(self, caplog: pytest.LogCaptureFixture) -> None:
         """
         Periodic and unrelated MAVLink messages should be ignored during polling.
 
@@ -492,11 +502,15 @@ class TestCompassCalibrationProgressPolling:
 
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
-        result = commands_mgr.get_compass_calibration_progress()
+        with caplog.at_level("DEBUG"):
+            result = commands_mgr.get_compass_calibration_progress()
+        assert caplog.messages == ["Ignoring non calibration MAVLink message during compass calibration poll: UNKNOWN"]
 
         assert not result
 
-    def test_get_compass_calibration_progress_preserves_mixed_progress_and_report_messages(self) -> None:
+    def test_get_compass_calibration_progress_preserves_mixed_progress_and_report_messages(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """
         Progress polling should drain raw messages without discarding non-report updates.
 
@@ -532,7 +546,12 @@ class TestCompassCalibrationProgressPolling:
 
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
-        result = commands_mgr.get_compass_calibration_progress()
+        with caplog.at_level("DEBUG"):
+            result = commands_mgr.get_compass_calibration_progress()
+        assert caplog.messages == [
+            "Compass calibration progress queued for compass 0: pct=42 status=1",
+            "Compass calibration report queued for compass 0: status=4 saved=True",
+        ]
 
         assert result == [
             {
@@ -553,7 +572,7 @@ class TestCompassCalibrationProgressPolling:
             },
         ]
 
-    def test_get_compass_calibration_progress_surfaces_status_text_feedback(self) -> None:
+    def test_get_compass_calibration_progress_surfaces_status_text_feedback(self, caplog: pytest.LogCaptureFixture) -> None:
         """
         Progress polling should preserve calibration status text as user feedback.
 
@@ -577,7 +596,11 @@ class TestCompassCalibrationProgressPolling:
 
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
-        result = commands_mgr.get_compass_calibration_progress()
+        with caplog.at_level("DEBUG"):
+            result = commands_mgr.get_compass_calibration_progress()
+        assert caplog.messages == [
+            "Compass calibration status text received: severity=6 text=Mag(0) good orientation: 12 21.2"
+        ]
 
         assert result == [
             {
@@ -588,7 +611,9 @@ class TestCompassCalibrationProgressPolling:
             },
         ]
 
-    def test_get_compass_calibration_progress_uses_default_compass_id_when_status_text_has_no_marker(self) -> None:
+    def test_get_compass_calibration_progress_uses_default_compass_id_when_status_text_has_no_marker(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """
         Status text without an embedded compass index should still be surfaced.
 
@@ -611,11 +636,13 @@ class TestCompassCalibrationProgressPolling:
         mock_conn_mgr.master = mock_master
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
-        result = commands_mgr.get_compass_calibration_progress()
+        with caplog.at_level("DEBUG"):
+            result = commands_mgr.get_compass_calibration_progress()
+        assert caplog.messages == ["Compass calibration status text received: severity=5 text=Calibration still running"]
 
         assert result == [{"type": "STATUS_TEXT", "compass_id": None, "status": 5, "text": "Calibration still running"}]
 
-    def test_get_compass_calibration_progress_recovers_from_recv_errors(self) -> None:
+    def test_get_compass_calibration_progress_recovers_from_recv_errors(self, caplog: pytest.LogCaptureFixture) -> None:
         """
         Read errors should not crash the polling loop.
 
@@ -632,7 +659,9 @@ class TestCompassCalibrationProgressPolling:
         mock_conn_mgr.master = mock_master
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
-        result = commands_mgr.get_compass_calibration_progress()
+        with caplog.at_level("DEBUG"):
+            result = commands_mgr.get_compass_calibration_progress()
+        assert caplog.messages == ["Error reading compass calibration progress: boom"]
 
         assert not result
 
@@ -649,3 +678,59 @@ class TestCompassCalibrationProgressPolling:
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
         assert not commands_mgr.get_compass_calibration_progress()
+
+
+@pytest.mark.parametrize(
+    ("info_system", "info_component", "target_system", "target_component", "source", "status", "accepted"),
+    [
+        ("1", "1", 1, 0, (1, 1), 1, True),
+        ("1", "1", 1, 0, (1, 1), 2, True),
+        ("1", "1", 1, 0, (1, 1), 3, True),
+        ("1", "1", 1, 0, (1, 1), 0, False),
+        ("1", "1", 1, 0, (1, 1), 4, False),
+        ("1", "1", 1, 0, (2, 1), 2, False),
+        ("1", "1", 1, 0, (1, 42), 2, False),
+        ("42", "2", 1, 1, (42, 2), 2, True),
+        ("", "", 42, 2, (42, 2), 2, True),
+        ("", "", 42, 2, (42, 3), 2, False),
+        ("", "", 42, 0, (42, 1), 2, True),
+        ("0", "1", 1, 1, (0, 1), 2, False),
+    ],
+)
+def test_only_active_compass_telemetry_from_the_selected_controller_confirms_start(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    info_system: str,
+    info_component: str,
+    target_system: int,
+    target_component: int,
+    source: tuple[int, int],
+    status: int,
+    accepted: bool,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """
+    Only the selected controller's active calibration confirms startup.
+
+    GIVEN: An unacknowledged start and calibration telemetry with a source and status
+    WHEN: The acknowledgement window closes
+    THEN: Only the selected controller's active calibration confirms startup
+    """
+    master = MagicMock(target_system=target_system, target_component=target_component)
+    progress = mavutil.mavlink.MAVLink_mag_cal_progress_message(0, 1, status, 0, 10, [0] * 10, 0, 0, 0)
+    progress._header.srcSystem, progress._header.srcComponent = source
+    master.recv_match.side_effect = [None, progress]
+    connection = Mock(master=master, info=Mock(system_id=info_system, component_id=info_component))
+    commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
+    with (
+        patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time", side_effect=[0, 0, 6]),
+        caplog.at_level("DEBUG"),
+    ):
+        success, detail = commands.start_compass_calibration()
+    assert success is accepted
+    assert detail == ("" if accepted else "Compass calibration start failed: Command acknowledgment timeout after 5.0 seconds")
+    if accepted:
+        assert "Command start confirmed by telemetry after acknowledgment timeout" in caplog.messages
+
+    assert all(
+        entry.kwargs == {"type": ["COMMAND_ACK", "STATUSTEXT", "MAG_CAL_PROGRESS"], "blocking": False}
+        for entry in master.recv_match.call_args_list
+    )

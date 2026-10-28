@@ -309,6 +309,19 @@ def test_receiver_streams_are_requested_once_and_restored_when_monitor_pauses(re
     request.assert_called_with()
 
 
+def test_pausing_an_inactive_disconnected_receiver_does_not_request_streams(receiver_context: SimpleNamespace) -> None:
+    """
+    Leave an inactive connection alone when closing the receiver view.
+
+    GIVEN a newly constructed receiver whose flight controller is disconnected,
+    WHEN monitoring is stopped before its first poll,
+    THEN no stream restoration command is sent.
+    """
+    receiver_context.controller.master = None
+    receiver_context.model.stop_monitoring()
+    receiver_context.controller.request_rc_receiver_messages.assert_not_called()
+
+
 def test_reconnection_requests_streams_without_restoring_rates_on_the_new_vehicle(receiver_context: SimpleNamespace) -> None:
     """
     Renew telemetry requests when the FC connection changes.
@@ -328,7 +341,9 @@ def test_reconnection_requests_streams_without_restoring_rates_on_the_new_vehicl
     request.assert_called_once_with()
 
 
-def test_io_failure_clears_live_success_but_monitor_can_recover(receiver_context: SimpleNamespace) -> None:
+def test_io_failure_clears_live_success_but_monitor_can_recover(
+    receiver_context: SimpleNamespace, caplog: pytest.LogCaptureFixture
+) -> None:
     """
     Recover from a transient transport failure.
 
@@ -339,7 +354,9 @@ def test_io_failure_clears_live_success_but_monitor_can_recover(receiver_context
     receiver_context.messages.append(rc_message())
     receiver_context.model.get_receiver_state()
     receiver_context.controller.master.recv_match.side_effect = OSError("disconnected")
-    state = receiver_context.model.get_receiver_state()
+    with caplog.at_level("DEBUG"):
+        state = receiver_context.model.get_receiver_state()
+    assert caplog.messages == ["Error reading RC receiver telemetry: disconnected"]
     assert not state.receiving_channels
     assert state.rssi is None
     receiver_context.controller.master.recv_match.side_effect = [rc_message(), None]
@@ -397,3 +414,77 @@ def test_frozen_build_collects_dynamic_receiver_modules(platform: str) -> None:
     """
     spec = (_PACKAGE.parent / platform / "ardupilot_methodic_configurator.spec").read_text(encoding="utf-8")
     assert 'collect_submodules("ardupilot_methodic_configurator.plugins")' in spec.replace("'", '"')
+
+
+def test_foreign_receiver_packets_do_not_hide_a_following_selected_controller_report(
+    receiver_context: SimpleNamespace,
+) -> None:
+    """
+    Continue reception after ignoring another component's telemetry.
+
+    GIVEN: A foreign component followed by the selected controller's report
+    WHEN: Receiver telemetry is polled
+    THEN: The selected report is displayed with nonblocking receive calls
+    """
+    foreign = rc_message((1800,) * 5)
+    foreign._header.srcComponent = 42
+    receiver_context.messages.extend([foreign, rc_message((1200,) * 5)])
+    assert receiver_context.model.get_receiver_state().channels == (1200,) * 5
+    assert all(call.kwargs == {"blocking": False} for call in receiver_context.controller.master.recv_match.call_args_list)
+
+
+@pytest.mark.parametrize(("count", "expected"), [(0, (None,) * 5), (1, (1, None, None, None, None))])
+def test_channel_count_and_smallest_valid_pwm_define_available_receiver_inputs(
+    receiver_context: SimpleNamespace, count: int, expected: tuple[int | None, ...]
+) -> None:
+    """
+    Follow the reported channel count even when unused fields contain values.
+
+    GIVEN: A report whose unused fields are populated and first channel has PWM 1
+    WHEN: The receiver advertises zero or one available channel
+    THEN: Only advertised valid input is exposed
+    """
+    message = rc_message((1,) * 5)
+    message.chancount = count
+    receiver_context.messages.append(message)
+    assert receiver_context.model.get_receiver_state().channels == expected
+
+
+def test_interval_request_and_restore_failures_remain_visible_in_receiver_diagnostics(
+    receiver_context: SimpleNamespace, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    Explain firmware interval failures while leaving receiver monitoring usable.
+
+    GIVEN: Firmware rejects the receiver stream interval commands
+    WHEN: Monitoring starts and then yields the link
+    THEN: Both failed operations are recorded with the firmware's reason
+    """
+    receiver_context.controller.request_rc_receiver_messages.return_value = (False, "unsupported")
+    with caplog.at_level("DEBUG"):
+        receiver_context.model.get_receiver_state()
+        receiver_context.model.stop_monitoring()
+    assert caplog.messages == [
+        "Could not request RC receiver telemetry intervals: unsupported",
+        "Could not restore RC receiver telemetry intervals: unsupported",
+    ]
+
+
+def test_undiscovered_receiver_system_cannot_supply_a_successful_test(receiver_context: SimpleNamespace) -> None:
+    """
+    Wait for a selected controller identity before accepting receiver telemetry.
+
+    GIVEN: Discovery still has the broadcast system ID zero
+    WHEN: A packet with system ID zero appears on the link
+    THEN: It cannot establish a working receiver or a successful failsafe check
+    """
+    controller = receiver_context.controller
+    controller.info.system_id = ""
+    controller.master.target_system = 0
+    message = rc_message()
+    message._header.srcSystem = 0
+    receiver_context.messages.append(message)
+    state = receiver_context.model.get_receiver_state()
+    assert state.receiving_channels is False
+    assert state.channels == (None,) * 5
+    assert state.failsafe is None

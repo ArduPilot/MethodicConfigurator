@@ -90,6 +90,7 @@ def test_no_fix_and_2d_fix_hide_unusable_coordinates(sample: TelemetrySample, fi
     row = GnssDataModel(MagicMock()).update(sample)[0]
     assert row[3] == row[6] == row[7] == "N/A"
     assert (row[1] == "N/A") is (fix != "2")
+    assert (row[2] == "N/A") is (fix != "2")
     assert row[5] == "19"
 
 
@@ -125,8 +126,8 @@ def test_time_secondary_receiver_and_stale_data_remain_independent(sample: Telem
     assert rows[0][4] == "2023-11-14 22:13:20 UTC"
     assert rows[1][0] == "Waiting for GNSS data"
     assert model.update(replace(sample, time=13))[0][1] == "N/A"
-    assert model.update(replace(sample, connection=None))[0][0] == "Disconnected"
-    assert model.update(replace(sample, error=True))[0][0] == "Connection error"
+    assert model.update(replace(sample, connection=None)) == (("Disconnected", *("N/A",) * 7),) * 2
+    assert model.update(replace(sample, error=True)) == (("Connection error", *("N/A",) * 7),) * 2
     sample.messages[(2, 1, "GPS_RAW_INT")] = sample.messages.pop((1, 1, "GPS_RAW_INT"))
     assert model.update(sample)[0][1] == "N/A"
 
@@ -153,7 +154,9 @@ def test_monitor_requests_and_parses_real_gnss_packets_without_changing_stream_r
         assert GnssDataModel(link.controller).update(sample)[0][1] == "52.0000000"
         assert send.call_count == 3
         assert {call.args[4] for call in send.call_args_list} == {24, 124, 2}
-        assert all(call.args[2] == 512 for call in send.call_args_list)
+        assert [call.args for call in send.call_args_list] == [
+            (1, 1, 512, 0, message_id, 0, 0, 0, 0, 0, 0) for message_id in (24, 124, 2)
+        ]
         backend.poll()
         assert send.call_count == 3
         backend.close()
@@ -253,16 +256,16 @@ def test_second_receiver_visibility_requires_fresh_detected_hardware(sample: Tel
     """
     model = GnssDataModel(MagicMock(fc_parameters={"BRD_RTC_TZ_MIN": 0}))
     model.update(sample)
-    assert not model.second_receiver_present
+    assert model.second_receiver_present is False
     fields = dict(sample.messages[(1, 1, "GPS_RAW_INT")].fields)
     fields["fix_type"] = fix
     sample.messages[(1, 1, "GPS2_RAW")] = MessageSample(1, 52, 10, tuple(fields.items()))
     model.update(sample)
     assert model.second_receiver_present is visible
     model.update(replace(sample, time=13))
-    assert not model.second_receiver_present
+    assert model.second_receiver_present is False
     model.update(replace(sample, connection=None))
-    assert not model.second_receiver_present
+    assert model.second_receiver_present is False
 
 
 def test_second_receiver_column_follows_live_detection(
@@ -335,3 +338,119 @@ def test_unknown_or_invalid_timezone_keeps_local_time_unavailable(sample: Teleme
     row = model.update(sample)[0]
     assert row[4] == "N/A"
     assert row[1] == "52.1234567"
+
+
+@pytest.mark.parametrize(
+    ("fix", "status", "secondary"),
+    [
+        ("0", "No GNSS", False),
+        ("1", "No fix", True),
+        ("2", "2D fix", True),
+        ("3", "3D fix", True),
+        ("4", "DGPS", True),
+        ("5", "RTK float", True),
+        ("6", "RTK fixed", True),
+        ("7", "Static", True),
+        ("8", "PPP", True),
+        ("9", "Unknown fix", False),
+        ("-1", "Unknown fix", False),
+        ("2.5", "Unknown fix", False),
+    ],
+)
+def test_receiver_fix_labels_and_presence_cover_every_reported_fix(
+    sample: TelemetrySample, fix: str, status: str, secondary: bool
+) -> None:
+    """
+    Both fix labels and secondary receiver visibility reflect that code.
+
+    GIVEN: A primary and secondary receiver reporting a fix code
+    WHEN: Their telemetry is displayed
+    THEN: Both fix labels and secondary receiver visibility reflect that code
+    """
+    fields = dict(sample.messages[(1, 1, "GPS_RAW_INT")].fields)
+    fields["fix_type"] = fix
+    message = MessageSample(1, 52, 10, tuple(fields.items()))
+    sample.messages.update({(1, 1, "GPS_RAW_INT"): message, (1, 1, "GPS2_RAW"): message})
+    model = GnssDataModel(MagicMock())
+    assert model.second_receiver_present is False
+    assert [row[0] for row in model.update(sample)] == [status, status]
+    assert model.second_receiver_present is secondary
+
+
+@pytest.mark.parametrize(
+    ("changes", "expected"),
+    [
+        (
+            {"lat": "900000000", "lon": "-1800000000", "fix_type": "3", "satellites_visible": "0", "h_acc": "1", "v_acc": "1"},
+            ("90.0000000", "-180.0000000", "-12.345", "0", "0.001", "0.001"),
+        ),
+        ({"lat": "905000000", "lon": "-1805000000"}, ("N/A", "N/A", "-12.345", "19", "0.450", "0.800")),
+    ],
+)
+def test_coordinate_limits_and_minimum_valid_accuracy_remain_distinct_from_unavailable(
+    sample: TelemetrySample, changes: dict[str, str], expected: tuple[str, ...]
+) -> None:
+    """
+    Valid endpoints remain visible and impossible coordinates are unavailable.
+
+    GIVEN: Reports at coordinate limits, outside the globe, or with one-millimetre accuracy
+    WHEN: A receiver report is interpreted
+    THEN: Valid endpoints remain visible and impossible coordinates are unavailable
+    """
+    fields = dict(sample.messages[(1, 1, "GPS_RAW_INT")].fields)
+    fields.update(changes)
+    sample.messages[(1, 1, "GPS_RAW_INT")] = MessageSample(1, 52, 10, tuple(fields.items()))
+    row = GnssDataModel(MagicMock()).update(sample)[0]
+    assert (*row[1:4], *row[5:]) == expected
+
+
+@pytest.mark.parametrize(("timestamp", "expected"), [("1000000000000", "1970-01-12 13:46:40 UTC"), ("1e30", "N/A")])
+def test_utc_boundary_and_out_of_range_timestamps_are_displayed_safely(
+    sample: TelemetrySample, timestamp: str, expected: str
+) -> None:
+    """
+    Valid UTC is formatted and out-of-range dates are unavailable.
+
+    GIVEN: The earliest accepted UTC timestamp or one outside the platform date range
+    WHEN: The receiver clock is displayed
+    THEN: Valid UTC is formatted and out-of-range dates are unavailable
+    """
+    sample.messages[(1, 1, "SYSTEM_TIME")] = MessageSample(1, 20, 10, (("time_unix_usec", timestamp),))
+    model = GnssDataModel(MagicMock(fc_parameters={"BRD_RTC_TZ_MIN": 0}))
+    assert model.update(sample)[0][4] == expected
+
+
+@pytest.mark.parametrize("component", [0, 42])
+def test_receiver_reports_follow_the_selected_nondefault_component(sample: TelemetrySample, component: int) -> None:
+    """
+    Displayed fix belongs to the selected component.
+
+    GIVEN: The selected controller uses component 42
+    WHEN: Its receiver report arrives alongside reports from component 1
+    THEN: The displayed fix belongs to the selected component
+    """
+    assert isinstance(sample.connection, SimpleNamespace)
+    sample.connection.target_component = component
+    report = sample.messages.pop((1, 1, "GPS_RAW_INT"))
+    sample.messages[(1, component or 1, "GPS_RAW_INT")] = report
+    assert GnssDataModel(MagicMock()).update(sample)[0][0] == "RTK fixed"
+
+
+def test_gnss_request_write_failure_retains_connection_identity_and_poll_time(link: SimpleNamespace) -> None:
+    """
+    Expose a failed GNSS request without losing the connection identity.
+
+    GIVEN: A connected link whose GNSS command write fails
+    WHEN: The backend requests a fresh fix
+    THEN: The error snapshot retains the original connection and timestamp
+    """
+    backend = GnssBackend(link.controller, clock=lambda: link.now)
+    try:
+        link.now = 42.0
+        with patch.object(link.master.mav, "command_long_send", side_effect=OSError("write failed")):
+            snapshot = backend.poll()
+        assert snapshot.error is True
+        assert snapshot.connection is link.master
+        assert snapshot.time == 42.0
+    finally:
+        backend.close()

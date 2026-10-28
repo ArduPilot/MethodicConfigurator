@@ -94,16 +94,20 @@ class TestAccelerometerCalibrationDataModelConnection:
 class TestAccelerometerCalibrationCancellation:  # pylint: disable=too-few-public-methods
     """Closing the wizard resets local state without claiming to cancel FC work."""
 
-    def test_cancel_closes_locally_without_sending_an_fc_cancel_command(self, connected_flight_controller) -> None:
+    def test_cancel_closes_locally_without_sending_an_fc_cancel_command(self, connected_flight_controller, caplog) -> None:
         """The user can leave the wizard even though ArduPilot has no MAVLink cancel command."""
         model = AccelerometerCalibrationDataModel(connected_flight_controller)
         model._current_position = mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEFT
 
-        success, message = model.cancel_full_calibration()
+        with caplog.at_level("INFO"):
+            success, message = model.cancel_full_calibration()
 
         assert success is True
-        assert "wizard was closed" in message.lower()
-        assert "may still be finishing" in message.lower()
+        assert message == (
+            "The calibration wizard was closed. The flight controller may still be finishing calibration; "
+            "check its status before continuing."
+        )
+        assert caplog.messages == ["The full accelerometer calibration wizard was closed locally"]
         assert model._current_position is None
         connected_flight_controller.cancel_accel_calibration.assert_not_called()
 
@@ -127,7 +131,7 @@ class TestAccelerometerCalibrationDataModelSimpleCalibration:
         assert message == "Flight controller not connected"
         disconnected_flight_controller.start_accel_calibration_simple.assert_not_called()
 
-    def test_simple_calibration_succeeds_when_backend_confirms(self, connected_flight_controller) -> None:
+    def test_simple_calibration_succeeds_when_backend_confirms(self, connected_flight_controller, caplog) -> None:
         """
         A successful backend calibration is reported as success to the user.
 
@@ -138,10 +142,12 @@ class TestAccelerometerCalibrationDataModelSimpleCalibration:
         connected_flight_controller.start_accel_calibration_simple.return_value = (True, "")
         model = AccelerometerCalibrationDataModel(connected_flight_controller)
 
-        success, message = model.start_simple_calibration()
+        with caplog.at_level("INFO"):
+            success, message = model.start_simple_calibration()
 
         assert success is True
         assert message == "Calibration successful"
+        assert caplog.messages == ["Simple accelerometer calibration completed"]
         connected_flight_controller.start_accel_calibration_simple.assert_called_once_with()
 
     def test_simple_calibration_surfaces_backend_error_message(self, connected_flight_controller) -> None:
@@ -267,7 +273,7 @@ class TestAccelerometerCalibrationDataModelPolling:
         assert result is None
         assert model._current_position is None
 
-    def test_poll_records_requested_position_from_flight_controller(self, connected_flight_controller) -> None:
+    def test_poll_records_requested_position_from_flight_controller(self, connected_flight_controller, caplog) -> None:
         """
         A new FC position request is returned and remembered for later confirmation.
 
@@ -278,10 +284,12 @@ class TestAccelerometerCalibrationDataModelPolling:
         connected_flight_controller.poll_accel_cal_vehicle_pos.return_value = mavutil.mavlink.ACCELCAL_VEHICLE_POS_NOSEDOWN
         model = AccelerometerCalibrationDataModel(connected_flight_controller)
 
-        result = model.poll_for_next_position()
+        with caplog.at_level("DEBUG"):
+            result = model.poll_for_next_position()
 
         assert result == mavutil.mavlink.ACCELCAL_VEHICLE_POS_NOSEDOWN
         assert model._current_position == mavutil.mavlink.ACCELCAL_VEHICLE_POS_NOSEDOWN
+        assert caplog.messages == ["FC requested calibration position: 4"]
 
 
 class TestAccelerometerCalibrationDataModelPositionHelpers:
@@ -324,7 +332,7 @@ class TestAccelerometerCalibrationDataModelPositionHelpers:
 
         label = model.get_position_label(9999)
 
-        assert "Unknown position" in label
+        assert label == "Unknown position 9999"
         assert "9999" in label
 
     def test_success_terminal_state_is_reported_complete_and_successful(self) -> None:
@@ -387,7 +395,7 @@ class TestAccelerometerCalibrationDataModelConfirmCurrentPosition:
         success, message = model.confirm_current_position()
 
         assert success is False
-        assert "No position has been requested" in message
+        assert message == "No position has been requested by the flight controller yet"
         flight_controller.confirm_accel_vehicle_pos.assert_not_called()
 
     def test_confirm_current_position_fails_after_success_completion(self) -> None:
@@ -405,7 +413,7 @@ class TestAccelerometerCalibrationDataModelConfirmCurrentPosition:
         success, message = model.confirm_current_position()
 
         assert success is False
-        assert "already completed" in message
+        assert message == "Calibration has already completed"
         flight_controller.confirm_accel_vehicle_pos.assert_not_called()
 
     def test_confirm_current_position_fails_after_failed_completion(self) -> None:
@@ -423,10 +431,10 @@ class TestAccelerometerCalibrationDataModelConfirmCurrentPosition:
         success, message = model.confirm_current_position()
 
         assert success is False
-        assert "already completed" in message
+        assert message == "Calibration has already completed"
         flight_controller.confirm_accel_vehicle_pos.assert_not_called()
 
-    def test_confirm_current_position_delegates_normal_position_and_propagates_success_message(self) -> None:
+    def test_confirm_current_position_delegates_normal_position_and_propagates_success_message(self, caplog) -> None:
         """
         A normal requested position is confirmed through the flight controller.
 
@@ -440,7 +448,9 @@ class TestAccelerometerCalibrationDataModelConfirmCurrentPosition:
         model = AccelerometerCalibrationDataModel(flight_controller)
         model._current_position = mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEVEL
 
-        success, message = model.confirm_current_position()
+        with caplog.at_level("DEBUG"):
+            success, message = model.confirm_current_position()
+        assert caplog.messages == ["Confirmed calibration position 1"]
 
         assert success is True
         assert message == "confirmed"
@@ -483,4 +493,4 @@ class TestAccelerometerCalibrationDataModelConfirmCurrentPosition:
         success, message = model.confirm_current_position()
 
         assert success is False
-        assert "Failed to send position confirmation" in message
+        assert message == "Failed to send position confirmation"

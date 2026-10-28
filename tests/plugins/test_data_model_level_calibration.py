@@ -56,13 +56,15 @@ class TestLevelCalibrationWorkflow:
         assert message == "Level calibration started"
         connected_flight_controller.start_accel_calibration_level.assert_called_once_with()
 
-    def test_user_can_poll_until_level_calibration_acknowledgment_arrives(self, connected_flight_controller) -> None:
+    def test_user_can_poll_until_level_calibration_acknowledgment_arrives(self, connected_flight_controller, caplog) -> None:
         """Pending and accepted ACKs are exposed without blocking the caller."""
         connected_flight_controller.poll_accel_calibration_level.side_effect = [None, (True, "")]
         model = LevelCalibrationDataModel(connected_flight_controller)
 
         assert model.poll_level_calibration() is None
-        assert model.poll_level_calibration() == (True, "Level calibration successful")
+        with caplog.at_level("INFO"):
+            assert model.poll_level_calibration() == (True, "Level calibration successful")
+        assert caplog.messages == ["Level calibration completed"]
         assert connected_flight_controller.poll_accel_calibration_level.call_count == 2
 
     def test_abandoning_calibration_releases_the_flight_controller_session(self, connected_flight_controller) -> None:
@@ -79,6 +81,19 @@ class TestLevelCalibrationWorkflow:
         model = LevelCalibrationDataModel(connected_flight_controller)
 
         assert model.poll_level_calibration() == (False, "Command failed")
+
+    def test_completed_failure_without_controller_detail_still_explains_the_result(self, connected_flight_controller) -> None:
+        """
+        Give the operator an actionable result when the controller supplies no reason.
+
+        GIVEN: Level calibration finishes unsuccessfully with an empty detail
+        WHEN: The operator polls for completion
+        THEN: A stable failure message is returned instead of an empty result
+        """
+        connected_flight_controller.poll_accel_calibration_level.return_value = (False, "")
+        model = LevelCalibrationDataModel(connected_flight_controller)
+
+        assert model.poll_level_calibration() == (False, "Level calibration failed")
 
     def test_user_receives_controller_failure_reason(self, connected_flight_controller) -> None:
         """

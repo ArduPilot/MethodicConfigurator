@@ -236,7 +236,7 @@ def test_requests_are_bounded_and_do_not_change_stream_rates(link: SimpleNamespa
     """
     backend = EscTelemetryBackend(link.controller, lambda: link.now)
     try:
-        for now in (0, 0.25, 0.5, 0.75, 1, 20):
+        for now in (0, 0.25, 0.5, 0.75, 1, 1.25, 1.75, 20):
             link.now = now
             backend.poll()
         assert link.master.write.call_count == 3
@@ -244,6 +244,8 @@ def test_requests_are_bounded_and_do_not_change_stream_rates(link: SimpleNamespa
         for call in link.master.write.call_args_list:
             command = decoder.parse_char(call.args[0])
             assert command.command == mavlink.MAV_CMD_REQUEST_MESSAGE
+            assert command.confirmation == 0
+            assert (command.param2, command.param3, command.param4, command.param5, command.param6, command.param7) == (0,) * 6
             assert command.param1 == mavlink.MAVLINK_MSG_ID_ESC_TELEMETRY_1_TO_4
             assert (command.target_system, command.target_component) == (1, 1)
         backend.close()
@@ -253,7 +255,7 @@ def test_requests_are_bounded_and_do_not_change_stream_rates(link: SimpleNamespa
         backend.close()
 
 
-def test_backend_recovers_from_disconnect_and_io_failure(link: SimpleNamespace) -> None:
+def test_backend_recovers_from_disconnect_and_io_failure(link: SimpleNamespace, caplog: pytest.LogCaptureFixture) -> None:
     """
     A failed telemetry write.
 
@@ -263,13 +265,22 @@ def test_backend_recovers_from_disconnect_and_io_failure(link: SimpleNamespace) 
     """
     backend = EscTelemetryBackend(link.controller, lambda: link.now)
     link.master.write.side_effect = OSError("disconnected")
-    assert backend.poll().error
+    link.now = 12.0
+    with caplog.at_level("DEBUG"):
+        failed = backend.poll()
+    assert failed.error
+    assert failed.connection is link.master
+    assert failed.time == 12.0
+    assert caplog.messages == ["Error reading ESC telemetry: disconnected"]
     assert not link.master.message_hooks
     link.master.write.side_effect = None
     assert not backend.poll().error
     assert len(link.master.message_hooks) == 1
     link.controller.master = None
-    assert backend.poll().connection is None
+    link.now = 42.0
+    disconnected = backend.poll()
+    assert disconnected.connection is None
+    assert disconnected.time == 42.0
     assert not link.master.message_hooks
 
 
@@ -516,3 +527,80 @@ def test_busy_links_have_bounded_reads_and_preserve_other_observers(link: Simple
     assert len(replacement.master.message_hooks) == 1
     backend.close()
     assert not replacement.master.message_hooks
+
+
+def test_reusable_esc_table_labels_identify_every_measurement_and_its_units() -> None:
+    """
+    Keep measurement labels and engineering units consistent in every ESC table host.
+
+    GIVEN: The reusable ESC telemetry model
+    WHEN: A host requests its row labels
+    THEN: The six labels distinguish RPM, electrical units, temperature, consumption and packet count
+    """
+    assert EscTelemetryDataModel.row_labels() == (
+        "RPM",
+        "Voltage (V)",
+        "Current (A)",
+        "Temperature (°C)",
+        "Consumption (mAh)",
+        "Telemetry packets",
+    )
+
+
+def test_model_keeps_exactly_32_esc_columns_and_ignores_unusable_snapshot_entries(model: EscTelemetryDataModel) -> None:
+    """
+    Preserve the table shape and discard invalid or unused ESC entries.
+
+    GIVEN: First and last ESC readings alongside out-of-range, incomplete and zero-padded entries
+    WHEN: A reusable table host updates the model
+    THEN: Only ESCs 1 and 32 are detected and every measurement row has exactly 32 columns
+    """
+    reading = EscTelemetryReading((1200, 2450, 123, 42, 77, 10), received_at=1.0)
+    entries = {
+        0: reading,
+        31: reading,
+        -1: reading,
+        32: reading,
+        1: EscTelemetryReading((0,) * 6),
+        2: EscTelemetryReading((1200, 2450)),
+    }
+    rows = model.update(EscTelemetrySnapshot(object(), 1.0, entries))
+    assert model.visible_esc_indices == (0, 31)
+    assert len(rows) == 6
+    assert all(len(row) == 32 for row in rows)
+    assert [row[31] for row in rows] == ["1200", "24.50", "1.23", "42", "77", "10"]
+    assert all(row[index] == "-" for row in rows for index in range(1, 31))
+
+
+def test_rpm_updates_independently_of_a_frozen_electrical_telemetry_counter(model: EscTelemetryDataModel) -> None:
+    """
+    Preserve faster RPM measurements while electrical telemetry waits for its next packet.
+
+    GIVEN: An ESC reports electrical telemetry and a packet count of ten
+    WHEN: RPM changes without the electrical packet counter advancing
+    THEN: RPM updates immediately while voltage retains the last measured value.
+    """
+    connection = object()
+    first = EscTelemetryReading((1000, 1200, 0, 25, 0, 10))
+    model.update(EscTelemetrySnapshot(connection, 0.0, {0: first}))
+    latest = EscTelemetryReading((2000, 1300, 0, 25, 0, 10))
+    rows = model.update(EscTelemetrySnapshot(connection, 1.0, {0: latest}))
+    assert rows[0][0] == "2000"
+    assert rows[1][0] == "12.00"
+
+
+@pytest.mark.parametrize("failed", [True, False])
+def test_invalid_snapshots_cannot_repopulate_live_esc_readings(model: EscTelemetryDataModel, failed: bool) -> None:
+    """
+    Discard observations attached to an error or disconnected snapshot.
+
+    GIVEN: Cached ESC telemetry followed by a snapshot with an error or no connection
+    WHEN: The invalid snapshot still contains observations
+    THEN: All visible ESCs and displayed values are cleared.
+    """
+    connection = object()
+    readings = {0: EscTelemetryReading((1000, 1200, 0, 25, 0, 10))}
+    model.update(EscTelemetrySnapshot(connection, 0.0, readings))
+    rows = model.update(EscTelemetrySnapshot(connection if failed else None, 1.0, readings, error=failed))
+    assert model.visible_esc_indices == ()
+    assert all(value == "-" for row in rows for value in row)
