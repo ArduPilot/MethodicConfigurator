@@ -97,7 +97,9 @@ progress accounting, configuration expression evaluation, firmware parameter
 migrations, battery-monitor telemetry and status handling, and configuration-step
 processing. All plugin backends and data models are included, together with shared
 data/ESC telemetry models, telemetry and radio backends, and flight-controller
-command handling used by calibration and motor-testing plugins.
+command handling used by calibration and motor-testing plugins. External parameter
+upload selection, configured file-upload policy, atomic file replacement, and
+flight-controller diagnostic assembly and device rows are also included.
 It runs on Linux, macOS, or Windows
 through WSL.
 
@@ -206,6 +208,18 @@ values. Transient-variable cleanup can be redundant with rebuilding the step's
 evaluation context. The current rename planner returns no duplicate removals,
 so that feedback branch is unreachable through normal processing. Review these
 separately from lost metadata, incorrect live inputs, and conflicting renames.
+
+For external parameter and configured file uploads, check omitted-edit warnings,
+verified FC snapshots, complete per-file outcomes including filenames, and executor
+progress callbacks. For atomic writes, verify that failures preserve the original
+and remove temporary files, and that content is synced before replacement.
+Encoding aliases and native newline defaults can behave identically on Linux;
+directory-open flag changes can also be equivalent where `O_RDONLY` is zero.
+For diagnostics, cover timeout boundaries, component isolation, pending-message
+eviction, malformed text, and invalid entries before valid devices. Some split-limit
+changes preserve the first token, category lookups normalize case, and the decoder
+returns an error together with a missing decoded value. Review these separately
+from device-ID and chunk-sequence boundary survivors and platform-specific I/O paths.
 
 For a focused rerun, pass quoted module or function patterns to `mutmut run`,
 for example:

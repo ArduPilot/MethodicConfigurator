@@ -195,6 +195,11 @@ only_mutate = [
     # Globs keep new plugin backends and data models in scope automatically.
     "ardupilot_methodic_configurator/plugins/backend_*.py",
     "ardupilot_methodic_configurator/plugins/data_model_*.py",
+    # External parameter selection, file-upload policy, atomic writes, and diagnostics.
+    "ardupilot_methodic_configurator/data_model_parameter_compare_and_upload.py",
+    "ardupilot_methodic_configurator/data_model_file_upload.py",
+    "ardupilot_methodic_configurator/backend_safe_file_io.py",
+    "ardupilot_methodic_configurator/data_model_fc_diagnostics.py",
     # Shared implementations used by telemetry and calibration plugins.
     "ardupilot_methodic_configurator/backend_data_telemetry.py",
     "ardupilot_methodic_configurator/backend_esc_telemetry.py",
@@ -250,6 +255,12 @@ do_not_mutate = [
 pytest_add_cli_args_test_selection = [
     # Include model, backend, unit, behavior, and real-widget plugin regressions.
     "tests/plugins/",
+    "tests/test_data_model_parameter_compare_and_upload.py",
+    "tests/test_data_model_file_upload.py",
+    "tests/unit_backend_safe_file_io.py",
+    "tests/bdd_backend_safe_file_io.py",
+    "tests/test_backend_safe_file_io_write_capture.py",
+    "tests/test_data_model_fc_diagnostics.py",
     "tests/test_backend_data_telemetry.py",
     "tests/test_esc_telemetry.py",
     "tests/test_backend_flightcontroller_commands.py",
