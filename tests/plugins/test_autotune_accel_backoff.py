@@ -78,6 +78,189 @@ def snapshot(model: AutotuneAccelBackoffDataModel) -> dict[str, tuple[str, str, 
     }
 
 
+class TestAccelerationBackoffContracts:
+    """Keep project input, validation and no-op behavior consistent for weight compensation."""
+
+    @pytest.mark.parametrize(
+        ("project", "expected"),
+        [
+            ({}, ("", "")),
+            ({"Components": {}}, ("", "")),
+            ({"Components": {"Frame": {}}}, ("", "")),
+            ({"Components": {"Frame": {"Specifications": {}}}}, ("", "")),
+            ({"Components": {"Frame": {"Specifications": {"TOW min Kg": 0.5}}}}, ("0.5", "")),
+            ({"Components": {"Frame": {"Specifications": {"TOW max Kg": 1}}}}, ("", "1")),
+            ({"Components": {"Frame": {"Specifications": {"TOW min Kg": "0.75", "TOW max Kg": 1.5}}}}, ("0.75", "1.5")),
+        ],
+        ids=["no-components", "no-frame", "no-specifications", "no-weights", "only-minimum", "only-maximum", "mixed-types"],
+    )
+    def test_project_weights_keep_missing_entries_blank_and_preserve_available_values(
+        self, model_factory: ModelFactory, project: dict[str, object], expected: tuple[str, str]
+    ) -> None:
+        """
+        Incomplete projects can open the weight editor without inventing a weight.
+
+        GIVEN: Project components with missing or partially entered takeoff weights
+        WHEN: The plugin requests its initial weight fields
+        THEN: Available values appear as text and missing values remain blank
+        """
+        model = model_factory()
+        model.filesystem.vehicle_components_fs.data = project
+        before = snapshot(model)
+
+        assert model.takeoff_weights() == expected
+        assert snapshot(model) == before
+        assert model.has_applied is False
+        assert model.range_warnings == []
+
+    @pytest.mark.parametrize(("minimum", "maximum"), [(0.5, 1.0), (1.0, 2.0)])
+    def test_light_vehicles_can_scale_acceleration_limits(
+        self, model_factory: ModelFactory, minimum: float, maximum: float
+    ) -> None:
+        """
+        Valid takeoff weights of one kilogram or less support compensation.
+
+        GIVEN: A light vehicle with positive minimum and maximum weights
+        WHEN: Weight compensation is applied
+        THEN: Acceleration limits are halved and their reasons record the actual weights
+        """
+        model = model_factory()
+        before = snapshot(model)
+
+        changed = model.apply_backoff(minimum, maximum)
+
+        assert set(changed) == {"ATC_ACCEL_R_MAX", "ATC_ACCEL_P_MAX", "ATC_ACCEL_Y_MAX"}
+        for name in changed:
+            parameter = model.parameter_editor.current_step_parameters[name]
+            assert parameter.get_new_value() == float(before[name][0]) / 2
+            assert parameter.fc_value_as_string == before[name][1]
+            assert parameter.change_reason == (
+                f"Existing reason; {before[name][1]} scaled by minimum / maximum takeoff weight "
+                f"({minimum:g} / {maximum:g} kg) @autotune_accel_backoff"
+            )
+        assert model.has_applied is True
+        assert model.range_warnings == []
+
+    @pytest.mark.parametrize("readonly", [True, False], ids=["read-only", "forced"])
+    def test_equal_weights_complete_without_editing_locked_limits(self, model_factory: ModelFactory, readonly: bool) -> None:
+        """
+        Equal weights complete the workflow without requiring editable parameters.
+
+        GIVEN: An acceleration limit that cannot be edited
+        WHEN: The user applies equal takeoff weights and later tries a reduction
+        THEN: The no-op succeeds, a second application is rejected, and all values stay intact
+        """
+        model = model_factory()
+        name = "ATC_ACCEL_Y_MAX"
+        model.parameter_editor.current_step_parameters[name] = ArduPilotParameter(
+            name, Par(18000, "Keep this limit"), {"ReadOnly": readonly}, forced_par=None if readonly else Par(18000)
+        )
+        before = snapshot(model)
+
+        assert model.apply_backoff(1, 1) == []
+
+        assert model.has_applied is True
+        assert model.range_warnings == []
+        with pytest.raises(ValueError, match="already been scaled") as error:
+            model.apply_backoff(1, 2)
+        assert str(error.value) == "Acceleration limits have already been scaled for this step."
+        assert snapshot(model) == before
+
+    @pytest.mark.parametrize("invalid_kind", ["readonly", "forced", "negative", "nonfinite", "underflow"])
+    def test_invalid_acceleration_identifies_the_parameter_and_preserves_the_entire_tune(
+        self, model_factory: ModelFactory, invalid_kind: str
+    ) -> None:
+        """
+        Failed validation identifies the offending limit before staging any changes.
+
+        GIVEN: Valid earlier limits followed by a locked or invalid yaw limit
+        WHEN: A reduction would edit it or produce an invalid acceleration
+        THEN: Guidance names the limit and no value, reason or dirty flag changes
+        """
+        model = model_factory()
+        name = "ATC_ACCEL_Y_MAX"
+        value = {"negative": -1.0, "nonfinite": float("nan"), "underflow": 5e-324}.get(invalid_kind, 18000.0)
+        model.parameter_editor.current_step_parameters[name] = ArduPilotParameter(
+            name,
+            Par(value),
+            {"ReadOnly": invalid_kind == "readonly"},
+            forced_par=Par(value) if invalid_kind == "forced" else None,
+        )
+        before = snapshot(model)
+
+        with pytest.raises(ValueError, match="Parameter") as error:
+            model.apply_backoff(1, 2)
+
+        expected = (
+            f"Parameter {name} is not editable; no acceleration limits were changed."
+            if invalid_kind in ("readonly", "forced")
+            else f"Parameter {name} must have a finite non-negative acceleration limit."
+        )
+        assert str(error.value) == expected
+        assert snapshot(model) == before
+        assert model.has_applied is False
+        assert model.range_warnings == []
+
+    def test_weight_compensation_adds_a_reason_without_an_empty_prefix(self, model_factory: ModelFactory) -> None:
+        """
+        Compensation records a complete reason when the user has not entered one.
+
+        GIVEN: A staged acceleration limit with a blank change reason
+        WHEN: Weight compensation is applied
+        THEN: Its reason records the reduction and marker without a leading separator
+        """
+        model = model_factory()
+        parameter = model.parameter_editor.current_step_parameters["ATC_ACCEL_R_MAX"]
+        parameter.set_change_reason("")
+
+        model.apply_backoff(1, 2)
+
+        assert parameter.get_new_value() == 45000
+        assert parameter.change_reason_for_file == (
+            "90000 scaled by minimum / maximum takeoff weight (1 / 2 kg) @autotune_accel_backoff"
+        )
+
+    @pytest.mark.parametrize(
+        ("minimum", "maximum", "ratio_underflows"),
+        [
+            (0.0, 1.0, False),
+            (-1.0, 2.0, False),
+            (2.0, 1.0, False),
+            (float("nan"), 2.0, False),
+            (1.0, float("nan"), False),
+            (1.0, float("inf"), False),
+            (float("inf"), float("inf"), False),
+            (1e-300, 1e300, True),
+        ],
+        ids=["zero", "negative", "reversed", "nan-minimum", "nan-maximum", "infinite-maximum", "both-infinite", "tiny-ratio"],
+    )
+    def test_weight_errors_distinguish_invalid_inputs_from_a_ratio_too_small_to_represent(
+        self, model_factory: ModelFactory, minimum: float, maximum: float, ratio_underflows: bool
+    ) -> None:
+        """
+        Weight validation gives the user guidance specific to the failing input.
+
+        GIVEN: Invalid takeoff weights or positive finite weights whose ratio underflows
+        WHEN: The user applies weight compensation
+        THEN: The error identifies the weight constraints or tiny ratio and the tune stays unchanged
+        """
+        model = model_factory()
+        before = snapshot(model)
+
+        with pytest.raises(ValueError, match=r"takeoff weight|Takeoff weights") as error:
+            model.apply_backoff(minimum, maximum)
+
+        expected = (
+            "The minimum / maximum takeoff weight ratio is too small."
+            if ratio_underflows
+            else "Takeoff weights must be finite and positive, with minimum no greater than maximum."
+        )
+        assert str(error.value) == expected
+        assert snapshot(model) == before
+        assert model.has_applied is False
+        assert model.range_warnings == []
+
+
 @pytest.mark.parametrize("prefix", ["ATC", "Q_A"])
 @pytest.mark.parametrize("acceleration", ["ACCEL", "ACC"])
 def test_weight_ratio_reduces_only_current_acceleration_limits(

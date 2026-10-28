@@ -188,6 +188,55 @@ def test_stop_periodic_polling_ignores_tcl_error() -> None:
     cancel.assert_called_once_with("after-1")
 
 
+def test_monitor_continues_delivering_samples_across_multiple_timer_ticks() -> None:
+    """
+    Live monitoring continues beyond its first scheduled reading.
+
+    GIVEN: Successive IMU samples and no optional notification callbacks
+    WHEN: Three scheduled polling callbacks run
+    THEN: Each sample arrives in order and a callable timer remains scheduled
+    """
+    samples = [(0.0, 0.0, 0.0), (100.0, 200.0, -900.0), (-300.0, 400.0, 0.0)]
+    poll = MagicMock(side_effect=samples)
+    received: list[tuple[float, float, float]] = []
+    callbacks: list[Callable[[], None]] = []
+
+    def schedule(interval: int, callback: Callable[[], None]) -> str:
+        assert interval == 125
+        assert callable(callback)
+        callbacks.append(callback)
+        return f"timer-{len(callbacks)}"
+
+    assert poll_imu_periodically(schedule, None, ImuPollHandlers(125, poll, received.append)) == "timer-1"
+    for tick in range(3):
+        callbacks[tick]()
+
+    assert received == samples
+    assert len(callbacks) == 4
+
+
+def test_monitor_with_a_pending_timer_does_not_schedule_or_poll_again() -> None:
+    """
+    Reopening a live monitor reuses its current polling job.
+
+    GIVEN: A pending IMU polling timer
+    WHEN: Periodic polling is requested again
+    THEN: The existing timer is returned without scheduling work or delivering a sample
+    """
+    schedule = MagicMock()
+    poll = MagicMock()
+    on_sample = MagicMock()
+    on_scheduled = MagicMock()
+
+    result = poll_imu_periodically(schedule, "pending-timer", ImuPollHandlers(125, poll, on_sample, on_scheduled=on_scheduled))
+
+    assert result == "pending-timer"
+    schedule.assert_not_called()
+    poll.assert_not_called()
+    on_sample.assert_not_called()
+    on_scheduled.assert_not_called()
+
+
 @pytest.mark.parametrize("pending", [None, "existing-timer"])
 def test_reopening_a_monitor_keeps_only_one_pending_timer(pending: str | None) -> None:
     """

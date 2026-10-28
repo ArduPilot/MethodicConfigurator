@@ -77,6 +77,66 @@ def model_factory() -> Callable[[str, str], AutotuneGainBackoffDataModel]:
     return create
 
 
+class TestGainBackoffValidation:
+    """Require actionable validation feedback and preserve staged gains on failure."""
+
+    @pytest.mark.parametrize("invalid_kind", ["readonly", "forced", "negative", "nonfinite"])
+    def test_invalid_gain_identifies_the_parameter_without_partially_changing_the_tune(
+        self, model_factory: Callable[[str, str], AutotuneGainBackoffDataModel], invalid_kind: str
+    ) -> None:
+        """
+        Validation identifies the failing gain before committing any reductions.
+
+        GIVEN: Valid gains followed by a locked or invalid roll P gain
+        WHEN: The user applies gain back-off
+        THEN: Guidance names that gain and every staged value and reason remains intact
+        """
+        model = model_factory("roll", "ATC")
+        name = "ATC_RAT_RLL_P"
+        value = {"negative": -0.16, "nonfinite": float("nan")}.get(invalid_kind, 0.16)
+        metadata = {"ReadOnly": invalid_kind == "readonly"}
+        model.parameter_editor.current_step_parameters[name] = ArduPilotParameter(
+            name,
+            Par(value),
+            metadata,
+            forced_par=Par(value) if invalid_kind == "forced" else None,
+        )
+        before = parameter_snapshot(model)
+
+        with pytest.raises(ValueError, match="Parameter") as error:
+            model.apply_backoff(0.25)
+
+        expected = (
+            f"Parameter {name} is not editable; no gains were changed."
+            if invalid_kind in ("readonly", "forced")
+            else f"Parameter {name} must have a finite non-negative gain."
+        )
+        assert str(error.value) == expected
+        assert parameter_snapshot(model) == before
+        assert model.range_warnings == []
+
+    def test_zero_backoff_preserves_locked_gains_without_attempting_validation(
+        self, model_factory: Callable[[str, str], AutotuneGainBackoffDataModel]
+    ) -> None:
+        """
+        A zero reduction remains a no-op even when gains cannot be edited.
+
+        GIVEN: A forced roll gain and no prior range warnings
+        WHEN: The user applies zero back-off
+        THEN: No gain changes or validation errors occur and warning state stays empty
+        """
+        model = model_factory("roll", "ATC")
+        name = "ATC_RAT_RLL_P"
+        model.parameter_editor.current_step_parameters[name] = ArduPilotParameter(name, Par(0.16), forced_par=Par(0.16))
+        before = parameter_snapshot(model)
+        assert model.range_warnings == []
+
+        assert model.apply_backoff(0.0) == []
+
+        assert parameter_snapshot(model) == before
+        assert model.range_warnings == []
+
+
 @pytest.mark.parametrize("prefix", ["ATC", "Q_A"])
 @pytest.mark.parametrize(
     ("axis", "axes", "terms"),
