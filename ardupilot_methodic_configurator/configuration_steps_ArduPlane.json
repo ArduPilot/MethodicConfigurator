@@ -336,7 +336,7 @@
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["BATT.*"],
             "forced_parameters": {
-                "BATT_FS_CRT_ACT": { "New Value": 2, "Change Reason": "Land: switch to AUTO mode and execute the nearest DO_LAND sequence if in mission" },
+                "BATT_FS_CRT_ACT": { "New Value": 2, "Change Reason": "Land: fly the nearest DO_LAND_START landing sequence in AUTO, otherwise RTL" },
                 "BATT_FS_LOW_ACT": { "New Value": 1, "Change Reason": "RTL: return to launch" }
             },
             "derived_parameters": {
