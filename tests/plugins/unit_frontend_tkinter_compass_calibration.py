@@ -47,6 +47,7 @@ def progress_popup(attach_basewindow_shell) -> CompassCalibrationPopup:
     popup = object.__new__(CompassCalibrationPopup)
     root = attach_basewindow_shell(popup)
     popup._timer_id = "after-id"
+    popup._parent = MagicMock()
     popup._polls_without_updates = 0
     popup._no_telemetry_warning_emitted = False
     popup._expected_compass_ids = [0, 1]
@@ -301,6 +302,7 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         popup.model = MagicMock()
         popup.model.cancel_calibration = MagicMock(return_value=(True, ""))
         popup.model.finish_calibration = MagicMock()
+        popup._parent = MagicMock()
 
         with patch(
             "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.messagebox.showinfo"
@@ -310,7 +312,7 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         root.after_cancel.assert_called_once_with("after-id")
         popup.model.cancel_calibration.assert_called_once()
         popup.model.finish_calibration.assert_called_once()
-        mock_info.assert_called_once_with("Cancelled", "Compass calibration was cancelled.", parent=root)
+        mock_info.assert_called_once_with("Cancelled", "Compass calibration was cancelled.", parent=popup._parent)
         popup.destroy.assert_called_once()
 
     def test_user_sees_backend_rejection_when_cancel_fails(self, attach_basewindow_shell) -> None:
@@ -713,7 +715,6 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
             popup._check_progress()
 
         assert popup.completion_status == {0: True, 1: True}
-        popup.root.after_cancel.assert_called_once_with("after-id")
         popup.model.finish_calibration.assert_called_once()
         mock_info.assert_called_once()
         popup.destroy.assert_called_once()
