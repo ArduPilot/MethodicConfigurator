@@ -178,7 +178,7 @@ def test_plane_step_13_preserves_saved_q_values_and_distinguishes_fc_imports(
     step = json.loads(config_file.read_text(encoding="utf-8"))["steps"][filename]
     filesystem = processor.local_filesystem
     calculations = ConfigurationSteps("vehicle_dir", "ArduPlane")
-    saved = ParDict({"Q_A_RAT_PIT_FLTE": Par(17, "saved by user"), "INS_GYRO_FILTER": Par(46)})
+    saved = ParDict({"Q_A_RAT_PIT_FLTE": Par(17, "saved by user"), "INS_GYRO_FILTER": Par(46, "measured in flight")})
     filesystem.file_parameters = {filename: saved}
     if offline:
         filesystem.file_parameters["15_board_orientation.param"] = ParDict({"Q_ENABLE": Par(1)})
@@ -190,7 +190,7 @@ def test_plane_step_13_preserves_saved_q_values_and_distinguishes_fc_imports(
     filesystem.compute_deletions.side_effect = calculations.compute_deletions
     filesystem.compute_add_parameters.side_effect = calculations.compute_add_parameters
     processor.variables = {"vehicle_components": {"Propellers": {"Specifications": {"Diameter_inches": 10}}}}
-    live = {} if offline else {"Q_ENABLE": 0.0, "Q_A_RAT_PIT_FLTE": 17.0, "Q_M_THST_EXPO": 0.58, "INS_GYRO_FILTER": 46.0}
+    live = {} if offline else {"Q_ENABLE": 0.0, "Q_A_RAT_PIT_FLTE": 17.0, "Q_M_THST_EXPO": 0.58, "INS_GYRO_FILTER": 70.0}
 
     result = processor.process_configuration_step(filename, live)
     parameters = result[0]
@@ -200,6 +200,9 @@ def test_plane_step_13_preserves_saved_q_values_and_distinguishes_fc_imports(
     assert parameters["Q_A_RAT_PIT_FLTE"].change_reason == "saved by user"
     assert not parameters["Q_A_RAT_PIT_FLTE"].is_forced
     assert not parameters["Q_A_RAT_PIT_FLTE"].is_derived
+    assert parameters["INS_GYRO_FILTER"].get_new_value() == 46
+    assert parameters["INS_GYRO_FILTER"].change_reason == "measured in flight"
+    assert not parameters["INS_GYRO_FILTER"].is_derived
     if offline:
         assert "Q_M_THST_EXPO" not in parameters
         assert result[6] == set()
@@ -207,9 +210,34 @@ def test_plane_step_13_preserves_saved_q_values_and_distinguishes_fc_imports(
         assert parameters["Q_M_THST_EXPO"].get_new_value() == 0.58
         assert not parameters["Q_M_THST_EXPO"].is_derived
         assert result[6] == {"Q_M_THST_EXPO"}
-    assert set(result[5]) == {"INS_GYRO_FILTER"}
+    assert not result[5]
     assert filesystem.file_parameters[filename]["Q_A_RAT_PIT_FLTE"].value == 17
     assert filesystem.file_parameters[filename]["Q_A_RAT_PIT_FLTE"].comment == "saved by user"
+    assert filesystem.file_parameters[filename]["INS_GYRO_FILTER"].value == 46
+    assert filesystem.file_parameters[filename]["INS_GYRO_FILTER"].comment == "measured in flight"
+
+
+def test_plane_step_13_leaves_unsaved_fc_gyro_filter_unchanged(processor: ConfigurationStepProcessor) -> None:
+    """A conventional Plane's existing FC gyro cutoff is not proposed for replacement."""
+    filename = "13_initial_atc.param"
+    config_file = Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "configuration_steps_ArduPlane.json"
+    filesystem = processor.local_filesystem
+    calculations = ConfigurationSteps("vehicle_dir", "ArduPlane")
+    filesystem.file_parameters = {filename: ParDict()}
+    filesystem.configuration_steps = {filename: json.loads(config_file.read_text(encoding="utf-8"))["steps"][filename]}
+    filesystem.forced_parameters = calculations.forced_parameters
+    filesystem.derived_parameters = calculations.derived_parameters
+    filesystem.compute_forced_and_derived_parameters.side_effect = calculations.compute_forced_and_derived_parameters
+    filesystem.compute_deletions.side_effect = calculations.compute_deletions
+    filesystem.compute_add_parameters.side_effect = calculations.compute_add_parameters
+    processor.variables = {"vehicle_components": {"Propellers": {"Specifications": {"Diameter_inches": 10}}}}
+    live = {"Q_ENABLE": 0.0, "INS_GYRO_FILTER": 70.0}
+
+    result = processor.process_configuration_step(filename, live)
+
+    assert "INS_GYRO_FILTER" not in result[0]
+    assert not result[5]
+    assert live["INS_GYRO_FILTER"] == 70.0
 
 
 @pytest.mark.parametrize(

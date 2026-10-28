@@ -334,6 +334,7 @@ def test_arduplane_initial_attitude_formulas_evaluate_for_both_parameter_generat
     assert parameter_names <= set(config_steps.derived_parameters[step_file])
     assert config_steps.derived_parameters[step_file]["Q_A_ANG_YAW_P"].value == pytest.approx(5.5)
     assert config_steps.derived_parameters[step_file]["Q_M_THST_EXPO"].value == pytest.approx(0.41)
+    assert config_steps.derived_parameters[step_file]["INS_GYRO_FILTER"].value == pytest.approx(115)
 
 
 @pytest.mark.parametrize(
@@ -347,8 +348,8 @@ def test_arduplane_initial_attitude_formulas_evaluate_for_both_parameter_generat
     ],
     ids=["conventional", "frame-class-alone", "missing-enable", "unsupported-enable", "unavailable"],
 )
-def test_plane_step_13_generates_only_common_filters_without_quadplane_enable(fc_parameters: dict[str, float]) -> None:
-    """Conventional and unknown Plane configurations do not generate Q attitude or hover settings."""
+def test_plane_step_13_generates_only_common_accel_filter_without_quadplane_enable(fc_parameters: dict[str, float]) -> None:
+    """Conventional and unknown Plane configurations do not generate QuadPlane or gyro-filter settings."""
     configuration_steps_file = (
         Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "configuration_steps_ArduPlane.json"
     )
@@ -363,7 +364,7 @@ def test_plane_step_13_generates_only_common_filters_without_quadplane_enable(fc
 
     assert forced_error == derived_error == ""
     assert set(config_steps.forced_parameters["13_initial_atc.param"]) == {"INS_ACCEL_FILTER"}
-    assert set(config_steps.derived_parameters["13_initial_atc.param"]) == {"INS_GYRO_FILTER"}
+    assert not config_steps.derived_parameters.get("13_initial_atc.param")
     assert config_steps.forced_parameters["13_initial_atc.param"]["INS_ACCEL_FILTER"].value == 10
 
 
@@ -382,6 +383,7 @@ def test_plane_step_13_clears_stale_quadplane_rules_after_disable() -> None:
     assert config_steps.compute_forced_and_derived_parameters("13_initial_atc.param", step, variables) == ("", "")
     assert "Q_M_THST_HOVER" in config_steps.forced_parameters["13_initial_atc.param"]
     assert "Q_A_ACCEL_P_MAX" in config_steps.derived_parameters["13_initial_atc.param"]
+    assert config_steps.derived_parameters["13_initial_atc.param"]["INS_GYRO_FILTER"].value == pytest.approx(42)
     assert config_steps.forced_parameters["13_initial_atc.param"]["Q_M_THST_HOVER"].value == pytest.approx(0.2)
     assert config_steps.forced_parameters["13_initial_atc.param"]["Q_A_THR_MIX_MAN"].value == pytest.approx(0.1)
     assert config_steps.forced_parameters["13_initial_atc.param"]["Q_A_RAT_YAW_FLTE"].value == pytest.approx(2)
@@ -389,12 +391,12 @@ def test_plane_step_13_clears_stale_quadplane_rules_after_disable() -> None:
     variables["fc_parameters"] = {"Q_ENABLE": 0.0, "Q_FRAME_CLASS": 1.0}
     assert config_steps.compute_forced_and_derived_parameters("13_initial_atc.param", step, variables) == ("", "")
     assert set(config_steps.forced_parameters["13_initial_atc.param"]) == {"INS_ACCEL_FILTER"}
-    assert set(config_steps.derived_parameters["13_initial_atc.param"]) == {"INS_GYRO_FILTER"}
+    assert not config_steps.derived_parameters.get("13_initial_atc.param")
 
 
 @pytest.mark.parametrize("template_name", ["normal_plane", "empty_4.7.x"])
-def test_generic_plane_step_13_templates_only_preassign_common_imu_filters(template_name: str) -> None:
-    """New generic Plane projects keep common IMU filters without QuadPlane tuning defaults."""
+def test_generic_plane_step_13_templates_only_preassign_accel_filter(template_name: str) -> None:
+    """New generic Plane projects do not preassign a gyro filter or QuadPlane tuning defaults."""
     template_file = (
         Path(__file__).parent.parent
         / "ardupilot_methodic_configurator"
@@ -405,7 +407,7 @@ def test_generic_plane_step_13_templates_only_preassign_common_imu_filters(templ
     )
     names = {line.partition(",")[0] for line in template_file.read_text(encoding="utf-8").splitlines() if line}
 
-    assert names == {"INS_ACCEL_FILTER", "INS_GYRO_FILTER"}
+    assert names == {"INS_ACCEL_FILTER"}
 
 
 def test_copter_step_13_attitude_rules_remain_available_without_q_enable() -> None:
