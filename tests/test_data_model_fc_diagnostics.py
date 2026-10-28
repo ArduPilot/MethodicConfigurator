@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from itertools import permutations
+from types import SimpleNamespace
 
 import pytest
 from pymavlink.dialects.v20.ardupilotmega import MAVLink_statustext_message
@@ -231,3 +232,193 @@ def test_duplicate_compass_priority_ids_use_the_highest_priority(priority_order:
     rows = diagnostics.device_rows(parameters)
 
     assert rows == [("COMPASS1", "I2C", 0, 118, "LSM9DS1", 1, "COMPASS_DEV_ID: 423425")]
+
+
+@pytest.mark.parametrize(("elapsed", "expected"), [(4.999, "A" * 50 + "tail"), (5.0, None)])
+def test_chunk_expiration_obeys_the_timeout_boundary(
+    monkeypatch: pytest.MonkeyPatch, elapsed: float, expected: str | None
+) -> None:
+    """
+    Expire unfinished diagnostics at the configured deadline.
+
+    GIVEN: An unfinished diagnostic received at time zero
+    WHEN: Its final chunk arrives just before or exactly at the timeout
+    THEN: Only the continuation arriving before the deadline is assembled
+    """
+    now = [0.0]
+    monkeypatch.setattr(diagnostics, "monotonic", lambda: now[0])
+    assembler = diagnostics.StatusTextAssembler()
+    assert assembler.assemble(MAVLink_statustext_message(4, b"A" * 50, id=42, chunk_seq=0)) is None
+
+    now[0] = elapsed
+
+    assert assembler.assemble(MAVLink_statustext_message(4, b"tail", id=42, chunk_seq=1)) == expected
+
+
+def test_components_on_the_same_vehicle_cannot_mix_diagnostic_chunks() -> None:
+    """
+    Components have independent message sequences even within one vehicle.
+
+    GIVEN: Two components using the same diagnostic message ID
+    WHEN: Their chunks arrive interleaved
+    THEN: Each completed message contains only its own component's text
+    """
+    assembler = diagnostics.StatusTextAssembler()
+    for component, payload, sequence, expected in (
+        (1, b"A" * 50, 0, None),
+        (2, b"B" * 50, 0, None),
+        (1, b"one", 1, "A" * 50 + "one"),
+        (2, b"two", 1, "B" * 50 + "two"),
+    ):
+        message = MAVLink_statustext_message(4, payload, id=42, chunk_seq=sequence)
+        message._header.srcSystem = 1  # pylint: disable=protected-access
+        message._header.srcComponent = component  # pylint: disable=protected-access
+        assert assembler.assemble(message) == expected
+
+
+def test_pending_limit_discards_only_the_oldest_unfinished_diagnostic() -> None:
+    """
+    Keep recent unfinished messages when the pending-message limit is reached.
+
+    GIVEN: One hundred unfinished diagnostics
+    WHEN: A new message starts after restarting the newest pending message
+    THEN: The oldest is evicted and recent messages still assemble correctly
+    """
+    assembler = diagnostics.StatusTextAssembler()
+    for message_id in range(1, 101):
+        assert assembler.assemble(MAVLink_statustext_message(4, b"A" * 50, id=message_id, chunk_seq=0)) is None
+    assert assembler.assemble(MAVLink_statustext_message(4, b"B" * 50, id=100, chunk_seq=0)) is None
+    assert assembler.assemble(MAVLink_statustext_message(4, b"oldest", id=1, chunk_seq=1)) == "A" * 50 + "oldest"
+    # Refill the completed slot so the next new message must evict ID 2.
+    assert assembler.assemble(MAVLink_statustext_message(4, b"A" * 50, id=1, chunk_seq=0)) is None
+    assert assembler.assemble(MAVLink_statustext_message(4, b"C" * 50, id=101, chunk_seq=0)) is None
+
+    assert assembler.assemble(MAVLink_statustext_message(4, b"old", id=2, chunk_seq=1)) is None
+    assert assembler.assemble(MAVLink_statustext_message(4, b"recent", id=1, chunk_seq=1)) == "A" * 50 + "recent"
+    assert assembler.assemble(MAVLink_statustext_message(4, b"restarted", id=100, chunk_seq=1)) == "B" * 50 + "restarted"
+    assert assembler.assemble(MAVLink_statustext_message(4, b"new", id=101, chunk_seq=1)) == "C" * 50 + "new"
+
+
+@pytest.mark.parametrize("invalid_id", [float("nan"), float("inf"), -1, 0x1000000])
+def test_invalid_device_and_priority_entries_do_not_hide_later_valid_compasses(invalid_id: float) -> None:
+    """
+    Malformed entries must not hide other detected devices or their priorities.
+
+    GIVEN: Invalid device and priority entries before a valid compass
+    WHEN: The device table is derived
+    THEN: The valid compass remains visible with its configured rank
+    """
+    rows = diagnostics.device_rows(
+        {"BARO1_DEVID": invalid_id, "COMPASS_PRIO1_ID": invalid_id, "COMPASS_DEV_ID": 423425, "COMPASS_PRIO2_ID": 423425}
+    )
+
+    assert rows == [("COMPASS1", "I2C", 0, 118, "LSM9DS1", 2, "COMPASS_DEV_ID: 423425")]
+
+
+@pytest.mark.parametrize("parameter_name", ["ARSPD_DEVID", "AIRSPEED_DEVID"])
+def test_airspeed_devices_use_the_airspeed_type_table(parameter_name: str) -> None:
+    """
+    Airspeed devices retain their category-specific sensor names.
+
+    GIVEN: An airspeed device using either supported parameter prefix
+    WHEN: Diagnostics derives its row
+    THEN: The type comes from the airspeed table and no compass rank is assigned
+    """
+    device_id = (2 << 16) | (40 << 8) | (1 << 3) | 1
+
+    rows = diagnostics.device_rows({parameter_name: device_id})
+
+    assert rows == [
+        (parameter_name.removesuffix("_DEVID"), "I2C", 1, 40, "AIRSPEED_MS4525", None, f"{parameter_name}: {device_id}")
+    ]
+
+
+@pytest.mark.parametrize("text", ["  café\x00ignored", "  café\x00ignored".encode()])
+def test_standalone_text_transports_decode_utf8_and_discard_null_padding(text: str | bytes) -> None:
+    """
+    Text-only transports display the same diagnostic as wire-backed messages.
+
+    GIVEN: A transport with a string or byte payload and no raw wire attribute
+    WHEN: Its standalone diagnostic is assembled
+    THEN: UTF-8 is preserved, null padding is discarded, and whitespace is trimmed
+    """
+    assert diagnostics.StatusTextAssembler().assemble(SimpleNamespace(text=text)) == "café"
+
+
+@pytest.mark.parametrize(("system", "component"), [(None, None), (1, None), (None, 1), ("1", 1), (1, "1")])
+def test_incomplete_source_identifiers_are_reported_as_unknown(system: object, component: object) -> None:
+    """
+    A source is known only when both numeric identifiers are available.
+
+    GIVEN: A transport missing or misreporting one source identifier
+    WHEN: Its packet source is requested
+    THEN: No partial or nonnumeric source identifier is returned
+    """
+    message = SimpleNamespace(get_srcSystem=lambda: system, get_srcComponent=lambda: component)
+
+    assert diagnostics.message_source(message) is None
+    assert diagnostics.message_source(SimpleNamespace()) is None
+    assert diagnostics.message_source(SimpleNamespace(get_srcSystem=lambda: 1)) is None
+    assert diagnostics.message_source(SimpleNamespace(get_srcComponent=lambda: 1)) is None
+
+
+def test_padded_chunk_without_source_or_sequence_metadata_completes_immediately() -> None:
+    """
+    A null-terminated first chunk is complete even with a full wire payload.
+
+    GIVEN: A transport with no source or sequence metadata and fifty padded text bytes
+    WHEN: Its first chunk is assembled
+    THEN: The diagnostic is emitted immediately without waiting for a continuation
+    """
+    message = SimpleNamespace(id=42, text=b"ready\x00" + b"\x00" * 44)
+
+    assert diagnostics.StatusTextAssembler().assemble(message) == "ready"
+
+
+@pytest.mark.parametrize("chunked", [False, True])
+def test_invalid_utf8_is_replaced_without_losing_the_diagnostic(chunked: bool) -> None:
+    """
+    Invalid text bytes do not prevent diagnostic display.
+
+    GIVEN: A standalone or chunked diagnostic containing invalid UTF-8 and null padding
+    WHEN: The complete message arrives
+    THEN: Invalid bytes are replaced and text after the first null is discarded
+    """
+    assembler = diagnostics.StatusTextAssembler()
+    if chunked:
+        assert assembler.assemble(MAVLink_statustext_message(4, b"A" * 50, id=42, chunk_seq=0)) is None
+    message = MAVLink_statustext_message(4, b"\xff\x00ignored\x00", id=42 if chunked else 0, chunk_seq=1 if chunked else 0)
+
+    assert assembler.assemble(message) == ("A" * 50 if chunked else "") + "\ufffd"
+
+
+def test_completed_or_broken_sequences_cannot_accept_delayed_continuations() -> None:
+    """
+    Retired sequences cannot produce duplicate or misleading diagnostics.
+
+    GIVEN: One completed diagnostic and another with a missing chunk
+    WHEN: Delayed continuations arrive
+    THEN: Both sequences remain discarded
+    """
+    assembler = diagnostics.StatusTextAssembler()
+    assert assembler.assemble(MAVLink_statustext_message(4, b"A" * 50, id=42, chunk_seq=0)) is None
+    assert assembler.assemble(MAVLink_statustext_message(4, b"tail", id=42, chunk_seq=1)) == "A" * 50 + "tail"
+    assert assembler.assemble(MAVLink_statustext_message(4, b"duplicate", id=42, chunk_seq=1)) is None
+    assert assembler.assemble(MAVLink_statustext_message(4, b"B" * 50, id=43, chunk_seq=0)) is None
+    assert assembler.assemble(MAVLink_statustext_message(4, b"gap", id=43, chunk_seq=2)) is None
+    assert assembler.assemble(MAVLink_statustext_message(4, b"late", id=43, chunk_seq=1)) is None
+
+
+def test_dronecan_devices_display_the_bus_protocol_as_the_sensor_type() -> None:
+    """
+    CAN device type fields represent node information rather than local sensor models.
+
+    GIVEN: A detected compass on the DRONECAN bus
+    WHEN: Its diagnostic row is derived
+    THEN: The type identifies DRONECAN and the source parameter is retained
+    """
+    device_id = (7 << 16) | (42 << 8) | (1 << 3) | 3
+
+    assert diagnostics.device_rows({"COMPASS_DEV_ID": device_id}) == [
+        ("COMPASS1", "DRONECAN", 1, 42, "DRONECAN", None, f"COMPASS_DEV_ID: {device_id}")
+    ]

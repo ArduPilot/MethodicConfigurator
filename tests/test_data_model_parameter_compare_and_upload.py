@@ -94,3 +94,40 @@ def test_refresh_keeps_values_for_parameters_missing_from_fc_reply() -> None:
     refresh_external_fc_values({"ROLL_P": parameter}, {})
 
     assert parameter.fc_value_as_string == "0.1"
+
+
+def test_omitted_edits_are_sorted_and_all_named_in_the_warning() -> None:
+    """
+    Show every omitted edit in a stable, readable warning.
+
+    GIVEN: Two manually edited parameters supplied in reverse alphabetical order
+    WHEN: Neither is selected for upload
+    THEN: The warning names both edits on separate lines in alphabetical order
+    """
+    parameters = {name: ArduPilotParameter(name, Par(1), fc_value=0) for name in ("Z_LAST", "A_FIRST")}
+    for parameter in parameters.values():
+        parameter.set_new_value("2")
+    warning = MagicMock()
+
+    omitted = unselected_manual_edits(parameters, parameters, [])
+
+    assert omitted == ["A_FIRST", "Z_LAST"]
+    assert confirm_external_upload_selection(omitted, warning) is False
+    warning.assert_called_once_with(
+        "Manual parameter edits not selected",
+        "The following manually edited parameters differ from the flight controller "
+        "but are not selected for upload:\n\nA_FIRST\nZ_LAST",
+    )
+
+
+def test_selection_ignores_names_missing_from_the_external_file() -> None:
+    """
+    Ignore stale selections without losing valid parameter objects.
+
+    GIVEN: A selection containing one valid and one absent external parameter
+    WHEN: Uploadable parameters are collected
+    THEN: Only the selected existing parameter is returned unchanged
+    """
+    parameter = ArduPilotParameter("ROLL_P", Par(0.2), fc_value=0.1)
+
+    assert selected_external_parameters({"ROLL_P": parameter}, ["ABSENT", "ROLL_P"]) == {"ROLL_P": parameter}

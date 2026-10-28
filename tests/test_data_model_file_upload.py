@@ -18,6 +18,7 @@ import pytest
 from ardupilot_methodic_configurator.backend_flightcontroller_protocols import FileUploadCheckStatus, FileUploadResult
 from ardupilot_methodic_configurator.data_model_file_upload import (
     FileUploadDisposition,
+    FileUploadOutcome,
     FileUploadWorkflow,
 )
 
@@ -62,7 +63,7 @@ def test_local_file_states_are_reported_without_remote_operations(
         progress_factory,
     )
 
-    assert [outcome.disposition for outcome in outcomes] == [expected]
+    assert outcomes == [FileUploadOutcome("script.lua", "/APM/Scripts/script.lua", expected)]
     check_upload.assert_not_called()
     upload.assert_not_called()
     confirm.assert_not_called()
@@ -77,7 +78,7 @@ def test_remote_current_file_skips_confirmation_and_upload() -> None:
 
     outcomes = workflow.upload_files([("script.lua", "/APM/Scripts/script.lua")], set(), confirm, progress_factory)
 
-    assert [outcome.disposition for outcome in outcomes] == [FileUploadDisposition.ALREADY_CURRENT]
+    assert outcomes == [FileUploadOutcome("script.lua", "/APM/Scripts/script.lua", FileUploadDisposition.ALREADY_CURRENT)]
     check_upload.assert_called_once_with("/APM/Scripts/script.lua", "script.lua")
     upload.assert_not_called()
     confirm.assert_not_called()
@@ -92,7 +93,7 @@ def test_remote_verification_failure_is_a_per_file_outcome() -> None:
 
     outcomes = workflow.upload_files([("script.lua", "/APM/Scripts/script.lua")], set(), confirm, progress_factory)
 
-    assert [outcome.disposition for outcome in outcomes] == [FileUploadDisposition.VERIFICATION_FAILED]
+    assert outcomes == [FileUploadOutcome("script.lua", "/APM/Scripts/script.lua", FileUploadDisposition.VERIFICATION_FAILED)]
     check_upload.assert_called_once()
     confirm.assert_not_called()
     upload.assert_not_called()
@@ -104,7 +105,7 @@ def test_no_connection_stops_before_remote_preflight() -> None:
 
     outcomes = workflow.upload_files([("script.lua", "/APM/Scripts/script.lua")], set(), confirm, progress_factory)
 
-    assert [outcome.disposition for outcome in outcomes] == [FileUploadDisposition.NO_CONNECTION]
+    assert outcomes == [FileUploadOutcome("script.lua", "/APM/Scripts/script.lua", FileUploadDisposition.NO_CONNECTION)]
     check_upload.assert_not_called()
     confirm.assert_not_called()
     upload.assert_not_called()
@@ -117,7 +118,7 @@ def test_declined_upload_does_not_start_transfer() -> None:
 
     outcomes = workflow.upload_files([("script.lua", "/APM/Scripts/script.lua")], set(), confirm, progress_factory)
 
-    assert [outcome.disposition for outcome in outcomes] == [FileUploadDisposition.USER_DECLINED]
+    assert outcomes == [FileUploadOutcome("script.lua", "/APM/Scripts/script.lua", FileUploadDisposition.USER_DECLINED)]
     confirm.assert_called_once_with("script.lua", "/APM/Scripts/script.lua")
     upload.assert_not_called()
     progress_factory.assert_not_called()
@@ -133,7 +134,7 @@ def test_upload_failure_is_returned_to_the_presenter() -> None:
         [("script.lua", "/APM/Scripts/script.lua")], set(), Mock(return_value=True), progress_factory
     )
 
-    assert [outcome.disposition for outcome in outcomes] == [FileUploadDisposition.UPLOAD_FAILED]
+    assert outcomes == [FileUploadOutcome("script.lua", "/APM/Scripts/script.lua", FileUploadDisposition.UPLOAD_FAILED)]
     upload.assert_called_once()
 
 
@@ -250,7 +251,7 @@ def test_nested_upload_batch_is_rejected_without_disturbing_outer_batch(callback
     ],
 )
 def test_provider_exception_does_not_skip_later_uploads(
-    provider_stage: str, error_type: type[Exception], expected: FileUploadDisposition
+    provider_stage: str, error_type: type[Exception], expected: FileUploadDisposition, caplog: pytest.LogCaptureFixture
 ) -> None:
     """
     Recoverable provider errors are isolated to the affected file.
@@ -274,8 +275,15 @@ def test_provider_exception_does_not_skip_later_uploads(
         progress_factory,
     )
 
-    assert [outcome.disposition for outcome in outcomes] == [expected, FileUploadDisposition.UPLOADED]
+    assert outcomes == [
+        FileUploadOutcome("first.lua", "/APM/Scripts/first.lua", expected),
+        FileUploadOutcome("second.lua", "/APM/Scripts/second.lua", FileUploadDisposition.UPLOADED),
+    ]
     assert upload.call_args.args[:2] == ("second.lua", "/APM/Scripts/second.lua")
+    assert "first.lua" in caplog.text
+    assert "file operation failed" in caplog.text
+    if provider_stage in {"check", "upload"}:
+        assert "/APM/Scripts/first.lua" in caplog.text
 
 
 def test_confirmation_exception_releases_batch_for_a_later_request() -> None:
@@ -297,3 +305,84 @@ def test_confirmation_exception_releases_batch_for_a_later_request() -> None:
     outcomes = workflow.upload_files([("a.lua", "/APM/Scripts/a.lua")], set(), confirm, progress_factory)
 
     assert outcomes[0].disposition is FileUploadDisposition.UPLOADED
+
+
+def test_executor_receives_file_size_and_runs_the_upload_with_progress() -> None:
+    """
+    An executor can announce transfer start and run the supplied task.
+
+    GIVEN: A one-byte local file and an executor that starts progress before I/O
+    WHEN: The executor invokes the supplied upload task
+    THEN: The transport receives the correct paths and progress reaches one callback
+    """
+    workflow, _size, _check, upload, confirm, progress_factory = _create_workflow(file_size=1)
+
+    def report_progress(_local: str, _remote: str, progress: Callable[[int, int], None]) -> FileUploadResult:
+        progress(1, 1)
+        return FileUploadResult.UPLOADED
+
+    def execute(
+        task: Callable[[Callable[[int, int], None]], FileUploadResult],
+        size: int,
+        progress: Callable[[int, int], None],
+    ) -> FileUploadResult:
+        assert size == 1
+        progress(0, size)
+        return task(progress)
+
+    upload.side_effect = report_progress
+
+    outcomes = workflow.upload_files([("a.lua", "/APM/Scripts/a.lua")], set(), confirm, progress_factory, run_upload=execute)
+
+    assert [(outcome.local_filename, outcome.remote_filename, outcome.disposition) for outcome in outcomes] == [
+        ("a.lua", "/APM/Scripts/a.lua", FileUploadDisposition.UPLOADED)
+    ]
+    assert upload.call_args.args[:2] == ("a.lua", "/APM/Scripts/a.lua")
+    progress_factory.assert_called_once_with()
+    assert progress_factory.return_value.call_args_list == [((0, 1),), ((1, 1),)]
+
+
+def test_disconnect_stops_the_batch_without_checking_later_files() -> None:
+    """
+    Stop processing a batch once its controller is disconnected.
+
+    GIVEN: Two configured files and a disconnected controller
+    WHEN: Upload is requested
+    THEN: Only the first file gets a no-connection outcome and neither is transferred
+    """
+    workflow, size, check, upload, confirm, progress_factory = _create_workflow(connected=False)
+
+    outcomes = workflow.upload_files(
+        [("a.lua", "/APM/Scripts/a.lua"), ("b.lua", "/APM/Scripts/b.lua")], set(), confirm, progress_factory
+    )
+
+    assert len(outcomes) == 1
+    assert outcomes[0].local_filename == "a.lua"
+    assert outcomes[0].disposition is FileUploadDisposition.NO_CONNECTION
+    size.assert_called_once_with("a.lua")
+    check.assert_not_called()
+    upload.assert_not_called()
+
+
+def test_upload_can_report_progress_without_a_progress_presenter() -> None:
+    """
+    A caller may decline to display progress without interrupting the transfer.
+
+    GIVEN: A progress factory that returns no callback
+    WHEN: The transport sends multiple progress notifications
+    THEN: Upload succeeds and the factory is requested only once
+    """
+    workflow, _size, _check, upload, confirm, progress_factory = _create_workflow()
+    progress_factory.return_value = None
+
+    def report_progress(_local: str, _remote: str, progress: Callable[[int, int], None]) -> FileUploadResult:
+        progress(1, 12)
+        progress(12, 12)
+        return FileUploadResult.UPLOADED
+
+    upload.side_effect = report_progress
+
+    outcomes = workflow.upload_files([("a.lua", "/APM/Scripts/a.lua")], set(), confirm, progress_factory)
+
+    assert outcomes[0].disposition is FileUploadDisposition.UPLOADED
+    progress_factory.assert_called_once_with()
