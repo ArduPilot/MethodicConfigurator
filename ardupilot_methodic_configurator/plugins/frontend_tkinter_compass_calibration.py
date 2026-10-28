@@ -344,12 +344,12 @@ class CompassCalibrationPopup(CalibrationPopupBase["CompassCalibrationDataModel"
                     success, error_msg = self.model.cancel_calibration()
                     if success:
                         self.model.finish_calibration()
+                        self.destroy()
                         messagebox.showerror(
                             _("Calibration Failed"),
                             _("Calibration for Compass {compass_id} failed. Please try again.").format(compass_id=cid),
-                            parent=self.root,
+                            parent=self._parent,
                         )
-                        self.destroy()
                     else:
                         messagebox.showerror(_("Failed to Cancel"), error_msg, parent=self.root)
                         logging_debug(
@@ -359,16 +359,17 @@ class CompassCalibrationPopup(CalibrationPopupBase["CompassCalibrationDataModel"
                     return
 
         if self.completion_status and all(self.completion_status.values()):
-            if self._timer_id:
-                self.root.after_cancel(self._timer_id)
             self.model.finish_calibration()
             logging_debug(_("Compass calibration finished for all compasses; closing popup."))
+            # Close the borderless popup and release navigation before opening a
+            # modal result dialog. Otherwise it can obscure the dialog and keep
+            # the user trapped in a session that has already finished.
+            self.destroy()
             messagebox.showinfo(
                 _("Calibration Complete"),
                 _("All compasses successfully calibrated and saved!"),
-                parent=self.root,
+                parent=self._parent,
             )
-            self.destroy()
         else:
             logging_debug(_("Compass calibration still in progress; scheduling next poll in 100 ms."))
             self._timer_id = self.root.after(100, self._check_progress)
@@ -380,8 +381,8 @@ class CompassCalibrationPopup(CalibrationPopupBase["CompassCalibrationDataModel"
         if success:
             self.model.finish_calibration()
             logging_debug(_("Compass calibration cancel accepted; closing popup."))
-            messagebox.showinfo(_("Cancelled"), _("Compass calibration was cancelled."), parent=self.root)
             self.destroy()
+            messagebox.showinfo(_("Cancelled"), _("Compass calibration was cancelled."), parent=self._parent)
             return
 
         messagebox.showerror(_("Failed to Cancel"), error_msg, parent=self.root)

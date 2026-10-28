@@ -416,6 +416,77 @@ def test_leaving_compass_calibration_cancels_the_session_and_closes_owned_window
     assert not context.view.winfo_exists()
 
 
+@pytest.mark.parametrize("outcome", ["reports", "status_text", "generic_status_text", "cancel", "failed_report"])
+@pytest.mark.parametrize("dialog_fails", [False, True])
+def test_user_can_continue_after_compass_calibration_finishes(
+    tk_root: tk.Tk, mocker: MockerFixture, outcome: str, *, dialog_fails: bool
+) -> None:
+    """
+    Release the finished session before opening a result dialog.
+
+    GIVEN: A real progress popup owns the navigation lock
+    WHEN: Calibration finishes, even if displaying its result fails
+    THEN: The popup is closed and navigation is restored before the dialog opens
+    """
+    mocker.patch.object(BaseWindow, "_get_dpi_scaling_factor", return_value=1.0)
+    mocker.patch.object(BaseWindow, "_setup_theme_and_styling")
+    mocker.patch.object(CompassCalibrationPopup, "_resize_and_center")
+    mocker.patch("tkinter.Misc.update_idletasks")
+    model = MagicMock(spec=CompassCalibrationDataModel)
+    model.get_active_compass_ids.return_value = [0, 1]
+    model.start_calibration.return_value = (True, "")
+    model.cancel_calibration.return_value = (True, "")
+    host = SimpleNamespace(navigation_lock=NavigationLock())
+    navigation = frontend.ttk.Button(tk_root, text="Next")
+    host.navigation_lock.register(navigation)
+    view = CompassCalibrationView(tk_root, model, cast("BaseWindow", host))
+
+    def show_result(*_args: object, **kwargs: object) -> None:
+        assert not popup.root.winfo_exists()
+        assert not host.navigation_lock.locked
+        assert not navigation.instate(("disabled",))
+        assert popup._timer_id is None
+        assert kwargs["parent"] is tk_root
+        model.finish_calibration.assert_called_once_with()
+        if dialog_fails:
+            message = "Result dialog unavailable"
+            raise tk.TclError(message)
+
+    dialog = mocker.patch.object(
+        frontend.messagebox, "showerror" if outcome == "failed_report" else "showinfo", side_effect=show_result
+    )
+    try:
+        view._begin_calibration()
+        popup = view._calibration_popup
+        assert popup is not None
+        assert host.navigation_lock.locked
+        if outcome == "reports":
+            model.get_progress.return_value = [
+                {"type": "REPORT", "compass_id": cid, "status": 4, "saved": True} for cid in (0, 1)
+            ]
+        elif outcome in {"status_text", "generic_status_text"}:
+            model.get_progress.return_value = [
+                {"type": "STATUS_TEXT", "compass_id": cid, "text": "Compass calibrated requires reboot"}
+                for cid in ((0, 1) if outcome == "status_text" else (None,))
+            ]
+        else:
+            model.get_progress.return_value = [{"type": "REPORT", "compass_id": 0, "status": 5, "saved": False}]
+        action = popup._on_cancel if outcome == "cancel" else popup._check_progress
+        if dialog_fails:
+            with pytest.raises(tk.TclError, match="Result dialog unavailable"):
+                action()
+        else:
+            action()
+        dialog.assert_called_once()
+        if outcome in {"cancel", "failed_report"}:
+            model.cancel_calibration.assert_called_once_with()
+        else:
+            model.cancel_calibration.assert_not_called()
+    finally:
+        view.destroy()
+        navigation.destroy()
+
+
 def test_registered_compass_plugin_creates_the_user_start_control(tk_root: tk.Tk, mocker: MockerFixture) -> None:
     """
     Open compass calibration through application registration.
