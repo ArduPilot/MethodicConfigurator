@@ -1563,6 +1563,9 @@
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
+            "add_parameters": {
+                "RTL_ALTITUDE": { "if": "'RTL_ALTITUDE' in fc_parameters" }
+            },
             "old_filenames": []
         }
     },
