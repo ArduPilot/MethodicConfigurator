@@ -5992,6 +5992,54 @@ class TestVehicleComponentsSynchronisation:
 class TestPluginAvailability:
     """Test which plugins are offered to the user for a given configuration step."""
 
+    @pytest.mark.parametrize(
+        ("fc_parameters", "expected_plugin"),
+        [
+            ({"Q_ENABLE": 0.0, "Q_FRAME_CLASS": 1.0}, None),
+            ({"Q_ENABLE": 1.0, "Q_FRAME_CLASS": 1.0}, {"name": PLUGIN_MOTOR_TEST, "placement": "left"}),
+            ({"Q_ENABLE": 2.0, "Q_FRAME_CLASS": 1.0}, None),
+            ({"Q_FRAME_CLASS": 1.0}, None),
+            ({}, None),
+        ],
+        ids=["conventional-plane", "quadplane", "unsupported-enable", "unknown-enable", "unavailable-parameters"],
+    )
+    def test_plane_step_14_motor_test_follows_active_quadplane_configuration(
+        self, parameter_editor: ParameterEditor, fc_parameters: dict[str, float], expected_plugin: dict | None
+    ) -> None:
+        """The real Step 14 plugin guard uses active Q_ENABLE, not the mere presence of Q frame parameters."""
+        _ = self
+        steps_file = Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "configuration_steps_ArduPlane.json"
+        step = json.loads(steps_file.read_text(encoding="utf-8"))["steps"]["14_esc.param"]
+        parameter_editor._local_filesystem.get_plugin.return_value = step["plugin"]
+        parameter_editor._flight_controller.fc_parameters = fc_parameters
+        parameter_editor._config_step_processor.variables = {}
+
+        assert parameter_editor.get_plugin("14_esc.param") == expected_plugin
+        parameter_editor._local_filesystem.get_plugin.assert_called_once_with("14_esc.param")
+        assert parameter_editor._flight_controller.fc_parameters == fc_parameters
+
+    def test_plane_step_14_plugin_tracks_current_fc_value_after_a_change(self, parameter_editor: ParameterEditor) -> None:
+        """Rechecking the step after an FC change never retains a stale motor-test plugin."""
+        _ = self
+        steps_file = Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "configuration_steps_ArduPlane.json"
+        step = json.loads(steps_file.read_text(encoding="utf-8"))["steps"]["14_esc.param"]
+        parameter_editor._local_filesystem.get_plugin.return_value = step["plugin"]
+        parameter_editor._config_step_processor.variables = {}
+
+        for enabled, expected in ((1.0, True), (0.0, False), (1.0, True)):
+            parameter_editor._flight_controller.fc_parameters = {"Q_ENABLE": enabled, "Q_FRAME_CLASS": 1.0}
+            assert (parameter_editor.get_plugin("14_esc.param") is not None) is expected
+
+    def test_copter_step_14_motor_test_remains_available(self, parameter_editor: ParameterEditor) -> None:
+        """The ArduCopter Step 14 motor-test registration remains unconditional."""
+        _ = self
+        steps_file = Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "configuration_steps_ArduCopter.json"
+        step = json.loads(steps_file.read_text(encoding="utf-8"))["steps"]["14_esc.param"]
+        parameter_editor._local_filesystem.get_plugin.return_value = step["plugin"]
+        parameter_editor._flight_controller.fc_parameters = {"FRAME_CLASS": 1.0}
+
+        assert parameter_editor.get_plugin("14_esc.param") == {"name": PLUGIN_MOTOR_TEST, "placement": "left"}
+
     def test_user_sees_an_unconditional_plugin_for_the_step(self, parameter_editor: ParameterEditor) -> None:
         """
         A plugin without a condition is always offered.
