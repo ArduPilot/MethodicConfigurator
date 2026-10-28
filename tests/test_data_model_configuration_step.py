@@ -10,7 +10,9 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import json
 from logging import INFO
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -163,6 +165,51 @@ def test_step_evaluates_live_values_and_respects_existing_and_deleted_parameters
         assert additions == {"BATT_OPTIONS": Par(6, "added")}
         assert parameters["BATT_OPTIONS"].get_new_value() == 3
         assert imported == {"BATT_OPTIONS"}
+
+
+@pytest.mark.parametrize("offline", [False, True], ids=["connected-plane", "offline-saved-quadplane"])
+def test_plane_step_13_preserves_saved_q_values_and_distinguishes_fc_imports(
+    processor: ConfigurationStepProcessor,
+    offline: bool,
+) -> None:
+    """Saved Q values survive; existing nondefault FC values are imports rather than recommendations."""
+    filename = "13_initial_atc.param"
+    config_file = Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "configuration_steps_ArduPlane.json"
+    step = json.loads(config_file.read_text(encoding="utf-8"))["steps"][filename]
+    filesystem = processor.local_filesystem
+    calculations = ConfigurationSteps("vehicle_dir", "ArduPlane")
+    saved = ParDict({"Q_A_RAT_PIT_FLTE": Par(17, "saved by user"), "INS_GYRO_FILTER": Par(46)})
+    filesystem.file_parameters = {filename: saved}
+    if offline:
+        filesystem.file_parameters["15_board_orientation.param"] = ParDict({"Q_ENABLE": Par(1)})
+    filesystem.configuration_steps = {filename: step}
+    filesystem.param_default_dict = {"Q_M_THST_EXPO": Par(0.5), "INS_ACCEL_FILTER": Par(20)}
+    filesystem.forced_parameters = calculations.forced_parameters
+    filesystem.derived_parameters = calculations.derived_parameters
+    filesystem.compute_forced_and_derived_parameters.side_effect = calculations.compute_forced_and_derived_parameters
+    filesystem.compute_deletions.side_effect = calculations.compute_deletions
+    filesystem.compute_add_parameters.side_effect = calculations.compute_add_parameters
+    processor.variables = {"vehicle_components": {"Propellers": {"Specifications": {"Diameter_inches": 10}}}}
+    live = {} if offline else {"Q_ENABLE": 0.0, "Q_A_RAT_PIT_FLTE": 17.0, "Q_M_THST_EXPO": 0.58, "INS_GYRO_FILTER": 46.0}
+
+    result = processor.process_configuration_step(filename, live)
+    parameters = result[0]
+
+    assert result[1] == []
+    assert parameters["Q_A_RAT_PIT_FLTE"].get_new_value() == 17
+    assert parameters["Q_A_RAT_PIT_FLTE"].change_reason == "saved by user"
+    assert not parameters["Q_A_RAT_PIT_FLTE"].is_forced
+    assert not parameters["Q_A_RAT_PIT_FLTE"].is_derived
+    if offline:
+        assert "Q_M_THST_EXPO" not in parameters
+        assert result[6] == set()
+    else:
+        assert parameters["Q_M_THST_EXPO"].get_new_value() == 0.58
+        assert not parameters["Q_M_THST_EXPO"].is_derived
+        assert result[6] == {"Q_M_THST_EXPO"}
+    assert set(result[5]) == {"INS_GYRO_FILTER"}
+    assert filesystem.file_parameters[filename]["Q_A_RAT_PIT_FLTE"].value == 17
+    assert filesystem.file_parameters[filename]["Q_A_RAT_PIT_FLTE"].comment == "saved by user"
 
 
 @pytest.mark.parametrize(

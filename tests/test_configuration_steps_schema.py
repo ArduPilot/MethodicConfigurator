@@ -324,18 +324,105 @@ def test_arduplane_initial_attitude_formulas_evaluate_for_both_parameter_generat
 
     step_file = "13_initial_atc.param"
     config_steps = ConfigurationSteps("vehicle_dir", "ArduPlane")
-    error = config_steps.compute_parameters(
-        step_file,
-        config["steps"][step_file],
-        "derived",
-        {
-            "fc_parameters": dict.fromkeys(parameter_names, 0),
-            "vehicle_components": {"Propellers": {"Specifications": {"Diameter_inches": 3}}},
-        },
-    )
+    variables = {
+        "fc_parameters": {"Q_ENABLE": 1.0, **dict.fromkeys(parameter_names, 0)},
+        "vehicle_components": {"Propellers": {"Specifications": {"Diameter_inches": 3}}},
+    }
+    error = config_steps.compute_parameters(step_file, config["steps"][step_file], "derived", variables)
 
     assert error == ""
     assert parameter_names <= set(config_steps.derived_parameters[step_file])
+    assert config_steps.derived_parameters[step_file]["Q_A_ANG_YAW_P"].value == pytest.approx(5.5)
+    assert config_steps.derived_parameters[step_file]["Q_M_THST_EXPO"].value == pytest.approx(0.41)
+
+
+@pytest.mark.parametrize(
+    "fc_parameters",
+    [
+        {"Q_ENABLE": 0.0},
+        {"Q_ENABLE": 0.0, "Q_FRAME_CLASS": 1.0, "Q_A_ACCEL_P_MAX": 10000.0},
+        {"Q_FRAME_CLASS": 1.0, "Q_M_THST_EXPO": 0.58},
+        {"Q_ENABLE": 2.0},
+        {},
+    ],
+    ids=["conventional", "frame-class-alone", "missing-enable", "unsupported-enable", "unavailable"],
+)
+def test_plane_step_13_generates_only_common_filters_without_quadplane_enable(fc_parameters: dict[str, float]) -> None:
+    """Conventional and unknown Plane configurations do not generate Q attitude or hover settings."""
+    configuration_steps_file = (
+        Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "configuration_steps_ArduPlane.json"
+    )
+    step = json.loads(configuration_steps_file.read_text(encoding="utf-8"))["steps"]["13_initial_atc.param"]
+    config_steps = ConfigurationSteps("vehicle_dir", "ArduPlane")
+    variables = {
+        "fc_parameters": fc_parameters,
+        "vehicle_components": {"Propellers": {"Specifications": {"Diameter_inches": 10}}},
+    }
+
+    forced_error, derived_error = config_steps.compute_forced_and_derived_parameters("13_initial_atc.param", step, variables)
+
+    assert forced_error == derived_error == ""
+    assert set(config_steps.forced_parameters["13_initial_atc.param"]) == {"INS_ACCEL_FILTER"}
+    assert set(config_steps.derived_parameters["13_initial_atc.param"]) == {"INS_GYRO_FILTER"}
+    assert config_steps.forced_parameters["13_initial_atc.param"]["INS_ACCEL_FILTER"].value == 10
+
+
+def test_plane_step_13_clears_stale_quadplane_rules_after_disable() -> None:
+    """Re-evaluating the step after Q_ENABLE changes clears stale Q forced and derived values."""
+    configuration_steps_file = (
+        Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "configuration_steps_ArduPlane.json"
+    )
+    step = json.loads(configuration_steps_file.read_text(encoding="utf-8"))["steps"]["13_initial_atc.param"]
+    config_steps = ConfigurationSteps("vehicle_dir", "ArduPlane")
+    variables = {
+        "fc_parameters": {"Q_ENABLE": 1.0, "Q_A_ACCEL_P_MAX": 10000.0},
+        "vehicle_components": {"Propellers": {"Specifications": {"Diameter_inches": 10}}},
+    }
+
+    assert config_steps.compute_forced_and_derived_parameters("13_initial_atc.param", step, variables) == ("", "")
+    assert "Q_M_THST_HOVER" in config_steps.forced_parameters["13_initial_atc.param"]
+    assert "Q_A_ACCEL_P_MAX" in config_steps.derived_parameters["13_initial_atc.param"]
+    assert config_steps.forced_parameters["13_initial_atc.param"]["Q_M_THST_HOVER"].value == pytest.approx(0.2)
+    assert config_steps.forced_parameters["13_initial_atc.param"]["Q_A_THR_MIX_MAN"].value == pytest.approx(0.1)
+    assert config_steps.forced_parameters["13_initial_atc.param"]["Q_A_RAT_YAW_FLTE"].value == pytest.approx(2)
+
+    variables["fc_parameters"] = {"Q_ENABLE": 0.0, "Q_FRAME_CLASS": 1.0}
+    assert config_steps.compute_forced_and_derived_parameters("13_initial_atc.param", step, variables) == ("", "")
+    assert set(config_steps.forced_parameters["13_initial_atc.param"]) == {"INS_ACCEL_FILTER"}
+    assert set(config_steps.derived_parameters["13_initial_atc.param"]) == {"INS_GYRO_FILTER"}
+
+
+@pytest.mark.parametrize("template_name", ["normal_plane", "empty_4.7.x"])
+def test_generic_plane_step_13_templates_only_preassign_common_imu_filters(template_name: str) -> None:
+    """New generic Plane projects keep common IMU filters without QuadPlane tuning defaults."""
+    template_file = (
+        Path(__file__).parent.parent
+        / "ardupilot_methodic_configurator"
+        / "vehicle_templates"
+        / "ArduPlane"
+        / template_name
+        / "13_initial_atc.param"
+    )
+    names = {line.partition(",")[0] for line in template_file.read_text(encoding="utf-8").splitlines() if line}
+
+    assert names == {"INS_ACCEL_FILTER", "INS_GYRO_FILTER"}
+
+
+def test_copter_step_13_attitude_rules_remain_available_without_q_enable() -> None:
+    """The Plane-specific gating does not change ArduCopter initial attitude tuning."""
+    configuration_steps_file = (
+        Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "configuration_steps_ArduCopter.json"
+    )
+    step = json.loads(configuration_steps_file.read_text(encoding="utf-8"))["steps"]["13_initial_atc.param"]
+    config_steps = ConfigurationSteps("vehicle_dir", "ArduCopter")
+    variables = {
+        "fc_parameters": {},
+        "vehicle_components": {"Propellers": {"Specifications": {"Diameter_inches": 10}}},
+    }
+
+    assert config_steps.compute_forced_and_derived_parameters("13_initial_atc.param", step, variables) == ("", "")
+    assert "ATC_RAT_PIT_FLTE" in config_steps.forced_parameters["13_initial_atc.param"]
+    assert "ATC_ANG_YAW_P" in config_steps.derived_parameters["13_initial_atc.param"]
 
 
 @pytest.mark.parametrize(
