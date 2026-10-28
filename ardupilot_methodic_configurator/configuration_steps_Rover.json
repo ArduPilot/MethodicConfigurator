@@ -552,8 +552,8 @@
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["BATT.*"],
             "forced_parameters": {
-                "BATT_FS_CRT_ACT": { "New Value": 1, "Change Reason": "RTL: return to launch" },
-                "BATT_FS_LOW_ACT": { "New Value": 2, "Change Reason": "Hold: stop the vehicle" }
+                "BATT_FS_CRT_ACT": { "New Value": 2, "Change Reason": "Hold: stop the vehicle" },
+                "BATT_FS_LOW_ACT": { "New Value": 1, "Change Reason": "RTL: return to launch" }
             },
             "derived_parameters": {
                 "BATT_ARM_VOLT": { "New Value": "vehicle_components['Battery']['Specifications']['Volt per cell arm']*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Only arm above this voltage, to avoid taking off with insufficient battery capacity" },
