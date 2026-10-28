@@ -11,7 +11,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Generator
 from dataclasses import replace
-from threading import Event, Thread
+from itertools import count
+from threading import Event, RLock, Thread
+from threading import enumerate as enumerate_threads
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -22,7 +24,9 @@ from pymavlink.dialects.v20 import ardupilotmega as mavlink
 from telemetry_test_helpers import connected_telemetry_link, create_telemetry_link, feed
 
 from ardupilot_methodic_configurator.backend_data_telemetry import DataTelemetryBackend
+from ardupilot_methodic_configurator.backend_esc_telemetry import EscTelemetryBackend
 from ardupilot_methodic_configurator.backend_mavftp import FTP_OP, MAVFTP, OP_WriteFile
+from ardupilot_methodic_configurator.backend_radio_status import RadioStatusBackend
 from ardupilot_methodic_configurator.data_model_data_telemetry import (
     DataTelemetryDataModel,
     MessageSample,
@@ -185,7 +189,9 @@ def test_heartbeat_write_failure_reports_unavailable_and_can_recover(telemetry_l
         backend.close()
 
 
-def test_gcs_heartbeat_recovers_from_a_write_failure_after_monitoring_closes(telemetry_link: SimpleNamespace) -> None:
+def test_gcs_heartbeat_recovers_from_a_write_failure_after_monitoring_closes(
+    telemetry_link: SimpleNamespace, caplog: pytest.LogCaptureFixture
+) -> None:
     """
     Keep the GCS alive after a transient transport failure without reopening monitoring.
 
@@ -208,7 +214,9 @@ def test_gcs_heartbeat_recovers_from_a_write_failure_after_monitoring_closes(tel
         recovered.set()
 
     telemetry_link.master.write.side_effect = flaky_write
-    assert recovered.wait(4), "Heartbeat writes must retry while monitoring remains closed"
+    with caplog.at_level("DEBUG"):
+        assert recovered.wait(4), "Heartbeat writes must retry while monitoring remains closed"
+    assert caplog.messages == ["Error sending GCS heartbeat: temporary link failure"]
 
 
 def test_replacing_connection_stops_old_heartbeats_and_waits_for_monitoring(telemetry_link: SimpleNamespace) -> None:
@@ -599,7 +607,9 @@ def test_observer_preserves_other_consumers_and_detaches_on_reconnect(telemetry_
     backend.close()
 
 
-def test_read_failure_clears_observer_and_reports_unavailable(telemetry_link: SimpleNamespace) -> None:
+def test_read_failure_clears_observer_and_reports_unavailable(
+    telemetry_link: SimpleNamespace, caplog: pytest.LogCaptureFixture
+) -> None:
     """
     Recover safely from transport errors.
 
@@ -607,10 +617,17 @@ def test_read_failure_clears_observer_and_reports_unavailable(telemetry_link: Si
     WHEN the transport fails while reading,
     THEN a read error replaces live data and the observer is detached.
     """
-    backend = DataTelemetryBackend(telemetry_link.controller)
+    backend = DataTelemetryBackend(telemetry_link.controller, lambda: telemetry_link.now)
     backend.poll()
-    with patch.object(telemetry_link.master, "recv_match", side_effect=OSError("link lost")):
+    telemetry_link.now = 42.0
+    with (
+        patch.object(telemetry_link.master, "recv_match", side_effect=OSError("link lost")),
+        caplog.at_level("DEBUG"),
+    ):
         sample = backend.poll()
+    assert caplog.messages == ["Error reading data telemetry: link lost"]
+    assert sample.connection is telemetry_link.master
+    assert sample.time == 42.0
     assert sample.error
     assert not sample.messages
     assert not telemetry_link.master.message_hooks
@@ -702,5 +719,267 @@ def test_busy_stream_and_source_count_are_bounded(telemetry_link: SimpleNamespac
             message.pack(mavlink.MAVLink(None, srcSystem=index // 250, srcComponent=index % 250))
             backend._capture(telemetry_link.master, message)
         assert len(backend.poll().messages) == 512
+    finally:
+        backend.close()
+
+
+def test_message_wire_sizes_accumulate_without_displaying_the_packet_type_as_a_field(
+    telemetry_link: SimpleNamespace,
+) -> None:
+    """
+    Count every received packet in per-message throughput.
+
+    GIVEN: Two reports from the same MAVLink source and message type
+    WHEN: Their telemetry is captured
+    THEN: Counts and wire bytes accumulate while the synthetic type field is omitted
+    """
+    backend = DataTelemetryBackend(telemetry_link.controller, lambda: telemetry_link.now)
+    try:
+        first = feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
+        backend.poll()
+        second = feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 1, 3, 3))
+        report = backend.poll().messages[(1, 1, "HEARTBEAT")]
+        assert report.count == 2
+        assert report.size == len(first) + len(second)
+        assert "mavpackettype" not in dict(report.fields)
+    finally:
+        backend.close()
+
+
+def test_unknown_local_rssi_and_remote_noise_are_never_presented_as_measured_strength(
+    telemetry_link: SimpleNamespace,
+) -> None:
+    """
+    Preserve each radio field's unavailable sentinel independently.
+
+    GIVEN: A modem reports unavailable RSSI and remote noise
+    WHEN: The telemetry backend captures its report
+    THEN: Those two fields are absent while other valid measurements remain
+    """
+    backend = DataTelemetryBackend(telemetry_link.controller, lambda: telemetry_link.now)
+    try:
+        feed(telemetry_link, mavlink.MAVLink_radio_status_message(255, 254, 100, 0, 255, 1, 2))
+        assert backend.poll().radio == RadioSample((1, 1), 0.0, None, 254, 0, None, 100, 1, 2)
+    finally:
+        backend.close()
+
+
+def test_inspector_rows_retain_measured_rates_between_ticks_then_expire_at_three_seconds() -> None:
+    """
+    Preserve measured message rates until the next interval or expiry.
+
+    GIVEN: Cumulative message counts and bytes from one connection
+    WHEN: Polls establish a rate, reuse it and reach the stale boundary
+    THEN: Age, frequency and wire throughput reflect each interval without invented traffic
+    """
+    model = DataTelemetryDataModel(MagicMock())
+    connection = object()
+    key = (1, 1, "HEARTBEAT")
+    baseline = TelemetrySample(connection, 0, messages={key: MessageSample(1, 20, 0, ())})
+    initial = model.update(baseline)
+    assert initial.connected is True
+    assert (initial.messages[0].hz, initial.messages[0].bytes_per_second, initial.messages[0].age) == (0, 0, 0)
+    measured = replace(baseline, time=1, messages={key: MessageSample(3, 64, 1, ())})
+    for now, expected_age in ((1, 0), (1.25, 0.25)):
+        state = model.update(replace(measured, time=now))
+        assert state.connected is True
+        assert state.receiving is True
+        row = state.messages[0]
+        assert (row.hz, row.bytes_per_second, row.age) == (2, 44, expected_age)
+    idle = model.update(replace(measured, time=2))
+    assert (idle.messages[0].hz, idle.messages[0].bytes_per_second) == (0, 0)
+    stale = model.update(replace(measured, time=4))
+    assert stale.receiving is False
+    assert (stale.messages[0].hz, stale.messages[0].bytes_per_second, stale.messages[0].age) == (0, 0, 3)
+    error = model.update(replace(measured, error=True))
+    assert error.connected is True
+    assert error.error is True
+    assert not error.messages
+    disconnected = model.update(replace(measured, connection=None))
+    assert disconnected.connected is False
+    assert disconnected.error is False
+
+
+def test_radio_error_rate_is_unavailable_when_reports_are_three_seconds_apart() -> None:
+    """
+    Rebaseline error rates after a gap in modem reports.
+
+    GIVEN: Radio reports separated by exactly the stale interval
+    WHEN: The later report arrives with more receive errors
+    THEN: No rate is calculated across the stale interval
+    """
+    model = DataTelemetryDataModel(MagicMock())
+    connection = object()
+    radio = RadioSample((51, 68), 0, 100, 90, 20, 30, 80, 2, 0)
+    model.update(TelemetrySample(connection, 0, radio=radio))
+    state = model.update(TelemetrySample(connection, 3, radio=replace(radio, time=3, rxerrors=5)))
+    assert state.radio_error_rate is None
+
+
+def test_heartbeat_sender_reuses_the_existing_encoder_lock_and_preserves_requested_mavlink_version(
+    telemetry_link: SimpleNamespace,
+) -> None:
+    """
+    Share encoder synchronization and preserve MAVLink version requests.
+
+    GIVEN: An encoder already has a send lock before heartbeat monitoring starts
+    WHEN: The heartbeat sender installs its wrapper and other tools send packets
+    THEN: The lock remains shared, default traffic uses MAVLink 2 and explicit MAVLink 1 is preserved
+    """
+    master = telemetry_link.master
+    lock = RLock()
+    master.mav.amc_send_lock = lock
+    backend = RadioStatusBackend()
+    original_send = master.mav.send
+    try:
+        backend.start(master)
+        assert master.mav.amc_send_lock is lock
+        assert any(thread.name == "gcs-heartbeat" and thread.daemon for thread in enumerate_threads())
+        heartbeat = mavlink.MAVLink_heartbeat_message(6, 8, 0, 0, 4, 3)
+        master.mav.send(heartbeat)
+        assert master.write.call_args.args[0][0] == 0xFD
+        master.mav.send(heartbeat, force_mavlink1=True)
+        assert master.write.call_args.args[0][0] == 0xFE
+        stopped_sender = master.mav.send
+    finally:
+        backend.close()
+    assert master.mav.send == original_send
+    with pytest.raises(OSError, match=r"^MAVLink sender has stopped$") as error:
+        stopped_sender(heartbeat)
+    assert str(error.value) == "MAVLink sender has stopped"
+
+
+def test_heartbeat_shutdown_contains_port_close_errors_in_diagnostics(
+    telemetry_link: SimpleNamespace,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """
+    Contain transport cleanup failures while stopping the heartbeat worker.
+
+    GIVEN: A port raises an I/O error when the stopped worker closes it
+    WHEN: The heartbeat backend shuts down
+    THEN: Shutdown completes and the close failure is recorded without escaping the worker
+    """
+    backend = RadioStatusBackend()
+    telemetry_link.master.port = SimpleNamespace(close=MagicMock(side_effect=OSError("close failed")))
+    backend.start(telemetry_link.master)
+    with caplog.at_level("DEBUG"):
+        backend.close()
+    assert caplog.messages == ["Error closing stopped GCS heartbeat port: close failed"]
+
+
+def test_heartbeat_shutdown_tolerates_an_in_memory_connection_without_a_port(
+    telemetry_link: SimpleNamespace,
+    recwarn: pytest.WarningsRecorder,
+) -> None:
+    """
+    Shut down transports without optional serial-port cleanup methods.
+
+    GIVEN: A MAVLink connection has no port object
+    WHEN: The heartbeat worker starts and then stops
+    THEN: No unhandled worker exception is emitted during cleanup
+    """
+    backend = RadioStatusBackend()
+    if hasattr(telemetry_link.master, "port"):
+        del telemetry_link.master.port
+    backend.start(telemetry_link.master)
+    backend.close()
+    assert not recwarn.list
+
+
+@pytest.mark.parametrize("backend_type", [DataTelemetryBackend, EscTelemetryBackend])
+def test_data_telemetry_deadline_yields_before_reading_more_packets(
+    telemetry_link: SimpleNamespace, backend_type: type[DataTelemetryBackend] | type[EscTelemetryBackend]
+) -> None:
+    """
+    Yield the GUI as soon as its receive budget expires.
+
+    GIVEN: A queued heartbeat and a clock reaching the ten-millisecond deadline
+    WHEN: The telemetry backend polls
+    THEN: Reception is deferred to the next GUI tick without consuming the queued packet
+    """
+    ticks = count(0.0, 0.01)
+    backend = backend_type(telemetry_link.controller, lambda: next(ticks))
+    feed(telemetry_link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
+    try:
+        with patch.object(telemetry_link.master, "recv_match", wraps=telemetry_link.master.recv_match) as receive:
+            snapshot = backend.poll()
+        receive.assert_not_called()
+        assert 0 <= snapshot.time <= 0.03
+        assert not (snapshot.messages if isinstance(snapshot, TelemetrySample) else snapshot.readings)
+    finally:
+        backend.close()
+
+
+def test_data_telemetry_disconnection_keeps_the_snapshot_clock(telemetry_link: SimpleNamespace) -> None:
+    """
+    Preserve the poll time even when no controller is connected.
+
+    GIVEN: A disconnected flight controller
+    WHEN: The telemetry backend polls at a known time
+    THEN: The disconnected snapshot retains that time
+    """
+    telemetry_link.controller.master = None
+    backend = DataTelemetryBackend(telemetry_link.controller, lambda: 42.0)
+    assert backend.poll() == TelemetrySample(None, 42.0)
+
+
+def test_inspector_truncates_long_wire_fields_to_its_display_budget(telemetry_link: SimpleNamespace) -> None:
+    """
+    Bound the text retained for large MAVLink array fields.
+
+    GIVEN an encoded file-transfer message with a full payload,
+    WHEN the real parser delivers it to the inspector backend,
+    THEN its payload field is truncated to 512 characters.
+    """
+    backend = DataTelemetryBackend(telemetry_link.controller, lambda: telemetry_link.now)
+    payload = [255] * 251
+    try:
+        feed(telemetry_link, mavlink.MAVLink_file_transfer_protocol_message(0, 1, 1, payload))
+        sample = backend.poll()
+        fields = dict(sample.messages[(1, 1, "FILE_TRANSFER_PROTOCOL")].fields)
+        assert fields["payload"] == str(payload)[:512]
+    finally:
+        backend.close()
+
+
+def test_cached_inspector_rates_expire_at_the_exact_stale_boundary(telemetry_link: SimpleNamespace) -> None:
+    """
+    Clear displayed rates immediately when their last packet becomes stale.
+
+    GIVEN a nonzero cached rate measured before the three-second stale boundary,
+    WHEN polling reaches exactly three seconds without a new measurement interval,
+    THEN the row remains visible with zero rates and no receiving indicator.
+    """
+    model = DataTelemetryDataModel(telemetry_link.controller)
+    key = (1, 1, "HEARTBEAT")
+    connection = telemetry_link.master
+    model.update(TelemetrySample(connection, 0.0))
+    messages = {key: MessageSample(1, 20, 0.0, ())}
+    active = model.update(TelemetrySample(connection, 2.5, messages=messages))
+    assert active.messages[0].hz == pytest.approx(0.4)
+    stale = model.update(TelemetrySample(connection, 3.0, messages=messages))
+    assert not stale.receiving
+    assert stale.messages[0].age == 3.0
+    assert stale.messages[0].hz == stale.messages[0].bytes_per_second == 0.0
+
+
+def test_corrupt_wire_packets_increment_parse_errors_without_creating_inspector_rows(telemetry_link: SimpleNamespace) -> None:
+    """
+    Count actual MAVLink parser errors independently from decoded message traffic.
+
+    GIVEN: A MAVLink heartbeat packet whose checksum is corrupted
+    WHEN: The real parser receives its bytes
+    THEN: One parse error is reported and no valid message row is created
+    """
+    packet = bytearray(mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3).pack(telemetry_link.sender))
+    packet[-1] ^= 0xFF
+    telemetry_link.incoming.write(packet)
+    telemetry_link.incoming.seek(0)
+    backend = DataTelemetryBackend(telemetry_link.controller, lambda: telemetry_link.now)
+    try:
+        snapshot = backend.poll()
+        assert snapshot.parse_errors == 1
+        assert not snapshot.messages
     finally:
         backend.close()

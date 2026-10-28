@@ -62,7 +62,7 @@ class TestServoOutputRecommendations:  # pylint: disable=too-many-public-methods
         """The servo model uses the same output labels as vehicle-component validation."""
         assert SERVO_OUT_PWM_PORTS is PWM_OUT_PORTS
 
-    def test_main_out_quad_starts_motor_functions_at_first_servo_output(self, servo_model_factory) -> None:
+    def test_main_out_quad_starts_motor_functions_at_first_servo_output(self, servo_model_factory, caplog) -> None:
         """
         Main Out wiring assigns a quad's motors to the first output bank.
 
@@ -74,7 +74,10 @@ class TestServoOutputRecommendations:  # pylint: disable=too-many-public-methods
         model = servo_model_factory("Main Out", 1)
 
         # Act (When)
-        recommendations, _message, _status = model.get_recommendations()
+        recommendations, message, status = model.get_recommendations()
+        assert caplog.messages == []
+        assert message == "Recommended 4 motor output assignment(s)."
+        assert status is ServoOutRecommendationStatus.RECOMMENDATIONS_AVAILABLE
 
         # Assert (Then)
         assert recommendations == {
@@ -139,7 +142,9 @@ class TestServoOutputRecommendations:  # pylint: disable=too-many-public-methods
             "SERVO3_FUNCTION": 36,
             "SERVO7_FUNCTION": 39,
         }
-        assert "servo" in message.lower()
+        assert message == (
+            "Recommended 4 motor output assignment(s). SERVO7 is the tricopter yaw servo; connect it to a servo, not an ESC."
+        )
 
     def test_tricopter_keeps_yaw_output_reserved_when_an_esc_output_is_occupied(self, servo_model_factory) -> None:
         """An occupied early output must not move an ESC onto the reserved yaw-servo output."""
@@ -157,7 +162,9 @@ class TestServoOutputRecommendations:  # pylint: disable=too-many-public-methods
             "SERVO4_FUNCTION": 36,
             "SERVO7_FUNCTION": 39,
         }
-        assert "servo" in message.lower()
+        assert message == (
+            "Recommended 4 motor output assignment(s). SERVO7 is the tricopter yaw servo; connect it to a servo, not an ESC."
+        )
 
     def test_aio_tricopter_keeps_the_yaw_servo_on_servo7(self, servo_model_factory) -> None:
         """AIO connection ordering must not move the tricopter yaw servo into the ESC bank."""
@@ -308,7 +315,7 @@ class TestServoOutputRecommendations:  # pylint: disable=too-many-public-methods
 
         assert recommendations == {}
         assert status is ServoOutRecommendationStatus.ERROR
-        assert "supported motor-output mapping" in message
+        assert message == "FRAME_CLASS 0 does not have a supported motor-output mapping."
 
     def test_existing_motor_function_is_not_duplicated(self, servo_model_factory) -> None:
         """A motor function already routed elsewhere is never proposed a second time."""
@@ -501,7 +508,7 @@ class TestServoOutputRecommendations:  # pylint: disable=too-many-public-methods
 
         # Assert (Then)
         assert recommendations == {}
-        assert "Main Out or AIO" in message
+        assert message == "Select either Main Out or AIO as the FC-to-ESC connection type before assigning outputs."
         assert status is ServoOutRecommendationStatus.ERROR
 
     def test_complete_mapping_has_a_semantic_no_changes_status(self, servo_model_factory) -> None:
@@ -577,7 +584,7 @@ class TestServoOutputApplication:
 
         # Assert (Then)
         assert applied == ["SERVO1_FUNCTION", "SERVO3_FUNCTION", "SERVO4_FUNCTION"]
-        assert "SERVO2_FUNCTION" in message
+        assert message == "Applied 3 motor output assignment(s). Could not apply: SERVO2_FUNCTION."
 
     def test_application_accepts_only_parameter_update_status_values(self) -> None:
         """
@@ -599,12 +606,15 @@ class TestServoOutputApplication:
         model = ServoOutDataModel(filesystem, editor)
 
         # Act (When)
-        applied, message, _status = model.apply_recommendations()
+        applied, message, status = model.apply_recommendations()
 
         # Assert (Then)
         assert not applied
-        assert message.startswith("No servo output assignments could be applied.")
-        assert "SERVO1_FUNCTION" in message
+        assert status is ServoOutRecommendationStatus.ERROR
+        assert message == (
+            "No servo output assignments could be applied. Could not apply: "
+            "SERVO1_FUNCTION, SERVO2_FUNCTION, SERVO3_FUNCTION, SERVO4_FUNCTION."
+        )
 
     def test_application_preserves_unassigned_motor_warning(self) -> None:
         """Applying available outputs keeps the warning for motors still without an output."""
@@ -628,8 +638,7 @@ class TestServoOutputApplication:
         applied, message, _status = model.apply_recommendations()
 
         assert applied == ["SERVO4_FUNCTION"]
-        assert "Applied 1 motor output assignment(s)." in message
-        assert "Motor2, Motor3, Motor4 are not assigned to any output" in message
+        assert message == ("Applied 1 motor output assignment(s). Motor2, Motor3, Motor4 are not assigned to any output.")
 
 
 @pytest.mark.parametrize("frame_class", ["invalid", [], float("inf")])
@@ -651,7 +660,7 @@ def test_invalid_frame_configuration_cannot_propose_motor_outputs(
     # Then: Do not guess a frame or overwrite outputs.
     assert recommendations == {}
     assert status is ServoOutRecommendationStatus.ERROR
-    assert "supported motor-output mapping" in message
+    assert message == "FRAME_CLASS 0 does not have a supported motor-output mapping."
 
 
 @pytest.mark.parametrize("invalid_function", [[], "invalid", 5.5])
@@ -696,7 +705,7 @@ def test_unusable_motor_metadata_produces_an_actionable_mapping_error(
     # Then: Invalid records do not silently become a usable layout.
     assert recommendations == {}
     assert status is ServoOutRecommendationStatus.ERROR
-    assert "supported motor-output mapping" in message
+    assert message == "FRAME_CLASS 1 does not have a supported motor-output mapping."
 
 
 @pytest.mark.parametrize("occupied", [True, False])
@@ -749,26 +758,200 @@ def test_unavailable_servo_parameter_does_not_prevent_other_motor_assignments(
     # Then: One unavailable output does not prevent the others from being assigned.
     assert applied == ["SERVO2_FUNCTION", "SERVO3_FUNCTION", "SERVO4_FUNCTION"]
     assert status is ServoOutRecommendationStatus.APPLIED
-    assert "Could not apply: SERVO1_FUNCTION." in message
+    assert message == "Applied 3 motor output assignment(s). Could not apply: SERVO1_FUNCTION."
 
 
-def test_a_frame_needing_too_many_outputs_is_rejected_before_assigning_any(
+@pytest.mark.parametrize("motor_count", [14, 15])
+def test_frame_layouts_respect_the_available_output_capacity(
     servo_model_factory: Callable[[str, int, dict[str, object] | None], ServoOutDataModel],
+    motor_count: int,
 ) -> None:
     """
-    Reject layouts exceeding the plugin's output capacity.
+    Accept a full output bank and reject layouts exceeding its capacity.
 
-    GIVEN: A supported frame layout requires fifteen outputs
+    GIVEN: A scripting frame layout requires fourteen or fifteen outputs
     WHEN: The user requests assignments for fourteen available outputs
-    THEN: No truncated mapping is offered and the capacity error is explained
+    THEN: All fourteen motors are assigned or the excess capacity is explained
     """
     # Given: A realistic external layout exceeding this plugin's routing capacity.
-    model = servo_model_factory("Main Out", 1, None)
-    metadata = {"layouts": [{"Class": 1, "motors": [{"Number": number} for number in range(1, 16)]}]}
+    model = servo_model_factory("Main Out", 15, None)
+    metadata = {"layouts": [{"Class": 15, "motors": [{"Number": number} for number in range(1, motor_count + 1)]}]}
     with patch.object(model._motor_data_loader, "load_json_data", return_value=metadata):
         # When: Resolve the complete motor layout.
         recommendations, message, status = model.get_recommendations()
     # Then: Never silently omit the fifteenth motor.
-    assert recommendations == {}
-    assert status is ServoOutRecommendationStatus.ERROR
-    assert "requires more outputs" in message
+    if motor_count == 15:
+        assert recommendations == {}
+        assert status is ServoOutRecommendationStatus.ERROR
+        assert message == "FRAME_CLASS 15 requires more outputs than this plugin can assign."
+    else:
+        functions = (*range(33, 41), *range(82, 86), 160, 161)
+        assert recommendations == {f"SERVO{index}_FUNCTION": value for index, value in enumerate(functions, 1)}
+        assert status is ServoOutRecommendationStatus.RECOMMENDATIONS_AVAILABLE
+        assert message == "Recommended 14 motor output assignment(s)."
+
+
+def test_multiple_later_servo_changes_explain_conflicts_without_discarding_recommendation_summary(servo_model_factory) -> None:
+    """
+    Preserve the assignment summary and every conflicting later step.
+
+    GIVEN: Two currently unassigned outputs have saved changes after this step
+    WHEN: Motor outputs are recommended
+    THEN: Those outputs are skipped and both conflicts follow the recommendation summary
+    """
+    model = servo_model_factory("Main Out", 1)
+    model._parameter_editor.current_file = "10_servo_out.param"
+    model._local_filesystem.file_parameters = {
+        "10_servo_out.param": ParDict(),
+        "14_later_setup.param": ParDict({"SERVO1_FUNCTION": Par(0), "SERVO2_FUNCTION": Par(0)}),
+        "15_later_setup.param": ParDict({"SERVO1_FUNCTION": Par(0)}),
+    }
+    recommendations, message, status = model.get_recommendations()
+    assert recommendations == {f"SERVO{number + 2}_FUNCTION": 32 + number for number in range(1, 5)}
+    assert status is ServoOutRecommendationStatus.RECOMMENDATIONS_AVAILABLE
+    assert message == (
+        "Recommended 4 motor output assignment(s). "
+        "Skipped outputs with later saved changes because those steps would overwrite assignments: "
+        "SERVO1_FUNCTION (14_later_setup.param), SERVO2_FUNCTION (14_later_setup.param)."
+    )
+
+
+def test_occupied_tricopter_yaw_output_is_preserved_and_reports_the_unassigned_servo(servo_model_factory) -> None:
+    """
+    Preserve an occupied yaw-servo output and explain the missing assignment.
+
+    GIVEN: A tricopter's SERVO7 is occupied by a non-motor function
+    WHEN: Outputs are recommended
+    THEN: Three ESC assignments are proposed and the unassigned yaw function is reported
+    """
+    model = servo_model_factory("Main Out", 7, {"SERVO7_FUNCTION": SimpleNamespace(get_new_value=lambda: 70)})
+    recommendations, message, status = model.get_recommendations()
+    assert recommendations == {"SERVO1_FUNCTION": 33, "SERVO2_FUNCTION": 34, "SERVO3_FUNCTION": 36}
+    assert status is ServoOutRecommendationStatus.RECOMMENDATIONS_AVAILABLE
+    assert message == "Recommended 3 motor output assignment(s). Motor7 is not assigned to any output."
+
+
+@pytest.mark.parametrize(
+    ("frame_class", "summary"),
+    [(1, ""), (3, ""), (7, " SERVO7 is the tricopter yaw servo; connect it to a servo, not an ESC.")],
+)
+def test_applying_motor_outputs_retains_only_the_unresolved_assignment_guidance(
+    servo_model_factory, frame_class: int, summary: str
+) -> None:
+    """
+    Replace the recommendation summary with an accurate application result.
+
+    GIVEN: A quad, octa or tricopter has free outputs and the editor accepts each assignment
+    WHEN: The recommendations are applied
+    THEN: The result reports the applied assignments without repeating the recommendation.
+    """
+    model = servo_model_factory("Main Out", frame_class)
+    editor = cast("SimpleNamespace", model._parameter_editor)
+    editor.add_parameter_to_current_file = MagicMock(return_value=True)
+    editor.update_parameter_value = MagicMock(return_value=SimpleNamespace(status=ParameterValueUpdateStatus.UPDATED))
+    applied, message, status = model.apply_recommendations()
+    count = 8 if frame_class == 3 else 4
+    assert len(applied) == count
+    assert status is ServoOutRecommendationStatus.APPLIED
+    assert message == f"Applied {count} motor output assignment(s)."
+    recommendations, recommendation_message, _status = model.get_recommendations()
+    assert len(recommendations) == count
+    assert recommendation_message == f"Recommended {count} motor output assignment(s)." + summary
+
+
+@pytest.mark.parametrize("source", ["saved", "controller", "staged"])
+def test_motor_assignments_ignore_servo_settings_that_are_not_output_functions(servo_model_factory, source: str) -> None:
+    """
+    Interpret only SERVOx_FUNCTION values as existing motor assignments.
+
+    GIVEN: The BLHeli output mask has the numeric value of Motor1's function
+    WHEN: Recommendations combine saved, controller and staged parameters
+    THEN: The mask does not make an unassigned Motor1 appear connected.
+    """
+    model = servo_model_factory("Main Out", 1)
+    if source == "saved":
+        model._local_filesystem.file_parameters = {"10_servo.param": ParDict({"SERVO_BLH_MASK": Par(33)})}
+    elif source == "controller":
+        model._parameter_editor.fc_parameters["SERVO_BLH_MASK"] = 33
+    else:
+        model._parameter_editor.current_step_parameters["SERVO_BLH_MASK"] = SimpleNamespace(get_new_value=lambda: 33)
+    recommendations, _message, status = model.get_recommendations()
+    assert status is ServoOutRecommendationStatus.RECOMMENDATIONS_AVAILABLE
+    assert recommendations == {f"SERVO{number}_FUNCTION": 32 + number for number in range(1, 5)}
+
+
+def test_later_changes_to_occupied_outputs_do_not_warn_about_overwriting_new_assignments(servo_model_factory) -> None:
+    """
+    Reserve future outputs only when they are currently available for assignment.
+
+    GIVEN: A motor and a control output already have assignments that are changed by a later step
+    WHEN: The remaining motors are routed to free outputs
+    THEN: Occupied outputs are preserved and no overwrite warning refers to them.
+    """
+    parameters = {
+        "SERVO1_FUNCTION": SimpleNamespace(get_new_value=lambda: 33),
+        "SERVO2_FUNCTION": SimpleNamespace(get_new_value=lambda: 4),
+    }
+    model = servo_model_factory("Main Out", 1, parameters)
+    model._parameter_editor.current_file = "10_servo.param"
+    model._local_filesystem.file_parameters = {
+        "10_servo.param": ParDict(),
+        "12_controls.param": ParDict({"SERVO1_FUNCTION": Par(33), "SERVO2_FUNCTION": Par(4)}),
+    }
+    recommendations, message, status = model.get_recommendations()
+    assert status is ServoOutRecommendationStatus.RECOMMENDATIONS_AVAILABLE
+    assert recommendations == {f"SERVO{number + 1}_FUNCTION": 32 + number for number in range(2, 5)}
+    assert message == "Recommended 3 motor output assignment(s)."
+
+
+@pytest.mark.parametrize("bad_motors", [None, [], [None], [{"Number": "invalid"}]])
+def test_motor_layout_selection_continues_after_an_unusable_matching_layout(bad_motors: object) -> None:
+    """
+    Recover from an unusable layout when another matching motor arrangement exists.
+
+    GIVEN: Motor metadata contains a malformed matching layout before a usable one
+    WHEN: The frame class's motor numbers are resolved
+    THEN: The usable layout supplies all four motor numbers.
+    """
+    data = {
+        "layouts": [
+            {"Class": 1, "motors": bad_motors},
+            {"Class": 1, "motors": [{"Number": number} for number in range(1, 5)]},
+        ]
+    }
+    assert ServoOutDataModel._motor_numbers_for_frame_class(1, data) == (1, 2, 3, 4)
+
+
+@pytest.mark.parametrize("unset", ["", "33.5"])
+def test_empty_functions_remain_assignable_and_fractional_functions_are_not_motor_assignments(
+    servo_model_factory, unset: str
+) -> None:
+    """
+    Avoid interpreting incomplete function edits as a valid motor assignment.
+
+    GIVEN: One output has an empty edit or an invalid fractional function value
+    WHEN: A quad's motor outputs are recommended
+    THEN: Motor1 is assigned to the first genuinely free output.
+    """
+    model = servo_model_factory("Main Out", 1, {"SERVO1_FUNCTION": SimpleNamespace(get_new_value=lambda: unset)})
+    recommendations, _message, _status = model.get_recommendations()
+    first_output = 1 if unset == "" else 2
+    assert recommendations == {f"SERVO{number + first_output - 1}_FUNCTION": 32 + number for number in range(1, 5)}
+
+
+@pytest.mark.parametrize(("vehicle", "label", "frame_class"), [("Rover", "Boat", 2), ("", "Quad", 1)])
+def test_offline_frame_labels_use_the_selected_vehicle_dictionary_or_copter_fallback(
+    servo_model_factory, vehicle: str, label: str, frame_class: int
+) -> None:
+    """
+    Interpret saved frame labels using their vehicle's own numbering.
+
+    GIVEN: No controller frame parameter is available and a saved frame label exists
+    WHEN: The offline frame class is resolved
+    THEN: Rover labels use Rover numbering and an unspecified vehicle uses Copter's fallback.
+    """
+    model = servo_model_factory("Main Out", 1)
+    model._parameter_editor.fc_parameters.clear()
+    model._local_filesystem.vehicle_type = vehicle
+    model._local_filesystem.vehicle_components_fs.data["Components"]["Frame"] = {"Specifications": {"Frame class": label}}
+    assert model._get_frame_class() == frame_class

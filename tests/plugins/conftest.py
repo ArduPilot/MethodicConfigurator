@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Shared fixtures for plugin recovery lifecycles and staged RC parameter editing.
+Shared plugin fixtures and mutation-run ordering for fast domain assertions.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from collections.abc import Callable
+from os import getenv
 from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock
 
@@ -23,6 +24,14 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import Pa
 
 if TYPE_CHECKING:
     from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginView
+
+
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Fail on direct domain assertions before exercising Tk callers during mutation runs."""
+    if getenv("MUTANT_UNDER_TEST"):
+        items.sort(
+            key=lambda item: "frontend" in item.path.name or any(name in item.fixturenames for name in ("root", "tk_root"))
+        )
 
 
 @pytest.fixture

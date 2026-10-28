@@ -108,10 +108,10 @@ class TestRCCalibrationDataModelStartCancel:
         success, error_msg = model.start_calibration()
 
         assert success is False
-        assert error_msg != ""
+        assert error_msg == "Flight controller not connected"
         assert model._is_calibrating is False
 
-    def test_start_calibration_activates_tracking_when_connected(self, connected_flight_controller) -> None:
+    def test_start_calibration_activates_tracking_when_connected(self, connected_flight_controller, caplog) -> None:
         """
         Calibration starts cleanly when a link is available.
 
@@ -121,7 +121,9 @@ class TestRCCalibrationDataModelStartCancel:
         """
         model = RCCalibrationDataModel(connected_flight_controller)
 
-        success, error_msg = model.start_calibration()
+        with caplog.at_level("INFO"):
+            success, error_msg = model.start_calibration()
+        assert caplog.messages == ["RC calibration started — move all sticks and switches to their extremes"]
 
         assert success is True
         assert error_msg == ""
@@ -144,7 +146,7 @@ class TestRCCalibrationDataModelStartCancel:
         assert not model._channel_min
         assert not model._channel_max
 
-    def test_cancel_calibration_discards_state_without_writing(self, connected_flight_controller) -> None:
+    def test_cancel_calibration_discards_state_without_writing(self, connected_flight_controller, caplog) -> None:
         """
         Cancelling stops tracking and never writes parameters to the FC.
 
@@ -157,7 +159,9 @@ class TestRCCalibrationDataModelStartCancel:
         model._channel_min = {0: 1100}
         model._channel_max = {0: 1900}
 
-        success, error_msg = model.cancel_calibration()
+        with caplog.at_level("INFO"):
+            success, error_msg = model.cancel_calibration()
+        assert caplog.messages == ["RC calibration cancelled"]
 
         assert success is True
         assert error_msg == ""
@@ -171,7 +175,7 @@ class TestRCCalibrationDataModelStartCancel:
 class TestRCCalibrationDataModelFinish:
     """Calibration measurements become editable New values, never direct controller writes."""
 
-    def test_finish_without_data_writes_no_parameters(self, connected_flight_controller) -> None:
+    def test_finish_without_data_writes_no_parameters(self, connected_flight_controller, caplog) -> None:
         """
         Finishing with no recorded readings stages nothing.
 
@@ -183,7 +187,8 @@ class TestRCCalibrationDataModelFinish:
         model.start_calibration()
         success, message = model.finish_calibration()
         assert success is False
-        assert message
+        assert message == "No RC calibration data recorded — nothing to save"
+        assert caplog.messages == [message]
         assert model._is_calibrating is False
         connected_flight_controller.set_param.assert_not_called()
 
@@ -261,7 +266,7 @@ class TestRCCalibrationDataModelFinish:
         controller.set_param.assert_not_called()
 
     def test_finish_with_only_stationary_channels_stages_nothing(
-        self, rc_staging_context: tuple[MagicMock, ParameterEditor]
+        self, rc_staging_context: tuple[MagicMock, ParameterEditor], caplog: pytest.LogCaptureFixture
     ) -> None:
         """
         Finishing a run with no stick or switch movement leaves every value alone.
@@ -277,10 +282,12 @@ class TestRCCalibrationDataModelFinish:
         controller.master.recv_match.side_effect = [_make_rc_channels_msg([1500]), None]
         model.get_rc_telemetry()
 
-        success, message = model.finish_calibration()
+        with caplog.at_level("INFO"):
+            success, message = model.finish_calibration()
 
         assert success is True
-        assert "No RC channels moved" in message
+        assert message == "No RC channels moved; no calibration parameters were staged."
+        assert caplog.messages == ["RC1 did not move; calibration values were not staged", message]
         assert {name: parameter.get_new_value() for name, parameter in editor.current_step_parameters.items()} == before
         assert not model._channel_min
         assert not model._channel_max
@@ -300,7 +307,7 @@ class TestRCCalibrationDataModelFinish:
         model._channel_max = {0: 1900}
         success, message = model.finish_calibration()
         assert success is False
-        assert "parameter editor" in message
+        assert message == "Open RC calibration in the parameter editor to stage changes for upload."
         assert model._channel_min == {0: 1100}
         connected_flight_controller.set_param.assert_not_called()
 
@@ -351,6 +358,10 @@ class TestRCCalibrationDataModelTelemetry:
         assert telemetry["pitch"] == 0.0
         assert telemetry["throttle"] == 1000.0
         assert telemetry["yaw"] == 0.0
+        assert [entry.kwargs for entry in connected_flight_controller.master.recv_match.call_args_list] == [
+            {"type": "RC_CHANNELS", "blocking": False},
+            {"type": "HEARTBEAT", "blocking": False},
+        ]
 
     def test_telemetry_keeps_all_channels_and_marks_invalid_values_unavailable(self, connected_flight_controller) -> None:
         """
@@ -425,7 +436,7 @@ class TestRCCalibrationDataModelTelemetry:
 
         assert telemetry["roll"] == 0.0
 
-    def test_recv_match_exception_is_swallowed(self, connected_flight_controller) -> None:
+    def test_recv_match_exception_is_swallowed(self, connected_flight_controller, caplog) -> None:
         """
         A telemetry read error never propagates to the GUI.
 
@@ -436,7 +447,9 @@ class TestRCCalibrationDataModelTelemetry:
         model = RCCalibrationDataModel(connected_flight_controller)
         connected_flight_controller.master.recv_match.side_effect = RuntimeError("link lost")
 
-        assert not model.get_rc_telemetry()
+        with caplog.at_level("DEBUG"):
+            assert not model.get_rc_telemetry()
+        assert caplog.messages == ["Error reading MAVLink telemetry: link lost"]
 
     def test_telemetry_includes_flight_mode_from_heartbeat(self, connected_flight_controller) -> None:
         """
@@ -543,6 +556,15 @@ class TestRCCalibrationDataModelTelemetry:
         [
             ({}, (1000, 2000, 1500)),
             ({"RC1_MIN": nan, "RC1_MAX": 2000}, (1000, 2000, 1500)),
+            ({"RC1_MIN": 1000, "RC1_MAX": nan}, (1000, 2000, 1500)),
+            ({"RC1_MIN": -100, "RC1_MAX": 2100}, (1000, 2000, 1500)),
+            ({"RC1_MIN": 0, "RC1_MAX": 2100}, (1000, 2000, 1500)),
+            ({"RC1_MIN": 1000, "RC1_MAX": 65535}, (1000, 2000, 1500)),
+            ({"RC1_MIN": 1, "RC1_MAX": 65534}, (1, 65534, 32768)),
+            ({"RC1_MIN": 1100, "RC1_MAX": 1900, "RC1_TRIM": nan}, (1100, 1900, 1500)),
+            ({"RC1_MIN": 1100, "RC1_MAX": 1900, "RC1_TRIM": 1000}, (1100, 1900, 1500)),
+            ({"RC1_MIN": 1100, "RC1_MAX": 1900, "RC1_TRIM": 1100}, (1100, 1900, 1100)),
+            ({"RC1_MIN": 1100, "RC1_MAX": 1900, "RC1_TRIM": 1900}, (1100, 1900, 1900)),
             ({"RC1_MIN": 2000, "RC1_MAX": 1000}, (1000, 2000, 1500)),
             ({"RC1_MIN": 1500.1, "RC1_MAX": 1500.2}, (1000, 2000, 1500)),
             ({"RC1_MIN": 1100, "RC1_MAX": 1900, "RC1_TRIM": 3000}, (1100, 1900, 1500)),
@@ -655,7 +677,7 @@ class TestRCCalibrationDataModelFlightMode:
         """
         model = RCCalibrationDataModel(disconnected_flight_controller)
 
-        assert model.get_flight_mode() != ""
+        assert model.get_flight_mode() == "Not connected"
 
     def test_flight_mode_returns_custom_mode_from_heartbeat(self, connected_flight_controller) -> None:
         """
@@ -671,6 +693,7 @@ class TestRCCalibrationDataModelFlightMode:
         connected_flight_controller.master.recv_match.return_value = hb
 
         assert model.get_flight_mode() == "5"
+        connected_flight_controller.master.recv_match.assert_called_once_with(type="HEARTBEAT", blocking=False)
 
     def test_flight_mode_returns_no_data_without_heartbeat(self, connected_flight_controller) -> None:
         """
@@ -683,9 +706,9 @@ class TestRCCalibrationDataModelFlightMode:
         model = RCCalibrationDataModel(connected_flight_controller)
         connected_flight_controller.master.recv_match.return_value = None
 
-        assert model.get_flight_mode() != ""
+        assert model.get_flight_mode() == "No Data"
 
-    def test_flight_mode_swallows_recv_match_exception(self, connected_flight_controller) -> None:
+    def test_flight_mode_swallows_recv_match_exception(self, connected_flight_controller, caplog) -> None:
         """
         A HEARTBEAT read error never propagates out of get_flight_mode.
 
@@ -696,7 +719,9 @@ class TestRCCalibrationDataModelFlightMode:
         model = RCCalibrationDataModel(connected_flight_controller)
         connected_flight_controller.master.recv_match.side_effect = RuntimeError("link lost")
 
-        assert model.get_flight_mode() != ""
+        with caplog.at_level("DEBUG"):
+            assert model.get_flight_mode() == "No Data"
+        assert caplog.messages == ["Error reading HEARTBEAT: link lost"]
 
 
 class TestTransmitterStickModes:
@@ -794,7 +819,10 @@ class TestRCMappingStaging:
         before = {name: (par.get_new_value(), par.change_reason) for name, par in editor.current_step_parameters.items()}
         success, message = RCCalibrationDataModel(controller, editor).set_mapping_mode(3)
         assert success is False
-        assert message
+        if protection != "range":
+            assert message == "Parameter RCMAP_YAW is read-only, forced or derived; no values were changed."
+        else:
+            assert message == "The value for RCMAP_YAW (1.0) should be greater than 2.0\n"
         assert {
             name: (par.get_new_value(), par.change_reason) for name, par in editor.current_step_parameters.items()
         } == before
@@ -815,8 +843,9 @@ class TestRCMappingStaging:
         assert editor.current_step_parameters["RCMAP_PITCH"].get_new_value() == 3
         controller.set_param.assert_not_called()
 
+    @pytest.mark.parametrize("unavailable", [False, True])
     def test_failed_parameter_addition_rolls_back_preceding_additions(
-        self, rc_staging_context: tuple[MagicMock, ParameterEditor], monkeypatch: pytest.MonkeyPatch
+        self, rc_staging_context: tuple[MagicMock, ParameterEditor], monkeypatch: pytest.MonkeyPatch, unavailable: bool
     ) -> None:
         """
         Unsupported mapping parameters cannot leave half-added rows.
@@ -831,12 +860,15 @@ class TestRCMappingStaging:
 
         def add(name: str) -> bool:
             if name == "RCMAP_PITCH":
+                if unavailable:
+                    return False
                 message = "Missing"
                 raise InvalidParameterNameError(message)
             return real_add(name)
 
         monkeypatch.setattr(editor, "add_parameter_to_current_file", add)
-        success, _message = RCCalibrationDataModel(controller, editor).set_mapping_mode(3)
+        success, message = RCCalibrationDataModel(controller, editor).set_mapping_mode(3)
+        assert message == ("Could not add parameter RCMAP_PITCH to this step." if unavailable else "Missing")
         assert success is False
         assert editor.current_step_parameters == {}
         controller.set_param.assert_not_called()
@@ -972,7 +1004,7 @@ class TestRCChannelOptionProtection:
         success, message = model.set_channel_option(channel_number, "999")
 
         assert success is False
-        assert "valid RC channel option" in message
+        assert message == "Select a valid RC channel option."
         staged_values = {name: parameter.get_new_value() for name, parameter in editor.current_step_parameters.items()}
         assert staged_values == original_values
         assert controller.fc_parameters == original_cache
@@ -1122,3 +1154,279 @@ class TestRCChannelOptionProtection:
         assert channels[7]["function_editable"] is True
         assert model.set_channel_option(8, "300")[0] is True
         controller.set_param.assert_not_called()
+
+
+def test_staged_mapping_and_auxiliary_option_retain_upload_guidance_and_change_reasons(rc_staging_context) -> None:
+    """
+    Preserve the reasons for pending RC edits and their required upload steps.
+
+    GIVEN: Editable RC mapping and auxiliary-channel parameters
+    WHEN: The operator selects Mode 1 and assigns an option to the last channel
+    THEN: Pending values explain their origin and the mapping guidance includes upload and reboot
+    """
+    controller, editor = rc_staging_context
+    model = RCCalibrationDataModel(controller, editor)
+    assert model.set_mapping_mode(1) == (
+        True,
+        (
+            "Changes staged. Press parameter upload to write them to the flight controller. "
+            "RC mapping changes require a flight-controller reboot after upload."
+        ),
+    )
+    for name in ("RCMAP_PITCH", "RCMAP_THROTTLE"):
+        assert (
+            editor.current_step_parameters[name].change_reason
+            == "RC mapping preset Mode 1 selected in the RC calibration plugin."
+        )
+    assert model.set_channel_option(16, "300")[0] is True
+    assert editor.current_step_parameters["RC16_OPTION"].get_new_value() == 300
+    assert (
+        editor.current_step_parameters["RC16_OPTION"].change_reason
+        == "RC channel 16 option selected in the RC calibration plugin."
+    )
+    controller.set_param.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("operation", "arguments", "guidance"),
+    [
+        ("set_mapping_mode", (0,), "Select an RC mapping mode from 1 to 4."),
+        ("set_channel_option", (0, "300"), "Select an RC channel from 1 to 16."),
+        ("set_channel_option", (17, "300"), "Select an RC channel from 1 to 16."),
+        ("set_channel_option", (6, "bad"), "Select a valid RC channel option."),
+        ("set_channel_option", (1, "300"), "The primary-control and flight-mode channel functions cannot be changed here."),
+    ],
+)
+def test_invalid_rc_edits_return_the_guidance_needed_to_correct_the_request(
+    rc_staging_context,
+    operation: str,
+    arguments: tuple,
+    guidance: str,
+) -> None:
+    """
+    Explain invalid RC edits without changing staged values.
+
+    GIVEN: An invalid mapping, channel, option or protected primary control
+    WHEN: The edit is requested
+    THEN: The operation fails with actionable guidance and preserves all pending values
+    """
+    controller, editor = rc_staging_context
+    model = RCCalibrationDataModel(controller, editor)
+    previous = {name: parameter.get_new_value() for name, parameter in editor.current_step_parameters.items()}
+    assert getattr(model, operation)(*arguments) == (False, guidance)
+    assert {name: parameter.get_new_value() for name, parameter in editor.current_step_parameters.items()} == previous
+
+
+def test_asymmetric_rc_calibration_preserves_observed_maximum_integer_trim_and_measurement_reason(
+    rc_staging_context,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """
+    Stage actual measured endpoints with an integer midpoint.
+
+    GIVEN: Channel 1 moves between asymmetric endpoints while channel 2 stays still
+    WHEN: Calibration finishes
+    THEN: Only measured motion is staged, with a traceable reason and complete diagnostics
+    """
+    controller, editor = rc_staging_context
+    model = RCCalibrationDataModel(controller, editor)
+    with caplog.at_level("INFO"):
+        assert model.start_calibration() == (True, "")
+        for reading in ([1001, 1500], [1888, 1500], [1700, 1500], [0, 0]):
+            controller.master.recv_match.side_effect = [_make_rc_channels_msg(reading), None]
+            model.get_rc_telemetry()
+        assert model.finish_calibration()[0] is True
+    assert caplog.messages == [
+        "RC calibration started — move all sticks and switches to their extremes",
+        "RC1: MIN=1001 MAX=1888 TRIM=1444",
+        "RC2 did not move; calibration values were not staged",
+    ]
+    for suffix, expected in (("MIN", 1001), ("MAX", 1888), ("TRIM", 1444)):
+        parameter = editor.current_step_parameters[f"RC1_{suffix}"]
+        assert parameter.get_new_value() == expected
+        assert parameter.change_reason == "Measured in the RC calibration plugin."
+    controller.set_param.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("pwm", "expected"), [(1000, -1000), (1200, -500), (1400, 0), (1750, 500), (2100, 1000), (2200, 1000), (900, -1000)]
+)
+@pytest.mark.parametrize("reversed_channel", [0, 1])
+def test_asymmetric_roll_travel_uses_each_side_of_trim_and_clamps_the_preview(
+    connected_flight_controller: MagicMock,
+    pwm: int,
+    expected: int,
+    reversed_channel: int,
+) -> None:
+    """
+    Respect calibrated neutral and asymmetric travel on both sides of the stick.
+
+    GIVEN: Roll has a trim of 1400 and endpoints 1000 to 2100
+    WHEN: Samples cross neutral and exceed either endpoint, with or without reversal
+    THEN: The preview uses each side's span and remains within minus to plus 1000
+    """
+    controller = connected_flight_controller
+    controller.fc_parameters = {"RC1_MIN": 1000, "RC1_MAX": 2100, "RC1_TRIM": 1400, "RC1_REVERSED": reversed_channel}
+    controller.master.recv_match.side_effect = [_make_rc_channels_msg([pwm]), None]
+    assert RCCalibrationDataModel(controller).get_rc_telemetry()["roll"] == (expected if reversed_channel == 0 else -expected)
+
+
+@pytest.mark.parametrize("trim", [1000, 2100])
+def test_roll_trim_at_an_endpoint_uses_a_safe_midpoint_for_the_stick_preview(
+    connected_flight_controller: MagicMock,
+    trim: int,
+) -> None:
+    """
+    Keep the stick preview usable when a neutral trim coincides with an endpoint.
+
+    GIVEN: Roll trim equals either calibrated endpoint
+    WHEN: The receiver reports the midpoint of its travel
+    THEN: The preview is centered and the configured trim marker remains unchanged
+    """
+    controller = connected_flight_controller
+    controller.fc_parameters = {"RC1_MIN": 1000, "RC1_MAX": 2100, "RC1_TRIM": trim}
+    controller.master.recv_match.side_effect = [_make_rc_channels_msg([1550]), None]
+    telemetry = RCCalibrationDataModel(controller).get_rc_telemetry()
+    assert telemetry["roll"] == 0.0
+    assert telemetry["channels"][0]["trim"] == trim
+
+
+@pytest.mark.parametrize(("mode_channel", "expected_mode"), [(None, 5), (nan, 5), (16.0, 16), (0.0, 0), (1.0, 1)])
+def test_offline_channel_rows_preserve_default_controls_and_the_configured_mode_channel(
+    connected_flight_controller: MagicMock,
+    mode_channel: float | None,
+    expected_mode: int,
+) -> None:
+    """
+    Present useful channel functions before mapping or receiver telemetry is available.
+
+    GIVEN: Missing mapping parameters and a missing, invalid, last or disabled flight-mode channel
+    WHEN: The RC monitor requests channel rows
+    THEN: Primary controls use their defaults and Mode follows the valid channel or safe fallback
+    """
+    controller = connected_flight_controller
+    controller.fc_parameters = {} if mode_channel is None else {"FLTMODE_CH": mode_channel}
+    model = RCCalibrationDataModel(controller)
+    rows = model.get_channel_calibration()
+    expected = {1: "Roll", 2: "Pitch", 3: "Throttle", 4: "Yaw"}
+    if expected_mode:
+        previous = expected.get(expected_mode)
+        expected[expected_mode] = f"{previous} / Mode" if previous else "Mode"
+    assert len(rows) == 16
+    assert [row["function"] for row in rows] == [expected.get(channel, "") for channel in range(1, 17)]
+    assert all(row["option_value"] == 0 and row["option_label"] == "0" for row in rows)
+    assert all(not row["function_editable"] and row["option_choices"] == {} for row in rows)
+    assert model.get_preview_axes() == {"roll": 0.0, "pitch": 0.0, "throttle": 0.0, "yaw": 0.0}
+
+
+@pytest.mark.parametrize("mapping", [0.0, 17.0, 1.5, nan])
+def test_invalid_primary_mapping_does_not_label_an_unassigned_channel_as_roll(
+    connected_flight_controller: MagicMock,
+    mapping: float,
+) -> None:
+    """
+    Leave invalid primary-control assignments visibly unassigned.
+
+    GIVEN: The downloaded roll mapping is out of range, fractional or nonfinite
+    WHEN: The monitor displays channel functions
+    THEN: No channel is labelled Roll while other default primary controls remain visible
+    """
+    connected_flight_controller.fc_parameters = {"RCMAP_ROLL": mapping}
+    rows = RCCalibrationDataModel(connected_flight_controller).get_channel_calibration()
+    assert all("Roll" not in row["function"] for row in rows)
+    assert [row["function"] for row in rows[1:4]] == ["Pitch", "Throttle", "Yaw"]
+
+
+@pytest.mark.parametrize(("value", "label"), [(300.0, "300"), (nan, "")])
+def test_unknown_firmware_option_labels_preserve_numeric_values_or_unavailability(
+    connected_flight_controller: MagicMock,
+    value: float,
+    label: str,
+) -> None:
+    """
+    Show unlabelled firmware options without inventing a named function.
+
+    GIVEN: The FC reports an auxiliary option but firmware choices are not loaded
+    WHEN: Its channel row is requested
+    THEN: A finite numeric value is shown directly and unavailable data has an empty label
+    """
+    connected_flight_controller.fc_parameters = {"RC6_OPTION": value}
+    row = RCCalibrationDataModel(connected_flight_controller).get_channel_calibration()[5]
+    assert row["option_label"] == label
+    assert row["function_editable"] is False
+    assert row["option_choices"] == {}
+
+
+@pytest.mark.parametrize(
+    ("axes", "expected"),
+    [
+        ({}, ((0.0, 0.0), (0.0, 0.0))),
+        ({"yaw": -2000.0, "throttle": 2000.0, "roll": 2000.0, "pitch": -2000.0}, ((-1.0, 1.0), (1.0, 1.0))),
+        ({"yaw": 2000.0, "throttle": -2000.0, "roll": -2000.0, "pitch": 2000.0}, ((1.0, -1.0), (-1.0, -1.0))),
+    ],
+)
+def test_stick_preview_defaults_missing_axes_to_neutral_and_clamps_excess_travel(axes, expected) -> None:
+    """
+    Keep transmitter stick coordinates neutral or inside their display bounds.
+
+    GIVEN: Missing axes or stick travel beyond normalized endpoints
+    WHEN: Mode-2 stick coordinates are calculated
+    THEN: Missing input stays centered and excess input stays at the edge of the display
+    """
+    assert RCCalibrationDataModel.stick_positions(axes, 2) == expected
+
+
+@pytest.mark.parametrize("pwm", [0, 1500])
+def test_throttle_preview_uses_travel_midpoint_instead_of_calibrated_low_trim(
+    connected_flight_controller: MagicMock, pwm: int
+) -> None:
+    """
+    Keep throttle travel centered independently of the saved low-throttle trim.
+
+    GIVEN: Throttle has calibrated endpoints 1000 and 2000 with a trim of 1100
+    WHEN: A midpoint or unavailable PWM sample arrives
+    THEN: The throttle preview remains centered rather than treating trim as neutral.
+    """
+    controller = connected_flight_controller
+    controller.fc_parameters = {"RC3_MIN": 1000, "RC3_MAX": 2000, "RC3_TRIM": 1100}
+    controller.master.recv_match.side_effect = [_make_rc_channels_msg([1500, 1500, pwm]), None]
+    assert RCCalibrationDataModel(controller).get_rc_telemetry()["throttle"] == 0.0
+
+
+@pytest.mark.parametrize("invalid_pwm", [0, 65535])
+def test_missing_receiver_samples_do_not_contaminate_recorded_calibration_extrema(
+    rc_staging_context, invalid_pwm: int
+) -> None:
+    """
+    Preserve real stick travel when a receiver temporarily reports unavailable PWM.
+
+    GIVEN: Calibration sees a valid endpoint, an unavailable sample, and a second endpoint
+    WHEN: The operator finishes calibration
+    THEN: Only the two measured endpoints determine the staged limits and trim.
+    """
+    controller, editor = rc_staging_context
+    model = RCCalibrationDataModel(controller, editor)
+    assert model.start_calibration() == (True, "")
+    for pwm in (1500, invalid_pwm, 1800):
+        controller.master.recv_match.side_effect = [_make_rc_channels_msg([pwm]), None]
+        telemetry = model.get_rc_telemetry()
+        assert telemetry["channels"][0]["value"] == (None if pwm == invalid_pwm else pwm)
+    assert model.finish_calibration()[0]
+    assert editor.current_step_parameters["RC1_MIN"].get_new_value() == 1500
+    assert editor.current_step_parameters["RC1_MAX"].get_new_value() == 1800
+    assert editor.current_step_parameters["RC1_TRIM"].get_new_value() == 1650
+
+
+def test_receiver_report_with_no_channels_does_not_invent_a_first_channel(connected_flight_controller: MagicMock) -> None:
+    """
+    Leave the channel count empty when the receiver declares no available channels.
+
+    GIVEN: A receiver declares zero channels while its first raw field retains an old value
+    WHEN: The calibration monitor polls
+    THEN: No receiver channel is treated as available.
+    """
+    controller = connected_flight_controller
+    controller.master.recv_match.side_effect = [_make_rc_channels_msg([1700], chancount=0), None]
+    telemetry = RCCalibrationDataModel(controller).get_rc_telemetry()
+    assert all(channel["value"] is None for channel in telemetry["channels"])
+    assert telemetry["roll"] == 0.0

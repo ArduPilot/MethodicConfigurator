@@ -64,7 +64,7 @@ class TestCompassCalibrationWithDisconnectedFlightController:
     """Test compass calibration behavior when the flight controller is disconnected."""
 
     def test_user_sees_not_connected_state_when_fc_is_disconnected(
-        self, disconnected_compass_calibration_model: CompassCalibrationDataModel
+        self, disconnected_compass_calibration_model: CompassCalibrationDataModel, caplog: pytest.LogCaptureFixture
     ) -> None:
         """
         The model reports that the flight controller is not connected.
@@ -78,6 +78,7 @@ class TestCompassCalibrationWithDisconnectedFlightController:
 
         # Assert
         assert result is False
+        assert caplog.messages == ["Flight controller not connected, cannot check compass status."]
 
     def test_user_cannot_start_calibration_without_a_flight_controller(
         self, disconnected_compass_calibration_model: CompassCalibrationDataModel, disconnected_flight_controller: MagicMock
@@ -119,7 +120,10 @@ class TestCompassCalibrationWithDisconnectedFlightController:
         disconnected_flight_controller.cancel_compass_calibration.assert_not_called()
 
     def test_user_sees_no_progress_data_when_fc_is_disconnected(
-        self, disconnected_compass_calibration_model: CompassCalibrationDataModel, disconnected_flight_controller: MagicMock
+        self,
+        disconnected_compass_calibration_model: CompassCalibrationDataModel,
+        disconnected_flight_controller: MagicMock,
+        caplog: pytest.LogCaptureFixture,
     ) -> None:
         """
         Progress polling returns no updates when there is no connection.
@@ -130,11 +134,38 @@ class TestCompassCalibrationWithDisconnectedFlightController:
         AND: The backend is not called
         """
         # Act
-        result = disconnected_compass_calibration_model.get_progress()
+        with caplog.at_level("DEBUG"):
+            result = disconnected_compass_calibration_model.get_progress()
 
         # Assert
         assert result == []
+        assert caplog.messages == ["Compass calibration progress requested while disconnected."]
         disconnected_flight_controller.get_compass_calibration_progress.assert_not_called()
+
+
+@pytest.mark.parametrize(("success", "detail"), [(True, ""), (False, "controller busy")])
+def test_operator_diagnostics_distinguish_accepted_and_rejected_compass_cancellation(
+    connected_flight_controller: MagicMock, success: bool, detail: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    Preserve the controller's cancellation outcome in operator diagnostics.
+
+    GIVEN: The controller accepts or rejects a compass cancellation
+    WHEN: The operator cancels calibration
+    THEN: The result and diagnostic record distinguish acceptance from rejection
+    """
+    model = CompassCalibrationDataModel(connected_flight_controller)
+    connected_flight_controller.cancel_compass_calibration.return_value = (success, detail)
+    with caplog.at_level("DEBUG"):
+        result = model.cancel_calibration()
+
+    assert result == (success, detail)
+    assert caplog.messages == [
+        "Compass calibration cancel requested.",
+        "Compass calibration cancel accepted by flight controller."
+        if success
+        else f"Compass calibration cancel rejected: {detail}",
+    ]
 
 
 class TestCompassCalibrationWithConnectedFlightController:
@@ -372,3 +403,55 @@ class TestCompassCalibrationWithConnectedFlightController:
         # Assert
         connected_flight_controller.get_compass_calibration_progress.assert_called_once()
         assert result == expected_data
+
+
+@pytest.mark.parametrize(("success", "detail"), [(True, ""), (False, "controller busy")])
+def test_compass_start_diagnostics_preserve_enabled_sensors_and_controller_result(
+    connected_flight_controller: MagicMock, success: bool, detail: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    Diagnostics retain the sensor flags and the controller's decision.
+
+    GIVEN: One enabled compass and an accepted or rejected start request
+    WHEN: The operator starts calibration
+    THEN: Diagnostics retain the sensor flags and the controller's decision
+    """
+    controller = connected_flight_controller
+    controller.fc_parameters["UNRELATED"] = 42
+    controller.start_compass_calibration.return_value = (success, detail)
+    model = CompassCalibrationDataModel(controller)
+    with caplog.at_level("DEBUG"):
+        assert model.start_calibration() == (success, detail)
+    assert caplog.messages == [
+        (
+            "Compass calibration preflight: enabled compass ids=[0], raw flags="
+            "{'COMPASS_ENABLE': 1, 'COMPASS_USE': 1, 'COMPASS_USE2': 0, 'COMPASS_USE3': 0}"
+        ),
+        "Compass calibration start requested for active compasses: [0]",
+        "Compass calibration start accepted by flight controller."
+        if success
+        else f"Compass calibration start rejected: {detail}",
+    ]
+
+
+def test_disabled_compasses_explain_which_flags_the_operator_must_enable(
+    connected_flight_controller: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    Diagnostic and returned guidance name the settings to enable.
+
+    GIVEN: Compass use is disabled
+    WHEN: The operator attempts calibration
+    THEN: The diagnostic and returned guidance name the settings to enable
+    """
+    connected_flight_controller.fc_parameters["COMPASS_ENABLE"] = 0
+    model = CompassCalibrationDataModel(connected_flight_controller)
+    with caplog.at_level("DEBUG"):
+        assert model.start_calibration() == (
+            False,
+            "No active compasses are enabled. Set COMPASS_ENABLE=1 and enable at least one COMPASS_USE* parameter.",
+        )
+    assert caplog.messages == [
+        "Compass calibration preflight: COMPASS_ENABLE disabled or parameters unavailable.",
+        "No active compasses are enabled. Set COMPASS_ENABLE=1 and enable at least one COMPASS_USE* parameter.",
+    ]

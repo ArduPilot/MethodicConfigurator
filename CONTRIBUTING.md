@@ -87,7 +87,7 @@ SITL_BINARY="$PWD/sitl/arducopter" PATH="$PWD/.venv/bin:$PATH" \
 ### Mutation testing
 
 The optional [Mutmut](https://mutmut.readthedocs.io/en/latest/) suite checks whether
-existing tests detect small changes to thirty-eight modules covering battery voltages,
+existing tests detect small changes to modules covering battery voltages,
 parameter validation and serialization, firmware version parsing, parameter
 history, AutoTune acceleration/gain backoff, IMU helpers, firmware upload,
 log-analysis orchestration, usage popups, file browsing and task scheduling, motor-test UI,
@@ -95,7 +95,10 @@ bootloader protocol handling, schema-validated filesystem IO, IMU log analysis,
 vehicle-component validation/display, flight-controller business rules, transfer
 progress accounting, configuration expression evaluation, firmware parameter
 migrations, battery-monitor telemetry and status handling, and configuration-step
-processing. It runs on Linux, macOS, or Windows
+processing. All plugin backends and data models are included, together with shared
+data/ESC telemetry models, telemetry and radio backends, and flight-controller
+command handling used by calibration and motor-testing plugins.
+It runs on Linux, macOS, or Windows
 through WSL.
 
 Install it into the project virtual environment:
@@ -119,6 +122,14 @@ and a working desktop display, without `xvfb-run`.
 
 The `[tool.mutmut]` section in `pyproject.toml` selects both the modules to mutate
 and the tests to run. Update those lists together when expanding the suite.
+Plugin `backend_*.py` and `data_model_*.py` targets use globs, and the entire
+`tests/plugins/` directory is selected, so newly added plugin implementations and
+their tests are included automatically. Shared implementations outside the plugin
+directory and their tests must still be added explicitly.
+The command module's source-lint regression is deselected only for mutation runs:
+it checks the hand-written source, while Mutmut generates thousands of function
+variants that make that subprocess exceed the normal test timeout. Normal pytest
+and the pylint CI job continue to run that check.
 Include the module's existing behavior, BDD, and unit tests when auditing the
 selection. A "no tests" result can indicate an omitted test file or missing
 association rather than missing tests in the repository.
@@ -130,6 +141,8 @@ Add repository resources and test helpers used by selected tests to `also_copy`;
 the AutoTune tests need `TUNING_GUIDE_Heli.md`, component-model tests need the
 `tests/` directory for shared fixtures, and MAVLink inspector tests need the
 PowerShell completion module copied into Mutmut's test tree.
+Plugin packaging regressions also require the `windows/`, `linux/`, and `macos/`
+directories containing the frozen-build specifications.
 Generated copies and results are stored in the ignored `mutants/` directory;
 Mutmut resumes previous work there. For a fresh baseline, remove that generated
 directory first, especially after changing tests or dependencies. Run from the
@@ -206,13 +219,19 @@ Keep a copy of previous results before refreshing `mutants/`, and report killed,
 surviving, unassociated, timed-out and crashed mutants separately. A partial run
 does not establish a new score for the full configured suite.
 
-If a worker crashes or times out while the same mutant fails normally in a direct
-pytest run, compare it in a separate temporary checkout with
-`forkserver_warmup = "none"` under `[tool.mutmut]`. This initializes test-module
-imports inside each worker instead of preloading them in the fork server and
-can distinguish shared GUI import state from an actual mutant-induced hang.
-It adds worker startup cost, so use it for diagnosis before changing the normal
-suite configuration. Retain both runs' execution outcomes in the report.
+The suite uses `forkserver_warmup = "none"` under `[tool.mutmut]` so test-module
+imports, including Tk, initialize inside each worker. Preloading GUI modules in
+the fork server produced worker crashes and timeouts during plugin mutation runs;
+the same mutants were killed with worker-local imports. This costs additional
+worker startup time. Keep worker counts modest and retain crashed or timed-out
+outcomes separately when comparing runs; a worker failure alone does not show
+that a mutant changes application behavior.
+The shared plugin conftest runs direct backend/model assertions before Tk callers
+when `MUTANT_UNDER_TEST` is set. GUI tests remain selected; this ordering lets
+incorrect domain results fail before a GUI callback can stall on them.
+Mutation jobs use pytest-timeout's thread watchdog so a blocked Tk C call cannot
+outlive the per-test timeout while consuming too little CPU for Mutmut's CPU
+limit. Normal pytest runs keep their existing timeout method.
 
 ### Optional local code graph
 
