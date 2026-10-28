@@ -213,7 +213,7 @@ def test_separate_calibration_steps_preserve_the_existing_vehicle_settings(templ
 
     GIVEN: An independently captured historical template with measured calibration and output settings
     WHEN: The packaged template uses separate calibration, output and mode steps
-    THEN: Its final parameter values match the historical vehicle configuration
+    THEN: Its final parameter values match history apart from corrected Rover battery failsafes
     """
     fixture = Path(__file__).parent / "fixtures" / "vehicle_templates_v1.json"
     historical_files = json.loads(fixture.read_text(encoding="utf-8"))[template_id]["files"]
@@ -225,6 +225,15 @@ def test_separate_calibration_steps_preserve_the_existing_vehicle_settings(templ
             if line.strip() and not line.startswith("#"):
                 name, _, value = line.partition(",")
                 expected[name] = float(value.partition("#")[0])
+
+    if template_id.startswith("Rover/"):
+        # The later battery fix intentionally replaces historical defaults with RTL then Hold.
+        expected.update(
+            BATT_FS_LOW_ACT=1.0,
+            BATT_FS_CRT_ACT=2.0,
+            BATT2_FS_LOW_ACT=1.0,
+            BATT2_FS_CRT_ACT=2.0,
+        )
 
     template_dir = TEMPLATES_ROOT / template_id
     actual: dict[str, float] = {}
