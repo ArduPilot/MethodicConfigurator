@@ -3051,6 +3051,78 @@ class TestParameterSummaryMethods:
 class TestFileNavigationMethods:
     """Test suite for file navigation business logic methods."""
 
+    @pytest.mark.parametrize(
+        ("live_enable", "saved_enable", "connected", "expected_mandatory"),
+        [
+            (0.0, None, True, False),
+            (0.0, 1.0, True, False),
+            (1.0, 0.0, True, True),
+            (None, 1.0, True, False),
+            (2.0, None, True, False),
+            (None, 1.0, False, True),
+            (None, None, False, False),
+        ],
+        ids=[
+            "plane",
+            "live-plane-over-saved",
+            "live-quad-over-saved",
+            "missing-live",
+            "unsupported",
+            "offline-quad",
+            "unknown",
+        ],
+    )
+    def test_plane_step_28_mandatory_status_follows_explicit_quadplane_enable(
+        self,
+        parameter_editor: ParameterEditor,
+        live_enable: float | None,
+        saved_enable: float | None,
+        connected: bool,
+        expected_mandatory: bool,
+    ) -> None:
+        """Navigation and displayed mandatory level agree on active or saved QuadPlane enablement."""
+        _ = self
+        step = "28_throttle_controller.param"
+        fs = parameter_editor._local_filesystem
+        fs.vehicle_type = "ArduPlane"
+        saved_throttle = ParDict({"Q_A_THR_MIX_MAN": Par(0.37, "saved by user")})
+        fs.file_parameters = {"27_previous.param": ParDict(), step: saved_throttle, "29_next.param": ParDict()}
+        if saved_enable is not None:
+            fs.file_parameters["27_previous.param"]["Q_ENABLE"] = Par(saved_enable)
+        fs.get_documentation_text_and_url.side_effect = lambda _filename, key: (
+            ("100% mandatory (0% optional)", "") if key == "mandatory" else ("", "")
+        )
+        parameter_editor._flight_controller.master = object() if connected else None
+        parameter_editor._flight_controller.fc_parameters = {} if live_enable is None else {"Q_ENABLE": live_enable}
+
+        text, _url = parameter_editor.get_documentation_text_and_url("mandatory", step)
+        assert parameter_editor.parse_mandatory_level_percentage(text)[0] == (100 if expected_mandatory else 0)
+        assert parameter_editor.is_configuration_step_optional(step) is not expected_mandatory
+        assert parameter_editor.get_next_non_optional_file("27_previous.param") == (
+            step if expected_mandatory else "29_next.param"
+        )
+        assert parameter_editor.get_previous_non_optional_file("29_next.param") == (
+            step if expected_mandatory else "27_previous.param"
+        )
+        assert parameter_editor.get_next_non_optional_file("27_previous.param", "advanced") == step
+        assert fs.file_parameters[step]["Q_A_THR_MIX_MAN"].value == 0.37
+        assert fs.file_parameters[step]["Q_A_THR_MIX_MAN"].comment == "saved by user"
+        parameter_editor._flight_controller.set_param.assert_not_called()
+
+    def test_copter_step_28_navigation_keeps_its_mandatory_status(self, parameter_editor: ParameterEditor) -> None:
+        """The Plane-specific Step 28 gate does not alter Copter navigation."""
+        _ = self
+        step = "28_throttle_controller.param"
+        fs = parameter_editor._local_filesystem
+        fs.vehicle_type = "ArduCopter"
+        fs.file_parameters = {"27_previous.param": ParDict(), step: ParDict(), "29_next.param": ParDict()}
+        fs.get_documentation_text_and_url.side_effect = None
+        fs.get_documentation_text_and_url.return_value = ("100% mandatory (0% optional)", "")
+        parameter_editor._flight_controller.fc_parameters = {"Q_ENABLE": 0.0}
+
+        assert parameter_editor.get_documentation_text_and_url("mandatory", step)[0] == "100% mandatory (0% optional)"
+        assert parameter_editor.get_next_non_optional_file("27_previous.param") == step
+
     def test_get_next_non_optional_file_with_valid_sequence(self, parameter_editor) -> None:
         """
         User navigates to next non-optional file in valid sequence.
