@@ -1612,7 +1612,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             file_name = self.current_file
 
         # Check if the configuration step for the given file is optional
-        mandatory_text, _mandatory_url = self._local_filesystem.get_documentation_text_and_url(file_name, "mandatory")
+        mandatory_text, _mandatory_url = self.get_documentation_text_and_url("mandatory", file_name)
         # Extract percentage from mandatory_text like "80% mandatory (20% optional)"
         percentage = 0
         if mandatory_text:
@@ -2633,9 +2633,24 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
     # frontend_tkinter_parameter_editor_table.py API end
 
     # frontend_tkinter_parameter_editor_documentation_frame.py API start
+    def _quadplane_throttle_controller_applicable(self) -> bool:
+        """Require active QuadPlane enablement, or an explicit saved setting while offline."""
+        if self.is_fc_link_connected:
+            return self.fc_parameters.get("Q_ENABLE") == 1
+        saved_parameters, _first_file = self._local_filesystem.compound_params()
+        saved_enable = saved_parameters.get("Q_ENABLE")
+        return saved_enable is not None and saved_enable.value == 1
+
     def get_documentation_text_and_url(self, key: str, filename: str | None = None) -> tuple[str, str]:
         if filename is None:
             filename = self.current_file
+        if (
+            key == "mandatory"
+            and filename == "28_throttle_controller.param"
+            and self._local_filesystem.vehicle_type == "ArduPlane"
+            and not self._quadplane_throttle_controller_applicable()
+        ):
+            return _("0% mandatory (100% optional)"), ""
         return self._local_filesystem.get_documentation_text_and_url(filename, key)
 
     def get_why_why_now_tooltip(self) -> str:
