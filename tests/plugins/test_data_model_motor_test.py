@@ -3035,6 +3035,139 @@ class TestMotorTestDataModelParameterGuards:
         motor_test_model.flight_controller.set_param.assert_called_with("MOT_SPIN_MIN", 0.15)
 
 
+class TestMotorCommandBoundaries:
+    """Protect command limits and keep rejected requests away from the controller."""
+
+    @pytest.mark.parametrize(("sequence", "output", "label"), [(0, 1, "A"), (3, 4, "D")], ids=["first-motor", "last-motor"])
+    @pytest.mark.parametrize("throttle", [1, 100], ids=["minimum-throttle", "maximum-throttle"])
+    @pytest.mark.parametrize("duration", [1, 60], ids=["minimum-duration", "maximum-duration"])
+    def test_user_can_test_first_and_last_motors_at_inclusive_command_limits(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+        self, motor_test_model: MotorTestDataModel, sequence: int, output: int, label: str, throttle: int, duration: int
+    ) -> None:
+        """
+        Every motor remains available at the documented throttle and duration limits.
+
+        GIVEN: A connected quad with safe battery voltage
+        WHEN: The first or last motor is tested at an allowed endpoint
+        THEN: The controller receives exactly the selected motor, throttle and duration
+        """
+        motor_test_model.test_motor(sequence, output, throttle, duration)
+
+        motor_test_model.flight_controller.test_motor.assert_called_once_with(sequence, label, output, throttle, duration)
+
+    @pytest.mark.parametrize(
+        ("command", "message"),
+        [
+            ((-1, 1, 10, 2), "Invalid test sequence number -1 (valid range: 0-3)"),
+            ((4, 1, 10, 2), "Invalid test sequence number 4 (valid range: 0-3)"),
+            ((0, 0, 10, 2), "Invalid motor output number 0 (valid range: 1-4)"),
+            ((0, 5, 10, 2), "Invalid motor output number 5 (valid range: 1-4)"),
+            ((0, 2, 10, 2), "Invalid motor output number 2 (expected: 1)"),
+            ((0, 1, 0, 2), "Invalid throttle percentage 0 (valid range: 1-100)"),
+            ((0, 1, 101, 2), "Invalid throttle percentage 101 (valid range: 1-100)"),
+            ((0, 1, 10, 0), "Invalid test duration 0 (valid range: 1-60)"),
+            ((0, 1, 10, 61), "Invalid test duration 61 (valid range: 1-60)"),
+        ],
+        ids=[
+            "negative-sequence",
+            "past-last-sequence",
+            "zero-output",
+            "past-last-output",
+            "wrong-output",
+            "below-throttle",
+            "above-throttle",
+            "below-duration",
+            "above-duration",
+        ],
+    )
+    def test_invalid_motor_requests_explain_the_allowed_value_without_sending_a_command(
+        self, motor_test_model: MotorTestDataModel, command: tuple[int, int, int, int], message: str
+    ) -> None:
+        """
+        Invalid requests provide actionable guidance before any motor is started.
+
+        GIVEN: Safe battery conditions and an invalid motor command
+        WHEN: The user attempts the test
+        THEN: Validation identifies the invalid value and the controller receives no command
+        """
+        with pytest.raises(ValidationError) as error:
+            motor_test_model.test_motor(*command)
+
+        assert str(error.value) == message
+        motor_test_model.flight_controller.test_motor.assert_not_called()
+
+    @pytest.mark.parametrize("workflow", ["test_motor", "test_all_motors", "test_motors_in_sequence"])
+    @pytest.mark.parametrize("voltage", [None, 11.0, 16.8], ids=["missing-telemetry", "minimum-voltage", "maximum-voltage"])
+    def test_every_motor_workflow_blocks_unavailable_or_critical_battery_voltage(
+        self, motor_test_model: MotorTestDataModel, workflow: str, voltage: float | None
+    ) -> None:
+        """
+        Battery safety applies to every command, including the exact voltage limits.
+
+        GIVEN: Enabled primary battery monitoring with missing or critical telemetry
+        WHEN: The user starts an individual, simultaneous or sequential motor test
+        THEN: Battery-specific guidance is returned and no motor command reaches the controller
+        """
+        readings = None if voltage is None else {0: (voltage, 2.1)}
+        motor_test_model.flight_controller.get_battery_statuses.return_value = (readings, "")
+        arguments = (0, 1, 10, 2) if workflow == "test_motor" else (10, 2)
+
+        with pytest.raises(MotorTestSafetyError) as error:
+            getattr(motor_test_model, workflow)(*arguments)
+
+        expected_message = (
+            "Could not read battery status."
+            if voltage is None
+            else f"Battery voltage {voltage:.1f}V is outside safe range (11.0V - 16.8V)"
+        )
+        assert str(error.value) == expected_message
+        assert error.value.battery_related is True
+        motor_test_model.flight_controller.test_motor.assert_not_called()
+        motor_test_model.flight_controller.test_all_motors.assert_not_called()
+        motor_test_model.flight_controller.test_motors_in_sequence.assert_not_called()
+
+    def test_missing_primary_monitor_setting_allows_motor_testing_with_a_voltage_warning(
+        self, motor_test_model: MotorTestDataModel, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """
+        An absent primary monitor setting follows the disabled-monitor behavior.
+
+        GIVEN: A connected controller without BATT_MONITOR or battery telemetry
+        WHEN: The user starts a motor test
+        THEN: The command proceeds with a warning that voltage cannot be verified
+        """
+        motor_test_model.flight_controller.fc_parameters.pop("BATT_MONITOR")
+        motor_test_model.flight_controller.get_battery_statuses.return_value = (None, "")
+
+        motor_test_model.test_motor(0, 1, 10, 2)
+
+        motor_test_model.flight_controller.test_motor.assert_called_once_with(0, "A", 1, 10, 2)
+        assert "Battery monitoring disabled, cannot verify voltage." in caplog.messages
+
+    @pytest.mark.parametrize("workflow", ["test_motor", "test_all_motors", "test_motors_in_sequence"])
+    def test_disconnected_controller_blocks_motor_commands_even_without_battery_monitoring(
+        self, motor_test_model: MotorTestDataModel, workflow: str
+    ) -> None:
+        """
+        Connection failures take precedence over the disabled battery-monitor bypass.
+
+        GIVEN: A disconnected controller without a primary battery monitor setting
+        WHEN: The user attempts any motor test workflow
+        THEN: Connection guidance is returned and no motor command is sent
+        """
+        motor_test_model.flight_controller.master = None
+        motor_test_model.flight_controller.fc_parameters.pop("BATT_MONITOR")
+        arguments = (0, 1, 10, 2) if workflow == "test_motor" else (10, 2)
+
+        with pytest.raises(FlightControllerConnectionError) as error:
+            getattr(motor_test_model, workflow)(*arguments)
+
+        assert str(error.value) == "Flight controller not connected."
+        motor_test_model.flight_controller.test_motor.assert_not_called()
+        motor_test_model.flight_controller.test_all_motors.assert_not_called()
+        motor_test_model.flight_controller.test_motors_in_sequence.assert_not_called()
+
+
 class TestMotorTestDataModelMotorExecutionWorkflows:
     """Exercise single, all, sequential, and emergency motor test workflows."""
 
