@@ -506,6 +506,8 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
         logging_debug("current script directory1: %s", package_path)
         if platform_system() == "Windows":
             package_path = Path(ProgramSettings._user_config_dir())
+            if not (package_path / "vehicle_templates").is_dir():
+                package_path = Path(ProgramSettings._site_config_dir())
         logging_debug("current script directory2: %s", package_path)
 
         logging_debug(_("site_directory: %s"), package_path)

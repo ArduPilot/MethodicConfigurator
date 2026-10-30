@@ -183,6 +183,8 @@ var
 	i:				Integer;
 	taskname:		String;
 	regpath:		String;
+	regroot:		Integer;
+	installedPath:	String;
 	regstring:		String;
 	appid:			String;
 begin
@@ -192,8 +194,15 @@ begin
 		appid := '{#emit SetupSetting("AppId")}';
 		if appid = '' then appid := '{#emit SetupSetting("AppName")}';
 		regpath := ExpandConstant('Software\Microsoft\Windows\CurrentVersion\Uninstall\'+appid+'_is1');
+		regroot := HKCU;
 		ModPathType := 'user';
-		RegQueryStringValue(HKCU, regpath, 'Inno Setup: Selected Tasks', regstring);
+		// Match the installation directory rather than the uninstaller's elevation.
+		if RegQueryStringValue(HKLM, regpath, 'Inno Setup: App Path', installedPath) and
+			(CompareText(installedPath, ExpandConstant('{app}')) = 0) then begin
+			regroot := HKLM;
+			ModPathType := 'system';
+		end;
+		RegQueryStringValue(regroot, regpath, 'Inno Setup: Selected Tasks', regstring);
 
 		// check each task; if matches modpath taskname, trigger patch removal
 		if regstring <> '' then begin
