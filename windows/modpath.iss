@@ -192,8 +192,9 @@ begin
 		appid := '{#emit SetupSetting("AppId")}';
 		if appid = '' then appid := '{#emit SetupSetting("AppName")}';
 		regpath := ExpandConstant('Software\Microsoft\Windows\CurrentVersion\Uninstall\'+appid+'_is1');
-		RegQueryStringValue(HKLM, regpath, 'Inno Setup: Selected Tasks', regstring);
-		if regstring = '' then RegQueryStringValue(HKCU, regpath, 'Inno Setup: Selected Tasks', regstring);
+		// AI-EDIT (2026-10-30): Read this user's tasks and remove only their PATH entry.
+		ModPathType := 'user';
+		RegQueryStringValue(HKCU, regpath, 'Inno Setup: Selected Tasks', regstring);
 
 		// check each task; if matches modpath taskname, trigger patch removal
 		if regstring <> '' then begin
