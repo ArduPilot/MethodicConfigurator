@@ -223,10 +223,40 @@ def create_mock_data_model_ardupilot_parameter(  # pylint: disable=too-many-argu
 
 @pytest.fixture
 def mock_master() -> Generator[tk.Tk, None, None]:
-    """Create a mock tkinter root window."""
-    root = tk.Tk()
-    yield root
-    root.destroy()
+    """Give the table its own root, including for masterless dialog variables."""
+    # Restore any session root after destroying this fixture's interpreter.
+    with patch.object(tk, "_default_root", None):
+        root = tk.Tk()
+        try:
+            yield root
+        finally:
+            root.destroy()
+
+
+def test_dialog_variables_follow_table_root_when_session_root_already_exists(
+    root: tk.Tk, request: pytest.FixtureRequest
+) -> None:
+    """
+    Keep dialog variables and controls in the same Tcl interpreter.
+
+    GIVEN: Another GUI test has already created the session root
+    WHEN: A table uses masterless search and bitmask variables on its own root
+    THEN: Search changes and checkbox clicks update the corresponding controls and variables
+    """
+    # Request the table root only after the session root has been initialized.
+    table_root = request.getfixturevalue("mock_master")
+    assert table_root is not root
+    search_value = tk.StringVar(value="initial")
+    search = ttk.Entry(table_root, textvariable=search_value)
+    selected = tk.BooleanVar(value=False)
+    checkbox = ttk.Checkbutton(table_root, variable=selected)
+
+    search_value.set("filtered parameter")
+    checkbox.invoke()
+
+    assert search.get() == "filtered parameter"
+    assert selected.get() is True
+    assert root.winfo_exists()
 
 
 @pytest.fixture
