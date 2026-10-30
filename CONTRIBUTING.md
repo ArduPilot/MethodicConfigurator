@@ -99,7 +99,8 @@ processing. All plugin backends and data models are included, together with shar
 data/ESC telemetry models, telemetry and radio backends, and flight-controller
 command handling used by calibration and motor-testing plugins. External parameter
 upload selection, configured file-upload policy, atomic file replacement, and
-flight-controller diagnostic assembly and device rows are also included.
+flight-controller diagnostic assembly and device rows are also included, together
+with MAVLink inspector sorting, source identifiers, and decoded-field presentation.
 It runs on Linux, macOS, or Windows
 through WSL.
 

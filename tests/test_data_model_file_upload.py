@@ -269,21 +269,22 @@ def test_provider_exception_does_not_skip_later_uploads(
     provider.side_effect = [error_type("file operation failed"), success]
 
     outcomes = workflow.upload_files(
-        [("first.lua", "/APM/Scripts/first.lua"), ("second.lua", "/APM/Scripts/second.lua")],
+        [("local-first.lua", "/APM/Scripts/remote-first.lua"), ("second.lua", "/APM/Scripts/second.lua")],
         set(),
         confirm,
         progress_factory,
     )
 
     assert outcomes == [
-        FileUploadOutcome("first.lua", "/APM/Scripts/first.lua", expected),
+        FileUploadOutcome("local-first.lua", "/APM/Scripts/remote-first.lua", expected),
         FileUploadOutcome("second.lua", "/APM/Scripts/second.lua", FileUploadDisposition.UPLOADED),
     ]
     assert upload.call_args.args[:2] == ("second.lua", "/APM/Scripts/second.lua")
-    assert "first.lua" in caplog.text
     assert "file operation failed" in caplog.text
+    if provider_stage in {"size", "upload"}:
+        assert "local-first.lua" in caplog.text
     if provider_stage in {"check", "upload"}:
-        assert "/APM/Scripts/first.lua" in caplog.text
+        assert "/APM/Scripts/remote-first.lua" in caplog.text
 
 
 def test_confirmation_exception_releases_batch_for_a_later_request() -> None:
