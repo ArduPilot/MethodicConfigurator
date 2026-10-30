@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import json
 import platform
 from os import path as os_path
+from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
@@ -1321,29 +1322,84 @@ class TestInternalConfigurationMethods:
             assert result == "/mock/package/path/vehicle_templates"
             mock_importlib.assert_called_once_with("ardupilot_methodic_configurator")
 
-    def test_get_templates_base_dir_uses_site_config_on_windows(self) -> None:
+    @pytest.mark.parametrize("user_templates_state", ["absent", "empty", "user-only", "marker-directory", "installed"])
+    def test_get_templates_base_dir_selects_installed_templates_on_windows(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, user_templates_state: str
+    ) -> None:
         """
-        Templates base directory uses site config directory on Windows.
+        Select an installed template set without relying on the machine's configuration.
 
-        GIVEN: A Windows platform environment
+        GIVEN: An all-users template installation and possibly a per-user template directory
         WHEN: The templates base directory is requested
-        THEN: The site configuration directory should be used as the base
+        THEN: Per-user templates take precedence only when their installer-owned file exists
         """
-        # Arrange: Mock Windows platform and site config
-        with (
-            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.platform_system") as mock_platform,
-            patch(
-                "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings._site_config_dir"
-            ) as mock_site_config,
-        ):
-            mock_platform.return_value = "Windows"
-            mock_site_config.return_value = "C:\\Program Files\\App"
+        monkeypatch.delenv("AMC_COMPONENT_TEMPLATES_DIR_TEST", raising=False)
+        user_config = tmp_path / "user"
+        site_config = tmp_path / "site"
+        user_templates = user_config / "vehicle_templates"
+        site_templates = site_config / "vehicle_templates"
+        site_templates.mkdir(parents=True)
+        (site_templates / "system_vehicle_components_template.json").write_text("{}", encoding="utf-8")
+        if user_templates_state != "absent":
+            user_templates.mkdir(parents=True)
+        if user_templates_state == "user-only":
+            (user_templates / "user_vehicle_components_template.json").write_text("{}", encoding="utf-8")
+        elif user_templates_state == "marker-directory":
+            (user_templates / "system_vehicle_components_template.json").mkdir()
+        elif user_templates_state == "installed":
+            (user_templates / "system_vehicle_components_template.json").write_text("{}", encoding="utf-8")
 
-            # Act: Get templates base directory
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_program_settings.platform_system", return_value="Windows"
+            ),
+            patch.object(ProgramSettings, "_user_config_dir", return_value=str(user_config)) as mock_user_config,
+            patch.object(ProgramSettings, "_site_config_dir", return_value=str(site_config)) as mock_site_config,
+        ):
             result = ProgramSettings.get_templates_base_dir()
 
-            # Assert: Windows path logic is used correctly
-            mock_site_config.assert_called_once()
-            # Use os.path.join to handle platform-specific path separators
-            expected_path = os_path.join("C:\\Program Files\\App", "vehicle_templates")
-            assert result == expected_path
+            mock_user_config.assert_called_once_with()
+            if user_templates_state == "installed":
+                assert result == str(user_templates)
+                mock_site_config.assert_not_called()
+            else:
+                assert result == str(site_templates)
+                mock_site_config.assert_called_once_with()
+
+    def test_scope_switch_finds_shared_templates_after_per_user_uninstall(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """
+        Find all-users templates when uninstall leaves personal presets behind.
+
+        GIVEN: Per-user templates, personal presets, and an all-users installation
+        WHEN: Uninstall removes the per-user installer's template file
+        THEN: Lookup switches to the shared installation and leaves personal presets intact
+        """
+        monkeypatch.delenv("AMC_COMPONENT_TEMPLATES_DIR_TEST", raising=False)
+        user_config = tmp_path / "user"
+        site_config = tmp_path / "site"
+        user_templates = user_config / "vehicle_templates"
+        site_templates = site_config / "vehicle_templates"
+        user_templates.mkdir(parents=True)
+        site_templates.mkdir(parents=True)
+        user_system_file = user_templates / "system_vehicle_components_template.json"
+        user_system_file.write_text("{}", encoding="utf-8")
+        (site_templates / user_system_file.name).write_text("{}", encoding="utf-8")
+        personal_presets = user_templates / "user_vehicle_components_template.json"
+        personal_presets.write_text('{"Flight Controller": [{"name": "Personal preset"}]}', encoding="utf-8")
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_program_settings.platform_system", return_value="Windows"
+            ),
+            patch.object(ProgramSettings, "_user_config_dir", return_value=str(user_config)),
+            patch.object(ProgramSettings, "_site_config_dir", return_value=str(site_config)),
+        ):
+            assert ProgramSettings.get_templates_base_dir() == str(user_templates)
+
+            user_system_file.unlink()
+
+            assert ProgramSettings.get_templates_base_dir() == str(site_templates)
+            assert json.loads(personal_presets.read_text(encoding="utf-8")) == {
+                "Flight Controller": [{"name": "Personal preset"}]
+            }
