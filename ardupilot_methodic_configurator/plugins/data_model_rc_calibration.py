@@ -2,7 +2,9 @@
 Data model for the RC calibration plugin.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
+
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
@@ -22,6 +24,7 @@ from ardupilot_methodic_configurator.data_model_parameter_editor import (
     ParameterEditor,
     ParameterValueUpdateStatus,
 )
+from ardupilot_methodic_configurator.plugins.backend_rc_telemetry import RCTelemetryBackend, rc_channel_values
 
 if TYPE_CHECKING:
     from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
@@ -48,7 +51,7 @@ RC_MAP_PRESETS: dict[int, dict[str, int]] = {
 }
 
 
-class RCCalibrationDataModel:
+class RCCalibrationDataModel:  # pylint: disable=too-many-instance-attributes
     """Data model for RC calibration, backed by MAVLink RC_CHANNELS telemetry."""
 
     def __init__(self, flight_controller: FlightController, parameter_editor: ParameterEditor | None = None) -> None:
@@ -59,6 +62,11 @@ class RCCalibrationDataModel:
         self._channel_max: dict[int, int] = {}  # 0-based channel index → observed maximum PWM
         self._last_raw: list[int] = []
         self._last_channel_count = 0
+        self._telemetry = RCTelemetryBackend(flight_controller)
+
+    def stop_monitoring(self) -> None:
+        """Restore the receiver stream defaults when this monitor yields the link."""
+        self._telemetry.stop_monitoring()
 
     def _preview_parameters(self) -> dict[str, float]:
         """Overlay staged RC values without modifying the downloaded flight-controller cache."""
@@ -371,12 +379,28 @@ class RCCalibrationDataModel:
             self._channel_max.clear()
         return success, message
 
+    def _read_channels(self, message: Any) -> dict[str, Any]:  # noqa: ANN401
+        """Record each sample's calibration extremes and build its live display values."""
+        raw = rc_channel_values(message, _RC_DISPLAY_CHANNELS)
+        self._last_raw = raw
+        self._last_channel_count = len(raw)
+        if self._is_calibrating:
+            for index, value in enumerate(raw):
+                if value not in (0, _RC_INVALID_PWM):
+                    self._channel_min[index] = min(self._channel_min.get(index, value), value)
+                    self._channel_max[index] = max(self._channel_max.get(index, value), value)
+
+        channels = self.get_channel_calibration()
+        for index, value in enumerate(raw):
+            if value not in (0, _RC_INVALID_PWM):
+                channels[index]["value"] = value
+        return {**self.get_preview_axes(), "channels": channels}
+
     def get_rc_telemetry(self) -> dict[str, Any]:
         """
         Return live RC telemetry from the flight controller.
 
-        Reads the MAVLink RC_CHANNELS message (non-blocking) and the most
-        recent HEARTBEAT (non-blocking) to build the telemetry dict.
+        Read a bounded batch without blocking, preserving every RC sample and the latest heartbeat.
 
         Returns an empty dict when not connected or when no message is
         available yet, which signals the GUI to keep waiting.
@@ -385,59 +409,20 @@ class RCCalibrationDataModel:
         Trim maps to zero for roll/pitch/yaw; the endpoint midpoint does so for throttle. Defaults are
         CH1=roll, CH2=pitch, CH3=throttle, CH4=yaw and a 1000-2000 us range.
         """
-        if self.flight_controller.master is None:
+        if self._telemetry.sync_connection():
+            self._last_raw = []
+            self._last_channel_count = 0
+        if self._telemetry.connection is None:
             return {}
 
-        master = self.flight_controller.master
         telemetry: dict[str, Any] = {}
 
         try:
-            latest_rc_msg = master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                type="RC_CHANNELS", blocking=False
-            )
-            latest_hb = master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                type="HEARTBEAT", blocking=False
-            )
-
-            if latest_rc_msg:
-                n_channels = max(0, min(latest_rc_msg.chancount, _RC_DISPLAY_CHANNELS))
-                raw: list[int] = [
-                    latest_rc_msg.chan1_raw,
-                    latest_rc_msg.chan2_raw,
-                    latest_rc_msg.chan3_raw,
-                    latest_rc_msg.chan4_raw,
-                    latest_rc_msg.chan5_raw,
-                    latest_rc_msg.chan6_raw,
-                    latest_rc_msg.chan7_raw,
-                    latest_rc_msg.chan8_raw,
-                    latest_rc_msg.chan9_raw,
-                    latest_rc_msg.chan10_raw,
-                    latest_rc_msg.chan11_raw,
-                    latest_rc_msg.chan12_raw,
-                    latest_rc_msg.chan13_raw,
-                    latest_rc_msg.chan14_raw,
-                    latest_rc_msg.chan15_raw,
-                    latest_rc_msg.chan16_raw,
-                ]
-
-                self._last_raw = raw
-                self._last_channel_count = n_channels
-                telemetry.update(self.get_preview_axes())
-
-                if self._is_calibrating:
-                    for i in range(n_channels):
-                        if raw[i] not in (0, _RC_INVALID_PWM):
-                            self._channel_min[i] = min(self._channel_min.get(i, raw[i]), raw[i])
-                            self._channel_max[i] = max(self._channel_max.get(i, raw[i]), raw[i])
-
-                channels = self.get_channel_calibration()
-                for index in range(n_channels):
-                    if raw[index] not in (0, _RC_INVALID_PWM):
-                        channels[index]["value"] = raw[index]
-                telemetry["channels"] = channels
-
-            if latest_hb:
-                telemetry["flight_mode"] = str(latest_hb.custom_mode)
+            for message in self._telemetry.get_rc_telemetry():
+                if message.get_type() == "RC_CHANNELS":
+                    telemetry.update(self._read_channels(message))
+                elif message.get_type() == "HEARTBEAT":
+                    telemetry["flight_mode"] = str(message.custom_mode)
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logging_debug(_("Error reading MAVLink telemetry: %(error)s"), {"error": str(exc)})
 

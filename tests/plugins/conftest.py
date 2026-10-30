@@ -69,6 +69,7 @@ def rc_staging_context() -> tuple[MagicMock, ParameterEditor]:
     """Use real parameter objects and editor APIs; mock only filesystem and FC I/O."""
     controller = MagicMock()
     controller.master.recv_match.return_value = None
+    controller.request_rc_receiver_messages.return_value = (True, "")
     # pylint: disable=duplicate-code
     controller.fc_parameters = {
         "RCMAP_ROLL": 1.0,
