@@ -231,6 +231,7 @@ only_mutate = [
     "ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py",
     "ardupilot_methodic_configurator/log_analysis/data_model_plane_landing.py",
     "ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py",
+    "ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py",
     "ardupilot_methodic_configurator/log_analysis/data_model_firmware_version.py",
     "ardupilot_methodic_configurator/log_analysis/data_model_parameter_history.py",
     "ardupilot_methodic_configurator/plugins/imu_helpers.py",
@@ -239,6 +240,7 @@ only_mutate = [
     "ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py",
     "ardupilot_methodic_configurator/frontend_tkinter_file_browser.py",
     "ardupilot_methodic_configurator/frontend_tkinter_file_browser_tasks.py",
+    "ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py",
     "ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py",
     "ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py",
 ]
@@ -282,6 +284,8 @@ pytest_add_cli_args_test_selection = [
     "tests/test_bootloader_identity.py",
     "tests/test_bootloader_partial_read.py",
     "tests/test_data_model_imu_analysis.py",
+    "tests/test_data_model_availability_models.py",
+    "tests/test_data_model_log_analysis.py",
     "tests/test_bus_labels.py",
     "tests/test_data_model_vehicle_components_display.py",
     "tests/unit_data_model_vehicle_components_display.py",
@@ -313,6 +317,9 @@ pytest_add_cli_args_test_selection = [
     "tests/test_frontend_tkinter_file_browser.py",
     "tests/bdd_frontend_tkinter_file_browser.py",
     "tests/test_frontend_tkinter_file_browser_tasks.py",
+    "tests/test_frontend_tkinter_parameter_editor_table.py",
+    "tests/integration_frontend_tkinter_parameter_editor_table.py",
+    "tests/acceptance_bitmask_parameter_editor_usage_popup.py",
     "tests/test_backend_filesystem_json_with_schema.py",
 ]
 pytest_add_cli_args = [

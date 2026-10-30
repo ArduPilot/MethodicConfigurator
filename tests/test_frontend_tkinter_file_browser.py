@@ -49,6 +49,31 @@ from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginPauseR
 # pylint: disable=too-many-lines, too-few-public-methods, too-many-public-methods, protected-access
 
 
+@pytest.fixture(name="local_action_browser")
+def _local_action_browser(tmp_path: Path) -> FileBrowserWindow:
+    """Provide real local entries and replace only UI and refresh boundaries."""
+    window = _bare_window()
+    path = tmp_path / "flight.bin"
+    path.write_bytes(b"flight data")
+    window.local_entries = [LocalFileEntry(path.name, path, path.stat().st_size)]
+    window.remote_entries = [FlightControllerLogFile("flight.bin", "/flight.bin", 11)]
+    window.local_tree = MagicMock()
+    window.remote_tree = MagicMock()
+    window.local_tree.selection.return_value = ("0",)
+    window.remote_tree.selection.return_value = ("0",)
+    window.local_directory_var = MagicMock()
+    window.local_directory_var.get.return_value = str(tmp_path)
+    window.remote_directory_var = MagicMock()
+    window.remote_directory_var.get.return_value = "/APM/LOGS/"
+    window.ui = MagicMock()
+    window.root = MagicMock()
+    window.parameter_editor = MagicMock()
+    window.refresh_local_panel = MagicMock()
+    window.refresh_remote_panel = MagicMock()
+    window._panel_navigation_enabled = True
+    return window
+
+
 def _run_tk_until(tk_root: tk.Tk, condition: typing.Callable[[], bool]) -> None:
     """Process Tk events until a predicate succeeds or the operation times out."""
     deadline = time.monotonic() + 2
@@ -2695,3 +2720,596 @@ def test_user_gets_fresh_byte_counts_rate_and_eta_when_retrying_failed_transfers
     finally:
         for popup in popups:
             popup.destroy()
+
+
+@pytest.mark.parametrize("via_dialog", [False, True], ids=["inline", "dialog"])
+@pytest.mark.parametrize("outcome", ["success", "collision", "permission-denied"])
+def test_local_rename_preserves_files_on_failure(
+    local_action_browser: FileBrowserWindow, via_dialog: bool, outcome: str
+) -> None:
+    """
+    Rename a local entry without losing either file when the operation fails.
+
+    GIVEN a selected log and a successful, conflicting, or denied destination,
+    WHEN the user commits a rename inline or through the dialog,
+    THEN only success moves the file and refreshes the panel; failures explain why.
+    """
+    window = local_action_browser
+    entry = window.local_entries[0]
+    target = entry.path.with_name("renamed.bin")
+    window.ui.askstring.return_value = target.name
+    if outcome == "collision":
+        target.write_bytes(b"existing log")
+    expected_error = "The target name already exists." if outcome == "collision" else "read-only filesystem"
+    with contextlib.ExitStack() as stack:
+        if outcome == "permission-denied":
+            stack.enter_context(patch.object(Path, "rename", side_effect=PermissionError(expected_error)))
+        if via_dialog:
+            window.rename_selected_local_entry()
+        else:
+            assert window._rename_entry("local", entry, target.name) is (outcome == "success")
+
+    assert window._panel_navigation_enabled
+    if outcome == "success":
+        assert not entry.path.exists()
+        assert target.read_bytes() == b"flight data"
+        window.refresh_local_panel.assert_called_once_with()
+        window.ui.show_info.assert_called_once_with("Rename summary", "Renamed flight.bin to renamed.bin.")
+        window.ui.show_error.assert_not_called()
+    else:
+        assert entry.path.read_bytes() == b"flight data"
+        assert target.exists() is (outcome == "collision")
+        if outcome == "collision":
+            assert target.read_bytes() == b"existing log"
+        window.ui.show_error.assert_called_once_with("Rename error", expected_error)
+        window.ui.show_info.assert_not_called()
+        window.refresh_local_panel.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("scenario", "message"),
+    [
+        ("cancel", None),
+        ("missing-parent", "The selected local directory does not exist."),
+        ("collision", "The target name already exists."),
+        ("permission-denied", "read-only filesystem"),
+    ],
+)
+def test_local_directory_creation_failure_keeps_existing_files(
+    local_action_browser: FileBrowserWindow, scenario: str, message: str | None
+) -> None:
+    """
+    Leave the current directory intact when a new directory cannot be created.
+
+    GIVEN a cancelled prompt, missing parent, occupied name, or denied write,
+    WHEN the user requests a new directory,
+    THEN no success or refresh is reported and existing file contents are preserved.
+    """
+    window = local_action_browser
+    entry = window.local_entries[0]
+    target = entry.path.parent / "new-folder"
+    window.ui.askstring.return_value = None if scenario == "cancel" else target.name
+    if scenario == "missing-parent":
+        window.local_directory_var.get.return_value = str(entry.path.parent / "missing")
+    if scenario == "collision":
+        target.write_bytes(b"keep me")
+    with contextlib.ExitStack() as stack:
+        if scenario == "permission-denied":
+            stack.enter_context(patch.object(Path, "mkdir", side_effect=PermissionError(message)))
+        window.create_new_local_directory()
+
+    assert entry.path.read_bytes() == b"flight data"
+    if scenario == "collision":
+        assert target.read_bytes() == b"keep me"
+    else:
+        assert not target.exists()
+    if message is None:
+        window.ui.show_error.assert_not_called()
+    else:
+        window.ui.show_error.assert_called_once_with("New directory error", message)
+    window.ui.show_info.assert_not_called()
+    window.refresh_local_panel.assert_not_called()
+    assert window._panel_states["local"].pending_entry is None
+
+
+@pytest.mark.parametrize("panel", ["local", "remote"])
+@pytest.mark.parametrize("selected", [(), ("0", "1"), ("2",)])
+def test_rename_requires_exactly_one_non_parent_entry(
+    local_action_browser: FileBrowserWindow, panel: str, selected: tuple[str, ...]
+) -> None:
+    """
+    Reject ambiguous rename selections before asking for a new name.
+
+    GIVEN no selection, several entries, or only the parent-navigation row,
+    WHEN rename is requested in either panel,
+    THEN an actionable selection error appears and no rename is attempted.
+    """
+    window = local_action_browser
+    local_parent = window.local_entries[0].path.parent
+    window.local_entries.extend(
+        [LocalFileEntry("other.bin", local_parent / "other.bin", 0), LocalFileEntry("..", local_parent, 0, is_directory=True)]
+    )
+    window.remote_entries.extend(
+        [FlightControllerLogFile("other.bin", "/other.bin", 0), FlightControllerLogFile("..", "/", 0, is_directory=True)]
+    )
+    tree = window.local_tree if panel == "local" else window.remote_tree
+    tree.selection.return_value = selected
+
+    getattr(window, f"rename_selected_{panel}_entry")()
+
+    window.ui.show_error.assert_called_once_with("Rename error", f"Select exactly one {panel} entry to rename.")
+    window.ui.askstring.assert_not_called()
+    window.parameter_editor.rename_remote_path.assert_not_called()
+    assert window.local_entries[0].path.read_bytes() == b"flight data"
+
+
+@pytest.mark.parametrize("panel", ["local", "remote"])
+@pytest.mark.parametrize("event_kind", ["click", "selection"])
+@pytest.mark.parametrize("row", ["0", ""])
+def test_panel_events_remember_the_current_row_without_erasing_it_on_blank_events(
+    local_action_browser: FileBrowserWindow, panel: str, event_kind: str, row: str
+) -> None:
+    """
+    Keep the user's active panel and selected row in sync with tree events.
+
+    GIVEN an earlier row and a click or selection event on either tree,
+    WHEN a populated or blank row produces the event,
+    THEN the panel changes, a real row replaces the remembered row, and blanks preserve it.
+    """
+    window = local_action_browser
+    window.last_selected_panel = "remote" if panel == "local" else "local"
+    window._panel_states[panel].selected_item = "previous"
+    other_panel = "remote" if panel == "local" else "local"
+    window._panel_states[other_panel].selected_item = "untouched"
+    tree = window.local_tree if panel == "local" else window.remote_tree
+    tree.identify_row.return_value = row
+    tree.focus.return_value = row
+    window._update_transfer_buttons = MagicMock()
+
+    if event_kind == "click":
+        window._remember_panel_from_click(panel, SimpleNamespace(y=37))
+        tree.identify_row.assert_called_once_with(37)
+        window._update_transfer_buttons.assert_not_called()
+    else:
+        window._remember_panel_from_selection(panel)
+        window._update_transfer_buttons.assert_called_once_with()
+
+    assert window.last_selected_panel == panel
+    assert window._panel_states[panel].selected_item == (row or "previous")
+    assert window._panel_states[other_panel].selected_item == "untouched"
+
+
+@pytest.mark.parametrize("panel", ["local", "remote", "outside"])
+def test_select_all_keyboard_shortcut_excludes_parent_and_targets_the_event_panel(
+    local_action_browser: FileBrowserWindow, panel: str
+) -> None:
+    """
+    Select files in the panel receiving the keyboard shortcut.
+
+    GIVEN two file trees with a parent row and file rows,
+    WHEN Ctrl+A arrives from either panel or an unrelated widget,
+    THEN the appropriate tree selects only its files and stops event propagation.
+    """
+    window = local_action_browser
+    for tree in (window.local_tree, window.remote_tree):
+        tree.get_children.return_value = ("parent", "first", "second")
+        tree.item.side_effect = lambda item, _column: (".." if item == "parent" else item,)
+    event_tree = window.local_tree if panel == "local" else window.remote_tree if panel == "remote" else object()
+
+    assert window._on_select_all_key(SimpleNamespace(widget=event_tree)) == "break"
+
+    selected_tree = window.local_tree if panel == "local" else window.remote_tree
+    untouched_tree = window.remote_tree if panel == "local" else window.local_tree
+    selected_tree.selection_set.assert_called_once_with(["first", "second"])
+    untouched_tree.selection_set.assert_not_called()
+
+
+@pytest.mark.parametrize("disable_all", [False, True])
+def test_failed_task_start_restores_browser_controls(local_action_browser: FileBrowserWindow, disable_all: bool) -> None:
+    """
+    Keep browser controls usable when the task runner cannot start work.
+
+    GIVEN an idle runner that raises while starting an operation,
+    WHEN a task is submitted with either control-lock policy,
+    THEN controls are restored, no completion runs, and the original error propagates.
+    """
+    window = local_action_browser
+    window._task_runner = MagicMock(active=False)
+    window._task_runner.start.side_effect = RuntimeError("worker unavailable")
+    window._set_operation_controls_state = MagicMock()
+    window._set_remote_controls_state = MagicMock()
+    window.close_button = MagicMock()
+    completion = MagicMock()
+
+    with pytest.raises(RuntimeError, match=r"^worker unavailable$"):
+        window._start_task(MagicMock(), None, completion, disable_all_controls=disable_all)
+
+    controls = window._set_operation_controls_state if disable_all else window._set_remote_controls_state
+    untouched = window._set_remote_controls_state if disable_all else window._set_operation_controls_state
+    assert controls.call_args_list == [call("disabled"), call("normal")]
+    untouched.assert_not_called()
+    assert window.close_button.configure.call_args_list == [call(state="disabled"), call(state="normal")]
+    assert window._all_controls_locked is False
+    completion.assert_not_called()
+
+
+@pytest.mark.parametrize("direction", ["download", "upload"])
+@pytest.mark.parametrize("failure", ["exception", "invalid-plan"])
+def test_transfer_planning_failure_never_starts_a_transfer(
+    local_action_browser: FileBrowserWindow, direction: str, failure: str
+) -> None:
+    """
+    Report preparation failures before any transfer or overwrite can begin.
+
+    GIVEN a selected file and a planner that raises or returns an invalid plan,
+    WHEN the user requests upload or download,
+    THEN the relevant error appears and neither backend transfer is called.
+    """
+    window = local_action_browser
+    window.ui.ask_yesno.return_value = True
+    planner = "_prepare_remote_download" if direction == "download" else "_build_local_upload_plan"
+    settings = {"side_effect": OSError("planning denied")} if failure == "exception" else {"return_value": None}
+    with patch(f"ardupilot_methodic_configurator.frontend_tkinter_file_browser.{planner}", **settings):
+        getattr(window, "download_selected_remote_entries" if direction == "download" else "upload_selected_local_entries")()
+
+    expected = (
+        "planning denied"
+        if failure == "exception"
+        else (
+            "Could not prepare the selected remote entries."
+            if direction == "download"
+            else "Could not prepare the selected local entries."
+        )
+    )
+    window.ui.show_error.assert_called_once_with(f"{direction.title()} error", expected)
+    window.parameter_editor.download_remote_file.assert_not_called()
+    window.parameter_editor.upload_file_to_fc.assert_not_called()
+    window.ui.create_progress_window.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "action",
+    [
+        "create_new_local_directory",
+        "rename_selected_local_entry",
+        "rename_selected_remote_entry",
+        "download_selected_remote_entries",
+        "upload_selected_local_entries",
+        "delete_selected_remote_entries",
+        "create_new_remote_directory",
+        "download_last_flight_log",
+    ],
+)
+def test_busy_browser_rejects_operations_before_prompts_or_filesystem_changes(
+    local_action_browser: FileBrowserWindow, action: str
+) -> None:
+    """
+    Prevent a second operation from interfering with active work.
+
+    GIVEN a runner already executing a file operation,
+    WHEN another mutating or transfer action is requested,
+    THEN no prompt, backend call, refresh, or local file change occurs.
+    """
+    window = local_action_browser
+    window._task_runner.active = True
+
+    getattr(window, action)()
+
+    assert not window.ui.mock_calls
+    assert not window.parameter_editor.mock_calls
+    window.refresh_local_panel.assert_not_called()
+    window.refresh_remote_panel.assert_not_called()
+    assert window.local_entries[0].path.read_bytes() == b"flight data"
+
+
+@pytest.mark.parametrize("via_dialog", [False, True])
+def test_rename_cancellation_restores_keyboard_navigation(local_action_browser: FileBrowserWindow, via_dialog: bool) -> None:
+    """
+    Resume keyboard navigation after cancelling either rename interface.
+
+    GIVEN an active rename prompt,
+    WHEN the user cancels it,
+    THEN the file is untouched, no error appears, and navigation resumes.
+    """
+    window = local_action_browser
+    window._panel_navigation_enabled = False
+    editor = MagicMock()
+    window.ui.askstring.return_value = None
+
+    if via_dialog:
+        window._rename_entry_with_dialog("local", window.local_entries[0])
+    else:
+        assert window._cancel_inline_rename(editor) == "break"
+        editor.destroy.assert_called_once_with()
+
+    assert window._panel_navigation_enabled
+    assert window.local_entries[0].path.read_bytes() == b"flight data"
+    window.ui.show_error.assert_not_called()
+    window.refresh_local_panel.assert_not_called()
+
+
+@pytest.mark.parametrize("is_directory", [False, True])
+def test_local_delete_failure_is_included_in_the_summary(local_action_browser: FileBrowserWindow, is_directory: bool) -> None:
+    """
+    Report failed deletions without claiming success or deleting directory contents.
+
+    GIVEN an already missing file or a nonempty directory,
+    WHEN the user confirms deletion,
+    THEN the path is listed as failed and existing nested contents are preserved.
+    """
+    window = local_action_browser
+    path = window.local_entries[0].path
+    path.unlink()
+    if is_directory:
+        path.mkdir()
+        (path / "keep.bin").write_bytes(b"nested flight")
+    window.local_entries = [LocalFileEntry(path.name, path, 0, is_directory=is_directory)]
+    window.ui.ask_yesno.return_value = True
+
+    window.delete_selected_local_entries()
+
+    window.ui.show_error.assert_called_once_with("Local delete summary", f"Failed: {path}")
+    window.refresh_local_panel.assert_called_once_with()
+    if is_directory:
+        assert (path / "keep.bin").read_bytes() == b"nested flight"
+
+
+@pytest.mark.parametrize("chosen", ["", "chosen-folder"])
+def test_directory_picker_refreshes_only_after_a_choice(local_action_browser: FileBrowserWindow, chosen: str) -> None:
+    """
+    Keep the displayed directory when the directory picker is cancelled.
+
+    GIVEN the current local directory,
+    WHEN the user chooses a different directory or cancels,
+    THEN only an actual choice updates the directory and triggers a refresh.
+    """
+    window = local_action_browser
+    current = window.local_directory_var.get()
+    window.ui.askdirectory.return_value = chosen
+
+    window.choose_local_directory()
+
+    window.ui.askdirectory.assert_called_once_with(title="Select local directory", initialdir=current)
+    if chosen:
+        window.local_directory_var.set.assert_called_once_with(chosen)
+        window.refresh_local_panel.assert_called_once_with()
+    else:
+        window.local_directory_var.set.assert_not_called()
+        window.refresh_local_panel.assert_not_called()
+
+
+@pytest.mark.parametrize("panel", ["local", "remote"])
+def test_enter_in_directory_entry_refreshes_only_its_panel(local_action_browser: FileBrowserWindow, panel: str) -> None:
+    """
+    Load a typed directory with Enter without also triggering another action.
+
+    GIVEN either directory entry receives Enter,
+    WHEN its key handler runs,
+    THEN the corresponding panel alone refreshes and the key event is consumed.
+    """
+    window = local_action_browser
+
+    assert getattr(window, f"_on_{panel}_directory_return")() == "break"
+
+    getattr(window, f"refresh_{panel}_panel").assert_called_once_with()
+    getattr(window, f"refresh_{'remote' if panel == 'local' else 'local'}_panel").assert_not_called()
+
+
+@pytest.mark.parametrize("value", [0.0, -1.0, float("inf"), float("nan")])
+def test_unrepresentable_modification_time_shows_a_placeholder(value: float) -> None:
+    """
+    Keep the file list usable when a timestamp cannot be displayed.
+
+    GIVEN a nonpositive or unrepresentable filesystem timestamp,
+    WHEN the browser formats its modification time,
+    THEN a stable placeholder is displayed instead of raising an exception.
+    """
+    assert FileBrowserWindow._format_modified_time(value) == "-"
+
+
+@pytest.mark.parametrize("action", ["download_selected_remote_entries", "upload_selected_local_entries"])
+@pytest.mark.parametrize("selection", [(), ("1",)])
+def test_transfer_ignores_empty_selection_and_parent_navigation(
+    local_action_browser: FileBrowserWindow, action: str, selection: tuple[str, ...]
+) -> None:
+    """
+    Never transfer a parent directory merely because its navigation row is selected.
+
+    GIVEN no selected files or only the parent-navigation row,
+    WHEN a transfer is requested,
+    THEN no confirmation or backend work starts.
+    """
+    window = local_action_browser
+    window.local_entries.append(LocalFileEntry("..", window.local_entries[0].path.parent, 0, is_directory=True))
+    window.remote_entries.append(FlightControllerLogFile("..", "/", 0, is_directory=True))
+    window.local_tree.selection.return_value = selection
+    window.remote_tree.selection.return_value = selection
+
+    getattr(window, action)()
+
+    assert not window.ui.mock_calls
+    assert not window.parameter_editor.mock_calls
+
+
+@pytest.mark.parametrize("failure", ["missing", "permission-denied"])
+def test_local_refresh_failure_reports_the_reason_without_publishing_rows(
+    local_action_browser: FileBrowserWindow, failure: str
+) -> None:
+    """
+    Remove stale rows and explain why the requested local directory could not load.
+
+    GIVEN a previous file listing and a missing or unreadable new directory,
+    WHEN the user refreshes,
+    THEN stale entries are cleared and the directory error is shown.
+    """
+    window = local_action_browser
+    error = FileNotFoundError("gone") if failure == "missing" else PermissionError("listing denied")
+    expected = "The selected local directory does not exist." if failure == "missing" else "listing denied"
+    window.local_tree.get_children.return_value = ("0",)
+    with patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser._read_local_directory", side_effect=error):
+        FileBrowserWindow.refresh_local_panel(window)
+
+    assert window.local_entries == []
+    window.local_tree.delete.assert_called_once_with("0")
+    window.ui.show_error.assert_called_once_with("Local directory error", expected)
+    window.local_tree.insert.assert_not_called()
+
+
+@pytest.mark.parametrize("panel", ["local", "remote"])
+@pytest.mark.parametrize("row_visible", [False, True])
+def test_inline_rename_falls_back_to_a_dialog_and_reports_invalid_names(
+    local_action_browser: FileBrowserWindow, panel: str, row_visible: bool
+) -> None:
+    """
+    Offer a rename dialog when the selected row cannot host an inline editor.
+
+    GIVEN a hidden row or a row without usable dimensions,
+    WHEN rename starts and the user enters a path instead of a name,
+    THEN a clear error appears, navigation resumes, and no file is renamed.
+    """
+    window = local_action_browser
+    tree = window.local_tree if panel == "local" else window.remote_tree
+    entry = window.local_entries[0] if panel == "local" else window.remote_entries[0]
+    tree.bbox.return_value = (0, 0, 0, 10) if row_visible else ()
+    window.ui.askstring.return_value = "../outside.bin"
+
+    window._start_inline_rename(panel, "0", entry)
+
+    window.ui.askstring.assert_called_once_with(
+        f"Rename {panel} entry", "New name:", initialvalue="flight.bin", parent=window.root
+    )
+    window.ui.show_error.assert_called_once_with("Rename error", "The new name must be one file or directory name.")
+    assert window._panel_navigation_enabled
+    assert window.local_entries[0].path.read_bytes() == b"flight data"
+    window.parameter_editor.rename_remote_path.assert_not_called()
+
+
+@pytest.mark.parametrize("disable_all", [False, True])
+def test_busy_task_runner_does_not_lock_controls_again(local_action_browser: FileBrowserWindow, disable_all: bool) -> None:
+    """
+    Leave an active operation's controls and callbacks under its ownership.
+
+    GIVEN an active task runner,
+    WHEN a caller attempts to submit another task,
+    THEN it is rejected without changing controls or invoking callbacks.
+    """
+    window = local_action_browser
+    window._task_runner = MagicMock(active=True)
+    window._set_operation_controls_state = MagicMock()
+    window._set_remote_controls_state = MagicMock()
+    task, progress, completion = MagicMock(), MagicMock(), MagicMock()
+
+    assert window._start_task(task, progress, completion, disable_all_controls=disable_all) is False
+
+    window._task_runner.start.assert_not_called()
+    window._set_operation_controls_state.assert_not_called()
+    window._set_remote_controls_state.assert_not_called()
+    task.assert_not_called()
+    progress.assert_not_called()
+    completion.assert_not_called()
+
+
+def test_failed_progress_task_start_closes_popup_and_restores_controls(local_action_browser: FileBrowserWindow) -> None:
+    """
+    Clean up a progress popup when starting the worker raises.
+
+    GIVEN a runner that cannot start and an already created progress popup,
+    WHEN a background operation is submitted,
+    THEN the popup closes once, controls unlock, and the original error propagates.
+    """
+    window = local_action_browser
+    window._task_runner = MagicMock(active=False)
+    window._task_runner.start.side_effect = RuntimeError("worker unavailable")
+    window._set_operation_controls_state = MagicMock()
+    window.close_button = MagicMock()
+    popup = MagicMock()
+    window.ui.create_progress_window.return_value = popup
+    completion = MagicMock()
+
+    with pytest.raises(RuntimeError, match=r"^worker unavailable$"):
+        window._start_background_operation("Rename", "Working", MagicMock(), completion)
+
+    popup.destroy.assert_called_once_with()
+    assert window._set_operation_controls_state.call_args_list == [call("disabled"), call("normal")]
+    assert window._all_controls_locked is False
+    completion.assert_not_called()
+
+
+def test_background_worker_failure_is_delivered_as_a_failed_operation(local_action_browser: FileBrowserWindow) -> None:
+    """
+    Present an unexpected worker exception through normal operation completion.
+
+    GIVEN a background worker that raises,
+    WHEN the operation finishes,
+    THEN completion receives the error as a failed result and the popup closes.
+    """
+    window = local_action_browser
+    worker = MagicMock(side_effect=OSError("connection lost"))
+    completion = MagicMock()
+    popup = window.ui.create_progress_window.return_value
+
+    assert window._start_background_operation("Rename", "Working", worker, completion) is True
+
+    completion.assert_called_once_with([], ["connection lost"])
+    popup.destroy.assert_called_once_with()
+    assert window._all_controls_locked is False
+
+
+@pytest.mark.parametrize("name", ["new-folder", "../outside", ""])
+def test_new_local_directory_confirms_its_name_and_selects_only_a_created_directory(
+    local_action_browser: FileBrowserWindow, name: str
+) -> None:
+    """
+    Tie directory-creation feedback and pending selection to the user's actual choice.
+
+    GIVEN a valid new directory name or an unsafe path,
+    WHEN the user confirms the directory prompt,
+    THEN only a valid name creates a directory, reports success, and schedules selection.
+    """
+    window = local_action_browser
+    parent = window.local_entries[0].path.parent
+    window.ui.askstring.return_value = name
+
+    window.create_new_local_directory()
+
+    window.ui.askstring.assert_called_once_with("New local directory", "Directory name:", parent=window.root)
+    if name == "new-folder":
+        assert (parent / name).is_dir()
+        window.ui.show_info.assert_called_once_with("New directory summary", "Created local directory new-folder.")
+        window.ui.show_error.assert_not_called()
+        assert window._panel_states["local"].pending_entry == name
+        assert window._panel_states["remote"].pending_entry is None
+        window.refresh_local_panel.assert_called_once_with()
+    else:
+        assert sorted(path.name for path in parent.iterdir()) == ["flight.bin"]
+        window.ui.show_error.assert_called_once_with(
+            "New directory error", "The directory name must be a single directory name."
+        )
+        window.ui.show_info.assert_not_called()
+        assert window._panel_states["local"].pending_entry is None
+        window.refresh_local_panel.assert_not_called()
+
+
+@pytest.mark.parametrize("panel", ["local", "remote"])
+def test_inline_rename_cannot_mutate_files_during_an_active_operation(
+    local_action_browser: FileBrowserWindow, panel: str
+) -> None:
+    """
+    Recheck operation ownership when an inline rename is committed.
+
+    GIVEN another file operation became active after the editor opened,
+    WHEN the editor attempts to commit a new name,
+    THEN neither the local filesystem nor the flight controller is changed.
+    """
+    window = local_action_browser
+    window._task_runner.active = True
+    entry = window.local_entries[0] if panel == "local" else window.remote_entries[0]
+
+    assert window._rename_entry(panel, entry, "renamed.bin") is False
+
+    assert window.local_entries[0].path.read_bytes() == b"flight data"
+    assert not window.local_entries[0].path.with_name("renamed.bin").exists()
+    assert not window.parameter_editor.mock_calls
+    assert not window.ui.mock_calls
+    window.refresh_local_panel.assert_not_called()
+    window.refresh_remote_panel.assert_not_called()
