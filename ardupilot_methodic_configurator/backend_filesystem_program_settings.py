@@ -505,7 +505,8 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
         package_path = importlib_files("ardupilot_methodic_configurator")
         logging_debug("current script directory1: %s", package_path)
         if platform_system() == "Windows":
-            package_path = Path(ProgramSettings._site_config_dir())
+            # AI-EDIT (2026-10-30): Match the user-only Windows installer template destination.
+            package_path = Path(ProgramSettings._user_config_dir())
         logging_debug("current script directory2: %s", package_path)
 
         logging_debug(_("site_directory: %s"), package_path)
