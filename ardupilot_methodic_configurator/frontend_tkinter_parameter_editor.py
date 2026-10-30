@@ -1853,7 +1853,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         try:
             # Atomically replace the in-memory components so derived-parameter expressions
             # see the updated values when refresh_current_step_computed_parameters() runs.
-            self.parameter_editor.update_vehicle_components(editor_data["Components"])
+            if not self.parameter_editor.update_vehicle_components(editor_data["Components"]):
+                return
             self.parameter_editor.refresh_current_step_computed_parameters()
             # Workflow dialogs and upload waits can dispatch events from the outgoing inline editor.
             if (

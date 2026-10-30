@@ -398,14 +398,6 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             cb.bind("<Return>", on_validate_combobox)
             cb.bind("<ButtonRelease>", on_validate_combobox)
 
-            # Override the FocusOut binding to also handle validation
-            def combined_focus_out(event: tk.Event) -> None:
-                # First handle the dropdown closing logic (already done by setup function)
-                # Then handle validation
-                self._validate_combobox(event, path)
-
-            cb.bind("<FocusOut>", combined_focus_out, add="+")
-
             if path in FC_CONNECTION_TYPE_PATHS:
                 # immediate update of Protocol combobox choices after changing connection Type selection
                 cb.bind(
@@ -464,7 +456,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         }
 
         if should_update_data_model and value in allowed_values:
-            self.data_model.set_component_value(path, value)
+            if str(self.data_model.get_component_value(path)) != value:
+                self.data_model.set_component_value(path, value)
             self._trigger_change_callback()
 
         if value not in allowed_values:
@@ -507,7 +500,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             return False
 
         if is_focusout_event:
-            self.data_model.set_component_value(path, value)
+            if str(self.data_model.get_component_value(path)) != value:
+                self.data_model.set_component_value(path, value)
             self._trigger_change_callback()
         entry.configure(style="entry_input_valid.TEntry")
         return True
