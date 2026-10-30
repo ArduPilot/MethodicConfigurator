@@ -48,7 +48,9 @@ class EscTelemetryView(ttk.Frame):  # pylint: disable=too-many-ancestors
             self.table,
             _(
                 "Live ESC readings. Missing or stale data is shown as '-'. "
-                "ESC numbers follow the flight controller's ESC telemetry offset."
+                "ESC numbers follow the flight controller's ESC telemetry offset. "
+                "For configured bidirectional DShot outputs, 0* means the group reported zero RPM; "
+                "the individual output may instead be unavailable."
             ),
         )
         self.scroll_tooltip = Tooltip(scrollbar, _("Scroll to view additional ESC columns."))
