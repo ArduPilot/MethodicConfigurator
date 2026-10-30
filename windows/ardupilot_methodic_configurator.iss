@@ -21,7 +21,6 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-; AI-EDIT (2026-10-30): Install for the current user without elevation.
 PrivilegesRequired=lowest
 DefaultDirName={userpf}\{#MyAppName}
 ; DefaultDirName={code:GetDefaultDirName}
@@ -33,9 +32,7 @@ SolidCompression=yes
 ChangesEnvironment=yes
 
 [InstallDelete]
-; AI-EDIT (2026-10-30): Leave the machine-wide application directory untouched.
 
-; AI-EDIT (2026-10-30): Clean up obsolete templates only in the current user's data.
 ; Remove ArduCopter template files
 Type: filesandordirs; Name: "{userappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.3.8-params"
 Type: filesandordirs; Name: "{userappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.4.4-params"
@@ -79,7 +76,6 @@ Type: filesandordirs; Name: "{userappdata}\.ardupilot_methodic_configurator\vehi
 Type: filesandordirs; Name: "{userappdata}\.ardupilot_methodic_configurator\vehicle_templates\Rover\AION_R1";
 Type: filesandordirs; Name: "{userappdata}\.ardupilot_methodic_configurator\vehicle_templates\Rover\Carisma_SCA-1E";
 Type: filesandordirs; Name: "{userappdata}\.ardupilot_methodic_configurator\vehicle_templates\Rover\empty_4.7.x";
-; AI-EDIT (2026-10-30): Outdated template metadata is also user-scoped.
 ; Remove Outdated files
 Type: filesandordirs; Name: "{app}\_internal\ardupilot_methodic_configurator\ArduCopter_configuration_steps.json";
 Type: filesandordirs; Name: "{app}\_internal\ardupilot_methodic_configurator\ArduPlane_configuration_steps.json";
@@ -101,13 +97,11 @@ Name: "ja"; MessagesFile: "compiler:Languages\Japanese.isl"
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 Name: "modifypath"; Description: "&Add application directory to environmental path for current user. For command line use"; Flags: unchecked checkablealone
-; AI-EDIT (2026-10-30): Do not offer a machine-wide PATH task.
 
 [Files]
 Source: "..\ardupilot_methodic_configurator\dist\ardupilot_methodic_configurator\ardupilot_methodic_configurator.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\ardupilot_methodic_configurator\dist\ardupilot_methodic_configurator\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
-; AI-EDIT (2026-10-30): Install templates in the current user's configuration directory.
 Source: "..\ardupilot_methodic_configurator\vehicle_templates\*.*"; DestDir: "{userappdata}\.ardupilot_methodic_configurator\vehicle_templates"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\git_hash.txt"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
 Source: "..\windows\ardupilot_methodic_configurator.ico"; DestDir: "{app}"; Flags: ignoreversion
@@ -126,7 +120,6 @@ Source: "..\ardupilot_methodic_configurator_command_line_completion.psm1"; DestD
 Name: "{userappdata}\.ardupilot_methodic_configurator\vehicles"; Flags: uninsneveruninstall
 
 [Icons]
-; AI-EDIT (2026-10-30): Desktop and template shortcuts belong to the current user.
 Name: "{userdesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{userappdata}\.ardupilot_methodic_configurator"; Tasks: desktopicon; IconFilename: "{app}\ardupilot_methodic_configurator.ico"; Parameters: "--language {language}"
 Name: "{group}\Documentation"; Filename: "https://github.com/ArduPilot/MethodicConfigurator/blob/master/USERMANUAL.md"
 Name: "{group}\Vehicle Templates"; Filename: "{userappdata}\.ardupilot_methodic_configurator\vehicle_templates"
@@ -158,7 +151,6 @@ end;
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
 	if CurStep = ssPostInstall then begin
-		// AI-EDIT (2026-10-30): Modify only the current user's PATH.
 		ModPathType := 'user';
 
 		if IsTaskSelected(ModPathName) then
