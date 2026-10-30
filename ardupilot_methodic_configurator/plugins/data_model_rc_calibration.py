@@ -59,6 +59,16 @@ class RCCalibrationDataModel:
         self._channel_max: dict[int, int] = {}  # 0-based channel index → observed maximum PWM
         self._last_raw: list[int] = []
         self._last_channel_count = 0
+        self._monitor_connection: object | None = None
+        self._stream_requested = False
+
+    def stop_monitoring(self) -> None:
+        """Restore the receiver stream defaults when this monitor yields the link."""
+        if self._stream_requested and self.flight_controller.master is self._monitor_connection:
+            success, error = self.flight_controller.request_rc_receiver_messages(0)
+            if not success:
+                logging_debug("Could not restore RC receiver telemetry intervals: %s", error)
+        self._stream_requested = False
 
     def _preview_parameters(self) -> dict[str, float]:
         """Overlay staged RC values without modifying the downloaded flight-controller cache."""
@@ -375,8 +385,8 @@ class RCCalibrationDataModel:
         """
         Return live RC telemetry from the flight controller.
 
-        Reads the MAVLink RC_CHANNELS message (non-blocking) and the most
-        recent HEARTBEAT (non-blocking) to build the telemetry dict.
+        Reads one RC_CHANNELS or HEARTBEAT message without blocking. A single
+        combined filter prevents the heartbeat read from discarding RC samples.
 
         Returns an empty dict when not connected or when no message is
         available yet, which signals the GUI to keep waiting.
@@ -385,21 +395,29 @@ class RCCalibrationDataModel:
         Trim maps to zero for roll/pitch/yaw; the endpoint midpoint does so for throttle. Defaults are
         CH1=roll, CH2=pitch, CH3=throttle, CH4=yaw and a 1000-2000 us range.
         """
-        if self.flight_controller.master is None:
+        master = self.flight_controller.master
+        if master is not self._monitor_connection:
+            self._monitor_connection = master
+            self._stream_requested = False
+            self._last_raw = []
+            self._last_channel_count = 0
+        if master is None:
             return {}
 
-        master = self.flight_controller.master
         telemetry: dict[str, Any] = {}
 
         try:
-            latest_rc_msg = master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                type="RC_CHANNELS", blocking=False
-            )
-            latest_hb = master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                type="HEARTBEAT", blocking=False
+            if not self._stream_requested:
+                self._stream_requested = True
+                success, error = self.flight_controller.request_rc_receiver_messages()
+                if not success:
+                    logging_debug("Could not request RC receiver telemetry intervals: %s", error)
+            message = master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                type=["RC_CHANNELS", "HEARTBEAT"], blocking=False
             )
 
-            if latest_rc_msg:
+            if message and message.get_type() == "RC_CHANNELS":
+                latest_rc_msg = message
                 n_channels = max(0, min(latest_rc_msg.chancount, _RC_DISPLAY_CHANNELS))
                 raw: list[int] = [
                     latest_rc_msg.chan1_raw,
@@ -436,8 +454,8 @@ class RCCalibrationDataModel:
                         channels[index]["value"] = raw[index]
                 telemetry["channels"] = channels
 
-            if latest_hb:
-                telemetry["flight_mode"] = str(latest_hb.custom_mode)
+            elif message and message.get_type() == "HEARTBEAT":
+                telemetry["flight_mode"] = str(message.custom_mode)
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logging_debug(_("Error reading MAVLink telemetry: %(error)s"), {"error": str(exc)})
 
