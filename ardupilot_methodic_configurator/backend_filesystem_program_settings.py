@@ -506,7 +506,8 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
         logging_debug("current script directory1: %s", package_path)
         if platform_system() == "Windows":
             package_path = Path(ProgramSettings._user_config_dir())
-            if not (package_path / "vehicle_templates").is_dir():
+            # Uninstall can leave personal presets behind; require an installer-owned file.
+            if not (package_path / "vehicle_templates" / "system_vehicle_components_template.json").is_file():
                 package_path = Path(ProgramSettings._site_config_dir())
         logging_debug("current script directory2: %s", package_path)
 
