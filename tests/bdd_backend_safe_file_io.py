@@ -420,3 +420,86 @@ def test_directory_open_failure_does_not_discard_a_completed_save(tmp_path: Path
 
     assert target.read_text(encoding="utf-8") == "updated"
     assert list(tmp_path.iterdir()) == [target]
+
+
+@pytest.mark.skipif(not hasattr(os, "chown"), reason="Ownership preservation requires os.chown")
+def test_atomic_save_requests_the_original_owner_and_group_for_the_replacement(tmp_path: Path) -> None:
+    """
+    Preserve the ownership policy when replacing an existing file.
+
+    GIVEN: An existing file with an owner and group
+    WHEN: Its replacement is prepared for an atomic save
+    THEN: The OS is asked to apply the original owner and group to that replacement
+    """
+    target = tmp_path / "settings.json"
+    target.write_text("original", encoding="utf-8")
+    original = target.stat()
+
+    with patch("ardupilot_methodic_configurator.backend_safe_file_io.os.chown", autospec=True) as set_owner:
+        safe_write(str(target), lambda file: file.write("updated"))
+
+    set_owner.assert_called_once()
+    replacement, owner, group = set_owner.call_args.args
+    assert (owner, group) == (original.st_uid, original.st_gid)
+    assert Path(replacement).parent == target.parent
+    assert Path(replacement) != target
+    assert target.read_text(encoding="utf-8") == "updated"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Requires POSIX directory descriptors")
+def test_directory_close_failure_does_not_report_a_successful_save_as_failed(tmp_path: Path) -> None:
+    """
+    A best-effort directory-close error must not undo a completed save.
+
+    GIVEN: A directory descriptor whose close operation reports an I/O error
+    WHEN: The file is saved and its directory is synced
+    THEN: The save succeeds and the directory descriptor is released
+    """
+    target = tmp_path / "settings.json"
+    real_close = os.close
+    closed: list[int] = []
+
+    def close_with_error(fd: int) -> None:
+        real_close(fd)
+        closed.append(fd)
+        message = "directory close failed"
+        raise OSError(message)
+
+    with patch("ardupilot_methodic_configurator.backend_safe_file_io.os.close", side_effect=close_with_error):
+        safe_write(str(target), lambda file: file.write("updated"))
+
+    assert len(closed) == 1
+    with pytest.raises(OSError, match=os.strerror(errno.EBADF)) as error:
+        os.fstat(closed[0])
+    assert error.value.errno == errno.EBADF
+    assert target.read_text(encoding="utf-8") == "updated"
+    assert list(tmp_path.iterdir()) == [target]
+
+
+def test_temporary_file_cleanup_failure_preserves_the_original_write_error(tmp_path: Path) -> None:
+    """
+    Report the original save failure even if temporary-file cleanup also fails.
+
+    GIVEN: An existing file, a failed writer, and an OS error removing its temporary file
+    WHEN: Atomic saving aborts
+    THEN: The original error reaches the caller and the previous file remains intact
+    """
+    target = tmp_path / "settings.json"
+    target.write_text("original", encoding="utf-8")
+    write_error = ValueError("cannot serialize settings")
+
+    def fail_write(file: IO[str]) -> None:
+        file.write("partial update")
+        raise write_error
+
+    with (
+        patch(
+            "ardupilot_methodic_configurator.backend_safe_file_io.os.unlink", side_effect=OSError("cleanup denied")
+        ) as cleanup,
+        pytest.raises(ValueError, match="cannot serialize settings") as error,
+    ):
+        safe_write(str(target), fail_write)
+
+    assert error.value is write_error
+    cleanup.assert_called_once()
+    assert target.read_text(encoding="utf-8") == "original"

@@ -9,6 +9,7 @@ SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import threading
 from collections.abc import Generator
 from dataclasses import replace
 from itertools import count
@@ -213,8 +214,8 @@ def test_gcs_heartbeat_recovers_from_a_write_failure_after_monitoring_closes(
             raise OSError(message)
         recovered.set()
 
-    telemetry_link.master.write.side_effect = flaky_write
     with caplog.at_level("DEBUG"):
+        telemetry_link.master.write.side_effect = flaky_write
         assert recovered.wait(4), "Heartbeat writes must retry while monitoring remains closed"
     assert caplog.messages == ["Error sending GCS heartbeat: temporary link failure"]
 
@@ -836,10 +837,11 @@ def test_heartbeat_sender_reuses_the_existing_encoder_lock_and_preserves_request
         assert master.mav.amc_send_lock is lock
         assert any(thread.name == "gcs-heartbeat" and thread.daemon for thread in enumerate_threads())
         heartbeat = mavlink.MAVLink_heartbeat_message(6, 8, 0, 0, 4, 3)
-        master.mav.send(heartbeat)
-        assert master.write.call_args.args[0][0] == 0xFD
-        master.mav.send(heartbeat, force_mavlink1=True)
-        assert master.write.call_args.args[0][0] == 0xFE
+        with master.mav.amc_send_lock:
+            master.mav.send(heartbeat)
+            assert master.write.call_args.args[0][0] == 0xFD
+            master.mav.send(heartbeat, force_mavlink1=True)
+            assert master.write.call_args.args[0][0] == 0xFE
         stopped_sender = master.mav.send
     finally:
         backend.close()
@@ -870,7 +872,7 @@ def test_heartbeat_shutdown_contains_port_close_errors_in_diagnostics(
 
 def test_heartbeat_shutdown_tolerates_an_in_memory_connection_without_a_port(
     telemetry_link: SimpleNamespace,
-    recwarn: pytest.WarningsRecorder,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """
     Shut down transports without optional serial-port cleanup methods.
@@ -879,12 +881,14 @@ def test_heartbeat_shutdown_tolerates_an_in_memory_connection_without_a_port(
     WHEN: The heartbeat worker starts and then stops
     THEN: No unhandled worker exception is emitted during cleanup
     """
+    worker_errors: list[threading.ExceptHookArgs] = []
+    monkeypatch.setattr(threading, "excepthook", worker_errors.append)
     backend = RadioStatusBackend()
     if hasattr(telemetry_link.master, "port"):
         del telemetry_link.master.port
     backend.start(telemetry_link.master)
     backend.close()
-    assert not recwarn.list
+    assert not worker_errors
 
 
 @pytest.mark.parametrize("backend_type", [DataTelemetryBackend, EscTelemetryBackend])

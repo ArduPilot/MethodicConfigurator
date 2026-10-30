@@ -127,23 +127,26 @@ def test_switching_headings_starts_ascending_and_equal_values_stay_stable(messag
     assert model.rows == tied
 
 
-def test_unknown_heading_does_not_change_the_existing_sort(messages: tuple[MessageRate, ...]) -> None:
+@pytest.mark.parametrize("descending", [False, True])
+def test_unknown_heading_does_not_change_the_existing_sort(messages: tuple[MessageRate, ...], descending: bool) -> None:
     """
     Reject an invalid column without corrupting valid inspection state.
 
-    GIVEN a populated model sorted by count,
+    GIVEN a populated model sorted by count in either direction,
     WHEN an unknown heading is requested,
     THEN the request fails and both the rows and sort preferences remain intact.
     """
     model = MavlinkInspectorDataModel()
     model.update(TelemetryState(messages=messages))
     model.sort_by("count")
+    if descending:
+        model.sort_by("count")
     before = model.rows
-    with pytest.raises(ValueError, match="Unknown MAVLink message column"):
+    with pytest.raises(ValueError, match=r"^Unknown MAVLink message column: payload$"):
         model.sort_by("payload")
     assert model.rows == before
     assert model.sort_column == "count"
-    assert not model.sort_descending
+    assert model.sort_descending is descending
 
 
 def test_same_message_from_different_senders_keeps_independent_fields(messages: tuple[MessageRate, ...]) -> None:
@@ -164,3 +167,85 @@ def test_same_message_from_different_senders_keeps_independent_fields(messages: 
     assert model.values(first) == (1, 1, "HEARTBEAT", 10, "10.0", "100.0", "10.0")
     model.update(TelemetryState(messages=(replace(first, sample=replace(first.sample, fields=())),)))
     assert model.fields("1:1:HEARTBEAT") == ""
+
+
+@pytest.mark.parametrize(
+    ("column", "order"),
+    [
+        ("system", (3, 1, 2, 0)),
+        ("component", (2, 0, 3, 1)),
+        ("message", (0, 2, 3, 1)),
+        ("count", (1, 3, 0, 2)),
+        ("hz", (3, 0, 2, 1)),
+        ("bytes", (2, 1, 3, 0)),
+        ("age", (1, 0, 3, 2)),
+    ],
+)
+def test_each_heading_orders_by_its_own_independent_measurement(column: str, order: tuple[int, ...]) -> None:
+    """
+    Distinguish every sort key even when other message attributes disagree.
+
+    GIVEN: IDs, names, counts, rates and ages that all have different orderings
+    WHEN: The user selects a column heading
+    THEN: Only the measurement belonging to that column determines the order
+    """
+    rows = tuple(
+        MessageRate((system, component, name), MessageSample(count, 400, 0, ()), hz, rate, age)
+        for system, component, name, count, hz, rate, age in (
+            (10, 2, "ATTITUDE", 20, 0.5, 100.0, 0.8),
+            (2, 10, "VFR_HUD", 3, 2.1, 40.0, 0.2),
+            (3, 1, "HEARTBEAT", 100, 1.3, 10.0, 2.5),
+            (1, 3, "SYS_STATUS", 10, 0.1, 90.0, 1.1),
+        )
+    )
+    model = MavlinkInspectorDataModel()
+    model.update(TelemetryState(messages=rows))
+
+    model.sort_by(column)
+
+    assert model.rows == tuple(rows[index] for index in order)
+
+
+@pytest.mark.parametrize("descending", [False, True])
+def test_tied_rows_follow_the_latest_snapshot_order_in_both_sort_directions(
+    messages: tuple[MessageRate, ...], descending: bool
+) -> None:
+    """
+    Preserve stable ordering when a live snapshot contains equal measurements.
+
+    GIVEN: An ascending or descending frequency sort with tied message rates
+    WHEN: The next snapshot changes the incoming row order
+    THEN: Tied rows follow that new order while the chosen sort direction is retained
+    """
+    tied = tuple(replace(row, hz=1.0) for row in messages)
+    model = MavlinkInspectorDataModel()
+    model.update(TelemetryState(messages=tied))
+    model.sort_by("hz")
+    if descending:
+        model.sort_by("hz")
+    latest = tuple(reversed(tied))
+
+    model.update(TelemetryState(messages=latest))
+
+    assert model.rows == latest
+    assert model.sort_column == "hz"
+    assert model.sort_descending is descending
+
+
+@pytest.mark.parametrize("column", [None, "system", "hz"])
+def test_empty_inspector_can_be_read_and_sorted_before_telemetry_arrives(column: str | None) -> None:
+    """
+    Keep an inspector opened before connection usable while it waits for telemetry.
+
+    GIVEN: A new inspector that has not received its first snapshot
+    WHEN: The user reads its rows and fields or chooses a sort heading
+    THEN: Its table and detail pane remain empty without raising an error
+    """
+    model = MavlinkInspectorDataModel()
+
+    assert not model.rows
+    assert model.fields("1:1:HEARTBEAT") == ""
+    if column is not None:
+        model.sort_by(column)
+        assert not model.rows
+        assert model.sort_column == column

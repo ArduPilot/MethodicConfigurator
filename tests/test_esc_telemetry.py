@@ -21,8 +21,10 @@ from pymavlink.dialects.v20 import ardupilotmega as mavlink
 from telemetry_test_helpers import create_telemetry_link, feed
 
 from ardupilot_methodic_configurator.__main__ import register_plugins
+from ardupilot_methodic_configurator.backend_data_telemetry import DataTelemetryBackend
 from ardupilot_methodic_configurator.backend_esc_telemetry import EscTelemetryBackend
 from ardupilot_methodic_configurator.backend_flightcontroller_commands import FlightControllerCommands
+from ardupilot_methodic_configurator.data_model_data_telemetry import TelemetrySample
 from ardupilot_methodic_configurator.data_model_esc_telemetry import (
     MAX_ESCS,
     EscTelemetryDataModel,
@@ -604,3 +606,60 @@ def test_invalid_snapshots_cannot_repopulate_live_esc_readings(model: EscTelemet
     rows = model.update(EscTelemetrySnapshot(connection if failed else None, 1.0, readings, error=failed))
     assert model.visible_esc_indices == ()
     assert all(value == "-" for row in rows for value in row)
+
+
+@pytest.mark.parametrize(("elapsed", "requests"), [(0.999, 1), (1.0, 2), (1.001, 2), (5.0, 2)])
+def test_esc_request_is_due_at_exactly_one_second_without_catching_up_after_a_pause(
+    link: SimpleNamespace, elapsed: float, requests: int
+) -> None:
+    """
+    Request ESC telemetry at its deadline without flooding a resumed connection.
+
+    GIVEN: An initial ESC request sent at time zero
+    WHEN: Polling resumes just before, at, or after its one-second deadline
+    THEN: A due request is sent immediately and missed intervals never produce a burst
+    """
+    backend = EscTelemetryBackend(link.controller, lambda: link.now)
+    try:
+        backend.poll()
+        assert link.master.write.call_count == 1
+
+        link.now = elapsed
+        snapshot = backend.poll()
+
+        assert not snapshot.error
+        assert link.master.write.call_count == requests
+    finally:
+        backend.close()
+
+
+@pytest.mark.parametrize("backend_type", [DataTelemetryBackend, EscTelemetryBackend])
+def test_empty_telemetry_poll_never_waits_for_a_packet(
+    link: SimpleNamespace, backend_type: type[DataTelemetryBackend] | type[EscTelemetryBackend]
+) -> None:
+    """
+    An empty telemetry queue must not block the GUI refresh callback.
+
+    GIVEN: A connected transport with no queued packets
+    WHEN: A telemetry backend polls within its receive budget
+    THEN: The receive operation never waits and returns a successful empty snapshot
+    """
+    # Heartbeat scheduling is an external FC operation, independent of the receive contract.
+    link.controller.start_gcs_heartbeat.side_effect = None
+    backend = backend_type(link.controller, lambda: link.now)
+    real_receive = link.master.recv_match
+
+    def receive(*, blocking: bool = False) -> object:
+        assert not blocking, "Telemetry polling must not wait for a packet"
+        return real_receive(blocking=blocking)
+
+    try:
+        with patch.object(link.master, "recv_match", side_effect=receive) as receiver:
+            snapshot = backend.poll()
+
+        receiver.assert_called_once()
+        assert snapshot.connection is link.master
+        assert not snapshot.error
+        assert not (snapshot.messages if isinstance(snapshot, TelemetrySample) else snapshot.readings)
+    finally:
+        backend.close()

@@ -422,3 +422,52 @@ def test_dronecan_devices_display_the_bus_protocol_as_the_sensor_type() -> None:
     assert diagnostics.device_rows({"COMPASS_DEV_ID": device_id}) == [
         ("COMPASS1", "DRONECAN", 1, 42, "DRONECAN", None, f"COMPASS_DEV_ID: {device_id}")
     ]
+
+
+@pytest.mark.parametrize("message_id", [None, "legacy"])
+def test_legacy_transports_without_numeric_chunk_ids_display_full_length_text(message_id: str | None) -> None:
+    """
+    Legacy diagnostics must not wait for chunks their transport cannot identify.
+
+    GIVEN: Fifty bytes of text with absent or nonnumeric chunk metadata
+    WHEN: The diagnostic is assembled
+    THEN: The complete text is displayed immediately
+    """
+    message = SimpleNamespace(text=b"A" * 50)
+    if message_id is not None:
+        message.id = message_id
+
+    assert diagnostics.StatusTextAssembler().assemble(message) == "A" * 50
+
+
+@pytest.mark.parametrize("sequence", [None, "1", -1, 256])
+def test_malformed_chunk_numbers_do_not_crash_or_discard_a_valid_pending_message(sequence: object) -> None:
+    """
+    Reject malformed chunk metadata without corrupting an ongoing diagnostic.
+
+    GIVEN: A valid unfinished message followed by an invalid chunk number
+    WHEN: The invalid packet arrives before the valid continuation
+    THEN: It is ignored and the valid diagnostic still completes
+    """
+    assembler = diagnostics.StatusTextAssembler()
+    assert assembler.assemble(SimpleNamespace(id=42, chunk_seq=0, text=b"A" * 50)) is None
+
+    assert assembler.assemble(SimpleNamespace(id=42, chunk_seq=sequence, text=b"invalid")) is None
+
+    assert assembler.assemble(SimpleNamespace(id=42, chunk_seq=1, text=b"tail")) == "A" * 50 + "tail"
+
+
+def test_long_diagnostic_can_finish_at_the_last_valid_chunk_number(monkeypatch: pytest.MonkeyPatch) -> None:
+    """
+    Accept the full range of MAVLink's unsigned eight-bit chunk numbers.
+
+    GIVEN: A diagnostic spanning every valid chunk number
+    WHEN: The final text arrives at chunk 255 before expiration
+    THEN: The entire message is returned without truncation
+    """
+    monkeypatch.setattr(diagnostics, "monotonic", lambda: 0.0)
+    assembler = diagnostics.StatusTextAssembler()
+    for sequence in range(255):
+        assert assembler.assemble(MAVLink_statustext_message(4, b"A" * 50, id=42, chunk_seq=sequence)) is None
+
+    assert assembler.assemble(MAVLink_statustext_message(4, b"tail", id=42, chunk_seq=255)) == "A" * (50 * 255) + "tail"
