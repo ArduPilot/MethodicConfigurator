@@ -2325,8 +2325,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             param_name: The name of the parameter to delete
 
         """
-        # If parameter was in original file, mark as deleted
-        if param_name in self._local_filesystem.file_parameters.get(self.current_file, ParDict()):
+        # Track saved rows and automatically inserted derived rows so refresh respects the deletion.
+        if (
+            param_name in self._local_filesystem.file_parameters.get(self.current_file, ParDict())
+            or param_name in self._inline_derived_parameters
+        ):
             self._deleted_parameters.add(param_name)
 
         # If it was previously added in this session, remove from added set

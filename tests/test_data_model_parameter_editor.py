@@ -7421,6 +7421,50 @@ class TestDuplicateParameterRemoval:
 class TestDerivedParameterPatching:
     """Test how derived parameter values are patched into an already loaded step."""
 
+    def test_explicitly_deleted_inline_derived_row_stays_deleted_until_readded(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """GIVEN a derived row, WHEN deleted and refreshed, THEN only a manual re-add restores it."""
+        step_file = "10_telemetry.param"
+        parameter_editor.current_file = step_file
+        parameter_editor._flight_controller.fc_parameters = {"SERIAL2_PROTOCOL": 0.0, "SERIAL3_PROTOCOL": 0.0}
+        parameter_editor._local_filesystem.configuration_steps = {step_file: {"derived_parameters": {}}}
+        parameter_editor._local_filesystem.file_parameters = {step_file: ParDict()}
+        selection = {"name": "SERIAL2_PROTOCOL"}
+
+        def compute(*_args: object) -> None:
+            name = selection["name"]
+            parameter_editor._local_filesystem.derived_parameters = {step_file: ParDict({name: Par(2.0)})}
+
+        parameter_editor._local_filesystem.compute_parameters.side_effect = compute
+
+        parameter_editor.refresh_current_step_computed_parameters()
+        assert "SERIAL2_PROTOCOL" in parameter_editor.current_step_parameters
+
+        parameter_editor.delete_parameter_from_current_file("SERIAL2_PROTOCOL")
+        assert "SERIAL2_PROTOCOL" not in parameter_editor.current_step_parameters
+        assert "SERIAL2_PROTOCOL" in parameter_editor._deleted_parameters
+
+        parameter_editor.refresh_current_step_computed_parameters()
+        assert "SERIAL2_PROTOCOL" not in parameter_editor.current_step_parameters
+
+        selection["name"] = "SERIAL3_PROTOCOL"
+        parameter_editor.refresh_current_step_computed_parameters()
+        selection["name"] = "SERIAL2_PROTOCOL"
+        parameter_editor.refresh_current_step_computed_parameters()
+        assert "SERIAL2_PROTOCOL" not in parameter_editor.current_step_parameters
+
+        assert parameter_editor.add_parameter_to_current_file("SERIAL2_PROTOCOL")
+        assert "SERIAL2_PROTOCOL" not in parameter_editor._deleted_parameters
+        parameter_editor.refresh_current_step_computed_parameters()
+        assert "SERIAL2_PROTOCOL" in parameter_editor.current_step_parameters
+
+        parameter_editor.delete_parameter_from_current_file("SERIAL2_PROTOCOL")
+        parameter_editor._export_current_file(annotate_doc=False)
+        exported = parameter_editor._local_filesystem.export_to_param.call_args.args[0]
+        assert "SERIAL2_PROTOCOL" not in exported
+        assert "SERIAL2_PROTOCOL" not in parameter_editor._local_filesystem.file_parameters[step_file]
+
     def test_inline_selection_adds_and_retires_only_automatic_derived_rows(self, parameter_editor: ParameterEditor) -> None:
         """GIVEN changing ports, WHEN refreshed, THEN only the final derived row is exported."""
         step_file = "10_telemetry.param"
