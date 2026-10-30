@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import sys
 import tkinter as tk
 from collections.abc import Callable, Generator
+from dataclasses import dataclass
 from tkinter import ttk
 from types import SimpleNamespace
 from typing import Any, cast
@@ -27,6 +28,7 @@ from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduP
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.data_model_parameter_editor import (
     InvalidParameterNameError,
+    OperationNotPossibleError,
     ParameterEditor,
     ParameterValueUpdateResult,
     ParameterValueUpdateStatus,
@@ -44,6 +46,129 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table imp
 from ardupilot_methodic_configurator.frontend_tkinter_show import Tooltip
 
 # pylint: disable=protected-access, redefined-outer-name, too-few-public-methods, too-many-lines
+
+
+@dataclass
+class _AddParameterDialog:
+    """Real dialog widgets with controlled delivery of their bound Tk events."""
+
+    table: ParameterEditorTable
+    root: tk.Toplevel
+    search: ttk.Entry
+    listbox: tk.Listbox
+    add_button: ttk.Button
+    bindings: dict[tuple[tk.Misc, str], Callable[[tk.Event], object]]
+
+    def send(self, widget: tk.Misc, sequence: str) -> object:
+        """Deliver the event through the callback registered by the application."""
+        event = tk.Event()
+        event.widget = widget
+        return self.bindings[widget, sequence](event)
+
+
+def _descendants(widget: tk.Misc) -> Generator[tk.Misc, None, None]:
+    """Walk real widgets to find dialog controls without relying on Tk names."""
+    for child in widget.winfo_children():
+        yield child
+        yield from _descendants(child)
+
+
+def _select_bits_one_and_two(window: tk.Toplevel, initial_mask: int) -> None:
+    """Verify the initial selection and preview before changing the mask to 6."""
+    widgets = list(_descendants(window))
+    checkboxes = {str(widget["text"]): widget for widget in widgets if isinstance(widget, ttk.Checkbutton)}
+    assert [checkboxes[f"Bit {bit}"].instate(["selected"]) for bit in range(3)] == (
+        [True, True, False] if initial_mask == 3 else [False, False, False]
+    )
+    preview = next(widget for widget in widgets if isinstance(widget, ttk.Label))
+    assert preview["text"] == f"TEST_PARAM Value: {initial_mask}"
+    for bit in range(3):
+        checkbox = checkboxes[f"Bit {bit}"]
+        if checkbox.instate(["selected"]) != (bit in {1, 2}):
+            checkbox.invoke()
+    assert preview["text"] == "TEST_PARAM Value: 6"
+
+
+def _assert_bitmask_reopen_binding(
+    table: ParameterEditorTable,
+    bindings: MagicMock,
+    event: tk.Event,
+    parameter: ArduPilotParameter,
+    hints: tuple[ttk.Entry, ttk.Label],
+) -> None:
+    """Verify that a restored double-click binding preserves the row's context."""
+    reopen = next(
+        call.args[1] for call in bindings.call_args_list if len(call.args) > 1 and call.args[0] == "<Double-Button-1>"
+    )
+    with patch.object(table, "_open_bitmask_selection_if_editable") as reopened:
+        reopen(event)
+    reopened.assert_called_once_with(event, parameter, *hints)
+
+
+@pytest.fixture
+def add_parameter_dialog(parameter_editor_table: ParameterEditorTable) -> Generator[_AddParameterDialog, None, None]:
+    """Open the real add-dialog contents and control the surrounding window/event loop."""
+    table = parameter_editor_table
+    table.parameter_editor.get_possible_add_param_names.return_value = [
+        "ATC_RAT_RLL_P",
+        "SERVO1_FUNCTION",
+        "ATC_RAT_PIT_P",
+        "BATT_CAPACITY",
+    ]
+    table.parameter_editor.add_parameters_to_current_file.side_effect = lambda names: (list(names), [], [])
+    table.parameter_editor.generate_bulk_add_feedback_message.return_value = ("success", "Added", "Parameters added")
+    root = tk.Toplevel(table.main_frame)
+    root.withdraw()
+    frame = ttk.Frame(root)
+    frame.pack()
+    shell = SimpleNamespace(root=root, main_frame=frame, calculate_scaled_geometry=lambda width, height: f"{width}x{height}")
+    bindings: dict[tuple[tk.Misc, str], Callable[[tk.Event], object]] = {}
+    original_bind = tk.Misc.bind
+
+    def remember_binding(
+        widget: tk.Misc,
+        sequence: str | None = None,
+        func: Callable[[tk.Event], object] | str | None = None,
+        add: str | None = None,
+    ) -> str:
+        if sequence is not None and callable(func):
+            bindings[widget, sequence] = func
+        return original_bind(widget, sequence, func, add)
+
+    with (
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.BaseWindow", return_value=shell
+        ) as shell_factory,
+        patch.object(table, "_center_and_focus_window"),
+        patch.object(tk.Misc, "bind", remember_binding),
+        patch.object(tk.Misc, "update"),
+        patch.object(tk.Misc, "update_idletasks"),
+        patch.object(tk.Misc, "wait_visibility"),
+        patch.object(tk.Misc, "wait_window"),
+        patch.object(root, "after"),
+    ):
+        try:
+            table._on_parameter_add()
+            shell_factory.assert_called_once_with(table.main_frame)
+            assert str(root.transient()) == str(table.main_frame)
+            widgets = list(_descendants(root))
+            search = next((widget for widget in widgets if isinstance(widget, ttk.Entry)), None)
+            listbox = next((widget for widget in widgets if isinstance(widget, tk.Listbox)), None)
+            add_button = next((widget for widget in widgets if isinstance(widget, ttk.Button)), None)
+            assert isinstance(search, ttk.Entry)
+            assert isinstance(listbox, tk.Listbox)
+            assert isinstance(add_button, ttk.Button)
+            yield _AddParameterDialog(
+                table,
+                root,
+                search,
+                listbox,
+                add_button,
+                bindings,
+            )
+        finally:
+            if root.winfo_exists():
+                root.destroy()
 
 
 def create_mock_data_model_ardupilot_parameter(  # pylint: disable=too-many-arguments, too-many-positional-arguments # noqa: PLR0913, PLR0917
@@ -441,8 +566,13 @@ def test_bulk_upload_choice_survives_filter_change_during_batched_render(
         if individual_edit:
             table.upload_checkbutton_var["P0"].set(bulk_clicks == 1)
         table.repopulate_table(show_only_differences=True, gui_complexity="advanced")
-        while pending_batches:
+        # Even an interrupted render must finish within one callback per row
+        # plus the cancelled generation's callback.
+        for _callback_index in range(len(table.parameters) + 1):
+            if not pending_batches:
+                break
             pending_batches.pop(0)()
+        assert not pending_batches, "Rendering kept scheduling batches after the final row"
 
     expected_names = set() if bulk_clicks == 1 else set(table.parameters)
     if individual_edit:
@@ -2846,3 +2976,806 @@ def test_older_macos_scrolls_to_new_rows_after_layout_settles(tk_root: tk.Tk) ->
             forced_render.assert_not_called()
     finally:
         parent.destroy()
+
+
+@pytest.mark.parametrize("query", ["rat", "RaT", "ATC_RAT", "rll"])
+def test_add_dialog_filters_names_case_insensitively_and_enter_adds_all_matches(
+    add_parameter_dialog: _AddParameterDialog, query: str
+) -> None:
+    """
+    Add the filtered parameter set directly from the search entry.
+
+    GIVEN a mixed list of candidate parameters,
+    WHEN the user enters a case-insensitive filter and presses Enter without selecting rows,
+    THEN only matching names are added in display order and the dialog closes.
+    """
+    dialog = add_parameter_dialog
+    assert dialog.root.title() == "Add parameter(s)"
+    assert str(dialog.add_button["state"]) == "disabled"
+    dialog.search.insert(0, query)
+    expected = ["ATC_RAT_RLL_P"] if query == "rll" else ["ATC_RAT_RLL_P", "ATC_RAT_PIT_P"]
+    assert dialog.listbox.get(0, tk.END) == tuple(expected)
+
+    dialog.send(dialog.search, "<Return>")
+
+    dialog.table.parameter_editor.add_parameters_to_current_file.assert_called_once_with(expected)
+    dialog.table.parameter_editor_window.repopulate_parameter_table.assert_called_once_with()
+    assert dialog.table._pending_scroll_to_bottom is True
+    assert not dialog.root.winfo_exists()
+
+
+@pytest.mark.parametrize("source", ["button", "search", "listbox", "window"])
+def test_add_dialog_adds_only_selected_names_and_converts_them_to_uppercase(
+    add_parameter_dialog: _AddParameterDialog, source: str
+) -> None:
+    """
+    Respect explicit selections regardless of how addition is activated.
+
+    GIVEN a selection from the candidate list,
+    WHEN the user activates Add or presses Enter in a dialog control,
+    THEN only the selected names are submitted, normalized for the parameter model.
+    """
+    dialog = add_parameter_dialog
+    dialog.listbox.delete(0, tk.END)
+    for name in ("atc_rat_rll_p", "batt_capacity", "servo1_function"):
+        dialog.listbox.insert(tk.END, name)
+    dialog.listbox.selection_set(0)
+    dialog.listbox.selection_set(2)
+    dialog.send(dialog.listbox, "<<ListboxSelect>>")
+    assert dialog.add_button["text"] == "Add 2 selected parameters"
+    assert str(dialog.add_button["state"]) == "normal"
+
+    if source == "button":
+        dialog.add_button.invoke()
+    else:
+        widget = {"search": dialog.search, "listbox": dialog.listbox, "window": dialog.root}[source]
+        dialog.send(widget, "<Return>")
+
+    dialog.table.parameter_editor.add_parameters_to_current_file.assert_called_once_with(["ATC_RAT_RLL_P", "SERVO1_FUNCTION"])
+    assert not dialog.root.winfo_exists()
+
+
+@pytest.mark.parametrize("upper", [False, True])
+def test_add_dialog_selection_shortcuts_update_button_state_and_stop_event_propagation(
+    add_parameter_dialog: _AddParameterDialog, upper: bool
+) -> None:
+    """
+    Keep the add action in sync with select-all and deselect-all shortcuts.
+
+    GIVEN a populated candidate list,
+    WHEN the user selects all, deselects all, then selects a single row,
+    THEN the button reports the count, disables for no selection, and handles uppercase shortcuts too.
+    """
+    dialog = add_parameter_dialog
+    assert dialog.send(dialog.listbox, "<Control-A>" if upper else "<Control-a>") == "break"
+    assert dialog.listbox.curselection() == (0, 1, 2, 3)
+    assert dialog.add_button["text"] == "Add 4 selected parameters"
+    assert str(dialog.add_button["state"]) == "normal"
+
+    assert dialog.send(dialog.listbox, "<Control-D>" if upper else "<Control-d>") == "break"
+    assert not dialog.listbox.curselection()
+    assert dialog.add_button["text"] == "No parameter selected"
+    assert str(dialog.add_button["state"]) == "disabled"
+    dialog.listbox.selection_set(1)
+    dialog.send(dialog.listbox, "<<ListboxSelect>>")
+    assert dialog.add_button["text"] == "Add selected parameter"
+    assert str(dialog.add_button["state"]) == "normal"
+    dialog.table.parameter_editor.add_parameters_to_current_file.assert_not_called()
+
+
+@pytest.mark.parametrize("source", ["search", "listbox", "window", "double-click"])
+def test_add_dialog_ignores_empty_selections_and_empty_filtered_results(
+    add_parameter_dialog: _AddParameterDialog, source: str
+) -> None:
+    """
+    Avoid adding any parameters when a filter has no matches.
+
+    GIVEN no candidate names match the user's search,
+    WHEN addition is attempted through any keyboard or double-click handler,
+    THEN the model is untouched and the dialog remains usable.
+    """
+    dialog = add_parameter_dialog
+    dialog.search.insert(0, "no_such_parameter")
+    assert dialog.listbox.size() == 0
+    assert dialog.add_button["text"] == "No parameter selected"
+    assert str(dialog.add_button["state"]) == "disabled"
+
+    widget = dialog.search if source == "search" else dialog.root if source == "window" else dialog.listbox
+    dialog.send(widget, "<Double-Button-1>" if source == "double-click" else "<Return>")
+
+    dialog.table.parameter_editor.add_parameters_to_current_file.assert_not_called()
+    assert dialog.root.winfo_exists()
+
+
+@pytest.mark.parametrize("accepted", [False, True])
+@pytest.mark.parametrize("count", [ParameterEditor.MAX_BULK_ADD_SUGGESTIONS, ParameterEditor.MAX_BULK_ADD_SUGGESTIONS + 1])
+def test_add_dialog_confirms_only_above_the_bulk_add_limit(
+    add_parameter_dialog: _AddParameterDialog, accepted: bool, count: int
+) -> None:
+    """
+    Ask for confirmation only when the selected set exceeds the bulk-add limit.
+
+    GIVEN a selection exactly at or one above the limit,
+    WHEN the user requests addition and accepts or declines confirmation,
+    THEN the boundary is respected and declining leaves the dialog and model unchanged.
+    """
+    dialog = add_parameter_dialog
+    names = [f"PARAM_{index}" for index in range(count)]
+    dialog.listbox.delete(0, tk.END)
+    for name in names:
+        dialog.listbox.insert(tk.END, name)
+    dialog.listbox.selection_set(0, tk.END)
+    dialog.table._dialogs.ask_yes_no.return_value = accepted
+
+    dialog.send(dialog.listbox, "<Return>")
+
+    if count > ParameterEditor.MAX_BULK_ADD_SUGGESTIONS:
+        dialog.table._dialogs.ask_yes_no.assert_called_once_with(
+            "Confirm bulk addition",
+            "Adding many parameters at once can make it difficult to track changes and may impact GUI performance.\n"
+            f"Are you sure you want to add all {count} parameters?",
+        )
+    else:
+        dialog.table._dialogs.ask_yes_no.assert_not_called()
+    if accepted or count == ParameterEditor.MAX_BULK_ADD_SUGGESTIONS:
+        dialog.table.parameter_editor.add_parameters_to_current_file.assert_called_once_with(names)
+        assert not dialog.root.winfo_exists()
+    else:
+        dialog.table.parameter_editor.add_parameters_to_current_file.assert_not_called()
+        assert dialog.root.winfo_exists()
+        assert dialog.listbox.curselection() == tuple(range(count))
+
+
+def test_double_click_adds_only_the_first_selected_parameter(add_parameter_dialog: _AddParameterDialog) -> None:
+    """
+    Keep double-click addition limited to one parameter even with a multi-selection.
+
+    GIVEN several selected candidates,
+    WHEN the user double-clicks the list,
+    THEN only the first selected name is added and the dialog closes.
+    """
+    dialog = add_parameter_dialog
+    dialog.listbox.selection_set(1, 3)
+
+    dialog.send(dialog.listbox, "<Double-Button-1>")
+
+    dialog.table.parameter_editor.add_parameters_to_current_file.assert_called_once_with(["SERVO1_FUNCTION"])
+    assert not dialog.root.winfo_exists()
+
+
+@pytest.mark.parametrize("platform", ["linux", "darwin"])
+def test_escape_closes_the_add_dialog_without_changing_parameters(
+    add_parameter_dialog: _AddParameterDialog, platform: str
+) -> None:
+    """
+    Cancel parameter addition consistently on Linux and macOS.
+
+    GIVEN an open dialog with a selected candidate,
+    WHEN Escape is pressed,
+    THEN the dialog closes, releases a grab only where supported, and no parameter is added.
+    """
+    dialog = add_parameter_dialog
+    dialog.listbox.selection_set(0)
+    with (
+        patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.sys_platform", platform),
+        patch.object(dialog.root, "grab_release") as release,
+    ):
+        dialog.send(dialog.root, "<Escape>")
+
+    assert release.call_count == (0 if platform == "darwin" else 1)
+    assert not dialog.root.winfo_exists()
+    dialog.table.parameter_editor.add_parameters_to_current_file.assert_not_called()
+
+
+@pytest.mark.parametrize("platform", ["linux", "darwin"])
+def test_bulk_add_reports_the_exact_model_results_before_closing_the_dialog(
+    add_parameter_dialog: _AddParameterDialog, platform: str
+) -> None:
+    """
+    Preserve partial-success feedback when adding a selection of parameters.
+
+    GIVEN the model reports added, skipped, and failed names,
+    WHEN the selection is submitted,
+    THEN those lists reach feedback unchanged and the add dialog closes on either platform.
+    """
+    dialog = add_parameter_dialog
+    editor = dialog.table.parameter_editor
+    editor.add_parameters_to_current_file.side_effect = None
+    editor.add_parameters_to_current_file.return_value = (["ATC_RAT_RLL_P"], ["SERVO1_FUNCTION"], ["ATC_RAT_PIT_P"])
+    editor.generate_bulk_add_feedback_message.return_value = (
+        "warning",
+        "Partial addition",
+        "Some names were skipped or failed",
+    )
+    dialog.listbox.selection_set(0, 2)
+    with (
+        patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.sys_platform", platform),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_warning_popup") as warning,
+        patch.object(dialog.root, "grab_release") as release,
+    ):
+        dialog.add_button.configure(state="normal")
+        dialog.add_button.invoke()
+
+    editor.generate_bulk_add_feedback_message.assert_called_once_with(
+        ["ATC_RAT_RLL_P"], ["SERVO1_FUNCTION"], ["ATC_RAT_PIT_P"]
+    )
+    warning.assert_called_once_with("Partial addition", "Some names were skipped or failed")
+    assert release.call_count == (0 if platform == "darwin" else 1)
+    assert not dialog.root.winfo_exists()
+    dialog.table.parameter_editor_window.repopulate_parameter_table.assert_called_once_with()
+
+
+@pytest.mark.parametrize(
+    ("failure", "title"),
+    [
+        (InvalidParameterNameError("bad name"), "Invalid parameter name."),
+        (OperationNotPossibleError("step is locked"), "Operation not possible"),
+    ],
+)
+def test_single_parameter_addition_reports_model_errors_without_refreshing(
+    parameter_editor_table: ParameterEditorTable, failure: Exception, title: str
+) -> None:
+    """
+    Keep existing rows intact when the model rejects a single addition.
+
+    GIVEN a model that rejects a parameter name or the current operation,
+    WHEN addition is confirmed,
+    THEN the original reason is shown and neither a refresh nor bottom-scroll is scheduled.
+    """
+    table = parameter_editor_table
+    table._pending_scroll_to_bottom = False
+    table.parameter_editor.add_parameter_to_current_file.side_effect = failure
+
+    assert table._confirm_parameter_addition("TEST_PARAM") is False
+
+    table._dialogs.show_error.assert_called_once_with(title, str(failure))
+    table.parameter_editor_window.repopulate_parameter_table.assert_not_called()
+    assert table._pending_scroll_to_bottom is False
+
+
+@pytest.mark.parametrize("batch_size", [None, 0, -1])
+def test_batched_rendering_rejects_invalid_batch_sizes_before_rendering(
+    parameter_editor_table: ParameterEditorTable, batch_size: int | None
+) -> None:
+    """
+    Reject invalid rendering settings before partially building the table.
+
+    GIVEN no batch size or a nonpositive batch size,
+    WHEN batched rendering is explicitly requested,
+    THEN a clear error is raised and no completion notification is emitted.
+    """
+    table = parameter_editor_table
+    table.options.render_batch_size = batch_size
+    complete = MagicMock()
+    table.options.render_complete_callback = complete
+
+    with pytest.raises(ValueError, match=r"^render_batch_size must be a positive integer$"):
+        table._update_table_in_batches({}, "simple", scroll_to_bottom=False)
+
+    complete.assert_not_called()
+
+
+def test_batched_rendering_notifies_completion_and_bitmask_help_only_after_the_last_row(
+    parameter_editor_table: ParameterEditorTable,
+) -> None:
+    """
+    Delay completion and bitmask help until every pending row is rendered.
+
+    GIVEN an external table with a bitmask and a second row in separate batches,
+    WHEN the scheduled second batch runs,
+    THEN completion sees both rows, scrolling occurs once, and bitmask help appears once.
+    """
+    table = parameter_editor_table
+    parameters = {
+        "BITS": create_mock_data_model_ardupilot_parameter(name="BITS", is_bitmask=True),
+        "OTHER": create_mock_data_model_ardupilot_parameter(name="OTHER"),
+    }
+    table.parameters = parameters
+    table.options.show_parameter_actions = False
+    table.options.render_batch_size = 1
+    complete: list[tuple[str, ...]] = []
+    table.options.render_complete_callback = lambda: complete.append(tuple(table._new_value_widgets))
+    scheduled: list[Callable[[], None]] = []
+    with (
+        patch.object(table, "after_idle", side_effect=scheduled.append),
+        patch.object(table, "_apply_scroll_position") as scroll,
+        patch.object(tk.Misc, "update_idletasks"),
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.UsagePopupWindow.should_display",
+            return_value=True,
+        ) as help_preference,
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table."
+            "display_bitmask_parameters_editor_usage_popup"
+        ) as help_popup,
+    ):
+        table._update_table_in_batches(parameters, "simple", scroll_to_bottom=True)
+        assert tuple(table._new_value_widgets) == ("BITS",)
+        assert not complete
+        scroll.assert_not_called()
+        help_popup.assert_not_called()
+        assert len(scheduled) == 1
+
+        scheduled.pop(0)()
+
+        assert complete == [("BITS", "OTHER")]
+        scroll.assert_called_once()
+        assert scroll.call_args.args == (True,)
+        help_popup.assert_called_once_with(table.main_frame)
+        help_preference.assert_called_once_with("bitmask_parameter_editor")
+        assert not scheduled
+
+
+def test_batched_rendering_identifies_a_missing_parameter_and_does_not_report_completion(
+    parameter_editor_table: ParameterEditorTable, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    Identify the affected parameter when a batch cannot construct its row.
+
+    GIVEN a row whose data disappeared before widget creation,
+    WHEN the batch is rendered,
+    THEN the fatal error names the parameter and file, and completion is never reported.
+    """
+    table = parameter_editor_table
+    table.options.render_batch_size = 1
+    complete = MagicMock()
+    table.options.render_complete_callback = complete
+    with (
+        patch.object(table, "_create_column_widgets", side_effect=KeyError("missing metadata")),
+        patch.object(tk.Misc, "update_idletasks"),
+        pytest.raises(SystemExit) as stopped,
+    ):
+        table._update_table_in_batches(
+            {"MISSING": create_mock_data_model_ardupilot_parameter(name="MISSING")}, "simple", scroll_to_bottom=False
+        )
+
+    assert stopped.value.code == 1
+    errors = [record for record in caplog.records if record.levelname == "CRITICAL"]
+    assert len(errors) == 1
+    assert errors[0].getMessage() == "Parameter MISSING not found in the test_file file: 'missing metadata'"
+    assert errors[0].exc_info is not None
+    assert isinstance(errors[0].exc_info[1], KeyError)
+    complete.assert_not_called()
+
+
+@pytest.mark.parametrize("editable", [False, True])
+def test_external_choice_editability_preserves_or_restores_the_parameter_selection(
+    parameter_editor_table: ParameterEditorTable, editable: bool
+) -> None:
+    """
+    Restore a locked external choice without changing a manually editable selection.
+
+    GIVEN a choice row whose displayed selection differs from its model value,
+    WHEN manual editability changes,
+    THEN locking restores the model value and unlocking permits choice selection.
+    """
+    table = parameter_editor_table
+    parameter = create_mock_data_model_ardupilot_parameter(is_multiple_choice=True, value=0)
+    widget = PairTupleCombobox(table.view_port, list(parameter.choices_dict.items()), "0", parameter.name)
+    widget.current(1)
+    table._new_value_widgets[parameter.name] = widget
+
+    table._set_external_value_widget_editability(parameter, editable)
+
+    assert str(widget["state"]) == ("readonly" if editable else "disabled")
+    assert widget.get_selected_key() == ("1" if editable else "0")
+    assert parameter.value_as_string == "0"
+
+
+def test_updating_a_choice_widget_as_entry_text_leaves_its_selection_unchanged(
+    parameter_editor_table: ParameterEditorTable,
+) -> None:
+    """
+    Preserve choice labels when entry-specific synchronization is requested.
+
+    GIVEN a multiple-choice widget showing a selected label,
+    WHEN the generic entry-text helper is called,
+    THEN the chosen key and displayed label remain intact.
+    """
+    table = parameter_editor_table
+    parameter = create_mock_data_model_ardupilot_parameter(is_multiple_choice=True, value=0)
+    widget = PairTupleCombobox(table.view_port, list(parameter.choices_dict.items()), "1", parameter.name)
+
+    table._update_new_value_entry_text(widget, parameter)
+
+    assert widget.get_selected_key() == "1"
+    assert widget.get() == "Option 1"
+
+
+@pytest.mark.parametrize("state", ["normal", "disabled"])
+def test_bitmask_editor_opens_only_for_an_editable_value_widget(
+    parameter_editor_table: ParameterEditorTable, state: str
+) -> None:
+    """
+    Respect the current row's lock when the user requests bitmask editing.
+
+    GIVEN a normal or disabled bitmask value entry,
+    WHEN its double-click handler is requested,
+    THEN only an editable entry opens the bitmask dialog.
+    """
+    table = parameter_editor_table
+    parameter = create_mock_data_model_ardupilot_parameter(is_bitmask=True)
+    entry = ttk.Entry(table.view_port, state=state)
+    label = ttk.Label(table.view_port)
+    event = tk.Event()
+    event.widget = entry
+    with patch.object(table, "_open_bitmask_selection_window") as opened:
+        table._open_bitmask_selection_if_editable(event, parameter, None, label)
+
+    if state == "normal":
+        opened.assert_called_once_with(event, parameter, None, label)
+    else:
+        opened.assert_not_called()
+
+
+@pytest.mark.parametrize("initial_text", ["3", "invalid", ""])
+@pytest.mark.parametrize("close_action", ["close", "focus-out"])
+@pytest.mark.parametrize("parent_closed", [False, True])
+def test_bitmask_dialog_updates_the_decimal_preview_and_applies_the_checked_bits(
+    parameter_editor_table: ParameterEditorTable, initial_text: str, close_action: str, parent_closed: bool
+) -> None:
+    """
+    Apply selected bits and recover from an invalid decimal value in the entry.
+
+    GIVEN a bitmask entry with a valid or invalid initial decimal string,
+    WHEN the user selects bits 1 and 2 and closes or moves focus away from the dialog,
+    THEN the decimal preview and row show 6, validation runs, and the dialog releases row ownership.
+    """
+    table = parameter_editor_table
+    table.main_frame = ttk.Frame(table.main_frame)
+    parameter = create_mock_data_model_ardupilot_parameter(is_bitmask=True, value=1, fc_value=1)
+    entry = ttk.Entry(table.view_port)
+    entry.insert(0, initial_text)
+    reason = ttk.Entry(table.view_port)
+    label = ttk.Label(table.view_port)
+    event = tk.Event()
+    event.widget = entry
+
+    def update_parameter(_name: str, value: str, *, include_range_check: bool) -> ParameterValueUpdateResult:
+        assert include_range_check is True
+        parameter.set_new_value(value)
+        return ParameterValueUpdateResult(ParameterValueUpdateStatus.UPDATED)
+
+    table.parameter_editor.update_parameter_value.side_effect = update_parameter
+
+    def interact(window: tk.Toplevel, _target: tk.Misc | None = None) -> None:
+        assert table.bitmask_editor_open
+        assert window.title() == "Select TEST_PARAM Bitmask Options"
+        _select_bits_one_and_two(window, 3 if initial_text == "3" else 0)
+        if parent_closed:
+            table.main_frame.destroy()
+        if close_action == "close":
+            window.tk.call(window.protocol("WM_DELETE_WINDOW"))
+        else:
+            handler = next(call.args[2] for call in focus_bind.call_args_list if call.args[1] == "<FocusOut>")
+            with patch.object(window, "focus_get", return_value=MagicMock(winfo_ismapped=MagicMock(return_value=True))):
+                handler(tk.Event())
+                assert window.winfo_exists()
+            with patch.object(window, "focus_get", return_value=None):
+                handler(tk.Event())
+        assert not window.winfo_exists()
+        assert entry.get() == "6"
+        assert label["text"] == NEW_VALUE_DIFFERENT_STR
+
+    with (
+        patch.object(table, "_center_and_focus_window"),
+        patch.object(tk.Misc, "update_idletasks"),
+        patch.object(tk.Toplevel, "bind", autospec=True) as focus_bind,
+        patch.object(tk.Toplevel, "wait_window", autospec=True, side_effect=interact),
+        patch.object(entry, "bind", wraps=entry.bind) as entry_bindings,
+        patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as tooltip,
+    ):
+        table._open_bitmask_selection_window(event, parameter, reason, label)
+
+    assert not table.bitmask_editor_open
+    assert parameter.value_as_string == "6"
+    assert bool(entry.bind("<Double-Button-1>")) is not parent_closed
+    if not parent_closed:
+        _assert_bitmask_reopen_binding(table, entry_bindings, event, parameter, (reason, label))
+    table.parameter_editor.update_parameter_value.assert_called_once_with("TEST_PARAM", "6", include_range_check=True)
+    tooltip.assert_called_once_with(reason, parameter.tooltip_change_reason)
+    if initial_text == "invalid":
+        table._dialogs.show_error.assert_called_once_with(
+            "Invalid Bitmask Value", "The new value 'invalid' is not a valid integer for the TEST_PARAM bitmask."
+        )
+    else:
+        table._dialogs.show_error.assert_not_called()
+
+
+@pytest.mark.parametrize("added", [False, True])
+def test_single_parameter_addition_refreshes_only_after_the_model_accepts_it(
+    parameter_editor_table: ParameterEditorTable, added: bool
+) -> None:
+    """
+    Refresh and scroll only after the model actually adds a parameter.
+
+    GIVEN the model accepts or declines addition,
+    WHEN a single parameter is confirmed,
+    THEN the return value and refresh behavior agree with the model result.
+    """
+    table = parameter_editor_table
+    table.parameter_editor.add_parameter_to_current_file.return_value = added
+    table._pending_scroll_to_bottom = False
+
+    assert table._confirm_parameter_addition("TEST_PARAM") is added
+
+    assert table._pending_scroll_to_bottom is added
+    assert table.parameter_editor_window.repopulate_parameter_table.call_count == int(added)
+    table._dialogs.show_error.assert_not_called()
+
+
+def test_parameter_dialog_parent_resolution_reports_when_no_toplevel_exists(
+    parameter_editor_table: ParameterEditorTable,
+) -> None:
+    """
+    Explain an unavailable dialog parent instead of creating an unrelated window.
+
+    GIVEN a detached table whose ancestor lookup returns no Tk toplevel,
+    WHEN a dialog parent is requested,
+    THEN a clear parent-resolution error is raised.
+    """
+    table = parameter_editor_table
+    table.main_frame = MagicMock(spec=tk.Misc)
+    table.main_frame.master = None
+    table.main_frame.winfo_toplevel.return_value = None
+
+    with pytest.raises(RuntimeError, match="Could not resolve parent toplevel window"):
+        table._get_parent_toplevel()
+
+
+def test_unselected_choice_widget_does_not_submit_a_replacement_on_focus_out(
+    parameter_editor_table: ParameterEditorTable,
+) -> None:
+    """
+    Preserve a parameter value when its choice widget has no selection.
+
+    GIVEN a choice row whose displayed selection has been cleared,
+    WHEN the widget loses focus without selecting an option,
+    THEN no replacement value or model update is invented.
+    """
+    table = parameter_editor_table
+    parameter = create_mock_data_model_ardupilot_parameter(is_multiple_choice=True, value=0)
+    label = ttk.Label(table.view_port)
+    widget = table._create_new_value_entry(parameter, None, label)
+    assert isinstance(widget, PairTupleCombobox)
+    widget.set("")
+    assert widget.get_selected_key() is None
+    event = tk.Event()
+    event.widget = widget
+    event.type = tk.EventType.FocusOut
+
+    widget.testing_on_parameter_value_change(event)
+
+    assert parameter.value_as_string == "0"
+    table.parameter_editor.update_parameter_value.assert_not_called()
+
+
+@pytest.mark.parametrize("row_kind", ["bitmask", "readonly-bitmask", "numeric"])
+def test_batched_rendering_does_not_repeat_dismissed_bitmask_help(
+    parameter_editor_table: ParameterEditorTable, row_kind: str
+) -> None:
+    """
+    Respect a user's decision to dismiss bitmask-editor guidance.
+
+    GIVEN a batched bitmask row and a saved preference not to show its help,
+    WHEN rendering completes,
+    THEN completion is notified without reopening the dismissed popup.
+    """
+    table = parameter_editor_table
+    table.options.render_batch_size = 1
+    table.options.show_parameter_actions = False
+    parameter = create_mock_data_model_ardupilot_parameter(
+        is_bitmask=row_kind != "numeric", is_readonly=row_kind == "readonly-bitmask"
+    )
+    table.parameters = {parameter.name: parameter}
+    complete = MagicMock()
+    table.options.render_complete_callback = complete
+    with (
+        patch.object(tk.Misc, "update_idletasks"),
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.UsagePopupWindow.should_display",
+            return_value=False,
+        ) as preference,
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table."
+            "display_bitmask_parameters_editor_usage_popup"
+        ) as help_popup,
+    ):
+        table._update_table_in_batches(table.parameters, "simple", scroll_to_bottom=False)
+
+    if row_kind == "bitmask":
+        preference.assert_called_once_with("bitmask_parameter_editor")
+    else:
+        preference.assert_not_called()
+    help_popup.assert_not_called()
+    complete.assert_called_once_with()
+
+
+def test_bitmask_dialog_applies_to_replacement_widgets_after_the_original_row_is_removed(
+    parameter_editor_table: ParameterEditorTable,
+) -> None:
+    """
+    Apply a bitmask edit to the current row after recovery rebuilds the table.
+
+    GIVEN a bitmask dialog open while its original row widgets are replaced,
+    WHEN the user selects another bit and closes the dialog,
+    THEN the replacement value and difference label update without touching destroyed widgets.
+    """
+    table = parameter_editor_table
+    parameter = create_mock_data_model_ardupilot_parameter(is_bitmask=True, value=1, fc_value=3)
+    old_entry = ttk.Entry(table.view_port)
+    old_entry.insert(0, "1")
+    old_reason = ttk.Entry(table.view_port)
+    old_label = ttk.Label(table.view_port)
+    new_entry = ttk.Entry(table.view_port)
+    new_entry.insert(0, "0")
+    new_label = ttk.Label(table.view_port, text="stale")
+    table._new_value_widgets[parameter.name] = new_entry
+    table._value_is_different_labels[parameter.name] = new_label
+    event = tk.Event()
+    event.widget = old_entry
+
+    def update_parameter(_name: str, value: str, *, include_range_check: bool) -> ParameterValueUpdateResult:
+        assert include_range_check is True
+        parameter.set_new_value(value)
+        return ParameterValueUpdateResult(ParameterValueUpdateStatus.UPDATED)
+
+    table.parameter_editor.update_parameter_value.side_effect = update_parameter
+
+    def replace_row_and_close(window: tk.Toplevel, _target: tk.Misc | None = None) -> None:
+        old_entry.destroy()
+        old_reason.destroy()
+        old_label.destroy()
+        checkbox = next(
+            widget for widget in _descendants(window) if isinstance(widget, ttk.Checkbutton) and widget["text"] == "Bit 1"
+        )
+        checkbox.invoke()
+        window.tk.call(window.protocol("WM_DELETE_WINDOW"))
+        assert not window.winfo_exists()
+
+    with (
+        patch.object(table, "_center_and_focus_window"),
+        patch.object(tk.Misc, "update_idletasks"),
+        patch.object(tk.Toplevel, "wait_window", autospec=True, side_effect=replace_row_and_close),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as tooltip,
+    ):
+        table._open_bitmask_selection_window(event, parameter, old_reason, old_label)
+
+    assert new_entry.get() == "3"
+    assert new_label["text"] == " "
+    assert parameter.value_as_string == "3"
+    assert not table.bitmask_editor_open
+    tooltip.assert_not_called()
+    table._dialogs.show_error.assert_not_called()
+
+
+def test_normal_batched_table_reserves_rows_and_keeps_its_add_action_usable(
+    parameter_editor_table: ParameterEditorTable,
+) -> None:
+    """
+    Keep a normal configuration table usable before and after batched rendering.
+
+    GIVEN two normal parameters rendered in separate batches,
+    WHEN the final batch finishes,
+    THEN rows stay in order, the scrollbar reserves only actual rows, and Add opens the add workflow.
+    """
+    table = parameter_editor_table
+    table.view_port = ttk.Frame(table.main_frame)
+    table.parameters = None
+    table.options.render_batch_size = 1
+    table.options.show_parameter_actions = True
+    table.parameter_editor_window.gui_complexity = "advanced"
+    parameters = {name: create_mock_data_model_ardupilot_parameter(name=name, fc_value=0) for name in ("FIRST", "SECOND")}
+    table.parameter_editor.current_step_parameters = parameters
+    table.parameter_editor.should_display_bitmask_parameter_editor_usage.return_value = False
+    scheduled: list[Callable[[], None]] = []
+    with (
+        patch.object(table, "after_idle", side_effect=scheduled.append),
+        patch.object(tk.Misc, "update_idletasks"),
+        patch.object(table, "_apply_scroll_position"),
+        patch.object(table, "_on_parameter_add") as add,
+        patch.object(table, "_show_tooltip") as tooltip,
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.UsagePopupWindow.should_display",
+            return_value=True,
+        ),
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table."
+            "display_bitmask_parameters_editor_usage_popup"
+        ) as help_popup,
+    ):
+        table._update_table_in_batches(parameters, "advanced", scroll_to_bottom=False)
+        assert table.view_port.grid_rowconfigure(0)["minsize"] == 0
+        assert all(table.view_port.grid_rowconfigure(row)["minsize"] > 0 for row in (1, 2))
+        assert table.view_port.grid_rowconfigure(3)["minsize"] == 0
+        assert tuple(table._new_value_widgets) == ("FIRST",)
+        assert len(scheduled) == 1
+        scheduled.pop(0)()
+
+        assert [table._new_value_widgets[name].grid_info()["row"] for name in parameters] == [1, 2]
+        assert set(table.upload_checkbutton_var) == set(parameters)
+        footer = next(
+            widget for widget in table.view_port.winfo_children() if isinstance(widget, ttk.Button) and widget["text"] == "Add"
+        )
+        assert footer.grid_info()["row"] > 2
+        tooltip.assert_any_call(footer, "Add a parameter to the test_file file")
+        footer.invoke()
+        add.assert_called_once_with()
+        help_popup.assert_not_called()
+    assert [call.args[0] for call in table.parameter_editor.should_display_bitmask_parameter_editor_usage.call_args_list] == [
+        "FIRST",
+        "SECOND",
+    ]
+
+
+def test_restarting_batched_rendering_discards_the_previous_generations_callbacks(
+    parameter_editor_table: ParameterEditorTable,
+) -> None:
+    """
+    Prevent stale batches from restoring rows removed by a new table refresh.
+
+    GIVEN one render waiting for a later batch,
+    WHEN another parameter set replaces the table before that callback runs,
+    THEN the old callback cannot add obsolete rows or emit another completion notification.
+    """
+    table = parameter_editor_table
+    table.options.render_batch_size = 1
+    table.options.show_parameter_actions = False
+    table.parameters = {name: create_mock_data_model_ardupilot_parameter(name=name) for name in ("OLD", "OLD_LATER")}
+    completions: list[tuple[str, ...]] = []
+    table.options.render_complete_callback = lambda: completions.append(tuple(table._new_value_widgets))
+    scheduled: list[Callable[[], None]] = []
+    with (
+        patch.object(table, "after_idle", side_effect=scheduled.append),
+        patch.object(tk.Misc, "update_idletasks"),
+        patch.object(table, "_apply_scroll_position"),
+    ):
+        table.repopulate_table(show_only_differences=False, gui_complexity="simple")
+        assert len(scheduled) == 1
+        table.parameters = {"NEW": create_mock_data_model_ardupilot_parameter(name="NEW")}
+        table.repopulate_table(show_only_differences=False, gui_complexity="simple")
+        assert completions == [("NEW",)]
+
+        scheduled.pop(0)()
+
+    assert tuple(table._new_value_widgets) == ("NEW",)
+    assert completions == [("NEW",)]
+    assert not scheduled
+
+
+def test_bitmask_editing_retains_row_ownership_when_the_dialog_is_reopened(
+    parameter_editor_table: ParameterEditorTable,
+) -> None:
+    """
+    Reacquire row ownership correctly for each consecutive bitmask edit.
+
+    GIVEN a bitmask dialog that was closed without changing the value,
+    WHEN the same row's dialog is opened again,
+    THEN each open dialog owns the row and each completed dialog releases it.
+    """
+    table = parameter_editor_table
+    parameter = create_mock_data_model_ardupilot_parameter(is_bitmask=True, value=1)
+    entry = ttk.Entry(table.view_port)
+    entry.insert(0, "1")
+    label = ttk.Label(table.view_port)
+    event = tk.Event()
+    event.widget = entry
+    table.parameter_editor.update_parameter_value.return_value = ParameterValueUpdateResult(
+        ParameterValueUpdateStatus.UNCHANGED
+    )
+
+    def close(window: tk.Toplevel, _target: tk.Misc | None = None) -> None:
+        assert table.bitmask_editor_open
+        window.tk.call(window.protocol("WM_DELETE_WINDOW"))
+        assert not window.winfo_exists()
+
+    with (
+        patch.object(table, "_center_and_focus_window"),
+        patch.object(tk.Misc, "update_idletasks"),
+        patch.object(tk.Toplevel, "wait_window", autospec=True, side_effect=close),
+    ):
+        for _dialog_index in range(2):
+            table._open_bitmask_selection_window(event, parameter, None, label)
+            assert not table.bitmask_editor_open
+    assert parameter.value_as_string == "1"
+    table._dialogs.show_error.assert_not_called()

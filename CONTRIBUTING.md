@@ -101,6 +101,10 @@ command handling used by calibration and motor-testing plugins. External paramet
 upload selection, configured file-upload policy, atomic file replacement, and
 flight-controller diagnostic assembly and device rows are also included, together
 with MAVLink inspector sorting, source identifiers, and decoded-field presentation.
+ESC log analysis covers armed-period RPM and current comparisons, per-output error
+peaks, motor-spin margins, and documented DShot output rates.
+Parameter-table tests cover add-dialog filtering and selection, bulk-add feedback,
+bitmask editing, and completion of batched rendering.
 It runs on Linux, macOS, or Windows
 through WSL.
 
