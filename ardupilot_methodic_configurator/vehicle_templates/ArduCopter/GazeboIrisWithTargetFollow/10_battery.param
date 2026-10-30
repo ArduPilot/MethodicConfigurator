@@ -16,5 +16,5 @@ BATT2_FS_LOW_ACT,1  # flying indoors, just land ASAP, no need to hit the ceiling
 BATT2_FS_VOLTSRC,1  # In our build this is a redundant monitor for batt1 so == BATT_FS_VOLTSRC
 BATT2_LOW_MAH,600  # In our build this is a redundant monitor for batt1 so == BATT_LOW_MAH
 BATT2_LOW_VOLT,14.4  # In our build this is a redundant monitor for batt1 so == BATT_LOW_VOLT
-MOT_BAT_VOLT_MAX,12.8
-MOT_BAT_VOLT_MIN,9.6
+MOT_BAT_VOLT_MAX,12.8001  # Scale the PIDs up when battery voltage is below this threshold
+MOT_BAT_VOLT_MIN,9.6  # Scale the PIDs up when battery voltage is above this threshold

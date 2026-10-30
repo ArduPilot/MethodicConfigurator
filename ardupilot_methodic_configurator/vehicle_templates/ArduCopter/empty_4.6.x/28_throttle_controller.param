@@ -1,4 +1,4 @@
-ATC_THR_MIX_MAN,0.1  # Because ALTHOLD flight mode was used for more than 30 seconds to correctly learn the MOT_THST_HOVER value
+ATC_THR_MIX_MAN,0.5  # Because ALTHOLD flight mode was used for more than 30 seconds to correctly learn the MOT_THST_HOVER value
 MOT_BAT_VOLT_MAX,0
 MOT_BAT_VOLT_MIN,0
 MOT_SPOOL_TIME,0.5
