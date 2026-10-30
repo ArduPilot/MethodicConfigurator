@@ -210,8 +210,14 @@ begin
 			MPExplode(aSelectedTasks, regstring, ',');
 			if GetArrayLength(aSelectedTasks) > 0 then begin
 				for i := 0 to GetArrayLength(aSelectedTasks)-1 do begin
-					if comparetext(aSelectedTasks[i], taskname) = 0 then
+					if comparetext(aSelectedTasks[i], taskname) = 0 then begin
 						ModPath();
+						// Older all-users installers added the directory to the user PATH.
+						if regroot = HKLM then begin
+							ModPathType := 'user';
+							ModPath();
+						end;
+					end;
 				end;
 			end;
 		end;

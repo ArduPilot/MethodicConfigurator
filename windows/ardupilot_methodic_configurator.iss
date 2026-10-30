@@ -23,7 +23,6 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
-UsePreviousPrivileges=no
 DefaultDirName={autopf}\{#MyAppName}
 ; DefaultDirName={code:GetDefaultDirName}
 DefaultGroupName={#MyAppName}
@@ -34,6 +33,8 @@ SolidCompression=yes
 ChangesEnvironment=yes
 
 [InstallDelete]
+; Remove stale application files from the default directory for this scope.
+Type: filesandordirs; Name: "{autopf}\{#MyAppName}"
 
 ; Remove ArduCopter template files
 Type: filesandordirs; Name: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.3.8-params"
