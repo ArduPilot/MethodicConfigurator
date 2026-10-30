@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 
 ESC_MESSAGE_OFFSETS = {f"ESC_TELEMETRY_{start}_TO_{start + 3}": start - 1 for start in range(1, MAX_ESCS + 1, 4)}
+_UNKNOWN_ESC_MESSAGES = {f"UNKNOWN_{getattr(mavlink, f'MAVLINK_MSG_ID_{name}')}" for name in ESC_MESSAGE_OFFSETS}
 
 
 class EscTelemetryBackend:
@@ -38,6 +39,7 @@ class EscTelemetryBackend:
         self._master: Any = None
         self._last_request: float | None = None
         self._readings: dict[int, EscTelemetryReading] = {}
+        self._decoder = mavlink.MAVLink(None)
 
     def close(self) -> None:
         """Remove only this observer and reset request timing."""
@@ -56,6 +58,17 @@ class EscTelemetryBackend:
         )
 
     def _capture(self, master: Any, message: Any) -> None:  # noqa: ANN401
+        if message.get_type() in _UNKNOWN_ESC_MESSAGES:
+            # A connection that initially detected MAVLink 1 can still receive
+            # MAVLink 2 frames, but its v1 dialect does not know ESC message IDs.
+            # Decode and validate the original packet without replacing the
+            # shared parser or disturbing other connection consumers.
+            try:
+                self._decoder.signing = master.mav.signing
+                message = self._decoder.decode(bytearray(message.get_msgbuf()))
+            except mavlink.MAVError as exc:
+                logging_debug("Invalid ESC telemetry packet: %s", exc)
+                return
         offset = ESC_MESSAGE_OFFSETS.get(str(message.get_type()))
         if offset is None:
             return
@@ -88,18 +101,22 @@ class EscTelemetryBackend:
             if self._last_request is None or now - self._last_request >= 1.0:
                 # ArduPilot maps this first group to its shared sender for ALL ESC groups.
                 system_id, component_id = self._target_ids(master)
-                master.mav.command_long_send(
-                    system_id,
-                    component_id,
-                    mavlink.MAV_CMD_REQUEST_MESSAGE,
-                    0,
-                    mavlink.MAVLINK_MSG_ID_ESC_TELEMETRY_1_TO_4,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
+                # ESC_TELEMETRY_* IDs require MAVLink 2. Encode this request
+                # as v2 even if the link initially negotiated MAVLink 1.
+                master.mav.send(
+                    mavlink.MAVLink_command_long_message(
+                        system_id,
+                        component_id,
+                        mavlink.MAV_CMD_REQUEST_MESSAGE,
+                        0,
+                        mavlink.MAVLINK_MSG_ID_ESC_TELEMETRY_1_TO_4,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                    )
                 )
                 self._last_request = now
             deadline = self._clock() + 0.01
