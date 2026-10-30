@@ -126,6 +126,52 @@ def test_rc_monitor_yields_its_timer_to_diagnostics_and_resumes_once(rc_navigati
     rc_navigation_view.controller.set_param.assert_not_called()
 
 
+def test_rc_monitor_restores_stream_after_pause(rc_navigation_view: SimpleNamespace) -> None:
+    """
+    Monitoring resumes after yielding the connection.
+
+    GIVEN the controller step is receiving telemetry,
+    WHEN another operation pauses and resumes the monitor,
+    THEN the stream is released while paused and requested again on the next poll.
+    """
+    view = rc_navigation_view.view
+    controller = rc_navigation_view.controller
+    view._stop_polling()
+    view._check_telemetry()
+    controller.request_rc_receiver_messages.assert_called_once_with()
+    view.on_deactivate()
+    assert controller.request_rc_receiver_messages.call_args.args == (0,)
+    view.on_activate()
+    view._stop_polling()
+    view._check_telemetry()
+    assert [call.args for call in controller.request_rc_receiver_messages.call_args_list] == [(), (0,), ()]
+
+
+def test_controller_step_refreshes_bars_for_consecutive_samples(rc_navigation_view: SimpleNamespace) -> None:
+    """
+    Consecutive receiver samples update the real controller-step widgets.
+
+    GIVEN the controller step has opened after the receiver stream was restored,
+    WHEN the user moves a channel twice,
+    THEN each new PWM value is displayed and the telemetry stream is requested.
+    """
+    view = rc_navigation_view.view
+    controller = rc_navigation_view.controller
+    messages = []
+    for pwm in (1100, 1900):
+        message = MagicMock(chancount=1)
+        message.get_type.return_value = "RC_CHANNELS"
+        for number in range(1, 17):
+            setattr(message, f"chan{number}_raw", pwm)
+        messages.extend((message, None))
+    controller.master.recv_match.side_effect = messages
+    for expected in ("1100 µs", "1900 µs"):
+        view._stop_polling()
+        view._check_telemetry()
+        assert view.channel_bars._value_labels[1].cget("text") == expected
+    controller.request_rc_receiver_messages.assert_called_once_with()
+
+
 class TestRCChannelBars:
     """Test the user's live channel-value and calibration-marker display."""
 
@@ -576,6 +622,7 @@ def test_embedded_monitor_initialises_all_markers_and_preserves_channels_on_hear
     """
     controller = MagicMock()
     controller.fc_parameters = {"RC1_MIN": 990.0, "RC1_MAX": 2010.0, "RC1_TRIM": 1490.0}
+    controller.request_rc_receiver_messages.return_value = (True, "")
     controller.master.recv_match.return_value = None
     parent = tk.Frame(tk_root)
     view = RCCalibrationView(parent, RCCalibrationDataModel(controller), MagicMock(spec=BaseWindow))
@@ -586,6 +633,7 @@ def test_embedded_monitor_initialises_all_markers_and_preserves_channels_on_hear
         canvas = view.channel_bars._bar_canvases[1]
         assert len(canvas.find_withtag("calibration_marker")) == 3
         message = MagicMock(chancount=4)
+        message.get_type.return_value = "RC_CHANNELS"
         for channel_number in range(1, 17):
             setattr(message, f"chan{channel_number}_raw", 1600 if channel_number == 1 else 1500)
         controller.master.recv_match.side_effect = [message, None]
@@ -593,7 +641,8 @@ def test_embedded_monitor_initialises_all_markers_and_preserves_channels_on_hear
         view._check_telemetry()
         before = view.channel_bars._value_labels[1].cget("text")
         heartbeat = MagicMock(custom_mode=3)
-        controller.master.recv_match.side_effect = [None, heartbeat]
+        heartbeat.get_type.return_value = "HEARTBEAT"
+        controller.master.recv_match.side_effect = [heartbeat]
         view._stop_polling()
         view._check_telemetry()
         assert before == "1600 µs"
@@ -651,7 +700,7 @@ def test_embedded_monitor_aligns_sections_with_documentation_and_moves_scrollbar
         host.destroy()
 
 
-def test_floating_monitor_shares_the_stick_boxes_and_three_channel_markers(tk_root: tk.Tk) -> None:
+def test_floating_monitor_shares_the_stick_boxes_and_three_channel_markers(tk_root: tk.Tk) -> None:  # noqa: PLR0915 # pylint: disable=too-many-statements
     """
     The floating live monitor presents the same markers and stick preview as the embedded view.
 
@@ -661,6 +710,7 @@ def test_floating_monitor_shares_the_stick_boxes_and_three_channel_markers(tk_ro
     """
     controller = MagicMock()
     controller.fc_parameters = {"RC1_MIN": 990.0, "RC1_MAX": 2010.0, "RC1_TRIM": 1490.0}
+    controller.request_rc_receiver_messages.return_value = (True, "")
     controller.master.recv_match.return_value = None
     root = tk.Toplevel(tk_root)
     root.withdraw()
@@ -696,13 +746,16 @@ def test_floating_monitor_shares_the_stick_boxes_and_three_channel_markers(tk_ro
             assert tuple(int(str(value)) for value in section.cget("padding")) == (4,)
             assert section.pack_info()["pady"] == (0, 4)
         message = MagicMock(chancount=4)
+        message.get_type.return_value = "RC_CHANNELS"
         for number in range(1, 17):
             setattr(message, f"chan{number}_raw", 1700 if number == 3 else 1500)
         controller.master.recv_match.side_effect = [message, None]
         popup._stop_polling()
         popup._check_telemetry()
         assert popup.channel_bars._value_labels[3].cget("text") == "1700 µs"
-        controller.master.recv_match.side_effect = [None, MagicMock(custom_mode=5)]
+        heartbeat = MagicMock(custom_mode=5)
+        heartbeat.get_type.return_value = "HEARTBEAT"
+        controller.master.recv_match.side_effect = [heartbeat]
         popup._stop_polling()
         popup._check_telemetry()
         assert popup.channel_bars._value_labels[3].cget("text") == "1700 µs"
@@ -728,6 +781,7 @@ def test_cancel_calibration_restores_configured_markers_immediately(tk_root: tk.
     """
     controller = MagicMock()
     controller.fc_parameters = {"RC1_MIN": 1000.0, "RC1_MAX": 2000.0, "RC1_TRIM": 1490.0}
+    controller.request_rc_receiver_messages.return_value = (True, "")
     controller.master.recv_match.return_value = None
     parent = tk.Frame(tk_root)
     view = RCCalibrationView(parent, RCCalibrationDataModel(controller), MagicMock(spec=BaseWindow))
@@ -735,6 +789,7 @@ def test_cancel_calibration_restores_configured_markers_immediately(tk_root: tk.
         view._start_btn.invoke()
         assert str(view._cancel_btn.cget("state")) == "normal"
         message = MagicMock(chancount=1)
+        message.get_type.return_value = "RC_CHANNELS"
         for number in range(1, 17):
             setattr(message, f"chan{number}_raw", 1300)
         controller.master.recv_match.side_effect = [message, None]
@@ -764,6 +819,7 @@ def test_mode_combobox_stages_mapping_and_refreshes_new_values_without_upload(
     controller, editor = rc_staging_context
     model = RCCalibrationDataModel(controller, editor)
     message = MagicMock(chancount=4)
+    message.get_type.return_value = "RC_CHANNELS"
     for number in range(1, 17):
         setattr(message, f"chan{number}_raw", 1800 if number == 3 else 1500)
     controller.master.recv_match.side_effect = [message, None]
@@ -1147,6 +1203,7 @@ def test_rc_monitor_warns_once_for_a_telemetry_gap_then_recovers(
     assert view._timer_id is not None
     # When: Fresh receiver telemetry arrives.
     message = MagicMock(chancount=16)
+    message.get_type.return_value = "RC_CHANNELS"
     for number in range(1, 17):
         setattr(message, f"chan{number}_raw", 1700 if number == 3 else 1500)
     context.controller.master.recv_match.side_effect = [message, None]

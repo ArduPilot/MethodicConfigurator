@@ -493,6 +493,11 @@ class RCCalibrationPopup(CalibrationPopupBase["RCCalibrationDataModel"]):
         self._timer_id = self.root.after(100, self._check_telemetry)
         logging_debug(_("RC calibration progress popup created and polling scheduled."))
 
+    def destroy(self) -> None:
+        """Release the requested stream when the monitor closes."""
+        self.model.stop_monitoring()
+        super().destroy()
+
     def _setup_ui(self) -> None:
         content_frame = self._create_framed_ui(_("Live Monitor"))
         content_frame.pack_configure(padx=_RC_FRAME_PADDING, pady=_RC_FRAME_PADDING)
@@ -709,6 +714,7 @@ class RCCalibrationView(ttk.Frame):  # pylint: disable=too-many-ancestors, too-m
     def on_deactivate(self) -> None:
         """Yield the shared receiver while hidden or while diagnostics is open."""
         self._stop_polling()
+        self.model.stop_monitoring()
 
     def _check_telemetry(self) -> None:
         telemetry = self.model.get_rc_telemetry()
@@ -736,7 +742,7 @@ class RCCalibrationView(ttk.Frame):  # pylint: disable=too-many-ancestors, too-m
     def destroy(self) -> None:
         """Stop the polling loop before destroying the widget."""
         try:
-            self._stop_polling()
+            self.on_deactivate()
             if self._calibration_active:
                 self.model.cancel_calibration()
                 self._calibration_active = False

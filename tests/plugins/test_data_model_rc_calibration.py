@@ -40,6 +40,7 @@ def _make_rc_channels_msg(raw: list[int], chancount: int | None = None) -> Magic
     """
     padded = list(raw) + [_RC_INVALID_PWM] * (18 - len(raw))
     msg = MagicMock()
+    msg.get_type.return_value = "RC_CHANNELS"
     for i in range(18):
         setattr(msg, f"chan{i + 1}_raw", padded[i])
     msg.chancount = chancount if chancount is not None else len(raw)
@@ -52,6 +53,7 @@ def connected_flight_controller() -> MagicMock:
     flight_controller = MagicMock()
     flight_controller.master = MagicMock()
     flight_controller.master.recv_match.return_value = None
+    flight_controller.request_rc_receiver_messages.return_value = (True, "")
     flight_controller.fc_parameters = {}
     return flight_controller
 
@@ -315,6 +317,74 @@ class TestRCCalibrationDataModelFinish:
 class TestRCCalibrationDataModelTelemetry:
     """Test live RC telemetry parsing from MAVLink RC_CHANNELS messages."""
 
+    def test_batch_preserves_extremes_and_displays_latest_sample(self, rc_staging_context) -> None:
+        """Queued extremes are staged even when the latest sample has returned to center."""
+        controller, editor = rc_staging_context
+        model = RCCalibrationDataModel(controller, editor)
+        model.start_calibration()
+        controller.master.recv_match.side_effect = [
+            _make_rc_channels_msg([1100]),
+            _make_rc_channels_msg([1900]),
+            _make_rc_channels_msg([1500]),
+            None,
+        ]
+
+        telemetry = model.get_rc_telemetry()
+
+        assert telemetry["channels"][0]["value"] == 1500
+        assert model.finish_calibration()[0]
+        assert editor.current_step_parameters["RC1_MIN"].get_new_value() == 1100
+        assert editor.current_step_parameters["RC1_MAX"].get_new_value() == 1900
+
+    def test_poll_bounds_unrelated_packets(self, connected_flight_controller: MagicMock) -> None:
+        """Unrelated traffic cannot cause an unbounded poll or hide queued RC data forever."""
+        controller = connected_flight_controller
+        unrelated = MagicMock()
+        unrelated.get_type.return_value = "SYS_STATUS"
+        controller.master.recv_match.side_effect = [unrelated] * 50 + [_make_rc_channels_msg([1200]), None]
+        model = RCCalibrationDataModel(controller)
+
+        assert not model.get_rc_telemetry()
+        assert controller.master.recv_match.call_count == 50
+        assert model.get_rc_telemetry()["channels"][0]["value"] == 1200
+
+    def test_monitor_rerequests_stream_after_reconnection(self, connected_flight_controller: MagicMock) -> None:
+        """
+        Monitoring resumes after a controller reconnects.
+
+        GIVEN a monitor that requested telemetry on an earlier connection,
+        WHEN the flight controller reconnects with a different link,
+        THEN the stream is requested on the new connection and old stick readings are discarded.
+        """
+        controller = connected_flight_controller
+        model = RCCalibrationDataModel(controller)
+        controller.master.recv_match.side_effect = [_make_rc_channels_msg([1900]), None]
+        assert model.get_rc_telemetry()["roll"] == 800
+        controller.master = None
+        assert not model.get_rc_telemetry()
+        controller.master = MagicMock()
+        controller.master.recv_match.return_value = None
+        assert not model.get_rc_telemetry()
+        assert model.get_preview_axes()["roll"] == 0
+        assert controller.request_rc_receiver_messages.call_count == 2
+
+    def test_monitor_uses_existing_stream_when_interval_request_is_rejected(
+        self, connected_flight_controller: MagicMock
+    ) -> None:
+        """
+        Existing telemetry remains usable when interval commands are unsupported.
+
+        GIVEN a controller that rejects interval requests but already sends RC data,
+        WHEN the monitor polls,
+        THEN it still shows received values and does not repeatedly request the stream.
+        """
+        controller = connected_flight_controller
+        controller.request_rc_receiver_messages.return_value = (False, "unsupported")
+        controller.master.recv_match.side_effect = [_make_rc_channels_msg([1200]), _make_rc_channels_msg([1800]), None]
+        model = RCCalibrationDataModel(controller)
+        assert model.get_rc_telemetry()["channels"][0]["value"] == 1800
+        controller.request_rc_receiver_messages.assert_called_once_with()
+
     def test_telemetry_is_empty_when_disconnected(self, disconnected_flight_controller) -> None:
         """
         Telemetry is empty without a link so the GUI keeps waiting.
@@ -358,10 +428,8 @@ class TestRCCalibrationDataModelTelemetry:
         assert telemetry["pitch"] == 0.0
         assert telemetry["throttle"] == 1000.0
         assert telemetry["yaw"] == 0.0
-        assert [entry.kwargs for entry in connected_flight_controller.master.recv_match.call_args_list] == [
-            {"type": "RC_CHANNELS", "blocking": False},
-            {"type": "HEARTBEAT", "blocking": False},
-        ]
+        assert connected_flight_controller.master.recv_match.call_count == 2
+        connected_flight_controller.master.recv_match.assert_called_with(blocking=False)
 
     def test_telemetry_keeps_all_channels_and_marks_invalid_values_unavailable(self, connected_flight_controller) -> None:
         """
@@ -453,19 +521,21 @@ class TestRCCalibrationDataModelTelemetry:
 
     def test_telemetry_includes_flight_mode_from_heartbeat(self, connected_flight_controller) -> None:
         """
-        A HEARTBEAT following the RC_CHANNELS read populates the flight mode.
+        A HEARTBEAT following an RC_CHANNELS message populates the flight mode.
 
         GIVEN: An RC_CHANNELS message followed by a HEARTBEAT with custom_mode=3
-        WHEN: get_rc_telemetry reads both messages
+        WHEN: get_rc_telemetry reads both messages in one poll
         THEN: The telemetry carries flight_mode="3"
         """
         model = RCCalibrationDataModel(connected_flight_controller)
         rc_msg = _make_rc_channels_msg([1500], chancount=1)
         hb = MagicMock()
         hb.custom_mode = 3
-        connected_flight_controller.master.recv_match.side_effect = [rc_msg, hb]
+        hb.get_type.return_value = "HEARTBEAT"
+        connected_flight_controller.master.recv_match.side_effect = [rc_msg, hb, None]
 
         telemetry = model.get_rc_telemetry()
+        assert telemetry["channels"][0]["value"] == 1500
 
         assert telemetry["flight_mode"] == "3"
 
