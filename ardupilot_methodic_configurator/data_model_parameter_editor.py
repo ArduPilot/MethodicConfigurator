@@ -192,6 +192,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         # Track parameters deleted by user (were in original file) or renamed by the system in the current configuration step
         self._deleted_parameters: set[str] = set()
+        # Keep explicit derived-row deletions suppressed after export until the step is reloaded.
+        self._suppressed_derived_parameters: set[str] = set()
 
         # Track connection renames applied for the current step: maps original_file_param_name → current renamed name.
         # Used by refresh_current_step_connection_renames() to undo/redo renames without a full rebuild.
@@ -2094,6 +2096,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self._added_parameters.clear()
         self._inline_derived_parameters.clear()
         self._deleted_parameters.clear()
+        self._suppressed_derived_parameters.clear()
         self._connection_renames.clear()
 
         # Process configuration step and get operations to apply
@@ -2325,11 +2328,12 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             param_name: The name of the parameter to delete
 
         """
-        # Track saved rows and automatically inserted derived rows so refresh respects the deletion.
-        if (
-            param_name in self._local_filesystem.file_parameters.get(self.current_file, ParDict())
-            or param_name in self._inline_derived_parameters
-        ):
+        is_derived = param_name in self._inline_derived_parameters or (
+            param_name in self.current_step_parameters and self.current_step_parameters[param_name].is_derived
+        )
+        if is_derived:
+            self._suppressed_derived_parameters.add(param_name)
+        if param_name in self._local_filesystem.file_parameters.get(self.current_file, ParDict()) or is_derived:
             self._deleted_parameters.add(param_name)
 
         # If it was previously added in this session, remove from added set
@@ -2390,6 +2394,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 self._added_parameters.add(param_name)
             # If was previously deleted, remove from deleted set
             self._deleted_parameters.discard(param_name)
+            self._suppressed_derived_parameters.discard(param_name)
 
             return True
 
@@ -2406,6 +2411,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                     self._added_parameters.add(param_name)
                 # If was previously deleted, remove from deleted set
                 self._deleted_parameters.discard(param_name)
+                self._suppressed_derived_parameters.discard(param_name)
 
                 return True
             if fc_parameters:
@@ -2795,6 +2801,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             if (available is None or name in available)
             and name not in deleted_by_step
             and name not in self._deleted_parameters
+            and name not in self._suppressed_derived_parameters
         }
 
         for param_name in self._inline_derived_parameters - applicable:

@@ -3831,6 +3831,7 @@ class TestUnsavedChangesTracking:
 
         # Assert: No net change, so no unsaved changes
         assert not parameter_editor._has_unsaved_changes()
+        assert "PARAM2" not in parameter_editor._suppressed_derived_parameters
 
     def test_user_not_prompted_when_deleting_then_adding_back_same_parameter(self, parameter_editor) -> None:
         """
@@ -7456,14 +7457,34 @@ class TestDerivedParameterPatching:
 
         assert parameter_editor.add_parameter_to_current_file("SERIAL2_PROTOCOL")
         assert "SERIAL2_PROTOCOL" not in parameter_editor._deleted_parameters
+        assert "SERIAL2_PROTOCOL" not in parameter_editor._suppressed_derived_parameters
         parameter_editor.refresh_current_step_computed_parameters()
         assert "SERIAL2_PROTOCOL" in parameter_editor.current_step_parameters
 
         parameter_editor.delete_parameter_from_current_file("SERIAL2_PROTOCOL")
+        assert "SERIAL2_PROTOCOL" in parameter_editor._deleted_parameters
+        parameter_editor.refresh_current_step_computed_parameters()
+        assert "SERIAL2_PROTOCOL" not in parameter_editor.current_step_parameters
         parameter_editor._export_current_file(annotate_doc=False)
         exported = parameter_editor._local_filesystem.export_to_param.call_args.args[0]
         assert "SERIAL2_PROTOCOL" not in exported
         assert "SERIAL2_PROTOCOL" not in parameter_editor._local_filesystem.file_parameters[step_file]
+        assert not parameter_editor._has_unsaved_changes()
+
+        parameter_editor.refresh_current_step_computed_parameters()
+        assert "SERIAL2_PROTOCOL" not in parameter_editor.current_step_parameters
+
+        assert parameter_editor.add_parameter_to_current_file("SERIAL2_PROTOCOL")
+        assert "SERIAL2_PROTOCOL" not in parameter_editor._suppressed_derived_parameters
+        parameter_editor.refresh_current_step_computed_parameters()
+        assert "SERIAL2_PROTOCOL" in parameter_editor.current_step_parameters
+        parameter_editor.delete_parameter_from_current_file("SERIAL2_PROTOCOL")
+
+        parameter_editor._config_step_processor.process_configuration_step = MagicMock(
+            return_value=({}, [], [], set(), [], ParDict({"SERIAL2_PROTOCOL": Par(2.0)}), set())
+        )
+        parameter_editor._repopulate_configuration_step_parameters()
+        assert "SERIAL2_PROTOCOL" in parameter_editor.current_step_parameters
 
     def test_inline_selection_adds_and_retires_only_automatic_derived_rows(self, parameter_editor: ParameterEditor) -> None:
         """GIVEN changing ports, WHEN refreshed, THEN only the final derived row is exported."""
