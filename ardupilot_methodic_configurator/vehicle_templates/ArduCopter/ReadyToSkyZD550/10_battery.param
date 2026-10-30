@@ -7,5 +7,5 @@ BATT_FS_LOW_ACT,2  # Return and land at home or rally point
 BATT_FS_VOLTSRC,1  # Let the firmware handle the nasty business of variable and battery dependent internal resistance
 BATT_LOW_MAH,2000  # trigger low failsafe just below 33% remaining
 BATT_LOW_VOLT,21.6  # Low failsafe voltage x nr. of cells
-MOT_BAT_VOLT_MAX,26.1
-MOT_BAT_VOLT_MIN,19.799999
+MOT_BAT_VOLT_MAX,26.1  # Scale the PIDs up when battery voltage is below this threshold
+MOT_BAT_VOLT_MIN,19.8  # Scale the PIDs up when battery voltage is above this threshold
