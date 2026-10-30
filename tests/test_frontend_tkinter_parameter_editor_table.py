@@ -16,7 +16,7 @@ from collections.abc import Callable, Generator
 from dataclasses import dataclass
 from tkinter import ttk
 from types import SimpleNamespace
-from typing import Any, cast
+from typing import Any, Literal, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -129,10 +129,13 @@ def add_parameter_dialog(parameter_editor_table: ParameterEditorTable) -> Genera
         widget: tk.Misc,
         sequence: str | None = None,
         func: Callable[[tk.Event], object] | str | None = None,
-        add: str | None = None,
-    ) -> str:
+        add: Literal["", "+"] | bool | None = None,
+    ) -> str | None:
         if sequence is not None and callable(func):
             bindings[widget, sequence] = func
+        if isinstance(func, str):
+            original_bind(widget, sequence, func, add)
+            return None
         return original_bind(widget, sequence, func, add)
 
     with (
@@ -3686,7 +3689,7 @@ def test_normal_batched_table_reserves_rows_and_keeps_its_add_action_usable(
     ):
         table._update_table_in_batches(parameters, "advanced", scroll_to_bottom=False)
         assert table.view_port.grid_rowconfigure(0)["minsize"] == 0
-        assert all(table.view_port.grid_rowconfigure(row)["minsize"] > 0 for row in (1, 2))
+        assert all(int(table.view_port.grid_rowconfigure(row)["minsize"]) > 0 for row in (1, 2))
         assert table.view_port.grid_rowconfigure(3)["minsize"] == 0
         assert tuple(table._new_value_widgets) == ("FIRST",)
         assert len(scheduled) == 1
