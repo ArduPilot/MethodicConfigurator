@@ -1050,20 +1050,23 @@ def test_craft_preview_shows_sticks_around_a_cropped_drone_on_the_frame_backgrou
         sticks = preview.stick_preview
         left, right = sticks._canvases[0], sticks._canvases[1]
         image_frame = sticks.craft_frame
-        assert sticks.mode_selector.winfo_rooty() < left.winfo_rooty()
-        assert 0 <= image_frame.winfo_rootx() - (left.winfo_rootx() + left.winfo_width()) <= 4
-        assert 0 <= right.winfo_rootx() - (image_frame.winfo_rootx() + image_frame.winfo_width()) <= 4
+        # Windows can report zero/stale screen coordinates for descendants of a withdrawn root.
+        # Compare geometry in the shared parent instead of depending on native window mapping.
+        gimbals = left.master
+        assert gimbals is not None
+        assert sticks.mapping_frame.winfo_y() + sticks.mode_selector.winfo_y() < gimbals.winfo_y() + left.winfo_y()
+        assert 0 <= image_frame.winfo_x() - (left.winfo_x() + left.winfo_width()) <= 4
+        assert 0 <= right.winfo_x() - (image_frame.winfo_x() + image_frame.winfo_width()) <= 4
         assert preview.winfo_width() == 600
-        assert right.winfo_rootx() + right.winfo_width() < preview.winfo_rootx() + preview.winfo_width()
+        assert sticks.winfo_x() + gimbals.winfo_x() + right.winfo_x() + right.winfo_width() < preview.winfo_width()
         status = preview.status_label
-        assert status.winfo_rooty() == sticks.mapping_frame.winfo_rooty()
-        assert status.winfo_rootx() + status.winfo_width() == (
-            sticks.mapping_frame.winfo_rootx() + sticks.mapping_frame.winfo_width()
-        )
-        assert status.winfo_rootx() >= sticks.mode_selector.winfo_rootx() + sticks.mode_selector.winfo_width()
-        assert left.winfo_rooty() == right.winfo_rooty()
-        assert left.winfo_rooty() <= preview.image_label.winfo_rooty() + preview.image_label.winfo_height() / 2
-        assert left.winfo_rooty() + left.winfo_height() >= preview.image_label.winfo_rooty()
+        assert status.winfo_y() == 0
+        assert status.winfo_x() + status.winfo_width() == sticks.mapping_frame.winfo_width()
+        assert status.winfo_x() >= sticks.mode_selector.winfo_x() + sticks.mode_selector.winfo_width()
+        assert left.winfo_y() == right.winfo_y()
+        image_top = image_frame.winfo_y() + preview.image_label.winfo_y()
+        assert left.winfo_y() <= image_top + preview.image_label.winfo_height() / 2
+        assert left.winfo_y() + left.winfo_height() >= image_top
         image = ImageTk.getimage(preview.image_label.image).convert("RGB")  # type: ignore[attr-defined]
         assert image.size == (288, 160)
         background = ttk.Style(preview).lookup("TFrame", "background") or "#d9d9d9"
