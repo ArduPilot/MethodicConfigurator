@@ -2948,8 +2948,9 @@ def test_transfer_planning_failure_never_starts_a_transfer(
     window = local_action_browser
     window.ui.ask_yesno.return_value = True
     planner = "_prepare_remote_download" if direction == "download" else "_build_local_upload_plan"
-    settings = {"side_effect": OSError("planning denied")} if failure == "exception" else {"return_value": None}
-    with patch(f"ardupilot_methodic_configurator.frontend_tkinter_file_browser.{planner}", **settings):
+    with patch(f"ardupilot_methodic_configurator.frontend_tkinter_file_browser.{planner}", return_value=None) as mock_planner:
+        if failure == "exception":
+            mock_planner.side_effect = OSError("planning denied")
         getattr(window, "download_selected_remote_entries" if direction == "download" else "upload_selected_local_entries")()
 
     expected = (

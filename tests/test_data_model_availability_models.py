@@ -312,7 +312,9 @@ def test_esc_availability_explains_legacy_missing_fields(field: str) -> None:
     log = _esc_log([(2, 1, 1200, 3, 0)])
     columns = log.get_message_columns("ESC")
     assert columns is not None
-    log.add_message_columns("ESC", columns[[name for name in columns.dtype.names if name != field]])
+    names = columns.dtype.names
+    assert names is not None
+    log.add_message_columns("ESC", columns[[name for name in names if name != field]])
 
     result = EscLogAvailabilityModel(log, _esc_context({})).check()
 
@@ -460,7 +462,9 @@ def test_esc_checks_skip_schemas_missing_their_required_fields(field: str) -> No
     log = _esc_log([(2, 3, 0, 1, 2)], [(1, 2), (0, 6)])
     columns = log.get_message_columns("ESC")
     assert columns is not None
-    log.add_message_columns("ESC", columns[[name for name in columns.dtype.names if name != field]])
+    names = columns.dtype.names
+    assert names is not None
+    log.add_message_columns("ESC", columns[[name for name in names if name != field]])
     model = EscLogAnalysis(log, _esc_context({}))
 
     if field in {"Instance", "TimeUS", "RPM"}:
@@ -509,6 +513,7 @@ def test_dshot_rate_uses_documented_multipliers_and_warns_at_the_exact_boundary(
         assert finding.timestamp_us is None
         assert finding.param_name == "SERVO_DSHOT_RATE"
         assert finding.related_step == "07_esc.param"
+        assert context.apm_doc is not None
         label = context.apm_doc["SERVO_DSHOT_RATE"]["values"][str(code)]
         assert finding.message == (
             f"Effective DShot output rate is {expected_rate:.0f}Hz (SCHED_LOOP_RATE={loop_rate:.0f}Hz, "
@@ -545,6 +550,7 @@ def test_dshot_metadata_handles_unknown_labels_and_case_insensitive_known_labels
     THEN unknown labels are skipped and a known uppercase label uses its documented multiplier.
     """
     context = _esc_context({"MOT_PWM_TYPE": 9.0, "SCHED_LOOP_RATE": 400.0, "SERVO_DSHOT_RATE": 8.0})
+    assert context.apm_doc is not None
     context.apm_doc["SERVO_DSHOT_RATE"]["values"] = {} if label is None else {"8": label}
 
     outcomes = EscLogAnalysis(LogData(), context).check_dshot_output_rate()
@@ -734,7 +740,9 @@ def test_armed_rpm_check_skips_an_incomplete_arm_schema(field: str) -> None:
     log = _esc_log([(7, 2, 0, 1, 0), (7, 4, 0, 1, 0)], [(1, 2), (0, 4)])
     columns = log.get_message_columns("ARM")
     assert columns is not None
-    log.add_message_columns("ARM", columns[[name for name in columns.dtype.names if name != field]])
+    names = columns.dtype.names
+    assert names is not None
+    log.add_message_columns("ARM", columns[[name for name in names if name != field]])
 
     assert not EscLogAnalysis(log, _esc_context({})).check_rpm_while_armed()
 
