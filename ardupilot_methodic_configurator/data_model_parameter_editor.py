@@ -187,13 +187,19 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         # Track parameters added by user (not in original file) or renamed by the system in the current configuration step
         self._added_parameters: set[str] = set()
+        # Rows created by conditional derivation in this editing session, including after export.
+        self._inline_derived_parameters: set[str] = set()
 
         # Track parameters deleted by user (were in original file) or renamed by the system in the current configuration step
         self._deleted_parameters: set[str] = set()
+        # Keep explicit derived-row deletions suppressed after export until the step is reloaded.
+        self._suppressed_derived_parameters: set[str] = set()
 
         # Track connection renames applied for the current step: maps original_file_param_name → current renamed name.
         # Used by refresh_current_step_connection_renames() to undo/redo renames without a full rebuild.
         self._connection_renames: dict[str, str] = {}
+        # Saved sources whose row (possibly already renamed) was explicitly deleted during this edit session.
+        self._suppressed_connection_renames: set[str] = set()
 
         self._at_least_one_changed = False
 
@@ -2078,7 +2084,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             }
         )
 
-    def _repopulate_configuration_step_parameters(  # pylint: disable=too-many-locals, too-many-branches
+    def _repopulate_configuration_step_parameters(  # noqa: PLR0915  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         self,
     ) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
         """
@@ -2090,8 +2096,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         """
         # Reset tracking sets when navigating to new file
         self._added_parameters.clear()
+        self._inline_derived_parameters.clear()
         self._deleted_parameters.clear()
+        self._suppressed_derived_parameters.clear()
         self._connection_renames.clear()
+        self._suppressed_connection_renames.clear()
 
         # Process configuration step and get operations to apply
         (
@@ -2127,6 +2136,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                     param_name, derived_par, self.current_file, self.fc_parameters
                 )
                 self._added_parameters.add(param_name)
+                self._inline_derived_parameters.add(param_name)
 
         # Apply rename operations to domain model using add/delete tracking
         for old_name in duplicates_to_remove:
@@ -2321,12 +2331,22 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             param_name: The name of the parameter to delete
 
         """
-        # If parameter was in original file, mark as deleted
+        self._suppressed_connection_renames.update(
+            source for source, target in self._connection_renames.items() if target == param_name
+        )
         if param_name in self._local_filesystem.file_parameters.get(self.current_file, ParDict()):
+            self._suppressed_connection_renames.add(param_name)
+        is_derived = param_name in self._inline_derived_parameters or (
+            param_name in self.current_step_parameters and self.current_step_parameters[param_name].is_derived
+        )
+        if is_derived:
+            self._suppressed_derived_parameters.add(param_name)
+        if param_name in self._local_filesystem.file_parameters.get(self.current_file, ParDict()) or is_derived:
             self._deleted_parameters.add(param_name)
 
         # If it was previously added in this session, remove from added set
         self._added_parameters.discard(param_name)
+        self._inline_derived_parameters.discard(param_name)
 
         # Remove from runtime state
         if param_name in self.current_step_parameters:
@@ -2347,6 +2367,13 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         possible_add_param_names = [param_name for param_name in param_dict if param_name not in active_params]
         possible_add_param_names.sort()
         return possible_add_param_names
+
+    def _unsuppress_readded_connection_renames(self, param_name: str) -> None:
+        """Restore tracking for a saved source when its renamed target is re-added."""
+        self._suppressed_connection_renames.discard(param_name)
+        self._suppressed_connection_renames.difference_update(
+            source for source, target in self._connection_renames.items() if target == param_name
+        )
 
     def add_parameter_to_current_file(self, param_name: str) -> bool:
         """
@@ -2382,6 +2409,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 self._added_parameters.add(param_name)
             # If was previously deleted, remove from deleted set
             self._deleted_parameters.discard(param_name)
+            self._suppressed_derived_parameters.discard(param_name)
+            self._unsuppress_readded_connection_renames(param_name)
 
             return True
 
@@ -2398,6 +2427,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                     self._added_parameters.add(param_name)
                 # If was previously deleted, remove from deleted set
                 self._deleted_parameters.discard(param_name)
+                self._suppressed_derived_parameters.discard(param_name)
+                self._unsuppress_readded_connection_renames(param_name)
 
                 return True
             if fc_parameters:
@@ -2615,6 +2646,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         self._added_parameters.clear()
         self._deleted_parameters.clear()
+        # The exported names are now the saved-file sources for the next port change.
+        self._connection_renames.clear()
+        self._suppressed_connection_renames.clear()
         # copy parameters new values to their _values_on_file
         for param in self.current_step_parameters.values():
             param.copy_new_value_to_file()
@@ -2753,19 +2787,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         """Return True if the in-memory component data differs from what was last saved to disk."""
         return self._local_filesystem.vehicle_components_fs.has_unsaved_changes("Components")
 
-    def refresh_current_step_computed_parameters(self) -> None:
-        """
-        Recompute derived parameters and connection renames for the current step after component data changed.
-
-        Unlike _repopulate_configuration_step_parameters(), this performs a lightweight
-        in-place update: only the derived parameter *values* are recalculated and patched
-        into the existing current_step_parameters dict, and any rename_connection renames
-        are re-evaluated and applied.  The full parameter set is NOT rebuilt from
-        file_parameters and the delete_parameters logic is NOT re-run, so:
-          - parameters that were already removed by the delete logic stay removed
-          - user edits to non-derived parameters are preserved
-          - the 'show only differences' filter does not cause derived params to disappear
-        """
+    def refresh_current_step_computed_parameters(self) -> None:  # pylint: disable=too-many-branches
+        """Reconcile conditional derived rows and connection renames after a component edit."""
         if not self.current_file or self.current_file not in self._local_filesystem.configuration_steps:
             return
         step_info = self._local_filesystem.configuration_steps[self.current_file]
@@ -2781,16 +2804,56 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             # Recompute derived params with the updated vehicle_components dict
             self._local_filesystem.compute_parameters(self.current_file, step_info, "derived", variables)
 
-        # Patch only the derived values in the existing domain model - no rebuild, no deletions
-        for param_name, derived_par in self._local_filesystem.derived_parameters.get(self.current_file, ParDict()).items():
+        # A newly computed row must not occupy a saved connection's rename destination.
+        if "rename_connection" in step_info:
+            self._refresh_current_step_connection_renames(step_info, variables)
+
+        if "derived_parameters" not in step_info:
+            return
+
+        derived_params = self._local_filesystem.derived_parameters.get(self.current_file, ParDict())
+        available = set(self.fc_parameters) if self.fc_parameters else None
+        deleted_by_step = self._local_filesystem.compute_deletions(self.current_file, step_info, variables)
+        applicable = {
+            name
+            for name in derived_params
+            if (available is None or name in available)
+            and name not in deleted_by_step
+            and name not in self._deleted_parameters
+            and name not in self._suppressed_derived_parameters
+        }
+
+        for param_name in self._inline_derived_parameters - applicable:
+            existing = self.current_step_parameters.get(param_name)
+            if existing is not None and existing.is_manual_override:
+                self._inline_derived_parameters.discard(param_name)
+                continue
+            if existing is not None and self._is_selected_gnss_transport(param_name, step_info, variables):
+                continue
+            self.current_step_parameters.pop(param_name, None)
+            self._added_parameters.discard(param_name)
+            if param_name in self._local_filesystem.file_parameters.get(self.current_file, ParDict()):
+                self._deleted_parameters.add(param_name)
+        self._inline_derived_parameters.intersection_update(applicable | set(self.current_step_parameters))
+
+        for param_name in applicable:
+            derived_par = derived_params[param_name]
             if param_name in self.current_step_parameters:
                 existing = self.current_step_parameters[param_name]
+                if existing.is_manual_override:
+                    continue
+                if (
+                    "gnss" in self.current_file.lower()
+                    and step_info.get("rename_connection") == _GNSS_FC_CONNECTION_RENAME_EXPR
+                    and param_name in self._connection_renames.values()
+                ):
+                    continue
                 if not (existing.is_forced or existing.is_derived):
                     # The parameter was created before its derived value could be evaluated (e.g. the
                     # vehicle_components dict was incomplete at step-load time).  Now that evaluation
                     # succeeded, re-create it so it carries the derived flag and the correct value.
                     original_par = self._local_filesystem.file_parameters.get(self.current_file, ParDict()).get(param_name)
-                    if original_par is not None:
+                    if original_par is not None and not existing.is_dirty:
                         self.current_step_parameters[param_name] = self._config_step_processor.create_ardupilot_parameter(
                             param_name, original_par, self.current_file, self.fc_parameters or {}
                         )
@@ -2801,9 +2864,34 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                         self.current_step_parameters[param_name].set_forced_or_derived_change_reason(derived_par.comment)
                 except (ValueError, TypeError) as e:
                     logging_error(_("Failed to patch derived parameter %s: %s"), param_name, str(e))
+            else:
+                self.current_step_parameters[param_name] = self._config_step_processor.create_ardupilot_parameter(
+                    param_name, derived_par, self.current_file, self.fc_parameters or {}
+                )
+                self._added_parameters.add(param_name)
+                self._inline_derived_parameters.add(param_name)
 
-        if "rename_connection" in step_info:
-            self._refresh_current_step_connection_renames(step_info, variables)
+    @staticmethod
+    def _is_selected_gnss_transport(param_name: str, step_info: dict, variables: dict) -> bool:
+        """Keep a same-UART GNSS transport when its driver no longer derives it."""
+        if step_info.get("rename_connection") != _GNSS_FC_CONNECTION_RENAME_EXPR:
+            return False
+        selected = variables.get("vehicle_components", {}).get("GNSS Receiver", {}).get("FC Connection", {}).get("Type")
+        return selected is not None and param_name == f"{selected}_PROTOCOL"
+
+    def _transfer_inline_derived_ownership(self, old_name: str, new_name: str) -> None:
+        """Keep same-session derivation ownership when a saved source is renamed."""
+        if old_name in self._inline_derived_parameters:
+            self._inline_derived_parameters.discard(old_name)
+            self._inline_derived_parameters.add(new_name)
+
+    def _take_current_rename_par(self, current_target: str, original_par: Par | None) -> Par | None:
+        """Remove a rename target and retain its current value for the next name."""
+        current = self.current_step_parameters.pop(current_target, None)
+        if current is None:
+            return original_par
+        self._added_parameters.discard(current_target)
+        return Par(current.get_new_value(), current.change_reason_for_file) if original_par is not None else None
 
     def _apply_gnss_protocol_value(self, target_name: str) -> None:
         """Set the GNSS MAVLink protocol value on a newly renamed _PROTOCOL parameter, ignoring no-op updates."""
@@ -2841,9 +2929,18 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         # Process renames that already exist: update if the target changed
         for orig_name, current_target in list(self._connection_renames.items()):
+            if orig_name in self._suppressed_connection_renames:
+                del self._connection_renames[orig_name]
+                continue
+            if (
+                current_target in self.current_step_parameters
+                and self.current_step_parameters[current_target].is_manual_override is True
+            ):
+                continue
             new_target = new_rename_map.get(orig_name)
             if new_target is None:
                 # Rename no longer applicable — restore original name
+                self._transfer_inline_derived_ownership(current_target, orig_name)
                 if current_target in self.current_step_parameters:
                     self._added_parameters.discard(current_target)
                     del self.current_step_parameters[current_target]
@@ -2858,12 +2955,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 if new_target in self.current_step_parameters and new_target not in self._connection_renames.values():
                     logging_warning(_("Skipping connection rename %s → %s: target already exists"), current_target, new_target)
                 else:
-                    if current_target in self.current_step_parameters:
-                        self._added_parameters.discard(current_target)
-                        del self.current_step_parameters[current_target]
-                    if orig_name in original_params:
+                    self._transfer_inline_derived_ownership(current_target, new_target)
+                    current_par = self._take_current_rename_par(current_target, original_params.get(orig_name))
+                    if current_par is not None:
                         self.current_step_parameters[new_target] = self._config_step_processor.create_ardupilot_parameter(
-                            new_target, original_params[orig_name], self.current_file, self.fc_parameters
+                            new_target, current_par, self.current_file, self.fc_parameters
                         )
                         if is_gnss and new_target.endswith("_PROTOCOL"):
                             self._apply_gnss_protocol_value(new_target)
@@ -2873,6 +2969,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         # Apply renames that are new (not previously tracked)
         for orig_name, new_target in new_rename_map.items():
+            if orig_name in self._suppressed_connection_renames:
+                continue
             if orig_name in self._connection_renames:
                 continue  # already handled above
             if orig_name in original_params:
@@ -2886,9 +2984,12 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         is_gnss: bool,
     ) -> None:
         """Apply a single connection rename that was not previously tracked."""
+        if orig_name in self.current_step_parameters and self.current_step_parameters[orig_name].is_manual_override is True:
+            return
         if new_target in self.current_step_parameters:
             logging_warning(_("Skipping connection rename %s → %s: target already exists"), orig_name, new_target)
             return
+        self._transfer_inline_derived_ownership(orig_name, new_target)
         # Remove the original (un-renamed) parameter if it is still present
         if orig_name in self.current_step_parameters:
             del self.current_step_parameters[orig_name]
