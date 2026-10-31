@@ -11,11 +11,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from collections.abc import Callable
 from logging import debug as logging_debug
 from time import monotonic
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 from pymavlink.dialects.v20 import ardupilotmega as mavlink
 from serial import SerialException
 
+from ardupilot_methodic_configurator.backend_mavlink_telemetry import MavlinkTelemetryBackend
 from ardupilot_methodic_configurator.data_model_esc_telemetry import (
     ESC_FIELDS,
     MAX_ESCS,
@@ -27,23 +28,21 @@ if TYPE_CHECKING:
     from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 
 ESC_MESSAGE_OFFSETS = {f"ESC_TELEMETRY_{start}_TO_{start + 3}": start - 1 for start in range(1, MAX_ESCS + 1, 4)}
+_UNKNOWN_ESC_MESSAGES = {f"UNKNOWN_{getattr(mavlink, f'MAVLINK_MSG_ID_{name}')}" for name in ESC_MESSAGE_OFFSETS}
 
 
-class EscTelemetryBackend:
+class EscTelemetryBackend(MavlinkTelemetryBackend):
     """Observe ESC packets without opening another connection or changing stream rates."""
 
     def __init__(self, flight_controller: "FlightController", clock: Callable[[], float] = monotonic) -> None:
-        self.flight_controller = flight_controller
-        self._clock = clock
-        self._master: Any = None
+        super().__init__(flight_controller, clock)
         self._last_request: float | None = None
         self._readings: dict[int, EscTelemetryReading] = {}
+        self._decoder = mavlink.MAVLink(None)
 
     def close(self) -> None:
         """Remove only this observer and reset request timing."""
-        if self._master is not None and self._capture in self._master.message_hooks:
-            self._master.message_hooks.remove(self._capture)
-        self._master = None
+        super().close()
         self._last_request = None
         self._readings.clear()
 
@@ -55,7 +54,18 @@ class EscTelemetryBackend:
             int(info.component_id) if info.component_id else int(master.target_component),
         )
 
-    def _capture(self, master: Any, message: Any) -> None:  # noqa: ANN401
+    def _capture(self, master: Any, message: Any, /) -> None:  # noqa: ANN401
+        if message.get_type() in _UNKNOWN_ESC_MESSAGES:
+            # A connection that initially detected MAVLink 1 can still receive
+            # MAVLink 2 frames, but its v1 dialect does not know ESC message IDs.
+            # Decode and validate the original packet without replacing the
+            # shared parser or disturbing other connection consumers.
+            try:
+                self._decoder.signing = master.mav.signing
+                message = self._decoder.decode(bytearray(message.get_msgbuf()))
+            except mavlink.MAVError as exc:
+                logging_debug("Invalid ESC telemetry packet: %s", exc)
+                return
         offset = ESC_MESSAGE_OFFSETS.get(str(message.get_type()))
         if offset is None:
             return
@@ -73,14 +83,7 @@ class EscTelemetryBackend:
 
     def poll(self) -> EscTelemetrySnapshot:
         """Request all groups once per second and drain at most 200 packets/10 ms."""
-        # This observer lifecycle and MAVLink command layout intentionally match other backends.
-        # pylint: disable=duplicate-code
-        master = cast("Any", self.flight_controller.master)
-        if master is not self._master:
-            self.close()
-            self._master = master
-            if master is not None:
-                master.message_hooks.append(self._capture)
+        master = self._sync_connection()
         if master is None:
             return EscTelemetrySnapshot(None, self._clock())
         try:
@@ -88,24 +91,25 @@ class EscTelemetryBackend:
             if self._last_request is None or now - self._last_request >= 1.0:
                 # ArduPilot maps this first group to its shared sender for ALL ESC groups.
                 system_id, component_id = self._target_ids(master)
-                master.mav.command_long_send(
-                    system_id,
-                    component_id,
-                    mavlink.MAV_CMD_REQUEST_MESSAGE,
-                    0,
-                    mavlink.MAVLINK_MSG_ID_ESC_TELEMETRY_1_TO_4,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
+                # ESC_TELEMETRY_* IDs require MAVLink 2. Encode this request
+                # as v2 even if the link initially negotiated MAVLink 1.
+                master.mav.send(
+                    mavlink.MAVLink_command_long_message(
+                        system_id,
+                        component_id,
+                        mavlink.MAV_CMD_REQUEST_MESSAGE,
+                        0,
+                        mavlink.MAVLINK_MSG_ID_ESC_TELEMETRY_1_TO_4,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                    )
                 )
                 self._last_request = now
-            deadline = self._clock() + 0.01
-            for _index in range(200):
-                if self._clock() >= deadline or master.recv_match(blocking=False) is None:
-                    break
+            self._drain_messages()
             readings, self._readings = self._readings, {}
             return EscTelemetrySnapshot(master, self._clock(), readings)
         except (OSError, SerialException, AttributeError, TypeError, ValueError) as exc:

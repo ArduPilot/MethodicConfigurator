@@ -46,7 +46,7 @@ class EscTelemetryDataModel:
         self.flight_controller = flight_controller
         self._connection: object | None = None
         self._telemetry: dict[int, tuple[float, EscTelemetryReading]] = {}
-        self._rpm: dict[int, tuple[float, int]] = {}
+        self._rpm: dict[int, tuple[float, int | str]] = {}
 
     @property
     def visible_esc_indices(self) -> tuple[int, ...]:
@@ -71,15 +71,35 @@ class EscTelemetryDataModel:
             _("Telemetry packets"),
         )
 
-    def update(self, snapshot: EscTelemetrySnapshot) -> tuple[tuple[str, ...], ...]:
+    def _configured_bdshot_output(self, index: int) -> bool:
+        """Identify configured outputs, accounting for the ESC MAVLink offset."""
+        params = self.flight_controller.fc_parameters
+        if not isinstance(params, dict):
+            return False
+        try:
+            mask = int(params.get("SERVO_BLH_BDMASK", 0))
+            offset = int(params.get("ESC_TLM_MAV_OFS", 0))
+        except (TypeError, ValueError, OverflowError):
+            return False
+        output = index + offset
+        return 0 <= offset < MAX_ESCS and 0 <= output < MAX_ESCS and bool(mask & (1 << output))
+
+    def update(self, snapshot: EscTelemetrySnapshot) -> tuple[tuple[str, ...], ...]:  # pylint: disable=too-many-branches
         """Return measurement rows; zeros remain valid for an ESC reporting telemetry."""
         if snapshot.connection is not self._connection or snapshot.error or snapshot.connection is None:
             self.clear_live_data()
             self._connection = snapshot.connection
         if not snapshot.error and snapshot.connection is not None:
             for index, reading in snapshot.readings.items():
-                if not 0 <= index < MAX_ESCS or len(reading.values) != len(ESC_FIELDS) or not any(reading.values):
-                    continue  # ArduPilot pads unused members of a four-ESC group with zeros.
+                if not 0 <= index < MAX_ESCS or len(reading.values) != len(ESC_FIELDS):
+                    continue
+                if not any(reading.values):
+                    # The wire format cannot distinguish a stopped BDShot motor from
+                    # an unavailable member of an otherwise active group.
+                    if self._configured_bdshot_output(index):
+                        received_at = snapshot.time if reading.received_at is None else reading.received_at
+                        self._rpm[index] = (received_at, "0*")
+                    continue
                 old = self._telemetry.get(index)
                 count = reading.values[-1]
                 received_at = snapshot.time if reading.received_at is None else reading.received_at

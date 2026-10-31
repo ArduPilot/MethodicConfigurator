@@ -17,6 +17,7 @@ from unittest.mock import MagicMock, patch
 
 import jsonschema
 import pytest
+from pymavlink.dialects.v10 import ardupilotmega as mavlink1
 from pymavlink.dialects.v20 import ardupilotmega as mavlink
 from telemetry_test_helpers import create_telemetry_link, feed
 
@@ -93,6 +94,119 @@ def test_received_esc_groups_appear_in_the_correct_columns(
     assert not link.master.message_hooks
 
 
+@pytest.mark.parametrize("start", [1, 5, 9, 13, 17, 21, 25, 29])
+def test_esc_telemetry_is_displayed_when_connection_initially_detected_mavlink1(
+    link: SimpleNamespace, model: EscTelemetryDataModel, start: int
+) -> None:
+    """
+    Decode ESC messages even when the shared connection began in MAVLink 1.
+
+    GIVEN a MAVLink 1 parser and an FC that sends ESC telemetry only after a MAVLink 2 request,
+    WHEN the monitor requests and receives an ESC group,
+    THEN the correct readings appear without replacing the connection's parser.
+    """
+    master = link.master
+    master.mav = mavlink1.MAVLink(master, srcSystem=255, srcComponent=190)
+    master.mav.robust_parsing = True
+    master.WIRE_PROTOCOL_VERSION = "1.0"
+    parser = master.mav
+    message_type = getattr(mavlink, f"MAVLink_esc_telemetry_{start}_to_{start + 3}_message")
+    expected = packet()
+
+    def respond_to_request(data: bytes) -> None:
+        command = mavlink.MAVLink(None).parse_char(data)
+        assert data[0] == 0xFD
+        assert command is not None
+        assert command.command == mavlink.MAV_CMD_REQUEST_MESSAGE
+        feed(
+            link,
+            message_type(
+                *[getattr(expected, name) for name in ("temperature", "voltage", "current", "totalcurrent", "rpm", "count")]
+            ),
+        )
+
+    master.write.side_effect = respond_to_request
+    backend = EscTelemetryBackend(link.controller, lambda: link.now)
+    try:
+        rows = model.update(backend.poll())
+        assert [row[start - 1] for row in rows] == ["1200", "24.50", "1.23", "42", "77", "10"]
+        assert model.visible_esc_indices == (start - 1,)
+        assert master.mav is parser
+    finally:
+        backend.close()
+
+
+def test_invalid_unknown_esc_packet_does_not_display_telemetry(link: SimpleNamespace) -> None:
+    """
+    Validate packets before using telemetry unknown to a MAVLink 1 parser.
+
+    GIVEN a corrupted MAVLink 2 ESC packet received by a MAVLink 1 parser,
+    WHEN the monitor polls,
+    THEN the invalid reading is ignored without stopping the observer.
+    """
+    master = link.master
+    master.mav = mavlink1.MAVLink(master, srcSystem=255, srcComponent=190)
+    master.mav.robust_parsing = True
+    encoded = bytearray(packet().pack(link.sender))
+    encoded[-1] ^= 1
+    link.incoming.write(encoded)
+    link.incoming.seek(0)
+    backend = EscTelemetryBackend(link.controller, lambda: link.now)
+    try:
+        snapshot = backend.poll()
+        assert not snapshot.error
+        assert not snapshot.readings
+        assert backend._capture in master.message_hooks
+    finally:
+        backend.close()
+
+
+@pytest.mark.parametrize("source", [(2, 1), (1, 2)])
+def test_mavlink1_parser_does_not_accept_esc_packets_from_other_sources(
+    link: SimpleNamespace, source: tuple[int, int]
+) -> None:
+    """
+    Filter decoded ESC packets using the actual MAVLink 2 source.
+
+    GIVEN a MAVLink 1 parser and an ESC packet from another system or component,
+    WHEN the monitor decodes it,
+    THEN the unrelated ESC is not displayed.
+    """
+    link.master.mav = mavlink1.MAVLink(link.master, srcSystem=255, srcComponent=190)
+    link.master.mav.robust_parsing = True
+    feed(link, packet(), *source)
+    backend = EscTelemetryBackend(link.controller, lambda: link.now)
+    try:
+        assert not backend.poll().readings
+    finally:
+        backend.close()
+
+
+@pytest.mark.parametrize("valid", [True, False])
+def test_mavlink1_unknown_esc_packets_respect_connection_signing(link: SimpleNamespace, valid: bool) -> None:
+    """
+    Preserve the connection's authentication policy while decoding ESC packets.
+
+    GIVEN a MAVLink 1 parser with a signing key and a signed MAVLink 2 ESC packet,
+    WHEN the monitor decodes the packet,
+    THEN only a packet with a valid signature is accepted.
+    """
+    link.master.mav = mavlink1.MAVLink(link.master, srcSystem=255, srcComponent=190)
+    link.master.mav.robust_parsing = True
+    link.master.mav.signing.secret_key = b"a" * 32
+    link.sender.signing.secret_key = (b"a" if valid else b"b") * 32
+    link.sender.signing.sign_outgoing = True
+    link.sender.signing.timestamp = 100
+    feed(link, packet())
+    backend = EscTelemetryBackend(link.controller, lambda: link.now)
+    try:
+        snapshot = backend.poll()
+        assert not snapshot.error
+        assert bool(snapshot.readings) is valid
+    finally:
+        backend.close()
+
+
 def test_missing_and_stale_escs_are_unavailable(model: EscTelemetryDataModel) -> None:
     """
     An empty table and one reporting ESC.
@@ -125,6 +239,45 @@ def test_rpm_only_telemetry_does_not_invent_electrical_readings(model: EscTeleme
     assert rows[0][0] == "1500"
     assert all(row[0] == "-" for row in rows[1:])
     assert model.visible_esc_indices == (0,)
+
+
+def test_stopped_bdshot_outputs_from_real_controller_packet_are_visible(link: SimpleNamespace) -> None:
+    """
+    Show zero-filled packets from the connected controller.
+
+    GIVEN the connected controller's four configured BDShot outputs and an all-zero group 9-12
+    WHEN the encoded packet is received and later stops arriving
+    THEN ambiguous zero RPMs are shown, electrical data stays unavailable, and RPM expires.
+    """
+    link.controller.fc_parameters = {"SERVO_BLH_BDMASK": 3840.0, "ESC_TLM_MAV_OFS": 0.0}
+    model = EscTelemetryDataModel(link.controller)
+    backend = EscTelemetryBackend(link.controller, lambda: link.now)
+    feed(link, mavlink.MAVLink_esc_telemetry_9_to_12_message(*([[0] * 4] * 6)))
+    try:
+        rows = model.update(backend.poll())
+        assert model.visible_esc_indices == (8, 9, 10, 11)
+        assert rows[0][8:12] == ("0*",) * 4
+        assert all(row[8:12] == ("-",) * 4 for row in rows[1:])
+        link.now = 3.0
+        assert model.update(backend.poll())[0][8:12] == ("-",) * 4
+    finally:
+        backend.close()
+
+
+def test_bdshot_zero_padding_respects_mask_and_mavlink_offset(link: SimpleNamespace) -> None:
+    """
+    Avoid treating unconfigured padding as a BDShot output.
+
+    GIVEN a group containing configured and unconfigured zero-filled outputs and a MAVLink offset
+    WHEN the group arrives
+    THEN only configured outputs become visible and their RPM is explicitly ambiguous.
+    """
+    link.controller.fc_parameters = {"SERVO_BLH_BDMASK": float(1 << 9), "ESC_TLM_MAV_OFS": 4.0}
+    model = EscTelemetryDataModel(link.controller)
+    readings = {index: EscTelemetryReading((0, 0, 0, 0, 0, 0)) for index in range(4, 8)}
+    rows = model.update(EscTelemetrySnapshot(object(), 0, readings))
+    assert model.visible_esc_indices == (5,)
+    assert rows[0][4:8] == ("-", "0*", "-", "-")
 
 
 def test_counter_wrap_and_connection_boundaries(model: EscTelemetryDataModel) -> None:
@@ -346,6 +499,26 @@ def test_treeview_refreshes_and_releases_resources(view: frontend.EscTelemetryVi
     assert resumed not in view.tk.call("after", "info")
 
 
+def test_esc_step_shows_values_from_mavlink1_initial_connection(
+    view: frontend.EscTelemetryView, link: SimpleNamespace
+) -> None:
+    """
+    Show the decoded ESC values in the real step table.
+
+    GIVEN a connection that initially selected the MAVLink 1 dialect,
+    WHEN an ESC telemetry packet arrives in MAVLink 2,
+    THEN the ESC column and its voltage become visible.
+    """
+    link.master.mav = mavlink1.MAVLink(link.master, srcSystem=255, srcComponent=190)
+    link.master.mav.robust_parsing = True
+    feed(link, packet())
+    poll_view(view)
+    assert view.table.cget("displaycolumns") == ("1",)
+    values = view.table.item("1", "values")
+    assert isinstance(values, tuple)
+    assert values[0] == "24.50"
+
+
 def test_upload_lock_and_modal_dialog_pause_reads(view: frontend.EscTelemetryView, link: SimpleNamespace) -> None:
     """
     An exclusive FC operation or modal tool.
@@ -507,7 +680,10 @@ def test_sparse_esc_columns_keep_their_numbers_and_ignore_unused_slots(view: fro
     assert view.table.column("8", "stretch") == 0
 
 
-def test_busy_links_have_bounded_reads_and_preserve_other_observers(link: SimpleNamespace) -> None:
+@pytest.mark.parametrize("backend_type", [EscTelemetryBackend, DataTelemetryBackend])
+def test_busy_links_have_bounded_reads_and_preserve_other_observers(
+    link: SimpleNamespace, backend_type: type[EscTelemetryBackend] | type[DataTelemetryBackend]
+) -> None:
     """
     Keep telemetry responsive on a busy shared connection.
 
@@ -519,7 +695,7 @@ def test_busy_links_have_bounded_reads_and_preserve_other_observers(link: Simple
     link.master.message_hooks.append(observer)
     for _index in range(250):
         feed(link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
-    backend = EscTelemetryBackend(link.controller, lambda: link.now)
+    backend = backend_type(link.controller, lambda: link.now)
     backend.poll()
     assert observer.call_count == 200
     replacement = create_telemetry_link()
@@ -529,6 +705,34 @@ def test_busy_links_have_bounded_reads_and_preserve_other_observers(link: Simple
     assert len(replacement.master.message_hooks) == 1
     backend.close()
     assert not replacement.master.message_hooks
+
+
+@pytest.mark.parametrize("backend_type", [EscTelemetryBackend, DataTelemetryBackend])
+def test_slow_packets_stop_both_telemetry_polls_at_the_time_budget(
+    link: SimpleNamespace, backend_type: type[EscTelemetryBackend] | type[DataTelemetryBackend]
+) -> None:
+    """
+    Bound elapsed work even when packet processing is slow.
+
+    GIVEN a backlog whose observer takes six milliseconds to process each packet
+    WHEN the telemetry backend polls with a ten-millisecond budget
+    THEN only two packets are read and closing the backend preserves the other observer
+    """
+
+    def advance_clock(_master: object, _message: object) -> None:
+        link.now += 0.006
+
+    observer = MagicMock(side_effect=advance_clock)
+    link.master.message_hooks.append(observer)
+    for _index in range(10):
+        feed(link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
+    backend = backend_type(link.controller, lambda: link.now)
+    try:
+        backend.poll()
+        assert observer.call_count == 2
+    finally:
+        backend.close()
+    assert link.master.message_hooks == [observer]
 
 
 def test_reusable_esc_table_labels_identify_every_measurement_and_its_units() -> None:

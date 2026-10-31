@@ -19,10 +19,12 @@ from unittest.mock import MagicMock
 import pytest
 from jsonschema import validate
 from pymavlink import mavutil
+from telemetry_test_helpers import rc_channels_message
 
 from ardupilot_methodic_configurator import data_model_parameter_editor as editor_module
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.plugins import frontend_tkinter_rc_receiver as frontend
+from ardupilot_methodic_configurator.plugins.data_model_rc_calibration import RCCalibrationDataModel
 from ardupilot_methodic_configurator.plugins.data_model_rc_receiver import RCReceiverDataModel, RCReceiverState
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_rc_receiver import register_rc_receiver_plugin
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_RC_RECEIVER
@@ -36,12 +38,7 @@ _PACKAGE = Path(__file__).resolve().parents[2] / "ardupilot_methodic_configurato
 
 def rc_message(channels: tuple[int, ...] = (1000, 1200, 1500, 1800, 2000), rssi: int = 127) -> Any:  # noqa: ANN401
     """Use real MAVLink fields, including unused channels and the source address."""
-    message = mavutil.mavlink.MAVLink_rc_channels_message(
-        0, len(channels), *(channels + (65535,) * (18 - len(channels))), rssi
-    )
-    message._header.srcSystem = 1
-    message._header.srcComponent = 1
-    return message
+    return rc_channels_message(channels, rssi=rssi)
 
 
 def status_message(present: int = _RC_BIT, enabled: int = _RC_BIT, health: int = _RC_BIT) -> Any:  # noqa: ANN401
@@ -53,15 +50,10 @@ def status_message(present: int = _RC_BIT, enabled: int = _RC_BIT, health: int =
 
 
 @pytest.fixture
-def receiver_context() -> SimpleNamespace:
+def receiver_context(rc_controller: MagicMock) -> SimpleNamespace:
     """Mock only transport and time; execute the real model and MAVLink messages."""
     messages: deque[Any] = deque()
-    controller = MagicMock()
-    controller.master.target_system = 1
-    controller.master.target_component = 0
-    controller.info.system_id = "1"
-    controller.info.component_id = "1"
-    controller.request_rc_receiver_messages.return_value = (True, "")
+    controller = rc_controller
     controller.master.recv_match.side_effect = lambda **_kwargs: messages.popleft() if messages else None
     clock = MagicMock(return_value=100.0)
     return SimpleNamespace(controller=controller, clock=clock, messages=messages, model=RCReceiverDataModel(controller, clock))
@@ -84,6 +76,51 @@ def test_user_can_monitor_first_five_channels_without_writing_parameters(receive
     assert state.failsafe is False
     receiver_context.controller.set_param.assert_not_called()
     receiver_context.controller.request_rc_receiver_messages.assert_called_once_with()
+
+
+def test_controller_step_restarts_stream_and_preserves_interleaved_rc_samples(receiver_context: SimpleNamespace) -> None:
+    """
+    Channel monitoring continues after the receiver step.
+
+    GIVEN the receiver step has enabled and then restored its telemetry stream,
+    WHEN the controller step monitors multiple RC samples before a heartbeat,
+    THEN it requests the stream again, records both extremes and displays the latest sample.
+    """
+    controller = receiver_context.controller
+    controller.fc_parameters = {}
+    receiver_context.messages.append(rc_message((1500,)))
+    assert receiver_context.model.get_receiver_state().channels[0] == 1500
+    receiver_context.model.stop_monitoring()
+
+    # Mimic pymavlink's filter: unmatched packets are consumed, not queued.
+    def recv_match(*, blocking: bool, type: list[str] | None = None) -> Any:  # noqa: ANN401,A002  # pylint: disable=redefined-builtin
+        assert not blocking
+        while receiver_context.messages:
+            message = receiver_context.messages.popleft()
+            if type is None or message.get_type() in type:
+                return message
+        return None
+
+    controller.master.recv_match.side_effect = recv_match
+    heartbeat = mavutil.mavlink.MAVLink_heartbeat_message(2, 3, 0, 7, 4, 3)
+    heartbeat._header.srcSystem = 1
+    heartbeat._header.srcComponent = 1
+    receiver_context.messages.extend([rc_message((1100,)), rc_message((1900,)), heartbeat])
+    model = RCCalibrationDataModel(controller)
+    assert model.start_calibration()[0]
+    telemetry = model.get_rc_telemetry()
+    assert telemetry["channels"][0]["value"] == 1900
+    assert telemetry["flight_mode"] == "7"
+    assert model._channel_min[0] == 1100
+    assert model._channel_max[0] == 1900
+    assert [call.args for call in controller.request_rc_receiver_messages.call_args_list] == [(), (0,), ()]
+    model.stop_monitoring()
+    model.stop_monitoring()
+    assert controller.request_rc_receiver_messages.call_args_list[-1].args == (0,)
+    assert controller.request_rc_receiver_messages.call_count == 4
+    model.get_rc_telemetry()
+    assert controller.request_rc_receiver_messages.call_args_list[-1].args == ()
+    controller.set_param.assert_not_called()
 
 
 @pytest.mark.parametrize(("rssi", "expected"), [(0, 0), (254, 254), (255, None)])

@@ -9,7 +9,7 @@ SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
 from io import BytesIO
 from types import SimpleNamespace
 from unittest.mock import MagicMock
@@ -20,6 +20,17 @@ from pymavlink.dialects.v20 import ardupilotmega as mavlink
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import FlightControllerConnection
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
+
+
+def rc_channels_message(
+    raw: Sequence[int], chancount: int | None = None, *, rssi: int = 127, source: tuple[int, int] = (1, 1)
+) -> mavlink.MAVLink_rc_channels_message:
+    """Build actual RC telemetry, including its advertised channel count and source address."""
+    message = mavlink.MAVLink_rc_channels_message(
+        0, len(raw) if chancount is None else chancount, *(list(raw) + [65535] * (18 - len(raw))), rssi
+    )
+    message._header.srcSystem, message._header.srcComponent = source  # pylint: disable=protected-access
+    return message
 
 
 def connected_telemetry_link() -> Generator[SimpleNamespace, None, None]:

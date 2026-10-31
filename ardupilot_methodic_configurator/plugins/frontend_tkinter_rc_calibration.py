@@ -476,22 +476,68 @@ class RCChannelBars(ttk.LabelFrame):  # pylint: disable=too-many-ancestors,too-m
         return 1 + round(fraction * (width - 2))
 
 
-class RCCalibrationPopup(CalibrationPopupBase["RCCalibrationDataModel"]):
+class _RCTelemetryPolling:  # pylint: disable=too-few-public-methods
+    """Share rendering, telemetry-gap warnings and scheduling between the two RC monitors."""
+
+    model: RCCalibrationDataModel
+    craft_preview: RCCraftPreview
+    stick_preview: RCStickPreview
+    channel_bars: RCChannelBars
+    _polling_widget: tk.Misc
+    _timer_id: str | None
+    _polls_without_updates: int
+    _no_telemetry_warning_emitted: bool
+
+    def _schedule_rc_poll(self) -> None:
+        self._timer_id = self._polling_widget.after(100, self._check_telemetry)
+
+    def _check_telemetry(self) -> None:
+        telemetry = self.model.get_rc_telemetry()
+        self.craft_preview.update_telemetry(telemetry)
+
+        if not telemetry:
+            self._polls_without_updates += 1
+            if self._polls_without_updates == 50 and not self._no_telemetry_warning_emitted:
+                self._no_telemetry_warning_emitted = True
+                logging_warning(
+                    _("No RC telemetry has arrived after %(polls)d polls."), {"polls": self._polls_without_updates}
+                )
+            self._schedule_rc_poll()
+            return
+
+        self._polls_without_updates = 0
+        self._no_telemetry_warning_emitted = False
+
+        self.stick_preview.update_axes(telemetry)
+        if "channels" in telemetry:
+            self.channel_bars.update_channels(telemetry["channels"])
+
+        self._schedule_rc_poll()
+
+
+class RCCalibrationPopup(_RCTelemetryPolling, CalibrationPopupBase["RCCalibrationDataModel"]):
     """A modern, borderless popup window with a custom draggable title bar for RC monitoring."""
 
     _MIN_WIDTH = 600
     _MIN_HEIGHT = 500
+    _timer_id: str | None
 
     def __init__(self, parent: tk.Widget, model: RCCalibrationDataModel) -> None:
         super().__init__(parent, model)
+        self._polling_widget = self.root
 
         self._setup_style()
         self._setup_ui()
         self._resize_and_center()
         self.root.lift()
         self.root.focus_force()
-        self._timer_id = self.root.after(100, self._check_telemetry)
+        self._schedule_rc_poll()
         logging_debug(_("RC calibration progress popup created and polling scheduled."))
+
+    def destroy(self) -> None:
+        """Release the requested stream when the monitor closes."""
+        self.model.stop_monitoring()
+        super().destroy()
 
     def _setup_ui(self) -> None:
         content_frame = self._create_framed_ui(_("Live Monitor"))
@@ -519,31 +565,8 @@ class RCCalibrationPopup(CalibrationPopupBase["RCCalibrationDataModel"]):
         self.craft_preview.update_telemetry(axes)
         self.channel_bars.update_channels(self.model.get_channel_calibration())
 
-    def _check_telemetry(self) -> None:
-        telemetry = self.model.get_rc_telemetry()
-        self.craft_preview.update_telemetry(telemetry)
 
-        if not telemetry:
-            self._polls_without_updates += 1
-            if self._polls_without_updates == 50 and not self._no_telemetry_warning_emitted:
-                self._no_telemetry_warning_emitted = True
-                logging_warning(
-                    _("No RC telemetry has arrived after %(polls)d polls."), {"polls": self._polls_without_updates}
-                )
-            self._timer_id = self.root.after(100, self._check_telemetry)
-            return
-
-        self._polls_without_updates = 0
-        self._no_telemetry_warning_emitted = False
-
-        self.stick_preview.update_axes(telemetry)
-        if "channels" in telemetry:
-            self.channel_bars.update_channels(telemetry["channels"])
-
-        self._timer_id = self.root.after(100, self._check_telemetry)
-
-
-class RCCalibrationView(ttk.Frame):  # pylint: disable=too-many-ancestors, too-many-instance-attributes
+class RCCalibrationView(_RCTelemetryPolling, ttk.Frame):  # pylint: disable=too-many-ancestors, too-many-instance-attributes
     """Main GUI view for the RC calibration plugin inside AMC."""
 
     def __init__(
@@ -553,6 +576,7 @@ class RCCalibrationView(ttk.Frame):  # pylint: disable=too-many-ancestors, too-m
         base_window: BaseWindow,
     ) -> None:
         super().__init__(parent)
+        self._polling_widget = self
         self.model = model
         self.base_window = base_window
         self._timer_id: str | None = None
@@ -561,7 +585,7 @@ class RCCalibrationView(ttk.Frame):  # pylint: disable=too-many-ancestors, too-m
         self._no_telemetry_warning_emitted = False
         self._setup_style()
         self._setup_ui()
-        self._timer_id = self.after(100, self._check_telemetry)
+        self._schedule_rc_poll()
 
     def _setup_style(self) -> None:
         style = ttk.Style(self)
@@ -704,39 +728,17 @@ class RCCalibrationView(ttk.Frame):  # pylint: disable=too-many-ancestors, too-m
     def on_activate(self) -> None:
         """Resume live RC monitoring without changing collected or staged calibration values."""
         if self._timer_id is None:
-            self._timer_id = self.after(100, self._check_telemetry)
+            self._schedule_rc_poll()
 
     def on_deactivate(self) -> None:
         """Yield the shared receiver while hidden or while diagnostics is open."""
         self._stop_polling()
-
-    def _check_telemetry(self) -> None:
-        telemetry = self.model.get_rc_telemetry()
-        self.craft_preview.update_telemetry(telemetry)
-
-        if not telemetry:
-            self._polls_without_updates += 1
-            if self._polls_without_updates == 50 and not self._no_telemetry_warning_emitted:
-                self._no_telemetry_warning_emitted = True
-                logging_warning(
-                    _("No RC telemetry has arrived after %(polls)d polls."), {"polls": self._polls_without_updates}
-                )
-            self._timer_id = self.after(100, self._check_telemetry)
-            return
-
-        self._polls_without_updates = 0
-        self._no_telemetry_warning_emitted = False
-
-        self.stick_preview.update_axes(telemetry)
-        if "channels" in telemetry:
-            self.channel_bars.update_channels(telemetry["channels"])
-
-        self._timer_id = self.after(100, self._check_telemetry)
+        self.model.stop_monitoring()
 
     def destroy(self) -> None:
         """Stop the polling loop before destroying the widget."""
         try:
-            self._stop_polling()
+            self.on_deactivate()
             if self._calibration_active:
                 self.model.cancel_calibration()
                 self._calibration_active = False
