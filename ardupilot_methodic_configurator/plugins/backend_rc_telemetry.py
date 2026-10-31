@@ -50,7 +50,7 @@ class RCTelemetryBackend:
         self._stream_requested = False
 
     def get_rc_telemetry(self) -> Iterator[Any]:
-        """Yield every packet in a bounded, nonblocking batch, in order."""
+        """Yield packets from the selected controller in a bounded, nonblocking batch."""
         self.sync_connection()
         master = cast("Any", self.connection)
         if master is None:
@@ -67,10 +67,11 @@ class RCTelemetryBackend:
             message = master.recv_match(blocking=False)
             if message is None:
                 break
-            yield message
+            if self.is_selected_source(message):
+                yield message
 
     def is_selected_source(self, message: Any) -> bool:  # noqa: ANN401
-        """Identify receiver-health packets belonging to the selected flight controller."""
+        """Identify RC monitoring and calibration packets from the selected flight controller."""
         master = cast("Any", self.connection)
         if master is None:
             return False

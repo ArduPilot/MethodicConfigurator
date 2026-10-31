@@ -11,10 +11,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from collections.abc import Callable
 from logging import debug as logging_debug
 from time import monotonic
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 from serial import SerialException
 
+from ardupilot_methodic_configurator.backend_mavlink_telemetry import MavlinkTelemetryBackend
 from ardupilot_methodic_configurator.data_model_data_telemetry import (
     MessageKey,
     MessageSample,
@@ -28,25 +29,21 @@ if TYPE_CHECKING:
 _MAX_MESSAGE_TYPES = 512
 
 
-class DataTelemetryBackend:
+class DataTelemetryBackend(MavlinkTelemetryBackend):
     """Observe parsed packets without replacing hooks or reading from a second connection."""
 
     def __init__(self, flight_controller: "FlightController", clock: Callable[[], float] = monotonic) -> None:
-        self.flight_controller = flight_controller
-        self._clock = clock
-        self._master: Any = None
+        super().__init__(flight_controller, clock)
         self._messages: dict[MessageKey, MessageSample] = {}
         self._radio: RadioSample | None = None
 
     def close(self) -> None:
         """Detach only our observer and discard data at lifecycle boundaries."""
-        if self._master is not None and self._capture in self._master.message_hooks:
-            self._master.message_hooks.remove(self._capture)
-        self._master = None
+        super().close()
         self._messages.clear()
         self._radio = None
 
-    def _capture(self, _master: object, message: Any) -> None:  # noqa: ANN401
+    def _capture(self, _master: object, message: Any, /) -> None:  # noqa: ANN401
         """Count all sources independently, including modem-injected RADIO messages."""
         name = str(message.get_type())
         if name == "BAD_DATA":
@@ -83,20 +80,12 @@ class DataTelemetryBackend:
 
     def poll(self) -> TelemetrySample:
         """Enable connection-owned heartbeats and drain at most 200 packets/10 ms."""
-        master = cast("Any", self.flight_controller.master)
-        if master is not self._master:
-            self.close()
-            self._master = master
-            if master is not None:
-                master.message_hooks.append(self._capture)
+        master = self._sync_connection()
         if master is None:
             return TelemetrySample(None, self._clock())
         try:
             self.flight_controller.start_gcs_heartbeat()
-            deadline = self._clock() + 0.01
-            for _index in range(200):
-                if self._clock() >= deadline or master.recv_match(blocking=False) is None:
-                    break
+            self._drain_messages()
             return TelemetrySample(
                 connection=master,
                 time=self._clock(),
