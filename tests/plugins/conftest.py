@@ -65,11 +65,23 @@ def fire_tk_timer() -> Callable[[tk.Misc, str], None]:
 
 
 @pytest.fixture
-def rc_staging_context() -> tuple[MagicMock, ParameterEditor]:
-    """Use real parameter objects and editor APIs; mock only filesystem and FC I/O."""
+def rc_controller() -> MagicMock:
+    """Provide a selected controller with RC stream requests and transport I/O mocked."""
     controller = MagicMock()
+    controller.info.system_id = "1"
+    controller.info.component_id = "1"
+    controller.master.target_system = 1
+    controller.master.target_component = 0
     controller.master.recv_match.return_value = None
     controller.request_rc_receiver_messages.return_value = (True, "")
+    controller.fc_parameters = {}
+    return controller
+
+
+@pytest.fixture
+def rc_staging_context(rc_controller: MagicMock) -> tuple[MagicMock, ParameterEditor]:  # pylint: disable=redefined-outer-name
+    """Use real parameter objects and editor APIs; mock only filesystem and FC I/O."""
+    controller = rc_controller
     # pylint: disable=duplicate-code
     controller.fc_parameters = {
         "RCMAP_ROLL": 1.0,

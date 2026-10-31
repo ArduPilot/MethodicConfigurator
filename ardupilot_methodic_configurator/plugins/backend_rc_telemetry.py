@@ -70,7 +70,7 @@ class RCTelemetryBackend:
             yield message
 
     def is_selected_source(self, message: Any) -> bool:  # noqa: ANN401
-        """Identify receiver-health packets belonging to the selected flight controller."""
+        """Identify RC monitoring and calibration packets from the selected flight controller."""
         master = cast("Any", self.connection)
         if master is None:
             return False

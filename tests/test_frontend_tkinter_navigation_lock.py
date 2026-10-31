@@ -610,7 +610,8 @@ def test_destroying_a_calibration_view_releases_its_navigation_lock(calibration_
     view._calibration_popup = None
     view._instructions_popup = None
     fixture.host.navigation_lock.acquire(view)
-    parent_destroy = mocker.patch.object(view_type.__bases__[0], "destroy")
+    widget_base = next(base for base in view_type.__bases__ if hasattr(base, "destroy"))
+    parent_destroy = mocker.patch.object(widget_base, "destroy")
     if view_type is AccelerometerCalibrationView:
         mocker.patch.object(view, "_stop_polling", side_effect=OSError("cleanup unavailable"))
     elif view_type is LevelCalibrationView:
