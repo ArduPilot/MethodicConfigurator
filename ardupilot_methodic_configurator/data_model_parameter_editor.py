@@ -198,6 +198,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         # Track connection renames applied for the current step: maps original_file_param_name → current renamed name.
         # Used by refresh_current_step_connection_renames() to undo/redo renames without a full rebuild.
         self._connection_renames: dict[str, str] = {}
+        # Saved sources whose row (possibly already renamed) was explicitly deleted during this edit session.
+        self._suppressed_connection_renames: set[str] = set()
 
         self._at_least_one_changed = False
 
@@ -2098,6 +2100,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self._deleted_parameters.clear()
         self._suppressed_derived_parameters.clear()
         self._connection_renames.clear()
+        self._suppressed_connection_renames.clear()
 
         # Process configuration step and get operations to apply
         (
@@ -2328,6 +2331,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             param_name: The name of the parameter to delete
 
         """
+        self._suppressed_connection_renames.update(
+            source for source, target in self._connection_renames.items() if target == param_name
+        )
+        if param_name in self._local_filesystem.file_parameters.get(self.current_file, ParDict()):
+            self._suppressed_connection_renames.add(param_name)
         is_derived = param_name in self._inline_derived_parameters or (
             param_name in self.current_step_parameters and self.current_step_parameters[param_name].is_derived
         )
@@ -2395,6 +2403,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             # If was previously deleted, remove from deleted set
             self._deleted_parameters.discard(param_name)
             self._suppressed_derived_parameters.discard(param_name)
+            self._suppressed_connection_renames.discard(param_name)
 
             return True
 
@@ -2412,6 +2421,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 # If was previously deleted, remove from deleted set
                 self._deleted_parameters.discard(param_name)
                 self._suppressed_derived_parameters.discard(param_name)
+                self._suppressed_connection_renames.discard(param_name)
 
                 return True
             if fc_parameters:
@@ -2630,6 +2640,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self._added_parameters.clear()
         self._inline_derived_parameters.clear()
         self._deleted_parameters.clear()
+        # The exported names are now the saved-file sources for the next port change.
+        self._connection_renames.clear()
+        self._suppressed_connection_renames.clear()
         # copy parameters new values to their _values_on_file
         for param in self.current_step_parameters.values():
             param.copy_new_value_to_file()
@@ -2883,6 +2896,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         # Process renames that already exist: update if the target changed
         for orig_name, current_target in list(self._connection_renames.items()):
+            if orig_name in self._suppressed_connection_renames:
+                del self._connection_renames[orig_name]
+                continue
             new_target = new_rename_map.get(orig_name)
             if new_target is None:
                 # Rename no longer applicable — restore original name
@@ -2915,6 +2931,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         # Apply renames that are new (not previously tracked)
         for orig_name, new_target in new_rename_map.items():
+            if orig_name in self._suppressed_connection_renames:
+                continue
             if orig_name in self._connection_renames:
                 continue  # already handled above
             if orig_name in original_params:
