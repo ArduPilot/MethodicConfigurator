@@ -2368,6 +2368,13 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         possible_add_param_names.sort()
         return possible_add_param_names
 
+    def _unsuppress_readded_connection_renames(self, param_name: str) -> None:
+        """Restore tracking for a saved source when its renamed target is re-added."""
+        self._suppressed_connection_renames.discard(param_name)
+        self._suppressed_connection_renames.difference_update(
+            source for source, target in self._connection_renames.items() if target == param_name
+        )
+
     def add_parameter_to_current_file(self, param_name: str) -> bool:
         """
         Add a parameter to the current file.
@@ -2403,7 +2410,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             # If was previously deleted, remove from deleted set
             self._deleted_parameters.discard(param_name)
             self._suppressed_derived_parameters.discard(param_name)
-            self._suppressed_connection_renames.discard(param_name)
+            self._unsuppress_readded_connection_renames(param_name)
 
             return True
 
@@ -2421,7 +2428,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 # If was previously deleted, remove from deleted set
                 self._deleted_parameters.discard(param_name)
                 self._suppressed_derived_parameters.discard(param_name)
-                self._suppressed_connection_renames.discard(param_name)
+                self._unsuppress_readded_connection_renames(param_name)
 
                 return True
             if fc_parameters:
@@ -2878,6 +2885,14 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             self._inline_derived_parameters.discard(old_name)
             self._inline_derived_parameters.add(new_name)
 
+    def _take_current_rename_par(self, current_target: str, original_par: Par | None) -> Par | None:
+        """Remove a rename target and retain its current value for the next name."""
+        current = self.current_step_parameters.pop(current_target, None)
+        if current is None:
+            return original_par
+        self._added_parameters.discard(current_target)
+        return Par(current.get_new_value(), current.change_reason_for_file) if original_par is not None else None
+
     def _apply_gnss_protocol_value(self, target_name: str) -> None:
         """Set the GNSS MAVLink protocol value on a newly renamed _PROTOCOL parameter, ignoring no-op updates."""
         with contextlib.suppress(ParameterUnchangedError):
@@ -2941,12 +2956,10 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                     logging_warning(_("Skipping connection rename %s → %s: target already exists"), current_target, new_target)
                 else:
                     self._transfer_inline_derived_ownership(current_target, new_target)
-                    if current_target in self.current_step_parameters:
-                        self._added_parameters.discard(current_target)
-                        del self.current_step_parameters[current_target]
-                    if orig_name in original_params:
+                    current_par = self._take_current_rename_par(current_target, original_params.get(orig_name))
+                    if current_par is not None:
                         self.current_step_parameters[new_target] = self._config_step_processor.create_ardupilot_parameter(
-                            new_target, original_params[orig_name], self.current_file, self.fc_parameters
+                            new_target, current_par, self.current_file, self.fc_parameters
                         )
                         if is_gnss and new_target.endswith("_PROTOCOL"):
                             self._apply_gnss_protocol_value(new_target)

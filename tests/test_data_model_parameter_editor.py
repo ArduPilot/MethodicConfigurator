@@ -5928,6 +5928,49 @@ class TestConnectionRenameSaveLifecycle:
         assert parameter_editor.current_step_parameters["SERIAL2_BAUD"].get_new_value() == 115.0
         assert parameter_editor.current_step_parameters["SERIAL1_BAUD"].get_new_value() == 57.0
 
+        self.change_port(parameter_editor, components, "SERIAL3")
+        assert parameter_editor.current_step_parameters["SERIAL2_BAUD"].get_new_value() == 115.0
+        assert parameter_editor.current_step_parameters["SERIAL3_BAUD"].get_new_value() == 57.0
+
+    @pytest.mark.parametrize("add_source", ["fc", "docs"])
+    @pytest.mark.parametrize(
+        ("suffix", "initial_value", "edited_value"),
+        [("BAUD", 115.0, 230.0), ("PROTOCOL", 3.0, 4.0)],
+    )
+    def test_readded_connection_parameter_moves_with_edited_value(
+        self,
+        parameter_editor: ParameterEditor,
+        add_source: str,
+        suffix: str,
+        initial_value: float,
+        edited_value: float,
+    ) -> None:
+        """GIVEN a deleted rename target, WHEN re-added and moved, THEN its new value follows the port."""
+        step_file, components = self.prepare(parameter_editor)
+        source_name = f"SERIAL2_{suffix}"
+        target_name = f"SERIAL3_{suffix}"
+        self.change_port(parameter_editor, components, "SERIAL2")
+        parameter_editor.delete_parameter_from_current_file(source_name)
+        if add_source == "fc":
+            parameter_editor._flight_controller.fc_parameters = {source_name: initial_value}
+        else:
+            parameter_editor._flight_controller.fc_parameters = {}
+            parameter_editor._local_filesystem.doc_dict = {source_name: {}}
+            parameter_editor._local_filesystem.param_default_dict = ParDict({source_name: Par(initial_value)})
+
+        assert parameter_editor.add_parameter_to_current_file(source_name)
+        result = parameter_editor.update_parameter_value(source_name, str(edited_value))
+        assert result.status == ParameterValueUpdateStatus.UPDATED
+        self.change_port(parameter_editor, components, "SERIAL3")
+
+        assert source_name not in parameter_editor.current_step_parameters
+        assert parameter_editor.current_step_parameters[target_name].get_new_value() == edited_value
+        parameter_editor._export_current_file(annotate_doc=False)
+        saved = parameter_editor._local_filesystem.file_parameters[step_file]
+        assert source_name not in saved
+        assert saved[target_name].value == edited_value
+        assert saved["BRD_SER3_RTSCTS"].value == 1.0
+
 
 class TestInlineDerivationOwnership:
     """Keep automatically derived rows identifiable across saves within one editing session."""
