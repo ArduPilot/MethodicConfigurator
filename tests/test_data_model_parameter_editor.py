@@ -5929,6 +5929,214 @@ class TestConnectionRenameSaveLifecycle:
         assert parameter_editor.current_step_parameters["SERIAL1_BAUD"].get_new_value() == 57.0
 
 
+class TestInlineDerivationOwnership:
+    """Keep automatically derived rows identifiable across saves within one editing session."""
+
+    @staticmethod
+    def prepare(parameter_editor: ParameterEditor, saved: ParDict | None = None) -> tuple[str, dict[str, str]]:
+        """Set up a generic conditional serial step with real editor operations."""
+        step_file = "10_telemetry.param"
+        components = {"port": "None"}
+        filesystem = parameter_editor._local_filesystem
+        filesystem.vehicle_components_fs.data = {"Components": components}
+        filesystem.configuration_steps = {
+            step_file: {"rename_connection": "vehicle_components['port']", "derived_parameters": {}}
+        }
+        filesystem.file_parameters = {step_file: saved if saved is not None else ParDict()}
+        filesystem.derived_parameters = {step_file: ParDict()}
+        filesystem.compute_deletions.return_value = set()
+
+        def compute(*_args: object) -> None:
+            port = components["port"]
+            filesystem.derived_parameters[step_file] = (
+                ParDict({f"{port}_PROTOCOL": Par(2.0, "selected protocol")}) if port.startswith("SERIAL") else ParDict()
+            )
+
+        filesystem.compute_parameters.side_effect = compute
+        parameter_editor.current_file = step_file
+        parameter_editor._flight_controller.fc_parameters = {}
+        parameter_editor._config_step_processor.variables = {"vehicle_components": components}
+        parameter_editor.current_step_parameters = {
+            name: parameter_editor._config_step_processor.create_ardupilot_parameter(name, par, step_file, {})
+            for name, par in filesystem.file_parameters[step_file].items()
+        }
+        return step_file, components
+
+    @staticmethod
+    def change_port(parameter_editor: ParameterEditor, components: dict[str, str], port: str) -> None:
+        """Edit the component and reconcile the current step."""
+        parameter_editor.update_vehicle_components({**components, "port": port})
+        parameter_editor.refresh_current_step_computed_parameters()
+
+    def test_saved_automatic_protocol_follows_port_and_retires_without_spurious_prompt(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """GIVEN an automatic row, WHEN saved then moved and deselected, THEN only its current name is removed."""
+        step_file, components = self.prepare(parameter_editor)
+        self.change_port(parameter_editor, components, "SERIAL2")
+        parameter_editor._export_current_file(annotate_doc=False)
+        assert not parameter_editor._has_unsaved_changes()
+        parameter_editor.refresh_current_step_computed_parameters()
+        assert not parameter_editor._has_unsaved_changes()
+
+        self.change_port(parameter_editor, components, "SERIAL3")
+        assert "SERIAL2_PROTOCOL" not in parameter_editor.current_step_parameters
+        assert parameter_editor.current_step_parameters["SERIAL3_PROTOCOL"].get_new_value() == 2.0
+        parameter_editor._export_current_file(annotate_doc=False)
+        assert not parameter_editor._has_unsaved_changes()
+
+        self.change_port(parameter_editor, components, "None")
+        assert "SERIAL3_PROTOCOL" not in parameter_editor.current_step_parameters
+        assert parameter_editor._has_unsaved_changes()
+        parameter_editor._export_current_file(annotate_doc=False)
+        parameter_editor._export_current_file(annotate_doc=False)
+        assert not parameter_editor._local_filesystem.file_parameters[step_file]
+        assert not parameter_editor._has_unsaved_changes()
+
+    def test_preexisting_saved_protocol_and_serial_settings_remain_user_owned(self, parameter_editor: ParameterEditor) -> None:
+        """GIVEN saved user settings, WHEN no connection is selected, THEN refresh and export keep them."""
+        saved = ParDict(
+            {
+                "SERIAL2_PROTOCOL": Par(7.0, "user protocol"),
+                "SERIAL2_BAUD": Par(57.0, "user baud"),
+                "BRD_SER2_RTSCTS": Par(1.0, "user flow control"),
+            }
+        )
+        step_file, components = self.prepare(parameter_editor, saved)
+        self.change_port(parameter_editor, components, "None")
+        parameter_editor._export_current_file(annotate_doc=False)
+
+        actual = parameter_editor._local_filesystem.file_parameters[step_file]
+        assert {name: par.value for name, par in actual.items()} == {
+            "SERIAL2_PROTOCOL": 7.0,
+            "SERIAL2_BAUD": 57.0,
+            "BRD_SER2_RTSCTS": 1.0,
+        }
+
+    def test_saved_automatic_protocol_retires_but_renamed_baud_and_flow_control_remain(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """GIVEN saved baud and flow control, WHEN ports change then disconnect, THEN those settings remain."""
+        saved = ParDict({"SERIAL1_BAUD": Par(57.0), "BRD_SER1_RTSCTS": Par(1.0)})
+        step_file, components = self.prepare(parameter_editor, saved)
+        for port in ("SERIAL2", "SERIAL3"):
+            self.change_port(parameter_editor, components, port)
+            parameter_editor._export_current_file(annotate_doc=False)
+
+        self.change_port(parameter_editor, components, "None")
+        parameter_editor._export_current_file(annotate_doc=False)
+        final = parameter_editor._local_filesystem.file_parameters[step_file]
+        assert "SERIAL3_PROTOCOL" not in final
+        assert final["SERIAL3_BAUD"].value == 57.0
+        assert final["BRD_SER3_RTSCTS"].value == 1.0
+
+    def test_user_addition_and_manual_override_survive_automatic_retirement(self, parameter_editor: ParameterEditor) -> None:
+        """GIVEN a user addition and override, WHEN the selected port ends, THEN both remain in the export."""
+        step_file, components = self.prepare(parameter_editor)
+        parameter_editor._local_filesystem.doc_dict = {"USER_PARAM": {}}
+        parameter_editor._local_filesystem.param_default_dict = ParDict({"USER_PARAM": Par(7.0)})
+        assert parameter_editor.add_parameter_to_current_file("USER_PARAM")
+        self.change_port(parameter_editor, components, "SERIAL2")
+        protocol = parameter_editor.current_step_parameters["SERIAL2_PROTOCOL"]
+        protocol.set_manual_override(True)
+        protocol.set_new_value("3")
+        parameter_editor._export_current_file(annotate_doc=False)
+
+        self.change_port(parameter_editor, components, "None")
+        parameter_editor._export_current_file(annotate_doc=False)
+        final = parameter_editor._local_filesystem.file_parameters[step_file]
+        assert final["SERIAL2_PROTOCOL"].value == 3.0
+        assert final["USER_PARAM"].value == 7.0
+
+    def test_post_export_manual_override_is_not_renamed_away(self, parameter_editor: ParameterEditor) -> None:
+        """GIVEN a new override on a saved row, WHEN another UART is chosen, THEN the override stays."""
+        step_file, components = self.prepare(parameter_editor)
+        self.change_port(parameter_editor, components, "SERIAL2")
+        parameter_editor._export_current_file(annotate_doc=False)
+        original = parameter_editor.current_step_parameters["SERIAL2_PROTOCOL"]
+        original.set_manual_override(True)
+        original.set_new_value("3")
+
+        self.change_port(parameter_editor, components, "SERIAL3")
+        assert parameter_editor.current_step_parameters["SERIAL2_PROTOCOL"] is original
+        assert original.get_new_value() == 3.0
+        assert parameter_editor.current_step_parameters["SERIAL3_PROTOCOL"].get_new_value() == 2.0
+        parameter_editor._export_current_file(annotate_doc=False)
+        assert parameter_editor._local_filesystem.file_parameters[step_file]["SERIAL2_PROTOCOL"].value == 3.0
+
+    def test_reload_forgets_automatic_ownership_but_keeps_saved_value(self, parameter_editor: ParameterEditor) -> None:
+        """GIVEN a saved automatic row, WHEN the step reloads, THEN it follows saved-file semantics."""
+        step_file, components = self.prepare(parameter_editor)
+        self.change_port(parameter_editor, components, "SERIAL2")
+        parameter_editor._export_current_file(annotate_doc=False)
+        parameter_editor.update_vehicle_components({**components, "port": "None"})
+        saved = parameter_editor._local_filesystem.file_parameters[step_file]
+        parameter_editor._config_step_processor.process_configuration_step = MagicMock(
+            return_value=(
+                {
+                    name: parameter_editor._config_step_processor.create_ardupilot_parameter(name, par, step_file, {})
+                    for name, par in saved.items()
+                },
+                [],
+                [],
+                set(),
+                [],
+                ParDict(),
+                set(),
+            )
+        )
+
+        parameter_editor._repopulate_configuration_step_parameters()
+        parameter_editor.refresh_current_step_computed_parameters()
+        assert parameter_editor.current_step_parameters["SERIAL2_PROTOCOL"].get_new_value() == 2.0
+
+    def test_gnss_same_uart_driver_change_keeps_transport_until_port_is_removed(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """GIVEN a saved GNSS UART, WHEN its driver changes, THEN the port remains until deselected."""
+        step_file = "10_gnss.param"
+        components = {"GNSS Receiver": {"FC Connection": {"Type": "SERIAL3", "Protocol": "uBlox"}}}
+        filesystem = parameter_editor._local_filesystem
+        filesystem.vehicle_components_fs.data = {"Components": components}
+        filesystem.configuration_steps = {
+            step_file: {
+                "rename_connection": "vehicle_components['GNSS Receiver']['FC Connection']['Type']",
+                "derived_parameters": {},
+            }
+        }
+        filesystem.file_parameters = {step_file: ParDict()}
+        filesystem.derived_parameters = {step_file: ParDict()}
+        filesystem.compute_deletions.return_value = set()
+
+        def compute(*_args: object) -> None:
+            selection = components["GNSS Receiver"]["FC Connection"]
+            filesystem.derived_parameters[step_file] = (
+                ParDict({f"{selection['Type']}_PROTOCOL": Par(5.0)})
+                if selection["Type"].startswith("SERIAL") and selection["Protocol"] == "uBlox"
+                else ParDict()
+            )
+
+        filesystem.compute_parameters.side_effect = compute
+        parameter_editor.current_file = step_file
+        parameter_editor._flight_controller.fc_parameters = {}
+        parameter_editor._config_step_processor.variables = {"vehicle_components": components}
+        parameter_editor.current_step_parameters = {}
+
+        parameter_editor.refresh_current_step_computed_parameters()
+        parameter_editor._export_current_file(annotate_doc=False)
+        components["GNSS Receiver"]["FC Connection"]["Protocol"] = "MAVLink"
+        parameter_editor.refresh_current_step_computed_parameters()
+        assert parameter_editor.current_step_parameters["SERIAL3_PROTOCOL"].get_new_value() == 5.0
+
+        components["GNSS Receiver"]["FC Connection"]["Protocol"] = "uBlox"
+        parameter_editor.refresh_current_step_computed_parameters()
+        assert parameter_editor.current_step_parameters["SERIAL3_PROTOCOL"].get_new_value() == 5.0
+        components["GNSS Receiver"]["FC Connection"].update({"Type": "None", "Protocol": "None"})
+        parameter_editor.refresh_current_step_computed_parameters()
+        parameter_editor._export_current_file(annotate_doc=False)
+        assert "SERIAL3_PROTOCOL" not in filesystem.file_parameters[step_file]
+
+
 def test_old_flight_log_ui_workflow_is_retired() -> None:
     """Dialogs and progress belong to FileBrowserWindow, not the model."""
     assert not hasattr(ParameterEditor, "download_last_flight_log_workflow")
