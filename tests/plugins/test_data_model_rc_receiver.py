@@ -19,6 +19,7 @@ from unittest.mock import MagicMock
 import pytest
 from jsonschema import validate
 from pymavlink import mavutil
+from telemetry_test_helpers import rc_channels_message
 
 from ardupilot_methodic_configurator import data_model_parameter_editor as editor_module
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
@@ -37,12 +38,7 @@ _PACKAGE = Path(__file__).resolve().parents[2] / "ardupilot_methodic_configurato
 
 def rc_message(channels: tuple[int, ...] = (1000, 1200, 1500, 1800, 2000), rssi: int = 127) -> Any:  # noqa: ANN401
     """Use real MAVLink fields, including unused channels and the source address."""
-    message = mavutil.mavlink.MAVLink_rc_channels_message(
-        0, len(channels), *(channels + (65535,) * (18 - len(channels))), rssi
-    )
-    message._header.srcSystem = 1
-    message._header.srcComponent = 1
-    return message
+    return rc_channels_message(channels, rssi=rssi)
 
 
 def status_message(present: int = _RC_BIT, enabled: int = _RC_BIT, health: int = _RC_BIT) -> Any:  # noqa: ANN401
@@ -54,15 +50,10 @@ def status_message(present: int = _RC_BIT, enabled: int = _RC_BIT, health: int =
 
 
 @pytest.fixture
-def receiver_context() -> SimpleNamespace:
+def receiver_context(rc_controller: MagicMock) -> SimpleNamespace:
     """Mock only transport and time; execute the real model and MAVLink messages."""
     messages: deque[Any] = deque()
-    controller = MagicMock()
-    controller.master.target_system = 1
-    controller.master.target_component = 0
-    controller.info.system_id = "1"
-    controller.info.component_id = "1"
-    controller.request_rc_receiver_messages.return_value = (True, "")
+    controller = rc_controller
     controller.master.recv_match.side_effect = lambda **_kwargs: messages.popleft() if messages else None
     clock = MagicMock(return_value=100.0)
     return SimpleNamespace(controller=controller, clock=clock, messages=messages, model=RCReceiverDataModel(controller, clock))
@@ -112,6 +103,8 @@ def test_controller_step_restarts_stream_and_preserves_interleaved_rc_samples(re
 
     controller.master.recv_match.side_effect = recv_match
     heartbeat = mavutil.mavlink.MAVLink_heartbeat_message(2, 3, 0, 7, 4, 3)
+    heartbeat._header.srcSystem = 1
+    heartbeat._header.srcComponent = 1
     receiver_context.messages.extend([rc_message((1100,)), rc_message((1900,)), heartbeat])
     model = RCCalibrationDataModel(controller)
     assert model.start_calibration()[0]

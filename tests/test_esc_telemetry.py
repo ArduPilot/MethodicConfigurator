@@ -680,7 +680,10 @@ def test_sparse_esc_columns_keep_their_numbers_and_ignore_unused_slots(view: fro
     assert view.table.column("8", "stretch") == 0
 
 
-def test_busy_links_have_bounded_reads_and_preserve_other_observers(link: SimpleNamespace) -> None:
+@pytest.mark.parametrize("backend_type", [EscTelemetryBackend, DataTelemetryBackend])
+def test_busy_links_have_bounded_reads_and_preserve_other_observers(
+    link: SimpleNamespace, backend_type: type[EscTelemetryBackend] | type[DataTelemetryBackend]
+) -> None:
     """
     Keep telemetry responsive on a busy shared connection.
 
@@ -692,7 +695,7 @@ def test_busy_links_have_bounded_reads_and_preserve_other_observers(link: Simple
     link.master.message_hooks.append(observer)
     for _index in range(250):
         feed(link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
-    backend = EscTelemetryBackend(link.controller, lambda: link.now)
+    backend = backend_type(link.controller, lambda: link.now)
     backend.poll()
     assert observer.call_count == 200
     replacement = create_telemetry_link()
@@ -702,6 +705,34 @@ def test_busy_links_have_bounded_reads_and_preserve_other_observers(link: Simple
     assert len(replacement.master.message_hooks) == 1
     backend.close()
     assert not replacement.master.message_hooks
+
+
+@pytest.mark.parametrize("backend_type", [EscTelemetryBackend, DataTelemetryBackend])
+def test_slow_packets_stop_both_telemetry_polls_at_the_time_budget(
+    link: SimpleNamespace, backend_type: type[EscTelemetryBackend] | type[DataTelemetryBackend]
+) -> None:
+    """
+    Bound elapsed work even when packet processing is slow.
+
+    GIVEN a backlog whose observer takes six milliseconds to process each packet
+    WHEN the telemetry backend polls with a ten-millisecond budget
+    THEN only two packets are read and closing the backend preserves the other observer
+    """
+
+    def advance_clock(_master: object, _message: object) -> None:
+        link.now += 0.006
+
+    observer = MagicMock(side_effect=advance_clock)
+    link.master.message_hooks.append(observer)
+    for _index in range(10):
+        feed(link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
+    backend = backend_type(link.controller, lambda: link.now)
+    try:
+        backend.poll()
+        assert observer.call_count == 2
+    finally:
+        backend.close()
+    assert link.master.message_hooks == [observer]
 
 
 def test_reusable_esc_table_labels_identify_every_measurement_and_its_units() -> None:

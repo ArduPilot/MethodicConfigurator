@@ -203,6 +203,7 @@ only_mutate = [
     # Shared implementations used by telemetry and calibration plugins.
     "ardupilot_methodic_configurator/backend_data_telemetry.py",
     "ardupilot_methodic_configurator/backend_esc_telemetry.py",
+    "ardupilot_methodic_configurator/backend_mavlink_telemetry.py",
     "ardupilot_methodic_configurator/backend_radio_status.py",
     "ardupilot_methodic_configurator/backend_flightcontroller_commands.py",
     "ardupilot_methodic_configurator/data_model_data_telemetry.py",

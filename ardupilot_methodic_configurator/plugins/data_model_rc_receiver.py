@@ -95,8 +95,6 @@ class RCReceiverDataModel:  # pylint: disable=too-many-instance-attributes
         now = self._clock()
         try:
             for message in self._telemetry.get_rc_telemetry():
-                if not self._telemetry.is_selected_source(message):
-                    continue
                 if message.get_type() == "RC_CHANNELS":
                     self._read_channels(message, now)
                 elif message.get_type() == "SYS_STATUS":

@@ -427,17 +427,3 @@ class RCCalibrationDataModel:  # pylint: disable=too-many-instance-attributes
             logging_debug(_("Error reading MAVLink telemetry: %(error)s"), {"error": str(exc)})
 
         return telemetry
-
-    def get_flight_mode(self) -> str:
-        """Return the current flight mode string from the most recent HEARTBEAT message."""
-        if self.flight_controller.master is None:
-            return _("Not connected")
-        try:
-            hb = self.flight_controller.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                type="HEARTBEAT", blocking=False
-            )
-            if hb:
-                return str(hb.custom_mode)
-        except Exception as exc:  # pylint: disable=broad-exception-caught
-            logging_debug(_("Error reading HEARTBEAT: %(error)s"), {"error": str(exc)})
-        return _("No Data")
