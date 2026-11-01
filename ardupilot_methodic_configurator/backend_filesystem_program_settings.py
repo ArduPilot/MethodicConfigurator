@@ -515,6 +515,22 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
         return str(package_path / "vehicle_templates")
 
     @staticmethod
+    def get_other_windows_templates_base_dir(templates_dir: str) -> str | None:
+        """Find the other installation scope without creating its configuration directory."""
+        if platform_system() != "Windows" or os.environ.get("AMC_COMPONENT_TEMPLATES_DIR_TEST"):
+            return None
+        user_dir = (
+            Path(user_config_dir(".ardupilot_methodic_configurator", appauthor=False, roaming=True)) / "vehicle_templates"
+        )
+        site_dir = Path(site_config_dir(".ardupilot_methodic_configurator", appauthor=False)) / "vehicle_templates"
+        selected = os_path.normcase(os_path.abspath(templates_dir))
+        if selected == os_path.normcase(os_path.abspath(user_dir)):
+            return str(site_dir)
+        if selected == os_path.normcase(os_path.abspath(site_dir)):
+            return str(user_dir)
+        return None
+
+    @staticmethod
     def get_vehicles_default_dir() -> Path:
         settings_directory = Path(ProgramSettings._user_config_dir())
         return settings_directory / "vehicles"

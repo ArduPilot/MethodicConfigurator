@@ -19,6 +19,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings, normalize_path
+from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 
 # pylint: disable=too-many-lines,protected-access,redefined-outer-name,too-few-public-methods
 
@@ -1403,3 +1404,118 @@ class TestInternalConfigurationMethods:
             assert json.loads(personal_presets.read_text(encoding="utf-8")) == {
                 "Flight Controller": [{"name": "Personal preset"}]
             }
+
+
+class TestComponentPresetScope:
+    """Preserve personal component presets when Windows installation scope changes."""
+
+    @pytest.mark.parametrize("old_scope", ["user", "site"])
+    def test_saved_presets_survive_scope_switch_and_subsequent_save(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, old_scope: str
+    ) -> None:
+        """
+        Load existing presets after switching either way, then retain them on the next save.
+
+        GIVEN a personal preset saved in an installation scope that is later uninstalled
+        WHEN another scope is installed and the user loads and saves component templates
+        THEN the old preset remains available and the new scope owns the updated file
+        """
+        monkeypatch.delenv("AMC_COMPONENT_TEMPLATES_DIR_TEST", raising=False)
+        user_config, site_config = tmp_path / "user", tmp_path / "site"
+        user_templates, site_templates = user_config / "vehicle_templates", site_config / "vehicle_templates"
+        user_templates.mkdir(parents=True)
+        site_templates.mkdir(parents=True)
+        marker = "system_vehicle_components_template.json"
+        (site_templates / marker).write_text("{}", encoding="utf-8")
+        if old_scope == "user":
+            (user_templates / marker).write_text("{}", encoding="utf-8")
+        old_templates = user_templates if old_scope == "user" else site_templates
+        new_templates = site_templates if old_scope == "user" else user_templates
+        preset = {"Flight Controller": [{"name": "Personal preset", "data": {"Manufacturer": "Example"}}]}
+        added = {"Battery": [{"name": "New preset", "data": {"Cells": 4}}]}
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_program_settings.platform_system", return_value="Windows"
+            ),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_program_settings.user_config_dir",
+                return_value=str(user_config),
+            ),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_program_settings.site_config_dir",
+                return_value=str(site_config),
+            ),
+        ):
+            components = VehicleComponents()
+            assert not components.save_component_templates_to_file(preset)[0]
+            assert ProgramSettings.get_templates_base_dir() == str(old_templates)
+            old_file = old_templates / "user_vehicle_components_template.json"
+            assert json.loads(old_file.read_text(encoding="utf-8")) == preset
+
+            (old_templates / marker).unlink()
+            (new_templates / marker).write_text("{}", encoding="utf-8")
+            assert ProgramSettings.get_templates_base_dir() == str(new_templates)
+            assert components.load_component_templates()["Flight Controller"] == [
+                {**preset["Flight Controller"][0], "is_user_modified": True}
+            ]
+            assert not components.save_component_templates_to_file(added)[0]
+            assert json.loads((new_templates / old_file.name).read_text(encoding="utf-8")) == {**preset, **added}
+            assert json.loads(old_file.read_text(encoding="utf-8")) == preset
+
+            old_file.write_text('{"Ignored": [{"name": "Old"}]}', encoding="utf-8")
+            assert components.load_component_templates() == {
+                "Flight Controller": [{**preset["Flight Controller"][0], "is_user_modified": True}],
+                "Battery": [{**added["Battery"][0], "is_user_modified": True}],
+            }
+
+    @pytest.mark.parametrize("selected_content", ["{}", "{invalid json"])
+    def test_selected_scope_file_remains_authoritative(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, selected_content: str
+    ) -> None:
+        """An empty or invalid selected file does not restore presets from the other scope."""
+        monkeypatch.delenv("AMC_COMPONENT_TEMPLATES_DIR_TEST", raising=False)
+        user_config, site_config = tmp_path / "user", tmp_path / "site"
+        user_templates, site_templates = user_config / "vehicle_templates", site_config / "vehicle_templates"
+        user_templates.mkdir(parents=True)
+        site_templates.mkdir(parents=True)
+        (user_templates / "system_vehicle_components_template.json").write_text("{}", encoding="utf-8")
+        (user_templates / "user_vehicle_components_template.json").write_text(selected_content, encoding="utf-8")
+        (site_templates / "user_vehicle_components_template.json").write_text(
+            '{"Flight Controller": [{"name": "Old preset"}]}', encoding="utf-8"
+        )
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_program_settings.platform_system", return_value="Windows"
+            ),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_program_settings.user_config_dir",
+                return_value=str(user_config),
+            ),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_program_settings.site_config_dir",
+                return_value=str(site_config),
+            ),
+        ):
+            assert VehicleComponents().load_component_templates() == {}
+
+    @pytest.mark.parametrize(("platform_name", "override"), [("Linux", False), ("Windows", True)])
+    def test_alternate_scope_is_disabled_outside_normal_windows_installs(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, platform_name: str, override: bool
+    ) -> None:
+        """Test overrides and non-Windows installations never read another scope's presets."""
+        if override:
+            monkeypatch.setenv("AMC_COMPONENT_TEMPLATES_DIR_TEST", str(tmp_path))
+        else:
+            monkeypatch.delenv("AMC_COMPONENT_TEMPLATES_DIR_TEST", raising=False)
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_program_settings.platform_system",
+                return_value=platform_name,
+            ),
+            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.user_config_dir") as user_dir,
+            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.site_config_dir") as site_dir,
+        ):
+            assert ProgramSettings.get_other_windows_templates_base_dir(str(tmp_path)) is None
+            user_dir.assert_not_called()
+            site_dir.assert_not_called()

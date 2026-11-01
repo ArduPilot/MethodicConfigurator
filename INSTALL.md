@@ -184,11 +184,19 @@ For PowerShell (MS Windows) autocompletion, run this command in PowerShell:
 notepad $PROFILE
 ```
 
-And add this line to the file:
+For the default per-user installation, add this line to the file:
 
 ```powershell
-Import-Module  "C:\Program Files (x86)\ardupilot_methodic_configurator\ardupilot_methodic_configurator_command_line_completion.psm1"
+Import-Module "$env:LOCALAPPDATA\Programs\ardupilot_methodic_configurator\ardupilot_methodic_configurator_command_line_completion.psm1"
 ```
+
+For an all-users installation on 64-bit Windows, use:
+
+```powershell
+Import-Module "${env:ProgramFiles(x86)}\ardupilot_methodic_configurator\ardupilot_methodic_configurator_command_line_completion.psm1"
+```
+
+If you selected a different installation directory, use the module path in that directory instead.
 
 ## Verify Installer Security and Integrity
 
