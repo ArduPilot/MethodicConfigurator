@@ -5951,6 +5951,8 @@ class TestConnectionRenameSaveLifecycle:
         target_name = f"SERIAL3_{suffix}"
         self.change_port(parameter_editor, components, "SERIAL2")
         parameter_editor.delete_parameter_from_current_file(source_name)
+        parameter_editor.update_vehicle_components({**components, "other": "intervening edit"})
+        parameter_editor.refresh_current_step_computed_parameters()
         if add_source == "fc":
             parameter_editor._flight_controller.fc_parameters = {source_name: initial_value}
         else:
@@ -5970,6 +5972,30 @@ class TestConnectionRenameSaveLifecycle:
         assert source_name not in saved
         assert saved[target_name].value == edited_value
         assert saved["BRD_SER3_RTSCTS"].value == 1.0
+
+    @pytest.mark.parametrize(("suffix", "saved_value"), [("BAUD", 57.0), ("PROTOCOL", 2.0)])
+    def test_readded_value_round_trip_to_original_port(
+        self, parameter_editor: ParameterEditor, suffix: str, saved_value: float
+    ) -> None:
+        """Document the existing saved-source behavior pending a decision on round-trip semantics."""
+        step_file, components = self.prepare(parameter_editor)
+        self.change_port(parameter_editor, components, "SERIAL2")
+        name = f"SERIAL2_{suffix}"
+        parameter_editor.delete_parameter_from_current_file(name)
+        parameter_editor.refresh_current_step_computed_parameters()
+        parameter_editor._flight_controller.fc_parameters = {name: 3.0}
+        assert parameter_editor.add_parameter_to_current_file(name)
+        parameter_editor.update_parameter_value(name, "4")
+        self.change_port(parameter_editor, components, "SERIAL3")
+        assert parameter_editor.current_step_parameters[f"SERIAL3_{suffix}"].get_new_value() == 4.0
+        self.change_port(parameter_editor, components, "SERIAL1")
+        assert parameter_editor.current_step_parameters[f"SERIAL1_{suffix}"].get_new_value() == saved_value
+        parameter_editor._export_current_file(annotate_doc=False)
+        saved = parameter_editor._local_filesystem.file_parameters[step_file]
+        assert saved[f"SERIAL1_{suffix}"].value == saved_value
+        assert f"SERIAL2_{suffix}" not in saved
+        assert f"SERIAL3_{suffix}" not in saved
+        assert not parameter_editor._has_unsaved_changes()
 
 
 class TestInlineDerivationOwnership:
@@ -6034,6 +6060,29 @@ class TestInlineDerivationOwnership:
         parameter_editor._export_current_file(annotate_doc=False)
         parameter_editor._export_current_file(annotate_doc=False)
         assert not parameter_editor._local_filesystem.file_parameters[step_file]
+        assert not parameter_editor._has_unsaved_changes()
+        self.change_port(parameter_editor, components, "SERIAL2")
+        parameter_editor._export_current_file(annotate_doc=False)
+        assert set(parameter_editor._local_filesystem.file_parameters[step_file]) == {"SERIAL2_PROTOCOL"}
+        assert not parameter_editor._has_unsaved_changes()
+
+    @pytest.mark.parametrize("save_retirement", [False, True])
+    def test_saved_automatic_protocol_returns_after_reselection(
+        self, parameter_editor: ParameterEditor, save_retirement: bool
+    ) -> None:
+        """A saved automatic row returns when the same port is selected again."""
+        step_file, components = self.prepare(parameter_editor)
+        self.change_port(parameter_editor, components, "SERIAL5")
+        parameter_editor._export_current_file(annotate_doc=False)
+        self.change_port(parameter_editor, components, "RCIN")
+        assert "SERIAL5_PROTOCOL" not in parameter_editor.current_step_parameters
+        if save_retirement:
+            parameter_editor._export_current_file(annotate_doc=False)
+        self.change_port(parameter_editor, components, "SERIAL5")
+        assert parameter_editor.current_step_parameters["SERIAL5_PROTOCOL"].get_new_value() == 2.0
+        assert parameter_editor._has_unsaved_changes() is save_retirement
+        parameter_editor._export_current_file(annotate_doc=False)
+        assert parameter_editor._local_filesystem.file_parameters[step_file]["SERIAL5_PROTOCOL"].value == 2.0
         assert not parameter_editor._has_unsaved_changes()
 
     def test_preexisting_saved_protocol_and_serial_settings_remain_user_owned(self, parameter_editor: ParameterEditor) -> None:
@@ -6174,10 +6223,15 @@ class TestInlineDerivationOwnership:
         components["GNSS Receiver"]["FC Connection"]["Protocol"] = "uBlox"
         parameter_editor.refresh_current_step_computed_parameters()
         assert parameter_editor.current_step_parameters["SERIAL3_PROTOCOL"].get_new_value() == 5.0
+        components["GNSS Receiver"]["FC Connection"]["Type"] = "SERIAL4"
+        parameter_editor.refresh_current_step_computed_parameters()
+        parameter_editor._export_current_file(annotate_doc=False)
+        assert set(filesystem.file_parameters[step_file]) == {"SERIAL4_PROTOCOL"}
         components["GNSS Receiver"]["FC Connection"].update({"Type": "None", "Protocol": "None"})
         parameter_editor.refresh_current_step_computed_parameters()
         parameter_editor._export_current_file(annotate_doc=False)
-        assert "SERIAL3_PROTOCOL" not in filesystem.file_parameters[step_file]
+        assert not filesystem.file_parameters[step_file]
+        assert not parameter_editor._has_unsaved_changes()
 
 
 def test_old_flight_log_ui_workflow_is_retired() -> None:
