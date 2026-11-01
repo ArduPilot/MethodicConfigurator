@@ -52,7 +52,7 @@ Directory Structure
 -------------------
 Both source and target directories maintain the same vehicle_templates structure:
 
-/tmp/amc_test_acceptance1/             Source: Compounded params.param files (mirrors source structure)
+Temporary source directory             Compounded params.param files (mirrors source structure)
 └── vehicle_templates/
     ├── ArduCopter/
     │   ├── diatone_taycan_mxc/
@@ -68,7 +68,7 @@ Both source and target directories maintain the same vehicle_templates structure
     ├── Rover/
     └── Heli/
 
-/tmp/amc_test_acceptance2/             Target: Generated vehicle projects (mirrors source structure)
+Temporary target directory             Generated vehicle projects (mirrors source structure)
 └── vehicle_templates/
     ├── ArduCopter/
     │   ├── diatone_taycan_mxc/
@@ -153,7 +153,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
     VehicleProjectCreator,
 )
 
-# ruff: noqa: ANN201, ANN205, S108, PLR0915, EM102
+# ruff: noqa: ANN201, ANN205, PLR0915, EM102
 
 # pylint: disable=too-many-lines,too-many-locals,too-many-branches,too-many-statements,redefined-outer-name,too-few-public-methods,unused-argument,broad-exception-caught
 
@@ -449,29 +449,15 @@ def get_empty_template_dir(vehicle_type: str) -> Path:
 
 
 @pytest.fixture(scope="module")
-def tmp_test_dir():
-    """Create and cleanup test directory in /tmp for compounded params.param files."""
-    test_dir = Path("/tmp/amc_test_acceptance1")
-    if test_dir.exists():
-        shutil.rmtree(test_dir)
-    test_dir.mkdir(parents=True, exist_ok=True)
-    return test_dir
-    # Cleanup after all tests (commented out for inspection)
-    # if test_dir.exists():
-    #     shutil.rmtree(test_dir)
+def tmp_test_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """Create an isolated directory for compounded parameter files."""
+    return tmp_path_factory.mktemp("amc_test_acceptance1")
 
 
 @pytest.fixture(scope="module")
-def tmp_test_output_dir():
-    """Create and cleanup output directory in /tmp for generated vehicle projects."""
-    test_dir = Path("/tmp/amc_test_acceptance2")
-    if test_dir.exists():
-        shutil.rmtree(test_dir)
-    test_dir.mkdir(parents=True, exist_ok=True)
-    return test_dir
-    # Cleanup after all tests (commented out for inspection)
-    # if test_dir.exists():
-    #     shutil.rmtree(test_dir)
+def tmp_test_output_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """Create an isolated directory for generated vehicle projects."""
+    return tmp_path_factory.mktemp("amc_test_acceptance2")
 
 
 @pytest.fixture(scope="module")
@@ -480,7 +466,7 @@ def compounded_params_files(tmp_test_dir):
     Create compounded params.param files from all vehicle templates.
 
     This fixture runs once for the module and creates params.param files
-    in /tmp/amc_test_acceptance1/ for all vehicle templates.
+    in a temporary directory for all vehicle templates.
 
     Returns:
         dict[Path, Path]: Mapping of template_dir -> params_file_path
@@ -506,7 +492,7 @@ def compounded_params_files(tmp_test_dir):
         if len(compound_params) == 0:
             continue
 
-        # Create output directory in /tmp with same structure (starting from vehicle_templates)
+        # Create an output directory with the same structure (starting from vehicle_templates)
         # Find the vehicle_templates directory in the path
         vehicle_templates_idx = None
         for i, part in enumerate(template_dir.parts):
@@ -662,7 +648,7 @@ class TestTemplateImportWithComponentInference:
                 pytest.skip(f"Empty template not found for vehicle type: {vehicle_type}")
 
             # Create output path preserving vehicle_templates structure
-            # params_dir is like: /tmp/amc_test_acceptance1/vehicle_templates/ArduCopter/Chimera7
+            # params_dir ends in vehicle_templates/ArduCopter/Chimera7, for example.
             relative_path = params_dir.relative_to(tmp_test_dir)
             # relative_path is like: vehicle_templates/ArduCopter/Chimera7
             vehicle_name = relative_path.parts[-1]
@@ -693,7 +679,7 @@ class TestTemplateImportWithComponentInference:
             project_creator = VehicleProjectCreator(local_filesystem)
             new_vehicle_dir = project_creator.create_new_vehicle_from_template(
                 template_dir=str(empty_template_dir),
-                new_base_dir=str(output_vehicle_dir.parent),  # e.g., /tmp/amc_test_acceptance2/vehicle_templates/ArduCopter
+                new_base_dir=str(output_vehicle_dir.parent),
                 new_vehicle_name=f"{vehicle_name}",
                 settings=settings,
                 fc_connected=False,  # File simulation mode - no physical connection
@@ -805,9 +791,7 @@ class TestTemplateImportWithComponentInference:
                 project_creator = VehicleProjectCreator(local_filesystem)
                 new_vehicle_dir = project_creator.create_new_vehicle_from_template(
                     template_dir=str(empty_template_dir),
-                    new_base_dir=str(
-                        output_vehicle_dir.parent
-                    ),  # e.g., /tmp/amc_test_acceptance2/vehicle_templates/ArduCopter
+                    new_base_dir=str(output_vehicle_dir.parent),
                     new_vehicle_name=f"{vehicle_name}",
                     settings=settings,
                     fc_connected=False,

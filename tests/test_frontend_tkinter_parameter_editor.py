@@ -3208,10 +3208,20 @@ class TestPluginLayoutRebuild:
                         assert canvas.winfo_height() >= view._continue_btn.winfo_reqheight() + 8
                         canvas.yview_moveto(1)
                         root.update_idletasks()
-                        assert canvas.winfo_rooty() <= view._continue_btn.winfo_rooty()
-                        assert view._continue_btn.winfo_rooty() + view._continue_btn.winfo_height() <= (
-                            canvas.winfo_rooty() + canvas.winfo_height()
-                        )
+                        # Screen coordinates can lag scrolling under a withdrawn Windows root.
+                        # Translate the button position through its parents into canvas coordinates.
+                        button_y = canvas.coords(view._scroll_frame.canvas_window)[1]
+                        ancestor: tk.Misc = view._continue_btn
+                        while ancestor is not view._scroll_frame.view_port:
+                            button_y += ancestor.winfo_y()
+                            parent = ancestor.master
+                            assert parent is not None
+                            ancestor = parent
+                        scroll_top, scroll_bottom = map(float, canvas.cget("scrollregion").split()[1::2])
+                        canvas.yview_moveto((button_y - scroll_top) / (scroll_bottom - scroll_top))
+                        root.update_idletasks()
+                        assert canvas.canvasy(0) <= button_y
+                        assert button_y + view._continue_btn.winfo_height() <= canvas.canvasy(canvas.winfo_height())
                     editor._rebuild_plugin_layout(None)
                     root.update_idletasks()
         finally:
