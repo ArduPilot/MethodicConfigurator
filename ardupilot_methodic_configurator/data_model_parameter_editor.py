@@ -2374,6 +2374,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
     def _unsuppress_readded_connection_renames(self, param_name: str) -> None:
         """Restore tracking for a saved source when its renamed target is re-added."""
+        self._connection_renames.pop(param_name, None)
         self._suppressed_connection_renames.discard(param_name)
         self._suppressed_connection_renames.difference_update(
             source for source, target in self._connection_renames.items() if target == param_name
@@ -2906,8 +2907,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
     def _transfer_inline_derived_ownership(self, old_name: str, new_name: str) -> None:
         """Keep same-session derivation ownership when a saved source is renamed."""
-        if old_name in self._inline_derived_parameters:
+        if old_name in self._inline_derived_parameters or old_name in self._retired_inline_derived_parameters:
             self._inline_derived_parameters.discard(old_name)
+            self._retired_inline_derived_parameters.discard(old_name)
             self._inline_derived_parameters.add(new_name)
 
     def _take_current_rename_par(self, current_target: str, original_par: Par | None) -> Par | None:
@@ -2955,6 +2957,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         # Process renames that already exist: update if the target changed
         for orig_name, current_target in list(self._connection_renames.items()):
             if orig_name in self._suppressed_connection_renames:
+                self._connection_renames[orig_name] = new_rename_map.get(orig_name, current_target)
                 continue
             if (
                 current_target in self.current_step_parameters

@@ -5973,6 +5973,56 @@ class TestConnectionRenameSaveLifecycle:
         assert saved[target_name].value == edited_value
         assert saved["BRD_SER3_RTSCTS"].value == 1.0
 
+    @pytest.mark.parametrize("add_source", ["fc", "docs"])
+    @pytest.mark.parametrize("suffix", ["BAUD", "PROTOCOL"])
+    def test_readded_saved_source_keeps_edit_after_refresh(
+        self, parameter_editor: ParameterEditor, add_source: str, suffix: str
+    ) -> None:
+        """Re-adding the saved source after a deletion must not revive an obsolete rename."""
+        step_file, components = self.prepare(parameter_editor)
+        self.change_port(parameter_editor, components, "SERIAL2")
+        parameter_editor.delete_parameter_from_current_file(f"SERIAL2_{suffix}")
+        self.change_port(parameter_editor, components, "SERIAL1")
+        name = f"SERIAL1_{suffix}"
+        if add_source == "fc":
+            parameter_editor._flight_controller.fc_parameters = {name: 3.0}
+        else:
+            parameter_editor._flight_controller.fc_parameters = {}
+            parameter_editor._local_filesystem.doc_dict = {name: {}}
+            parameter_editor._local_filesystem.param_default_dict = ParDict({name: Par(3.0)})
+        assert parameter_editor.add_parameter_to_current_file(name)
+        assert parameter_editor.update_parameter_value(name, "230").status == ParameterValueUpdateStatus.UPDATED
+        parameter_editor.update_vehicle_components({**components, "other": "unrelated"})
+        parameter_editor.refresh_current_step_computed_parameters()
+        assert parameter_editor.current_step_parameters[name].get_new_value() == 230.0
+        parameter_editor._export_current_file(annotate_doc=False)
+        assert parameter_editor._local_filesystem.file_parameters[step_file][name].value == 230.0
+
+    @pytest.mark.parametrize("add_source", ["fc", "docs"])
+    def test_readded_old_target_after_port_move_remains_independent(
+        self, parameter_editor: ParameterEditor, add_source: str
+    ) -> None:
+        """An old target re-added after the connection moved is an independent row."""
+        step_file, components = self.prepare(parameter_editor)
+        self.change_port(parameter_editor, components, "SERIAL2")
+        parameter_editor.delete_parameter_from_current_file("SERIAL2_BAUD")
+        self.change_port(parameter_editor, components, "SERIAL3")
+        name = "SERIAL2_BAUD"
+        if add_source == "fc":
+            parameter_editor._flight_controller.fc_parameters = {name: 115.0}
+        else:
+            parameter_editor._flight_controller.fc_parameters = {}
+            parameter_editor._local_filesystem.doc_dict = {name: {}}
+            parameter_editor._local_filesystem.param_default_dict = ParDict({name: Par(115.0)})
+        assert parameter_editor.add_parameter_to_current_file(name)
+        assert parameter_editor.update_parameter_value(name, "230").status == ParameterValueUpdateStatus.UPDATED
+        parameter_editor.update_vehicle_components({**components, "other": "unrelated"})
+        parameter_editor.refresh_current_step_computed_parameters()
+        assert parameter_editor.current_step_parameters[name].get_new_value() == 230.0
+        assert "SERIAL3_BAUD" not in parameter_editor.current_step_parameters
+        parameter_editor._export_current_file(annotate_doc=False)
+        assert parameter_editor._local_filesystem.file_parameters[step_file][name].value == 230.0
+
     @pytest.mark.parametrize(("suffix", "saved_value"), [("BAUD", 57.0), ("PROTOCOL", 2.0)])
     def test_readded_value_round_trip_to_original_port(
         self, parameter_editor: ParameterEditor, suffix: str, saved_value: float
@@ -6084,6 +6134,31 @@ class TestInlineDerivationOwnership:
         parameter_editor._export_current_file(annotate_doc=False)
         assert parameter_editor._local_filesystem.file_parameters[step_file]["SERIAL5_PROTOCOL"].value == 2.0
         assert not parameter_editor._has_unsaved_changes()
+
+    @pytest.mark.parametrize("save_first_retirement", [False, True])
+    @pytest.mark.parametrize("save_intermediate_port", [False, True])
+    def test_retired_protocol_does_not_return_after_another_port(
+        self, parameter_editor: ParameterEditor, save_first_retirement: bool, save_intermediate_port: bool
+    ) -> None:
+        """Retired automatic rows stay retired when selection passes through another port."""
+        step_file, components = self.prepare(parameter_editor)
+        self.change_port(parameter_editor, components, "SERIAL2")
+        parameter_editor._export_current_file(annotate_doc=False)
+        self.change_port(parameter_editor, components, "None")
+        if save_first_retirement:
+            parameter_editor._export_current_file(annotate_doc=False)
+        self.change_port(parameter_editor, components, "SERIAL3")
+        assert parameter_editor.current_step_parameters["SERIAL3_PROTOCOL"].get_new_value() == 2.0
+        if save_intermediate_port:
+            parameter_editor._export_current_file(annotate_doc=False)
+        self.change_port(parameter_editor, components, "None")
+        parameter_editor._export_current_file(annotate_doc=False)
+        assert not parameter_editor._local_filesystem.file_parameters[step_file]
+        assert not parameter_editor._has_unsaved_changes()
+        self.change_port(parameter_editor, components, "SERIAL2")
+        assert parameter_editor.current_step_parameters["SERIAL2_PROTOCOL"].get_new_value() == 2.0
+        parameter_editor._export_current_file(annotate_doc=False)
+        assert set(parameter_editor._local_filesystem.file_parameters[step_file]) == {"SERIAL2_PROTOCOL"}
 
     def test_preexisting_saved_protocol_and_serial_settings_remain_user_owned(self, parameter_editor: ParameterEditor) -> None:
         """GIVEN saved user settings, WHEN no connection is selected, THEN refresh and export keep them."""
