@@ -11,7 +11,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import datetime
+import datetime as dt
 import importlib.metadata
 import os
 import shutil
@@ -133,7 +133,7 @@ def create_one_pdef_xml_file(vehicle_type: str, dst_dir: str, git_tag: str) -> N
         # with the tag used to generate the file and the current date
         lines.insert(
             2,
-            f"<!-- Generated from git tag {git_tag} on {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} -->\n",
+            f"<!-- Generated from git tag {git_tag} on {dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} -->\n",
         )
         with open("apm.pdef.xml", "w", encoding="utf-8", newline="\n") as f:
             f.writelines(lines)
