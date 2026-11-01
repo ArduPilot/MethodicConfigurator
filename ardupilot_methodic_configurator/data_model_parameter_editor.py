@@ -2157,6 +2157,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 # Mark old parameter as deleted
                 self._deleted_parameters.add(old_name)
 
+                # The saved source, not the temporary derived destination, owns this row.
+                self._inline_derived_parameters.discard(new_name)
+
                 # Create new parameter with renamed name
                 old_par = original_params[old_name]
                 self.current_step_parameters[new_name] = self._config_step_processor.create_ardupilot_parameter(
@@ -2374,7 +2377,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
     def _unsuppress_readded_connection_renames(self, param_name: str) -> None:
         """Restore tracking for a saved source when its renamed target is re-added."""
-        self._connection_renames.pop(param_name, None)
+        if param_name in self._suppressed_connection_renames:
+            self._connection_renames.pop(param_name, None)
         self._suppressed_connection_renames.discard(param_name)
         self._suppressed_connection_renames.difference_update(
             source for source, target in self._connection_renames.items() if target == param_name
@@ -2957,7 +2961,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         # Process renames that already exist: update if the target changed
         for orig_name, current_target in list(self._connection_renames.items()):
             if orig_name in self._suppressed_connection_renames:
-                self._connection_renames[orig_name] = new_rename_map.get(orig_name, current_target)
+                self._connection_renames[orig_name] = new_rename_map.get(orig_name, orig_name)
                 continue
             if (
                 current_target in self.current_step_parameters
