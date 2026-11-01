@@ -695,6 +695,7 @@ def test_busy_links_have_bounded_reads_and_preserve_other_observers(
     link.master.message_hooks.append(observer)
     for _index in range(250):
         feed(link, mavlink.MAVLink_heartbeat_message(2, 3, 0, 0, 3, 3))
+    link.controller.start_gcs_heartbeat.side_effect = None
     backend = backend_type(link.controller, lambda: link.now)
     backend.poll()
     assert observer.call_count == 200
