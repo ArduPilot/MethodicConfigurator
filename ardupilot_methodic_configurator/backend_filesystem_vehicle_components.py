@@ -123,6 +123,12 @@ class VehicleComponents:
         templates_filename = "user_vehicle_components_template.json"
         templates_dir = ProgramSettings.get_templates_base_dir()
         filepath = os_path.join(templates_dir, templates_filename)
+        if not os_path.exists(filepath):
+            other_templates_dir = ProgramSettings.get_other_windows_templates_base_dir(templates_dir)
+            if other_templates_dir:
+                other_filepath = os_path.join(other_templates_dir, templates_filename)
+                if os_path.isfile(other_filepath):
+                    filepath = other_filepath
 
         templates = {}
         try:
