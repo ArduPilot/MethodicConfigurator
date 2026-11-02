@@ -3366,8 +3366,9 @@ def test_batched_rendering_identifies_a_missing_parameter_and_does_not_report_co
     errors = [record for record in caplog.records if record.levelname == "CRITICAL"]
     assert len(errors) == 1
     assert errors[0].getMessage() == "Parameter MISSING not found in the test_file file: 'missing metadata'"
-    assert errors[0].exc_info is not None
-    assert isinstance(errors[0].exc_info[1], KeyError)
+    exc_info = errors[0].exc_info
+    assert isinstance(exc_info, tuple)
+    assert isinstance(exc_info[1], KeyError)
     complete.assert_not_called()
 
 
