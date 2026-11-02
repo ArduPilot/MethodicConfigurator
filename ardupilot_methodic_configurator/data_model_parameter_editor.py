@@ -3012,7 +3012,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 current_par = self._take_current_rename_par(current_target, original_params.get(orig_name))
                 if previous is not None and previous.is_derived and not previous.is_manual_override:
                     current_par = original_params.get(orig_name)
-                if current_par is not None:
+                if current_par is not None and not (
+                    orig_name in self._declined_connection_renames and orig_name in self.current_step_parameters
+                ):
                     self.current_step_parameters[orig_name] = self._config_step_processor.create_ardupilot_parameter(
                         orig_name, current_par, self.current_file, self.fc_parameters
                     )

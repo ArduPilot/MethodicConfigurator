@@ -5898,6 +5898,53 @@ class TestConnectionRenameSaveLifecycle:  # pylint: disable=too-many-public-meth
         assert saved["SERIAL3_PROTOCOL"].value == 2.0
         assert "SERIAL2_PROTOCOL" not in saved
 
+    @pytest.mark.parametrize("disable_first", [True, False])
+    @pytest.mark.parametrize("second_port", ["None", "SERIAL3"])
+    def test_previous_serial_choice_survives_second_move_before_export(
+        self, parameter_editor: ParameterEditor, disable_first: bool, second_port: str
+    ) -> None:
+        """A second connection change must not overwrite a staged old-port choice."""
+        step_file, components = self.prepare(parameter_editor)
+        first_snapshot = parameter_editor.serial_protocol_snapshot("SERIAL1")
+        self.change_port(parameter_editor, components, "SERIAL2")
+        parameter_editor.preserve_or_disable_serial_protocol("SERIAL1", first_snapshot, disable=disable_first)
+        assert parameter_editor.current_step_parameters["SERIAL1_PROTOCOL"].get_new_value() == (-1.0 if disable_first else 2.0)
+
+        second_snapshot = parameter_editor.serial_protocol_snapshot("SERIAL2")
+        self.change_port(parameter_editor, components, second_port)
+        parameter_editor.preserve_or_disable_serial_protocol("SERIAL2", second_snapshot, disable=True)
+        parameter_editor._export_current_file(annotate_doc=False)
+        saved = parameter_editor._local_filesystem.file_parameters[step_file]
+        assert saved["SERIAL1_PROTOCOL"].value == (-1.0 if disable_first else 2.0)
+        assert saved["SERIAL2_PROTOCOL"].value == -1.0
+        if second_port == "SERIAL3":
+            assert saved["SERIAL3_PROTOCOL"].value == 2.0
+            assert saved["SERIAL3_BAUD"].value == 57.0
+            assert saved["BRD_SER3_RTSCTS"].value == 1.0
+            assert "SERIAL1_BAUD" not in saved
+        else:
+            assert "SERIAL3_PROTOCOL" not in saved
+            assert saved["SERIAL1_BAUD"].value == 57.0
+            assert saved["BRD_SER1_RTSCTS"].value == 1.0
+        assert "SERIAL2_BAUD" not in saved
+        assert "BRD_SER2_RTSCTS" not in saved
+        parameter_editor.update_vehicle_components({**components, "other": "changed"})
+        parameter_editor.refresh_current_step_computed_parameters()
+        parameter_editor._export_current_file(annotate_doc=False)
+        saved = parameter_editor._local_filesystem.file_parameters[step_file]
+        assert saved["SERIAL1_PROTOCOL"].value == (-1.0 if disable_first else 2.0)
+        assert saved["SERIAL2_PROTOCOL"].value == -1.0
+        assert ("SERIAL3_PROTOCOL" in saved) is (second_port == "SERIAL3")
+
+    def test_return_to_disabled_source_reports_connection_conflict(self, parameter_editor: ParameterEditor) -> None:
+        """The occupied old source is reported when attempting to return to it."""
+        _step_file, components = self.prepare(parameter_editor)
+        snapshot = parameter_editor.serial_protocol_snapshot("SERIAL1")
+        self.change_port(parameter_editor, components, "SERIAL2")
+        parameter_editor.preserve_or_disable_serial_protocol("SERIAL1", snapshot, disable=True)
+        assert ("SERIAL2_PROTOCOL", "SERIAL1_PROTOCOL") in parameter_editor.connection_change_conflicts("SERIAL2", "SERIAL1")
+        assert parameter_editor.current_step_parameters["SERIAL1_PROTOCOL"].get_new_value() == -1.0
+
     def test_no_connection_change_does_not_propose_a_transition(self, parameter_editor: ParameterEditor) -> None:
         """An unrelated component edit does not imply any connection operation."""
         _step_file, components = self.prepare(parameter_editor)
@@ -6290,6 +6337,21 @@ class TestInlineDerivationOwnership:
         """Edit the component and reconcile the current step."""
         parameter_editor.update_vehicle_components({**components, "port": port})
         parameter_editor.refresh_current_step_computed_parameters()
+
+    def test_disabled_saved_protocol_survives_derived_destination_deselection(self, parameter_editor: ParameterEditor) -> None:
+        """A derived destination cannot restore over a separately disabled saved source."""
+        step_file, components = self.prepare(parameter_editor, ParDict({"SERIAL1_PROTOCOL": Par(2.0)}))
+        self.change_port(parameter_editor, components, "SERIAL1")
+        snapshot = parameter_editor.serial_protocol_snapshot("SERIAL1")
+        self.change_port(parameter_editor, components, "SERIAL2")
+        assert parameter_editor.current_step_parameters["SERIAL2_PROTOCOL"].is_derived
+        parameter_editor.preserve_or_disable_serial_protocol("SERIAL1", snapshot, disable=True)
+        second_snapshot = parameter_editor.serial_protocol_snapshot("SERIAL2")
+        self.change_port(parameter_editor, components, "None")
+        parameter_editor.preserve_or_disable_serial_protocol("SERIAL2", second_snapshot, disable=True)
+        parameter_editor._export_current_file(annotate_doc=False)
+        saved = parameter_editor._local_filesystem.file_parameters[step_file]
+        assert {name: par.value for name, par in saved.items()} == {"SERIAL1_PROTOCOL": -1.0, "SERIAL2_PROTOCOL": -1.0}
 
     @pytest.mark.parametrize("disable", [True, False])
     def test_user_choice_preserves_or_disables_automatically_derived_protocol(
