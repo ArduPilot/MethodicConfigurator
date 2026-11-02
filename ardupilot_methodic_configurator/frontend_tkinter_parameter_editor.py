@@ -1840,7 +1840,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Re-populate the table with the new parameters
         self.parameter_editor_table.repopulate_table(self.show_only_differences.get(), self.gui_complexity)
 
-    def _on_component_data_changed(self) -> None:
+    def _on_component_data_changed(self) -> None:  # noqa: PLR0911  # pylint: disable=too-many-return-statements,too-many-branches
         """Called when a field in the inline component editor is changed by the user."""
         if self._updating_inline_editor:
             return  # prevent re-entrancy when repopulate_parameter_table triggers widget events
@@ -1857,6 +1857,13 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             disable_old = False
             if isinstance(transition, tuple) and len(transition) == 2:
                 old_port, new_port = transition
+                if not old_port and self.parameter_editor.connection_change_will_rename(editor_data["Components"]) is True:
+                    self.ui.show_warning(
+                        _("Unknown previous connection"),
+                        _("Cannot rename connection parameters because the previous connection is unknown."),
+                    )
+                    self._schedule_inline_component_rebuild()
+                    return
                 conflicts = self.parameter_editor.connection_change_conflicts(old_port, new_port)
                 if isinstance(conflicts, list) and conflicts:
                     details = "\n".join(f"{source} → {target}" for source, target in conflicts)
@@ -1866,7 +1873,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                             "Destination parameters already exist. Resolve them before changing the connection:\n\n{details}"
                         ).format(details=details),
                     )
-                    self._update_inline_component_editor(self._inline_component_name)
+                    self._schedule_inline_component_rebuild()
                     return
                 if self.parameter_editor.connection_change_will_rename(
                     editor_data["Components"]
@@ -1874,26 +1881,43 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     _("Change connection?"),
                     _(
                         "Change connection from {old} to {new} and rename its parameters?\n\nNo cancels the connection change."
-                    ).format(old=old_port, new=new_port),
+                    ).format(old=old_port or _("Unknown"), new=new_port),
                 ):
-                    self._update_inline_component_editor(self._inline_component_name)
+                    self._schedule_inline_component_rebuild()
                     return
                 if re.fullmatch(r"SERIAL\d+", old_port):
                     previous_protocol = self.parameter_editor.serial_protocol_snapshot(old_port)
-                    disable_old = self.ui.ask_yesno(
-                        _("Disable previous serial port?"),
-                        _(
-                            "Set {port}_PROTOCOL to -1 (disabled)?\n\n"
-                            "Yes stages the change for upload. No keeps the existing assignment."
-                        ).format(port=old_port),
-                    )
+                    if self.parameter_editor.can_disable_serial_protocol(old_port, previous_protocol):
+                        disable_old = self.ui.ask_yesno(
+                            _("Disable previous serial port?"),
+                            _(
+                                "Set {port}_PROTOCOL to -1 (disabled)?\n\n"
+                                "Yes stages the change for upload. No keeps the existing assignment."
+                            ).format(port=old_port),
+                        )
+                    else:
+                        self.ui.show_warning(
+                            _("Serial port unchanged"),
+                            _("Cannot disable {port}_PROTOCOL: it is unavailable, read-only, or not verified.").format(
+                                port=old_port
+                            ),
+                        )
             # Atomically replace the in-memory components so derived-parameter expressions
             # see the updated values when refresh_current_step_computed_parameters() runs.
             if not self.parameter_editor.update_vehicle_components(editor_data["Components"]):
                 return
-            self.parameter_editor.refresh_current_step_computed_parameters()
-            if old_port is not None and re.fullmatch(r"SERIAL\d+", old_port):
-                self.parameter_editor.preserve_or_disable_serial_protocol(old_port, previous_protocol, disable=disable_old)
+            self.parameter_editor.refresh_current_step_computed_parameters(old_port or "")
+            if (
+                old_port is not None
+                and re.fullmatch(r"SERIAL\d+", old_port)
+                and not self.parameter_editor.preserve_or_disable_serial_protocol(
+                    old_port, previous_protocol, disable=disable_old
+                )
+            ):
+                self.ui.show_warning(
+                    _("Serial port unchanged"),
+                    _("Could not change {port}_PROTOCOL; it was not disabled.").format(port=old_port),
+                )
             # Workflow dialogs and upload waits can dispatch events from the outgoing inline editor.
             if (
                 self.parameter_editor.current_file
@@ -1904,6 +1928,18 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.repopulate_parameter_table()
         finally:
             self._updating_inline_editor = False
+
+    def _schedule_inline_component_rebuild(self) -> None:
+        """Restore the current component after its widget event has finished."""
+        previous_editor = self.inline_component_editor
+        previous_file = self.parameter_editor.current_file
+        component_name = self._inline_component_name
+
+        def rebuild() -> None:
+            if self.inline_component_editor is previous_editor and self.parameter_editor.current_file == previous_file:
+                self._update_inline_component_editor(component_name)
+
+        self.root.after_idle(rebuild)
 
     def _update_inline_component_editor(self, component_name: str | None) -> None:
         """Show or hide the inline component editor based on the current step's component attribute."""

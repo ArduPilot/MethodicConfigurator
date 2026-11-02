@@ -5786,6 +5786,8 @@ class TestConnectionRenameSaveLifecycle:  # pylint: disable=too-many-public-meth
             )
         }
         parameter_editor.current_file = step_file
+        parameter_editor._flight_controller.master = None
+        parameter_editor._flight_controller.fc_parameters = {}
         parameter_editor._config_step_processor.variables = {"vehicle_components": components}
         parameter_editor.current_step_parameters = {
             name: parameter_editor._config_step_processor.create_ardupilot_parameter(
@@ -5858,6 +5860,168 @@ class TestConnectionRenameSaveLifecycle:  # pylint: disable=too-many-public-meth
             parameter_editor.refresh_current_step_computed_parameters()
             assert "SERIAL1_BAUD" in parameter_editor.current_step_parameters
             assert "SERIAL2_BAUD" not in parameter_editor.current_step_parameters
+
+    @pytest.mark.parametrize("disable", [True, False])
+    def test_step_load_asks_whether_to_disable_old_serial_protocol(
+        self, parameter_editor: ParameterEditor, disable: bool
+    ) -> None:
+        """An accepted saved protocol rename asks what to do with the old port."""
+        step_file, components = self.prepare(parameter_editor)
+        components["port"] = "SERIAL2"
+        parameter_editor._config_step_processor.process_configuration_step = MagicMock(
+            return_value=(
+                dict(parameter_editor.current_step_parameters),
+                [],
+                [],
+                set(),
+                [("SERIAL1_PROTOCOL", "SERIAL2_PROTOCOL")],
+                ParDict(),
+                set(),
+            )
+        )
+        confirm = MagicMock(side_effect=[True, disable])
+        parameter_editor._repopulate_configuration_step_parameters(confirm)
+        assert confirm.call_count == 2
+        parameter_editor._export_current_file(annotate_doc=False)
+        saved = parameter_editor._local_filesystem.file_parameters[step_file]
+        assert saved["SERIAL1_PROTOCOL"].value == (-1.0 if disable else 2.0)
+        assert saved["SERIAL2_PROTOCOL"].value == 2.0
+
+    def test_step_load_does_not_offer_to_disable_an_unsupported_serial_port(self, parameter_editor: ParameterEditor) -> None:
+        """An old port is retained if the connected firmware does not expose it."""
+        step_file, components = self.prepare(parameter_editor)
+        components["port"] = "SERIAL2"
+        parameter_editor._flight_controller.master = object()
+        parameter_editor._flight_controller.fc_parameters = {"SERIAL2_PROTOCOL": 2.0}
+        parameter_editor._config_step_processor.process_configuration_step = MagicMock(
+            return_value=(
+                dict(parameter_editor.current_step_parameters),
+                [],
+                [],
+                set(),
+                [("SERIAL1_PROTOCOL", "SERIAL2_PROTOCOL")],
+                ParDict(),
+                set(),
+            )
+        )
+        confirm = MagicMock(return_value=True)
+        _errors, infos = parameter_editor._repopulate_configuration_step_parameters(confirm)
+        confirm.assert_called_once()
+        assert any("SERIAL1_PROTOCOL" in message for _title, message in infos)
+        assert parameter_editor.current_step_parameters["SERIAL1_PROTOCOL"].get_new_value() == 2.0
+        parameter_editor._export_current_file(annotate_doc=False)
+        assert parameter_editor._local_filesystem.file_parameters[step_file]["SERIAL1_PROTOCOL"].value == 2.0
+
+    def test_missing_old_connection_still_proposes_rename_confirmation(self, parameter_editor: ParameterEditor) -> None:
+        """An incomplete prior connection must not silently rename saved rows."""
+        _step_file, components = self.prepare(parameter_editor)
+        del components["port"]
+        proposed = {**components, "port": "SERIAL2"}
+        assert parameter_editor.component_connection_transition(proposed) == ("", "SERIAL2")
+        assert parameter_editor.connection_change_will_rename(proposed)
+
+    def test_keeping_unchanged_serial_protocol_does_not_dirty_file(self, parameter_editor: ParameterEditor) -> None:
+        """Deselecting a connection and keeping its saved protocol does not change the parameter file."""
+        _step_file, components = self.prepare(parameter_editor)
+        previous = parameter_editor.serial_protocol_snapshot("SERIAL1")
+        self.change_port(parameter_editor, components, "None")
+        parameter_editor.preserve_or_disable_serial_protocol("SERIAL1", previous, disable=False)
+        assert not parameter_editor._has_unsaved_changes()
+
+    def test_undoing_serial_disable_returns_to_saved_clean_state(self, parameter_editor: ParameterEditor) -> None:
+        """The saved value remains the baseline after staging a disable."""
+        self.prepare(parameter_editor)
+        previous = parameter_editor.serial_protocol_snapshot("SERIAL1")
+        assert parameter_editor.preserve_or_disable_serial_protocol("SERIAL1", previous, disable=True)
+        row = parameter_editor.current_step_parameters["SERIAL1_PROTOCOL"]
+        row.set_new_value("2")
+        row.set_change_reason("saved protocol")
+        assert not row.is_dirty
+        assert not parameter_editor._has_unsaved_changes()
+
+    def test_connected_controller_missing_old_serial_parameter_cannot_stage_disable(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """A connection from an older project must not fabricate an unsupported FC parameter."""
+        self.prepare(parameter_editor)
+        parameter_editor._flight_controller.master = object()
+        parameter_editor._flight_controller.fc_parameters = {"SERIAL2_PROTOCOL": 2.0}
+        previous = parameter_editor.serial_protocol_snapshot("SERIAL1")
+        assert not parameter_editor.can_disable_serial_protocol("SERIAL1", previous)
+        assert not parameter_editor.preserve_or_disable_serial_protocol("SERIAL1", previous, disable=True)
+        assert parameter_editor.current_step_parameters["SERIAL1_PROTOCOL"].get_new_value() == 2.0
+
+    def test_connected_controller_with_known_serial_parameter_can_stage_disable(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """A parameter reported by the connected controller can be disabled after confirmation."""
+        self.prepare(parameter_editor)
+        parameter_editor._flight_controller.master = object()
+        parameter_editor._flight_controller.fc_parameters = {"SERIAL1_PROTOCOL": 2.0}
+        previous = parameter_editor.serial_protocol_snapshot("SERIAL1")
+        assert parameter_editor.can_disable_serial_protocol("SERIAL1", previous)
+        assert parameter_editor.preserve_or_disable_serial_protocol("SERIAL1", previous, disable=True)
+        row = parameter_editor.current_step_parameters["SERIAL1_PROTOCOL"]
+        assert row.get_new_value() == -1.0
+        assert row.is_dirty
+
+    def test_offline_unknown_serial_parameter_cannot_stage_disable(self, parameter_editor: ParameterEditor) -> None:
+        """Without a row, metadata, or FC value, support for a serial parameter is unknown."""
+        self.prepare(parameter_editor)
+        assert not parameter_editor.can_disable_serial_protocol("SERIAL9", None)
+        assert not parameter_editor.preserve_or_disable_serial_protocol("SERIAL9", None, disable=True)
+        assert "SERIAL9_PROTOCOL" not in parameter_editor.current_step_parameters
+
+    def test_connected_readonly_serial_parameter_cannot_be_disabled(self, parameter_editor: ParameterEditor) -> None:
+        """A known but read-only protocol parameter must not be staged for upload."""
+        self.prepare(parameter_editor)
+        parameter_editor._flight_controller.master = object()
+        parameter_editor._flight_controller.fc_parameters = {"SERIAL1_PROTOCOL": 2.0}
+        parameter_editor._local_filesystem.doc_dict = {"SERIAL1_PROTOCOL": {"ReadOnly": True}}
+        previous = parameter_editor.serial_protocol_snapshot("SERIAL1")
+        assert not parameter_editor.can_disable_serial_protocol("SERIAL1", previous)
+        assert not parameter_editor.preserve_or_disable_serial_protocol("SERIAL1", previous, disable=True)
+
+    def test_connected_controller_without_downloaded_parameters_cannot_stage_disable(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """A link alone does not establish which parameters its firmware supports."""
+        self.prepare(parameter_editor)
+        parameter_editor._flight_controller.master = object()
+        previous = parameter_editor.serial_protocol_snapshot("SERIAL1")
+        assert not parameter_editor.can_disable_serial_protocol("SERIAL1", previous)
+        assert not parameter_editor.preserve_or_disable_serial_protocol("SERIAL1", previous, disable=True)
+
+    def test_inline_move_leaves_other_saved_connections_untouched(self, parameter_editor: ParameterEditor) -> None:
+        """A known SERIAL1 move cannot claim an independently saved SERIAL3 setting."""
+        step_file, components = self.prepare(parameter_editor)
+        filesystem = parameter_editor._local_filesystem
+        filesystem.file_parameters[step_file]["SERIAL3_OPTIONS"] = Par(4.0, "independent")
+        parameter_editor.current_step_parameters["SERIAL3_OPTIONS"] = (
+            parameter_editor._config_step_processor.create_ardupilot_parameter(
+                "SERIAL3_OPTIONS", filesystem.file_parameters[step_file]["SERIAL3_OPTIONS"], step_file, {}
+            )
+        )
+        parameter_editor.update_vehicle_components({**components, "port": "SERIAL2"})
+        parameter_editor.refresh_current_step_computed_parameters("SERIAL1")
+        assert "SERIAL2_BAUD" in parameter_editor.current_step_parameters
+        assert parameter_editor.current_step_parameters["SERIAL3_OPTIONS"].get_new_value() == 4.0
+        assert "SERIAL2_OPTIONS" not in parameter_editor.current_step_parameters
+
+    def test_unrelated_component_edit_does_not_infer_connection_renames(self, parameter_editor: ParameterEditor) -> None:
+        """Without a connection transition, another port's saved settings stay where they are."""
+        step_file, components = self.prepare(parameter_editor)
+        filesystem = parameter_editor._local_filesystem
+        filesystem.file_parameters[step_file]["SERIAL3_OPTIONS"] = Par(4.0)
+        parameter_editor.current_step_parameters["SERIAL3_OPTIONS"] = (
+            parameter_editor._config_step_processor.create_ardupilot_parameter(
+                "SERIAL3_OPTIONS", filesystem.file_parameters[step_file]["SERIAL3_OPTIONS"], step_file, {}
+            )
+        )
+        parameter_editor.update_vehicle_components({**components, "other": "changed"})
+        parameter_editor.refresh_current_step_computed_parameters("")
+        assert "SERIAL3_OPTIONS" in parameter_editor.current_step_parameters
+        assert "SERIAL1_OPTIONS" not in parameter_editor.current_step_parameters
 
     @pytest.mark.parametrize("disable", [True, False])
     @pytest.mark.parametrize("new_port", ["SERIAL2", "None"])
@@ -5944,6 +6108,43 @@ class TestConnectionRenameSaveLifecycle:  # pylint: disable=too-many-public-meth
         parameter_editor.preserve_or_disable_serial_protocol("SERIAL1", snapshot, disable=True)
         assert ("SERIAL2_PROTOCOL", "SERIAL1_PROTOCOL") in parameter_editor.connection_change_conflicts("SERIAL2", "SERIAL1")
         assert parameter_editor.current_step_parameters["SERIAL1_PROTOCOL"].get_new_value() == -1.0
+
+    @pytest.mark.parametrize("disable", [True, False])
+    @pytest.mark.parametrize("save_before_return", [True, False])
+    def test_deleting_preserved_conflict_then_returning_keeps_selected_protocol(
+        self, parameter_editor: ParameterEditor, disable: bool, save_before_return: bool
+    ) -> None:
+        """Removing a retained old-port row must not delete the active connection's protocol."""
+        step_file, components = self.prepare(parameter_editor)
+        snapshot = parameter_editor.serial_protocol_snapshot("SERIAL1")
+        self.change_port(parameter_editor, components, "SERIAL2")
+        parameter_editor.preserve_or_disable_serial_protocol("SERIAL1", snapshot, disable=disable)
+        assert ("SERIAL2_PROTOCOL", "SERIAL1_PROTOCOL") in parameter_editor.connection_change_conflicts("SERIAL2", "SERIAL1")
+        parameter_editor.delete_parameter_from_current_file("SERIAL1_PROTOCOL")
+        if save_before_return:
+            parameter_editor._export_current_file(annotate_doc=False)
+        self.change_port(parameter_editor, components, "SERIAL1")
+        parameter_editor._export_current_file(annotate_doc=False)
+        assert parameter_editor._local_filesystem.file_parameters[step_file]["SERIAL1_PROTOCOL"].value == 2.0
+        assert "SERIAL2_PROTOCOL" not in parameter_editor._local_filesystem.file_parameters[step_file]
+
+    @pytest.mark.parametrize("comment", [None, "saved baud"])
+    def test_unmodified_connection_round_trip_does_not_make_step_dirty(
+        self, parameter_editor: ParameterEditor, comment: str | None
+    ) -> None:
+        """Moving a connection back to its saved port without editing rows restores the clean state."""
+        step_file, components = self.prepare(parameter_editor)
+        original = Par(57.0, comment)
+        parameter_editor._local_filesystem.file_parameters[step_file]["SERIAL1_BAUD"] = original
+        parameter_editor.current_step_parameters["SERIAL1_BAUD"] = (
+            parameter_editor._config_step_processor.create_ardupilot_parameter(
+                "SERIAL1_BAUD", original, step_file, parameter_editor.fc_parameters
+            )
+        )
+        assert not parameter_editor._has_unsaved_changes()
+        self.change_port(parameter_editor, components, "SERIAL2")
+        self.change_port(parameter_editor, components, "SERIAL1")
+        assert not parameter_editor._has_unsaved_changes()
 
     def test_no_connection_change_does_not_propose_a_transition(self, parameter_editor: ParameterEditor) -> None:
         """An unrelated component edit does not imply any connection operation."""
@@ -6325,6 +6526,7 @@ class TestInlineDerivationOwnership:
         filesystem.compute_parameters.side_effect = compute
         parameter_editor.current_file = step_file
         parameter_editor._flight_controller.fc_parameters = {}
+        parameter_editor._flight_controller.master = None
         parameter_editor._config_step_processor.variables = {"vehicle_components": components}
         parameter_editor.current_step_parameters = {
             name: parameter_editor._config_step_processor.create_ardupilot_parameter(name, par, step_file, {})
@@ -6337,6 +6539,45 @@ class TestInlineDerivationOwnership:
         """Edit the component and reconcile the current step."""
         parameter_editor.update_vehicle_components({**components, "port": port})
         parameter_editor.refresh_current_step_computed_parameters()
+
+    def test_unsaved_derived_protocol_move_requires_confirmation(self, parameter_editor: ParameterEditor) -> None:
+        """An automatically inserted protocol row still counts as a connection move."""
+        _step_file, components = self.prepare(parameter_editor)
+        self.change_port(parameter_editor, components, "SERIAL1")
+        assert parameter_editor.connection_change_will_rename({**components, "port": "SERIAL2"})
+
+    def test_unsaved_derived_protocol_with_unknown_old_connection_requires_confirmation(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """A missing previous connection must not hide a session-created protocol move."""
+        _step_file, components = self.prepare(parameter_editor)
+        self.change_port(parameter_editor, components, "SERIAL1")
+        del components["port"]
+        assert parameter_editor.connection_change_will_rename({**components, "port": "SERIAL2"})
+
+    def test_kept_manual_override_survives_return_to_the_original_port(self, parameter_editor: ParameterEditor) -> None:
+        """An unsaved manually overridden protocol remains intact when the connection returns."""
+        step_file, components = self.prepare(parameter_editor)
+        self.change_port(parameter_editor, components, "SERIAL1")
+        parameter_editor._export_current_file(annotate_doc=False)
+        row = parameter_editor.current_step_parameters["SERIAL1_PROTOCOL"]
+        row.set_manual_override(True)
+        row.set_new_value("4")
+        row.set_change_reason("my choice")
+        previous = parameter_editor.serial_protocol_snapshot("SERIAL1")
+        self.change_port(parameter_editor, components, "SERIAL2")
+        assert parameter_editor.preserve_or_disable_serial_protocol("SERIAL1", previous, disable=False)
+        kept = parameter_editor.current_step_parameters["SERIAL1_PROTOCOL"]
+        assert kept.is_dirty
+        assert kept.is_manual_override
+        parameter_editor.delete_parameter_from_current_file("SERIAL2_PROTOCOL")
+        self.change_port(parameter_editor, components, "SERIAL1")
+        restored = parameter_editor.current_step_parameters["SERIAL1_PROTOCOL"]
+        assert restored.get_new_value() == 4.0
+        assert restored.is_manual_override
+        assert restored.change_reason_for_file == "@manual_override my choice"
+        parameter_editor._export_current_file(annotate_doc=False)
+        assert parameter_editor._local_filesystem.file_parameters[step_file]["SERIAL1_PROTOCOL"].value == 4.0
 
     def test_disabled_saved_protocol_survives_derived_destination_deselection(self, parameter_editor: ParameterEditor) -> None:
         """A derived destination cannot restore over a separately disabled saved source."""
