@@ -91,7 +91,7 @@ Legend:
   - `check_for_software_updates()`: Main entry point function
 - **Actual Dependencies**:
   - `packaging.version` for semantic version comparison ✅
-  - `requests` for HTTP operations (via backend_internet) ✅
+  - `httpx2` for HTTP operations (via backend_internet) ✅
   - `webbrowser` for opening GitHub releases page ✅
   - `platform` for OS-specific installation logic ✅
   - `re` for release notes formatting ✅
@@ -122,7 +122,7 @@ Legend:
   - `download_and_install_pip_release()`: Linux pip/uv installation from PyPI
 
 - **Actual Dependencies**:
-  - `requests` with SSL verification and proxy support ✅
+  - `httpx2` with SSL verification and proxy support ✅
   - `hashlib` for SHA256 computation ✅
   - `subprocess` for Windows batch file execution and pip operations ✅
   - `tempfile` for secure temporary directories ✅
@@ -243,14 +243,14 @@ tests/unit_frontend_tkinter_software_update.py   # UI dialog tests ✅
 **Core Module (`data_model_software_updates.py`)**:
 
 - `packaging.version` for version comparison
-- `requests` for HTTP operations
+- `httpx2` for HTTP operations
 - `webbrowser` for opening release URLs
 - `platform` for OS detection
 - `re` for text processing
 
 **Backend Internet (`backend_internet.py`)**:
 
-- `requests` with timeout, SSL verification, and proxy support
+- `httpx2` with timeout, SSL verification, and proxy support
 - `hashlib` for SHA256 computation
 - `subprocess` for Windows batch file execution, macOS `hdiutil`/`ditto`, and pip operations
 - `tempfile` for secure temporary file handling

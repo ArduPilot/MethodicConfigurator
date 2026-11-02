@@ -19,7 +19,7 @@ from logging import debug as logging_debug
 from pathlib import Path
 from urllib.parse import urlparse
 
-import requests
+import httpx2
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
@@ -30,7 +30,6 @@ from ardupilot_methodic_configurator.backend_flightcontroller_bootloader import 
     load_apj,
 )
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import _connection_device_key
-from ardupilot_methodic_configurator.backend_internet import _get_verify_param
 from ardupilot_methodic_configurator.data_model_firmware_catalog import FirmwareRelease, releases_for_board
 from ardupilot_methodic_configurator.data_model_firmware_upload import (
     BootloaderInfo,
@@ -75,12 +74,12 @@ def _ensure_official_https_url(url: str, description: str) -> None:
 
 def fetch_firmware_manifest() -> dict:
     """Download and decode the official firmware manifest."""
-    with requests.get(MANIFEST_URL, timeout=(10, 90), stream=True, verify=_get_verify_param()) as response:
+    with httpx2.stream("GET", MANIFEST_URL, timeout=httpx2.Timeout(90, connect=10), follow_redirects=True) as response:
         response.raise_for_status()
-        _ensure_official_https_url(response.url, _("firmware catalog"))
+        _ensure_official_https_url(str(response.url), _("firmware catalog"))
         chunks: list[bytes] = []
         size = 0
-        for chunk in response.iter_content(65536):
+        for chunk in response.iter_bytes(65536):
             size += len(chunk)
             if size > MAX_MANIFEST_DOWNLOAD:
                 msg = _("The ArduPilot firmware catalog is too large")
@@ -102,16 +101,16 @@ def download_firmware(
     if cancellation_requested is not None and cancellation_requested():
         msg = _("Firmware download cancelled")
         raise FirmwareUploadCancelledError(msg)
-    with requests.get(release.url, timeout=(10, 90), stream=True, verify=_get_verify_param()) as response:
+    with httpx2.stream("GET", release.url, timeout=httpx2.Timeout(90, connect=10), follow_redirects=True) as response:
         response.raise_for_status()
-        _ensure_official_https_url(response.url, _("firmware download"))
+        _ensure_official_https_url(str(response.url), _("firmware download"))
         temporary_path: Path | None = None
         try:
             with tempfile.NamedTemporaryFile(
                 dir=destination.parent, prefix=f".{destination.name}.", suffix=".tmp", delete=False
             ) as output:
                 temporary_path = Path(output.name)
-                for chunk in response.iter_content(65536):
+                for chunk in response.iter_bytes(65536):
                     if cancellation_requested is not None and cancellation_requested():
                         msg = _("Firmware download cancelled")
                         raise FirmwareUploadCancelledError(msg)

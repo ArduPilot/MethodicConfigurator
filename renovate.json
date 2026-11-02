@@ -141,7 +141,7 @@
       "customType": "regex",
       "managerFilePatterns": ["/\\.py$/"],
       "matchStrings": [
-        "import (?<depName>matplotlib|lxml|beautifulsoup4|requests)(?:\\s|$)"
+        "import (?<depName>matplotlib|lxml|beautifulsoup4|httpx2)(?:\\s|$)"
       ],
       "datasourceTemplate": "pypi",
       "currentValueTemplate": "latest"

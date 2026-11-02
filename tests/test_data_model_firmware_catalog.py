@@ -24,7 +24,7 @@ from unittest.mock import MagicMock, patch
 from urllib.parse import urlparse
 
 import pytest
-from requests import Response
+from httpx2 import Response, Timeout
 
 from ardupilot_methodic_configurator.backend_firmware_upload import (
     FirmwareUploadCallbacks,
@@ -67,10 +67,10 @@ def _apj_contents(*, board_id: int = 9, git_identity: str = "abcdef12") -> bytes
 
 def _firmware_response(release: FirmwareRelease, contents: bytes) -> MagicMock:
     """Replace only HTTP transport while preserving streamed APJ bytes."""
-    response = MagicMock(spec=Response)
+    response = MagicMock(spec=[*dir(Response), "__enter__", "__exit__"])
     response.url = release.url
     response.__enter__.return_value = response
-    response.iter_content.return_value = [contents[:10], contents[10:]]
+    response.iter_bytes.return_value = [contents[:10], contents[10:]]
     return response
 
 
@@ -400,23 +400,16 @@ def test_user_downloads_the_selected_official_file_with_a_bound_digest(
     release = selectable_releases[1]
     response = MagicMock()
     response.url = release.url
-    response.iter_content.return_value = [b"first", b"second"]
+    response.iter_bytes.return_value = [b"first", b"second"]
     response.__enter__.return_value = response
     destination = tmp_path / "selected.apj"
 
-    with (
-        patch(
-            "ardupilot_methodic_configurator.backend_firmware_upload._get_verify_param",
-            return_value="test-ca.pem",
-        ) as verify_param,
-        patch("ardupilot_methodic_configurator.backend_firmware_upload.requests.get", return_value=response) as request,
-    ):
+    with patch("ardupilot_methodic_configurator.backend_firmware_upload.httpx2.stream", return_value=response) as request:
         digest = download_firmware(release, destination, Event().is_set)
 
     assert destination.read_bytes() == b"firstsecond"
     assert digest == hashlib.sha256(b"firstsecond").hexdigest()
-    request.assert_called_once_with(release.url, timeout=(10, 90), stream=True, verify="test-ca.pem")
-    verify_param.assert_called_once_with()
+    request.assert_called_once_with("GET", release.url, timeout=Timeout(90, connect=10), follow_redirects=True)
     response.raise_for_status.assert_called_once_with()
     response.__exit__.assert_called_once_with(None, None, None)
 
@@ -425,11 +418,11 @@ def test_catalog_rejects_redirect_away_from_official_server() -> None:
     """A redirected manifest cannot be used to choose firmware for flashing."""
     response = MagicMock()
     response.url = "https://other.example/manifest.json.gz"
-    response.iter_content.return_value = [gzip.compress(json.dumps({"firmware": []}).encode())]
+    response.iter_bytes.return_value = [gzip.compress(json.dumps({"firmware": []}).encode())]
     response.__enter__.return_value = response
 
     with (
-        patch("ardupilot_methodic_configurator.backend_firmware_upload.requests.get", return_value=response),
+        patch("ardupilot_methodic_configurator.backend_firmware_upload.httpx2.stream", return_value=response),
         pytest.raises(ValueError, match="redirected away"),
     ):
         fetch_firmware_manifest()
@@ -584,9 +577,9 @@ def test_failed_download_preserves_existing_apj_and_removes_temporary_file(
         msg = "connection interrupted"
         raise OSError(msg)
 
-    response.iter_content.side_effect = interrupted_content
+    response.iter_bytes.side_effect = interrupted_content
     with (
-        patch("ardupilot_methodic_configurator.backend_firmware_upload.requests.get", return_value=response),
+        patch("ardupilot_methodic_configurator.backend_firmware_upload.httpx2.stream", return_value=response),
         pytest.raises(OSError, match="connection interrupted"),
     ):
         download_firmware(release, destination)
@@ -603,7 +596,7 @@ def test_upload_rejects_apj_from_a_different_manifest_build(
     release = replace(selectable_releases[1], git_sha="abcdef1234567890")
     response = _firmware_response(release, _apj_contents(git_identity=actual_identity))
     with (
-        patch("ardupilot_methodic_configurator.backend_firmware_upload.requests.get", return_value=response),
+        patch("ardupilot_methodic_configurator.backend_firmware_upload.httpx2.stream", return_value=response),
         pytest.raises(FirmwareCompatibilityError, match="build"),
     ):
         FirmwareUploadService.upload_release(
@@ -612,7 +605,7 @@ def test_upload_rejects_apj_from_a_different_manifest_build(
             callbacks=FirmwareUploadCallbacks(confirmation_requested=lambda *_args: True),
         )
     response.raise_for_status.assert_called_once_with()
-    response.iter_content.assert_called_once_with(65536)
+    response.iter_bytes.assert_called_once_with(65536)
     upload_controller.upload_apj_firmware.assert_not_called()
 
 
@@ -635,7 +628,7 @@ def test_matching_manifest_git_sha_allows_the_downloaded_apj(
 
     upload_controller.upload_apj_firmware.side_effect = upload
     callbacks = FirmwareUploadCallbacks(confirmation_requested=lambda *_args: True)
-    with patch("ardupilot_methodic_configurator.backend_firmware_upload.requests.get", return_value=response) as request:
+    with patch("ardupilot_methodic_configurator.backend_firmware_upload.httpx2.stream", return_value=response) as request:
         result = FirmwareUploadService.upload_release(
             upload_controller,
             release,
@@ -644,9 +637,9 @@ def test_matching_manifest_git_sha_allows_the_downloaded_apj(
 
     assert result is bootloader
     request.assert_called_once()
-    assert request.call_args.args == (release.url,)
+    assert request.call_args.args == ("GET", release.url)
     response.raise_for_status.assert_called_once_with()
-    response.iter_content.assert_called_once_with(65536)
+    response.iter_bytes.assert_called_once_with(65536)
     response.__exit__.assert_called_once_with(None, None, None)
     assert len(uploaded_paths) == 1
     apj_path = uploaded_paths[0]

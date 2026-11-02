@@ -4,7 +4,7 @@
 # requires-python = ">=3.11"
 # dependencies = [
 #     "beautifulsoup4",
-#     "requests",
+#     "httpx2",
 # ]
 # ///
 
@@ -18,10 +18,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
 import time
-from os import environ as os_environ
 from urllib.parse import urljoin, urlparse
 
-import requests
+import httpx2
 from bs4 import BeautifulSoup, Tag
 
 # Define the URL where to start crawling
@@ -64,27 +63,6 @@ URL_BLACKLIST = [
 ]
 
 URL_BLACKLIST_PREFIXES = ["https://docs.cubepilot.org/user-guides/~/changes/", "zh-hans", "doc.cuav.net/tutorial"]
-
-
-# pylint: disable=duplicate-code
-def get_env_proxies() -> dict[str, str] | None:
-    proxies_env = {
-        "http": os_environ.get("HTTP_PROXY") or os_environ.get("http_proxy"),
-        "https": os_environ.get("HTTPS_PROXY") or os_environ.get("https_proxy"),
-        "no_proxy": os_environ.get("NO_PROXY") or os_environ.get("no_proxy"),
-    }
-    # Remove None values
-    proxies_dict: dict[str, str] = {k: v for k, v in proxies_env.items() if v is not None}
-    # define as None if no proxies are defined in the OS environment variables
-    proxies = proxies_dict or None
-    if proxies:
-        logging.info("Proxies: %s", proxies)
-    else:
-        logging.debug("Proxies: %s", proxies)
-    return proxies
-
-
-# pylint: enable=duplicate-code
 
 
 def remove_duplicates(visited_urls: set[str]) -> set[str]:
@@ -167,44 +145,38 @@ def main() -> None:
     visited_urls = set()
     broken_urls = set()
     urls_to_visit = {URL}
-    proxies = get_env_proxies()
 
     # Set up authentication if credentials provided
     # These placeholders are intentionally editable constants rather than runtime configuration.
     auth = (USERNAME, PASSWORD) if USERNAME and PASSWORD else None  # ty: ignore[redundant-condition]
 
-    session = requests.Session()
-    if auth:  # ty: ignore[redundant-condition]
-        session.auth = auth
-    if proxies:
-        session.proxies = proxies
+    with httpx2.Client(auth=auth, follow_redirects=True) as client:
+        while urls_to_visit:
+            current_url = urls_to_visit.pop()
 
-    while urls_to_visit:
-        current_url = urls_to_visit.pop()
+            if current_url in visited_urls or current_url in broken_urls:
+                continue
 
-        if current_url in visited_urls or current_url in broken_urls:
-            continue
+            try:
+                logging.info("Crawling: %s", current_url)
+                response = client.get(current_url, timeout=30)
+                response.raise_for_status()
 
-        try:
-            logging.info("Crawling: %s", current_url)
-            response = session.get(current_url, timeout=30)
-            response.raise_for_status()
+                visited_urls.add(current_url)
 
-            visited_urls.add(current_url)
+                # Parse HTML
+                soup = BeautifulSoup(response.text, "html.parser")
 
-            # Parse HTML
-            soup = BeautifulSoup(response.text, "html.parser")
+                urls_to_visit = find_all_links(soup, current_url, visited_urls, urls_to_visit)
 
-            urls_to_visit = find_all_links(soup, current_url, visited_urls, urls_to_visit)
-
-        except (requests.RequestException, requests.Timeout) as e:
-            logging.error("Network error crawling %s: %s", current_url, str(e))
-            broken_urls.add(current_url)
-            visited_urls.discard(current_url)
-        except (KeyError, ValueError) as e:
-            logging.error("URL processing error for %s: %s", current_url, str(e))
-            broken_urls.add(current_url)
-            visited_urls.discard(current_url)
+            except (httpx2.HTTPError, httpx2.InvalidURL) as e:
+                logging.error("Network error crawling %s: %s", current_url, str(e))
+                broken_urls.add(current_url)
+                visited_urls.discard(current_url)
+            except (KeyError, ValueError) as e:
+                logging.error("URL processing error for %s: %s", current_url, str(e))
+                broken_urls.add(current_url)
+                visited_urls.discard(current_url)
     output_urls(visited_urls, broken_urls, start_time)
 
 

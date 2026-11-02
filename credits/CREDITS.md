@@ -37,21 +37,24 @@ It directly uses:
 | [matplotlib](https://matplotlib.org/) | [Matplotlib License](https://github.com/matplotlib/matplotlib/blob/main/LICENSE/LICENSE) |
 | [numpy](https://numpy.org/) | [BSD License](https://github.com/numpy/numpy/blob/main/LICENSE.txt) |
 | [pillow](https://python-pillow.github.io/) | [MIT-CMU License](https://github.com/python-pillow/Pillow/blob/main/LICENSE) |
-| [requests](https://requests.readthedocs.io/) | [Apache 2.0 License](https://github.com/psf/requests/blob/main/LICENSE) |
+| [httpx2](https://github.com/pydantic/httpx2) | [BSD 3-Clause License](https://github.com/pydantic/httpx2/blob/main/LICENSE.md) |
 | [setuptools](https://setuptools.pypa.io/) | [MIT License](https://github.com/pypa/setuptools/blob/main/LICENSE) |
 | [jsonschema](https://python-jsonschema.readthedocs.io/en/stable/) | [MIT License](https://github.com/python-jsonschema/jsonschema/blob/main/COPYING) |
-| [certifi](https://github.com/certifi/python-certifi) | [Mozilla Public License 2.0](https://github.com/certifi/python-certifi/blob/master/LICENSE) |
 | [screeninfo](https://github.com/rr-/screeninfo) | [MIT License](https://github.com/rr-/screeninfo/blob/master/LICENSE.md) |
 | [simpleeval](https://github.com/danthedeckie/simpleeval) | [MIT License](https://github.com/danthedeckie/simpleeval/blob/main/LICENCE) |
 | [selenium](https://github.com/SeleniumHQ/selenium) | [Apache 2.0 License](https://github.com/SeleniumHQ/selenium/blob/trunk/LICENSE) (also in [LICENSES/Apache-2.0.txt](../LICENSES/Apache-2.0.txt)) |
-| [pip-system-certs](https://gitlab.com/alelec/pip-system-certs) | [BSD 2-Clause "Simplified" License](https://gitlab.com/alelec/pip-system-certs/-/blob/master/LICENSE?ref_type=heads) |
 | [mutmut](https://github.com/boxed/mutmut) by Anders Hovmöller (optional development tool) | [BSD 3-Clause License](https://github.com/boxed/mutmut/blob/3.8.0/LICENSE) |
 
 It indirectly uses:
 
 | Software | License |
 | -------- | ------- |
-| [charset-normalizer](https://github.com/Ousret/charset_normalizer) | [MIT License](https://github.com/Ousret/charset_normalizer/blob/master/LICENSE) |
+| [anyio](https://github.com/agronholm/anyio) | [MIT License](https://github.com/agronholm/anyio/blob/master/LICENSE) |
+| [certifi](https://github.com/certifi/python-certifi) | [Mozilla Public License 2.0](https://github.com/certifi/python-certifi/blob/master/LICENSE) |
+| [h11](https://github.com/python-hyper/h11) | [MIT License](https://github.com/python-hyper/h11/blob/master/LICENSE.txt) |
+| [httpcore2](https://github.com/pydantic/httpx2/tree/main/src/httpcore2) | [BSD 3-Clause License](https://github.com/pydantic/httpx2/blob/main/src/httpcore2/LICENSE.md) |
+| [socksio](https://github.com/sethmlarson/socksio) | [MIT License](https://github.com/sethmlarson/socksio/blob/master/LICENSE) |
+| [truststore](https://github.com/sethmlarson/truststore) | [MIT License](https://github.com/sethmlarson/truststore/blob/main/LICENSE) |
 | [future](https://github.com/PythonCharmers/python-future) | [MIT License](https://github.com/PythonCharmers/python-future/blob/master/LICENSE.txt) |
 | [urllib3](https://github.com/urllib3/urllib3) | [MIT License](https://github.com/urllib3/urllib3/blob/main/LICENSE.txt) |
 | [lxml](https://github.com/lxml/lxml) | [BSD License](https://github.com/lxml/lxml/blob/master/LICENSE.txt) |
