@@ -198,7 +198,7 @@ jobs:
           echo "hashes=$(cat checksums.txt | base64 -w0)" >> "$GITHUB_OUTPUT"
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: windows-installer
           path: windows/Output/*.exe
@@ -302,7 +302,7 @@ jobs:
             "$OUTPUT_DIR/$DMG_NAME"
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: macos-dmg
           path: macos/Output/*.dmg
@@ -404,7 +404,7 @@ jobs:
           ARCH=x86_64 ./appimagetool --appimage-extract-and-run "$APPDIR" "$OUTPUT_DIR/$APPIMAGE_NAME"
 
       - name: Upload Linux build artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: linux-appimage
           path: linux/Output/*.AppImage
