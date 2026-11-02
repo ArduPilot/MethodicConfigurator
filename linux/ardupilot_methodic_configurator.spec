@@ -6,7 +6,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
-import certifi
 import os
 
 spec_file = globals().get("__file__")
@@ -29,9 +28,7 @@ PROJECT_ROOT = _find_project_root(spec_dir)
 PACKAGE_ROOT = os.path.join(PROJECT_ROOT, "ardupilot_methodic_configurator")
 
 
-certifi_cacert = certifi.where()
-
-datas = [(certifi_cacert, "certifi")]
+datas = []
 
 git_hash_path = os.path.join(PROJECT_ROOT, "git_hash.txt")
 if os.path.exists(git_hash_path):

@@ -14,7 +14,7 @@ import logging
 import os
 from pathlib import Path
 
-import requests
+import httpx2
 
 os.chdir(Path(__file__).parent)
 
@@ -39,6 +39,7 @@ direct_dependencies = [
     {"name": "Scrollable_TK_frame", "license_url": "https://mozilla.org/MPL/2.0/"},
     {"name": "Python_Tkinter_ComboBox", "license_url": "https://mozilla.org/MPL/2.0/"},
     {"name": "defusedxml", "license_url": "https://raw.githubusercontent.com/tiran/defusedxml/main/LICENSE"},
+    {"name": "httpx2", "license_url": "https://raw.githubusercontent.com/pydantic/httpx2/main/LICENSE.md"},
     {
         "name": "jsonschema",
         "license_url": "https://raw.githubusercontent.com/python-jsonschema/jsonschema/refs/heads/main/COPYING",
@@ -50,29 +51,25 @@ direct_dependencies = [
     {"name": "platformdirs", "license_url": "https://raw.githubusercontent.com/platformdirs/platformdirs/main/LICENSE"},
     {"name": "pymavlink", "license_url": "https://raw.githubusercontent.com/ArduPilot/pymavlink/master/COPYING"},
     {"name": "pyserial", "license_url": "https://raw.githubusercontent.com/pyserial/pyserial/master/LICENSE.txt"},
-    {"name": "requests", "license_url": "https://raw.githubusercontent.com/psf/requests/main/LICENSE"},
     {"name": "setuptools", "license_url": "https://raw.githubusercontent.com/pypa/setuptools/main/LICENSE"},
     {
         "name": "argparse_check_range",
         "license_url": "http://www.apache.org/licenses/LICENSE-2.0",
     },
-    {"name": "certifi", "license_url": "https://raw.githubusercontent.com/certifi/python-certifi/master/LICENSE"},
     {"name": "screeninfo", "license_url": "https://raw.githubusercontent.com/rr-/screeninfo/master/LICENSE.md"},
     {"name": "selenium", "license_url": "https://raw.githubusercontent.com/SeleniumHQ/selenium/trunk/LICENSE"},
     {"name": "simpleeval", "license_url": "https://raw.githubusercontent.com/danthedeckie/simpleeval/main/LICENCE"},
-    {
-        "name": "pip-system-certs",
-        "license_url": "https://gitlab.com/alelec/pip-system-certs/-/raw/master/LICENSE",
-    },
 ]
 
 
 # List of indirect dependencies and their license URLs
 indirect_dependencies = [
-    {
-        "name": "charset-normalizer",
-        "license_url": "https://raw.githubusercontent.com/Ousret/charset_normalizer/master/LICENSE",
-    },
+    {"name": "anyio", "license_url": "https://raw.githubusercontent.com/agronholm/anyio/master/LICENSE"},
+    {"name": "certifi", "license_url": "https://raw.githubusercontent.com/certifi/python-certifi/master/LICENSE"},
+    {"name": "h11", "license_url": "https://raw.githubusercontent.com/python-hyper/h11/master/LICENSE.txt"},
+    {"name": "httpcore2", "license_url": "https://raw.githubusercontent.com/pydantic/httpx2/main/src/httpcore2/LICENSE.md"},
+    {"name": "socksio", "license_url": "https://raw.githubusercontent.com/sethmlarson/socksio/master/LICENSE"},
+    {"name": "truststore", "license_url": "https://raw.githubusercontent.com/sethmlarson/truststore/main/LICENSE"},
     {"name": "future", "license_url": "https://raw.githubusercontent.com/PythonCharmers/python-future/master/LICENSE.txt"},
     {"name": "urllib3", "license_url": "https://raw.githubusercontent.com/urllib3/urllib3/main/LICENSE.txt"},
     {"name": "lxml", "license_url": "https://raw.githubusercontent.com/lxml/lxml/master/LICENSE.txt"},
@@ -83,7 +80,7 @@ indirect_dependencies = [
 
 def download_license(package_name: str, license_url: str) -> None:
     try:
-        response = requests.get(license_url, timeout=10)
+        response = httpx2.get(license_url, timeout=10, follow_redirects=True)
         response.raise_for_status()  # Raise an exception if the request failed
         # Use a fixed filename for the Mozilla Public License version 2.0
         if package_name in {"Scrollable_TK_frame", "Python_Tkinter_ComboBox"}:
@@ -94,7 +91,7 @@ def download_license(package_name: str, license_url: str) -> None:
             f.write(response.content)
         msg = f"Downloaded {filename}"
         logging.info(msg)
-    except requests.exceptions.RequestException as e:
+    except httpx2.HTTPError as e:
         msg = f"Failed to download {package_name} license: {e}"
         logging.error(msg)
 

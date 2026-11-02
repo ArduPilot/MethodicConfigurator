@@ -796,6 +796,7 @@ class TestAnnotateParamsExceptionHandling(unittest.TestCase):
     """Test parameter exception handling."""
 
     @pytest.mark.usefixtures("mock_update", "mock_get_xml_dir", "mock_get_xml_url")
+    @patch("ardupilot_methodic_configurator.annotate_params.download_file_from_url", new=Mock(return_value=True))
     @patch("builtins.open", new_callable=mock.mock_open)
     def test_main_ioerror(self, mock_file: MagicMock) -> None:  # type: ignore[misc]
         with patch("ardupilot_methodic_configurator.annotate_params.parse_arguments") as mock_arg_parser:
@@ -815,6 +816,7 @@ class TestAnnotateParamsExceptionHandling(unittest.TestCase):
             assert cm.value.code in [1, 2]
 
     @pytest.mark.usefixtures("mock_update", "mock_get_xml_dir", "mock_get_xml_url")
+    @patch("ardupilot_methodic_configurator.annotate_params.download_file_from_url", new=Mock(return_value=True))
     @patch("builtins.open", new_callable=mock.mock_open)
     def test_main_oserror(self, mock_file: MagicMock) -> None:  # type: ignore[misc]
         with patch("ardupilot_methodic_configurator.annotate_params.parse_arguments") as mock_arg_parser:

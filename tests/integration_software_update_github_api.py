@@ -22,11 +22,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
 
+import httpx2
 import pytest
-import requests
+from httpx2 import HTTPStatusError as httpx2_HTTPStatusError
+from httpx2 import TimeoutException as httpx2_TimeoutException
 from packaging.version import Version
-from requests import RequestException as requests_RequestException
-from requests import Timeout as requests_Timeout
 
 from ardupilot_methodic_configurator.backend_internet import get_expected_sha256_from_release, get_release_info
 
@@ -159,7 +159,7 @@ class TestRealGitHubAPIIntegration:
         """
         # This test verifies that we're hitting the real API by checking for rate limit headers
         url = "https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/latest"
-        response = requests.get(url, timeout=30)
+        response = httpx2.get(url, timeout=30)
 
         # Assert - Rate limit headers should be present
         assert "X-RateLimit-Limit" in response.headers, "Should have rate limit header"
@@ -223,7 +223,7 @@ class TestRealGitHubAPIErrorHandling:
         THEN: System raises appropriate exception
           AND: Error is logged appropriately
         """
-        with pytest.raises(requests_RequestException):
+        with pytest.raises(httpx2_HTTPStatusError):
             get_release_info("/tags/v999.999.999-nonexistent", should_be_pre_release=False)
 
     def test_handles_network_timeout_appropriately(self) -> None:
@@ -236,7 +236,7 @@ class TestRealGitHubAPIErrorHandling:
           AND: No data corruption occurs
         """
         # This test uses a very short timeout to force a timeout
-        with pytest.raises((requests_Timeout, requests_RequestException)):
+        with pytest.raises(httpx2_TimeoutException):
             get_release_info("/latest", should_be_pre_release=False, timeout=0.001)
 
 

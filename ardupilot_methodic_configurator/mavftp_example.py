@@ -18,7 +18,7 @@ from logging import info as logging_info
 from typing import Any
 
 # import time
-import requests
+import httpx2
 from pymavlink import mavutil
 
 import ardupilot_methodic_configurator.backend_mavftp as mavftp
@@ -160,7 +160,7 @@ def get_last_log(mav_ftp: mavftp.MAVFTP) -> None:
 
 def download_script(url: str, local_filename: str) -> None:
     # Download the script from the internet to the PC
-    response = requests.get(url, timeout=5)
+    response = httpx2.get(url, timeout=5, follow_redirects=True)
 
     if response.status_code == 200:
         with open(local_filename, "wb") as file:

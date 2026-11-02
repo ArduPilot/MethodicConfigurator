@@ -14,8 +14,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from collections.abc import Iterator
+from typing import Self
 
-from requests.exceptions import RequestException
+from httpx2 import ConnectError
 
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url
 
@@ -28,10 +29,17 @@ class DummyResponse:
         self.headers = headers
         self.status_code = status_code
 
+    def __enter__(self) -> Self:
+        """Open the streamed response."""
+        return self
+
+    def __exit__(self, *_exc_info: object) -> None:
+        """Close the streamed response."""
+
     def raise_for_status(self) -> None:
         return None
 
-    def iter_content(self, chunk_size: int = 8192) -> Iterator[bytes]:  # pylint: disable=unused-argument
+    def iter_bytes(self, chunk_size: int = 8192) -> Iterator[bytes]:  # pylint: disable=unused-argument
         yield from self._chunks
 
 
@@ -42,7 +50,7 @@ def test_download_success(tmp_path, monkeypatch) -> None:
     def _get(*_args: object, **_kwargs: object) -> DummyResponse:
         return DummyResponse([data], {"content-length": str(len(data))}, 200)
 
-    monkeypatch.setattr("ardupilot_methodic_configurator.backend_internet.requests_get", _get)
+    monkeypatch.setattr("ardupilot_methodic_configurator.backend_internet.httpx2_stream", _get)
 
     ok = download_file_from_url("https://example.com/file", str(file_path))
     assert ok is True
@@ -68,7 +76,7 @@ def test_download_resume_with_existing_file(tmp_path, monkeypatch) -> None:
         assert "Range" in headers_arg
         return DummyResponse([remaining], headers, 206)
 
-    monkeypatch.setattr("ardupilot_methodic_configurator.backend_internet.requests_get", _get)
+    monkeypatch.setattr("ardupilot_methodic_configurator.backend_internet.httpx2_stream", _get)
 
     ok = download_file_from_url("https://example.com/large", str(file_path), allow_resume=True)
     assert ok is True
@@ -86,11 +94,11 @@ def test_download_retries_on_transient_errors(tmp_path, monkeypatch) -> None:
         # First two attempts raise, third returns data
         if calls["n"] < 3:
             err_msg = "transient"
-            err = RequestException(err_msg)
+            err = ConnectError(err_msg)
             raise err
         return DummyResponse([data], {"content-length": str(len(data))}, 200)
 
-    monkeypatch.setattr("ardupilot_methodic_configurator.backend_internet.requests_get", _get)
+    monkeypatch.setattr("ardupilot_methodic_configurator.backend_internet.httpx2_stream", _get)
 
     ok = download_file_from_url("https://example.com/retry", str(file_path), retries=3, backoff_factor=0.01)
     assert ok is True

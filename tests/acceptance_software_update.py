@@ -20,8 +20,8 @@ import time
 from unittest.mock import MagicMock, patch
 
 import pytest
+from httpx2 import HTTPStatusError, ReadTimeout
 from packaging.version import Version
-from requests import HTTPError, Timeout
 
 from ardupilot_methodic_configurator.backend_internet import (
     download_and_install_on_windows,
@@ -186,8 +186,7 @@ class TestAcceptanceVersionCheckAndDetection:
         mock_response = MagicMock()
         mock_response.status_code = 403
         mock_response.headers = {"X-RateLimit-Reset": "1704729600"}
-        error = HTTPError()
-        error.response = mock_response
+        error = HTTPStatusError("API rate limit exceeded", request=MagicMock(), response=mock_response)
         mock_get_release.side_effect = error
 
         # Act - Should handle gracefully
@@ -229,7 +228,7 @@ class TestAcceptanceDownloadManagement:
     These tests validate complete download workflows with all reliability features.
     """
 
-    @patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+    @patch("ardupilot_methodic_configurator.backend_internet.httpx2_stream")
     def test_user_downloads_update_with_full_reliability_features(self, mock_get, tmp_path) -> None:
         """
         User downloads update utilizing all reliability features.
@@ -247,24 +246,20 @@ class TestAcceptanceDownloadManagement:
         # Arrange
         call_count = {"n": 0}
 
-        def mock_get_with_features(*_args, **kwargs) -> MagicMock:
+        def mock_get_with_features(*_args, **_kwargs) -> MagicMock:
             call_count["n"] += 1
             # Simulate one retry, then success
             if call_count["n"] == 1:
                 msg = "Simulated timeout"
-                raise Timeout(msg)
+                raise ReadTimeout(msg)
 
             mock_response = MagicMock()
             mock_response.headers = {"content-length": "5000"}
             mock_response.status_code = 200
             # Simulate chunked streaming
-            mock_response.iter_content.return_value = [b"data" * 250]
+            mock_response.iter_bytes.return_value = [b"data" * 250]
             mock_response.raise_for_status.return_value = None
-
-            # Verify proxy support if configured
-            if "proxies" in kwargs:
-                assert isinstance(kwargs["proxies"], dict)
-
+            mock_response.__enter__.return_value = mock_response
             return mock_response
 
         mock_get.side_effect = mock_get_with_features
@@ -419,7 +414,7 @@ class TestAcceptanceSecurityRequirements:
     These tests validate all security measures are in place and working.
     """
 
-    @patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+    @patch("ardupilot_methodic_configurator.backend_internet.httpx2_stream")
     def test_user_protected_by_complete_security_measures(self, mock_get, tmp_path) -> None:
         """
         User is protected by all security measures during update.
@@ -437,20 +432,18 @@ class TestAcceptanceSecurityRequirements:
         mock_response = MagicMock()
         mock_response.headers = {"content-length": "1000"}
         mock_response.status_code = 200
-        mock_response.iter_content.return_value = [b"secure_data"]
+        mock_response.iter_bytes.return_value = [b"secure_data"]
         mock_response.raise_for_status.return_value = None
-        mock_get.return_value = mock_response
+        mock_get.return_value.__enter__.return_value = mock_response
 
         test_file = tmp_path / "secure_update.exe"
 
         # Act
         download_file_from_url("https://github.com/test/file", str(test_file))
 
-        # Assert - SSL verification enforced
+        # Assert - SSL verification is not disabled
         call_kwargs = mock_get.call_args.kwargs
-        assert call_kwargs["verify"] is True or isinstance(
-            call_kwargs["verify"], str
-        )  # SSL verification enabled (cert path provided)
+        assert call_kwargs.get("verify", True) is True
 
         # Assert - HTTPS URL required (tested in other tests)
         # Assert - File integrity checks (tested in other tests)
@@ -490,7 +483,7 @@ class TestAcceptancePerformanceRequirements:
         # Assert - Completes quickly (mocked, but validates no blocking operations)
         assert elapsed < 1.0  # Should be nearly instant with mocking
 
-    @patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+    @patch("ardupilot_methodic_configurator.backend_internet.httpx2_stream")
     def test_large_downloads_use_efficient_streaming(self, mock_get, tmp_path) -> None:
         """
         Large file downloads use efficient streaming.
@@ -512,9 +505,9 @@ class TestAcceptancePerformanceRequirements:
         mock_response.headers = {"content-length": str(large_file_size)}
         mock_response.status_code = 200
         # Simulate streaming chunks
-        mock_response.iter_content.return_value = [b"X" * chunk_size for _ in range(min(num_chunks, 100))]
+        mock_response.iter_bytes.return_value = [b"X" * chunk_size for _ in range(min(num_chunks, 100))]
         mock_response.raise_for_status.return_value = None
-        mock_get.return_value = mock_response
+        mock_get.return_value.__enter__.return_value = mock_response
 
         test_file = tmp_path / "large_file.exe"
 
@@ -522,7 +515,7 @@ class TestAcceptancePerformanceRequirements:
         download_file_from_url("https://github.com/test/large", str(test_file))
 
         # Assert - Streaming was used
-        mock_response.iter_content.assert_called_once()
+        mock_response.iter_bytes.assert_called_once()
 
 
 class TestAcceptanceUsabilityRequirements:

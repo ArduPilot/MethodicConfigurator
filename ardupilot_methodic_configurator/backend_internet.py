@@ -29,13 +29,13 @@ from typing import Any
 from urllib.parse import urljoin, urlparse
 from webbrowser import open as webbrowser_open
 
-import certifi
-from requests import HTTPError as requests_HTTPError
-from requests import RequestException as requests_RequestException
-from requests import Response
-from requests import Timeout as requests_Timeout
-from requests import get as requests_get
-from requests.exceptions import RequestException
+from httpx2 import HTTPError as httpx2_HTTPError
+from httpx2 import HTTPStatusError as httpx2_HTTPStatusError
+from httpx2 import InvalidURL as httpx2_InvalidURL
+from httpx2 import Response
+from httpx2 import TimeoutException as httpx2_TimeoutException
+from httpx2 import get as httpx2_get
+from httpx2 import stream as httpx2_stream
 
 from ardupilot_methodic_configurator import _
 
@@ -43,15 +43,6 @@ from ardupilot_methodic_configurator import _
 GITHUB_API_URL_RELEASES = "https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/"
 DOWNLOAD_BLOCK_SIZE = 8192
 PE_MAGIC_BYTES = b"MZ"  # Windows PE executable DOS header signature
-
-
-def _build_proxies() -> dict[str, str]:
-    proxies_dict = {
-        "http": os.environ.get("HTTP_PROXY") or os.environ.get("http_proxy"),
-        "https": os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy"),
-        "no_proxy": os.environ.get("NO_PROXY") or os.environ.get("no_proxy"),
-    }
-    return {k: v for k, v in proxies_dict.items() if v is not None}
 
 
 def _existing_size_and_headers(path: str, resume: bool) -> tuple[int, dict[str, str]]:
@@ -91,7 +82,7 @@ def _write_response(  # pylint: disable=too-many-arguments, too-many-positional-
     """Write HTTP response to disk with progress tracking."""
     downloaded_local = initial_downloaded
     with open(path, mode) as fh:
-        for chunk in response.iter_content(chunk_size=DOWNLOAD_BLOCK_SIZE):
+        for chunk in response.iter_bytes(chunk_size=DOWNLOAD_BLOCK_SIZE):
             if chunk:
                 fh.write(chunk)
                 downloaded_local += len(chunk)
@@ -100,32 +91,6 @@ def _write_response(  # pylint: disable=too-many-arguments, too-many-positional-
                     msg_local = _("Downloading ... {:.1f}%")
                     progress_callback(progress, msg_local.format(progress))
     return downloaded_local
-
-
-def _get_verify_param() -> str | bool:
-    """
-    Return the CA bundle path to use with requests, especially for PyInstaller builds.
-
-    Respects REQUESTS_CA_BUNDLE/SSL_CERT_FILE if set.
-    """
-    env_bundle = os.environ.get("REQUESTS_CA_BUNDLE") or os.environ.get("SSL_CERT_FILE")
-    if env_bundle and os.path.isfile(env_bundle):
-        logging_info("_get_verify_param() return env_bundle %s", env_bundle)
-        return env_bundle
-
-    # When frozen, try the bundled certifi/cacert.pem
-    if getattr(sys, "frozen", False):
-        base_path = getattr(sys, "_MEIPASS", os.path.dirname(sys.executable))
-        # Use POSIX-style join so tests expecting forward slashes pass on all platforms
-        bundled_cert = base_path.rstrip("/\\") + "/certifi/cacert.pem"
-        if os.path.isfile(bundled_cert):
-            logging_info("_get_verify_param() return bundled_cert %s", bundled_cert)
-            return bundled_cert
-
-    # Fallback: normal certifi location
-    certifi_path = certifi.where()
-    logging_info("_get_verify_param() return certifi.where %s", certifi_path)
-    return certifi_path
 
 
 def _get_github_api_headers() -> dict[str, str]:
@@ -141,11 +106,10 @@ def _get_github_api_headers() -> dict[str, str]:
     return {}
 
 
-def _attempt_download_once(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+def _attempt_download_once(
     url: str,
     local_filename: str,
     timeout: int,
-    proxies: dict[str, str],
     headers: dict[str, str],
     progress_callback: Callable[[float, str], None] | None,
 ) -> bool:
@@ -154,33 +118,23 @@ def _attempt_download_once(  # pylint: disable=too-many-arguments, too-many-posi
 
     Returns True on success, False on failure.
     """
-    # Build request parameters dynamically to avoid code duplication
-    request_kwargs: dict[str, Any] = {
-        "stream": True,
-        "timeout": timeout,
-        "proxies": proxies,
-        "verify": _get_verify_param(),
-    }
-    if headers:
-        request_kwargs["headers"] = headers
+    with httpx2_stream("GET", url, headers=headers, timeout=timeout, follow_redirects=True) as response:
+        response.raise_for_status()
 
-    response = requests_get(url, **request_kwargs)  # noqa: S113
-    response.raise_for_status()
+        total_size = _parse_total_size(response)
 
-    total_size = _parse_total_size(response)
+        # Determine write mode and existing size based on server response
+        # Only use append mode if server accepted the Range request (status 206)
+        mode = "ab" if response.status_code == 206 else "wb"
+        existing_size = 0
+        if mode == "ab":
+            # Parse existing size from original Range header
+            try:
+                existing_size = int(headers.get("Range", "bytes=0-").split("=")[1].split("-")[0])
+            except (ValueError, IndexError, AttributeError):
+                existing_size = 0
 
-    # Determine write mode and existing size based on server response
-    # Only use append mode if server accepted the Range request (status 206)
-    mode = "ab" if response.status_code == 206 else "wb"
-    existing_size = 0
-    if mode == "ab":
-        # Parse existing size from original Range header
-        try:
-            existing_size = int(headers.get("Range", "bytes=0-").split("=")[1].split("-")[0])
-        except (ValueError, IndexError, AttributeError):
-            existing_size = 0
-
-    downloaded = _write_response(response, local_filename, mode, existing_size, total_size, progress_callback)
+        downloaded = _write_response(response, local_filename, mode, existing_size, total_size, progress_callback)
 
     if progress_callback:
         progress_callback(100.0, _("Download complete"))
@@ -207,17 +161,19 @@ def download_file_from_url(  # pylint: disable=too-many-arguments, too-many-posi
         logging_error(_("URL or local filename not provided."))
         return False
 
-    proxies = _build_proxies()
     os.makedirs(os.path.dirname(os.path.abspath(local_filename)), exist_ok=True)
 
     attempt = 0
     while attempt <= retries:
         try:
             _existing_size, headers = _existing_size_and_headers(local_filename, allow_resume)
-            return _attempt_download_once(url, local_filename, timeout, proxies, headers, progress_callback)
-        except requests_Timeout:
+            return _attempt_download_once(url, local_filename, timeout, headers, progress_callback)
+        except httpx2_InvalidURL as e:
+            logging_error(_("Failed to access URL: %s. Error: %s"), url, e)
+            return False
+        except httpx2_TimeoutException:
             logging_error(_("Download timed out (attempt %d)"), attempt + 1)
-        except requests_RequestException as e:
+        except httpx2_HTTPError as e:
             logging_error(_("Network error during download (attempt %d): %s"), attempt + 1, e)
         except OSError as e:
             # OSError may be transient (disk full, temp permissions) - retry
@@ -263,7 +219,7 @@ def get_release_info(name: str, should_be_pre_release: bool, timeout: int = 30) 
         Release information dictionary
 
     Raises:
-        RequestException: If the request fails
+        HTTPError: If the request fails
 
     """
     if not name:
@@ -272,7 +228,7 @@ def get_release_info(name: str, should_be_pre_release: bool, timeout: int = 30) 
 
     try:
         url = urljoin(GITHUB_API_URL_RELEASES, name.lstrip("/"))
-        response = requests_get(url, timeout=timeout, verify=_get_verify_param(), headers=_get_github_api_headers())
+        response = httpx2_get(url, headers=_get_github_api_headers(), timeout=timeout, follow_redirects=True)
         response.raise_for_status()
 
         release_info = response.json()
@@ -284,7 +240,7 @@ def get_release_info(name: str, should_be_pre_release: bool, timeout: int = 30) 
 
         return release_info  # type: ignore[no-any-return]
 
-    except requests_HTTPError as e:
+    except httpx2_HTTPStatusError as e:
         if e.response.status_code == 403:
             logging_error(_("Failed to fetch release info: {}").format(e))
             # Get the rate limit reset time
@@ -293,7 +249,7 @@ def get_release_info(name: str, should_be_pre_release: bool, timeout: int = 30) 
             reset_datetime = datetime.fromtimestamp(reset_time, UTC).strftime("%Y-%m-%d %H:%M:%S %Z")
             logging_error(_("Rate limit exceeded. Please try again after: %s (UTC)"), reset_datetime)
         raise
-    except RequestException as e:
+    except (httpx2_HTTPError, OSError) as e:
         logging_error(_("Failed to fetch release info: {}").format(e))
         raise
     except (KeyError, ValueError) as e:
@@ -330,7 +286,7 @@ def get_expected_sha256_from_release(release_info: dict[str, Any], filename: str
             if not url:
                 continue
             try:
-                resp = requests_get(url, timeout=timeout, verify=_get_verify_param())
+                resp = httpx2_get(url, timeout=timeout, follow_redirects=True)
                 resp.raise_for_status()
                 text = resp.text
                 # look for lines like: <hash>  filename
@@ -341,7 +297,7 @@ def get_expected_sha256_from_release(release_info: dict[str, Any], filename: str
                 m2 = re.search(r"([A-Fa-f0-9]{64})", text)
                 if m2:
                     return m2.group(1)
-            except RequestException:
+            except (httpx2_HTTPError, httpx2_InvalidURL, OSError):
                 continue
 
     return None
@@ -756,19 +712,9 @@ def verify_and_open_url(url: str) -> bool:
     url_found: bool = False
 
     try:
-        # Get proxy settings from environment variables
-        proxies_dict = {
-            "http": os.environ.get("HTTP_PROXY") or os.environ.get("http_proxy"),
-            "https": os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy"),
-            "no_proxy": os.environ.get("NO_PROXY") or os.environ.get("no_proxy"),
-        }
-        # Remove None values
-        proxies = {k: v for k, v in proxies_dict.items() if v is not None}
-
-        # Use requests.get with allow_redirects to handle HTTP redirects properly
-        response = requests_get(url, timeout=5, stream=True, allow_redirects=True, proxies=proxies, verify=_get_verify_param())
-        url_found = response.status_code == 200
-    except (requests_RequestException, requests_Timeout) as e:
+        with httpx2_stream("GET", url, timeout=5, follow_redirects=True) as response:
+            url_found = response.status_code == 200
+    except (httpx2_HTTPError, httpx2_InvalidURL, OSError, ValueError) as e:
         logging_error(_("Failed to access URL: %s. Error: %s"), url, str(e))
         url_found = False
 

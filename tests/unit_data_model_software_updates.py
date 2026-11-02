@@ -14,7 +14,7 @@ from argparse import ArgumentParser
 from unittest.mock import Mock, patch
 
 import pytest
-from requests import RequestException as requests_RequestException
+from httpx2 import ConnectError as httpx2_ConnectError
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_software_updates import (
@@ -194,7 +194,7 @@ def test_check_for_software_updates_network_error() -> None:
     with (
         patch(
             "ardupilot_methodic_configurator.data_model_software_updates.get_release_info",
-            side_effect=requests_RequestException("Network error"),
+            side_effect=httpx2_ConnectError("Network error"),
         ),
         patch(
             "ardupilot_methodic_configurator.data_model_software_updates.LocalFilesystem.get_git_commit_hash",
@@ -205,6 +205,22 @@ def test_check_for_software_updates_network_error() -> None:
     ):
         assert check_for_software_updates() is False
         mock_logging_error.assert_called_once()
+
+
+def test_update_check_fails_gracefully_with_stale_ssl_cert_file(tmp_path, monkeypatch) -> None:
+    """
+    A stale SSL_CERT_FILE makes the update check fail instead of crashing the application.
+
+    GIVEN: SSL_CERT_FILE points to a CA bundle that no longer exists
+    WHEN: The startup update check runs
+    THEN: The check reports failure and returns normally
+    """
+    monkeypatch.setenv("SSL_CERT_FILE", str(tmp_path / "uninstalled-tool-ca.pem"))
+    with patch(
+        "ardupilot_methodic_configurator.data_model_software_updates.LocalFilesystem.get_git_commit_hash",
+        return_value="abc123",
+    ):
+        assert check_for_software_updates() is False
 
 
 def test_update_manager_newer_version(update_manager) -> None:  # pylint: disable=redefined-outer-name
@@ -454,7 +470,7 @@ def test_update_manager_network_error(update_manager) -> None:  # pylint: disabl
     with (
         patch(
             "ardupilot_methodic_configurator.data_model_software_updates.format_version_info",
-            side_effect=requests_RequestException("Network error"),
+            side_effect=httpx2_ConnectError("Network error"),
         ),
         patch("ardupilot_methodic_configurator.data_model_software_updates.logging_error") as mock_logging_error,
     ):

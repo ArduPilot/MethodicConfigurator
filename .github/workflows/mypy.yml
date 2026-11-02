@@ -39,7 +39,6 @@ jobs:
           WARNINGS=0
 
           export MYPY_VERSION=$(grep -oP 'mypy==\K[0-9]+(\.[0-9]+)*' pyproject.toml || echo '')
-          export TYPES_REQUESTS_VERSION=$(grep -oP 'types-requests==\K[0-9]+(\.[0-9]+)*' pyproject.toml || echo '')
 
           if [ -z "$MYPY_VERSION" ]; then
             echo "::warning::Could not detect mypy version in pyproject.toml; falling back to latest."
@@ -50,16 +49,7 @@ jobs:
             MYPY_INSTALL="mypy==$MYPY_VERSION"
           fi
 
-          if [ -z "$TYPES_REQUESTS_VERSION" ]; then
-            echo "::warning::Could not detect types-requests version in pyproject.toml; falling back to latest."
-            TYPES_REQUESTS_INSTALL="types-requests"
-            WARNINGS=1
-          else
-            echo "Will install types-requests version $TYPES_REQUESTS_VERSION."
-            TYPES_REQUESTS_INSTALL="types-requests==$TYPES_REQUESTS_VERSION"
-          fi
-
-          python -m pip install "$MYPY_INSTALL" "$TYPES_REQUESTS_INSTALL"
+          python -m pip install "$MYPY_INSTALL"
 
           echo "warnings=$WARNINGS" >> $GITHUB_OUTPUT
           if [ "$WARNINGS" -eq 1 ]; then

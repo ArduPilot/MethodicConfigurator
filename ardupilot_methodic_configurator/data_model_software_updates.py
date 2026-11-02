@@ -20,8 +20,8 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from typing import Any
 
+from httpx2 import HTTPError as httpx2_HTTPError
 from packaging import version
-from requests import RequestException as requests_RequestException
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator import __version__ as current_version
@@ -158,7 +158,7 @@ class UpdateManager:
         except KeyError as ke:
             logging_error(_("Key error during update process: %s"), ke)
             return False
-        except requests_RequestException as req_ex:
+        except httpx2_HTTPError as req_ex:
             logging_error(_("Network error during update process: %s"), req_ex)
             return False
         except ValueError as val_ex:
@@ -186,7 +186,7 @@ def check_for_software_updates() -> bool:
         latest_release = get_release_info("/latest", should_be_pre_release=False)
         update_manager = UpdateManager()
         return update_manager.check_and_update(latest_release, current_version)
-    except (requests_RequestException, ValueError) as e:
+    except (httpx2_HTTPError, OSError, ValueError) as e:
         msg = _("Update check failed: {}")
         logging_error(msg.format(e))
         return False

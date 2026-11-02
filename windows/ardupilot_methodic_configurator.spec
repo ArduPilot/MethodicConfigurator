@@ -2,16 +2,13 @@
 # spec file for pyinstaller to build ardupilot_methodic_configurator for windows
 
 from PyInstaller.utils.hooks import collect_submodules
-import certifi
 import os
 
 
 # Let PyInstaller's tkinter hook discover Tcl/Tk data. It supports both
 # external script directories and Tcl/Tk 9 archives embedded in the DLLs.
 
-# Path to certifi's CA bundle
-certifi_cacert = certifi.where()
-datas = [(certifi_cacert, "certifi")]
+datas = []
 
 ardupilot_methodic_configuratorAny = Analysis(['__main__.py'],
              pathex=[os.path.abspath('.')],

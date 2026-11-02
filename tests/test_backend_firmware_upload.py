@@ -74,10 +74,10 @@ def _apj_contents(*, board_id: int = 50) -> bytes:
 
 def _response(contents: bytes) -> MagicMock:
     """Supply streamed HTTP content without replacing download or APJ parsing."""
-    response = MagicMock(spec=firmware_upload.requests.Response)
+    response = MagicMock(spec=[*dir(firmware_upload.httpx2.Response), "__enter__", "__exit__"])
     response.url = _release().url
     response.__enter__.return_value = response
-    response.iter_content.return_value = [contents[:10], contents[10:]]
+    response.iter_bytes.return_value = [contents[:10], contents[10:]]
     return response
 
 
@@ -92,20 +92,16 @@ def test_manifest_download_returns_decoded_json() -> None:
     response = MagicMock()
     response.url = firmware_upload.MANIFEST_URL
     response.__enter__.return_value = response
-    response.iter_content.return_value = [gzip.compress(b'{"firmware": []}')]
-    with (
-        patch.object(firmware_upload, "_get_verify_param", return_value="test-ca.pem") as verify_param,
-        patch.object(firmware_upload.requests, "get", return_value=response) as request,
-    ):
+    response.iter_bytes.return_value = [gzip.compress(b'{"firmware": []}')]
+    with patch.object(firmware_upload.httpx2, "stream", return_value=response) as request:
         assert fetch_firmware_manifest() == {"firmware": []}
 
     request.assert_called_once_with(
+        "GET",
         firmware_upload.MANIFEST_URL,
-        timeout=(10, 90),
-        stream=True,
-        verify="test-ca.pem",
+        timeout=firmware_upload.httpx2.Timeout(90, connect=10),
+        follow_redirects=True,
     )
-    verify_param.assert_called_once_with()
     response.__exit__.assert_called_once_with(None, None, None)
 
 
@@ -114,16 +110,18 @@ def test_manifest_download_propagates_http_status_errors() -> None:
     response = MagicMock()
     response.url = firmware_upload.MANIFEST_URL
     response.__enter__.return_value = response
-    response.raise_for_status.side_effect = firmware_upload.requests.HTTPError("manifest unavailable")
+    response.raise_for_status.side_effect = firmware_upload.httpx2.HTTPStatusError(
+        "manifest unavailable", request=MagicMock(), response=MagicMock()
+    )
 
     with (
-        patch.object(firmware_upload.requests, "get", return_value=response),
-        pytest.raises(firmware_upload.requests.HTTPError, match="manifest unavailable"),
+        patch.object(firmware_upload.httpx2, "stream", return_value=response),
+        pytest.raises(firmware_upload.httpx2.HTTPStatusError, match="manifest unavailable"),
     ):
         fetch_firmware_manifest()
 
     response.raise_for_status.assert_called_once_with()
-    response.iter_content.assert_not_called()
+    response.iter_bytes.assert_not_called()
 
 
 def test_manifest_download_rejects_non_mapping_json() -> None:
@@ -137,8 +135,8 @@ def test_manifest_download_rejects_non_mapping_json() -> None:
     response = MagicMock()
     response.url = firmware_upload.MANIFEST_URL
     response.__enter__.return_value = response
-    response.iter_content.return_value = [gzip.compress(b"[]")]
-    with patch.object(firmware_upload.requests, "get", return_value=response), pytest.raises(ValueError, match="invalid"):
+    response.iter_bytes.return_value = [gzip.compress(b"[]")]
+    with patch.object(firmware_upload.httpx2, "stream", return_value=response), pytest.raises(ValueError, match="invalid"):
         fetch_firmware_manifest()
 
 
@@ -153,8 +151,8 @@ def test_manifest_download_rejects_oversized_payload() -> None:
     response = MagicMock()
     response.url = firmware_upload.MANIFEST_URL
     response.__enter__.return_value = response
-    response.iter_content.return_value = [b"x" * (firmware_upload.MAX_MANIFEST_DOWNLOAD + 1)]
-    with patch.object(firmware_upload.requests, "get", return_value=response), pytest.raises(ValueError, match="too large"):
+    response.iter_bytes.return_value = [b"x" * (firmware_upload.MAX_MANIFEST_DOWNLOAD + 1)]
+    with patch.object(firmware_upload.httpx2, "stream", return_value=response), pytest.raises(ValueError, match="too large"):
         fetch_firmware_manifest()
 
 
@@ -170,7 +168,7 @@ def test_manifest_download_rejects_non_official_redirect(url: str) -> None:
     response = MagicMock()
     response.url = url
     response.__enter__.return_value = response
-    with patch.object(firmware_upload.requests, "get", return_value=response), pytest.raises(ValueError, match="redirected"):
+    with patch.object(firmware_upload.httpx2, "stream", return_value=response), pytest.raises(ValueError, match="redirected"):
         fetch_firmware_manifest()
 
 
@@ -184,7 +182,7 @@ def test_apj_download_stops_when_cancelled_before_request(tmp_path: Path) -> Non
     """
     release = _release()
     destination = tmp_path / "image.apj"
-    with patch.object(firmware_upload.requests, "get") as request, pytest.raises(FirmwareUploadCancelledError):
+    with patch.object(firmware_upload.httpx2, "stream") as request, pytest.raises(FirmwareUploadCancelledError):
         download_firmware(release, destination, lambda: True)
     request.assert_not_called()
     assert not destination.exists()
@@ -203,7 +201,7 @@ def test_apj_download_rejects_untrusted_redirect(tmp_path: Path) -> None:
     response = MagicMock()
     response.__enter__.return_value = response
     response.url = "https://evil.example/image.apj"
-    with patch.object(firmware_upload.requests, "get", return_value=response), pytest.raises(ValueError, match="redirected"):
+    with patch.object(firmware_upload.httpx2, "stream", return_value=response), pytest.raises(ValueError, match="redirected"):
         download_firmware(release, destination)
     assert not destination.exists()
 
@@ -221,8 +219,8 @@ def test_apj_download_rejects_oversized_response(tmp_path: Path) -> None:
     response = MagicMock()
     response.url = release.url
     response.__enter__.return_value = response
-    response.iter_content.return_value = [b"x" * (firmware_upload.MAX_APJ_DOWNLOAD + 1)]
-    with patch.object(firmware_upload.requests, "get", return_value=response), pytest.raises(ValueError, match="too large"):
+    response.iter_bytes.return_value = [b"x" * (firmware_upload.MAX_APJ_DOWNLOAD + 1)]
+    with patch.object(firmware_upload.httpx2, "stream", return_value=response), pytest.raises(ValueError, match="too large"):
         download_firmware(release, destination)
     assert not destination.exists()
 
@@ -240,8 +238,8 @@ def test_apj_download_rejects_empty_response(tmp_path: Path) -> None:
     response = MagicMock()
     response.url = release.url
     response.__enter__.return_value = response
-    response.iter_content.return_value = []
-    with patch.object(firmware_upload.requests, "get", return_value=response), pytest.raises(ValueError, match="empty"):
+    response.iter_bytes.return_value = []
+    with patch.object(firmware_upload.httpx2, "stream", return_value=response), pytest.raises(ValueError, match="empty"):
         download_firmware(release, destination)
     assert not destination.exists()
 
@@ -260,12 +258,12 @@ def test_apj_download_cancellation_during_transfer_removes_temporary_file(tmp_pa
     response = MagicMock()
     response.url = release.url
     response.__enter__.return_value = response
-    response.iter_content.return_value = [b"partial", b"next chunk"]
+    response.iter_bytes.return_value = [b"partial", b"next chunk"]
     # The service checks once before the request, then before writing each chunk.
     # Let the first chunk reach the temporary file and cancel before the second.
     cancel = iter((False, False, True))
     with (
-        patch.object(firmware_upload.requests, "get", return_value=response),
+        patch.object(firmware_upload.httpx2, "stream", return_value=response),
         pytest.raises(FirmwareUploadCancelledError),
     ):
         download_firmware(release, destination, lambda: next(cancel))
@@ -465,12 +463,12 @@ def test_official_release_rejects_downloaded_image_for_different_board() -> None
     callbacks = FirmwareUploadCallbacks(confirmation_requested=lambda *_args: True)
 
     with (
-        patch.object(firmware_upload.requests, "get", return_value=response),
+        patch.object(firmware_upload.httpx2, "stream", return_value=response),
         pytest.raises(FirmwareCompatibilityError, match="detected board ID"),
     ):
         FirmwareUploadService.upload_release(controller, release, callbacks=callbacks)
 
-    response.iter_content.assert_called_once_with(65536)
+    response.iter_bytes.assert_called_once_with(65536)
     controller.upload_apj_firmware.assert_not_called()
 
 
@@ -501,7 +499,7 @@ def test_official_release_reports_download_and_upload_status_callbacks() -> None
         progress_callback=progress_callback,
         status_callback=statuses.append,
     )
-    with patch.object(firmware_upload.requests, "get", return_value=_response(contents)):
+    with patch.object(firmware_upload.httpx2, "stream", return_value=_response(contents)):
         FirmwareUploadService.upload_release(controller, _release(), callbacks=callbacks)
     assert statuses == [firmware_upload._("Downloading firmware…")]
     uploaded_path = controller.upload_apj_firmware.call_args.args[0]
@@ -535,7 +533,7 @@ def test_official_release_parses_downloaded_apj_before_upload() -> None:
 
     controller.upload_apj_firmware.side_effect = upload
     response = _response(apj_contents)
-    with patch.object(firmware_upload.requests, "get", return_value=response):
+    with patch.object(firmware_upload.httpx2, "stream", return_value=response):
         result = FirmwareUploadService.upload_release(
             controller,
             _release(),

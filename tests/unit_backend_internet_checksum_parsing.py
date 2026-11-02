@@ -16,7 +16,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from typing import NoReturn
 
-from requests.exceptions import RequestException
+from httpx2 import ConnectError
 
 from ardupilot_methodic_configurator.backend_internet import get_expected_sha256_from_release
 
@@ -25,7 +25,7 @@ class DummyResp:  # pylint: disable=too-few-public-methods, missing-class-docstr
     def __init__(self, text: str = "") -> None:
         self.text = text
 
-    def raise_for_status(self) -> None:  # mimic requests.Response
+    def raise_for_status(self) -> None:  # mimic Response
         return None
 
 
@@ -40,7 +40,7 @@ def test_parse_sha256_from_asset_exact_match(monkeypatch) -> None:
     }
 
     monkeypatch.setattr(
-        "ardupilot_methodic_configurator.backend_internet.requests_get",
+        "ardupilot_methodic_configurator.backend_internet.httpx2_get",
         lambda *_, **__: DummyResp(text),
     )
 
@@ -56,7 +56,7 @@ def test_parse_sha256_from_asset_first_hash(monkeypatch) -> None:
     release_info = {"assets": [{"name": "checksums.txt", "browser_download_url": "u"}], "body": ""}
 
     monkeypatch.setattr(
-        "ardupilot_methodic_configurator.backend_internet.requests_get",
+        "ardupilot_methodic_configurator.backend_internet.httpx2_get",
         lambda *_, **__: DummyResp(text),
     )
 
@@ -84,7 +84,7 @@ def test_body_single_hash_without_filename() -> None:
     assert got is None
 
 
-def test_requests_error_skips_asset_and_uses_body(monkeypatch) -> None:
+def test_network_error_skips_asset_and_uses_body(monkeypatch) -> None:
     """When asset download fails, function should return None (body parsing removed)."""
     filename = "file.whl"
     expected_hash = "e" * 64
@@ -95,10 +95,10 @@ def test_requests_error_skips_asset_and_uses_body(monkeypatch) -> None:
 
     def _raise(*_, **__) -> NoReturn:
         msg = "network"
-        raise RequestException(msg)
+        raise ConnectError(msg)
 
     monkeypatch.setattr(
-        "ardupilot_methodic_configurator.backend_internet.requests_get",
+        "ardupilot_methodic_configurator.backend_internet.httpx2_get",
         _raise,
     )
 
@@ -110,7 +110,7 @@ def test_requests_error_skips_asset_and_uses_body(monkeypatch) -> None:
 def test_no_hash_found_returns_none(monkeypatch) -> None:
     release_info = {"assets": [{"name": "notes.txt", "browser_download_url": "u"}], "body": ""}
     monkeypatch.setattr(
-        "ardupilot_methodic_configurator.backend_internet.requests_get",
+        "ardupilot_methodic_configurator.backend_internet.httpx2_get",
         lambda *_, **__: DummyResp(""),
     )
 

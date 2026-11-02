@@ -17,7 +17,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from unittest.mock import MagicMock, patch
 
 import pytest
-from requests import Timeout
+from httpx2 import ReadTimeout
 
 from ardupilot_methodic_configurator.backend_internet import (
     download_and_install_on_windows,
@@ -143,8 +143,9 @@ class TestWindowsUserInstallsUpdate:
 
     @patch("platform.system")
     @patch("ardupilot_methodic_configurator.data_model_software_updates.download_and_install_on_windows")
+    @patch("ardupilot_methodic_configurator.data_model_software_updates.get_expected_sha256_from_release")
     def test_windows_user_sees_progress_during_download(
-        self, mock_download, mock_platform, update_manager, mock_release_info
+        self, mock_get_sha256, mock_download, mock_platform, update_manager, mock_release_info
     ) -> None:
         """
         Windows user sees progress feedback during download.
@@ -155,6 +156,7 @@ class TestWindowsUserInstallsUpdate:
         """
         # Arrange
         mock_platform.return_value = "Windows"
+        mock_get_sha256.return_value = None
         mock_download.return_value = True
         update_manager.dialog = MagicMock()
 
@@ -268,7 +270,7 @@ class TestUpdateErrorHandling:
 class TestUserExperienceDuringDownload:
     """Test user experience during software download process."""
 
-    @patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+    @patch("ardupilot_methodic_configurator.backend_internet.httpx2_stream")
     def test_user_can_download_update_behind_corporate_proxy(self, mock_get, tmp_path, monkeypatch) -> None:
         """
         User can download updates from behind a corporate proxy.
@@ -285,10 +287,10 @@ class TestUserExperienceDuringDownload:
 
         mock_response = MagicMock()
         mock_response.headers = {"content-length": "1024"}
-        mock_response.iter_content.return_value = [b"update_data"]
+        mock_response.iter_bytes.return_value = [b"update_data"]
         mock_response.status_code = 200
         mock_response.raise_for_status.return_value = None
-        mock_get.return_value = mock_response
+        mock_get.return_value.__enter__.return_value = mock_response
 
         test_file = tmp_path / "update.exe"
 
@@ -301,13 +303,11 @@ class TestUserExperienceDuringDownload:
         # Assert
         assert result is True
         assert test_file.exists()
-        # Verify proxy was used
+        # Verify proxy settings from the environment are not disabled
         call_kwargs = mock_get.call_args.kwargs
-        assert "proxies" in call_kwargs
-        assert call_kwargs["proxies"]["http"] == "http://corporate-proxy:8080"
-        assert call_kwargs["proxies"]["https"] == "https://corporate-proxy:8443"
+        assert call_kwargs.get("trust_env", True) is True
 
-    @patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+    @patch("ardupilot_methodic_configurator.backend_internet.httpx2_stream")
     def test_user_download_resumes_after_network_interruption(self, mock_get, tmp_path, monkeypatch) -> None:  # pylint: disable=unused-argument
         """
         User can resume interrupted download without starting over.
@@ -330,9 +330,9 @@ class TestUserExperienceDuringDownload:
         mock_response = MagicMock()
         mock_response.status_code = 206  # Partial Content
         mock_response.headers = {"Content-Range": f"bytes 400-999/{len(full_data)}"}
-        mock_response.iter_content.return_value = [remaining_data]
+        mock_response.iter_bytes.return_value = [remaining_data]
         mock_response.raise_for_status.return_value = None
-        mock_get.return_value = mock_response
+        mock_get.return_value.__enter__.return_value = mock_response
 
         # Act
         result = download_file_from_url("https://github.com/test/file", str(test_file), allow_resume=True)
@@ -345,7 +345,7 @@ class TestUserExperienceDuringDownload:
         assert "headers" in call_kwargs
         assert "Range" in call_kwargs["headers"]
 
-    @patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+    @patch("ardupilot_methodic_configurator.backend_internet.httpx2_stream")
     def test_user_gets_progress_feedback_during_large_download(self, mock_get, tmp_path) -> None:
         """
         User sees progress updates during large file downloads.
@@ -363,9 +363,9 @@ class TestUserExperienceDuringDownload:
         # Simulate chunked download
         chunk_size = 1000
         chunks = [large_file[i : i + chunk_size] for i in range(0, len(large_file), chunk_size)]
-        mock_response.iter_content.return_value = chunks
+        mock_response.iter_bytes.return_value = chunks
         mock_response.raise_for_status.return_value = None
-        mock_get.return_value = mock_response
+        mock_get.return_value.__enter__.return_value = mock_response
 
         test_file = tmp_path / "large.exe"
         progress_updates = []
@@ -382,7 +382,7 @@ class TestUserExperienceDuringDownload:
         assert progress_updates[-1][0] == 100.0  # Final update is 100%
         assert "complete" in progress_updates[-1][1].lower()
 
-    @patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+    @patch("ardupilot_methodic_configurator.backend_internet.httpx2_stream")
     def test_user_experiences_automatic_retry_on_network_failure(self, mock_get, tmp_path) -> None:
         """
         User benefits from automatic retry on transient network failures.
@@ -400,13 +400,14 @@ class TestUserExperienceDuringDownload:
             call_count["n"] += 1
             if call_count["n"] < 3:  # Fail first 2 attempts
                 msg = "Network timeout"
-                raise Timeout(msg)
+                raise ReadTimeout(msg)
             # Third attempt succeeds
             mock_response = MagicMock()
             mock_response.headers = {"content-length": "100"}
             mock_response.status_code = 200
-            mock_response.iter_content.return_value = [b"success_data"]
+            mock_response.iter_bytes.return_value = [b"success_data"]
             mock_response.raise_for_status.return_value = None
+            mock_response.__enter__.return_value = mock_response
             return mock_response
 
         mock_get.side_effect = mock_get_with_retry
@@ -424,7 +425,7 @@ class TestUserExperienceDuringDownload:
 class TestSecurityAndIntegrity:
     """Test security and integrity verification during updates."""
 
-    @patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+    @patch("ardupilot_methodic_configurator.backend_internet.httpx2_get")
     def test_user_is_protected_by_checksum_verification(self, mock_get) -> None:
         """
         User is protected from corrupted or tampered downloads.
@@ -478,7 +479,7 @@ class TestSecurityAndIntegrity:
         # Assert - Rejected untrusted source
         assert result is False
 
-    @patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+    @patch("ardupilot_methodic_configurator.backend_internet.httpx2_stream")
     def test_user_update_uses_secure_https_connection(self, mock_get, tmp_path) -> None:
         """
         User downloads are protected by HTTPS encryption.
@@ -492,17 +493,15 @@ class TestSecurityAndIntegrity:
         mock_response = MagicMock()
         mock_response.headers = {"content-length": "100"}
         mock_response.status_code = 200
-        mock_response.iter_content.return_value = [b"data"]
+        mock_response.iter_bytes.return_value = [b"data"]
         mock_response.raise_for_status.return_value = None
-        mock_get.return_value = mock_response
+        mock_get.return_value.__enter__.return_value = mock_response
 
         test_file = tmp_path / "update.exe"
 
         # Act
         download_file_from_url("https://github.com/test/secure-file", str(test_file))
 
-        # Assert - SSL verification enabled
+        # Assert - SSL verification is not disabled
         call_kwargs = mock_get.call_args.kwargs
-        assert call_kwargs["verify"] is True or isinstance(
-            call_kwargs["verify"], str
-        )  # SSL verification enabled (cert path provided)
+        assert call_kwargs.get("verify", True) is True
