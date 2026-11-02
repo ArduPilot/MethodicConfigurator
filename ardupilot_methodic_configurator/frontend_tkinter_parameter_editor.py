@@ -1851,11 +1851,49 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             return  # no component data to sync
         self._updating_inline_editor = True
         try:
+            transition = self.parameter_editor.component_connection_transition(editor_data["Components"])
+            old_port: str | None = None
+            previous_protocol = None
+            disable_old = False
+            if isinstance(transition, tuple) and len(transition) == 2:
+                old_port, new_port = transition
+                conflicts = self.parameter_editor.connection_change_conflicts(old_port, new_port)
+                if isinstance(conflicts, list) and conflicts:
+                    details = "\n".join(f"{source} → {target}" for source, target in conflicts)
+                    self.ui.show_warning(
+                        _("Connection parameter conflict"),
+                        _(
+                            "Destination parameters already exist. Resolve them before changing the connection:\n\n{details}"
+                        ).format(details=details),
+                    )
+                    self._update_inline_component_editor(self._inline_component_name)
+                    return
+                if self.parameter_editor.connection_change_will_rename(
+                    editor_data["Components"]
+                ) is True and not self.ui.ask_yesno(
+                    _("Change connection?"),
+                    _(
+                        "Change connection from {old} to {new} and rename its parameters?\n\nNo cancels the connection change."
+                    ).format(old=old_port, new=new_port),
+                ):
+                    self._update_inline_component_editor(self._inline_component_name)
+                    return
+                if re.fullmatch(r"SERIAL\d+", old_port):
+                    previous_protocol = self.parameter_editor.serial_protocol_snapshot(old_port)
+                    disable_old = self.ui.ask_yesno(
+                        _("Disable previous serial port?"),
+                        _(
+                            "Set {port}_PROTOCOL to -1 (disabled)?\n\n"
+                            "Yes stages the change for upload. No keeps the existing assignment."
+                        ).format(port=old_port),
+                    )
             # Atomically replace the in-memory components so derived-parameter expressions
             # see the updated values when refresh_current_step_computed_parameters() runs.
             if not self.parameter_editor.update_vehicle_components(editor_data["Components"]):
                 return
             self.parameter_editor.refresh_current_step_computed_parameters()
+            if old_port is not None and re.fullmatch(r"SERIAL\d+", old_port):
+                self.parameter_editor.preserve_or_disable_serial_protocol(old_port, previous_protocol, disable=disable_old)
             # Workflow dialogs and upload waits can dispatch events from the outgoing inline editor.
             if (
                 self.parameter_editor.current_file

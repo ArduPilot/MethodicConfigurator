@@ -14,6 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import contextlib
 import platform
+import re
 import subprocess
 import textwrap
 from collections.abc import Callable
@@ -202,6 +203,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self._connection_renames: dict[str, str] = {}
         # Saved sources whose row (possibly already renamed) was explicitly deleted during this edit session.
         self._suppressed_connection_renames: set[str] = set()
+        self._declined_connection_renames: set[str] = set()
 
         self._at_least_one_changed = False
 
@@ -690,7 +692,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             self.open_documentation_in_browser(self.current_file)
 
         # Process configuration step and create domain model parameters
-        (ui_errors, ui_infos) = self._repopulate_configuration_step_parameters()
+        (ui_errors, ui_infos) = self._repopulate_configuration_step_parameters(ask_confirmation)
 
         for title, msg in ui_errors:
             show_error(title, msg)
@@ -2086,8 +2088,25 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             }
         )
 
+    def _confirm_step_renames(
+        self, renames: list[tuple[str, str]], infos: list[tuple[str, str]], confirm: AskConfirmationCallback | None
+    ) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+        """Ask before applying renames proposed during step loading."""
+        if not renames or confirm is None:
+            return renames, infos
+        changes = "\n".join(f"{old} → {new}" for old, new in renames)
+        if not confirm(
+            _("Rename connection parameters?"),
+            _("Rename these parameters to match the selected connection?\n\n{changes}").format(changes=changes),
+        ):
+            self._suppressed_connection_renames.update(old for old, _new in renames)
+            self._declined_connection_renames.update(old for old, _new in renames)
+            renames = []
+        return renames, [(title, message) for title, message in infos if title != _("Parameter Renamed")]
+
     def _repopulate_configuration_step_parameters(  # noqa: PLR0915  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         self,
+        ask_rename_confirmation: AskConfirmationCallback | None = None,
     ) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
         """
         Process the configuration step for the current file and update the self.current_step_parameters.
@@ -2104,6 +2123,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self._suppressed_derived_parameters.clear()
         self._connection_renames.clear()
         self._suppressed_connection_renames.clear()
+        self._declined_connection_renames.clear()
 
         # Process configuration step and get operations to apply
         (
@@ -2115,6 +2135,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             derived_params,
             autoimported_parameters,
         ) = self._config_step_processor.process_configuration_step(self.current_file, self.fc_parameters)
+        renames_to_apply, ui_infos = self._confirm_step_renames(renames_to_apply, ui_infos, ask_rename_confirmation)
         self._added_parameters.update(autoimported_parameters)
         derived_params = self._filter_derived_parameters_for_manual_overrides(derived_params)
 
@@ -2210,6 +2231,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             actually_deleted = [p for p in sorted(to_delete) if p in self.current_step_parameters]
             if actually_deleted:
                 logging_info(_("Deleting parameters %s from '%s'"), actually_deleted, self.current_file)
+            self._retired_inline_derived_parameters.update(
+                set(actually_deleted)
+                & set(step_info.get("derived_parameters", {}))
+                & set(self._local_filesystem.file_parameters.get(self.current_file, ParDict()))
+            )
             for param_name in to_delete:
                 if param_name in self.current_step_parameters:
                     self._deleted_parameters.add(param_name)
@@ -2377,6 +2403,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
     def _unsuppress_readded_connection_renames(self, param_name: str) -> None:
         """Restore tracking for a saved source when its renamed target is re-added."""
+        self._declined_connection_renames.discard(param_name)
         if param_name in self._suppressed_connection_renames:
             self._connection_renames.pop(param_name, None)
         self._suppressed_connection_renames.discard(param_name)
@@ -2661,6 +2688,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         # The exported names are now the saved-file sources for the next port change.
         self._connection_renames.clear()
         self._suppressed_connection_renames.clear()
+        self._suppressed_connection_renames.update(self._declined_connection_renames & set(export_params))
         # copy parameters new values to their _values_on_file
         for param in self.current_step_parameters.values():
             param.copy_new_value_to_file()
@@ -2950,7 +2978,15 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         # Calculate what the renames SHOULD be with the updated component data
         try:
             _duplicates, new_renamed_pairs = self._config_step_processor.calculate_connection_rename_operations(
-                original_params, rename_expr, variables
+                ParDict(
+                    {
+                        name: par
+                        for name, par in original_params.items()
+                        if name not in self._declined_connection_renames or name in self._connection_renames
+                    }
+                ),
+                rename_expr,
+                variables,
             )
         except Exception as exc:  # pylint: disable=broad-except
             logging_warning(_("rename_connection eval failed for %s: %s"), self.current_file, exc)
@@ -2972,14 +3008,17 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             if new_target is None:
                 # Rename no longer applicable — restore original name
                 self._transfer_inline_derived_ownership(current_target, orig_name)
-                if current_target in self.current_step_parameters:
-                    self._added_parameters.discard(current_target)
-                    del self.current_step_parameters[current_target]
-                if orig_name in original_params:
+                previous = self.current_step_parameters.get(current_target)
+                current_par = self._take_current_rename_par(current_target, original_params.get(orig_name))
+                if previous is not None and previous.is_derived and not previous.is_manual_override:
+                    current_par = original_params.get(orig_name)
+                if current_par is not None:
                     self.current_step_parameters[orig_name] = self._config_step_processor.create_ardupilot_parameter(
-                        orig_name, original_params[orig_name], self.current_file, self.fc_parameters
+                        orig_name, current_par, self.current_file, self.fc_parameters
                     )
                     self._deleted_parameters.discard(orig_name)
+                    if current_par != original_params.get(orig_name):
+                        self._added_parameters.add(orig_name)
                 del self._connection_renames[orig_name]
             elif new_target != current_target:
                 # Target changed — move the parameter to the new name
@@ -3021,12 +3060,14 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             logging_warning(_("Skipping connection rename %s → %s: target already exists"), orig_name, new_target)
             return
         self._transfer_inline_derived_ownership(orig_name, new_target)
-        # Remove the original (un-renamed) parameter if it is still present
-        if orig_name in self.current_step_parameters:
-            del self.current_step_parameters[orig_name]
+        # Carry unsaved edits along with the renamed row.
+        current_par = self._take_current_rename_par(orig_name, original_params[orig_name])
+        if orig_name in original_params:
             self._deleted_parameters.add(orig_name)
+        if current_par is None:
+            return
         self.current_step_parameters[new_target] = self._config_step_processor.create_ardupilot_parameter(
-            new_target, original_params[orig_name], self.current_file, self.fc_parameters
+            new_target, current_par, self.current_file, self.fc_parameters
         )
         if is_gnss and new_target.endswith("_PROTOCOL"):
             self._apply_gnss_protocol_value(new_target)
@@ -3042,6 +3083,96 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         restored dict is the same object already referenced by expression evaluators.
         """
         self._local_filesystem.vehicle_components_fs.revert_key_in_place("Components")
+
+    def component_connection_transition(self, components: dict) -> tuple[str, str] | None:
+        """Return an explicitly configured step connection change, if it can be evaluated."""
+        step = self._local_filesystem.configuration_steps.get(self.current_file, {})
+        expression = step.get("rename_connection")
+        fs_data = self._local_filesystem.vehicle_components_fs.data
+        if not expression or not isinstance(fs_data, dict) or not isinstance(fs_data.get("Components"), dict):
+            return None
+        variables = self._config_step_processor.variables.copy()
+        try:
+            variables["vehicle_components"] = fs_data["Components"]
+            old = safe_evaluate(str(expression), variables)
+            variables["vehicle_components"] = components
+            new = safe_evaluate(str(expression), variables)
+        except (ConfigurationStepEvalError, KeyError, TypeError, ValueError):
+            return None
+        if not isinstance(old, str) or not isinstance(new, str) or old == new:
+            return None
+        return old, new
+
+    def connection_change_will_rename(self, components: dict) -> bool:
+        """Check whether the proposed component values would rename current saved rows."""
+        step = self._local_filesystem.configuration_steps.get(self.current_file, {})
+        expression = step.get("rename_connection")
+        if not expression:
+            return False
+        variables = self._config_step_processor.variables.copy()
+        variables["vehicle_components"] = components
+        try:
+            _duplicates, pairs = self._config_step_processor.calculate_connection_rename_operations(
+                ParDict(
+                    {
+                        name: par
+                        for name, par in self._local_filesystem.file_parameters.get(self.current_file, ParDict()).items()
+                        if name not in self._declined_connection_renames or name in self._connection_renames
+                    }
+                ),
+                expression,
+                variables,
+            )
+        except (ConfigurationStepEvalError, KeyError, TypeError, ValueError):
+            return False
+        desired = dict(pairs)
+        if any(
+            source not in self._suppressed_connection_renames and desired.get(source, source) != target
+            for source, target in self._connection_renames.items()
+        ):
+            return True
+        return any(
+            source not in self._suppressed_connection_renames and source not in self._connection_renames for source in desired
+        )
+
+    def connection_change_conflicts(self, old: str, new: str) -> list[tuple[str, str]]:
+        """Identify occupied targets for rows associated with the previous connection."""
+        names = list(self.current_step_parameters)
+        old_names = self._config_step_processor._generate_connection_renames(names, old)  # noqa: SLF001  # pylint: disable=protected-access
+        new_names = self._config_step_processor._generate_connection_renames(names, new)  # noqa: SLF001  # pylint: disable=protected-access
+        return [
+            (source, target)
+            for source, target in new_names.items()
+            if old_names.get(source) == source and target != source and target in self.current_step_parameters
+        ]
+
+    def serial_protocol_snapshot(self, port: str) -> Par | None:
+        """Snapshot an existing serial protocol row before reconciling a connection change."""
+        if re.fullmatch(r"SERIAL\d+", port) is None:
+            return None
+        param = self.current_step_parameters.get(f"{port}_PROTOCOL")
+        return Par(param.get_new_value(), param.change_reason_for_file) if param is not None else None
+
+    def preserve_or_disable_serial_protocol(self, port: str, previous: Par | None, *, disable: bool) -> None:
+        """Retain the old assignment or stage its explicitly requested disabled value."""
+        if re.fullmatch(r"SERIAL\d+", port) is None:
+            return
+        name = f"{port}_PROTOCOL"
+        if previous is None and not disable:
+            return
+        if disable:
+            previous = Par(-1.0, _("Disable the previously selected serial connection"))
+        if previous is None:
+            return
+        self.current_step_parameters[name] = self._config_step_processor.create_ardupilot_parameter(
+            name, previous, self.current_file, self.fc_parameters
+        )
+        self._inline_derived_parameters.discard(name)
+        self._retired_inline_derived_parameters.discard(name)
+        self._deleted_parameters.discard(name)
+        self._added_parameters.add(name)
+        # This old-port row is independent of the selected connection after export.
+        self._declined_connection_renames.add(name)
 
     def update_vehicle_components(self, components: dict) -> bool:
         """
