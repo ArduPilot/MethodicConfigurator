@@ -60,6 +60,13 @@ def _existing_size_and_headers(path: str, resume: bool) -> tuple[int, dict[str, 
     return existing, headers
 
 
+def _log_if_ssl_cert_file_is_missing() -> None:
+    """Log an error naming SSL_CERT_FILE if it is set but does not point to an existing file."""
+    cert_file = os.environ.get("SSL_CERT_FILE")
+    if cert_file and not os.path.isfile(cert_file):
+        logging_error(_("SSL_CERT_FILE points to a missing CA bundle: %s. Fix or unset it to enable HTTPS."), cert_file)
+
+
 def _parse_total_size(response: Response) -> int:
     """Parse total file size from response headers."""
     content_range = response.headers.get("Content-Range")
@@ -178,6 +185,7 @@ def download_file_from_url(  # pylint: disable=too-many-arguments, too-many-posi
         except OSError as e:
             # OSError may be transient (disk full, temp permissions) - retry
             logging_error(_("File system error during download (attempt %d): %s"), attempt + 1, e)
+            _log_if_ssl_cert_file_is_missing()
         except ValueError as e:
             # ValueError is non-retryable - clean up and exit
             logging_error(_("Invalid data received from %s: %s"), url, e)
@@ -251,6 +259,7 @@ def get_release_info(name: str, should_be_pre_release: bool, timeout: int = 30) 
         raise
     except (httpx2_HTTPError, OSError) as e:
         logging_error(_("Failed to fetch release info: {}").format(e))
+        _log_if_ssl_cert_file_is_missing()
         raise
     except (KeyError, ValueError) as e:
         logging_error(_("Invalid release data: {}").format(e))
@@ -716,6 +725,7 @@ def verify_and_open_url(url: str) -> bool:
             url_found = response.status_code == 200
     except (httpx2_HTTPError, httpx2_InvalidURL, OSError, ValueError) as e:
         logging_error(_("Failed to access URL: %s. Error: %s"), url, str(e))
+        _log_if_ssl_cert_file_is_missing()
         url_found = False
 
     if url_found:

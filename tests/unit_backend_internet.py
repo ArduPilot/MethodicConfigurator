@@ -663,12 +663,16 @@ def test_verify_and_open_url_browser_exception(mock_webbrowser_open, mock_get) -
 
 
 @patch("ardupilot_methodic_configurator.backend_internet.webbrowser_open")
-def test_verify_and_open_url_fails_gracefully_with_stale_ssl_cert_file(mock_webbrowser_open, tmp_path, monkeypatch) -> None:
-    """A stale SSL_CERT_FILE makes the URL check fail instead of raising."""
-    monkeypatch.setenv("SSL_CERT_FILE", str(tmp_path / "uninstalled-tool-ca.pem"))
+def test_verify_and_open_url_fails_gracefully_with_stale_ssl_cert_file(
+    mock_webbrowser_open, tmp_path, monkeypatch, caplog
+) -> None:
+    """A stale SSL_CERT_FILE makes the URL check fail instead of raising, and the error names the variable."""
+    stale_cert_file = str(tmp_path / "uninstalled-tool-ca.pem")
+    monkeypatch.setenv("SSL_CERT_FILE", stale_cert_file)
 
     assert not verify_and_open_url("https://example.com")
     mock_webbrowser_open.assert_not_called()
+    assert any("SSL_CERT_FILE" in r.getMessage() and stale_cert_file in r.getMessage() for r in caplog.records)
 
 
 @patch("ardupilot_methodic_configurator.backend_internet.webbrowser_open")

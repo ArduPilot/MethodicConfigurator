@@ -21,6 +21,7 @@ from logging import warning as logging_warning
 from typing import Any
 
 from httpx2 import HTTPError as httpx2_HTTPError
+from httpx2 import InvalidURL as httpx2_InvalidURL
 from packaging import version
 
 from ardupilot_methodic_configurator import _
@@ -186,7 +187,7 @@ def check_for_software_updates() -> bool:
         latest_release = get_release_info("/latest", should_be_pre_release=False)
         update_manager = UpdateManager()
         return update_manager.check_and_update(latest_release, current_version)
-    except (httpx2_HTTPError, OSError, ValueError) as e:
+    except (httpx2_HTTPError, httpx2_InvalidURL, OSError, ValueError) as e:
         msg = _("Update check failed: {}")
         logging_error(msg.format(e))
         return False

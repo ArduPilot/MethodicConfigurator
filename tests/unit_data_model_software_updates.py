@@ -223,6 +223,24 @@ def test_update_check_fails_gracefully_with_stale_ssl_cert_file(tmp_path, monkey
         assert check_for_software_updates() is False
 
 
+def test_update_check_fails_gracefully_with_malformed_proxy_url(monkeypatch) -> None:
+    """
+    A malformed proxy URL makes the update check fail instead of crashing the application.
+
+    GIVEN: HTTPS_PROXY has a non-numeric port
+    WHEN: The startup update check runs
+    THEN: The check reports failure and returns normally
+    """
+    for name in ("https_proxy", "ALL_PROXY", "all_proxy", "NO_PROXY", "no_proxy"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("HTTPS_PROXY", "http://proxy.example:invalid")
+    with patch(
+        "ardupilot_methodic_configurator.data_model_software_updates.LocalFilesystem.get_git_commit_hash",
+        return_value="abc123",
+    ):
+        assert check_for_software_updates() is False
+
+
 def test_update_manager_newer_version(update_manager) -> None:  # pylint: disable=redefined-outer-name
     """Test update manager with newer version available."""
     latest_release = {"tag_name": "v2.0.0", "body": "New features"}
