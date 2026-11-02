@@ -266,7 +266,9 @@ def only_upload_changed_parameters_usage_popup(parent: tk.Tk) -> BaseWindow | No
     )
 
     # pylint: disable=import-outside-toplevel
-    from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import NEW_VALUE_DIFFERENT_STR  # noqa: PLC0415
+    from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import (  # noqa: PLC0415
+        NEW_VALUE_DIFFERENT_STR,
+    )
     # pylint: enable=import-outside-toplevel
 
     instructions_text.insert(tk.END, _("Only"), "bold")
