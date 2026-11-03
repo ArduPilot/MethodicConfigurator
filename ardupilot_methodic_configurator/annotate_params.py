@@ -48,6 +48,7 @@ from ardupilot_methodic_configurator.data_model_par_dict import (
 
 # URL of the XML file
 BASE_URL = "https://autotest.ardupilot.org/Parameters/"
+FIRMWARE_BASE_URL = "https://firmware.ardupilot.org/"
 
 PARAM_DEFINITION_XML_FILE = "apm.pdef.xml"
 LUA_PARAM_DEFINITION_XML_FILE = "35_inflight_magnetometer_fit_setup.pdef.xml"
@@ -550,48 +551,56 @@ def get_xml_dir(target: str) -> str:
 
 
 def get_xml_url(vehicle_type: str, firmware_version: str) -> str:
+    """Select historical metadata before 4.7.2 and firmware-build metadata from 4.7.2."""
     vehicle_parm_subdir = {
-        "ArduCopter": "versioned/Copter/stable-",
-        "ArduPlane": "versioned/Plane/stable-",
-        "Rover": "versioned/Rover/stable-",
-        "ArduSub": "versioned/Sub/stable-",
-        "AntennaTracker": "versioned/Tracker/stable-",
+        "ArduCopter": "Copter",
+        "ArduPlane": "Plane",
+        "Rover": "Rover",
+        "ArduSub": "Sub",
+        "AntennaTracker": "Tracker",
         # Not yet versioned in the https://autotest.ardupilot.org/Parameters server
-        "AP_Periph": "versioned/Periph/stable-",
-        "Blimp": "versioned/Blimp/stable-",
-        "Heli": "versioned/Copter/stable-",
-        "SITL": "versioned/SITL/stable-",
+        "AP_Periph": "Periph",
+        "Blimp": "Blimp",
+        "Heli": "Copter",
+        "SITL": "SITL",
     }
     try:
-        vehicle_subdir = vehicle_parm_subdir[vehicle_type] + firmware_version
+        vehicle_subdir = vehicle_parm_subdir[vehicle_type]
     except KeyError as e:
         msg = f"Vehicle type '{vehicle_type}' is not supported."
         raise ValueError(msg) from e
 
-    xml_url = BASE_URL
-    xml_url += vehicle_subdir if firmware_version else vehicle_type
-    xml_url += "/"
-    return xml_url
+    if not firmware_version:
+        return f"{BASE_URL}{vehicle_type}/"
+
+    version_match = re.match(r"(\d+)\.(\d+)(?:\.(\d+))?(?:$|[- _])", firmware_version)
+    if version_match and tuple(int(part or 0) for part in version_match.groups()) >= (4, 7, 2):
+        vehicle_subdir = {"Tracker": "AntennaTracker", "Periph": "AP_Periph"}.get(vehicle_subdir, vehicle_subdir)
+        return f"{FIRMWARE_BASE_URL}{vehicle_subdir}/stable-{firmware_version}/__METADATA__/"
+    return f"{BASE_URL}versioned/{vehicle_subdir}/stable-{firmware_version}/"
 
 
-def get_fallback_xml_url(vehicle_type: str, firmware_version: str) -> str:
+def get_fallback_xml_url(vehicle_type: str, firmware_version: str) -> str | None:
+    """Return a major.minor snapshot URL, or None when no fallback family is supported."""
     vehicle_parm_subdir = {
         "ArduCopter": "Copter-",
         "ArduPlane": "Plane-",
         "Rover": "Rover-",
         "ArduSub": "Sub-",
         "Heli": "Copter-",
+        "AntennaTracker": "Tracker-",
+        "AP_Periph": "AP_Periph-",
+        "Blimp": "Blimp-",
     }
-    try:
-        vehicle_subdir = vehicle_parm_subdir[vehicle_type] + firmware_version[0:3]
-    except KeyError as e:
-        msg = f"Vehicle type '{vehicle_type}' is not supported."
-        raise ValueError(msg) from e
-
-    xml_url = "https://raw.githubusercontent.com/ArduPilot/ParameterRepository/refs/heads/main/"
-    xml_url += vehicle_subdir if firmware_version else vehicle_type
-    xml_url += "/" + PARAM_DEFINITION_XML_FILE
-    return xml_url
+    vehicle_prefix = vehicle_parm_subdir.get(vehicle_type)
+    version_match = re.match(r"(\d+)\.(\d+)(?:\.|$)", firmware_version)
+    if vehicle_prefix is None or version_match is None:
+        return None
+    version = ".".join(version_match.groups())
+    return (
+        "https://raw.githubusercontent.com/ArduPilot/ParameterRepository/refs/heads/main/"
+        f"{vehicle_prefix}{version}/{PARAM_DEFINITION_XML_FILE}"
+    )
 
 
 def parse_parameter_metadata(  # pylint: disable=too-many-arguments, too-many-positional-arguments

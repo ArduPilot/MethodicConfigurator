@@ -14,7 +14,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import logging
 import urllib.request
 from pathlib import Path
-from urllib.error import URLError
 from urllib.parse import urlparse
 
 from batch_convert_motor_diagrams import DEFAULT_RESIZE_HEIGHT, DEFAULT_RESIZE_WIDTH, batch_convert_and_compare
@@ -107,8 +106,8 @@ def download_motor_diagrams() -> None:
             urllib.request.urlretrieve(url, output_path)  # noqa: S310
             downloaded += 1
 
-        except (URLError, OSError) as e:
-            logger.error("Failed to download %s: %s", filename, e)
+        except OSError:
+            logger.exception("Failed to download %s: ", filename)
             failed += 1
 
     logger.info("Download complete: %d succeeded, %d failed", downloaded, failed)

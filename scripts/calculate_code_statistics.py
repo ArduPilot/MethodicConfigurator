@@ -75,13 +75,11 @@ def calculate_generated_code_lines(repo_root: Path) -> tuple[int, int]:
     generated_lines = 0
 
     # Calculate generated app files lines
-    generated_app_lines = 0
     for gen_file in GENERATED_APP_FILES:
         file_path = repo_root / gen_file
         if file_path.exists():
             gen_stats = get_cloc_stats(str(file_path), include_patterns=["py"])
             lines = gen_stats.get("Python", {}).get("code", 0)
-            generated_app_lines += lines
             generated_lines += lines
 
     # Calculate generated script files lines

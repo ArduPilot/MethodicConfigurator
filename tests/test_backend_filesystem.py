@@ -28,6 +28,7 @@ from ardupilot_methodic_configurator.backend_filesystem import (
     _rename_file_preserving_git_history,
 )
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
+from ardupilot_methodic_configurator.log_analysis.backend_data_sources import load_apm_pdef
 
 # pylint: disable=too-many-lines, protected-access
 
@@ -161,9 +162,24 @@ def test_external_git_project_rename_does_not_execute_fsmonitor_or_hooks(externa
     assert _run_git_in_test_project(external_git_project, "ls-files").splitlines() == expected_paths
 
 
-def test_standalone_metadata_uses_connected_firmware_and_normalizes_reboot_field() -> None:
-    """A standalone editor receives the same parsed reboot metadata as an AMC project."""
-    filesystem = LocalFilesystem(None, "ArduPlane", "4.6.3", False, False)  # noqa: FBT003
+@pytest.mark.parametrize(
+    ("version", "expected_source"),
+    [
+        ("4.6.3", "https://autotest.ardupilot.org/Parameters/versioned/Plane/stable-4.6.3/apm.pdef.xml"),
+        ("4.7.0", "https://autotest.ardupilot.org/Parameters/versioned/Plane/stable-4.7.0/apm.pdef.xml"),
+        ("4.7.1", "https://autotest.ardupilot.org/Parameters/versioned/Plane/stable-4.7.1/apm.pdef.xml"),
+        ("4.7.2", "https://firmware.ardupilot.org/Plane/stable-4.7.2/__METADATA__/apm.pdef.xml"),
+    ],
+)
+def test_standalone_metadata_uses_connected_firmware_and_normalizes_reboot_field(version: str, expected_source: str) -> None:
+    """
+    A standalone editor downloads and normalizes metadata for its connected firmware.
+
+    GIVEN: A connected flight controller running a historical or current release
+    WHEN: Its parameter documentation is loaded
+    THEN: The correct upstream URL is downloaded and reboot metadata is normalized
+    """
+    filesystem = LocalFilesystem(None, "ArduPlane", version, False, False)  # noqa: FBT003
     metadata = {
         "ROLL_P": {
             "humanName": "Roll P",
@@ -176,13 +192,100 @@ def test_standalone_metadata_uses_connected_firmware_and_normalizes_reboot_field
         patch("ardupilot_methodic_configurator.backend_filesystem.download_file_from_url", return_value=True) as download,
         patch("ardupilot_methodic_configurator.backend_filesystem.parse_parameter_metadata", return_value=metadata) as parse,
     ):
-        source = filesystem.load_parameter_metadata_for_flight_controller("ArduPlane", "4.6.3")
+        source = filesystem.load_parameter_metadata_for_flight_controller("ArduPlane", version)
 
-    assert source.endswith("/versioned/Plane/stable-4.6.3/apm.pdef.xml")
+    assert source == expected_source
     assert download.call_args.args[0] == source
     assert parse.call_args.args[0] == ""
     assert parse.call_args.args[3] == "ArduPlane"
     assert filesystem.doc_dict["ROLL_P"]["RebootRequired"] is True
+
+
+@pytest.mark.parametrize("vehicle_type", ["AntennaTracker", "AP_Periph", "Blimp", "SITL"])
+@pytest.mark.parametrize("version", ["4.7.1", "4.7.2"])
+def test_project_and_log_metadata_allow_optional_fallbacks(tmp_path: Path, vehicle_type: str, version: str) -> None:
+    """
+    Load cached vehicle metadata through both project and log-analysis consumers.
+
+    GIVEN: A vehicle whose snapshot fallback was previously rejected
+    WHEN: Project loading and log analysis read its cached parameter documentation
+    THEN: Both paths parse the metadata without a fallback construction error
+    """
+    (tmp_path / "apm.pdef.xml").write_text(
+        '<paramfile><param name="TEST_PARAM" humanName="Test" documentation="Test metadata">'
+        '<field name="RebootRequired">True</field></param></paramfile>',
+        encoding="utf-8",
+    )
+    filesystem = LocalFilesystem(
+        str(tmp_path),
+        vehicle_type,
+        version,
+        allow_editing_template_files=False,
+        save_component_to_system_templates=False,
+        load_project=False,
+    )
+    with (
+        patch.object(filesystem, "load_vehicle_components_json_data", return_value=True),
+        patch.object(filesystem, "rename_parameter_files"),
+        patch.object(filesystem, "read_params_from_files", return_value={"01_setup.param": ParDict()}),
+        patch("ardupilot_methodic_configurator.backend_filesystem.ConfigurationSteps.re_init"),
+        patch("ardupilot_methodic_configurator.backend_filesystem.load_default_param_file", return_value=ParDict()),
+    ):
+        filesystem.re_init(str(tmp_path), vehicle_type)
+    log_metadata = load_apm_pdef(str(tmp_path), vehicle_type, version)
+
+    assert filesystem.doc_dict["TEST_PARAM"]["RebootRequired"] is True
+    assert log_metadata is not None
+    assert log_metadata["TEST_PARAM"]["humanName"] == "Test"
+
+
+@pytest.mark.parametrize(
+    ("vehicle_type", "firmware_directory", "fallback_directory"),
+    [
+        ("AntennaTracker", "AntennaTracker", "Tracker-4.7"),
+        ("AP_Periph", "AP_Periph", "AP_Periph-4.7"),
+        ("Blimp", "Blimp", "Blimp-4.7"),
+        ("SITL", "SITL", None),
+    ],
+)
+def test_log_metadata_recovers_after_primary_download_fails(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    vehicle_type: str,
+    firmware_directory: str,
+    fallback_directory: str | None,
+) -> None:
+    """
+    Try supported snapshots or development metadata after a failed release download.
+
+    GIVEN: A vehicle whose exact-release metadata cannot be downloaded
+    WHEN: Log analysis requests its parameter documentation
+    THEN: It loads the correct snapshot, or skips directly to development metadata for SITL
+    """
+    monkeypatch.chdir(tmp_path)
+    requested_urls: list[str] = []
+
+    def download_metadata(url: str, destination: str) -> bool:
+        requested_urls.append(url)
+        if len(requested_urls) == 1:
+            return False
+        Path(destination).write_text('<paramfile><param name="TEST_PARAM" humanName="Test"/></paramfile>', encoding="utf-8")
+        return True
+
+    with patch("ardupilot_methodic_configurator.annotate_params.download_file_from_url", side_effect=download_metadata):
+        metadata = load_apm_pdef(str(tmp_path), vehicle_type, "4.7.2")
+
+    expected_fallback = (
+        f"https://raw.githubusercontent.com/ArduPilot/ParameterRepository/refs/heads/main/{fallback_directory}/apm.pdef.xml"
+        if fallback_directory is not None
+        else f"https://autotest.ardupilot.org/Parameters/{vehicle_type}/apm.pdef.xml"
+    )
+    assert requested_urls == [
+        f"https://firmware.ardupilot.org/{firmware_directory}/stable-4.7.2/__METADATA__/apm.pdef.xml",
+        expected_fallback,
+    ]
+    assert metadata is not None
+    assert metadata["TEST_PARAM"]["humanName"] == "Test"
 
 
 def test_fc_metadata_fetch_ignores_unrelated_xml_in_current_directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

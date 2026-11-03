@@ -29,10 +29,12 @@ from defusedxml import ElementTree as DET  # noqa: N814
 
 from ardupilot_methodic_configurator.annotate_params import (
     BASE_URL,
+    FIRMWARE_BASE_URL,
     PARAM_DEFINITION_XML_FILE,
     create_doc_dict,
     extract_parameter_name_and_validate,
     format_columns,
+    get_fallback_xml_url,
     get_xml_data,
     get_xml_url,
     main,
@@ -1057,6 +1059,101 @@ def test_user_can_annotate_magfit_parameters_in_the_active_step(
         main()
 
     assert "Enable MagFit" in parameter_file.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    ("vehicle_type", "legacy_directory", "firmware_directory"),
+    [
+        ("ArduCopter", "Copter", "Copter"),
+        ("Heli", "Copter", "Copter"),
+        ("ArduPlane", "Plane", "Plane"),
+        ("Rover", "Rover", "Rover"),
+        ("ArduSub", "Sub", "Sub"),
+        ("AntennaTracker", "Tracker", "AntennaTracker"),
+        ("AP_Periph", "Periph", "AP_Periph"),
+        ("Blimp", "Blimp", "Blimp"),
+        ("SITL", "SITL", "SITL"),
+    ],
+)
+@pytest.mark.parametrize("version", ["4.6.3", "4.7.0", "4.7.1", "4.7.2"])
+def test_parameter_documentation_uses_the_upstream_release_location(
+    vehicle_type: str, legacy_directory: str, firmware_directory: str, version: str
+) -> None:
+    """
+    Request parameter documentation from the publisher for the vehicle's release.
+
+    GIVEN: A supported vehicle running a release before or from 4.7.2
+    WHEN: Its metadata download URL is selected
+    THEN: The correct server and vehicle directory are used
+    """
+    if version in {"4.6.3", "4.7.0", "4.7.1"}:
+        expected = f"{BASE_URL}versioned/{legacy_directory}/stable-{version}/apm.pdef.xml"
+    else:
+        expected = f"{FIRMWARE_BASE_URL}{firmware_directory}/stable-{version}/__METADATA__/apm.pdef.xml"
+
+    assert get_xml_url(vehicle_type, version) + PARAM_DEFINITION_XML_FILE == expected
+
+
+@pytest.mark.parametrize(
+    ("version", "expected_url"),
+    [
+        ("3.9.0", f"{BASE_URL}versioned/Copter/stable-3.9.0/"),
+        ("4.6.100", f"{BASE_URL}versioned/Copter/stable-4.6.100/"),
+        ("4.7", f"{BASE_URL}versioned/Copter/stable-4.7/"),
+        ("4.7.10", f"{FIRMWARE_BASE_URL}Copter/stable-4.7.10/__METADATA__/"),
+        ("4.7.2", f"{FIRMWARE_BASE_URL}Copter/stable-4.7.2/__METADATA__/"),
+        ("4.10.0", f"{FIRMWARE_BASE_URL}Copter/stable-4.10.0/__METADATA__/"),
+        ("5.0.0", f"{FIRMWARE_BASE_URL}Copter/stable-5.0.0/__METADATA__/"),
+        ("", f"{BASE_URL}ArduCopter/"),
+    ],
+)
+def test_metadata_location_compares_numeric_versions(version: str, expected_url: str) -> None:
+    """
+    Select metadata across version boundaries without comparing version strings.
+
+    GIVEN: Historical, current, future, or unspecified firmware versions
+    WHEN: The metadata source is selected
+    THEN: Numeric versions use the correct publisher and unspecified versions use the generic source
+    """
+    assert get_xml_url("ArduCopter", version) == expected_url
+
+
+@pytest.mark.parametrize(
+    ("vehicle_type", "version", "snapshot"),
+    [
+        ("ArduCopter", "4.10.0", "Copter-4.10"),
+        ("Heli", "4.7.2", "Copter-4.7"),
+        ("ArduPlane", "3.10.0", "Plane-3.10"),
+        ("Rover", "4.7.2", "Rover-4.7"),
+        ("ArduSub", "4.7.2", "Sub-4.7"),
+        ("AntennaTracker", "4.7.2", "Tracker-4.7"),
+        ("AP_Periph", "1.9.0", "AP_Periph-1.9"),
+        ("Blimp", "4.7.2", "Blimp-4.7"),
+    ],
+)
+def test_metadata_fallback_preserves_version_components(vehicle_type: str, version: str, snapshot: str) -> None:
+    """
+    Locate a matching snapshot without truncating multi-digit version components.
+
+    GIVEN: A vehicle family supported by ParameterRepository and a firmware version
+    WHEN: Its optional fallback URL is built
+    THEN: The URL uses the correct family and complete major.minor version
+    """
+    assert get_fallback_xml_url(vehicle_type, version) == (
+        f"https://raw.githubusercontent.com/ArduPilot/ParameterRepository/refs/heads/main/{snapshot}/apm.pdef.xml"
+    )
+
+
+@pytest.mark.parametrize(("vehicle_type", "version"), [("SITL", "4.7.2"), ("ArduCopter", ""), ("ArduCopter", "unknown")])
+def test_optional_snapshot_can_be_unavailable(vehicle_type: str, version: str) -> None:
+    """
+    Allow primary and cached metadata to load without a snapshot URL.
+
+    GIVEN: A vehicle or version without an applicable snapshot family
+    WHEN: Its optional fallback is requested
+    THEN: No fallback is returned and no exception interrupts metadata loading
+    """
+    assert get_fallback_xml_url(vehicle_type, version) is None
 
 
 def test_magfit_documentation_refreshes_each_templates_actual_setup_step(

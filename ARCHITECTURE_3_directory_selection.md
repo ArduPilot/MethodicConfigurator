@@ -208,6 +208,18 @@ firmware metadata and writes any remaining values to a numbered import file befo
   - Error handling for corrupted projects
 - **Access**: Through VehicleProjectManager factory methods
 
+#### Parameter Documentation
+
+Parameter documentation URL selection is shared through `annotate_params.get_xml_url()` by project loading,
+the standalone parameter editor, annotation, and log analysis. Releases below 4.7.2 use ArduPilot's historical
+`Parameters/versioned/<vehicle>/stable-<version>/` output on the autotest server. Releases from 4.7.2 use
+`<vehicle>/stable-<version>/__METADATA__/` on the firmware server. Vehicle names are mapped to each server's
+directory layout. See [upstream metadata generation and download locations](CUSTOMIZING_CONFIGURATION_STEPS.md#upstream-parameter-metadata).
+`get_fallback_xml_url()` returns an optional ParameterRepository snapshot URL with the complete major.minor version.
+Vehicle families without snapshots skip that fallback, allowing primary downloads and cached metadata to load normally.
+Project loading and log analysis can use snapshots or generic development metadata after a failed primary download;
+the standalone parameter editor requires exact-release metadata.
+
 #### Configuration Steps Backend
 
 - **File**: `backend_filesystem_configuration_steps.py`
