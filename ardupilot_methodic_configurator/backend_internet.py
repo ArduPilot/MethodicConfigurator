@@ -18,7 +18,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 from datetime import UTC, datetime
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -65,6 +65,16 @@ def _log_if_ssl_cert_file_is_missing() -> None:
     cert_file = os.environ.get("SSL_CERT_FILE")
     if cert_file and not os.path.isfile(cert_file):
         logging_error(_("SSL_CERT_FILE points to a missing CA bundle: %s. Fix or unset it to enable HTTPS."), cert_file)
+
+
+@contextlib.contextmanager
+def log_stale_ssl_cert_file_on_error() -> Generator[None]:
+    """Log an error naming SSL_CERT_FILE if it is stale when the block raises OSError; the error propagates."""
+    try:
+        yield
+    except OSError:
+        _log_if_ssl_cert_file_is_missing()
+        raise
 
 
 def _parse_total_size(response: Response) -> int:

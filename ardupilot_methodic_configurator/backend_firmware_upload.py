@@ -30,6 +30,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_bootloader import 
     load_apj,
 )
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import _connection_device_key
+from ardupilot_methodic_configurator.backend_internet import log_stale_ssl_cert_file_on_error
 from ardupilot_methodic_configurator.data_model_firmware_catalog import FirmwareRelease, releases_for_board
 from ardupilot_methodic_configurator.data_model_firmware_upload import (
     BootloaderInfo,
@@ -74,7 +75,10 @@ def _ensure_official_https_url(url: str, description: str) -> None:
 
 def fetch_firmware_manifest() -> dict:
     """Download and decode the official firmware manifest."""
-    with httpx2.stream("GET", MANIFEST_URL, timeout=httpx2.Timeout(90, connect=10), follow_redirects=True) as response:
+    with (
+        log_stale_ssl_cert_file_on_error(),
+        httpx2.stream("GET", MANIFEST_URL, timeout=httpx2.Timeout(90, connect=10), follow_redirects=True) as response,
+    ):
         response.raise_for_status()
         _ensure_official_https_url(str(response.url), _("firmware catalog"))
         chunks: list[bytes] = []
@@ -101,7 +105,10 @@ def download_firmware(
     if cancellation_requested is not None and cancellation_requested():
         msg = _("Firmware download cancelled")
         raise FirmwareUploadCancelledError(msg)
-    with httpx2.stream("GET", release.url, timeout=httpx2.Timeout(90, connect=10), follow_redirects=True) as response:
+    with (
+        log_stale_ssl_cert_file_on_error(),
+        httpx2.stream("GET", release.url, timeout=httpx2.Timeout(90, connect=10), follow_redirects=True) as response,
+    ):
         response.raise_for_status()
         _ensure_official_https_url(str(response.url), _("firmware download"))
         temporary_path: Path | None = None
