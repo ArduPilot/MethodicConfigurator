@@ -281,8 +281,9 @@ def _should_skip_version(version: str) -> bool:
     return (major, minor) < (4, 6)
 
 
-def _generate_pdefs_for_vehicle(vehicle_type: str, versions: list[str]) -> None:
+def _generate_pdefs_for_vehicle(vehicle_type: str, versions: list[str]) -> int:
     vehicle_dir = _vehicle_dir(vehicle_type)
+    failures = 0
     for version in versions:
         if _should_skip_version(version):
             continue
@@ -297,24 +298,33 @@ def _generate_pdefs_for_vehicle(vehicle_type: str, versions: list[str]) -> None:
             # e.g. git checkout fails on a missing tag, or param_parse.py aborts
             # at a pre-4.6 tag (import cgi on Python 3.13+); skip and keep going
             logger.exception("Skipping %s-%s:", vehicle_type, version)
+            failures += 1
             continue
     try:
         sync_to_remote(vehicle_dir)
     except subprocess.CalledProcessError:
         logger.exception("Failed to sync %s:", vehicle_dir)
+        failures += 1
+    return failures
 
 
-def main() -> None:
+def main() -> int:
     """Main function to generate and sync parameter definition XML files."""
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     # Ensure required dependencies are installed
     ensure_dependencies()
 
+    total_failures = 0
     # Iterate over each vehicle type and its versions, generating pdef XML files and syncing them
     for vehicle_type, versions in generate_vehicle_versions().items():
-        _generate_pdefs_for_vehicle(vehicle_type, versions)
+        total_failures += _generate_pdefs_for_vehicle(vehicle_type, versions)
+
+    if total_failures:
+        logger.error("Completed with %d failure(s)", total_failures)
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
