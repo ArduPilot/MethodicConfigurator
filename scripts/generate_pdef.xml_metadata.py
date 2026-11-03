@@ -96,6 +96,7 @@ def create_one_pdef_xml_file(vehicle_type: str, dst_dir: str, git_tag: str) -> N
     dst_file = f"{dst_dir}/{PDEF_XML_FILENAME}"
     full_dst_path = os.path.join(old_cwd, dst_dir)
     full_dst_file = os.path.join(old_cwd, dst_file)
+    src_xml = os.path.join(ardupilot_dir, PDEF_XML_FILENAME)
 
     # Check if the file already exists
     if os.path.exists(full_dst_file):
@@ -112,6 +113,12 @@ def create_one_pdef_xml_file(vehicle_type: str, dst_dir: str, git_tag: str) -> N
     try:
         # These subprocess calls are safe as they use fixed commands
         subprocess.run(["git", "checkout", git_tag], check=True, cwd=ardupilot_dir, timeout=300)  # noqa: S603, S607
+
+        # Remove any stale apm.pdef.xml from a previous run so the check after
+        # generation can't accidentally copy a file we didn't produce this time.
+        if os.path.exists(src_xml):
+            logger.debug("Removing stale %s from a previous run", src_xml)
+            os.unlink(src_xml)
 
         # Note: --git-tag was added to param_parse.py in October 2025. If an old tag
         # is ever generated (because its local pdef is missing), argparse will exit 2
@@ -147,7 +154,6 @@ def create_one_pdef_xml_file(vehicle_type: str, dst_dir: str, git_tag: str) -> N
             for line in proc.stderr.splitlines():
                 logger.debug("param_parse.py stderr: %s", line)
 
-        src_xml = os.path.join(ardupilot_dir, PDEF_XML_FILENAME)
         if not os.path.exists(src_xml):
             msg = f"param_parse.py did not produce {src_xml} (exit {proc.returncode})"
             raise FileNotFoundError(msg)
