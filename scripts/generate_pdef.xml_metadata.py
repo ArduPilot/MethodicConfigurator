@@ -278,10 +278,7 @@ def _should_skip_version(version: str) -> bool:
 def _generate_pdefs_for_vehicle(vehicle_type: str, versions: list[str]) -> None:
     vehicle_dir = _vehicle_dir(vehicle_type)
     for version in versions:
-        dst_file = f"{vehicle_dir}/stable-{version}/{PDEF_XML_FILENAME}"
-        already_have_file = os.path.exists(os.path.join(old_cwd, dst_file))
-
-        if _should_skip_version(version) and already_have_file:
+        if _should_skip_version(version):
             continue
 
         try:
