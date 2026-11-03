@@ -80,7 +80,7 @@ dev = [
     "pytest-timeout==2.4.0",
     "python-gettext==5.0",
     "ruff==0.17.3",
-    "ty==0.0.89",
+    "ty==0.0.96",
 ]
 
 ci_headless_tests = [

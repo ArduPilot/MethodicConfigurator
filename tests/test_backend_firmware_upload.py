@@ -172,6 +172,30 @@ def test_manifest_download_rejects_non_official_redirect(url: str) -> None:
         fetch_firmware_manifest()
 
 
+@pytest.mark.parametrize(
+    "download",
+    [
+        pytest.param(lambda _destination: fetch_firmware_manifest(), id="manifest"),
+        pytest.param(lambda destination: download_firmware(_release(), destination), id="apj"),
+    ],
+)
+def test_download_with_stale_ssl_cert_file_logs_the_variable(download, tmp_path: Path, monkeypatch, caplog) -> None:
+    """
+    A stale SSL_CERT_FILE is named in the log when a firmware server download fails.
+
+    GIVEN: SSL_CERT_FILE points to a CA bundle that no longer exists.
+    WHEN: The firmware manifest or an APJ is downloaded.
+    THEN: The missing-file error propagates and the log names SSL_CERT_FILE and its path.
+    """
+    stale_cert_file = str(tmp_path / "uninstalled-tool-ca.pem")
+    monkeypatch.setenv("SSL_CERT_FILE", stale_cert_file)
+
+    with pytest.raises(FileNotFoundError):
+        download(tmp_path / "image.apj")
+
+    assert any("SSL_CERT_FILE" in r.getMessage() and stale_cert_file in r.getMessage() for r in caplog.records)
+
+
 def test_apj_download_stops_when_cancelled_before_request(tmp_path: Path) -> None:
     """
     A download is not started after the user cancels.
