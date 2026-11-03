@@ -113,8 +113,8 @@ def create_one_pdef_xml_file(vehicle_type: str, dst_dir: str, git_tag: str) -> N
         # These subprocess calls are safe as they use fixed commands
         subprocess.run(["git", "checkout", git_tag], check=True, cwd=ardupilot_dir, timeout=300)  # noqa: S603, S607
 
-        # Note: --git-tag was added to param_parse.py in ~2024. If an old tag is
-        # ever generated (because its local pdef is missing), argparse will exit 2
+        # Note: --git-tag was added to param_parse.py in October 2025. If an old tag
+        # is ever generated (because its local pdef is missing), argparse will exit 2
         # before doing any work; the FileNotFoundError below catches that case.
         proc = subprocess.run(  # noqa: S603
             [
