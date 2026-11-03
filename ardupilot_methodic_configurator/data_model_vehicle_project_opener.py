@@ -14,7 +14,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_migration import migrate_vehicle_project_if_needed
-from ardupilot_methodic_configurator.data_model_par_dict import ParamFileError
 
 
 class VehicleProjectOpenError(Exception):
@@ -75,17 +74,14 @@ class VehicleProjectOpener:
         # locations when rename_parameter_files() runs inside re_init().
         migrate_vehicle_project_if_needed(last_vehicle_dir)
 
-        # An explicitly configured firmware version comes from the connected FC.
-        # Discard a project cache made for another firmware before re_init() can
-        # load it, so matching metadata is fetched instead.
-        self.local_filesystem.remove_cached_parameter_metadata_for_mismatched_firmware(last_vehicle_dir)
-
         # Let the selected project's vehicle_components.json determine its vehicle
         # type. Reusing the previous project's type would load the wrong metadata
         # and configuration steps (for example, Copter choices for an ArduPlane).
         try:
+            # Invalidate stale FC metadata before loading the selected project.
+            self.local_filesystem.remove_cached_parameter_metadata_for_mismatched_firmware(last_vehicle_dir)
             self.local_filesystem.re_init(last_vehicle_dir, "")
-        except ParamFileError as exp:
+        except (OSError, ValueError) as exp:
             raise VehicleProjectOpenError(
                 _("Fatal error reading parameter files"), _("Fatal error reading parameter files: {exp}").format(exp=exp)
             ) from exp
@@ -150,16 +146,13 @@ class VehicleProjectOpener:
         # locations when rename_parameter_files() runs inside re_init().
         migrate_vehicle_project_if_needed(vehicle_dir)
 
-        # An explicitly configured firmware version comes from the connected FC.
-        # Discard a project cache made for another firmware before re_init() can
-        # load it, so matching metadata is fetched instead.
-        self.local_filesystem.remove_cached_parameter_metadata_for_mismatched_firmware(vehicle_dir)
-
         # Let the selected project's vehicle_components.json determine its vehicle
         # type instead of carrying over the type of the previously opened project.
         try:
+            # Invalidate stale FC metadata before loading the selected project.
+            self.local_filesystem.remove_cached_parameter_metadata_for_mismatched_firmware(vehicle_dir)
             self.local_filesystem.re_init(vehicle_dir, "")
-        except ParamFileError as exp:
+        except (OSError, ValueError) as exp:
             raise VehicleProjectOpenError(
                 _("Fatal error reading parameter files"), _("Fatal error reading parameter files: {exp}").format(exp=exp)
             ) from exp

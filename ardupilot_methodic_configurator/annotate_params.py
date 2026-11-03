@@ -140,8 +140,14 @@ def parse_arguments() -> argparse.Namespace:
     return args
 
 
-def get_xml_data(
-    base_url: str, directory: str, filename: str, vehicle_type: str, fallback_xml_url: str | None = None
+def get_xml_data(  # pylint: disable=too-many-arguments
+    base_url: str,
+    directory: str,
+    filename: str,
+    vehicle_type: str,
+    fallback_xml_url: str | None = None,
+    *,
+    use_current_directory_cache: bool = True,
 ) -> ET.Element:
     """
     Fetch XML data from a local file or a URL.
@@ -152,6 +158,7 @@ def get_xml_data(
         filename (str): The name of the XML file.
         vehicle_type (str): The type of the vehicle.
         fallback_xml_url (Optional[str]): Fallback URL if the main URL fails.
+        use_current_directory_cache: Whether an XML file in the working directory may be reused.
 
     Returns:
         ET.Element: The root element of the parsed XML data.
@@ -163,7 +170,7 @@ def get_xml_data(
         # Load the file content relative to the script location
         with open(file_path, encoding="utf-8") as file:
             xml_data = file.read()
-    elif os_path.isfile(filename):
+    elif use_current_directory_cache and os_path.isfile(filename):
         # Load the file content from the current directory
         with open(filename, encoding="utf-8") as file:
             xml_data = file.read()
@@ -604,9 +611,18 @@ def get_fallback_xml_url(vehicle_type: str, firmware_version: str) -> str | None
 
 
 def parse_parameter_metadata(  # pylint: disable=too-many-arguments, too-many-positional-arguments
-    xml_url: str, xml_dir: str, xml_file: str, vehicle_type: str, max_line_length: int, fallback_xml_url: str | None = None
+    xml_url: str,
+    xml_dir: str,
+    xml_file: str,
+    vehicle_type: str,
+    max_line_length: int,
+    fallback_xml_url: str | None = None,
+    *,
+    use_current_directory_cache: bool = True,
 ) -> dict[str, Any]:
-    xml_root = get_xml_data(xml_url, xml_dir, xml_file, vehicle_type, fallback_xml_url)
+    xml_root = get_xml_data(
+        xml_url, xml_dir, xml_file, vehicle_type, fallback_xml_url, use_current_directory_cache=use_current_directory_cache
+    )
     return create_doc_dict(xml_root, vehicle_type, max_line_length)
 
 

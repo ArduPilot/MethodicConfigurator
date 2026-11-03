@@ -220,6 +220,18 @@ Vehicle families without snapshots skip that fallback, allowing primary download
 Project loading and log analysis can use snapshots or generic development metadata after a failed primary download;
 the standalone parameter editor requires exact-release metadata.
 
+On a connected-FC firmware mismatch, `LocalFilesystem.re_init()` refreshes project metadata before allowing the
+project to open. It deletes the stale project XML and invalidates its memory cache, downloads into a temporary
+directory inside the project, and parses nonempty parameter documentation using the usual fallback sources.
+The refresh ignores XML in the process working directory, atomically publishes the parsed XML in the project,
+and saves the FC firmware version to `vehicle_components.json` after the metadata and parameter files load.
+Failures leave the recorded version unchanged and are reported through the project-opening error path.
+The original parameter-file firmware version is retained in `vehicle_components.json` while upgrades are pending.
+On reopening, AMC reuses the saved metadata and retries the parameter upgrades, including when only some parameter
+files were saved in the preceding session. The pending version is removed after the files loaded from disk no longer
+need conversion. Before opening a project, AMC rejects a vehicle-family mismatch with the connected controller;
+Copter and Heli are treated as the same firmware family.
+
 #### Configuration Steps Backend
 
 - **File**: `backend_filesystem_configuration_steps.py`

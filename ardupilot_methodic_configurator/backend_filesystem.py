@@ -13,6 +13,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from argparse import Action, ArgumentParser, Namespace
 from collections.abc import Sequence
 from copy import deepcopy
+from json import JSONDecodeError
+from json import load as json_load
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import exception as logging_exception
@@ -24,6 +26,7 @@ from os import listdir as os_listdir
 from os import path as os_path
 from os import remove as os_remove
 from os import rename as os_rename
+from os import replace as os_replace
 from os import rmdir as os_rmdir
 from pathlib import Path
 from platform import system as platform_system
@@ -36,6 +39,7 @@ from shutil import which as shutil_which
 from subprocess import SubprocessError, run
 from tempfile import TemporaryDirectory
 from typing import Any, cast
+from xml.etree.ElementTree import ParseError
 from zipfile import ZipFile
 
 from argcomplete.completers import DirectoriesCompleter, FilesCompleter
@@ -64,6 +68,25 @@ from ardupilot_methodic_configurator.data_model_par_dict import MANUAL_OVERRIDE_
 
 PARAMETER_FILE_REGEXP = r"^\d{2}_.*\.param$"
 TOOLTIP_MAX_LENGTH = 105
+PARAMETER_FILES_VERSION_KEY = "Parameter files firmware version"
+
+
+def validate_project_vehicle_type(vehicle_dir: str, connected_type: str) -> str:
+    """Reject a project for a different vehicle family before modifying it."""
+    if not vehicle_dir or not connected_type:
+        return ""
+    try:
+        with open(os_path.join(vehicle_dir, "vehicle_components.json"), encoding="utf-8-sig") as file:
+            data = json_load(file)
+    except (FileNotFoundError, JSONDecodeError):
+        return ""  # The normal project loader handles missing or malformed files.
+    project_type = data.get("Components", {}).get("Flight Controller", {}).get("Firmware", {}).get("Type", "")
+    aliases = {"ArduRover": "Rover", "Heli": "ArduCopter"}
+    if project_type and aliases.get(project_type, project_type) != aliases.get(connected_type, connected_type):
+        msg = _("Project vehicle type {project_type} does not match connected flight controller type {connected_type}.")
+        msg = msg.format(project_type=project_type, connected_type=connected_type)
+        raise ValueError(msg)
+    return str(project_type)
 
 
 def _rename_file_preserving_git_history(source: Path, destination: Path) -> None:
@@ -204,13 +227,25 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         if not self.load_vehicle_components_json_data(vehicle_dir):
             return
 
+        project_fw_version = self.get_fc_fw_version_from_vehicle_components_json()
+        fc_fw_version = re_compile(r"[ _-]").split(self.fw_version, 1)[0]
+        refresh_metadata = bool(
+            self._fw_version_is_explicit
+            and not blank_component_data
+            and not self._is_read_only_template(vehicle_dir)
+            and project_fw_version
+            and fc_fw_version
+            and not _firmware_versions_match(project_fw_version, fc_fw_version)
+        )
         if blank_component_data:
             self.wipe_component_info()
             if self.vehicle_components_fs.data and "Components" in self.vehicle_components_fs.data:
                 self.save_vehicle_components_json_data(self.vehicle_components_fs.data, self.vehicle_dir)
 
         if not self._fw_version_is_explicit:
-            self.fw_version = self.get_fc_fw_version_from_vehicle_components_json()
+            self.fw_version = (
+                self.get_fc_fw_version_from_vehicle_components_json() if blank_component_data else project_fw_version
+            )
 
         if vehicle_type == "":
             vehicle_type = self.get_fc_fw_type_from_vehicle_components_json()
@@ -233,7 +268,12 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         # Read ArduPilot parameter documentation
         xml_dir = get_xml_dir(vehicle_dir)
         metadata_cache_key = (vehicle_type, fw_version, xml_dir)
-        if metadata_cache_key not in self._parameter_metadata_cache:
+        if refresh_metadata:
+            self.remove_cached_parameter_metadata_for_mismatched_firmware(vehicle_dir)
+            self._parameter_metadata_cache[metadata_cache_key] = self._refresh_parameter_metadata(
+                vehicle_type, fw_version, xml_dir
+            )
+        elif metadata_cache_key not in self._parameter_metadata_cache:
             xml_url = get_xml_url(vehicle_type, fw_version)
             fallback_xml_url = get_fallback_xml_url(vehicle_type, fw_version)
             self._parameter_metadata_cache[metadata_cache_key] = parse_parameter_metadata(
@@ -250,6 +290,71 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 self.doc_dict.update(doc_dict)
 
         self.__extend_and_reformat_parameter_documentation_metadata()
+        if refresh_metadata:
+            self._save_refreshed_firmware_version(vehicle_dir)
+
+    def get_parameter_files_firmware_version(self) -> str:
+        """Return the project's version before metadata refresh, for parameter-file upgrades."""
+        data = self.vehicle_components_fs.data or {}
+        pending_version = data.get(PARAMETER_FILES_VERSION_KEY, "")
+        if pending_version:
+            return str(pending_version)
+        return self.get_fc_fw_version_from_vehicle_components_json()
+
+    def _save_refreshed_firmware_version(self, vehicle_dir: str) -> None:
+        """Commit component firmware identity only after parameter metadata was loaded."""
+        if self._is_read_only_template(vehicle_dir):
+            return
+        data = deepcopy(self.vehicle_components_fs.data)
+        if data is None:
+            return
+        firmware = data["Components"]["Flight Controller"]["Firmware"]
+        data.setdefault(PARAMETER_FILES_VERSION_KEY, self.get_parameter_files_firmware_version())
+        firmware["Version"] = self.fw_version
+        firmware["Type"] = self.vehicle_type
+        error_occurred, message = self.save_vehicle_components_json_data(data, vehicle_dir)
+        if error_occurred:
+            raise OSError(message)
+
+    def clear_completed_parameter_upgrade(self) -> None:
+        """Clear pending upgrade state after all files on disk already match the target."""
+        data = deepcopy(self.vehicle_components_fs.data)
+        if not data or PARAMETER_FILES_VERSION_KEY not in data or self._is_read_only_template(self.vehicle_dir):
+            return
+        del data[PARAMETER_FILES_VERSION_KEY]
+        error_occurred, message = self.save_vehicle_components_json_data(data, self.vehicle_dir)
+        if error_occurred:
+            raise OSError(message)
+
+    def _is_read_only_template(self, vehicle_dir: str) -> bool:
+        """Keep template metadata unchanged unless template editing was explicitly enabled."""
+        return not self.allow_editing_template_files and self._is_template_directory(vehicle_dir)
+
+    def _refresh_parameter_metadata(self, vehicle_type: str, fw_version: str, xml_dir: str) -> dict[str, Any]:
+        """Download and parse fresh metadata, allowing fallback sources, before publishing it."""
+        xml_url = get_xml_url(vehicle_type, fw_version)
+        fallback_xml_url = get_fallback_xml_url(vehicle_type, fw_version)
+        with TemporaryDirectory(dir=xml_dir) as staging_dir:
+            try:
+                metadata = parse_parameter_metadata(
+                    xml_url,
+                    staging_dir,
+                    PARAM_DEFINITION_XML_FILE,
+                    vehicle_type,
+                    TOOLTIP_MAX_LENGTH,
+                    fallback_xml_url,
+                    use_current_directory_cache=False,
+                )
+            except (ParseError, SystemExit) as error:
+                msg = _("Could not load parameter metadata for firmware {version}.").format(version=fw_version)
+                raise ValueError(msg) from error
+            if not metadata:
+                msg = _("Parameter metadata for firmware {version} contains no parameter definitions.").format(
+                    version=fw_version
+                )
+                raise ValueError(msg)
+            os_replace(os_path.join(staging_dir, PARAM_DEFINITION_XML_FILE), os_path.join(xml_dir, PARAM_DEFINITION_XML_FILE))
+        return metadata
 
     def load_parameter_metadata_for_flight_controller(self, vehicle_type: str, firmware_version: str) -> str:
         """Fetch metadata for the exact FC firmware and return its source URL."""
@@ -286,7 +391,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         recorded in its vehicle_components.json instead.  Remove both the on-disk and
         in-memory copies so the following reinitialization downloads matching metadata.
         """
-        if not self._fw_version_is_explicit:
+        if not self._fw_version_is_explicit or self._is_read_only_template(vehicle_dir):
             return False
 
         fc_fw_version = re_compile(r"[ _-]").split(self.fw_version, 1)[0]
@@ -308,7 +413,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             return removed_from_memory
         except OSError as error:
             logging_warning(_("Could not remove cached parameter metadata %s: %s"), metadata_file, error)
-            return removed_from_memory
+            raise
 
         logging_info(
             _("Removed cached parameter metadata because project firmware %s differs from connected FC firmware %s."),

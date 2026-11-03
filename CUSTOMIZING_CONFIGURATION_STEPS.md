@@ -82,6 +82,17 @@ development metadata. Snapshot families include Copter (also Heli), Plane, Rover
 SITL skips the snapshot fallback. Multi-digit components are preserved: for example, Plane `3.10.0` uses `Plane-3.10`.
 The standalone editor requires the exact release metadata and reports an error if it cannot be downloaded.
 
+When opening a project with a connected flight controller, a firmware-version difference from
+`vehicle_components.json` invalidates the project's cached `apm.pdef.xml`, including patch-version differences.
+Methodic Configurator deletes the old XML, downloads fresh metadata using the sources above (fallbacks are allowed),
+and parses it before saving it in the project. It then updates the component JSON to the connected FC's firmware
+version after project metadata has loaded successfully. The stored version describes the FC even when a fallback
+provided the documentation. Reopening with the same FC version reuses the saved XML.
+If deletion, download, parsing, or saving the component JSON fails, project opening stops and the recorded firmware
+version remains unchanged so the operation can be retried. Empty metadata is also rejected. XML in another working
+directory cannot substitute for the fresh download. Offline projects keep their cached metadata and recorded version.
+Bundled template metadata and component files are not updated when template editing is disabled.
+
 ## Intermediate Parameter Files
 
 Each intermediate parameter file is a plain text file, editable with ArduPilot Methodic Configurator or any common text editor like
