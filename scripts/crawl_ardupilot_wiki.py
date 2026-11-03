@@ -66,7 +66,6 @@ URL_BLACKLIST = [
 URL_BLACKLIST_PREFIXES = ["https://docs.cubepilot.org/user-guides/~/changes/", "zh-hans", "doc.cuav.net/tutorial"]
 
 
-# pylint: disable=duplicate-code
 def get_env_proxies() -> dict[str, str] | None:
     proxies_env = {
         "http": os_environ.get("HTTP_PROXY") or os_environ.get("http_proxy"),
@@ -84,43 +83,41 @@ def get_env_proxies() -> dict[str, str] | None:
     return proxies
 
 
-# pylint: enable=duplicate-code
+def _is_https_dup(url: str, urls: set[str]) -> bool:
+    """`https://` version of an existing `http://` URL."""
+    return url.startswith("https://") and f"http://{url[8:]}" in urls
+
+
+def _is_index_html_dup(url: str, urls: set[str]) -> bool:
+    """`…/index.html` when `…/` or `…` already exists."""
+    return url.endswith("/index.html") and (url[:-11] in urls or url[:-10] in urls)
+
+
+def _is_trailing_slash_dup(url: str, urls: set[str]) -> bool:
+    """`…/` when `…` already exists."""
+    return url.endswith("/") and url[:-1] in urls
+
+
+def _is_common_html_dup(url: str, urls: set[str]) -> bool:
+    """`common-*.html` when the canonical ardupilot.org URL exists."""
+    if "/common-" not in url or not url.endswith(".html"):
+        return False
+    filename = url.rsplit("/", maxsplit=1)[-1]
+    canonical = f"http://ardupilot.org/copter/docs/{filename}"
+    return canonical in urls and url != canonical
+
+
+_RULES = (
+    _is_https_dup,
+    _is_index_html_dup,
+    _is_trailing_slash_dup,
+    _is_common_html_dup,
+)
 
 
 def remove_duplicates(visited_urls: set[str]) -> set[str]:
-    # if the URL is https:// and the same URL exists as http://, remove the https:// URL from the list
-    urls_to_remove = set()
-    for url in visited_urls:
-        if url.startswith("https://") and f"http://{url[8:]}" in visited_urls:
-            urls_to_remove.add(url)
-    visited_urls -= urls_to_remove
-
-    # if visited URLs end in "/index.html", and the same URL without "/index.html" or without "index.html" is in the list,
-    # remove the one with "/index.html" from the list
-    urls_to_remove = set()
-    for url in visited_urls:
-        if url.endswith("/index.html") and (url[:-11] in visited_urls or url[:-10] in visited_urls):
-            urls_to_remove.add(url)
-    visited_urls -= urls_to_remove
-
-    # if visited URLs end in "/", and the same URL without "/" is in the list, remove the one with "/" from the list
-    urls_to_remove = set()
-    for url in visited_urls:
-        if url.endswith("/") and url[:-1] in visited_urls:
-            urls_to_remove.add(url)
-    visited_urls -= urls_to_remove
-
-    # if visited URLs end in "common-*.html", and the file URL exists in with base URL http://ardupilot.org/copter/docs/,
-    # remove it from the list
-    urls_to_remove = set()
-    for url in visited_urls:
-        if "/common-" in url and url.endswith(".html"):
-            filename = url.split("/")[-1]
-            copter_url = f"http://ardupilot.org/copter/docs/{filename}"
-            if copter_url in visited_urls and url != copter_url:
-                urls_to_remove.add(url)
-    visited_urls -= urls_to_remove
-
+    for rule in _RULES:
+        visited_urls -= {url for url in visited_urls if rule(url, visited_urls)}
     return visited_urls
 
 
@@ -197,12 +194,12 @@ def main() -> None:
 
             urls_to_visit = find_all_links(soup, current_url, visited_urls, urls_to_visit)
 
-        except (requests.RequestException, requests.Timeout) as e:
-            logging.error("Network error crawling %s: %s", current_url, str(e))
+        except (requests.RequestException, requests.Timeout):
+            logging.exception("Network error crawling %s:", current_url)
             broken_urls.add(current_url)
             visited_urls.discard(current_url)
-        except (KeyError, ValueError) as e:
-            logging.error("URL processing error for %s: %s", current_url, str(e))
+        except (KeyError, ValueError):
+            logging.exception("URL processing error for %s:", current_url)
             broken_urls.add(current_url)
             visited_urls.discard(current_url)
     output_urls(visited_urls, broken_urls, start_time)

@@ -370,8 +370,5 @@ if __name__ == "__main__":
             resize_height=args.resize_height,
         )
         logger.info("Conversion completed successfully!")
-    except (OSError, RuntimeError, ValueError) as e:
-        logger.error("Error during conversion: %s", e)
-        import traceback
-
-        traceback.print_exc()
+    except (OSError, RuntimeError, ValueError):
+        logger.exception("Error during conversion: ")
