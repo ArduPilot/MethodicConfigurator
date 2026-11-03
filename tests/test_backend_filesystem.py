@@ -10,9 +10,11 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import json
 import tempfile
 import unittest
 from argparse import ArgumentParser
+from contextlib import nullcontext
 from os import devnull as os_devnull
 from os import path as os_path
 from pathlib import Path
@@ -22,15 +24,571 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from ardupilot_methodic_configurator.annotate_params import get_xml_dir
+from ardupilot_methodic_configurator.__main__ import initialize_filesystem, upgrade_project_parameter_files
+from ardupilot_methodic_configurator.annotate_params import get_xml_data, get_xml_dir
 from ardupilot_methodic_configurator.backend_filesystem import (
     LocalFilesystem,
     _rename_file_preserving_git_history,
+    validate_project_vehicle_type,
 )
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
+from ardupilot_methodic_configurator.data_model_parameter_upgrade import upgrade_parameters_for_firmware_version
+from ardupilot_methodic_configurator.data_model_vehicle_project import VehicleProjectManager
+from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpener, VehicleProjectOpenError
 from ardupilot_methodic_configurator.log_analysis.backend_data_sources import load_apm_pdef
 
 # pylint: disable=too-many-lines, protected-access
+
+REFRESHED_METADATA = (
+    '<paramfile><param name="ArduCopter:NEW_PARAM" humanName="New parameter" documentation="New firmware metadata">'
+    '<field name="RebootRequired">True</field></param></paramfile>'
+)
+
+
+@pytest.fixture(name="firmware_project")
+def fixture_firmware_project(tmp_path: Path) -> Path:
+    """Provide a real project with old metadata and schema-valid component JSON."""
+    template = (
+        Path(__file__).parents[1]
+        / "ardupilot_methodic_configurator/vehicle_templates/ArduCopter/empty_4.6.x/vehicle_components.json"
+    )
+    (tmp_path / "vehicle_components.json").write_text(template.read_text(encoding="utf-8"), encoding="utf-8")
+    (tmp_path / "01_project.param").write_text("NEW_PARAM,1\n", encoding="utf-8")
+    (tmp_path / "apm.pdef.xml").write_text(
+        '<paramfile><param name="ArduCopter:OLD_PARAM" humanName="Old parameter"/></paramfile>', encoding="utf-8"
+    )
+    return tmp_path
+
+
+@pytest.fixture(name="metadata_download")
+def fixture_metadata_download(firmware_project: Path, monkeypatch: pytest.MonkeyPatch) -> MagicMock:
+    """Replace only network IO, checking deletion and persistence ordering."""
+    components_path = firmware_project / "vehicle_components.json"
+    original_components = components_path.read_bytes()
+
+    def download(_url: str, destination: str) -> bool:
+        assert not (firmware_project / "apm.pdef.xml").exists()
+        assert components_path.read_bytes() == original_components
+        Path(destination).write_text(REFRESHED_METADATA, encoding="utf-8")
+        return True
+
+    downloader = MagicMock(side_effect=download)
+    monkeypatch.setattr("ardupilot_methodic_configurator.backend_filesystem.download_file_from_url", downloader)
+    monkeypatch.setattr("ardupilot_methodic_configurator.annotate_params.download_file_from_url", downloader)
+    return downloader
+
+
+@pytest.mark.parametrize("opening_method", ["direct", "selected", "last"])
+@pytest.mark.parametrize("use_fallback", [False, True])
+def test_opening_project_refreshes_metadata_and_persists_firmware_once(
+    firmware_project: Path,
+    metadata_download: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+    opening_method: str,
+    use_fallback: bool,
+) -> None:
+    """
+    Replace stale XML before committing the connected firmware version to JSON.
+
+    GIVEN: A project recorded for 4.6.3 and an FC running 4.7.2
+    WHEN: The project is opened directly, selected, or reopened as the last project
+    THEN: Primary or fallback XML is parsed before JSON advances, and reopening uses the cache
+    """
+    other_project = firmware_project / "other_project"
+    other_project.mkdir()
+    (other_project / "apm.pdef.xml").write_text('<paramfile><param name="WRONG_CWD_PARAM"/></paramfile>', encoding="utf-8")
+    monkeypatch.chdir(other_project)
+    if use_fallback:
+        successful_download = metadata_download.side_effect
+
+        def download_with_fallback(url: str, destination: str) -> bool:
+            if url.startswith("https://firmware.ardupilot.org/"):
+                return False
+            return successful_download(url, destination)
+
+        metadata_download.side_effect = download_with_fallback
+    filesystem = LocalFilesystem(None, "ArduCopter", "4.7.2", False, False)  # noqa: FBT003
+    stale_key = ("ArduCopter", "4.7.2", str(firmware_project))
+    filesystem._parameter_metadata_cache[stale_key] = {"STALE_RAM_PARAM": {}}
+    if opening_method == "direct":
+        # Exercise the constructor path, used when starting with --vehicle-dir.
+        filesystem = LocalFilesystem(str(firmware_project), "ArduCopter", "4.7.2", False, False)  # noqa: FBT003
+    else:
+        opener = VehicleProjectOpener(filesystem)
+        if opening_method == "selected":
+            opener.open_vehicle_directory(str(firmware_project))
+        else:
+            opener.open_last_vehicle_directory(str(firmware_project))
+
+    saved_components = json.loads((firmware_project / "vehicle_components.json").read_text(encoding="utf-8"))
+    assert saved_components["Components"]["Flight Controller"]["Firmware"]["Version"] == "4.7.2"
+    assert filesystem.doc_dict["NEW_PARAM"]["RebootRequired"] is True
+    assert "New firmware metadata" in filesystem.doc_dict["NEW_PARAM"]["doc_tooltip"]
+    assert "STALE_RAM_PARAM" not in filesystem.doc_dict
+    assert (firmware_project / "apm.pdef.xml").read_text(encoding="utf-8") == REFRESHED_METADATA
+    assert metadata_download.call_args_list[0].args[0] == (
+        "https://firmware.ardupilot.org/Copter/stable-4.7.2/__METADATA__/apm.pdef.xml"
+    )
+    assert filesystem.get_parameter_files_firmware_version() == "4.6.3"
+
+    # Repeat in the same process, then simulate restarting the application.
+    VehicleProjectOpener(filesystem).open_vehicle_directory(str(firmware_project))
+    assert filesystem.get_parameter_files_firmware_version() == "4.6.3"
+    reopened = LocalFilesystem(str(firmware_project), "ArduCopter", "4.7.2", False, False)  # noqa: FBT003
+    assert reopened.get_parameter_files_firmware_version() == "4.6.3"
+    assert reopened.doc_dict["NEW_PARAM"]["RebootRequired"] is True
+    assert metadata_download.call_count == (2 if use_fallback else 1)
+    if use_fallback:
+        assert metadata_download.call_args.args[0] == (
+            "https://raw.githubusercontent.com/ArduPilot/ParameterRepository/refs/heads/main/Copter-4.7/apm.pdef.xml"
+        )
+
+
+def test_parameter_upgrade_survives_restart_and_partial_saves(firmware_project: Path, metadata_download: MagicMock) -> None:
+    """Retain the source version until every parameter file is saved in the new form."""
+    (firmware_project / "01_project.param").write_text("ANGLE_MAX,4500\n", encoding="utf-8")
+    (firmware_project / "02_other.param").write_text("ANGLE_MAX,3000\n", encoding="utf-8")
+    first = LocalFilesystem(str(firmware_project), "ArduCopter", "4.7.2", False, False)  # noqa: FBT003
+    assert first.get_parameter_files_firmware_version() == "4.6.3"
+
+    # Restart before conversion, then save only one of the two converted files.
+    second = LocalFilesystem(str(firmware_project), "ArduCopter", "4.7.2", False, False)  # noqa: FBT003
+    state = MagicMock()
+    state.local_filesystem = second
+    state.flight_controller.info.flight_sw_version = "4.7.2"
+    upgrade_project_parameter_files(state, second.get_parameter_files_firmware_version())
+    assert second.get_parameter_files_firmware_version() == "4.6.3"
+    assert "ANGLE_MAX" not in second.file_parameters["01_project.param"]
+    (firmware_project / "01_project.param").write_text("ATC_ANGLE_MAX,45\n", encoding="utf-8")
+
+    third = LocalFilesystem(str(firmware_project), "ArduCopter", "4.7.2", False, False)  # noqa: FBT003
+    assert third.get_parameter_files_firmware_version() == "4.6.3"
+    upgrade_parameters_for_firmware_version(third.get_parameter_files_firmware_version(), "4.7.2", third.file_parameters)
+    assert third.file_parameters["01_project.param"]["ATC_ANGLE_MAX"].value == 45
+    assert third.file_parameters["02_other.param"]["ATC_ANGLE_MAX"].value == 30
+    assert metadata_download.call_count == 1
+
+    # Once both files on disk are upgraded, a later startup clears the marker.
+    (firmware_project / "02_other.param").write_text("ATC_ANGLE_MAX,30\n", encoding="utf-8")
+    fourth = LocalFilesystem(str(firmware_project), "ArduCopter", "4.7.2", False, False)  # noqa: FBT003
+    state.local_filesystem = fourth
+    upgrade_project_parameter_files(state, fourth.get_parameter_files_firmware_version())
+    assert fourth.get_parameter_files_firmware_version() == "4.7.2"
+    assert "Parameter files firmware version" not in json.loads(
+        (firmware_project / "vehicle_components.json").read_text(encoding="utf-8")
+    )
+
+
+@pytest.mark.parametrize("method", ["open_vehicle_directory", "open_last_vehicle_directory"])
+def test_connected_controller_rejects_other_vehicle_family_before_project_changes(
+    firmware_project: Path, metadata_download: MagicMock, method: str
+) -> None:
+    """A selected Copter project must not be modified for a connected Plane."""
+    original_components = (firmware_project / "vehicle_components.json").read_bytes()
+    original_xml = (firmware_project / "apm.pdef.xml").read_bytes()
+    filesystem = LocalFilesystem(None, "ArduPlane", "4.7.2", False, False)  # noqa: FBT003
+    controller = MagicMock()
+    controller.info.vehicle_type = "ArduPlane"
+    manager = VehicleProjectManager(filesystem, controller)
+    with pytest.raises(VehicleProjectOpenError, match="ArduPlane") as error:
+        getattr(manager, method)(str(firmware_project))
+    assert "ArduCopter" in error.value.message
+    assert error.value.title
+    assert (firmware_project / "vehicle_components.json").read_bytes() == original_components
+    assert (firmware_project / "apm.pdef.xml").read_bytes() == original_xml
+    metadata_download.assert_not_called()
+
+
+@pytest.mark.parametrize("connected_type", ["ArduCopter", "Heli"])
+def test_copter_and_heli_share_a_firmware_family(firmware_project: Path, connected_type: str) -> None:
+    """A helicopter controller can use a Copter project and vice versa."""
+    assert validate_project_vehicle_type(str(firmware_project), connected_type) == "ArduCopter"
+
+
+@pytest.mark.parametrize(
+    ("project_type", "connected_type"), [("Rover", "ArduRover"), ("ArduRover", "Rover"), ("Heli", "ArduCopter")]
+)
+def test_vehicle_family_aliases_are_accepted(firmware_project: Path, project_type: str, connected_type: str) -> None:
+    """Equivalent project and controller type names must not block opening a project."""
+    components_path = firmware_project / "vehicle_components.json"
+    data = json.loads(components_path.read_text(encoding="utf-8"))
+    data["Components"]["Flight Controller"]["Firmware"]["Type"] = project_type
+    components_path.write_text(json.dumps(data), encoding="utf-8")
+    assert validate_project_vehicle_type(str(firmware_project), connected_type) == project_type
+
+
+def test_unknown_controller_type_does_not_reject_a_project(firmware_project: Path) -> None:
+    """Offline use or an unidentified controller must not be treated as a mismatch."""
+    assert validate_project_vehicle_type(str(firmware_project), "") == ""
+    controller = MagicMock()
+    controller.master = None
+    controller.info.vehicle_type = "ArduPlane"
+    manager = VehicleProjectManager(MagicMock(), controller)
+    manager._opener.open_vehicle_directory = MagicMock(return_value=str(firmware_project))
+    manager.store_recently_used_vehicle_dir = MagicMock()
+    assert manager.open_vehicle_directory(str(firmware_project)) == str(firmware_project)
+
+
+@pytest.mark.parametrize(
+    "components",
+    [
+        {},
+        {"Components": {}},
+        {"Components": {"Flight Controller": {}}},
+        {"Components": {"Flight Controller": {"Firmware": {}}}},
+    ],
+)
+def test_project_without_a_recorded_vehicle_type_remains_openable(firmware_project: Path, components: dict) -> None:
+    """Incomplete project metadata does not invent a vehicle-family mismatch."""
+    (firmware_project / "vehicle_components.json").write_text(json.dumps(components), encoding="utf-8")
+    assert validate_project_vehicle_type(str(firmware_project), "ArduCopter") == ""
+
+
+@pytest.mark.parametrize("contents", [None, "{invalid json"])
+def test_missing_or_invalid_component_file_is_left_to_project_loader(firmware_project: Path, contents: str | None) -> None:
+    """The family check leaves missing or malformed files to the normal project loader."""
+    components = firmware_project / "vehicle_components.json"
+    if contents is None:
+        components.unlink()
+    else:
+        components.write_text(contents, encoding="utf-8")
+    assert validate_project_vehicle_type(str(firmware_project), "ArduCopter") == ""
+
+
+def test_vehicle_type_check_handles_utf8_bom(firmware_project: Path) -> None:
+    """A BOM in component JSON must not prevent detection of an incompatible FC."""
+    components = firmware_project / "vehicle_components.json"
+    contents = components.read_text(encoding="utf-8")
+    components.write_text(contents, encoding="utf-8-sig")
+    with pytest.raises(ValueError, match="ArduPlane"):
+        validate_project_vehicle_type(str(firmware_project), "ArduPlane")
+
+
+def test_xml_loader_reuses_current_directory_cache_by_default(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Existing callers can use local metadata without network access."""
+    project = tmp_path / "project"
+    project.mkdir()
+    (tmp_path / "apm.pdef.xml").write_text(REFRESHED_METADATA, encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    with patch("ardupilot_methodic_configurator.annotate_params.download_file_from_url") as download:
+        root = get_xml_data("https://example.invalid/", str(project), "apm.pdef.xml", "ArduCopter")
+    assert root.find("param") is not None
+    download.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("source_version", "target_version"), [("4.7.2", "invalid"), ("invalid", "4.7.2"), ("4.7.2", "4.6.3")]
+)
+def test_pending_upgrade_is_not_cleared_for_invalid_or_older_firmware(source_version: str, target_version: str) -> None:
+    """Unknown versions and a downgrade do not prove that upgrades were saved."""
+    state = MagicMock()
+    state.local_filesystem.file_parameters = {"01_first.param": ParDict({"TEST": Par(1)})}
+    state.flight_controller.info.flight_sw_version = target_version
+    clear_pending = MagicMock()
+    state.local_filesystem.clear_completed_parameter_upgrade = clear_pending
+    upgrade_project_parameter_files(state, source_version)
+    clear_pending.assert_not_called()
+
+
+def test_pending_upgrade_can_be_cleared_when_firmware_versions_are_equal() -> None:
+    """Equal valid versions with unchanged files are safe to mark complete."""
+    state = MagicMock()
+    state.local_filesystem.file_parameters = {"01_first.param": ParDict({"TEST": Par(1)})}
+    state.flight_controller.info.flight_sw_version = "4.7.2"
+    clear_pending = MagicMock()
+    state.local_filesystem.clear_completed_parameter_upgrade = clear_pending
+    upgrade_project_parameter_files(state, "4.7.2")
+    clear_pending.assert_called_once_with()
+
+
+def test_parameter_upgrade_accepts_firmware_version_with_release_description() -> None:
+    """Release descriptions must not suppress conversions required by the FC version."""
+    state = MagicMock()
+    state.local_filesystem.file_parameters = {"01_first.param": ParDict({"ANGLE_MAX": Par(4500)})}
+    state.flight_controller.info.flight_sw_version = "4.7.2 official release"
+    clear_pending = MagicMock()
+    state.local_filesystem.clear_completed_parameter_upgrade = clear_pending
+    upgrade_project_parameter_files(state, "4.6.3")
+    assert state.local_filesystem.file_parameters["01_first.param"]["ATC_ANGLE_MAX"].value == 45
+    clear_pending.assert_not_called()
+
+
+def test_clearing_absent_pending_upgrade_is_a_noop(firmware_project: Path) -> None:
+    """Projects without pending upgrades are not rewritten."""
+    filesystem = LocalFilesystem(None, "ArduCopter", "", False, False)  # noqa: FBT003
+    filesystem.vehicle_dir = str(firmware_project)
+    filesystem.load_vehicle_components_json_data(str(firmware_project))
+    original = (firmware_project / "vehicle_components.json").read_bytes()
+    filesystem.clear_completed_parameter_upgrade()
+    assert (firmware_project / "vehicle_components.json").read_bytes() == original
+
+
+def test_pending_upgrade_is_not_removed_from_read_only_templates(firmware_project: Path) -> None:
+    """Read-only templates retain their pending state without a filesystem write."""
+    filesystem = LocalFilesystem(None, "ArduCopter", "", False, False)  # noqa: FBT003
+    filesystem.vehicle_dir = str(firmware_project)
+    filesystem.load_vehicle_components_json_data(str(firmware_project))
+    assert filesystem.vehicle_components_fs.data is not None
+    filesystem.vehicle_components_fs.data["Parameter files firmware version"] = "4.6.3"
+    with (
+        patch.object(filesystem, "_is_read_only_template", return_value=True),
+        patch.object(filesystem, "save_vehicle_components_json_data") as save,
+    ):
+        filesystem.clear_completed_parameter_upgrade()
+    save.assert_not_called()
+    assert filesystem.get_parameter_files_firmware_version() == "4.6.3"
+
+
+def test_failed_pending_upgrade_save_keeps_state_for_retry(firmware_project: Path, metadata_download: MagicMock) -> None:
+    """A failed component JSON write must not forget the pending source version."""
+    filesystem = LocalFilesystem(str(firmware_project), "ArduCopter", "4.7.2", False, False)  # noqa: FBT003
+    with (
+        patch.object(filesystem, "save_vehicle_components_json_data", return_value=(True, "disk full")),
+        pytest.raises(OSError, match="disk full"),
+    ):
+        filesystem.clear_completed_parameter_upgrade()
+    assert filesystem.get_parameter_files_firmware_version() == "4.6.3"
+    assert metadata_download.call_count == 1
+
+
+def test_pending_parameter_version_survives_a_second_firmware_change(
+    firmware_project: Path, metadata_download: MagicMock
+) -> None:
+    """Refreshing metadata twice must not lose the version of unsaved parameter files."""
+    LocalFilesystem(str(firmware_project), "ArduCopter", "4.7.2", False, False)  # noqa: FBT003
+
+    def download(_url: str, destination: str) -> bool:
+        Path(destination).write_text(REFRESHED_METADATA, encoding="utf-8")
+        return True
+
+    metadata_download.side_effect = download
+    filesystem = LocalFilesystem(str(firmware_project), "ArduCopter", "4.8.0", False, False)  # noqa: FBT003
+    assert filesystem.get_fc_fw_version_from_vehicle_components_json() == "4.8.0"
+    assert filesystem.get_parameter_files_firmware_version() == "4.6.3"
+
+
+def test_download_is_staged_on_the_same_filesystem_as_the_project(
+    firmware_project: Path, metadata_download: MagicMock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Atomic publication must work when the system temporary directory is on another filesystem."""
+
+    def replace(source: str, destination: str) -> None:
+        assert Path(source).parent.parent == firmware_project
+        Path(source).replace(destination)
+
+    monkeypatch.setattr("ardupilot_methodic_configurator.backend_filesystem.os_replace", replace)
+    LocalFilesystem(str(firmware_project), "ArduCopter", "4.7.2", False, False)  # noqa: FBT003
+    assert metadata_download.call_count == 1
+
+
+def test_direct_start_rejects_other_vehicle_family_before_migration(firmware_project: Path) -> None:
+    """A command-line project is checked against the connected controller first."""
+    state = MagicMock()
+    state.args.bin_log = ""
+    state.args.vehicle_dir = str(firmware_project)
+    state.flight_controller.info.vehicle_type = "ArduPlane"
+    original_components = (firmware_project / "vehicle_components.json").read_bytes()
+    original_xml = (firmware_project / "apm.pdef.xml").read_bytes()
+    with (
+        patch("ardupilot_methodic_configurator.__main__.show_error_message") as show_error,
+        patch("ardupilot_methodic_configurator.__main__.migrate_vehicle_project_if_needed") as migrate,
+        pytest.raises(ValueError, match="ArduPlane"),
+    ):
+        initialize_filesystem(state)
+    migrate.assert_not_called()
+    assert isinstance(show_error.call_args.args[0], str)
+    assert show_error.call_args.args[0]
+    assert "ArduPlane" in show_error.call_args.args[1]
+    assert (firmware_project / "vehicle_components.json").read_bytes() == original_components
+    assert (firmware_project / "apm.pdef.xml").read_bytes() == original_xml
+
+
+@pytest.mark.parametrize("connected", [True, False])
+def test_direct_start_uses_compatible_project_type(firmware_project: Path, connected: bool) -> None:
+    """Use the selected project type, and ignore stale controller identity when offline."""
+    state = MagicMock()
+    state.args.bin_log = ""
+    state.args.vehicle_dir = str(firmware_project)
+    state.param_default_values = {}
+    state.flight_controller.master = MagicMock() if connected else None
+    state.flight_controller.info.vehicle_type = "ArduCopter" if connected else "ArduPlane"
+    state.vehicle_type = "ArduPlane" if connected else "ArduCopter"
+    with (
+        patch("ardupilot_methodic_configurator.__main__.migrate_vehicle_project_if_needed"),
+        patch("ardupilot_methodic_configurator.__main__.LocalFilesystem") as filesystem_class,
+        patch("ardupilot_methodic_configurator.__main__.show_error_message") as show_error,
+    ):
+        initialize_filesystem(state)
+    assert filesystem_class.call_args.args[1] == "ArduCopter"
+    show_error.assert_not_called()
+
+
+@pytest.mark.parametrize("failure", ["download", "malformed_xml", "empty_xml", "save_json", "delete_xml"])
+def test_failed_firmware_refresh_preserves_recorded_version_and_can_be_retried(
+    firmware_project: Path, metadata_download: MagicMock, failure: str
+) -> None:
+    """
+    Keep the saved project version unchanged when metadata replacement cannot complete.
+
+    GIVEN: Old project metadata and a failure during refresh or component persistence
+    WHEN: Opening the project fails, then the same project is opened after recovery
+    THEN: The old JSON survives the failure and is updated only by the successful retry
+    """
+    components_path = firmware_project / "vehicle_components.json"
+    original_components = components_path.read_bytes()
+    version = "4.7.2"
+    filesystem = LocalFilesystem(None, "ArduCopter", version, False, False)  # noqa: FBT003
+    opener = VehicleProjectOpener(filesystem)
+    successful_download = metadata_download.side_effect
+
+    def fail_download(url: str, destination: str) -> bool:
+        if failure == "download":
+            return False
+        successful_download(url, destination)
+        invalid_xml = {
+            "malformed_xml": "<paramfile>",
+            "empty_xml": "<paramfile/>",
+        }
+        if failure in invalid_xml:
+            Path(destination).write_text(invalid_xml[failure], encoding="utf-8")
+        return True
+
+    metadata_download.side_effect = fail_download
+    patch_target = (
+        "ardupilot_methodic_configurator.backend_filesystem.os_remove"
+        if failure == "delete_xml"
+        else "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.safe_write"
+    )
+    # The remaining scenarios fail during the actual download/parse path.
+    failure_context = (
+        patch(patch_target, side_effect=PermissionError("read-only project"))
+        if failure in {"save_json", "delete_xml"}
+        else nullcontext()
+    )
+    with failure_context, pytest.raises(VehicleProjectOpenError) as error:
+        opener.open_vehicle_directory(str(firmware_project))
+
+    if failure in {"download", "malformed_xml", "empty_xml"}:
+        assert version in error.value.message
+    if failure == "save_json":
+        assert "vehicle_components.json" in error.value.message
+    if failure == "delete_xml":
+        assert "read-only project" in error.value.message
+
+    assert components_path.read_bytes() == original_components
+    if failure in {"download", "malformed_xml", "empty_xml"}:
+        assert not (firmware_project / "apm.pdef.xml").exists()
+
+    metadata_download.side_effect = successful_download
+    opener.open_vehicle_directory(str(firmware_project))
+    saved = json.loads(components_path.read_text(encoding="utf-8"))
+    assert saved["Components"]["Flight Controller"]["Firmware"]["Version"] == version
+    assert filesystem.doc_dict["NEW_PARAM"]["RebootRequired"] is True
+
+
+@pytest.mark.parametrize("fc_version", ["", "4.6.3"])
+def test_matching_or_offline_project_keeps_its_metadata_and_component_json(
+    firmware_project: Path, metadata_download: MagicMock, fc_version: str
+) -> None:
+    """
+    Reuse project metadata when firmware matches or there is no connected FC version.
+
+    GIVEN: A project whose firmware matches the FC, or an offline session
+    WHEN: The project is opened
+    THEN: Its XML and component JSON remain unchanged and no download is attempted
+    """
+    metadata_bytes = (firmware_project / "apm.pdef.xml").read_bytes()
+    component_bytes = (firmware_project / "vehicle_components.json").read_bytes()
+
+    filesystem = LocalFilesystem(str(firmware_project), "ArduCopter", fc_version, False, False)  # noqa: FBT003
+
+    assert "OLD_PARAM" in filesystem.doc_dict
+    assert (firmware_project / "apm.pdef.xml").read_bytes() == metadata_bytes
+    assert (firmware_project / "vehicle_components.json").read_bytes() == component_bytes
+    metadata_download.assert_not_called()
+
+
+def test_matching_project_downloads_snapshot_when_release_metadata_is_unavailable(
+    firmware_project: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A matching project with no local XML still uses the snapshot fallback."""
+    (firmware_project / "apm.pdef.xml").unlink()
+    monkeypatch.chdir(firmware_project)
+    urls: list[str] = []
+
+    def download(url: str, destination: str) -> bool:
+        urls.append(url)
+        if "ParameterRepository" not in url:
+            return False
+        Path(destination).write_text(REFRESHED_METADATA, encoding="utf-8")
+        return True
+
+    monkeypatch.setattr("ardupilot_methodic_configurator.annotate_params.download_file_from_url", download)
+    filesystem = LocalFilesystem(str(firmware_project), "ArduCopter", "4.6.3", False, False)  # noqa: FBT003
+    assert "NEW_PARAM" in filesystem.doc_dict
+    assert len(urls) == 2
+    assert urls[0] == "https://autotest.ardupilot.org/Parameters/versioned/Copter/stable-4.6.3/apm.pdef.xml"
+    assert "/Copter-4.6/apm.pdef.xml" in urls[1]
+
+
+def test_new_blank_project_does_not_inherit_template_firmware_version(firmware_project: Path) -> None:
+    """Without a connected FC, a blanked template must not retain its old firmware identity."""
+    filesystem = LocalFilesystem(None, "ArduCopter", "", False, False)  # noqa: FBT003
+    filesystem.re_init(str(firmware_project), "ArduCopter", blank_component_data=True)
+    assert filesystem.fw_version == ""
+
+
+def test_firmware_suffix_does_not_cause_repeated_metadata_refresh(
+    firmware_project: Path, metadata_download: MagicMock
+) -> None:
+    """A version with a release suffix fetches the right metadata only once."""
+    filesystem = LocalFilesystem(str(firmware_project), "ArduCopter", "4.7.2 official", False, False)  # noqa: FBT003
+    assert "NEW_PARAM" in filesystem.doc_dict
+    assert "/stable-4.7.2/" in metadata_download.call_args.args[0]
+    reopened = LocalFilesystem(str(firmware_project), "ArduCopter", "4.7.2 official", False, False)  # noqa: FBT003
+    assert "NEW_PARAM" in reopened.doc_dict
+    assert metadata_download.call_count == 1
+
+
+def test_refreshed_metadata_records_the_vehicle_type_used_for_loading(
+    firmware_project: Path, metadata_download: MagicMock
+) -> None:
+    """Component identity remains aligned with the type used to load new metadata."""
+
+    def download(_url: str, destination: str) -> bool:
+        Path(destination).write_text(REFRESHED_METADATA.replace("ArduCopter:", "Helicopter:"), encoding="utf-8")
+        return True
+
+    metadata_download.side_effect = download
+    filesystem = LocalFilesystem(str(firmware_project), "Heli", "4.7.2", False, False)  # noqa: FBT003
+    assert "NEW_PARAM" in filesystem.doc_dict
+    components = json.loads((firmware_project / "vehicle_components.json").read_text(encoding="utf-8"))
+    assert components["Components"]["Flight Controller"]["Firmware"]["Type"] == "Heli"
+
+
+def test_reading_template_metadata_does_not_change_its_recorded_firmware(
+    firmware_project: Path, metadata_download: MagicMock
+) -> None:
+    """
+    Protect template component files when loading metadata for a connected FC.
+
+    GIVEN: A template loaded for reading with template editing disabled
+    WHEN: The template is inspected while different FC firmware is connected
+    THEN: Its cached XML loads without changing template files or downloading replacement metadata
+    """
+    components = firmware_project / "vehicle_components.json"
+    original = components.read_bytes()
+    original_xml = (firmware_project / "apm.pdef.xml").read_bytes()
+    with patch(
+        "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir",
+        return_value=str(firmware_project),
+    ):
+        filesystem = LocalFilesystem(str(firmware_project), "ArduCopter", "4.7.2", False, False)  # noqa: FBT003
+
+    assert "OLD_PARAM" in filesystem.doc_dict
+    assert components.read_bytes() == original
+    assert (firmware_project / "apm.pdef.xml").read_bytes() == original_xml
+    metadata_download.assert_not_called()
 
 
 def _run_git_in_test_project(project: Path, *arguments: str) -> str:
