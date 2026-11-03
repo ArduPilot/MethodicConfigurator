@@ -76,6 +76,19 @@ def _add_text_fields(
             extracted_strings[field].add(value)
 
 
+def _add_instructions_popup(
+    step_data: dict[str, Any],
+    extracted_strings: dict[str, set[str]],
+) -> None:
+    # Only the popup message is user-facing; its type selects the dialog style.
+    popup = step_data.get("instructions_popup")
+    if not isinstance(popup, dict):
+        return
+    message = popup.get("msg")
+    if isinstance(message, str) and message.strip():
+        extracted_strings["instructions_popup"].add(message)
+
+
 def _add_jump_messages(
     step_data: dict[str, Any],
     extracted_strings: dict[str, set[str]],
@@ -111,6 +124,7 @@ def process_configuration_steps(
 ) -> None:
     for step_data in data["steps"].values():
         _add_text_fields(step_data, text_fields, extracted_strings)
+        _add_instructions_popup(step_data, extracted_strings)
         _add_jump_messages(step_data, extracted_strings)
         _add_change_reasons(step_data, extracted_strings)
 
