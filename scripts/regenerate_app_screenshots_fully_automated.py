@@ -1510,10 +1510,6 @@ def capture_target(target: CaptureTarget, output_path: Path, args: argparse.Name
         return
 
     match action:
-        case "mavftp_browser" | "mavftp_remote_panel":
-            _capture_mavftp(output_path, delay, padding, remote_panel=action == "mavftp_remote_panel")
-        case "connection_no_connection":
-            _capture_connection(output_path, delay, padding, highlight_skip=True)
         case "connection_add_another" | "connection_udp_forwarding":
             _capture_connection_forwarding(
                 output_path,
