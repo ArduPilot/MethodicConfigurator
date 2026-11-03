@@ -105,6 +105,7 @@ def translatable_descriptions() -> None:  # noqa: PLR0915 # pylint: disable=too-
     _vehicle_components_descriptions = _("Name of the configuration template")
     _vehicle_components_descriptions = _("Number of cells in series (e.g., 4S means 4 cells)")
     _vehicle_components_descriptions = _("Number of magnetic pole pairs in the motor (affects RPM calculation)")
+    _vehicle_components_descriptions = _("Original parameter file version while firmware upgrades remain to be saved")
     _vehicle_components_descriptions = _("Physical frame and structure of the vehicle")
     _vehicle_components_descriptions = _("Physical structure of the vehicle")
     _vehicle_components_descriptions = _("Power source for the vehicle")
