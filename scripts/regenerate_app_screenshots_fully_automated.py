@@ -418,6 +418,18 @@ def _find_descendant(widget: tk.Misc, predicate: Callable[[tk.Misc], bool]) -> t
     return None
 
 
+def _required_widget_box(
+    parent: tk.Misc,
+    predicate: Callable[[tk.Misc], bool],
+    error_msg: str,
+) -> tuple[int, int, int, int]:
+    """Find the first matching descendant and return its screen-space bounding box."""
+    widget = _find_descendant(parent, predicate)
+    if widget is None:
+        raise RuntimeError(error_msg)
+    return _widget_screen_box(widget, margin=2)
+
+
 def _press_no_on_fc_copy_prompt(root: tk.Tk) -> None:
     """Dismiss the file-24 FC-copy prompt by choosing its No button."""
     prompt_title = translate("Update file with values from FC?")
@@ -664,7 +676,7 @@ def _capture_fc_info(output_path: Path, delay: float, padding: int, vehicle_dir:
         self.progress_label.config(text="Downloaded 947 of 999 parameters")
 
     with (
-        patch.object(tk.Tk, "mainloop", lambda _self: None),
+        patch.object(tk.Tk, "mainloop", return_value=None),
         patch.object(FlightControllerInfoWindow, "_download_flight_controller_parameters", _no_download),
     ):
         window = FlightControllerInfoWindow(fake_fc, vehicle_dir)  # type: ignore[arg-type]
@@ -733,45 +745,29 @@ def _capture_vehicle_opener(output_path: Path, delay: float, padding: int, vehic
 def _vehicle_opener_highlight_box(window: VehicleProjectOpenerWindow, action: str) -> tuple[int, int, int, int]:
     """Resolve a highlight box for a specific vehicle opener screenshot action."""
     if action == "vehicle_opener_legacy4":
-        browse_button = _find_descendant(
+        return _required_widget_box(
             window.connection_selection_widgets.container_frame,
             lambda w: _widget_text(w) == "...",
+            "Could not find open vehicle browse button",
         )
-        if browse_button is None:
-            msg = "Could not find open vehicle browse button"
-            raise RuntimeError(msg)
-        return _widget_screen_box(browse_button, margin=2)
-
     if action == "vehicle_opener_from_template":
-        template_button = _find_descendant(
+        return _required_widget_box(
             window.main_frame,
             lambda w: _widget_text(w).startswith("Create a vehicle project from a template"),
+            "Could not find create from template button",
         )
-        if template_button is None:
-            msg = "Could not find create from template button"
-            raise RuntimeError(msg)
-        return _widget_screen_box(template_button, margin=2)
-
     if action == "vehicle_opener_from_flight_controller":
-        fc_button = _find_descendant(
+        return _required_widget_box(
             window.main_frame,
             lambda w: _widget_text(w).startswith("Create a vehicle project from an already configured flight controller"),
+            "Could not find create from flight controller button",
         )
-        if fc_button is None:
-            msg = "Could not find create from flight controller button"
-            raise RuntimeError(msg)
-        return _widget_screen_box(fc_button, margin=2)
-
     if action == "vehicle_opener_from_bin":
-        bin_button = _find_descendant(
+        return _required_widget_box(
             window.main_frame,
             lambda w: _widget_text(w).startswith("Create a vehicle project from a .bin log file"),
+            "Could not find create from bin button",
         )
-        if bin_button is None:
-            msg = "Could not find create from bin button"
-            raise RuntimeError(msg)
-        return _widget_screen_box(bin_button, margin=2)
-
     msg = f"Unsupported vehicle opener highlight action: {action}"
     raise RuntimeError(msg)
 
@@ -841,14 +837,11 @@ def _capture_vehicle_creator_from_flight_controller(output_path: Path, delay: fl
 
 def _find_template_browse_button(window: VehicleProjectCreatorWindow) -> tuple[int, int, int, int]:
     """Find and return bounding box for template browse button."""
-    browse_button = _find_descendant(
+    return _required_widget_box(
         window.template_dir.container_frame,
         lambda w: _widget_text(w) == "...",
+        "Could not find source template browse button",
     )
-    if browse_button is None:
-        msg = "Could not find source template browse button"
-        raise RuntimeError(msg)
-    return _widget_screen_box(browse_button, margin=2)
 
 
 def _find_name_entry(window: VehicleProjectCreatorWindow, use_text_box: bool = False) -> tuple[int, int, int, int]:
@@ -867,14 +860,11 @@ def _find_name_entry(window: VehicleProjectCreatorWindow, use_text_box: bool = F
 
 def _find_create_button(window: VehicleProjectCreatorWindow) -> tuple[int, int, int, int]:
     """Find and return bounding box for create vehicle directory button."""
-    create_button = _find_descendant(
+    return _required_widget_box(
         window.main_frame,
         lambda w: _widget_text(w).startswith("Create a vehicle project from a template"),
+        "Could not find create vehicle directory button",
     )
-    if create_button is None:
-        msg = "Could not find create vehicle directory button"
-        raise RuntimeError(msg)
-    return _widget_screen_box(create_button, margin=2)
 
 
 def _vehicle_creator_highlight_box(window: VehicleProjectCreatorWindow, variant: str) -> tuple[int, int, int, int]:  # pylint: disable=too-many-locals
@@ -1357,103 +1347,123 @@ def _capture_rc_calibration(output_path: Path, delay: float, padding: int) -> No
         flight_controller.disconnect()
 
 
-def capture_target(target: CaptureTarget, output_path: Path, args: argparse.Namespace) -> None:  # pylint: disable=too-many-branches
-    """Capture one screenshot target."""
-    action = target.action
-    simple_captures = {
-        "about": _capture_about,
-        "connection": _capture_connection,
-        "instructions": _capture_instructions,
-        PLUGIN_RC_CALIBRATION: _capture_rc_calibration,
-    }
-    if action in simple_captures:
-        simple_captures[action](output_path, args.delay, args.padding)
-    elif action in ("connection_add_another", "connection_udp_forwarding"):
-        _capture_connection_forwarding(
-            output_path, args.delay, args.padding, show_dialog=action == "connection_udp_forwarding"
-        )
-    elif action == "fc_info":
-        _capture_fc_info(output_path, args.delay, args.padding, args.vehicle_dir)
-    elif action == "fc_banner":
-        _capture_fc_banner(output_path, args.delay, args.padding)
-    elif action == "motor_test":
-        _capture_motor_test(output_path, args.delay, args.padding, args.vehicle_dir)
-    elif action == "parameter_export":
-        _capture_parameter_export(output_path, args.delay, args.padding, args.vehicle_dir)
-    elif action == "mavlink_inspector":
-        _capture_mavlink_inspector(output_path, args.delay, args.padding, target.variant or "radio")
-    elif action in ("firmware_upload", "firmware_upload_progress"):
-        _capture_firmware_upload(output_path, args.delay, args.padding, show_progress=action == "firmware_upload_progress")
-    elif action.startswith("param_"):
-        if target.gui_complexity is None:
-            msg = f"gui_complexity required for {action}"
-            raise RuntimeError(msg)
-        if target.current_file is None:
-            msg = f"current_file required for {action}"
-            raise RuntimeError(msg)
-        _capture_parameter_editor(
-            output_path,
-            args.delay,
-            args.padding,
-            args.vehicle_dir,
-            current_file=target.current_file,
-            gui_complexity=target.gui_complexity,
-            scale=target.scale,
-        )
-    elif action == "vehicle_opener":
-        _capture_vehicle_opener(output_path, args.delay, args.padding, args.vehicle_dir)
-    elif action in (
+_SIMPLE_ACTIONS = {
+    "about": _capture_about,
+    "connection": _capture_connection,
+    "instructions": _capture_instructions,
+    "template_overview": _capture_template_overview,
+    "fc_banner": _capture_fc_banner,
+    # Plugin identifier (imported constant, not a string literal)
+    PLUGIN_RC_CALIBRATION: _capture_rc_calibration,
+}
+
+_VEHICLE_DIR_ACTIONS = {
+    "fc_info": _capture_fc_info,
+    "motor_test": _capture_motor_test,
+    "parameter_export": _capture_parameter_export,
+    "vehicle_opener": _capture_vehicle_opener,
+    "vehicle_creator": _capture_vehicle_creator,
+    "vehicle_creator_from_flight_controller": _capture_vehicle_creator_from_flight_controller,
+}
+
+_VEHICLE_OPENER_HIGHLIGHT = frozenset(
+    {
         "vehicle_opener_from_template",
         "vehicle_opener_from_flight_controller",
         "vehicle_opener_legacy4",
         "vehicle_opener_from_bin",
-    ):
-        _capture_vehicle_opener_with_highlight(
-            output_path,
-            args.delay,
-            args.padding,
-            args.vehicle_dir,
-            action=action,
-            scale=target.scale,
-            fc_connected=action == "vehicle_opener_from_flight_controller",
-        )
-    elif action == "vehicle_creator":
-        _capture_vehicle_creator(output_path, args.delay, args.padding, args.vehicle_dir)
-    elif action == "vehicle_creator_from_flight_controller":
-        _capture_vehicle_creator_from_flight_controller(output_path, args.delay, args.padding, args.vehicle_dir)
-    elif action.startswith("vehicle_creator_"):
-        if target.variant is None:
-            msg = f"variant required for {action}"
+    }
+)
+
+
+def capture_target(target: CaptureTarget, output_path: Path, args: argparse.Namespace) -> None:  # pylint: disable=too-many-branches
+    """Capture one screenshot target."""
+    action = target.action
+    delay = args.delay
+    padding = args.padding
+    vehicle_dir = args.vehicle_dir
+
+    if (simple_handler := _SIMPLE_ACTIONS.get(action)) is not None:
+        simple_handler(output_path, delay, padding)
+        return
+
+    if (vehicle_handler := _VEHICLE_DIR_ACTIONS.get(action)) is not None:
+        vehicle_handler(output_path, delay, padding, vehicle_dir)
+        return
+
+    match action:
+        case "connection_add_another" | "connection_udp_forwarding":
+            _capture_connection_forwarding(
+                output_path,
+                delay,
+                padding,
+                show_dialog=action == "connection_udp_forwarding",
+            )
+        case "mavlink_inspector":
+            _capture_mavlink_inspector(output_path, delay, padding, target.variant or "radio")
+        case "firmware_upload" | "firmware_upload_progress":
+            _capture_firmware_upload(
+                output_path,
+                delay,
+                padding,
+                show_progress=action == "firmware_upload_progress",
+            )
+        case _ if action.startswith("param_"):
+            current_file = target.current_file
+            gui_complexity = target.gui_complexity
+            if current_file is None or gui_complexity is None:
+                msg = f"param_* targets require current_file and gui_complexity (action={action})"
+                raise RuntimeError(msg)
+            _capture_parameter_editor(
+                output_path,
+                delay,
+                padding,
+                vehicle_dir,
+                current_file=current_file,
+                gui_complexity=gui_complexity,
+                scale=target.scale,
+            )
+        case _ if action in _VEHICLE_OPENER_HIGHLIGHT:
+            _capture_vehicle_opener_with_highlight(
+                output_path,
+                delay,
+                padding,
+                vehicle_dir,
+                action=action,
+                scale=target.scale,
+                fc_connected=action == "vehicle_opener_from_flight_controller",
+            )
+        case _ if action.startswith("vehicle_creator_"):
+            variant = target.variant
+            if variant is None:
+                msg = f"vehicle_creator_* targets require variant (action={action})"
+                raise RuntimeError(msg)
+            _capture_vehicle_creator_with_highlight(
+                output_path,
+                delay,
+                padding,
+                vehicle_dir,
+                variant,
+                scale=target.scale,
+                fc_connected=True,
+            )
+        case _ if action.startswith("create_from_template_"):
+            variant = target.variant
+            if variant is None:
+                msg = f"create_from_template_* targets require variant (action={action})"
+                raise RuntimeError(msg)
+            _capture_vehicle_creator_with_highlight(
+                output_path,
+                delay,
+                padding,
+                vehicle_dir,
+                variant,
+                scale=target.scale,
+                fc_connected=False,
+            )
+        case _:
+            msg = f"Unsupported action: {action}"
             raise RuntimeError(msg)
-        # Enable FC connection for all vehicle_creator variants to show FC-dependent options
-        _capture_vehicle_creator_with_highlight(
-            output_path,
-            args.delay,
-            args.padding,
-            args.vehicle_dir,
-            target.variant,
-            scale=target.scale,
-            fc_connected=True,
-        )
-    elif action.startswith("create_from_template_"):
-        if target.variant is None:
-            msg = f"variant required for {action}"
-            raise RuntimeError(msg)
-        # Create from template shows the flow without pre-configured FC options
-        _capture_vehicle_creator_with_highlight(
-            output_path,
-            args.delay,
-            args.padding,
-            args.vehicle_dir,
-            target.variant,
-            scale=target.scale,
-            fc_connected=False,
-        )
-    elif action == "template_overview":
-        _capture_template_overview(output_path, args.delay, args.padding)
-    else:
-        msg = f"Unsupported action: {action}"
-        raise RuntimeError(msg)
 
 
 def main() -> int:
@@ -1481,9 +1491,9 @@ def main() -> int:
 
         try:
             capture_target(target, output_path, args)
-        except Exception as exc:  # pylint: disable=broad-exception-caught
+        except Exception:  # pylint: disable=broad-exception-caught
             failures.append(target.filename)
-            logging.exception("Failed to generate %s: %s", target.filename, exc)
+            logging.exception("Failed to generate %s:", target.filename)
 
     # Keep the historical alias in sync in case only one of the two was captured.
     alias_filenames = {"App_screenshot_Parameter_file_editor_and_uploader4.png", "App_screenshot1.png"}

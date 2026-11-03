@@ -30,7 +30,8 @@ The ArduPilot Methodic Configurator relies on the following key files:
   ```
 
 - **ArduPilot parameter documentation file** (`apm.pdef.xml`): Contains parameter documentation and metadata in XML format.
-  Searched in this order: vehicle directory → installation directory → automatically downloaded [from the internet](https://autotest.ardupilot.org/Parameters/versioned/).
+  Searched in this order: vehicle directory → installation directory → automatically downloaded
+  from the [upstream location for the firmware version](#upstream-parameter-metadata).
   Generate from ArduPilot source code if needed:
 
   ```bash
@@ -48,6 +49,38 @@ The ArduPilot Methodic Configurator relies on the following key files:
 - **Vehicle Image File** (`vehicle.jpg`): Located in the vehicle-specific directory.
   Optional photograph or diagram of the vehicle displayed in the GUI for visual reference during configuration.
   Helps users identify the correct vehicle and its physical layout during setup.
+
+## Upstream Parameter Metadata
+
+ArduPilot generates `apm.pdef.xml` from parameter descriptions in its vehicle and library source code using
+`Tools/autotest/param_metadata/param_parse.py --vehicle <source_vehicle> --format xml`.
+Methodic Configurator downloads these generated files; ArduPilot maintains their generation and publication.
+
+| Firmware version | Download URL |
+| --- | --- |
+| Below 4.7.2 | `https://autotest.ardupilot.org/Parameters/versioned/<vehicle>/stable-<version>/apm.pdef.xml` |
+| 4.7.2 and newer | `https://firmware.ardupilot.org/<vehicle>/stable-<version>/__METADATA__/apm.pdef.xml` |
+
+The [historical metadata publisher](https://github.com/ArduPilot/ardupilot/blob/0c9b31f8323bd0ccaf6ff5dc26df987a7e66ec20/Tools/scripts/generate_pdef.xml_metadata.py)
+checks out release tags, runs the parameter parser, adds provenance, and supports uploading the resulting versioned files.
+These are served under [versioned parameter documentation](https://autotest.ardupilot.org/Parameters/versioned/).
+The [firmware build script](https://github.com/ArduPilot/ardupilot/blob/60993a422c579f4c0a0cfdda125484e023cc6732/Tools/scripts/build_binaries.py)
+generates metadata for firmware releases and places it in each release's `__METADATA__` directory, including
+`apm.pdef.xml`, compressed copies, and release-tag information. For example, see
+[Copter 4.7.2 metadata](https://firmware.ardupilot.org/Copter/stable-4.7.2/__METADATA__/).
+
+`<version>` is the firmware release version, such as `4.7.2`. Server directory names are `Copter`
+(also used for Heli), `Plane`, `Rover`, `Sub`, and `Blimp`.
+AntennaTracker uses `Tracker` on the historical server and `AntennaTracker` on the firmware server;
+AP_Periph uses `Periph` and `AP_Periph`, respectively.
+When no firmware version is specified, the generic `https://autotest.ardupilot.org/Parameters/<vehicle_type>/`
+location is used. Local cached XML files retain precedence over downloads.
+
+If the release download fails during project loading or log analysis, Methodic Configurator can try a matching
+major.minor snapshot from [ParameterRepository](https://github.com/ArduPilot/ParameterRepository), followed by generic
+development metadata. Snapshot families include Copter (also Heli), Plane, Rover, Sub, Tracker, AP_Periph, and Blimp.
+SITL skips the snapshot fallback. Multi-digit components are preserved: for example, Plane `3.10.0` uses `Plane-3.10`.
+The standalone editor requires the exact release metadata and reports an error if it cannot be downloaded.
 
 ## Intermediate Parameter Files
 
