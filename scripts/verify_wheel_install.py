@@ -41,7 +41,8 @@ for name in json.loads(sys.argv[1]):
     module = importlib.import_module(name)
     origin = Path(module.__file__).resolve()
     if not origin.is_relative_to(environment):
-        raise RuntimeError(f"{name} resolved outside isolated environment: {origin}")
+        msg = f"Module {name} was imported from {origin}, not the isolated environment {environment}"
+        raise RuntimeError(msg)
 if tkinter._default_root is not None:
     raise RuntimeError("Module imports created a Tk window")
 """

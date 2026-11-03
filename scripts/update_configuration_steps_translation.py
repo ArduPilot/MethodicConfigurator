@@ -59,47 +59,60 @@ def extract_result_strings_from_conditional(change_reason: str) -> list[str]:
     if first_match:
         result_strings.append(first_match.group(1))
     # Extract the last single-quoted string (after the trailing ' else ')
-    last_match = re.search(r"\s+else\s+'([^']+)'\s*$", stripped)
+    last_match = re.search(r"else\s+'([^']+)'$", stripped)
     if last_match:
         result_strings.append(last_match.group(1))
     return result_strings
 
 
-def process_configuration_steps(  # pylint: disable=too-many-branches
-    text_fields: list[str], extracted_strings: dict[str, set[str]], data: dict[str, Any]
+def _add_text_fields(
+    step_data: dict[str, Any],
+    text_fields: list[str],
+    extracted_strings: dict[str, set[str]],
 ) -> None:
-    for step_data in data["steps"].values():  # pylint: disable=too-many-nested-blocks
-        # Extract standard text fields
-        for field in text_fields:
-            if field in step_data and isinstance(step_data[field], str) and step_data[field].strip():
-                extracted_strings[field].add(step_data[field])
+    for field in text_fields:
+        value = step_data.get(field)
+        if isinstance(value, str) and value.strip():
+            extracted_strings[field].add(value)
 
-        # Only the popup message is user-facing; its type selects the dialog style.
-        popup = step_data.get("instructions_popup")
-        if isinstance(popup, dict):
-            message = popup.get("msg")
-            if isinstance(message, str) and message.strip():
-                extracted_strings["instructions_popup"].add(message)
 
-        # Special handling for jump_possible messages
-        if "jump_possible" in step_data:
-            for jump_message in step_data["jump_possible"].values():
-                if isinstance(jump_message, str) and jump_message.strip():
-                    extracted_strings["jump_messages"].add(jump_message)
+def _add_jump_messages(
+    step_data: dict[str, Any],
+    extracted_strings: dict[str, set[str]],
+) -> None:
+    jump_possible = step_data.get("jump_possible")
+    if not isinstance(jump_possible, dict):
+        return
+    for jump_message in jump_possible.values():
+        if isinstance(jump_message, str) and jump_message.strip():
+            extracted_strings["jump_messages"].add(jump_message)
 
-        # Extract change reasons from all parameter sections
-        for param_type in ["forced_parameters", "derived_parameters", "add_parameters"]:
-            if param_type in step_data:
-                for param_data in step_data[param_type].values():
-                    if "Change Reason" in param_data and isinstance(param_data["Change Reason"], str):
-                        extracted_strings["change_reasons"] = extracted_strings.get("change_reasons", set())
-                        change_reason = param_data["Change Reason"]
-                        if change_reason.strip():
-                            extracted_strings["change_reasons"].add(change_reason)
-                            # Also register individual result strings from ternary expressions
-                            # so that the translated output of safe_evaluate() is also in the catalog
-                            for result_str in extract_result_strings_from_conditional(change_reason):
-                                extracted_strings["change_reasons"].add(result_str)
+
+def _add_change_reasons(
+    step_data: dict[str, Any],
+    extracted_strings: dict[str, set[str]],
+) -> None:
+    reasons = extracted_strings.setdefault("change_reasons", set())
+    for param_type in ("forced_parameters", "derived_parameters", "add_parameters"):
+        for param_data in step_data.get(param_type, {}).values():
+            change_reason = param_data.get("Change Reason")
+            if not isinstance(change_reason, str) or not change_reason.strip():
+                continue
+            reasons.add(change_reason)
+            # Register individual result strings of ternary expressions so the
+            # translated output of safe_evaluate() is also in the catalog.
+            reasons.update(extract_result_strings_from_conditional(change_reason))
+
+
+def process_configuration_steps(
+    text_fields: list[str],
+    extracted_strings: dict[str, set[str]],
+    data: dict[str, Any],
+) -> None:
+    for step_data in data["steps"].values():
+        _add_text_fields(step_data, text_fields, extracted_strings)
+        _add_jump_messages(step_data, extracted_strings)
+        _add_change_reasons(step_data, extracted_strings)
 
 
 def extract_strings_from_config_steps(config_file: str) -> dict[str, set[str]]:
@@ -139,10 +152,10 @@ def extract_strings_from_config_steps(config_file: str) -> dict[str, set[str]]:
                     extracted_strings["phase_descriptions"] = extracted_strings.get("phase_descriptions", set())
                     extracted_strings["phase_descriptions"].add(phase_data["description"])
 
-    except json.JSONDecodeError as e:
-        logger.error("Error parsing %s: %s", config_file, e)
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.error("Error processing %s: %s", config_file, e)
+    except json.JSONDecodeError:
+        logger.exception("Error parsing %s:", config_file)
+    except Exception:  # pylint: disable=broad-exception-caught
+        logger.exception("Error processing %s:", config_file)
 
     return extracted_strings
 
@@ -213,10 +226,10 @@ def extract_descriptions_from_schema(schema_file: str) -> list[str]:
         # Start the extraction process
         extract_descriptions_recursively(schema)
 
-    except json.JSONDecodeError as e:
-        logger.error("Error parsing schema file %s: %s", schema_file, e)
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.error("Error processing schema file %s: %s", schema_file, e)
+    except json.JSONDecodeError:
+        logger.exception("Error parsing schema file %s:", schema_file)
+    except Exception:  # pylint: disable=broad-exception-caught
+        logger.exception("Error processing schema file %s:", schema_file)
 
     return sorted(descriptions)
 
