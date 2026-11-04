@@ -4,28 +4,6 @@
 from PyInstaller.utils.hooks import collect_submodules
 import certifi
 import os
-from pathlib import Path
-import sys
-
-
-def _find_tcl_tk_library(directory: Path, prefix: str) -> Path:
-    """Return the Tcl/Tk library directory shipped with the build Python."""
-    library_file = "init.tcl" if prefix == "tcl" else "tk.tcl"
-    candidates = sorted(
-        (path for path in directory.glob(f"{prefix}*") if path.is_dir() and (path / library_file).is_file()),
-        reverse=True,
-    )
-    if not candidates:
-        raise SystemExit(f"Could not find {prefix} library data below {directory}")
-    return candidates[0]
-
-
-# Set both variables before PyInstaller analyses tkinter so its built-in hook
-# collects the library data into _tcl_data and _tk_data. Without this, the
-# frozen application contains the DLLs but fails during the tkinter runtime hook.
-tcl_root = Path(sys.base_prefix) / "tcl"
-os.environ["TCL_LIBRARY"] = str(_find_tcl_tk_library(tcl_root, "tcl"))
-os.environ["TK_LIBRARY"] = str(_find_tcl_tk_library(tcl_root, "tk"))
 
 # Path to certifi's CA bundle
 certifi_cacert = certifi.where()
