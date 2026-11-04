@@ -1026,13 +1026,19 @@ class TestMotorTestView:  # pylint: disable=too-many-public-methods
 
         GIVEN: The root window used by the view
         WHEN: Shortcuts are configured
-        THEN: The expected bindings and focus calls occur
+        THEN: The expected bindings and focus calls occur, and destruction removes the bindings
         """
-        bind_spy = mocker.patch.object(motor_view.root_window, "bind")
+        # Teardown needs the real bind method to remove scripts as well as callback commands.
+        bind_spy = mocker.spy(motor_view.root_window, "bind")
         focus_spy = mocker.patch.object(motor_view.root_window, "focus_set")
         motor_view._setup_keyboard_shortcuts()
         assert {call.args[0] for call in bind_spy.call_args_list} == {"<Escape>", "<Control-s>"}
         focus_spy.assert_called_once()
+
+        bindings = list(motor_view._keyboard_bindings)
+        motor_view.destroy()
+        for sequence, binding_id in bindings:
+            assert binding_id not in motor_view.root_window.tk.call("bind", str(motor_view.root_window), sequence)
 
     def test_destroy_unbinds_keyboard_shortcuts(self, motor_view: MotorTestView) -> None:
         """Destroying the view must remove its app-wide actuator shortcuts."""
