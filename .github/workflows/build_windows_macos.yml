@@ -58,22 +58,42 @@ jobs:
         id: cache-innosetup
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: installer.exe
-          key: innosetup-6.7.4-exe
+          path: innosetup-7.1.1-x64.exe
+          key: innosetup-7.1.1-x64-exe
 
       - name: Download Inno Setup installer
         if: steps.cache-innosetup.outputs.cache-hit != 'true'
-        run: curl -L -o installer.exe https://github.com/jrsoftware/issrc/releases/download/is-6_7_4/innosetup-6.7.4.exe
+        run: |
+          curl.exe --fail --location --retry 3 --output innosetup-7.1.1-x64.exe https://github.com/jrsoftware/issrc/releases/download/is-7_1_1/innosetup-7.1.1-x64.exe
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup download failed with exit code $LASTEXITCODE." }
+
+      - name: Verify Inno Setup installer signature
+        run: |
+          $signature = Get-AuthenticodeSignature -FilePath innosetup-7.1.1-x64.exe
+          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.GetNameInfo('SimpleName', $false) -ne 'Pyrsys B.V.') {
+            throw "Inno Setup installer signature verification failed: $($signature.Status), $($signature.StatusMessage)"
+          }
 
       - name: Install Inno Setup
         run: |
-          Start-Process -FilePath ./installer.exe -ArgumentList '/VERYSILENT','/ALLUSERS','/DIR=inst' -Wait -NoNewWindow
+          $installDir = Join-Path $env:RUNNER_TEMP 'InnoSetup-7.1.1'
+          $arguments = @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-', "/DIR=`"$installDir`"")
+          $process = Start-Process -FilePath ./innosetup-7.1.1-x64.exe -ArgumentList $arguments -Wait -PassThru -NoNewWindow
+          if ($process.ExitCode -ne 0) { throw "Inno Setup installation failed with exit code $($process.ExitCode)." }
+          "INNO_SETUP_DIR=$installDir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Validate Inno Setup installation
         run: |
-          if (-not (Test-Path "$env:GITHUB_WORKSPACE\inst\ISCC.exe")) {
-            Get-ChildItem inst -Recurse -ErrorAction SilentlyContinue | Format-List FullName, Length
-            throw 'Inno Setup compiler not found at inst\\ISCC.exe. Ensure the installer step completed successfully.'
+          $compiler = Join-Path $env:INNO_SETUP_DIR 'ISCC.exe'
+          if (-not (Test-Path $compiler)) {
+            throw "Inno Setup compiler not found at $compiler."
+          }
+          & $compiler --version
+          if ($LASTEXITCODE -ne 0) { throw "Could not query Inno Setup compiler version." }
+          foreach ($language in @('ChineseSimplified', 'Portuguese', 'German', 'Italian', 'Japanese')) {
+            if (-not (Test-Path (Join-Path $env:INNO_SETUP_DIR "Languages\$language.isl"))) {
+              throw "Inno Setup language file $language.isl is missing."
+            }
           }
 
       - name: List installed software versions
@@ -180,25 +200,13 @@ jobs:
             Write-Host "::warning::Running in a fork which may have limited permissions"
           }
 
-      - name: Restore ChineseSimplified.isl from cache
-        id: cache-chinese-isl
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ChineseSimplified.isl
-          key: chinese-simplified-isl-6.7.4-unofficial
-
-      - name: Download ChineseSimplified.isl
-        if: steps.cache-chinese-isl.outputs.cache-hit != 'true'
-        run: |
-          curl --fail -L -o ChineseSimplified.isl https://raw.githubusercontent.com/jrsoftware/issrc/is-6_7_4/Files/Languages/Unofficial/ChineseSimplified.isl
-
       - name: Build installer
         run: |
-          New-Item -ItemType Directory -Force -Path "inst\Languages"
-          Copy-Item "ChineseSimplified.isl" -Destination "inst\Languages\ChineseSimplified.isl"
           cd windows
-          $env:VERSION=$(python return_version.py)
-          Start-Process -FilePath "..\inst\ISCC.exe" -ArgumentList "/dMyAppVersion=$env:VERSION", "ardupilot_methodic_configurator.iss" -Wait -NoNewWindow
+          $version = python return_version.py
+          if ($LASTEXITCODE -ne 0 -or -not $version) { throw 'Could not determine application version.' }
+          & (Join-Path $env:INNO_SETUP_DIR 'ISCC.exe') "/dMyAppVersion=$version" 'ardupilot_methodic_configurator.iss'
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed with exit code $LASTEXITCODE." }
           Get-ChildItem Output
 
       # https://github.com/slsa-framework/slsa-github-generator/blob/main/internal/builders/generic/README.md
@@ -216,6 +224,7 @@ jobs:
         with:
           name: windows-installer
           path: windows/Output/*.exe
+          if-no-files-found: error
           retention-days: 7
 
   build_macos:
