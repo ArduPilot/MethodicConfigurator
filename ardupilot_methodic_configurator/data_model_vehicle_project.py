@@ -19,7 +19,7 @@ from shutil import rmtree as shutil_rmtree
 from typing import TYPE_CHECKING, Optional
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem, validate_project_vehicle_type
 from ardupilot_methodic_configurator.data_model_par_dict import ParamFileError, ParDict, is_within_tolerance
 from ardupilot_methodic_configurator.data_model_vehicle_components import ComponentDataModel
 from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
@@ -28,7 +28,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
     VehicleProjectCreationError,
     VehicleProjectCreator,
 )
-from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpener
+from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpener, VehicleProjectOpenError
 
 if TYPE_CHECKING:
     from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
@@ -570,6 +570,18 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
         return new_path
 
     # Vehicle project opening operations
+    def _validate_connected_vehicle_type(self, vehicle_dir: str) -> None:
+        """Check the actual connected controller before the project can be modified."""
+        if not self.is_flight_controller_connected() or self._flight_controller is None:
+            return
+        connected_type = self._flight_controller.info.vehicle_type
+        if not isinstance(connected_type, str):
+            return
+        try:
+            validate_project_vehicle_type(vehicle_dir, connected_type)
+        except (OSError, ValueError) as error:
+            raise VehicleProjectOpenError(_("Incompatible vehicle project"), str(error)) from error
+
     def open_vehicle_directory(self, vehicle_dir: str) -> str:
         """
         Open an existing vehicle configuration directory.
@@ -584,6 +596,7 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             VehicleProjectOpenError: If opening fails for any reason
 
         """
+        self._validate_connected_vehicle_type(vehicle_dir)
         result = self._opener.open_vehicle_directory(vehicle_dir)
         # update history whenever a directory is opened successfully
         self.store_recently_used_vehicle_dir(result)
@@ -603,6 +616,7 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             VehicleProjectOpenError: If opening fails for any reason
 
         """
+        self._validate_connected_vehicle_type(last_vehicle_dir)
         result = self._opener.open_last_vehicle_directory(last_vehicle_dir)
         # update history whenever a directory is opened successfully
         self.store_recently_used_vehicle_dir(result)

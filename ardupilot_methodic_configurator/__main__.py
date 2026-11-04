@@ -24,6 +24,7 @@ import os
 import sys
 import tempfile
 from collections.abc import Callable
+from copy import deepcopy
 from logging import basicConfig as logging_basicConfig
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -33,9 +34,10 @@ from pathlib import Path
 from sys import exit as sys_exit
 
 import argcomplete
+from packaging.version import InvalidVersion, Version
 
 from ardupilot_methodic_configurator import _, __version__
-from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem, validate_project_vehicle_type
 from ardupilot_methodic_configurator.backend_filesystem_freedesktop import FreeDesktop
 from ardupilot_methodic_configurator.backend_filesystem_migration import (
     VEHICLE_COMPONENTS_FORMAT_VERSION,
@@ -45,7 +47,7 @@ from ardupilot_methodic_configurator.backend_filesystem_program_settings import 
 from ardupilot_methodic_configurator.backend_flightcontroller import DEVICE_FC_PARAM_FROM_FILE, FlightController
 from ardupilot_methodic_configurator.backend_internet import verify_and_open_url, webbrowser_open_url
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-from ardupilot_methodic_configurator.data_model_par_dict import ParamFileError, ParDict
+from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.data_model_parameter_upgrade import upgrade_parameters_for_firmware_version
 from ardupilot_methodic_configurator.data_model_software_updates import UpdateManager, check_for_software_updates
@@ -429,6 +431,16 @@ def initialize_filesystem(state: ApplicationState) -> None:
         )
         return
 
+    # Check the controller's reported family before migration or cache deletion.
+    connected_type = state.flight_controller.info.vehicle_type if state.flight_controller.master is not None else ""
+    project_type = ""
+    try:
+        if isinstance(connected_type, str):
+            project_type = validate_project_vehicle_type(state.args.vehicle_dir, connected_type)
+    except (OSError, ValueError) as exp:
+        show_error_message(_("Incompatible vehicle project"), str(exp))
+        raise
+
     # Migrate the vehicle project to the latest format version if needed.
     # This must run before LocalFilesystem is created so that parameter files are
     # in their new locations when rename_parameter_files() runs inside re_init().
@@ -439,12 +451,12 @@ def initialize_filesystem(state: ApplicationState) -> None:
     try:
         state.local_filesystem = LocalFilesystem(
             state.args.vehicle_dir,
-            state.vehicle_type,
+            project_type or state.vehicle_type,
             state.flight_controller.info.flight_sw_version,
             state.args.allow_editing_template_files,
             state.args.save_component_to_system_templates,
         )
-    except ParamFileError as exp:
+    except (OSError, ValueError) as exp:
         show_error_message(_("Fatal error reading parameter files"), f"{exp}")
         raise
 
@@ -811,7 +823,22 @@ def _run_validation_command() -> bool:
     return False
 
 
-def main() -> None:  # pylint: disable=too-many-branches
+def upgrade_project_parameter_files(state: ApplicationState, parameter_files_version: str) -> None:
+    """Upgrade loaded files and retain the source version until all changes are saved."""
+    flight_controller_version = state.flight_controller.info.flight_sw_version.split(" ", maxsplit=1)[0]
+    original_parameters = deepcopy(state.local_filesystem.file_parameters)
+    upgrade_parameters_for_firmware_version(
+        parameter_files_version, flight_controller_version, state.local_filesystem.file_parameters
+    )
+    try:
+        upgrade_is_complete = Version(flight_controller_version) >= Version(parameter_files_version)
+    except InvalidVersion:
+        upgrade_is_complete = False
+    if upgrade_is_complete and original_parameters == state.local_filesystem.file_parameters:
+        state.local_filesystem.clear_completed_parameter_upgrade()
+
+
+def main() -> None:
     """
     Main application entry point.
 
@@ -868,27 +895,14 @@ def main() -> None:  # pylint: disable=too-many-branches
     # Validate that all configured plugins are registered after the filesystem has loaded configuration steps.
     plugin_factory.validate_configuration_steps(state.local_filesystem.configuration_steps)
 
-    # Extract parameter files version from vehicle_components.json (set when files were created)
-    # must be done before the component editor workflow updates the file with information from the connected FC
-    parameter_files_version_str = state.local_filesystem.get_fc_fw_version_from_vehicle_components_json()
+    # Metadata refresh can already have saved the FC version in vehicle_components.json.
+    # Use the original project version for this startup's parameter-file upgrades.
+    parameter_files_version_str = (
+        state.local_filesystem.get_fc_fw_version_from_vehicle_components_json()
+        if state.vehicle_project_manager is not None and state.vehicle_project_manager.is_new_project
+        else state.local_filesystem.get_parameter_files_firmware_version()
+    )
     logging_info(_("Parameter files firmware version from vehicle_components.json: %s"), parameter_files_version_str)
-
-    # Keep existing projects' component metadata aligned with the connected FC. A missing
-    # project manager means the project was opened directly; retain the old version above
-    # for this startup's parameter-file upgrade comparison.
-    project_manager = state.vehicle_project_manager
-    fc_info = state.flight_controller.info
-    if (
-        (project_manager is None or not project_manager.is_new_project)
-        and fc_info is not None
-        and fc_info.flight_sw_version
-        and state.local_filesystem.vehicle_type
-    ):
-        state.local_filesystem.set_fc_fw_version_and_type_in_components_json(
-            fc_info.flight_sw_version,
-            state.local_filesystem.vehicle_type,
-            state.local_filesystem.vehicle_dir,
-        )
 
     if (
         state.flight_controller.fc_parameters
@@ -927,10 +941,7 @@ def main() -> None:  # pylint: disable=too-many-branches
         and state.flight_controller.info.flight_sw_version
     )
     if project_file_and_fc_firmware_info_available:
-        flight_controller_version_str = state.flight_controller.info.flight_sw_version.split(" ", maxsplit=1)[0]
-        upgrade_parameters_for_firmware_version(
-            parameter_files_version_str, flight_controller_version_str, state.local_filesystem.file_parameters
-        )
+        upgrade_project_parameter_files(state, parameter_files_version_str)
 
     # Start parameter editor
     parameter_editor_and_uploader(state)

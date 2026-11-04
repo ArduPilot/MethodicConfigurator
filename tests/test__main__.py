@@ -2657,13 +2657,13 @@ class TestEditorBackupAndMainOrchestration:
         assert events == ["run_initial_component_editor", "process_components", "parameter_editor"]
         local_filesystem.set_fc_fw_version_and_type_in_components_json.assert_not_called()
 
-    def test_main_saves_fc_version_for_directly_opened_project(self) -> None:
+    def test_main_uses_original_project_version_after_metadata_refresh(self) -> None:
         """
-        main() saves connected FC metadata for an existing project opened directly.
+        Parameter upgrades use the old version after metadata refresh saves the FC version.
 
         GIVEN: An existing project is selected directly with --vehicle-dir
         WHEN: main starts with newer firmware connected
-        THEN: It saves the connected FC metadata and compares upgrades against the previously stored version
+        THEN: Upgrades use the previously stored version without rewriting firmware metadata
         """
         # Arrange
         fc_mock = MagicMock()
@@ -2679,7 +2679,8 @@ class TestEditorBackupAndMainOrchestration:
             state.local_filesystem.file_parameters = {"01.param": {}}
             state.local_filesystem.doc_dict = {}
             state.local_filesystem.vehicle_dir = "/fake"
-            state.local_filesystem.get_fc_fw_version_from_vehicle_components_json.return_value = "4.6.0"
+            state.local_filesystem.get_fc_fw_version_from_vehicle_components_json.return_value = "4.7.1"
+            state.local_filesystem.get_parameter_files_firmware_version.return_value = "4.6.0"
             state.param_default_values_dirty = False  # type: ignore[union-attr]
 
         with (
@@ -2731,8 +2732,8 @@ class TestEditorBackupAndMainOrchestration:
         # Assert: disconnect
         fc_mock.disconnect.assert_called_once()
         mock_exit.assert_called_with(0)
-        local_filesystem.set_fc_fw_version_and_type_in_components_json.assert_called_once_with("4.7.1", "ArduCopter", "/fake")
-        # Metadata is updated after its old version was captured for this startup's comparison.
+        local_filesystem.set_fc_fw_version_and_type_in_components_json.assert_not_called()
+        # The loaded component JSON already records the new version; upgrades use the old snapshot.
         assert mock_upgrade.call_args.args[0] == "4.6.0"
         assert mock_upgrade.call_args.args[1] == "4.7.1"
         mock_component_editor.assert_not_called()
