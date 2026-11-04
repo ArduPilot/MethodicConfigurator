@@ -1,10 +1,10 @@
 rem build the standalone ardupilot_methodic_configurator.exe for Windows.
 rem This assumes Python and pip are on the system path
-rem This assumes InnoSetup is installed in C:\Program Files (x86)\Inno Setup 6
+rem This assumes InnoSetup is installed in C:\Program Files (x86)\Inno Setup 7
 rem   If it is not, change the INNOSETUP environment variable accordingly
 SETLOCAL enableextensions
 
-if "%INNOSETUP%" == "" (set "INNOSETUP=C:\Program Files (x86)\Inno Setup 6")
+if "%INNOSETUP%" == "" (set "INNOSETUP=C:\Program Files (x86)\Inno Setup 7")
 
 rem get the version
 for /f "tokens=*" %%a in (
@@ -47,7 +47,6 @@ echo $(git rev-parse HEAD) > git_hash.txt
 
 rem -----Build the Installer-----
 cd ..\windows
-curl -fsSL -o "c:\program files (x86)\inno setup 6\Languages\ChineseSimplified.isl" https://raw.githubusercontent.com/jrsoftware/issrc/refs/heads/main/Files/Languages/Unofficial/ChineseSimplified.isl
 rem Newer Inno Setup versions do not require a -compile flag, please add it if you have an old version
 "%INNOSETUP%\ISCC.exe" /dMyAppVersion=%VERSION% ardupilot_methodic_configurator.iss
 
