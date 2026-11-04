@@ -36,6 +36,7 @@ from tkinter import Tk, ttk
 import argcomplete
 
 from ardupilot_methodic_configurator import _, __version__
+from ardupilot_methodic_configurator.backend_bin_log_validation import validate_bin_log as _run_bin_log_validation
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_freedesktop import FreeDesktop
 from ardupilot_methodic_configurator.backend_filesystem_migration import (
@@ -191,19 +192,6 @@ def create_argument_parser() -> argparse.ArgumentParser:
 
     argcomplete.autocomplete(parser)
     return parser
-
-
-def _run_bin_log_validation(logfile: str) -> None:
-    """Run the isolated DataFlash validator requested by a frozen child process."""
-    from pymavlink import mavutil  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
-
-    try:
-        mlog = mavutil.mavlink_connection(logfile)
-        close_method = getattr(mlog, "close", None)
-        if callable(close_method):
-            close_method()
-    except (OSError, ValueError, SystemExit) as error:
-        raise SystemExit(str(error)) from None
 
 
 def _validate_command_line_args(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:

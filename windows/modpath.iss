@@ -55,7 +55,8 @@ var
 	oldpath:	String;
 	newpath:	String;
 	updatepath:	Boolean;
-	pathArr:	TArrayOfString;
+	pathEntry:	String;
+	firstPath:	Boolean;
 	aExecFile:	String;
 	aExecArr:	TArrayOfString;
 	i, d:		Integer;
@@ -82,45 +83,27 @@ begin
 		// Modify WinNT path
 		if UsingWinNT() = true then begin
 
-			// Get current path, split into an array
+			// Remove existing instances, then put the selected application first.
 			RegQueryStringValue(regroot, regpath, 'Path', oldpath);
 			oldpath := oldpath + ';';
-			i := 0;
-
-			while (Pos(';', oldpath) > 0) do begin
-				SetArrayLength(pathArr, i+1);
-				pathArr[i] := Copy(oldpath, 0, Pos(';', oldpath)-1);
+			newpath := '';
+			firstPath := true;
+			while Pos(';', oldpath) > 0 do begin
+				pathEntry := Copy(oldpath, 1, Pos(';', oldpath)-1);
 				oldpath := Copy(oldpath, Pos(';', oldpath)+1, Length(oldpath));
-				i := i + 1;
-
-				// Check if current directory matches app dir
-				if (pathdir[d] = pathArr[i-1]) or (CompareText(pathdir[d], pathArr[i-1]) = 0) then begin
-					// if uninstalling, remove dir from path
-					if IsUninstaller() = true then begin
-						continue;
-					// if installing, flag that dir already exists in path
-					end else begin
-						updatepath := false;
-					end;
-				// CHANGE: Add case-insensitive check to remove all instances during uninstall
-				end else if (IsUninstaller() = true) and (CompareText(pathdir[d], pathArr[i-1]) = 0) then begin
-					continue; // Skip adding this path (case-insensitive match)
-				end;
-
-				// Add current directory to new path
-				if i = 1 then begin
-					newpath := pathArr[i-1];
-				end else begin
-					newpath := newpath + ';' + pathArr[i-1];
+				if CompareText(pathdir[d], pathEntry) <> 0 then begin
+					if not firstPath then newpath := newpath + ';';
+					newpath := newpath + pathEntry;
+					firstPath := false;
 				end;
 			end;
-
-			// Append app dir to path if not already included
-			if (IsUninstaller() = false) AND (updatepath = true) then
-				newpath := newpath + ';' + pathdir[d];
+			if IsUninstaller() = false then begin
+				if firstPath then newpath := pathdir[d]
+				else newpath := pathdir[d] + ';' + newpath;
+			end;
 
 			// Write new path
-			RegWriteStringValue(regroot, regpath, 'Path', newpath);
+			RegWriteExpandStringValue(regroot, regpath, 'Path', newpath);
 
 		// Modify Win9x path
 		end else begin
@@ -177,7 +160,7 @@ begin
 	until Length(Text)=0;
 end;
 
-procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+procedure ModPathCurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
 	aSelectedTasks:	TArrayOfString;
 	i:				Integer;

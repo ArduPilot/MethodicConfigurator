@@ -100,34 +100,27 @@ Name: "ja"; MessagesFile: "compiler:Languages\Japanese.isl"
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 Name: "modifypath"; Description: "&Add application directory to PATH for command line use"; Flags: unchecked checkablealone
+Name: "powershellcompletion"; Description: "Enable PowerShell tab completion for the current user (updates profiles; requires local scripts)"; Flags: unchecked checkablealone; Check: not IsAdminInstallMode
 
 [Files]
-Source: "..\ardupilot_methodic_configurator\dist\ardupilot_methodic_configurator\ardupilot_methodic_configurator.exe"; DestDir: "{app}"; Flags: ignoreversion
+; Install the frozen app bundle and all vehicle templates.
 Source: "..\ardupilot_methodic_configurator\dist\ardupilot_methodic_configurator\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-; NOTE: Don't use "Flags: ignoreversion" on any shared system files
-Source: "..\ardupilot_methodic_configurator\vehicle_templates\*.*"; DestDir: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\git_hash.txt"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
-Source: "..\windows\ardupilot_methodic_configurator.ico"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\ardupilot_methodic_configurator\images\*.png"; DestDir: "{app}\_internal\ardupilot_methodic_configurator\images"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\ardupilot_methodic_configurator\images\*.svg"; DestDir: "{app}\_internal\ardupilot_methodic_configurator\images"; Flags: ignoreversion
-Source: "..\ardupilot_methodic_configurator\plugins\AP_Motors_test*.json"; DestDir: "{app}\_internal\ardupilot_methodic_configurator\plugins"; Flags: ignoreversion
-Source: "..\ardupilot_methodic_configurator\configuration_steps_*.json"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
-Source: "..\ardupilot_methodic_configurator\devid.json"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
-Source: "..\ardupilot_methodic_configurator\vehicle_components_schema.json"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
-Source: "..\LICENSES\*.*"; DestDir: "{app}\LICENSES"; Flags: ignoreversion
-Source: "..\credits\*.*"; DestDir: "{app}\credits"; Flags: ignoreversion
-Source: "..\ardupilot_methodic_configurator\locale\*.mo"; DestDir: "{app}\_internal\ardupilot_methodic_configurator\locale"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\ardupilot_methodic_configurator_command_line_completion.psm1"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\ardupilot_methodic_configurator\vehicle_templates\*"; DestDir: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates"; Flags: ignoreversion recursesubdirs createallsubdirs
+; PowerShell completion is an application integration documented in INSTALL.md.
+Source: "..\ardupilot_methodic_configurator_command_line_completion.psm1"; DestDir: "{app}"; Flags: ignoreversion
+Source: "powershell_completion_profile.ps1"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\LICENSES\*"; DestDir: "{app}\LICENSES"; Flags: ignoreversion recursesubdirs
+Source: "..\credits\*"; DestDir: "{app}\credits"; Excludes: "update_credits_licenses.py"; Flags: ignoreversion recursesubdirs
 
 [Dirs]
 Name: "{userappdata}\.ardupilot_methodic_configurator\vehicles"; Flags: uninsneveruninstall
 
 [Icons]
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{userappdata}\.ardupilot_methodic_configurator"; Tasks: desktopicon; IconFilename: "{app}\ardupilot_methodic_configurator.ico"; Parameters: "--language {language}"
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{userappdata}\.ardupilot_methodic_configurator"; Tasks: desktopicon; Parameters: "--language {language}"
 Name: "{group}\Documentation"; Filename: "https://github.com/ArduPilot/MethodicConfigurator/blob/master/USERMANUAL.md"
 Name: "{group}\Vehicle Templates"; Filename: "{autoappdata}\.ardupilot_methodic_configurator\vehicle_templates"
 Name: "{group}\ArduPilot Methodic Configurator Forum"; Filename: "https://discuss.ardupilot.org/t/new-ardupilot-methodic-configurator-gui/115038/"
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{userappdata}\.ardupilot_methodic_configurator"; IconFilename: "{app}\ardupilot_methodic_configurator.ico"; Parameters: "--language {language}"
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{userappdata}\.ardupilot_methodic_configurator"; Parameters: "--language {language}"
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent; Parameters: "--language {language}"
@@ -151,6 +144,19 @@ end;
 
 #include "modpath.iss"
 
+function ManageCompletionProfile(Action: String): Boolean;
+var
+    ResultCode: Integer;
+    Parameters: String;
+begin
+    Parameters := '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File ' +
+        AddQuotes(ExpandConstant('{app}\powershell_completion_profile.ps1')) +
+        ' -Action ' + Action + ' -ModulePath ' +
+        AddQuotes(ExpandConstant('{app}\ardupilot_methodic_configurator_command_line_completion.psm1'));
+    Result := Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'), Parameters,
+        '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0);
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
 	if CurStep = ssPostInstall then begin
@@ -161,5 +167,20 @@ begin
 
 		if IsTaskSelected(ModPathName) then
 			ModPath();
+		if not IsAdminInstallMode then begin
+			if IsTaskSelected('powershellcompletion') then begin
+				if not ManageCompletionProfile('Register') then
+					SuppressibleMsgBox('PowerShell completion could not be registered. Import the completion module from the installation directory in your PowerShell profile.', mbError, MB_OK, IDOK);
+			end else if not ManageCompletionProfile('Remove') then
+				SuppressibleMsgBox('The PowerShell completion profile could not be updated.', mbError, MB_OK, IDOK);
+		end;
 	end;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+	ModPathCurUninstallStepChanged(CurUninstallStep);
+	if (CurUninstallStep = usUninstall) and FileExists(ExpandConstant('{app}\powershell_completion_profile.ps1')) then
+		if not ManageCompletionProfile('Remove') then
+			Log('Could not remove PowerShell completion profile registration.');
 end;
