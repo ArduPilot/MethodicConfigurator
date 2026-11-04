@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import hashlib
 import importlib
+import importlib.util
 import json
 from pathlib import Path
 from unittest.mock import patch
@@ -20,6 +21,32 @@ import pytest
 from ardupilot_methodic_configurator import __main__ as amc_main
 from scripts.verify_packaged_modules import required_modules, verify_archive
 from scripts.verify_wheel_install import verify_wheel_hash, verify_wheel_install, wheel_from_report
+
+
+def test_windows_frozen_log_validation_does_not_load_the_gui() -> None:
+    """
+    Windows validates logs without starting the GUI.
+
+    GIVEN the frozen application is invoked as a log-validation child.
+    WHEN its entry point handles the validation command.
+    THEN it validates the log without importing the full application.
+    """
+    entry_path = Path(__file__).resolve().parents[1] / "windows" / "frozen_entrypoint.py"
+    spec = importlib.util.spec_from_file_location("windows_frozen_entrypoint", entry_path)
+    assert spec is not None
+    assert spec.loader is not None
+    entry = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(entry)
+
+    with (
+        patch.object(entry.sys, "argv", ["application.exe", "--validate-bin-log", "flight.bin"]),
+        patch.object(entry, "validate_bin_log") as validate,
+        patch.object(entry.importlib, "import_module") as import_module,
+    ):
+        entry.main()
+
+    validate.assert_called_once_with("flight.bin")
+    import_module.assert_not_called()
 
 
 def test_archive_check_covers_dynamically_loaded_plugins_and_log_analysis() -> None:

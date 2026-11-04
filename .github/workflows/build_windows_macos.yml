@@ -100,6 +100,21 @@ jobs:
         run: |
           python -m pip list
 
+      - name: Write the git commit hash to file
+        run: |
+          $hash = git rev-parse HEAD
+          $hash = $hash.Trim()
+          $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+          [System.IO.File]::WriteAllText("git_hash.txt", $hash, $utf8NoBom)
+
+      - name: Verify PowerShell profile registration
+        shell: pwsh
+        run: |
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File windows/test_powershell_completion_profile.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'Windows PowerShell profile test failed.' }
+          pwsh.exe -NoProfile -ExecutionPolicy Bypass -File windows/test_powershell_completion_profile.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'PowerShell 7 profile test failed.' }
+
       - name: Prepare installer
         run: |
           cd ardupilot_methodic_configurator
@@ -109,6 +124,28 @@ jobs:
             throw "PyInstaller failed with exit code $LASTEXITCODE."
           }
           del ardupilot_methodic_configurator.spec
+
+      - name: Verify frozen project commands and completion
+        shell: pwsh
+        run: |
+          $bundle = (Resolve-Path "ardupilot_methodic_configurator/dist/ardupilot_methodic_configurator").Path
+          $env:PATH = "$bundle;$env:PATH"
+          Import-Module "$PWD/ardupilot_methodic_configurator_command_line_completion.psm1" -Force
+          $manifest = Get-Content -Raw "$bundle/_internal/project_scripts.json" | ConvertFrom-Json
+          foreach ($name in $manifest.PSObject.Properties.Name) {
+            $command = Get-Command $name -CommandType Application | Select-Object -First 1
+            if (-not $command.Source.StartsWith($bundle, [StringComparison]::OrdinalIgnoreCase)) {
+              throw "Unexpected executable for $name : $($command.Source)"
+            }
+            & $name --help | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "Help failed for $name : $LASTEXITCODE" }
+            $line = "$name --he"
+            $matches = [System.Management.Automation.CommandCompletion]::CompleteInput($line, $line.Length, $null).CompletionMatches.CompletionText
+            if (-not ($matches | Where-Object { $_ -like '--help*' })) { throw "Completion failed for $name" }
+          }
+          $fixture = Join-Path $PWD "tests/fixtures/backend_log_80k.bin"
+          $values = @(& extract_param_defaults --type values $fixture)
+          if ($LASTEXITCODE -ne 0 -or $values.Count -eq 0) { throw 'Frozen parameter extraction failed.' }
 
       - name: Smoke-test frozen Tcl/Tk initialization
         shell: pwsh
@@ -167,13 +204,6 @@ jobs:
             Pop-Location
           }
 
-      - name: Write the git commit hash to file
-        run: |
-          $hash = git rev-parse HEAD
-          $hash = $hash.Trim()
-          $utf8NoBom = New-Object System.Text.UTF8Encoding $false
-          [System.IO.File]::WriteAllText("git_hash.txt", $hash, $utf8NoBom)
-
       - name: Verify git hash file
         run: |
           Write-Host "Git hash file content:"
@@ -208,6 +238,37 @@ jobs:
           & (Join-Path $env:INNO_SETUP_DIR 'ISCC.exe') "/dMyAppVersion=$version" 'ardupilot_methodic_configurator.iss'
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed with exit code $LASTEXITCODE." }
           Get-ChildItem Output
+
+      - name: Verify installed PowerShell completion and document layout
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem windows/Output/*.exe | Select-Object -First 1
+          $profiles = @((powershell.exe -NoProfile -Command '[Console]::Write($PROFILE.CurrentUserAllHosts)'), $PROFILE.CurrentUserAllHosts)
+          if ($LASTEXITCODE -ne 0 -or -not $profiles[0]) { throw 'Could not determine the Windows PowerShell profile path.' }
+          $beforeProfiles = @{}
+          foreach ($profilePath in $profiles) {
+            $beforeProfiles[$profilePath] = if ([IO.File]::Exists($profilePath)) { [Convert]::ToBase64String([IO.File]::ReadAllBytes($profilePath)) } else { $null }
+          }
+          $result = Start-Process -FilePath $installer.FullName -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/CURRENTUSER' -Wait -PassThru -WindowStyle Hidden
+          if ($result.ExitCode -ne 0) { throw "Default installer failed: $($result.ExitCode)" }
+          foreach ($profilePath in $profiles) {
+            $after = if ([IO.File]::Exists($profilePath)) { [Convert]::ToBase64String([IO.File]::ReadAllBytes($profilePath)) } else { $null }
+            if ($beforeProfiles[$profilePath] -cne $after) { throw "Default install changed PowerShell profile: $profilePath" }
+          }
+          $result = Start-Process -FilePath $installer.FullName -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/CURRENTUSER','/TASKS=modifypath,powershellcompletion' -Wait -PassThru -WindowStyle Hidden
+          if ($result.ExitCode -ne 0) { throw "Installer failed: $($result.ExitCode)" }
+          $app = Join-Path $env:LOCALAPPDATA 'Programs/ardupilot_methodic_configurator'
+          $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+          if ($userPath.Split(';') -notcontains $app) { throw 'Installer did not add the app directory to PATH.' }
+          $env:PATH = "$userPath;$env:PATH"
+          powershell.exe -ExecutionPolicy Bypass -File windows/test_installed_completion.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'Installed Windows PowerShell completion failed.' }
+          pwsh.exe -ExecutionPolicy Bypass -File windows/test_installed_completion.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'Installed PowerShell 7 completion failed.' }
+          foreach ($directory in @('credits', 'LICENSES')) {
+            if (-not (Test-Path "$app/$directory") -or (Test-Path "$app/_internal/$directory")) { throw "Unexpected $directory location." }
+          }
+          if (Test-Path "$app/credits/update_credits_licenses.py") { throw 'Development updater was included.' }
 
       # https://github.com/slsa-framework/slsa-github-generator/blob/main/internal/builders/generic/README.md
       - name: Generate hashes

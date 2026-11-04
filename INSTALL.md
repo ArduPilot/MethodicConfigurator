@@ -178,7 +178,15 @@ eval "$(register-python-argcomplete param_pid_adjustment_update)"
 eval "$(register-python-argcomplete mavftp)"
 ```
 
-For PowerShell (MS Windows) autocompletion, run this command in PowerShell:
+The Windows per-user installer can enable PowerShell tab completion by updating the current user's
+PowerShell profiles. This task is unchecked by default. Select it only if PowerShell allows local
+scripts: with the default Windows PowerShell Restricted execution policy, a profile causes a script
+execution error at startup. PowerShell must also start with profiles enabled for completion to load.
+Open a new PowerShell session after installing. Select the PATH task too if you want to run the
+commands by name. The task affects the installing user; for all-users installs or manual setup, add
+the module to each user's profile as described below.
+
+For manual PowerShell (MS Windows) autocompletion, run this command in PowerShell:
 
 ```powershell
 notepad $PROFILE
