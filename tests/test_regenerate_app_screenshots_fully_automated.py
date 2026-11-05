@@ -18,9 +18,11 @@ from contextlib import nullcontext
 from pathlib import Path
 from queue import SimpleQueue
 from types import ModuleType, SimpleNamespace
+from typing import Any
 from unittest.mock import ANY, MagicMock, call, patch
 
 import pytest
+from PIL import Image
 
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_MOTOR_TEST
 
@@ -271,6 +273,99 @@ def test_screenshot_generator_can_select_individual_targets(tmp_path) -> None:
 
     assert capture.call_count == 1
     assert capture.call_args.args[0].action == "parameter_export"
+
+
+@pytest.mark.parametrize("filename", ["App_screenshot_MAVFTP_browser.png", "App_screenshot_MAVFTP_remote_panel.png"])
+def test_user_can_regenerate_each_mavftp_screenshot_independently(tmp_path: Path, filename: str) -> None:
+    """
+    Regenerate one MAVFTP screenshot at a time.
+
+    GIVEN: One MAVFTP screenshot is requested without overwrite.
+    WHEN: The generator runs.
+    THEN: Only that screenshot is dispatched to a new output file.
+    """
+    args = argparse.Namespace(
+        images_dir=tmp_path,
+        vehicle_dir=tmp_path,
+        delay=0.0,
+        padding=0,
+        overwrite=False,
+        log_level="WARNING",
+        screenshots=[filename],
+    )
+    with (
+        patch.object(screenshot_generator, "parse_args", return_value=args),
+        patch.object(screenshot_generator, "configure_logging"),
+        patch.object(screenshot_generator, "register_plugins"),
+        patch.object(screenshot_generator, "_capture_mavftp") as capture,
+    ):
+        assert screenshot_generator.main() == 0
+
+    capture.assert_called_once_with(tmp_path / f"{filename}.new.png", 0.0, 0, remote_panel="remote_panel" in filename)
+
+
+def test_windows_capture_keeps_the_entire_client_area(tmp_path: Path) -> None:
+    """
+    Preserve the full window while removing the Windows shadow.
+
+    GIVEN: A window capture contains its title bar, client area and Windows shadow.
+    WHEN: The screenshot is saved with frame trimming enabled.
+    THEN: The client edges are preserved and the surrounding shadow is removed.
+    """
+    window = MagicMock(spec=screenshot_generator.tk.Tk)
+    window.winfo_rootx.return_value = 108
+    window.winfo_rooty.return_value = 132
+    window.winfo_width.return_value = 520
+    window.winfo_height.return_value = 380
+    output_path = tmp_path / "window.png"
+    with (
+        patch.object(screenshot_generator.platform, "system", return_value="Windows"),
+        patch.object(screenshot_generator, "_set_windows_application_icon"),
+        patch.object(screenshot_generator, "settle_tk"),
+        patch.object(screenshot_generator, "_compute_capture_region", return_value=(100, 100, 536, 420)),
+        patch.object(screenshot_generator.pyautogui, "screenshot", return_value=Image.new("RGB", (536, 420), "white")),
+    ):
+        screenshot_generator.capture_widget(window, output_path, 0)
+
+    with Image.open(output_path) as image:
+        assert image.size == (520, 412)
+        alpha = image.getchannel("A")
+        assert alpha.getpixel((0, 0)) == 0
+        assert alpha.getpixel((0, 200)) == 255
+        assert alpha.getpixel((519, 200)) == 255
+
+
+def test_mavftp_capture_cleans_up_its_temporary_files_when_capture_fails(tmp_path: Path) -> None:
+    """
+    Keep fixture files isolated even when screenshot capture fails.
+
+    GIVEN: A browser populated with representative local and remote files.
+    WHEN: Capturing the screenshot fails.
+    THEN: The window and temporary fixture directory are cleaned up.
+    """
+    window = MagicMock()
+    window.remote_entries = [object()]
+    window.local_entries = [object()]
+    fixture_directories: list[Path] = []
+
+    def create_window(_parent: object, editor: Any, _services: object) -> MagicMock:  # noqa: ANN401
+        directory = Path(editor.get_vehicle_directory())
+        assert {path.name for path in directory.iterdir()} == {"analysis.csv", "README.txt", "flight-photos"}
+        fixture_directories.append(directory)
+        return window
+
+    with (
+        patch.object(screenshot_generator, "_MavftpScreenshotWindow", side_effect=create_window),
+        patch.object(screenshot_generator, "settle_tk"),
+        patch.object(screenshot_generator.pyautogui, "moveTo"),
+        patch.object(screenshot_generator, "capture_widget", side_effect=RuntimeError("capture failed")),
+        pytest.raises(RuntimeError, match="capture failed"),
+    ):
+        screenshot_generator._capture_mavftp(tmp_path / "browser.png", 0, 0, remote_panel=False)
+
+    assert len(fixture_directories) == 1
+    assert not fixture_directories[0].exists()
+    window.root.destroy.assert_called_once_with()
 
 
 def test_screenshot_alias_uses_png_suffix_for_new_captures(tmp_path) -> None:
