@@ -9,6 +9,9 @@ images under the repository's images directory.
 Usage:
     python scripts/regenerate_app_screenshots_fully_automated.py
 
+To regenerate the MAVFTP screenshots only, add:
+    --screenshots App_screenshot_MAVFTP_browser.png App_screenshot_MAVFTP_remote_panel.png
+
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
@@ -691,6 +694,96 @@ def _capture_connection_forwarding(output_path: Path, delay: float, padding: int
     finally:
         widgets.stop_periodic_refresh()
         if window.root.winfo_exists():
+            window.root.destroy()
+
+
+class _MavftpScreenshotEditor:
+    """Provide representative local and remote files without a flight controller."""
+
+    is_fc_connected = True
+    is_mavftp_supported = True
+
+    def __init__(self, local_directory: Path) -> None:
+        self.local_directory = local_directory
+
+    def get_vehicle_directory(self) -> str:
+        return str(self.local_directory)
+
+    @staticmethod
+    def get_remote_files(directory: str) -> list[FlightControllerLogFile]:
+        listings = {
+            "/APM/LOGS": [
+                FlightControllerLogFile("00000157.BIN", "/APM/LOGS/00000157.BIN", 4_820_992, modified_at=1788450300),
+                FlightControllerLogFile("00000158.BIN", "/APM/LOGS/00000158.BIN", 1_284_096, modified_at=1788461100),
+                FlightControllerLogFile("mission-notes.txt", "/APM/LOGS/mission-notes.txt", 1_284, modified_at=1788461700),
+                FlightControllerLogFile("archive", "/APM/LOGS/archive", 0, is_directory=True, modified_at=1788379200),
+            ],
+            "/APM": [
+                FlightControllerLogFile("LOGS", "/APM/LOGS", 0, is_directory=True, modified_at=1788461700),
+                FlightControllerLogFile("PARAMS", "/APM/PARAMS", 0, is_directory=True, modified_at=1788379200),
+            ],
+            "/": [FlightControllerLogFile("APM", "/APM", 0, is_directory=True, modified_at=1788461700)],
+        }
+        return listings.get(directory.rstrip("/") or "/", [])
+
+
+class _MavftpScreenshotWindow(FileBrowserWindow):
+    """Keep displayed modification times consistent across host time zones."""
+
+    @staticmethod
+    def _format_modified_time(timestamp: float | None, *, unsupported_when_missing: bool = False) -> str:
+        if timestamp is None:
+            return "Unsupported" if unsupported_when_missing else ""
+        if timestamp <= 0:
+            return "-"
+        try:
+            return datetime.fromtimestamp(timestamp, tz=UTC).strftime("%Y-%m-%d %H:%M")
+        except (OverflowError, OSError, ValueError):
+            return "-"
+
+
+def _capture_mavftp(output_path: Path, delay: float, padding: int, *, remote_panel: bool) -> None:
+    """Capture the file browser with isolated, representative fixture files."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        local_directory = Path(tmpdir) / "ExampleVehicle"
+        local_directory.mkdir()
+        (local_directory / "analysis.csv").write_text("time,value\n0,1\n", encoding="utf-8", newline="\n")
+        (local_directory / "README.txt").write_text(
+            "Files copied from the flight controller.\n", encoding="utf-8", newline="\n"
+        )
+        (local_directory / "flight-photos").mkdir()
+        for path in local_directory.iterdir():
+            os.utime(path, (1_788_461_700, 1_788_461_700))
+
+        window = _MavftpScreenshotWindow(
+            None, cast("ParameterEditor", _MavftpScreenshotEditor(local_directory)), _standalone_ui_services()
+        )
+        try:
+            window.root.attributes("-topmost", 1)
+            window.root.geometry("+100+100")
+            window.root.lift()
+            pyautogui.moveTo(20, 20)
+            deadline = time.monotonic() + 5.0
+            while (not window.remote_entries or not window.local_entries) and time.monotonic() < deadline:
+                window.root.update()
+                time.sleep(0.05)
+            if not window.remote_entries or not window.local_entries:
+                msg = "The example file browser listings did not populate before the timeout"
+                raise RuntimeError(msg)
+
+            display_directory = "ExampleVehicle"
+            window.local_directory_var.set(display_directory)
+            window.local_directory_label.configure(
+                text=translate("Local files in {directory}").format(directory=display_directory)
+            )
+            settle_tk(window.root)
+            capture_widget(window.main_frame, output_path, delay, padding, trim_windows_frame=False)
+            if remote_panel:
+                right = window.local_directory_label.winfo_rootx() - window.main_frame.winfo_rootx() + padding
+                with Image.open(output_path) as captured:
+                    cropped = captured.crop((0, 0, min(right, captured.width), captured.height))
+                    cropped.save(output_path)
+        finally:
             window.root.destroy()
 
 
@@ -1417,6 +1510,8 @@ def capture_target(target: CaptureTarget, output_path: Path, args: argparse.Name
         return
 
     match action:
+        case "mavftp_browser" | "mavftp_remote_panel":
+            _capture_mavftp(output_path, delay, padding, remote_panel=action == "mavftp_remote_panel")
         case "connection_no_connection":
             _capture_connection(output_path, delay, padding, highlight_skip=True)
         case "connection_add_another" | "connection_udp_forwarding":

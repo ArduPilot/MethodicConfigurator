@@ -75,21 +75,8 @@
     "python-envs.pythonProjects": [],
     "python.terminal.activateEnvironment": true,
 
-    "//2": "Make sure every new terminal has a predictable shell (env from terminal.integrated.env.* is applied to all)",
+    "//2": "Use a predictable shell; Python activates the selected environment",
     "terminal.integrated.defaultProfile.windows": "PowerShell",
     "terminal.integrated.defaultProfile.linux": "bash",
-    "terminal.integrated.defaultProfile.osx": "zsh",
-
-    "terminal.integrated.env.linux": {
-      "VIRTUAL_ENV": "${workspaceFolder}/.venv",
-      "PATH": "${workspaceFolder}/.venv/bin:${env:PATH}"
-    },
-    "terminal.integrated.env.windows": {
-      "VIRTUAL_ENV": "${workspaceFolder}\\.venv",
-      "Path": "${workspaceFolder}\\.venv\\Scripts;${env:Path}"
-    },
-    "terminal.integrated.env.osx": {
-      "VIRTUAL_ENV": "${workspaceFolder}/.venv",
-      "PATH": "${workspaceFolder}/.venv/bin:${env:PATH}"
-    }
+    "terminal.integrated.defaultProfile.osx": "zsh"
 }
