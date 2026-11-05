@@ -36,6 +36,7 @@ from ardupilot_methodic_configurator.backend_bin_log import (
     open_log,
 )
 from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData, MessageSchema
+from ardupilot_methodic_configurator.log_analysis.data_model_parameter_history import ParameterHistory
 
 # pylint: disable=redefined-outer-name, protected-access
 
@@ -494,6 +495,68 @@ class TestCloseLog:
         mock_conn = MagicMock()
         mock_conn.close.side_effect = OSError("already closed")
         close_log(mock_conn)
+
+
+class TestBinLogProjectSnapshots:
+    """Exercise parameter snapshots prepared for vehicle project import."""
+
+    @pytest.mark.parametrize("invalid_default", [float("nan"), float("inf"), float("-inf")])
+    def test_import_preserves_current_value_when_default_is_not_finite(
+        self, invalid_default: float, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """An unavailable default is omitted while the logged current value remains importable."""
+        log_data = LogData()
+        log_data.vehicle_type = "ArduCopter"
+        log_data.firmware_version = (4, 6, 3)
+        log_data.parameter_defaults = {"VALID": 0.0, "GPS1_CAN_NODEID": invalid_default}
+        log_data.parameter_history = ParameterHistory({"VALID": 0.0, "GPS1_CAN_NODEID": 121.0})
+
+        with patch.object(backend_bin_log, "extract_log_first_pass", return_value=log_data):
+            _identity, defaults, current = backend_bin_log.extract_bin_log_data("flight.bin")
+
+        assert set(defaults) == {"VALID"}
+        assert current["GPS1_CAN_NODEID"].value == 121.0
+        assert current.get_missing_or_different(defaults)["GPS1_CAN_NODEID"].value == 121.0
+        assert "GPS1_CAN_NODEID" in caplog.text
+
+    def test_import_rejects_a_log_without_finite_defaults(self) -> None:
+        """A default snapshot made entirely of non-finite values is not usable."""
+        log_data = LogData()
+        log_data.vehicle_type = "ArduCopter"
+        log_data.firmware_version = (4, 6, 3)
+        log_data.parameter_defaults = {"UNKNOWN": float("nan")}
+        log_data.parameter_history = ParameterHistory({"UNKNOWN": 1.0})
+
+        with (
+            patch.object(backend_bin_log, "extract_log_first_pass", return_value=log_data),
+            pytest.raises(SystemExit, match=r"No.*finite.*default"),
+        ):
+            backend_bin_log.extract_bin_log_data("flight.bin")
+
+    @pytest.mark.parametrize("invalid_value", [float("nan"), float("inf"), float("-inf")])
+    def test_import_rejects_non_finite_current_values(self, invalid_value: float) -> None:
+        """A current parameter value cannot be silently lost or written as an invalid value."""
+        log_data = LogData()
+        log_data.vehicle_type = "ArduCopter"
+        log_data.firmware_version = (4, 6, 3)
+        log_data.parameter_defaults = {"VALID": 0.0}
+        log_data.parameter_history = ParameterHistory({"INVALID": invalid_value})
+
+        with (
+            patch.object(backend_bin_log, "extract_log_first_pass", return_value=log_data),
+            pytest.raises(SystemExit, match=r"non-finite current.*INVALID"),
+        ):
+            backend_bin_log.extract_bin_log_data("flight.bin")
+
+    @pytest.mark.parametrize("invalid_default", [float("nan"), float("inf"), float("-inf")])
+    def test_later_finite_default_replaces_an_unavailable_default(self, invalid_default: float) -> None:
+        """A later usable default is retained when the first observation was non-finite."""
+        state = _ParameterHistoryState.create()
+        state.record({"Name": "GPS1_CAN_NODEID", "Value": 121.0, "Default": invalid_default})
+        state.record({"Name": "GPS1_CAN_NODEID", "Value": 121.0, "Default": 0.0})
+        state.record({"Name": "GPS1_CAN_NODEID", "Value": 121.0, "Default": 1.0})
+
+        assert state.default_values["GPS1_CAN_NODEID"] == 0.0
 
 
 class TestNumpyAllocation:

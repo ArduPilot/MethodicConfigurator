@@ -383,8 +383,12 @@ class _ParameterHistoryState:
                 self.initialization_complete = True
             self.last_timestamp_us = timestamp_us
 
-        if name not in self.default_values and default is not None:
-            self.default_values[name] = default
+        if default is not None:
+            previous_default = self.default_values.get(name)
+            if previous_default is None or (
+                not math.isfinite(float(cast("Any", previous_default))) and math.isfinite(float(cast("Any", default)))
+            ):
+                self.default_values[name] = default
 
         if not self.initialization_complete:
             previous_value = self.current_values.get(name)
@@ -583,7 +587,22 @@ def _extract_parameter_snapshots_from_log_data(
     if log_data.parameter_history is None:
         msg = "No parameter history found in log"
         raise SystemExit(msg)
-    return log_data.parameter_defaults, log_data.parameter_history.latest_values
+    current_values = log_data.parameter_history.latest_values
+    invalid_current = sorted(name for name, value in current_values.items() if not math.isfinite(value))
+    if invalid_current:
+        msg = _("Log contains non-finite current parameter values: {parameters}").format(parameters=", ".join(invalid_current))
+        raise SystemExit(msg)
+    invalid_defaults = sorted(name for name, value in log_data.parameter_defaults.items() if not math.isfinite(value))
+    defaults = {name: value for name, value in log_data.parameter_defaults.items() if math.isfinite(value)}
+    if not defaults:
+        msg = _("No finite parameter default values found in log")
+        raise SystemExit(msg)
+    if invalid_defaults:
+        logging_warning(
+            _("Ignoring non-finite parameter defaults from the log: %s. Their current values will still be imported."),
+            ", ".join(invalid_defaults),
+        )
+    return defaults, current_values
 
 
 def extract_bin_log_data(

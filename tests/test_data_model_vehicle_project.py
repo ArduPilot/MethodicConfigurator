@@ -20,7 +20,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from ardupilot_methodic_configurator import backend_bin_log
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.data_model_vehicle_project import VehicleProjectManager, _types_match
 from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
@@ -28,6 +30,8 @@ from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
     VehicleProjectCreationError,
 )
 from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpenError
+from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
+from ardupilot_methodic_configurator.log_analysis.data_model_parameter_history import ParameterHistory
 
 # pylint: disable=protected-access, too-many-lines
 
@@ -1606,6 +1610,41 @@ class TestCreateNewVehicleFromBinLog:  # pylint: disable=too-many-public-methods
         # re_init is called once unconditionally (to point filesystem at new_path) and
         # once more after exporting imported params (to reload the new file).
         assert mock_reinit.call_count == 2
+
+    def test_user_can_import_a_log_with_an_unavailable_default(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """The saved project retains the current value without inventing a missing default."""
+        template_dir = REPO_ROOT / "ardupilot_methodic_configurator" / "vehicle_templates" / "ArduCopter" / "empty_4.6.x"
+        settings_dir = tmp_path / "settings"
+        settings_dir.mkdir()
+        monkeypatch.setenv("AMC_COMPONENT_TEMPLATES_DIR_TEST", str(template_dir.parent.parent))
+        log_data = LogData()
+        log_data.vehicle_type = "ArduCopter"
+        log_data.firmware_version = (4, 6, 3)
+        log_data.parameter_defaults = {"GPS1_CAN_NODEID": float("nan"), "GPS2_CAN_NODEID": 0.0}
+        log_data.parameter_history = ParameterHistory({"GPS1_CAN_NODEID": 121.0, "GPS2_CAN_NODEID": 122.0})
+
+        with (
+            patch.object(ProgramSettings, "_user_config_dir", return_value=str(settings_dir)),
+            patch("ardupilot_methodic_configurator.backend_filesystem.parse_parameter_metadata", return_value={}),
+            patch.object(backend_bin_log, "extract_log_first_pass", return_value=log_data),
+        ):
+            filesystem = LocalFilesystem(
+                None, "", "", allow_editing_template_files=False, save_component_to_system_templates=False
+            )
+            manager = VehicleProjectManager(filesystem)
+            with patch.object(manager, "open_vehicle_directory"), patch.object(manager, "store_recently_used_template_dirs"):
+                project = Path(
+                    manager.create_new_vehicle_from_bin_log(
+                        "flight.bin", template_dir=str(template_dir), vehicle_dir=str(tmp_path / "project")
+                    )
+                )
+            defaults = ParDict.from_file(str(project / "00_default.param"))
+            saved_params, _ = filesystem.compound_params(skip_default=False)
+
+        assert "GPS1_CAN_NODEID" not in defaults
+        assert defaults["GPS2_CAN_NODEID"].value == 0.0
+        assert saved_params["GPS1_CAN_NODEID"].value == 121.0
+        assert saved_params["GPS2_CAN_NODEID"].value == 122.0
 
     def test_no_import_file_when_all_params_covered_by_amc_files(self) -> None:
         """
