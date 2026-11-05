@@ -10,10 +10,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from dataclasses import dataclass
+from typing import Literal
 
 
 @dataclass
-class LogAnalysis:
+class LogAnalysis:  # pylint: disable=too-many-instance-attributes
     """Base log analysis class."""
 
     message: str
@@ -23,6 +24,11 @@ class LogAnalysis:
     param_name: str | None = None
     suggested_value: int | float | None = None
     group: str | None = None
+    end_timestamp_us: int | float | None = None
+    severity: Literal["informational", "warning", "critical"] | None = None
+    source: str | None = None
+    instance: int | None = None
+    evidence: dict[str, float] | None = None
 
 
 @dataclass

@@ -240,6 +240,24 @@
           "type": ["string", "null"],
           "description": "Optional presentation group for consecutive analysis outcomes."
         },
+        "end_timestamp_us": {
+          "type": ["number", "null"],
+          "description": "Last observed event sample in microseconds; does not imply recovery beyond a gap."
+        },
+        "severity": {
+          "enum": ["informational", "warning", "critical", null]
+        },
+        "source": {
+          "type": ["string", "null"]
+        },
+        "instance": {
+          "type": ["integer", "null"],
+          "description": "Sensor instance or EKF core, as identified by source. Null if identity is not logged."
+        },
+        "evidence": {
+          "type": ["object", "null"],
+          "additionalProperties": {"type": "number"}
+        },
         "step_info": {
           "$ref": "#/$defs/step_info"
         },

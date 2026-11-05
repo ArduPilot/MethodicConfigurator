@@ -8,11 +8,20 @@ SPDX-FileCopyrightText: 2026 Omkar Sarkar <omkarsarkar24@gmail.com>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import numpy as np
+
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.log_analysis.data_model_availability_base import (
     AvailabilityIssue,
     BaseLogAvailabilityModel,
     LogAvailabilityResult,
+)
+from ardupilot_methodic_configurator.log_analysis.data_model_gnss_consistency import GnssConsistencyChecks
+from ardupilot_methodic_configurator.log_analysis.data_model_gnss_samples import (
+    RECEIVER_FIELDS,
+    numeric_fields,
+    receiver_gap_limit,
+    sensor_series,
 )
 from ardupilot_methodic_configurator.log_analysis.data_model_log_availability import LogAvailabilityState
 
@@ -22,8 +31,41 @@ class GPSLogAvailabilityModel(BaseLogAvailabilityModel):
 
     def check(self) -> LogAvailabilityResult:
         records = self.log_data.get_message_columns("GPS")
+        detection_issues, readable_sources = self.check_detection_sources()
         if records is None or len(records) == 0:
-            return self._diagnose_absence()
+            ekf_sources: list[str] = []
+            checks = GnssConsistencyChecks(self.log_data, self.parameters, self.log_data.parameter_history)
+            for message in ("XKF4", "NKF4"):
+                ekf_sources.extend(
+                    f"{message}.{name}"
+                    for name in ("SV", "SP", "FS", "TS", "GPS", "OFN", "OFE")
+                    if any(
+                        item.instance is not None
+                        and np.any(
+                            np.isfinite(item.times)
+                            & (item.times >= 0)
+                            & np.isfinite(item.fields["PI"])
+                            & np.isfinite(item.fields[name])
+                            & checks.ekf_gps_evidence(item, message)
+                        )
+                        for item in sensor_series(self.log_data, message, ("PI", name))
+                    )
+                )
+            if not readable_sources and not ekf_sources:
+                result = self._diagnose_absence()
+                result.issues.extend(detection_issues)
+                return result
+            step, name = self.resolve_message_step("GPS", "GPS")
+            return LogAvailabilityResult(
+                available=True,
+                state=LogAvailabilityState.WARNING,
+                reason=_("GNSS evidence available: {sources}. GPS motion data unavailable.").format(
+                    sources=", ".join(readable_sources + ekf_sources)
+                ),
+                issues=[*detection_issues, AvailabilityIssue(_("No GPS messages; motion consistency checks unavailable"))],
+                name=name,
+                related_step=step,
+            )
 
         issues: list[AvailabilityIssue] = []
         for check in (self.check_status,):
@@ -31,7 +73,63 @@ class GPSLogAvailabilityModel(BaseLogAvailabilityModel):
         issues += self.check_parameters()
 
         step, name = self.resolve_message_step("GPS", "GPS")
-        return self.build_result(issues, name, related_step=step)
+        result = self.build_result(issues + detection_issues, name, related_step=step)
+        result.reason += _(" Receiver interference indicators: {sources}.").format(
+            sources=", ".join(readable_sources) or _("none available; explicit jamming/spoofing assessment unavailable")
+        )
+        return result
+
+    def check_detection_sources(self) -> tuple[list[AvailabilityIssue], list[str]]:
+        """Assess each explicit indicator independently, including timestamp and sample usability."""
+        issues: list[AvailabilityIssue] = []
+        readable: list[str] = []
+        for message, fields in RECEIVER_FIELDS.items():
+            for field in fields:
+                source = f"{message}.{field}"
+                samples = numeric_fields(self.log_data, message, ("TimeUS", field))
+                if samples is None:
+                    issues.append(
+                        AvailabilityIssue(
+                            _("{source} unavailable: no numeric timestamped samples in this log").format(source=source)
+                        )
+                    )
+                    continue
+                valid = np.isfinite(samples["TimeUS"]) & (samples["TimeUS"] >= 0) & np.isfinite(samples[field])
+                valid &= (samples[field] >= 0) & (samples[field] <= 255) & (samples[field] == np.floor(samples[field]))
+                series = sensor_series(self.log_data, message, (field,))
+                if (
+                    not any(
+                        np.any(np.isfinite(item.times) & (item.times >= 0) & np.isfinite(item.fields[field]))
+                        for item in series
+                    )
+                    or not valid.any()
+                ):
+                    issues.append(
+                        AvailabilityIssue(
+                            _("{source} unavailable: timestamps, sensor identifiers or values are invalid").format(
+                                source=source
+                            )
+                        )
+                    )
+                    continue
+                readable.append(source)
+                if not valid.all() or sum(len(item.times) for item in series) != len(samples["TimeUS"]):
+                    issues.append(
+                        AvailabilityIssue(_("{source} contains invalid samples; coverage is incomplete").format(source=source))
+                    )
+                if any(
+                    np.any(
+                        (np.diff(item.times) <= 0)
+                        | (np.diff(item.times) > (receiver_gap_limit(item.times) if message == "UBX1" else 2.0))
+                    )
+                    for item in series
+                ):
+                    issues.append(
+                        AvailabilityIssue(
+                            _("{source} has timestamp discontinuities; event intervals stop at gaps").format(source=source)
+                        )
+                    )
+        return issues, readable
 
     def _diagnose_absence(self) -> LogAvailabilityResult:
         """Diagnose why GPS data is absent using LOG_BITMASK."""
