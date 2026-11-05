@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import platform
 import re
 import shutil
@@ -27,6 +28,7 @@ import tkinter as tk
 import tkinter.font as tk_font
 from contextlib import contextmanager
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from tkinter import simpledialog, ttk
 from typing import TYPE_CHECKING, cast
@@ -42,6 +44,7 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_firmware_upload import FirmwareBoardInfo, FirmwareUploadService
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerLogFile
 from ardupilot_methodic_configurator.data_model_data_telemetry import (
     MessageRate,
     MessageSample,
@@ -56,6 +59,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_about_popup_window import 
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_connection_selection import ConnectionSelectionWindow
 from ardupilot_methodic_configurator.frontend_tkinter_fc_banner_window import FlightControllerBannerWindow
+from ardupilot_methodic_configurator.frontend_tkinter_file_browser import FileBrowserWindow, _standalone_ui_services
 from ardupilot_methodic_configurator.frontend_tkinter_firmware_upload import FirmwareUploadWindow
 from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_info import FlightControllerInfoWindow
 from ardupilot_methodic_configurator.frontend_tkinter_mavlink_inspector import MavlinkInspectorWindow
@@ -97,6 +101,7 @@ TARGETS: tuple[CaptureTarget, ...] = (
     CaptureTarget("App_screenshot_about.png", "about"),
     CaptureTarget("App_screenshot_FC_connection.png", "connection"),
     CaptureTarget("App_screenshot_FC_connection_add_another.png", "connection_add_another"),
+    CaptureTarget("App_screenshot_FC_connection_no_connection.png", "connection_no_connection"),
     CaptureTarget("App_screenshot_FC_connection_udp_forwarding.png", "connection_udp_forwarding"),
     CaptureTarget("App_screenshot_FC_info_and_param_download.png", "fc_info"),
     CaptureTarget("App_screenshot_FC_banner.png", "fc_banner"),
@@ -104,6 +109,8 @@ TARGETS: tuple[CaptureTarget, ...] = (
     CaptureTarget("App_screenshot_motor_test.png", "motor_test"),
     CaptureTarget("App_screenshot_rc_calibration.png", PLUGIN_RC_CALIBRATION),
     CaptureTarget("App_screenshot_Parameter_export.png", "parameter_export"),
+    CaptureTarget("App_screenshot_MAVFTP_browser.png", "mavftp_browser"),
+    CaptureTarget("App_screenshot_MAVFTP_remote_panel.png", "mavftp_remote_panel"),
     CaptureTarget("App_screenshot_MAVLink_inspector.png", "mavlink_inspector", variant="radio"),
     CaptureTarget("App_screenshot_MAVLink_inspector_no_radio.png", "mavlink_inspector", variant="no_radio"),
     CaptureTarget("App_screenshot_MAVLink_inspector_collapsed.png", "mavlink_inspector", variant="collapsed"),
@@ -555,13 +562,17 @@ def capture_widget(  # pylint: disable=too-many-arguments, too-many-positional-a
             if rel_right > rel_left and rel_bottom > rel_top:
                 draw.rectangle((rel_left, rel_top, rel_right, rel_bottom), outline="red", width=3)
 
-    # Crop superfluous pixels on Windows before resizing
-    if platform.system() == "Windows" and trim_windows_frame:
-        crop_left = 15
-        crop_right = 15
-        crop_bottom = 20
-        if image.width > crop_left + crop_right and image.height > crop_bottom:
-            image = image.crop((crop_left, 0, image.width - crop_right, image.height - crop_bottom))
+    # Remove the Windows shadow while retaining the title bar and all client pixels.
+    if platform.system() == "Windows" and trim_windows_frame and isinstance(widget, (tk.Tk, tk.Toplevel)):
+        left = max(widget.winfo_rootx() - x - padding, 0)
+        right = min(widget.winfo_rootx() - x + widget.winfo_width() + padding, image.width)
+        bottom = min(widget.winfo_rooty() - y + widget.winfo_height() + padding, image.height)
+        image = image.crop((left, 0, right, bottom))
+        if padding == 0:
+            image = image.convert("RGBA")
+            mask = Image.new("L", image.size, 0)
+            ImageDraw.Draw(mask).rounded_rectangle((0, 0, image.width - 1, image.height - 1), radius=8, fill=255)
+            image.putalpha(mask)
 
     if scale != 1.0:
         new_size = (round(image.width * scale), round(image.height * scale))
@@ -591,14 +602,28 @@ def _capture_about(output_path: Path, delay: float, padding: int) -> None:
         about_window.destroy()
 
 
-def _capture_connection(output_path: Path, delay: float, padding: int) -> None:
+def _capture_connection(output_path: Path, delay: float, padding: int, *, highlight_skip: bool = False) -> None:
     flight_controller = FakeConnectionFlightController()
     window = ConnectionSelectionWindow(
         cast("FlightController", flight_controller),
         "No ArduPilot flight controller was auto-detected yet.",
     )
     try:
-        capture_widget(window.root, output_path, delay, padding)
+        window.root.attributes("-topmost", 1)
+        window.root.geometry("+100+100")
+        window.root.lift()
+        pyautogui.moveTo(20, 20)
+        settle_tk(window.root)
+        highlight_boxes = None
+        if highlight_skip:
+            highlight_boxes = [
+                _required_widget_box(
+                    window.root,
+                    lambda widget: _widget_text(widget) == translate("Skip FC connection, just edit the .param files on disk"),
+                    "Could not find the skip connection button",
+                )
+            ]
+        capture_widget(window.root, output_path, delay, padding, highlight_boxes=highlight_boxes)
     finally:
         if hasattr(window, "connection_selection_widgets"):
             window.connection_selection_widgets.stop_periodic_refresh()
@@ -1392,6 +1417,8 @@ def capture_target(target: CaptureTarget, output_path: Path, args: argparse.Name
         return
 
     match action:
+        case "connection_no_connection":
+            _capture_connection(output_path, delay, padding, highlight_skip=True)
         case "connection_add_another" | "connection_udp_forwarding":
             _capture_connection_forwarding(
                 output_path,

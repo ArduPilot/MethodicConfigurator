@@ -72,9 +72,29 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         selection_frame = ttk.Frame(self.container_frame)
         selection_frame.pack(side=tk.TOP, pady=(4, 0))
 
+        # Create a label for baudrate
+        baudrate_label = ttk.Label(selection_frame, text=_("Baudrate:"))
+        baudrate_label.pack(side=tk.LEFT, padx=(0, 5))
+
+        # Create a combobox for baudrate selection
+        self.baudrate_var = tk.StringVar(value=str(self.default_baudrate))
+        self.baudrate_combobox = ttk.Combobox(
+            selection_frame,
+            textvariable=self.baudrate_var,
+            values=SUPPORTED_BAUDRATES,
+            state="normal",
+            width=10,
+        )
+        self.baudrate_combobox.pack(side=tk.LEFT, padx=(0, 5))
+        self.baudrate_combobox.bind("<<ComboboxSelected>>", self.on_baudrate_combobox_change, "+")
+        show_tooltip(
+            self.baudrate_combobox,
+            _("Select the baudrate for the connection\nMost flight controllers use 115200"),
+        )
+
         # Create a label for port
         port_label = ttk.Label(selection_frame, text=_("Port:"))
-        port_label.pack(side=tk.LEFT, padx=(0, 5))
+        port_label.pack(side=tk.LEFT, padx=(10, 5))
         # Load saved connection history from ProgramSettings and cache it to avoid
         # repeated disk reads on every periodic port-refresh cycle.
         self._connection_history_cache: list[str] = ProgramSettings.get_connection_history()
@@ -96,26 +116,6 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         show_tooltip(
             self.conn_selection_combobox,
             _("Select the flight controller connection\nYou can add a custom connection to the existing ones"),
-        )
-
-        # Create a label for baudrate
-        baudrate_label = ttk.Label(selection_frame, text=_("Baudrate:"))
-        baudrate_label.pack(side=tk.LEFT, padx=(10, 5))
-
-        # Create a combobox for baudrate selection
-        self.baudrate_var = tk.StringVar(value=str(self.default_baudrate))
-        self.baudrate_combobox = ttk.Combobox(
-            selection_frame,
-            textvariable=self.baudrate_var,
-            values=SUPPORTED_BAUDRATES,
-            state="normal",
-            width=10,
-        )
-        self.baudrate_combobox.pack(side=tk.LEFT, padx=(0, 5))
-        self.baudrate_combobox.bind("<<ComboboxSelected>>", self.on_baudrate_combobox_change, "+")
-        show_tooltip(
-            self.baudrate_combobox,
-            _("Select the baudrate for the connection\nMost flight controllers use 115200"),
         )
 
         # Start periodic port refresh
