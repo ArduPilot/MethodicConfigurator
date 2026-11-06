@@ -359,7 +359,13 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
         label.bind("<Configure>", partial(self._set_wraplength, label))
 
         if isinstance(outcome.evidence, dict) and outcome.evidence:
-            show_tooltip(label, "\n".join(f"{name}: {value:.3g}" for name, value in outcome.evidence.items()))
+            show_tooltip(
+                label,
+                "\n".join(
+                    f"{name}: {value:.0f}" if float(value).is_integer() else f"{name}: {value:.3g}"
+                    for name, value in outcome.evidence.items()
+                ),
+            )
 
         fixes = self._fix_for_outcome(outcome)
         if fixes:

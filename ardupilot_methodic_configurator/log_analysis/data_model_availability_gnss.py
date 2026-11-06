@@ -74,7 +74,7 @@ class GPSLogAvailabilityModel(BaseLogAvailabilityModel):
 
         step, name = self.resolve_message_step("GPS", "GPS")
         result = self.build_result(issues + detection_issues, name, related_step=step)
-        result.reason += _(" Receiver interference indicators: {sources}.").format(
+        result.reason = f"{result.reason}. " + _("Receiver interference indicators: {sources}.").format(
             sources=", ".join(readable_sources) or _("none available; explicit jamming/spoofing assessment unavailable")
         )
         return result

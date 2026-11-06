@@ -33,8 +33,10 @@ cannot be combined with a particular receiver's evidence.
 
 `XKFS.SS` selects the applicable timestamped `EK3_SRCn_POSXY` and `EK3_SRCn_VELXY`
 parameters. `XKFS.GI` identifies the lane's selected receiver when logged. `PI` identifies
-the primary lane. EKF events split at changes in primary activity, source set or receiver;
-their evidence includes `active_primary` and the selected receiver when known.
+the primary lane. All EKF events split at changes in primary activity and include `active_primary`.
+Innovation, timeout and GPS-check events also split at changes in source set or receiver;
+their evidence includes the selected receiver when known. Fault and position-reset events
+retain lane-level attribution.
 EKF2 GPS attribution uses the logged `EK2_GPS_TYPE`. EKF3 velocity attribution also
 checks timestamped `EK3_SRC_OPTIONS`: when `FuseAllVelocities` (bit 0) is enabled,
 GPS velocity configured in any source set remains eligible. Velocity innovations
@@ -47,6 +49,7 @@ across source sets.
 
 Timeout warnings retain only the position and velocity bits whose lane navigation
 sources use GPS, and include both the raw timeout mask and the GPS-relevant mask.
+The raw timeout evidence combines all bits observed within each interval using bitwise OR.
 Height, magnetometer, airspeed and drag timeout bits do not create GNSS warnings;
 unused sensors can remain timed out during normal operation.
 When the lane's filter status and fault bits identify initialization, pre-aiding GPS-check
@@ -110,9 +113,10 @@ Source eligibility and timeout corrections were also verified against local revi
 - [EKF navigation source eligibility and FuseAllVelocities](https://github.com/ArduPilot/ardupilot/blob/ed3795bcb8b5fafa3ab88eb1af295391006e04cd/libraries/AP_NavEKF/AP_NavEKF_Source.cpp)
 - [EKF3 initial timeout states](https://github.com/ArduPilot/ardupilot/blob/ed3795bcb8b5fafa3ab88eb1af295391006e04cd/libraries/AP_NavEKF3/AP_NavEKF3_core.cpp)
 
-The provided `../LogMessages.html` snapshot documents Aeron fields. The inspected local source
-does not contain the Aeron implementation, so support is field-gated and does not assume a
-firmware release boundary. Inertial Labs text transitions reference previous spoofing status
+[Aeron PLX external AHRS implementation](https://github.com/ArduPilot/ardupilot/blob/902f7ffb/libraries/AP_ExternalAHRS/AP_ExternalAHRS_Aeron_plx.cpp)
+defines the Aeron fields and statuses. Support is field-gated and does not assume a firmware
+release boundary. Inertial Labs text
+transitions reference previous spoofing status
 in some branches; the analyzer uses numeric `ILB5` records directly.
 
 Tests use real in-memory `LogData` columns and schemas to verify receiver decoding, gaps,

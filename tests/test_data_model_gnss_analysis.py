@@ -411,7 +411,7 @@ def test_ekf_missing_source_metadata_is_reported_as_missing_coverage() -> None:
     _add(log, "XKF4", TimeUS=[1, 2], C=[0, 0], PI=[0, 0], SV=[5, 5], SP=[5, 5])
     outcomes = GnssConsistencyChecks(log, {}).analyse()
     assert not _warnings(outcomes, "XKF4.SV")
-    assert _evidence(next(item for item in outcomes if item.source == "XKF4.GPS"))["evaluated"] == 0
+    assert _evidence(next(item for item in outcomes if item.source == "XKF4.SV/SP"))["evaluated"] == 0
 
 
 def test_primary_ekf_position_reset_is_reported_once_when_offset_changes() -> None:
@@ -767,6 +767,25 @@ def test_gps_ekf_timeouts_retain_relevant_bits_and_raw_evidence(message: str, ti
 
 
 @pytest.mark.parametrize("message", ["XKF4", "NKF4"])
+@pytest.mark.parametrize(("timeouts", "expected_mask"), [([5, 3], 7), ([9, 5], 13)])
+def test_raw_timeout_evidence_retains_all_bits_within_an_interval(
+    message: str, timeouts: list[int], expected_mask: int
+) -> None:
+    """GIVEN a constant GPS timeout WHEN other timeout bits change THEN the evidence retains every observed bit."""
+    log = LogData()
+    _add(log, message, TimeUS=[0, 1], C=[0, 0], PI=[0, 0], TS=timeouts)
+    _add(log, "XKFS", TimeUS=[0, 1], C=[0, 0], SS=[0, 0])
+    parameters = {"EK3_SRC1_POSXY": 3, "EK2_GPS_TYPE": 2}
+
+    events = _warnings(GnssConsistencyChecks(log, parameters).analyse(), f"{message}.TS")
+
+    assert len(events) == 1
+    assert (events[0].timestamp_us, events[0].end_timestamp_us) == (0, 1e6)
+    assert _evidence(events[0])["TS"] == expected_mask
+    assert _evidence(events[0])["gps_timeout_mask"] == 1
+
+
+@pytest.mark.parametrize("message", ["XKF4", "NKF4"])
 def test_ekf_timeouts_without_gps_source_evidence_are_not_attributed_to_gps(message: str) -> None:
     """
     Unknown navigation sources cannot establish GPS timeouts.
@@ -865,7 +884,7 @@ def test_fuse_all_velocities_includes_gps_from_another_source_set(options: float
 
     assert bool(_warnings(outcomes, "XKF4.SV")) == expected
     assert not _warnings(outcomes, "XKF4.SP")
-    coverage = next(item for item in outcomes if item.source == "XKF4.GPS")
+    coverage = next(item for item in outcomes if item.source == "XKF4.SV/SP")
     assert coverage.evidence == {"evaluated": 3.0 if expected else 0.0, "total": 6.0}
 
 
@@ -1186,6 +1205,54 @@ def test_ekf_gps_events_split_on_receiver_and_source_set_changes(field_name: str
 
     assert [(event.timestamp_us, event.end_timestamp_us) for event in events] == [(0, 1e6), (2e6, 3e6), (4e6, 5e6)]
     assert [_evidence(event)["gps_receiver"] for event in events] == [0, 1, 1]
+
+
+@pytest.mark.parametrize("message", ["XKF4", "NKF4"])
+@pytest.mark.parametrize("field_name", ["FS", "GPS"])
+def test_ekf_events_combine_observed_fault_masks(message: str, field_name: str) -> None:
+    """Changing masks retain all observed bits in one continuous interval."""
+    log = LogData()
+    _add(log, message, TimeUS=list(range(6)), C=[0] * 6, PI=[0] * 6, **{field_name: [1, 1, 2, 1, 2, 2]})
+    if message == "XKF4":
+        _add(log, "XKFS", TimeUS=list(range(6)), C=[0] * 6, SS=[0] * 6, GI=[0] * 6)
+    checks = GnssConsistencyChecks(log, {"EK3_SRC1_POSXY": 3, "EK2_GPS_TYPE": 0})
+
+    events = _warnings(checks.analyse(), f"{message}.{field_name}")
+
+    assert [(event.timestamp_us, event.end_timestamp_us) for event in events] == [(0, 5e6)]
+    assert _evidence(events[0])[field_name] == 3
+
+
+@pytest.mark.parametrize("invalid_mask", [-1, 1.5, 65536, np.nan, np.inf])
+def test_invalid_gps_check_masks_are_excluded_from_events_and_coverage(invalid_mask: float) -> None:
+    """Invalid bitmasks cannot establish GPS-check failures or evaluated coverage."""
+    log = LogData()
+    _add(log, "XKF4", TimeUS=[0, 1, 2], C=[0] * 3, PI=[0] * 3, GPS=[invalid_mask] * 3)
+    _add(log, "XKFS", TimeUS=[0, 1, 2], C=[0] * 3, SS=[0] * 3)
+
+    outcomes = GnssConsistencyChecks(log, {"EK3_SRC1_POSXY": 3}).analyse()
+
+    assert not _warnings(outcomes, "XKF4.GPS")
+    coverage = next(item for item in outcomes if item.source == "XKF4.GPS.coverage")
+    assert _evidence(coverage) == {"evaluated": 0.0, "total": 3.0}
+
+
+@pytest.mark.parametrize("message", ["XKF4", "NKF4"])
+def test_ekf_ratio_and_gps_field_coverage_have_distinct_sources(message: str) -> None:
+    """Ratio coverage and GPS-check coverage retain distinct counts and do not share the warning source."""
+    log = LogData()
+    _add(log, message, TimeUS=[0, 1, 2, 3], C=[0] * 4, PI=[0] * 4, SV=[0] * 4, SP=[0] * 4, GPS=[1] * 4)
+    if message == "XKF4":
+        _add(log, "XKFS", TimeUS=[0, 1, 2, 3], C=[0] * 4, SS=[0] * 4)
+
+    outcomes = GnssConsistencyChecks(log, {"EK3_SRC1_POSXY": 3, "EK3_SRC1_VELXY": 3, "EK2_GPS_TYPE": 0}).analyse()
+
+    ratio_coverage = next(item for item in outcomes if item.source == f"{message}.SV/SP")
+    gps_coverage = next(item for item in outcomes if item.source == f"{message}.GPS.coverage")
+    assert _evidence(ratio_coverage) == {"evaluated": 8.0, "total": 8.0}
+    assert _evidence(gps_coverage) == {"evaluated": 4.0, "total": 4.0}
+    assert len(_warnings(outcomes, f"{message}.GPS")) == 1
+    assert all(item.severity != "informational" for item in outcomes if item.source == f"{message}.GPS")
 
 
 @pytest.mark.parametrize("field_name", ["FS", "GPS", "OFN", "OFE", "TS"])

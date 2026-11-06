@@ -558,6 +558,19 @@ class TestOutcomeGrouping:
         assert any(item.get("foreground") == "red3" for item in labels)
         assert any(item.args[1] == "status: 3" for item in patched_widgets["show_tooltip"].call_args_list)
 
+    def test_evidence_tooltip_preserves_integer_masks(
+        self, bare_window: LogAnalysisReportWindow, patched_widgets: dict[str, MagicMock]
+    ) -> None:
+        """Display integer masks exactly while keeping fractional measurements concise."""
+        bare_window.body_frame = MagicMock()
+        event = LogAnalysis("Receiver warning", evidence={"first": 1024.0, "second": 1025.0, "ratio": 1.23456})
+
+        bare_window._outcome_line(event)
+
+        assert any(
+            item.args[1] == "first: 1024\nsecond: 1025\nratio: 1.23" for item in patched_widgets["show_tooltip"].call_args_list
+        )
+
     def test_ungrouped_outcomes_render_without_headings(self, bare_window: LogAnalysisReportWindow) -> None:
         """Preserve the rendering behavior of analyses that do not provide groups."""
         outcomes = [_make_outcome(message="first"), _make_outcome(message="second")]
