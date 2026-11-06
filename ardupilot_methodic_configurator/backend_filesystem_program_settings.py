@@ -28,6 +28,7 @@ from pathlib import Path
 from platform import system as platform_system
 from posixpath import normpath as posixpath_normpath
 from re import match as re_match
+from threading import Lock
 from typing import Any
 
 from platformdirs import site_config_dir, user_config_dir
@@ -148,6 +149,8 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
 
     MAX_RECENT_DIRS = 10  # Maximum number of recent vehicle directories to store
     MAX_CONNECTION_HISTORY = 10  # Maximum number of connection strings to store
+    # Serialize complete read-modify-write operations across the GUI and reconnect worker.
+    _settings_lock = Lock()
 
     def __init__(self) -> None:
         pass
@@ -168,6 +171,7 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
             "Format version": 2,  # Version 2: introduced recent_vehicle_history replacing vehicle_dir
             "display_usage_popup": dict.fromkeys(USAGE_POPUP_WINDOWS, True),
             "connection_history": [],
+            "last_successful_connection": {},
             "recent_vehicle_history": [],
             "directory_selection": {
                 "template_dir": os_path.join(cls.get_templates_base_dir(), "ArduCopter", "empty_4.6.x"),
@@ -364,28 +368,30 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
 
     @staticmethod
     def store_recently_used_template_dirs(template_dir: str, new_base_dir: str) -> None:
-        settings = ProgramSettings._get_settings_as_dict()
+        with ProgramSettings._settings_lock:
+            settings = ProgramSettings._get_settings_as_dict()
 
-        # Update the settings with the new values
-        settings["directory_selection"].update(
-            {
-                "template_dir": normalize_path(template_dir),
-                "new_base_dir": normalize_path(new_base_dir),
-            }
-        )
+            # Update the settings with the new values
+            settings["directory_selection"].update(
+                {
+                    "template_dir": normalize_path(template_dir),
+                    "new_base_dir": normalize_path(new_base_dir),
+                }
+            )
 
-        ProgramSettings._set_settings_from_dict(settings)
+            ProgramSettings._set_settings_from_dict(settings)
 
     @staticmethod
     def store_template_dir(relative_template_dir: str) -> None:
-        settings = ProgramSettings._get_settings_as_dict()
+        with ProgramSettings._settings_lock:
+            settings = ProgramSettings._get_settings_as_dict()
 
-        template_dir = os_path.join(ProgramSettings.get_templates_base_dir(), relative_template_dir)
+            template_dir = os_path.join(ProgramSettings.get_templates_base_dir(), relative_template_dir)
 
-        # Update the settings with the new values
-        settings["directory_selection"].update({"template_dir": normalize_path(template_dir)})
+            # Update the settings with the new values
+            settings["directory_selection"].update({"template_dir": normalize_path(template_dir)})
 
-        ProgramSettings._set_settings_from_dict(settings)
+            ProgramSettings._set_settings_from_dict(settings)
 
     # History manager for vehicle directories
     _recent_vehicle_history = RecentItemsHistoryList(
@@ -399,9 +405,10 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
     @staticmethod
     def store_recently_used_vehicle_dir(vehicle_dir: str) -> None:
         """Store a vehicle directory in recent history (most recent first, capped at MAX_RECENT_DIRS entries)."""
-        settings = ProgramSettings._get_settings_as_dict()
-        settings = ProgramSettings._recent_vehicle_history.store_item(vehicle_dir, settings)
-        ProgramSettings._set_settings_from_dict(settings)
+        with ProgramSettings._settings_lock:
+            settings = ProgramSettings._get_settings_as_dict()
+            settings = ProgramSettings._recent_vehicle_history.store_item(vehicle_dir, settings)
+            ProgramSettings._set_settings_from_dict(settings)
 
     @staticmethod
     def migrate_settings_to_latest_version() -> None:
@@ -416,16 +423,17 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
         - Version 1: Used vehicle_dir in directory_selection
         - Version 2: Introduced recent_vehicle_history list replacing vehicle_dir
         """
-        settings = ProgramSettings._get_settings_as_dict()
-        current_version = settings.get("Format version", 1)  # Default to 1 for old settings
+        with ProgramSettings._settings_lock:
+            settings = ProgramSettings._get_settings_as_dict()
+            current_version = settings.get("Format version", 1)  # Default to 1 for old settings
 
-        # Migrate from version 1 to version 2
-        if current_version < 2:
-            logging_info("Migrating settings from version %d to version 2", current_version)
-            ProgramSettings._migrate_v1_to_v2(settings)
-            settings["Format version"] = 2
-            ProgramSettings._set_settings_from_dict(settings)
-            logging_info("Settings migration to version 2 complete")
+            # Migrate from version 1 to version 2
+            if current_version < 2:
+                logging_info("Migrating settings from version %d to version 2", current_version)
+                ProgramSettings._migrate_v1_to_v2(settings)
+                settings["Format version"] = 2
+                ProgramSettings._set_settings_from_dict(settings)
+                logging_info("Settings migration to version 2 complete")
 
     @staticmethod
     def _migrate_v1_to_v2(settings: dict) -> None:
@@ -559,12 +567,13 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
 
     @staticmethod
     def set_display_usage_popup(ptype: str, value: bool) -> None:
-        settings = ProgramSettings._get_settings_as_dict()
-        if ptype in settings.get("display_usage_popup", {}):
-            settings["display_usage_popup"][ptype] = value
-            ProgramSettings._set_settings_from_dict(settings)
-        else:
-            logging_error(_("Usage popup type '%s' not found in settings dictionary"), ptype)
+        with ProgramSettings._settings_lock:
+            settings = ProgramSettings._get_settings_as_dict()
+            if ptype in settings.get("display_usage_popup", {}):
+                settings["display_usage_popup"][ptype] = value
+                ProgramSettings._set_settings_from_dict(settings)
+            else:
+                logging_error(_("Usage popup type '%s' not found in settings dictionary"), ptype)
 
     @staticmethod
     def get_setting(setting: str) -> int | bool | str | float | None:
@@ -582,36 +591,37 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
 
     @staticmethod
     def set_setting(setting: str, value: bool | str | float) -> None:
-        settings = ProgramSettings._get_settings_as_dict()
-        setting_parts = setting.split("/")
+        with ProgramSettings._settings_lock:
+            settings = ProgramSettings._get_settings_as_dict()
+            setting_parts = setting.split("/")
 
-        # Handle hierarchical setting paths (e.g., "directory_selection/template_dir")
-        if len(setting_parts) > 1:
-            current = settings
-            # Navigate to the nested dictionary, except for the last part
-            for i, part in enumerate(setting_parts[:-1]):
-                if part not in current or not isinstance(current[part], dict):
-                    logging_error(
-                        _("Cannot set nested setting '%s': parent path '%s' not found or not a dictionary"),
-                        setting,
-                        "/".join(setting_parts[: i + 1]),
-                    )
-                    return
-                current = current[part]
+            # Handle hierarchical setting paths (e.g., "directory_selection/template_dir")
+            if len(setting_parts) > 1:
+                current = settings
+                # Navigate to the nested dictionary, except for the last part
+                for i, part in enumerate(setting_parts[:-1]):
+                    if part not in current or not isinstance(current[part], dict):
+                        logging_error(
+                            _("Cannot set nested setting '%s': parent path '%s' not found or not a dictionary"),
+                            setting,
+                            "/".join(setting_parts[: i + 1]),
+                        )
+                        return
+                    current = current[part]
 
-            # Set the value at the final level
-            last_part = setting_parts[-1]
-            if last_part in current:
-                current[last_part] = value
+                # Set the value at the final level
+                last_part = setting_parts[-1]
+                if last_part in current:
+                    current[last_part] = value
+                    ProgramSettings._set_settings_from_dict(settings)
+                else:
+                    logging_error(_("Setting path '%s' not found in settings dictionary"), setting)
+            # Handle simple (non-hierarchical) setting
+            elif setting in settings:
+                settings[setting] = value
                 ProgramSettings._set_settings_from_dict(settings)
             else:
-                logging_error(_("Setting path '%s' not found in settings dictionary"), setting)
-        # Handle simple (non-hierarchical) setting
-        elif setting in settings:
-            settings[setting] = value
-            ProgramSettings._set_settings_from_dict(settings)
-        else:
-            logging_error(_("Setting '%s' not found in settings dictionary"), setting)
+                logging_error(_("Setting '%s' not found in settings dictionary"), setting)
 
     # Motor Test Settings
 
@@ -674,6 +684,36 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
         return filepath != "" and os_path.exists(filepath)
 
     # History manager for connection strings
+    @staticmethod
+    def get_last_successful_connection() -> tuple[str, int] | None:
+        """Return the last successful connection when both saved values are valid."""
+        saved = ProgramSettings._get_settings_as_dict().get("last_successful_connection")
+        if not isinstance(saved, dict):
+            return None
+        device, baudrate = saved.get("device"), saved.get("baudrate")
+        if not isinstance(device, str) or not device.strip() or device != device.strip():
+            return None
+        if (
+            len(device) > 200
+            or device in ("none", "file")
+            or isinstance(baudrate, bool)
+            or not isinstance(baudrate, int)
+            or baudrate < 1200
+        ):
+            return None
+        return device, baudrate
+
+    @staticmethod
+    def store_last_successful_connection(device: str, baudrate: int) -> None:
+        """Save the device and baud rate together only when the successful connection changes."""
+        with ProgramSettings._settings_lock:
+            settings = ProgramSettings._get_settings_as_dict()
+            connection = {"device": device, "baudrate": baudrate}
+            if settings.get("last_successful_connection") == connection:
+                return
+            settings["last_successful_connection"] = connection
+            ProgramSettings._set_settings_from_dict(settings)
+
     _connection_history = RecentItemsHistoryList(
         settings_key="connection_history",
         max_items=MAX_CONNECTION_HISTORY,
@@ -714,12 +754,13 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
             The normalized connection string that was stored, or None if invalid.
 
         """
-        try:
-            settings = ProgramSettings._get_settings_as_dict()
-            settings = ProgramSettings._connection_history.store_item(connection_string, settings)
-            ProgramSettings._set_settings_from_dict(settings)
-            return ProgramSettings._connection_history.normalizer(connection_string)
-        except ValueError as e:
-            # Log validation errors but don't raise (backward compatible behavior)
-            logging_warning("Failed to store connection string to history: %s", e)
-            return None
+        with ProgramSettings._settings_lock:
+            try:
+                settings = ProgramSettings._get_settings_as_dict()
+                settings = ProgramSettings._connection_history.store_item(connection_string, settings)
+                ProgramSettings._set_settings_from_dict(settings)
+                return ProgramSettings._connection_history.normalizer(connection_string)
+            except ValueError as e:
+                # Log validation errors but don't raise (backward compatible behavior)
+                logging_warning("Failed to store connection string to history: %s", e)
+                return None

@@ -23,6 +23,7 @@ from serial.tools.list_ports_common import ListPortInfo
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.argparse_check_range import CheckRange
+from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller_bootloader import (
     CancellationRequested,
     ConfirmationRequested,
@@ -405,6 +406,7 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         if master is None:
             logging_warning(_("Cannot reset flight controller: not connected"))
             return ""
+        connection_baudrate = self.active_baudrate
         # Issue a reset
         reboot_autopilot = cast("Callable[[], None]", getattr(master, "reboot_autopilot"))  # noqa: B009
         reboot_autopilot()
@@ -429,7 +431,7 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         # Reconnect to the flight controller
         return self.create_connection_with_retry(
             progress_callback=None,
-            baudrate=self.baudrate,
+            baudrate=connection_baudrate,
             reconnect_progress_callback=progress_callback,
             is_reconnect=True,
         )
@@ -673,12 +675,38 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
                 a successful connection.
 
         """
-        return self._connection_manager.connect(
+        if not device:
+            try:
+                previous = ProgramSettings.get_last_successful_connection()
+            except OSError as exc:
+                logging_warning("Could not read last successful connection: %s", exc)
+                previous = None
+            # Only probe unprefixed serial devices and UDP transports. TCP and WebSocket
+            # setup can block beyond the heartbeat timeout, including during the upgrade.
+            if previous and (":" not in previous[0] or previous[0].startswith(("udp:", "udpin:", "udpout:", "udpbcast:"))):
+                error = self._connection_manager.connect(
+                    device=previous[0],
+                    progress_callback=progress_callback,
+                    log_errors=False,
+                    baudrate=previous[1],
+                    timeout=FlightControllerConnection.CONNECTION_RETRY_TIMEOUT,
+                )
+                if not error:
+                    return ""
+
+        error = self._connection_manager.connect(
             device=device,
             progress_callback=progress_callback,
             log_errors=log_errors,
             baudrate=baudrate,
         )
+        connected_device = self._connection_manager.comport_device
+        if not error and connected_device and connected_device != DEVICE_FC_PARAM_FROM_FILE and device != "none":
+            try:
+                ProgramSettings.store_last_successful_connection(device or connected_device, self.active_baudrate)
+            except OSError as exc:
+                logging_warning("Could not save last successful connection: %s", exc)
+        return error
 
     def create_connection_with_retry(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,

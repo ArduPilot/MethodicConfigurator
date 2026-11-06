@@ -143,6 +143,8 @@ class FlightControllerConnectionProtocol(Protocol):
         progress_callback: Callable[[int, int], None] | None,
         log_errors: bool,
         baudrate: int | None,
+        *,
+        timeout: int = 5,
     ) -> str: ...
 
     def create_connection_with_retry(  # pylint: disable=too-many-arguments, too-many-positional-arguments
