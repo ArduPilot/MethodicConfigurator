@@ -227,8 +227,8 @@ def test_arduplane_configuration_steps_use_plane_parameter_names() -> None:
     assert "Q_TKOFF_RPM_MIN" in throttle_step["add_parameters"]
 
 
-def test_arduplane_4_7_throttle_controller_uses_scaled_quadplane_acceleration_gains() -> None:
-    """The renamed Plane 4.7 throttle gains retain the firmware conversion scale."""
+def test_arduplane_4_7_template_does_not_preassign_quadplane_throttle_gains() -> None:
+    """Generic Plane templates leave learned QuadPlane throttle gains for later review."""
     parameter_file = (
         Path(__file__).parent.parent
         / "ardupilot_methodic_configurator"
@@ -244,8 +244,7 @@ def test_arduplane_4_7_throttle_controller_uses_scaled_quadplane_acceleration_ga
         for name, value in [line.split(",", maxsplit=1)]
     }
 
-    assert values["Q_P_D_ACC_I"] == pytest.approx(round(0.2 * PLANE_47_TEMPLATE_HOVER_THRUST, 6))
-    assert values["Q_P_D_ACC_P"] == pytest.approx(round(0.1 * PLANE_47_TEMPLATE_HOVER_THRUST, 6))
+    assert values == {}
 
 
 def test_arduplane_4_7_throttle_controller_formulas_scale_hover_thrust() -> None:
@@ -256,7 +255,7 @@ def test_arduplane_4_7_throttle_controller_formulas_scale_hover_thrust() -> None
     config = json.loads(configuration_steps_file.read_text(encoding="utf-8"))
     config_steps = ConfigurationSteps("vehicle_dir", "ArduPlane")
     variables = {
-        "fc_parameters": {"Q_M_THST_HOVER": PLANE_47_TEMPLATE_HOVER_THRUST},
+        "fc_parameters": {"Q_ENABLE": 1.0, "Q_M_THST_HOVER": PLANE_47_TEMPLATE_HOVER_THRUST},
         "vehicle_components": {"Flight Controller": {"Firmware": {"Version": "4.7.0"}}},
     }
 
@@ -281,7 +280,7 @@ def test_arduplane_4_7_throttle_controller_exports_six_decimal_gains(tmp_path: P
     config = json.loads(configuration_steps_file.read_text(encoding="utf-8"))
     config_steps = ConfigurationSteps("vehicle_dir", "ArduPlane")
     variables = {
-        "fc_parameters": {"Q_M_THST_HOVER": PLANE_47_TEMPLATE_HOVER_THRUST},
+        "fc_parameters": {"Q_ENABLE": 1.0, "Q_M_THST_HOVER": PLANE_47_TEMPLATE_HOVER_THRUST},
         "vehicle_components": {"Flight Controller": {"Firmware": {"Version": "4.7.0"}}},
     }
 
@@ -359,7 +358,7 @@ def test_arduplane_throttle_controller_uses_quadplane_parameters(
     throttle_step_file = "28_throttle_controller.param"
     throttle_step = config["steps"][throttle_step_file]
     variables = {
-        "fc_parameters": {"Q_M_THST_HOVER": 0.2},
+        "fc_parameters": {"Q_ENABLE": 1.0, "Q_M_THST_HOVER": 0.2},
         "vehicle_components": {"Flight Controller": {"Firmware": {"Version": firmware_version}}},
     }
     error = config_steps.compute_parameters(throttle_step_file, throttle_step, "derived", variables)
@@ -368,8 +367,43 @@ def test_arduplane_throttle_controller_uses_quadplane_parameters(
     assert set(config_steps.derived_parameters[throttle_step_file]) == expected_parameter_names
 
 
-def test_arduplane_quadplane_only_steps_skip_missing_hover_thrust_without_warnings() -> None:
-    """QuadPlane-only steps must not warn while evaluating a fixed-wing Plane without Q_M_THST_HOVER."""
+def test_enabled_quadplane_without_learned_hover_thrust_does_not_invent_controller_gains() -> None:
+    """An enabled QuadPlane still needs the measured hover-thrust parameter for gain derivation."""
+    configuration_steps_file = (
+        Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "configuration_steps_ArduPlane.json"
+    )
+    config = json.loads(configuration_steps_file.read_text(encoding="utf-8"))
+    config_steps = ConfigurationSteps("vehicle_dir", "ArduPlane")
+
+    error = config_steps.compute_parameters(
+        "28_throttle_controller.param",
+        config["steps"]["28_throttle_controller.param"],
+        "derived",
+        {
+            "fc_parameters": {"Q_ENABLE": 1.0},
+            "vehicle_components": {"Flight Controller": {"Firmware": {"Version": "4.7.0"}}},
+        },
+    )
+
+    assert error == ""
+    assert set(config_steps.derived_parameters["28_throttle_controller.param"]) == {"Q_A_THR_MIX_MAN"}
+
+
+@pytest.mark.parametrize(
+    "fc_parameters",
+    [
+        {"Q_ENABLE": 0.0, "Q_FRAME_CLASS": 0.0, "Q_M_THST_HOVER": 0.2},
+        {"Q_ENABLE": 0.0, "Q_FRAME_CLASS": 1.0, "Q_M_THST_HOVER": 0.2},
+        {"Q_FRAME_CLASS": 1.0, "Q_M_THST_HOVER": 0.2},
+        {"Q_ENABLE": 2.0, "Q_M_THST_HOVER": 0.2},
+        {},
+    ],
+    ids=["plane", "plane-with-frame-class", "missing-enable", "unsupported-enable", "unavailable"],
+)
+def test_arduplane_quadplane_only_steps_skip_inapplicable_hover_tuning_without_warnings(
+    fc_parameters: dict[str, float],
+) -> None:
+    """A non-QuadPlane configuration never derives hover gains, even if Q frame values exist."""
     configuration_steps_file = (
         Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "configuration_steps_ArduPlane.json"
     )
@@ -377,7 +411,7 @@ def test_arduplane_quadplane_only_steps_skip_missing_hover_thrust_without_warnin
         config = json.load(file)
 
     fixed_wing_variables = {
-        "fc_parameters": {},
+        "fc_parameters": fc_parameters,
         "vehicle_components": {"Flight Controller": {"Firmware": {"Version": "4.7.0"}}},
     }
     with patch("ardupilot_methodic_configurator.backend_filesystem_configuration_steps.logging_warning") as logging_warning:
@@ -396,27 +430,20 @@ def test_arduplane_quadplane_only_steps_skip_missing_hover_thrust_without_warnin
         )
 
     assert error == ""
+    assert "28_throttle_controller.param" not in config_steps.derived_parameters
     assert motor_notch_error == ""
     logging_warning.assert_not_called()
 
 
 @pytest.mark.parametrize(
-    ("template_name", "expected_parameter_names"),
+    "template_name",
     [
-        (
-            "normal_plane",
-            {"Q_A_THR_MIX_MAN", "Q_P_ACCZ_I", "Q_P_ACCZ_P"},
-        ),
-        (
-            "empty_4.7.x",
-            {"Q_A_THR_MIX_MAN", "Q_P_D_ACC_I", "Q_P_D_ACC_P"},
-        ),
+        "normal_plane",
+        "empty_4.7.x",
     ],
 )
-def test_arduplane_throttle_controller_templates_use_quadplane_parameters(
-    template_name: str, expected_parameter_names: set[str]
-) -> None:
-    """Plane throttle-controller templates use the parameter spelling matching their firmware generation."""
+def test_arduplane_throttle_controller_templates_leave_quadplane_parameters_unset(template_name: str) -> None:
+    """New generic Plane projects do not preassign QuadPlane throttle settings."""
     parameter_file = (
         Path(__file__).parent.parent
         / "ardupilot_methodic_configurator"
@@ -427,7 +454,7 @@ def test_arduplane_throttle_controller_templates_use_quadplane_parameters(
     )
     parameter_names = {line.partition(",")[0] for line in parameter_file.read_text(encoding="utf-8").splitlines() if line}
 
-    assert parameter_names == expected_parameter_names
+    assert parameter_names == set()
 
 
 def find_json_files(directory) -> list[str]:
