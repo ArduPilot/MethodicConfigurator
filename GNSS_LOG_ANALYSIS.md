@@ -40,6 +40,10 @@ checks timestamped `EK3_SRC_OPTIONS`: when `FuseAllVelocities` (bit 0) is enable
 GPS velocity configured in any source set remains eligible. Velocity innovations
 may combine GPS and other configured velocity sources and are not attributed solely to GPS.
 EKF innovations remain GPS-aided evidence.
+Coverage for logged fault, quality, reset and timeout fields reports how many samples
+were evaluated. Samples without a usable GPS navigation source are skipped; missing or
+stale `XKFS.SS` can prevent EKF3 source selection unless GPS velocity fusion is enabled
+across source sets.
 
 Timeout warnings retain only the position and velocity bits whose lane navigation
 sources use GPS, and include both the raw timeout mask and the GPS-relevant mask.
@@ -54,8 +58,8 @@ an outage at the beginning of a partial log retains its ordinary warning behavio
 
 The inertial comparison uses each healthy IMU independently. Continuous inertial segments
 are indexed by start time and integrated axes are stored contiguously, so each GPS comparison
-does not scan or copy the entire inertial history. Reversed IMU boot epochs cannot be aligned
-unambiguously and are excluded. A warning requires disagreement
+does not scan or copy the entire inertial history. Reversed GPS or IMU boot epochs cannot be aligned
+unambiguously and are excluded from the inertial comparison. A warning requires disagreement
 with every available healthy IMU at every tested latency. GPS course describes velocity direction;
 it is not compared directly with vehicle yaw.
 
