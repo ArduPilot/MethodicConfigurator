@@ -53,6 +53,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv pip install .[win_dist]
+          python -c "from pymavlink.dfindexer import available; assert available, 'pymavlink fast indexer is missing'"
 
       - name: Restore Inno Setup installer from cache
         id: cache-innosetup
@@ -172,9 +173,12 @@ jobs:
           $validator = Join-Path $PWD "ardupilot_methodic_configurator\dist\ardupilot_methodic_configurator\ardupilot_methodic_configurator.exe"
           $fixture = Join-Path $PWD "tests\fixtures\backend_log_80k.bin"
           $env:PYMAVLINK_FAST_INDEX = "1"
-          & $validator --validate-bin-log $fixture
+          $valid_output = & $validator --validate-bin-log $fixture 2>&1
           if ($LASTEXITCODE -ne 0) {
-            throw "Frozen bin-log validator failed with exit code $LASTEXITCODE."
+            throw "Frozen bin-log validator failed with exit code $LASTEXITCODE. Output: $($valid_output | Out-String)"
+          }
+          if (($valid_output | Out-String) -match 'dfindexer is not available') {
+            throw 'Frozen bin-log validator is missing the pymavlink fast indexer.'
           }
 
           $empty_log = Join-Path $env:RUNNER_TEMP "empty.bin"
@@ -314,9 +318,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
+        env:
+          PYMAVLINK_FAST_INDEX: '1'
         run: |
           python -m pip install --upgrade pip
           python -m pip install .[mac_dist]
+          python -c "from pymavlink.dfindexer import available; assert available, 'pymavlink fast indexer is missing'"
 
       - name: Verify tkinter is available
         run: |
@@ -427,9 +434,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
+        env:
+          PYMAVLINK_FAST_INDEX: '1'
         run: |
           python -m pip install --upgrade pip
           python -m pip install .[linux_dist]
+          python -c "from pymavlink.dfindexer import available; assert available, 'pymavlink fast indexer is missing'"
 
       - name: Verify tkinter is available
         run: |

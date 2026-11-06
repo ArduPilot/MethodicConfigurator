@@ -167,6 +167,8 @@ changelog = "https://github.com/ArduPilot/MethodicConfigurator/releases"
 
 [tool.uv]
 required-version = ">=0.12.6"
+# Pymavlink disables its native DataFlash indexer on Windows and macOS source builds.
+extra-build-variables = { pymavlink = { PYMAVLINK_FAST_INDEX = "1" } }
 
 [tool.setuptools]
 # Discover the application and its subpackages; specify data via package-data.

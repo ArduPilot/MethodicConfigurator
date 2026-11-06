@@ -60,6 +60,29 @@ The above scripts will:
 * Set up pre-commit hooks for linting and formatting
 * Install GNU gettext tools for internationalization support
 
+### Pymavlink fast log indexing
+
+The uv project configuration enables pymavlink's native DataFlash indexer when it builds
+pymavlink from source. Published wheels may already include the indexer. Source builds need
+Python development headers and a C compiler; on Windows install Microsoft C++ Build Tools
+with the Desktop development with C++ workload. Pymavlink can silently fall back to a pure
+Python build if compilation is unavailable. Check the active environment with:
+
+```bash
+python -c "from pymavlink.dfindexer import available; print(available)"
+```
+
+If it prints `False`, install the build prerequisites and rebuild the pinned dependency from
+the project directory, bypassing previously cached builds:
+
+```bash
+uv pip install --reinstall-package pymavlink --no-binary pymavlink --no-cache -e .
+python -c "from pymavlink.dfindexer import available; assert available"
+```
+
+The uv setting applies to builds run from this project. Other installers need the
+`PYMAVLINK_FAST_INDEX=1` environment variable while building pymavlink from source.
+
 ### Running tests on Linux
 
 On Linux systems without a usable desktop display, the test suite may need the
