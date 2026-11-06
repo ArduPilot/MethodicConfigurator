@@ -1,8 +1,4 @@
 ARMING_RUDDER,2
-RC6_OPTION,0
-RC7_OPTION,153  # "Motor Emergency Stop", stops all motors immediately at a high signal
-RC8_OPTION,30  # "Lost rover Sound", generates a loud tone from the buzzer at a high signal to locate a lost multicopter
-RC9_OPTION,0
 RC1_MAX,1937
 RC1_MIN,1106
 RC1_TRIM,1525
@@ -30,15 +26,19 @@ RC5_MIN,965
 RC5_TRIM,965
 RC6_MAX,2071
 RC6_MIN,964
+RC6_OPTION,0
 RC6_TRIM,1506
 RC7_MAX,1998
 RC7_MIN,1003
+RC7_OPTION,153  # "Motor Emergency Stop", stops all motors immediately at a high signal
 RC7_TRIM,1003
 RC8_MAX,2064
 RC8_MIN,964
+RC8_OPTION,30  # "Lost rover Sound", generates a loud tone from the buzzer at a high signal to locate a lost multicopter
 RC8_TRIM,964
 RC9_MAX,2064
 RC9_MIN,964
+RC9_OPTION,0
 RC9_TRIM,964
 RCMAP_PITCH,3
 RCMAP_ROLL,4
