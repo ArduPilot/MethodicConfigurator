@@ -269,7 +269,17 @@ class TestComponentEditorWithMinimalMocking:
     while mocking only the absolute minimum required to avoid UI rendering.
     """
 
-    def test_editor_initialization_process(self, temp_vehicle_dir, root) -> None:
+    @pytest.fixture
+    def editor_root(self, root: tk.Tk) -> Generator[tk.Tk, None, None]:
+        """Remove only frames created by this test from the shared Tk root."""
+        initial_children = tuple(root.winfo_children())
+        yield root
+        for child in root.winfo_children():
+            if child not in initial_children:
+                child.destroy()
+        assert tuple(root.winfo_children()) == initial_children
+
+    def test_editor_initialization_process(self, temp_vehicle_dir, editor_root: tk.Tk) -> None:
         """
         Test the full initialization process with minimal mocking.
 
@@ -287,6 +297,7 @@ class TestComponentEditorWithMinimalMocking:
         )
 
         # Mock only the UI rendering parts, use the real root from conftest.py
+        root = editor_root
         with (
             patch.object(ComponentEditorWindow, "_create_scroll_frame") as mock_scroll_frame,
             patch.object(ComponentEditorWindow, "_create_intro_frame") as mock_intro_frame,
@@ -318,7 +329,7 @@ class TestComponentEditorWithMinimalMocking:
             assert isinstance(components, dict)
             assert len(components) > 0
 
-    def test_editor_with_real_data_model(self, temp_vehicle_dir, root) -> None:
+    def test_editor_with_real_data_model(self, temp_vehicle_dir, editor_root: tk.Tk) -> None:
         """
         Test the editor with a real data model but minimal UI mocking.
 
@@ -341,6 +352,7 @@ class TestComponentEditorWithMinimalMocking:
         data_model = ComponentDataModel(REALISTIC_VEHICLE_DATA, component_datatypes, schema)
 
         # Bypass UI initialization but use real data model and real root
+        root = editor_root
         with (
             patch.object(ComponentEditorWindow, "_initialize_ui"),
             patch("tkinter.PhotoImage"),

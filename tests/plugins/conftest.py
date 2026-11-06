@@ -10,7 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 from os import getenv
 from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock
@@ -21,9 +21,39 @@ from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduP
 from ardupilot_methodic_configurator.data_model_par_dict import Par
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_battery_monitor import BatteryMonitorView
 
 if TYPE_CHECKING:
     from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginView
+
+
+@pytest.fixture
+def cleanup_battery_monitor_views(request: pytest.FixtureRequest) -> Generator[None, None, None]:
+    """Release battery views and timers created by one test on the shared Tk root."""
+    if "tk_root" not in request.fixturenames:
+        yield
+        return
+
+    root = cast("tk.Tk", request.getfixturevalue("tk_root"))
+    initial_children = tuple(root.winfo_children())
+
+    def periodic_timer_ids() -> set[str]:
+        return {
+            str(timer_id)
+            for timer_id in root.tk.call("after", "info")
+            if "_periodic_update" in str(root.tk.call("after", "info", timer_id)[0])
+        }
+
+    initial_timers = periodic_timer_ids()
+
+    yield
+    for child in tuple(root.winfo_children()):
+        if child not in initial_children and isinstance(child, BatteryMonitorView):
+            child.destroy()
+    for timer_id in periodic_timer_ids() - initial_timers:
+        root.after_cancel(timer_id)
+    assert tuple(root.winfo_children()) == initial_children
+    assert periodic_timer_ids() == initial_timers
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
