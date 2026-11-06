@@ -755,6 +755,30 @@ class TestRenderSubsystem:
         mock_outcome_line.assert_any_call(outcomes[0])
         mock_outcome_line.assert_any_call(outcomes[1])
 
+    def test_gps_analysis_shows_its_reason_and_all_findings(self, bare_window: LogAnalysisReportWindow) -> None:
+        """GPS assessment limitations and findings remain visible together."""
+        window = self._window_for_render(bare_window)
+        outcomes = [_make_outcome(group="GNSS consistency"), _make_outcome(group="Coverage")]
+        reason = "GNSS assessment complete; undetected spoofing remains possible."
+        window.pairs = [
+            (
+                _make_availability_result(name="GPS", subsystem_key="gps"),
+                _make_analysis_result(reason=reason, outcomes=outcomes),
+            )
+        ]
+        window.report = None
+        window._report_availability_by_name = {}
+        window._report_analysis_by_name = {}
+        with (
+            patch.object(window, "_section_heading"),
+            patch.object(window, "_section_body") as body,
+            patch.object(window, "_group_heading"),
+            patch.object(window, "_outcome_line") as outcome_line,
+        ):
+            window._render_subsystem("GPS")
+        body.assert_any_call(reason)
+        assert outcome_line.call_args_list == [call(item) for item in outcomes]
+
     def test_actionable_outcome_exposes_a_parameter_fix(self, bare_window: LogAnalysisReportWindow) -> None:
         """Analysis recommendations should use the same parameter-fix workflow as availability issues."""
         outcome = _make_outcome(param_name="MOT_SPIN_MIN", suggested_value=0.15)

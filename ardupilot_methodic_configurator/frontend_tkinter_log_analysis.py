@@ -286,10 +286,12 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
         self._section_heading(_("Analysis"))
         if analysis_result is None:
             self._section_body(_("Not yet analyzed - {reason}").format(reason=availability_result.reason))
-        elif not analysis_result.outcomes:
-            self._section_body(_("No findings."))
         else:
-            self._render_outcomes(analysis_result.outcomes)
+            self._section_body(analysis_result.reason)
+            if analysis_result.outcomes:
+                self._render_outcomes(analysis_result.outcomes)
+            else:
+                self._section_body(_("No findings."))
 
     def _section_heading(self, text: str) -> None:
         ttk.Label(self.body_frame, text=text, font=("TkDefaultFont", 16, "bold"), foreground="#333333").pack(

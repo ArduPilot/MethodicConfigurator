@@ -14,21 +14,20 @@ The current Log Analysis system provides **detailed analysis** for:
 
 * Battery
 * ESC
+* GPS/GNSS consistency and interference indicators
 * IMU
 * Vibration
 
 It also performs **data availability checks only** (no detailed analysis yet) for:
 
-* GPS
 * FFT
 * Errors
 * Performance Monitor
 * Arming
 * Flight Mode
 
-All ten subsystems are checked for data availability first. Only the four listed above currently go on to produce detailed findings; the other six report whether their data
-is
-present and usable.
+Subsystems are checked for data availability first.
+Those listed above can also produce detailed findings.
 
 ## Before you start
 
@@ -38,8 +37,14 @@ You need:
 * An ArduPilot `.bin` DataFlash log
 * The correct vehicle project opened in Methodic Configurator (This is very important)
 
-The log should come from the same vehicle configuration that you are currently working with. The tool checks the vehicle type and firmware version from the log
-against the currently opened project. A log from a different vehicle or incompatible firmware version is rejected instead of being analyzed against the wrong configuration.
+For the standalone report, pass a log path as a positional argument, for example
+`python ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py "path/to/flight.bin"`.
+Use `--vehicle-dir` to supply the vehicle project for configuration context.
+If no log path is supplied, a file selector opens.
+
+The log should come from the same vehicle configuration that you are currently working with.
+The tool checks the vehicle type and firmware version from the log against the currently opened project.
+A log from a different vehicle or incompatible firmware version is rejected instead of being analyzed against the wrong configuration.
 
 ## Basic workflow
 
@@ -90,7 +95,9 @@ Make sure you are using the correct project AMC before selecting the log.
 
 ### 3. Select the log
 
-Open the Log Analysis section and select the `.bin` file. The tool reads the log and extracts the information required for analysis. This can include:
+Open the Log Analysis section and select the `.bin` file.
+The tool reads the log and extracts the information required for analysis.
+This can include:
 
 * Vehicle type
 * Firmware version
@@ -120,8 +127,8 @@ Which can provide wrong analysis.
 
 ### 5. Data availability
 
-Before running an analysis, the tool checks whether the required data exists and can be used. This is important because a missing or invalid log message should not produce
-a misleading analysis result.
+Before running an analysis, the tool checks whether the required data exists and can be used.
+This is important because a missing or invalid log message should not produce a misleading analysis result.
 
 For example, the IMU data availability checks can detect:
 
@@ -133,12 +140,14 @@ For example, the IMU data availability checks can detect:
 * Gyroscope signals that remain at zero
 * Accelerometer signals that remain at zero
 
-Data availability problem does not necessarily mean that the hardware is broken. It may simply mean that the required information was not recorded correctly.
+Data availability problem does not necessarily mean that the hardware is broken.
+It may simply mean that the required information was not recorded correctly.
 
 ## Battery Analysis
 
 Battery Analysis examines the battery information recorded in the BAT messages together with the vehicle's [battery monitor parameters]
-(<https://ardupilot.org/copter/docs/common-powermodule-landingpage.html>). It currently checks:
+(<https://ardupilot.org/copter/docs/common-powermodule-landingpage.html>).
+It currently checks:
 
 * Battery capacity usage
 * Voltage extremes
@@ -162,7 +171,8 @@ This gives an indication of how much of the configured battery capacity was cons
 
 ### Battery voltage
 
-The analysis examines the voltage recorded during the flight. If unusual voltage values are reported, investigate:
+The analysis examines the voltage recorded during the flight.
+If unusual voltage values are reported, investigate:
 
 * Battery condition
 * [Battery monitor configuration](https://ardupilot.org/copter/docs/common-powermodule-landingpage.html)
@@ -174,8 +184,8 @@ Do not assume that an unusual voltage value automatically means that the battery
 
 ### Battery failsafe parameters
 
-Battery failsafe thresholds should be configured consistently. If the analysis reports a problem with the battery thresholds, inspect the related parameters in
-Methodic Configurator before changing them.
+Battery failsafe thresholds should be configured consistently.
+If the analysis reports a problem with the battery thresholds, inspect the related parameters in Methodic Configurator before changing them.
 The relevant parameters include:
 
 * `BATT_LOW_VOLT`
@@ -207,8 +217,8 @@ Correct the problem
 
 ## ESC Analysis
 
-ESC Analysis examines the [ESC information](https://ardupilot.org/copter/docs/common-esc-guide.html) available in the flight log. ArduPilot can communicate with ESCs
-using several protocols, including:
+ESC Analysis examines the [ESC information](https://ardupilot.org/copter/docs/common-esc-guide.html) available in the flight log.
+ArduPilot can communicate with ESCs using several protocols, including:
 
 * [PWM, OneShot, OneShot125](https://ardupilot.org/copter/docs/common-brushless-escs.html)
 * [DShot](https://ardupilot.org/copter/docs/common-dshot-escs.html)
@@ -238,11 +248,13 @@ Check:
 * Propeller condition
 * ESC communication protocol
 
-An ESC finding does not automatically mean that the ESC itself is defective. Use the finding as a starting point for further investigation.
+An ESC finding does not automatically mean that the ESC itself is defective.
+Use the finding as a starting point for further investigation.
 
 ## IMU Analysis
 
-IMU Analysis checks the temperature calibration state of the vehicle's IMUs. It examines parameters such as:
+IMU Analysis checks the temperature calibration state of the vehicle's IMUs.
+It examines parameters such as:
 
 * `INS_TCAL1_ENABLE`
 * `INS_TCAL2_ENABLE`
@@ -256,27 +268,30 @@ You may see a result such as:
 
 > IMU 1 temperature calibration is not enabled. Consider running it for better accuracy across temperature changes.
 
-This means temperature calibration is not enabled for that IMU. If appropriate for the vehicle, follow the ArduPilot IMU temperature calibration procedure.
+This means temperature calibration is not enabled for that IMU.
+If appropriate for the vehicle, follow the ArduPilot IMU temperature calibration procedure.
 
 ### Temperature calibration in progress
 
-The analysis can also report that temperature calibration is still in progress. This means the calibration has not yet reached its completed state.
+The analysis can also report that temperature calibration is still in progress.
+This means the calibration has not yet reached its completed state.
 
 ### Accelerometer/gyroscope calibration prerequisite
 
-Temperature calibration data can only be trusted if a 6-axis accelerometer and gyroscope calibration has already been performed. If that prerequisite calibration is
-missing, the analysis reports that the IMU is marked as temperature-calibrated but the underlying data may be unreliable, and recommends running the accelerometer
-and gyroscope calibration before relying on the temperature calibration.
+Temperature calibration data can only be trusted if a 6-axis accelerometer and gyroscope calibration has already been performed.
+If that prerequisite calibration is missing, the analysis reports that the IMU is marked as temperature-calibrated but the underlying
+data may be unreliable, and recommends running the accelerometer and gyroscope calibration before relying on the temperature calibration.
 
 ### Invalid calibration
 
-The analysis can detect inconsistent calibration information. For example, an IMU may be marked as temperature-calibrated while the required accelerometer or gyroscope
-calibration temperature information is missing. In this situation, the analysis recommends correcting the calibration before relying on the temperature calibration data.
+The analysis can detect inconsistent calibration information.
+For example, an IMU may be marked as temperature-calibrated while the required accelerometer or gyroscope calibration temperature information is missing.
+In this situation, the analysis recommends correcting the calibration before relying on the temperature calibration data.
 
 ### Missing temperature range
 
-The temperature calibration data includes the temperature range over which calibration was performed. If the required minimum or maximum temperature information is missing,
-the analysis reports an inconsistent state.
+The temperature calibration data includes the temperature range over which calibration was performed.
+If the required minimum or maximum temperature information is missing, the analysis reports an inconsistent state.
 
 ## Vibration Analysis
 
@@ -308,12 +323,14 @@ If high vibration is reported, check:
 * Damaged components
 * Propeller balance
 
-Do not immediately change flight controller tuning parameters. First find the physical source of the vibration.
+Do not immediately change flight controller tuning parameters.
+First find the physical source of the vibration.
 
 ### Accelerometer clipping
 
-The analysis also checks for accelerometer clipping events. Clipping occurs when the measured acceleration reaches the sensor's measurable limit. If clipping is reported,
-investigate the cause before continuing with detailed tuning.
+The analysis also checks for accelerometer clipping events.
+Clipping occurs when the measured acceleration reaches the sensor's measurable limit.
+If clipping is reported, investigate the cause before continuing with detailed tuning.
 
 ## When an analysis is unavailable
 
@@ -325,8 +342,9 @@ or:
 
 > No VIBE data available for analysis
 
-This does not automatically mean that there is a hardware problem. It may simply mean that the required message was not recorded in the log. For example,
-Vibration Analysis requires usable VIBE data.
+This does not automatically mean that there is a hardware problem.
+It may simply mean that the required message was not recorded in the log.
+For example, Vibration Analysis requires usable VIBE data.
 
 If an analysis is unavailable:
 
@@ -350,11 +368,13 @@ For example:
 
 > IMU 1 temperature calibration is not enabled.
 
-The important part is not only the warning itself. Use the related parameter or configuration step to understand what should be checked next.
+The important part is not only the warning itself.
+Use the related parameter or configuration step to understand what should be checked next.
 
 ### What to do when a problem is reported
 
-Do not blindly change parameters. Use this workflow:
+Do not blindly change parameters.
+Use this workflow:
 
 ```text
 Finding
@@ -382,7 +402,8 @@ Analyze new log
 
 ```
 
-The purpose of Log Analysis is to help identify problems and guide investigation. It is not yet intended to automatically change vehicle parameters.
+The purpose of Log Analysis is to help identify problems and guide investigation.
+It is not yet intended to automatically change vehicle parameters.
 In the upcoming versions that can also be done.
 
 ## Recommended flight log workflow
@@ -419,9 +440,10 @@ Make sure:
 
 ## Important notes
 
-Log Analysis depends on the information recorded in the flight log. A missing analysis result does not automatically mean that the vehicle is healthy.
-Similarly, a reported issue does not automatically mean that a hardware component has failed. Always investigate the finding together with the
-vehicle configuration and the original flight conditions.
+Log Analysis depends on the information recorded in the flight log.
+A missing analysis result does not automatically mean that the vehicle is healthy.
+Similarly, a reported issue does not automatically mean that a hardware component has failed.
+Always investigate the finding together with the vehicle configuration and the original flight conditions.
 
 ## Frequently asked questions
 
@@ -429,10 +451,12 @@ vehicle configuration and the original flight conditions.
 Yes. The Log Analysis feature works with ArduPilot DataFlash `.bin` logs.
 
 **Can I analyze a log from another vehicle?**
-When analysing the log using AMC the log must match the currently opened vehicle project. The tool validates the vehicle type and firmware version before continuing.
+When analysing the log using AMC the log must match the currently opened vehicle project.
+The tool validates the vehicle type and firmware version before continuing.
 
 **Why is an analysis unavailable?**
-Usually because the required log data is missing or cannot be used. Check whether the required message was recorded in the log.
+Usually because the required log data is missing or cannot be used.
+Check whether the required message was recorded in the log.
 
 **Does a warning mean something is broken?**
 Not necessarily. A warning identifies something that should be investigated.
@@ -458,6 +482,7 @@ Because an analysis based on missing or invalid data could produce a misleading 
 
 The Log Analysis feature makes it easier to understand what happened during an ArduPilot flight.
 
-Current detailed analyses include Battery, ESC, IMU, and Vibration. The system also performs data availability checks for other vehicle subsystems (GPS, FFT, Errors, Performance
-Monitor, Arming, and Flight Mode). The best results come from a correctly configured vehicle, a complete flight log, and investigating the reported findings rather than
-blindly changing parameters.
+Current detailed analyses include Battery, ESC, IMU, Vibration, and GPS/GNSS.
+The system also performs data availability checks for other vehicle subsystems (FFT, Errors, Performance Monitor, Arming, and Flight Mode).
+The best results come from a correctly configured vehicle, a complete flight log, and investigating the reported findings
+rather than blindly changing parameters.
