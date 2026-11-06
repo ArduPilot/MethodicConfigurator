@@ -160,13 +160,16 @@ class GnssConsistencyChecks:
         message: str,
         measurements: dict[str, np.ndarray] | None = None,
         minimum_duration_s: float = 0.0,
+        bitmask_fields: tuple[str, ...] = (),
     ) -> list[LogAnalysis]:
         outcomes: list[LogAnalysis] = []
         for start, end, _level in event_intervals(series.times, levels):
             if series.times[end] - series.times[start] < minimum_duration_s:
                 continue
             evidence = {
-                name: float(np.nanmax(values[start : end + 1]))
+                name: float(np.bitwise_or.reduce(values[start : end + 1].astype(np.uint16)))
+                if name in bitmask_fields
+                else float(np.nanmax(values[start : end + 1]))
                 for name, values in (measurements or {}).items()
                 if np.isfinite(values[start : end + 1]).any()
             }
@@ -592,7 +595,7 @@ class GnssConsistencyChecks:
                 count += int(np.count_nonzero(np.isfinite(levels)))
                 total += len(series.times)
         self._coverage(
-            f"{message}.GPS",
+            f"{message}.SV/SP",
             count,
             total,
             _("Every logged lane is checked independently; GPS source selection is required. EKF evidence is GPS-aided."),
@@ -665,7 +668,6 @@ class GnssConsistencyChecks:
                 if field_name != "FS":
                     levels[startup] = np.nan
                 levels[~gps_evidence] = np.nan
-                count += int(np.count_nonzero(np.isfinite(levels)))
                 message_text = (
                     _("EKF lane position reset changed")
                     if field_name in ("OFN", "OFE")
@@ -681,6 +683,13 @@ class GnssConsistencyChecks:
                     identity = 8 * (np.nan_to_num(source_sets, nan=-1) + 1) + 32 * (np.nan_to_num(receiver, nan=-1) + 1)
                     levels = np.where(levels > 0, levels + identity, levels)
                     evidence["gps_receiver"] = receiver
+                if field_name in ("FS", "GPS"):
+                    raw_mask = series.fields[field_name]
+                    valid_mask = (
+                        np.isfinite(raw_mask) & (raw_mask >= 0) & (raw_mask <= 65535) & (raw_mask == np.floor(raw_mask))
+                    )
+                    levels = np.where(valid_mask, levels, np.nan)
+                count += int(np.count_nonzero(np.isfinite(levels)))
                 outcomes.extend(
                     self._events(
                         series,
@@ -688,6 +697,7 @@ class GnssConsistencyChecks:
                         f"{message}.{field_name}",
                         message_text,
                         evidence,
+                        bitmask_fields=(field_name,) if field_name in ("FS", "GPS") else (),
                     )
                 )
             self._ekf_discontinuity_coverage(message, field_name, count, total)
