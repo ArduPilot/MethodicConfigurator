@@ -475,7 +475,8 @@
             "old_filenames": [],
             "plugin": {
                 "name": "motor_test",
-                "placement": "left"
+                "placement": "left",
+                "if": "'Q_ENABLE' in fc_parameters and fc_parameters['Q_ENABLE'] == 1"
             }
         },
         "15_board_orientation.param": {
