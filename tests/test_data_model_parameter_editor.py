@@ -5992,6 +5992,74 @@ class TestVehicleComponentsSynchronisation:
 class TestPluginAvailability:
     """Test which plugins are offered to the user for a given configuration step."""
 
+    @pytest.mark.parametrize(
+        ("live_parameters", "saved_enable", "connected", "expected"),
+        [
+            ({"Q_ENABLE": 0.0, "Q_FRAME_CLASS": 0.0}, None, True, False),
+            ({"Q_ENABLE": 0.0, "Q_FRAME_CLASS": 1.0}, 1.0, True, False),
+            ({"Q_ENABLE": 1.0, "Q_FRAME_CLASS": 1.0}, None, True, True),
+            ({"Q_FRAME_CLASS": 1.0}, 1.0, True, False),
+            ({"Q_FRAME_CLASS": 1.0}, None, True, False),
+            ({}, 1.0, False, True),
+            ({}, 0.0, False, False),
+            ({}, None, False, False),
+        ],
+        ids=[
+            "conventional-plane",
+            "live-disabled-overrides-saved",
+            "quadplane",
+            "connected-missing-enable",
+            "frame-class-alone",
+            "offline-saved-quadplane",
+            "offline-saved-conventional",
+            "offline-unknown",
+        ],
+    )
+    def test_plane_step_11_servo_assistant_requires_quadplane_enable(
+        self,
+        parameter_editor: ParameterEditor,
+        live_parameters: dict[str, float],
+        saved_enable: float | None,
+        connected: bool,
+        expected: bool,
+    ) -> None:
+        """The real Step 11 plugin path uses live Q_ENABLE or explicit saved offline evidence."""
+        _ = self
+        steps_file = Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "configuration_steps_ArduPlane.json"
+        step = json.loads(steps_file.read_text(encoding="utf-8"))["steps"]["11_servo_outputs.param"]
+        saved_functions = ParDict({"SERVO1_FUNCTION": Par(70), "SERVO2_FUNCTION": Par(4)})
+        parameter_editor._local_filesystem.get_plugin.return_value = step["plugin"]
+        parameter_editor._local_filesystem.vehicle_type = "ArduPlane"
+        parameter_editor._local_filesystem.file_parameters = {"11_servo_outputs.param": saved_functions}
+        if saved_enable is not None:
+            parameter_editor._local_filesystem.file_parameters["15_board_orientation.param"] = ParDict(
+                {"Q_ENABLE": Par(saved_enable)}
+            )
+        parameter_editor._flight_controller.master = object() if connected else None
+        parameter_editor._flight_controller.fc_parameters = live_parameters
+        parameter_editor._config_step_processor.variables = {}
+
+        plugin = parameter_editor.get_plugin("11_servo_outputs.param")
+
+        assert (plugin == {"name": PLUGIN_SERVO_OUT, "placement": "left"}) is expected
+        assert parameter_editor._local_filesystem.file_parameters["11_servo_outputs.param"] == saved_functions
+        assert parameter_editor._flight_controller.fc_parameters == live_parameters
+        parameter_editor._flight_controller.set_param.assert_not_called()
+
+    def test_copter_servo_assistant_remains_available(self, parameter_editor: ParameterEditor) -> None:
+        """ArduCopter's Step 11 plugin remains available without Q_ENABLE."""
+        _ = self
+        steps_file = Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "configuration_steps_ArduCopter.json"
+        step = json.loads(steps_file.read_text(encoding="utf-8"))["steps"]["11_servo_outputs.param"]
+        parameter_editor._local_filesystem.get_plugin.return_value = step["plugin"]
+        parameter_editor._local_filesystem.vehicle_type = "ArduCopter"
+        parameter_editor._flight_controller.fc_parameters = {"FRAME_CLASS": 1.0}
+
+        assert parameter_editor.get_plugin("11_servo_outputs.param") == {
+            "name": PLUGIN_SERVO_OUT,
+            "placement": "left",
+        }
+
     def test_user_sees_an_unconditional_plugin_for_the_step(self, parameter_editor: ParameterEditor) -> None:
         """
         A plugin without a condition is always offered.
