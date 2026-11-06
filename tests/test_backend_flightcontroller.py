@@ -16,12 +16,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import tempfile
 from argparse import ArgumentParser
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any, cast  # pylint: disable=unused-import
 from unittest.mock import MagicMock, call, patch
 
 import pytest
 from pymavlink import mavutil
 
+from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_flightcontroller_commands import FlightControllerCommands
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import (
@@ -43,6 +45,186 @@ from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 # pylint: disable=protected-access, too-many-lines
 
 
+@pytest.fixture(autouse=True)
+def isolated_program_settings(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep all facade connection tests independent of the developer's settings."""
+    monkeypatch.setattr(ProgramSettings, "_user_config_dir", staticmethod(lambda: str(tmp_path)))
+
+
+@pytest.mark.parametrize(
+    "device",
+    [
+        "/dev/ttyUSB0",
+        "COM1",
+        "udp:127.0.0.1:14550",
+        "udpin:127.0.0.1:14550",
+        "udpout:127.0.0.1:14550",
+        "udpbcast:127.0.0.1:14550",
+    ],
+)
+def test_successful_connection_is_remembered_and_tried_first_on_next_autoconnection(tmp_path: Path, device: str) -> None:
+    """A successful manual connection survives a new controller instance."""
+    with patch.object(ProgramSettings, "_user_config_dir", return_value=str(tmp_path)):
+        fc, manager, *_ = _build_flight_controller_with_mocks()
+        manager.connect.return_value = ""
+        manager.comport_device = device
+        manager.active_baudrate = 57600
+        assert fc.connect(device, baudrate=57600) == ""
+
+        next_fc, next_manager, *_ = _build_flight_controller_with_mocks()
+        next_manager.connect.return_value = ""
+        progress = MagicMock()
+        assert next_fc.connect("", progress_callback=progress) == ""
+        next_manager.connect.assert_called_once_with(
+            device=device,
+            progress_callback=progress,
+            log_errors=False,
+            baudrate=57600,
+            timeout=FlightControllerConnection.CONNECTION_RETRY_TIMEOUT,
+        )
+
+
+@pytest.mark.parametrize("discovery_error", ["", "no ports"])
+@pytest.mark.parametrize(
+    "device", ["tcp:192.0.2.1:5760", "ws:192.0.2.1:5760", "wss:192.0.2.1:5760", "tcpin:0.0.0.0:5760", "wsserver:0.0.0.0:5760"]
+)
+def test_remembered_blocking_endpoint_does_not_delay_automatic_discovery(discovery_error: str, device: str) -> None:
+    """GIVEN a saved blocking transport WHEN autoconnecting THEN discovery runs without probing it."""
+    ProgramSettings.store_last_successful_connection(device, 57600)
+    fc, manager, *_ = _build_flight_controller_with_mocks()
+    manager.connect.return_value = discovery_error
+    manager.comport_device = "COM2"
+    manager.active_baudrate = 115200
+    progress = MagicMock()
+
+    assert fc.connect("", progress_callback=progress) == discovery_error
+
+    manager.connect.assert_called_once_with(device="", progress_callback=progress, log_errors=True, baudrate=None)
+    expected_pair = (device, 57600) if discovery_error else ("COM2", 115200)
+    assert ProgramSettings.get_last_successful_connection() == expected_pair
+
+
+@pytest.mark.parametrize("device", ["tcp:192.0.2.1:5760", "ws:192.0.2.1:5760", "wss:192.0.2.1:5760"])
+def test_remembered_blocking_endpoint_can_still_be_selected_explicitly(device: str) -> None:
+    """GIVEN a saved endpoint WHEN selected explicitly THEN the requested connection is attempted."""
+    ProgramSettings.store_last_successful_connection(device, 57600)
+    fc, manager, *_ = _build_flight_controller_with_mocks()
+    manager.connect.return_value = ""
+    manager.comport_device = device
+    manager.active_baudrate = 57600
+
+    assert fc.connect(device, baudrate=57600) == ""
+
+    manager.connect.assert_called_once_with(device=device, progress_callback=None, log_errors=True, baudrate=57600)
+    assert ProgramSettings.get_last_successful_connection() == (device, 57600)
+
+
+def test_failed_remembered_connection_falls_back_and_only_success_replaces_it(tmp_path: Path) -> None:
+    """A stale remembered endpoint does not prevent normal discovery."""
+    with patch.object(ProgramSettings, "_user_config_dir", return_value=str(tmp_path)):
+        ProgramSettings.store_last_successful_connection("/dev/old", 57600)
+        fc, manager, *_ = _build_flight_controller_with_mocks()
+        manager.connect.side_effect = ["unavailable", "no ports"]
+        assert fc.connect("") == "no ports"
+        assert ProgramSettings.get_last_successful_connection() == ("/dev/old", 57600)
+        manager.connect.assert_has_calls(
+            [
+                call(
+                    device="/dev/old",
+                    progress_callback=None,
+                    log_errors=False,
+                    baudrate=57600,
+                    timeout=FlightControllerConnection.CONNECTION_RETRY_TIMEOUT,
+                ),
+                call(device="", progress_callback=None, log_errors=True, baudrate=None),
+            ]
+        )
+        manager.connect.side_effect = ["unavailable", ""]
+        manager.comport_device = "/dev/new"
+        manager.active_baudrate = 115200
+        assert fc.connect("") == ""
+        assert ProgramSettings.get_last_successful_connection() == ("/dev/new", 115200)
+
+
+@pytest.mark.parametrize(
+    "saved",
+    [
+        None,
+        {},
+        {"device": 42, "baudrate": 57600},
+        {"device": " ", "baudrate": 57600},
+        {"device": " COM1 ", "baudrate": 57600},
+        {"device": "x" * 201, "baudrate": 57600},
+        {"device": "none", "baudrate": 57600},
+        {"device": "file", "baudrate": 57600},
+        {"device": "/dev/ttyUSB0", "baudrate": True},
+        {"device": "/dev/ttyUSB0", "baudrate": 1199},
+        {"device": "/dev/ttyUSB0", "baudrate": "57600"},
+    ],
+)
+def test_invalid_saved_connection_is_ignored(tmp_path: Path, saved: object) -> None:
+    """Invalid or incomplete settings do not prevent normal discovery."""
+    with patch.object(ProgramSettings, "_user_config_dir", return_value=str(tmp_path)):
+        settings = ProgramSettings._get_settings_as_dict()
+        settings["last_successful_connection"] = saved
+        ProgramSettings._set_settings_from_dict(settings)
+        fc, manager, *_ = _build_flight_controller_with_mocks()
+        manager.connect.return_value = "no ports"
+        assert fc.connect("") == "no ports"
+        manager.connect.assert_called_once_with(device="", progress_callback=None, log_errors=True, baudrate=None)
+
+
+def test_explicit_connection_overrides_saved_pair_and_preserves_other_settings(tmp_path: Path) -> None:
+    """An explicit connection replaces the saved pair without losing other settings."""
+    with patch.object(ProgramSettings, "_user_config_dir", return_value=str(tmp_path)):
+        ProgramSettings.store_last_successful_connection("COM1", 57600)
+        ProgramSettings.set_setting("gui_complexity", "normal")
+        fc, manager, *_ = _build_flight_controller_with_mocks()
+        manager.connect.return_value = ""
+        manager.comport_device = "COM2"
+        manager.active_baudrate = 1200
+        assert fc.connect("COM2", baudrate=1200) == ""
+        manager.connect.assert_called_once_with(device="COM2", progress_callback=None, log_errors=True, baudrate=1200)
+        assert ProgramSettings.get_last_successful_connection() == ("COM2", 1200)
+        assert ProgramSettings.get_setting("gui_complexity") == "normal"
+
+
+def test_maximum_length_saved_device_is_valid(tmp_path: Path) -> None:
+    """A device identifier at the supported length limit remains usable."""
+    with patch.object(ProgramSettings, "_user_config_dir", return_value=str(tmp_path)):
+        ProgramSettings.store_last_successful_connection("x" * 200, 1200)
+        assert ProgramSettings.get_last_successful_connection() == ("x" * 200, 1200)
+
+
+@pytest.mark.parametrize(("device", "connected_device"), [("none", "COM1"), ("file", "file"), ("", "")])
+def test_non_connection_does_not_replace_saved_pair(tmp_path: Path, device: str, connected_device: str) -> None:
+    """Skipping a connection or using a parameter file must not overwrite the saved pair."""
+    with patch.object(ProgramSettings, "_user_config_dir", return_value=str(tmp_path)):
+        ProgramSettings.store_last_successful_connection("COM1", 57600)
+        fc, manager, *_ = _build_flight_controller_with_mocks()
+        manager.connect.side_effect = ["failed", ""] if not device else None
+        if device:
+            manager.connect.return_value = ""
+        manager.comport_device = connected_device
+        assert fc.connect(device) == ""
+        assert ProgramSettings.get_last_successful_connection() == ("COM1", 57600)
+
+
+def test_settings_io_failure_does_not_prevent_connecting(caplog: pytest.LogCaptureFixture) -> None:
+    """Connection and discovery remain available when settings cannot be read or written."""
+    fc, manager, *_ = _build_flight_controller_with_mocks()
+    manager.connect.return_value = ""
+    manager.active_baudrate = 57600
+    with (
+        patch.object(ProgramSettings, "get_last_successful_connection", side_effect=OSError("read failed")),
+        patch.object(ProgramSettings, "store_last_successful_connection", side_effect=OSError("write failed")),
+    ):
+        assert fc.connect("") == ""
+        manager.connect.assert_called_once_with(device="", progress_callback=None, log_errors=True, baudrate=None)
+        assert "Could not read last successful connection: read failed" in caplog.messages
+        assert "Could not save last successful connection: write failed" in caplog.messages
+
+
 def _build_flight_controller_with_mocks(
     reboot_time: int = 2,
     sleep: Callable[[float], None] | None = None,
@@ -58,6 +240,7 @@ def _build_flight_controller_with_mocks(
     mock_conn_mgr.comport = "ttyACM0"
     mock_conn_mgr.comport_device = "/dev/ttyACM0"
     mock_conn_mgr.baudrate = 115200
+    mock_conn_mgr.active_baudrate = 115200
     mock_conn_mgr.discover_connections.return_value = None
     mock_conn_mgr.disconnect = MagicMock()
     mock_conn_mgr.add_connection.return_value = True
@@ -261,7 +444,8 @@ def test_flight_controller_forwards_file_manager_operations() -> None:
     assert files.mock_calls[5:] == [call.rename_remote_path("/APM/old", "/APM/new")]
 
 
-def test_reset_and_reconnect_reboots_disconnects_and_reconnects() -> None:
+@pytest.mark.parametrize("active_baudrate", [115200, 57600])
+def test_reset_and_reconnect_reboots_disconnects_and_reconnects(active_baudrate: int) -> None:
     """A connected controller is rebooted before the facade reconnects it."""
     events: list[object] = []
 
@@ -273,8 +457,14 @@ def test_reset_and_reconnect_reboots_disconnects_and_reconnects() -> None:
         return "RECONNECTED"
 
     fc, connection, _parameters, _commands, _files, master = _build_flight_controller_with_mocks(sleep=sleep)
+    connection.active_baudrate = active_baudrate
+
+    def disconnect() -> None:
+        events.append("disconnect")
+        connection.active_baudrate = connection.baudrate
+
     master.reboot_autopilot.side_effect = lambda: events.append("reboot")
-    connection.disconnect.side_effect = lambda: events.append("disconnect")
+    connection.disconnect.side_effect = disconnect
     connection.create_connection_with_retry.side_effect = reconnect
 
     assert fc.reset_and_reconnect(extra_sleep_time=0) == "RECONNECTED"
@@ -285,7 +475,7 @@ def test_reset_and_reconnect_reboots_disconnects_and_reconnects() -> None:
         progress_callback=None,
         retries=3,
         timeout=5,
-        baudrate=115200,
+        baudrate=active_baudrate,
         log_errors=True,
         reconnect_progress_callback=None,
         is_reconnect=True,

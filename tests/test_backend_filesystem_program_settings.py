@@ -12,8 +12,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
 import platform
+from concurrent.futures import ThreadPoolExecutor
 from os import path as os_path
 from pathlib import Path
+from threading import Event
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
@@ -54,6 +56,73 @@ def sample_program_settings() -> dict:
         "motor_test_duration": 5.0,
         "motor_test_throttle_pct": 10,
     }
+
+
+@pytest.mark.parametrize(("device", "baudrate"), [("COM1", 57600), ("COM2", 57600), ("COM1", 115200)])
+def test_connection_settings_are_written_only_when_the_pair_changes(tmp_path: Path, device: str, baudrate: int) -> None:
+    """GIVEN a remembered connection WHEN reconnecting THEN only a changed device or baud rate causes a save."""
+    with patch.object(ProgramSettings, "_user_config_dir", return_value=str(tmp_path)):
+        ProgramSettings.store_last_successful_connection("COM1", 57600)
+        ProgramSettings.set_setting("auto_open_doc_in_browser", value=False)
+
+        with patch.object(ProgramSettings, "_set_settings_from_dict", wraps=ProgramSettings._set_settings_from_dict) as save:
+            ProgramSettings.store_last_successful_connection(device, baudrate)
+
+        if (device, baudrate) == ("COM1", 57600):
+            save.assert_not_called()
+        else:
+            save.assert_called_once()
+        assert ProgramSettings.get_last_successful_connection() == (device, baudrate)
+        assert ProgramSettings.get_setting("auto_open_doc_in_browser") is False
+
+
+@pytest.mark.parametrize("connection_first", [True, False])
+def test_reconnect_and_documentation_changes_are_both_preserved(tmp_path: Path, connection_first: bool) -> None:
+    """GIVEN overlapping reconnect and GUI saves WHEN both finish THEN neither setting is lost."""
+    first_read = Event()
+    release_first = Event()
+    second_started = Event()
+    second_finished = Event()
+    read_settings = ProgramSettings._get_settings_as_dict
+
+    def pause_first_read() -> dict:
+        settings = read_settings()
+        if not first_read.is_set():
+            first_read.set()
+            assert release_first.wait(5), "The first settings update was not released"
+        return settings
+
+    def save_connection() -> None:
+        ProgramSettings.store_last_successful_connection("COM2", 57600)
+
+    def save_documentation() -> None:
+        ProgramSettings.set_setting("auto_open_doc_in_browser", value=False)
+
+    def second_update() -> None:
+        second_started.set()
+        (save_documentation if connection_first else save_connection)()
+        second_finished.set()
+
+    with patch.object(ProgramSettings, "_user_config_dir", return_value=str(tmp_path)):
+        ProgramSettings.set_setting("auto_open_doc_in_browser", value=True)
+        with (
+            patch.object(ProgramSettings, "_get_settings_as_dict", side_effect=pause_first_read),
+            ThreadPoolExecutor(max_workers=2) as executor,
+        ):
+            first = executor.submit(save_connection if connection_first else save_documentation)
+            try:
+                assert first_read.wait(5), "The first settings update did not start"
+                second = executor.submit(second_update)
+                assert second_started.wait(5), "The second settings update did not start"
+                # Allow an unprotected writer to finish while the first holds a stale snapshot.
+                second_finished.wait(0.1)
+            finally:
+                release_first.set()
+            first.result(timeout=5)
+            second.result(timeout=5)
+
+        assert ProgramSettings.get_last_successful_connection() == ("COM2", 57600)
+        assert ProgramSettings.get_setting("auto_open_doc_in_browser") is False
 
 
 class TestApplicationResourcePaths:
@@ -431,6 +500,7 @@ class TestSettingsFileOperations:
         expected_result["gui_complexity"] = "simple"  # Added by default
         expected_result["motor_test"] = {"duration": 2, "throttle_pct": 10}  # Added by default
         expected_result["connection_history"] = []  # Added by default
+        expected_result["last_successful_connection"] = {}  # Added by default
         expected_result["recent_vehicle_history"] = []  # Added by default
         expected_result["display_usage_popup"]["component_editor_validation"] = True  # Added by default
         expected_result["display_usage_popup"]["workflow_explanation"] = True  # Added by default

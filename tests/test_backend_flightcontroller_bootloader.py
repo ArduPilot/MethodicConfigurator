@@ -26,10 +26,17 @@ from serial.tools.list_ports_common import ListPortInfo
 
 from ardupilot_methodic_configurator import backend_flightcontroller_bootloader as bl
 from ardupilot_methodic_configurator import data_model_firmware_upload as fw
+from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
 # pylint: disable=too-many-instance-attributes,too-few-public-methods,protected-access,too-many-lines
+
+
+@pytest.fixture(autouse=True)
+def isolated_program_settings(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep facade connection persistence away from the developer's settings."""
+    monkeypatch.setattr(ProgramSettings, "_user_config_dir", staticmethod(lambda: str(tmp_path)))
 
 
 def apj(image: bytes, *, extf_image: bytes = b"", **overrides: object) -> bytes:
