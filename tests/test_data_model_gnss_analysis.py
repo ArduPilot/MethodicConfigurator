@@ -961,6 +961,26 @@ def test_reversed_imu_boot_epochs_cannot_establish_motion_consistency(
     assert _evidence(next(item for item in outcomes if item.source == "GPS.IMU"))["evaluated"] == 0
 
 
+@pytest.mark.parametrize("invalid_boundary", [False, True])
+def test_reversed_gps_boot_epochs_are_not_compared_with_first_epoch_imu(motion_log: LogData, invalid_boundary: bool) -> None:
+    """An ambiguous GPS receiver is skipped without losing coverage for another receiver."""
+    first = _columns(motion_log, "GPS").copy()
+    second = first.copy()
+    second["Spd"] = second["TimeUS"] * 20
+    other_receiver = first.copy()
+    other_receiver["I"] = 1
+    if invalid_boundary:
+        first["TimeUS"][-1] = np.nan
+    motion_log.add_message_columns("GPS", np.concatenate((first, second, other_receiver)))
+
+    outcomes = GnssConsistencyChecks(motion_log, {}).analyse()
+
+    assert not _warnings(outcomes, "GPS.IMU")
+    coverage = next(item for item in outcomes if item.source == "GPS.IMU" and item.severity == "informational")
+    assert _evidence(coverage) == {"evaluated": 20.0, "total": 61.0}
+    assert "reversed" in coverage.message.lower()
+
+
 def test_motion_assessment_does_not_copy_full_imu_history_for_each_gps_interval(
     motion_log: LogData, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -1154,17 +1174,61 @@ def test_ekf_only_availability_follows_timestamped_gps_configuration(message: st
     assert [(item.timestamp_us, item.end_timestamp_us) for item in events] == ([(1e6, 2e6)] if gps_at_start else [(3e6, 4e6)])
 
 
-def test_ekf_timeout_splits_on_receiver_and_source_set_changes() -> None:
-    """GIVEN a persistent GPS timeout WHEN source selection changes THEN each interval retains its receiver."""
+@pytest.mark.parametrize("field_name", ["TS", "GPS"])
+def test_ekf_gps_events_split_on_receiver_and_source_set_changes(field_name: str) -> None:
+    """GIVEN a persistent GPS event WHEN selection changes THEN each interval retains its receiver."""
     log = LogData()
-    _add(log, "XKF4", TimeUS=list(range(6)), C=[0] * 6, PI=[0] * 6, TS=[1] * 6)
+    _add(log, "XKF4", TimeUS=list(range(6)), C=[0] * 6, PI=[0] * 6, **{field_name: [1] * 6})
     _add(log, "XKFS", TimeUS=list(range(6)), C=[0] * 6, SS=[0, 0, 0, 0, 1, 1], GI=[0, 0, 1, 1, 1, 1])
     checks = GnssConsistencyChecks(log, {"EK3_SRC1_POSXY": 3, "EK3_SRC2_POSXY": 3})
 
-    events = _warnings(checks.analyse(), "XKF4.TS")
+    events = _warnings(checks.analyse(), f"XKF4.{field_name}")
 
     assert [(event.timestamp_us, event.end_timestamp_us) for event in events] == [(0, 1e6), (2e6, 3e6), (4e6, 5e6)]
     assert [_evidence(event)["gps_receiver"] for event in events] == [0, 1, 1]
+
+
+@pytest.mark.parametrize("field_name", ["FS", "GPS", "OFN", "OFE", "TS"])
+def test_ekf_discontinuity_coverage_explains_missing_source_selection(field_name: str) -> None:
+    """Logged EKF fields cannot be assessed without an identifiable GPS source."""
+    log = LogData()
+    _add(log, "GPS", TimeUS=[0, 1, 2], I=[0] * 3, Status=[3] * 3)
+    _add(log, "XKF4", TimeUS=[0, 1, 2], C=[0] * 3, PI=[0] * 3, **{field_name: [1] * 3})
+    context = _context()
+    context.parameters.update({"EK3_SRC1_POSXY": 3, "EK3_SRC1_VELXY": 3, "EK3_SRC_OPTIONS": 0})
+
+    outcomes = GPSLogAnalysis(log, context).analyse().outcomes
+
+    assert not _warnings(outcomes, f"XKF4.{field_name}")
+    coverage = next(item for item in outcomes if item.source == f"XKF4.{field_name}.coverage")
+    assert _evidence(coverage) == {"evaluated": 0.0, "total": 3.0}
+    assert "XKFS.SS" in coverage.message
+    assert "skipped" in coverage.message
+
+
+def test_ekf_discontinuity_coverage_counts_only_eligible_samples() -> None:
+    """Coverage distinguishes eligible GPS rows from stale source selection."""
+    log = LogData()
+    _add(log, "XKF4", TimeUS=[0, 1, 2, 3, 4], C=[0] * 5, PI=[0] * 5, GPS=[1] * 5)
+    _add(log, "XKFS", TimeUS=[0, 1], C=[0] * 2, SS=[0] * 2, GI=[1] * 2)
+
+    outcomes = GnssConsistencyChecks(log, {"EK3_SRC1_POSXY": 3}).analyse()
+
+    coverage = next(item for item in outcomes if item.source == "XKF4.GPS.coverage")
+    assert _evidence(coverage) == {"evaluated": 4.0, "total": 5.0}
+    assert len(_warnings(outcomes, "XKF4.GPS")) == 1
+
+
+def test_ekf_discontinuity_coverage_respects_fuse_all_velocities_without_source_selection() -> None:
+    """A missing XKFS selection does not suppress configured cross-source GPS velocity fusion."""
+    log = LogData()
+    _add(log, "XKF4", TimeUS=[0, 1, 2], C=[0] * 3, PI=[0] * 3, TS=[2] * 3)
+
+    outcomes = GnssConsistencyChecks(log, {"EK3_SRC_OPTIONS": 1, "EK3_SRC1_VELXY": 3}).analyse()
+
+    coverage = next(item for item in outcomes if item.source == "XKF4.TS.coverage")
+    assert _evidence(coverage) == {"evaluated": 3.0, "total": 3.0}
+    assert len(_warnings(outcomes, "XKF4.TS")) == 1
 
 
 def test_ekf_gps_source_selection_must_belong_to_the_same_lane_and_be_current() -> None:
