@@ -458,6 +458,10 @@ class GnssConsistencyChecks:
         outcomes: list[LogAnalysis] = []
         total = count = 0
         for gps in sensor_series(self.log_data, "GPS", ("Spd", "GCrs", "Status")):
+            total += max(0, len(gps.times) - 1)
+            valid_times = gps.times[np.isfinite(gps.times) & (gps.times >= 0)]
+            if np.any(np.diff(valid_times) < 0):
+                continue  # Repeated GPS boot epochs cannot be matched to IMU unambiguously.
             valid = _gps_fix(gps) & (gps.fields["Spd"] >= 0)
             samples = _MotionSamples(
                 gps,
@@ -482,14 +486,14 @@ class GnssConsistencyChecks:
                 )
             )
             count += int(np.count_nonzero(np.isfinite(residual)))
-            total += max(0, len(gps.times) - 1)
         self._coverage(
             "GPS.IMU",
             count,
             total,
             _(
                 "Short windows, healthy IMUs, low rotation and continuous attitude required. "
-                "Automatic receiver latency is tested over 0-0.5 s; attitude may itself be GPS-aided."
+                "Automatic receiver latency is tested over 0-0.5 s; attitude may itself be GPS-aided. "
+                "GPS series with reversed boot timestamps are excluded."
             ),
         )
         return outcomes
@@ -633,7 +637,9 @@ class GnssConsistencyChecks:
     def _ekf_discontinuities(self, message: str) -> list[LogAnalysis]:  # pylint: disable=too-many-locals
         outcomes: list[LogAnalysis] = []
         for field_name in ("OFN", "OFE", "FS", "TS", "GPS"):
+            count = total = 0
             for series in sensor_series(self.log_data, message, ("PI", field_name)):
+                total += len(series.times)
                 if series.instance is None:
                     continue
                 primary = (series.fields["PI"] == series.instance).astype(float)
@@ -659,6 +665,7 @@ class GnssConsistencyChecks:
                 if field_name != "FS":
                     levels[startup] = np.nan
                 levels[~gps_evidence] = np.nan
+                count += int(np.count_nonzero(np.isfinite(levels)))
                 message_text = (
                     _("EKF lane position reset changed")
                     if field_name in ("OFN", "OFE")
@@ -669,6 +676,7 @@ class GnssConsistencyChecks:
                 evidence = {field_name: series.fields[field_name], "active_primary": primary}
                 if field_name == "TS":
                     evidence["gps_timeout_mask"] = values
+                if field_name in ("TS", "GPS"):
                     _eligible, source_sets, receiver = self._ekf_source(series, message, "POSXY")
                     identity = 8 * (np.nan_to_num(source_sets, nan=-1) + 1) + 32 * (np.nan_to_num(receiver, nan=-1) + 1)
                     levels = np.where(levels > 0, levels + identity, levels)
@@ -682,4 +690,13 @@ class GnssConsistencyChecks:
                         evidence,
                     )
                 )
+            self._ekf_discontinuity_coverage(message, field_name, count, total)
         return outcomes
+
+    def _ekf_discontinuity_coverage(self, message: str, field_name: str, count: int, total: int) -> None:
+        if not total:
+            return
+        detail = _("Samples without a usable GPS navigation source are skipped; startup exclusions may also apply.")
+        if message == "XKF4":
+            detail += _(" XKFS.SS identifies the active source set; FuseAllVelocities can enable GPS velocity fusion.")
+        self._coverage(f"{message}.{field_name}.coverage", count, total, detail)
