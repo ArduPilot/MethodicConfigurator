@@ -411,6 +411,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._inline_component_chrome_height = 0
         self._parameter_area_resize_pending = False
         self._parameter_area_resize_running = False
+        self._parameter_area_resize_job: str | None = None
         self._inline_component_name: str | None = None
         self._updating_inline_editor: bool = False
         self._requested_action = ParameterEditorAction.FINISHED
@@ -1979,15 +1980,34 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def _bind_parameter_layout_events(self) -> None:
         """Refit when the window or any fixed section changes its allocated size."""
         self.main_frame.bind("<Configure>", self._on_main_frame_resize, add="+")
+        self.main_frame.bind("<Destroy>", self._on_main_frame_destroy, add="+")
         for widget in self.main_frame.winfo_children():
             if widget is not self.parameter_area_container:
                 widget.bind("<Configure>", self._on_main_frame_resize, add="+")
 
+    def _on_main_frame_destroy(self, event: tk.Event) -> None:
+        """Cancel an idle fit when its owning editor frame is destroyed."""
+        if event.widget is not self.main_frame:
+            return
+        if self._parameter_area_resize_job is not None:
+            with contextlib.suppress(tk.TclError):
+                self.root.after_cancel(self._parameter_area_resize_job)
+        self._parameter_area_resize_job = None
+        self._parameter_area_resize_pending = False
+
     def _on_main_frame_resize(self, _event: tk.Event) -> None:
         """Fit once idle, after fixed controls have re-wrapped at the new width."""
-        if not self._parameter_area_resize_pending and not self._parameter_area_resize_running:
+        if self._parameter_area_resize_job is None and not self._parameter_area_resize_running:
             self._parameter_area_resize_pending = True
-            self.root.after_idle(self._resize_parameter_area_to_fit)
+            self._parameter_area_resize_job = self.root.after_idle(self._run_pending_parameter_area_resize)
+
+    def _run_pending_parameter_area_resize(self) -> None:
+        """Run a queued fit only while its editor widgets still exist."""
+        self._parameter_area_resize_job = None
+        self._parameter_area_resize_pending = False
+        if not self.main_frame.winfo_exists() or not self.parameter_area_container.winfo_exists():
+            return
+        self._resize_parameter_area_to_fit()
 
     def _minimum_parameter_area_height(self) -> int:
         """Reserve table space alongside, or below, the current plugin."""
