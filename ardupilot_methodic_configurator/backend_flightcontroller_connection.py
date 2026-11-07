@@ -452,6 +452,8 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         progress_callback: Callable[[int, int], None] | None = None,
         log_errors: bool = True,
         baudrate: int | None = None,
+        *,
+        timeout: int = 5,
     ) -> str:
         """
         Establishes a connection to the FlightController using a specified device.
@@ -469,6 +471,8 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             log_errors: log errors
             baudrate (int, optional): The baudrate to use for the connection. If None,
                                     uses the default baudrate from initialization.
+            timeout: Heartbeat collection window for an explicit device. Autodetection
+                     uses CONNECTION_RETRY_TIMEOUT for its probes.
 
         Returns:
             str: An error message if the connection fails, otherwise an empty string indicating
@@ -489,7 +493,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             self.add_connection(device)
             self.comport = mavutil.SerialPort(device=device, description=device)
             return self.create_connection_with_retry(
-                progress_callback=progress_callback, baudrate=connection_baudrate, log_errors=log_errors
+                progress_callback=progress_callback, baudrate=connection_baudrate, log_errors=log_errors, timeout=timeout
             )
 
         # Try to autodetect serial ports

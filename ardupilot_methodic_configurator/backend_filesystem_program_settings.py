@@ -168,6 +168,7 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
             "Format version": 2,  # Version 2: introduced recent_vehicle_history replacing vehicle_dir
             "display_usage_popup": dict.fromkeys(USAGE_POPUP_WINDOWS, True),
             "connection_history": [],
+            "last_successful_connection": {},
             "recent_vehicle_history": [],
             "directory_selection": {
                 "template_dir": os_path.join(cls.get_templates_base_dir(), "ArduCopter", "empty_4.6.x"),
@@ -674,6 +675,32 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
         return filepath != "" and os_path.exists(filepath)
 
     # History manager for connection strings
+    @staticmethod
+    def get_last_successful_connection() -> tuple[str, int] | None:
+        """Return the last successful connection when both saved values are valid."""
+        saved = ProgramSettings._get_settings_as_dict().get("last_successful_connection")
+        if not isinstance(saved, dict):
+            return None
+        device, baudrate = saved.get("device"), saved.get("baudrate")
+        if not isinstance(device, str) or not device.strip() or device != device.strip():
+            return None
+        if (
+            len(device) > 200
+            or device in ("none", "file")
+            or isinstance(baudrate, bool)
+            or not isinstance(baudrate, int)
+            or baudrate < 1200
+        ):
+            return None
+        return device, baudrate
+
+    @staticmethod
+    def store_last_successful_connection(device: str, baudrate: int) -> None:
+        """Save the device and baud rate together after a successful connection."""
+        settings = ProgramSettings._get_settings_as_dict()
+        settings["last_successful_connection"] = {"device": device, "baudrate": baudrate}
+        ProgramSettings._set_settings_from_dict(settings)
+
     _connection_history = RecentItemsHistoryList(
         settings_key="connection_history",
         max_items=MAX_CONNECTION_HISTORY,
