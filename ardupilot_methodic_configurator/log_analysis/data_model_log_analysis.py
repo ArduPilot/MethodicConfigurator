@@ -14,6 +14,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from dataclasses import dataclass, field
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.log_analysis.data_model_auto_dynamic_notch import (
+    AutoDynamicNotchLogAnalysis,
+    AutoDynamicNotchLogAvailabilityModel,
+)
 from ardupilot_methodic_configurator.log_analysis.data_model_availability_arm import ArmLogAvailabilityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_availability_base import (
     BaseLogAnalysisModel,
@@ -72,6 +76,12 @@ LOG_ANALYSIS_SUBSYSTEMS: tuple[LogAnalysisModelSpec, ...] = (
     LogAnalysisModelSpec("imu", ImuLogAvailabilityModel, ImuLogAnalysis, ("Flight Controller",)),
     LogAnalysisModelSpec("vibe", VibeLogAvailabilityModel, VibeLogAnalysis, ("Flight Controller",)),
     LogAnalysisModelSpec("fft", FftLogAvailabilityModel),
+    LogAnalysisModelSpec(
+        "auto_dynamic_notch",
+        AutoDynamicNotchLogAvailabilityModel,
+        AutoDynamicNotchLogAnalysis,
+        ("Flight Controller", "ESC", "Motors"),
+    ),
     LogAnalysisModelSpec("err", ErrLogAvailabilityModel),
     LogAnalysisModelSpec("pm", PmLogAvailabilityModel),
     LogAnalysisModelSpec("arm", ArmLogAvailabilityModel),
