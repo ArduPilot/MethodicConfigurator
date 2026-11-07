@@ -2705,7 +2705,7 @@ class TestPluginLayoutLifecycle:
                 assert not editor._configured_upload_active
                 editor._on_component_data_changed()
                 parameter_editor.update_vehicle_components.assert_called_once_with(components)
-                parameter_editor.refresh_current_step_computed_parameters.assert_called_once_with()
+                parameter_editor.refresh_current_step_computed_parameters.assert_called_once_with("")
                 load_plugin.assert_not_called()
                 assert editor.current_plugin_view is None
                 if fail:
@@ -4778,6 +4778,117 @@ class TestInlineComponentEditorCallbacks:
             assert parameter_editor.update_vehicle_components.call_count == 5
         finally:
             parent.destroy()
+
+    @pytest.mark.parametrize("disable", [True, False])
+    def test_connection_move_asks_before_moving_and_disabling(self, parameter_editor: MagicMock, disable: bool) -> None:
+        """Both decisions are collected and the old protocol follows the user's choice."""
+        editor = _create_editor(parameter_editor)
+        editor.repopulate_parameter_table = MagicMock()
+        editor._update_plugin_layout = MagicMock()
+        editor.ui.ask_yesno = MagicMock(side_effect=[True, disable])
+        editor.inline_component_editor = MagicMock()
+        editor.inline_component_editor.get_component_data.return_value = {"Components": {"port": "SERIAL2"}}
+        parameter_editor.component_connection_transition.return_value = ("SERIAL1", "SERIAL2")
+        parameter_editor.connection_change_will_rename.return_value = True
+        snapshot = parameter_editor.serial_protocol_snapshot.return_value
+        editor._on_component_data_changed()
+        assert editor.ui.ask_yesno.call_count == 2
+        parameter_editor.update_vehicle_components.assert_called_once_with({"port": "SERIAL2"})
+        parameter_editor.refresh_current_step_computed_parameters.assert_called_once()
+        parameter_editor.preserve_or_disable_serial_protocol.assert_called_once_with("SERIAL1", snapshot, disable=disable)
+
+    def test_declining_connection_move_restores_the_component_editor(self, parameter_editor: MagicMock) -> None:
+        """Declining a move leaves both the model and parameter rows untouched."""
+        editor = _create_editor(parameter_editor)
+        editor.ui.ask_yesno = MagicMock(return_value=False)
+        editor._update_inline_component_editor = MagicMock()
+        editor._inline_component_name = "Telemetry"
+        editor.inline_component_editor = MagicMock()
+        editor.inline_component_editor.get_component_data.return_value = {"Components": {"port": "SERIAL2"}}
+        parameter_editor.component_connection_transition.return_value = ("SERIAL1", "SERIAL2")
+        parameter_editor.connection_change_will_rename.return_value = True
+        editor._on_component_data_changed()
+        editor._update_inline_component_editor.assert_not_called()
+        editor.root.after_idle.assert_called_once()
+        editor.root.after_idle.call_args.args[0]()
+        editor._update_inline_component_editor.assert_called_once_with("Telemetry")
+        parameter_editor.update_vehicle_components.assert_not_called()
+        parameter_editor.refresh_current_step_computed_parameters.assert_not_called()
+
+    def test_unknown_previous_connection_does_not_guess_renames(self, parameter_editor: MagicMock) -> None:
+        """An unknown old connection cannot authorize inferred renames."""
+        editor = _create_editor(parameter_editor)
+        editor.ui.ask_yesno = MagicMock(return_value=False)
+        editor._update_inline_component_editor = MagicMock()
+        editor.inline_component_editor = MagicMock()
+        editor.inline_component_editor.get_component_data.return_value = {"Components": {"port": "SERIAL2"}}
+        parameter_editor.component_connection_transition.return_value = ("", "SERIAL2")
+        parameter_editor.connection_change_will_rename.return_value = True
+        editor._on_component_data_changed()
+        editor.ui.ask_yesno.assert_not_called()
+        editor.ui.show_warning.assert_called_once()
+        parameter_editor.update_vehicle_components.assert_not_called()
+
+    def test_deselecting_serial_connection_asks_whether_to_disable(self, parameter_editor: MagicMock) -> None:
+        """Deselecting a serial port asks about disabling without asking to rename it."""
+        editor = _create_editor(parameter_editor)
+        editor.repopulate_parameter_table = MagicMock()
+        editor._update_plugin_layout = MagicMock()
+        editor.ui.ask_yesno = MagicMock(return_value=True)
+        editor.inline_component_editor = MagicMock()
+        editor.inline_component_editor.get_component_data.return_value = {"Components": {"port": "None"}}
+        parameter_editor.component_connection_transition.return_value = ("SERIAL1", "None")
+        snapshot = parameter_editor.serial_protocol_snapshot.return_value
+        editor._on_component_data_changed()
+        editor.ui.ask_yesno.assert_called_once()
+        parameter_editor.preserve_or_disable_serial_protocol.assert_called_once_with("SERIAL1", snapshot, disable=True)
+
+    def test_unsupported_old_port_is_not_offered_for_disabling(self, parameter_editor: MagicMock) -> None:
+        """Changing connection warns instead of proposing an unsupported protocol parameter."""
+        editor = _create_editor(parameter_editor)
+        editor.repopulate_parameter_table = MagicMock()
+        editor._update_plugin_layout = MagicMock()
+        editor.ui.ask_yesno = MagicMock()
+        editor.ui.show_warning = MagicMock()
+        editor.inline_component_editor = MagicMock()
+        editor.inline_component_editor.get_component_data.return_value = {"Components": {"port": "None"}}
+        parameter_editor.component_connection_transition.return_value = ("SERIAL9", "None")
+        parameter_editor.can_disable_serial_protocol.return_value = False
+        snapshot = parameter_editor.serial_protocol_snapshot.return_value
+        editor._on_component_data_changed()
+        editor.ui.ask_yesno.assert_not_called()
+        editor.ui.show_warning.assert_called_once()
+        parameter_editor.preserve_or_disable_serial_protocol.assert_called_once_with("SERIAL9", snapshot, disable=False)
+
+    def test_conflicting_destination_cancels_change(self, parameter_editor: MagicMock) -> None:
+        """An occupied destination is shown to the user before any move or disable."""
+        editor = _create_editor(parameter_editor)
+        editor.ui.show_warning = MagicMock()
+        editor.ui.ask_yesno = MagicMock()
+        editor._update_inline_component_editor = MagicMock()
+        editor._inline_component_name = "Telemetry"
+        editor.inline_component_editor = MagicMock()
+        editor.inline_component_editor.get_component_data.return_value = {"Components": {"port": "SERIAL2"}}
+        parameter_editor.component_connection_transition.return_value = ("SERIAL1", "SERIAL2")
+        parameter_editor.connection_change_conflicts.return_value = [("SERIAL1_BAUD", "SERIAL2_BAUD")]
+        editor._on_component_data_changed()
+        editor.ui.show_warning.assert_called_once()
+        assert "SERIAL2_BAUD" in editor.ui.show_warning.call_args.args[1]
+        editor.ui.ask_yesno.assert_not_called()
+        parameter_editor.update_vehicle_components.assert_not_called()
+        editor._update_inline_component_editor.assert_not_called()
+        editor.root.after_idle.call_args.args[0]()
+        editor._update_inline_component_editor.assert_called_once_with("Telemetry")
+
+    def test_deferred_rebuild_does_not_restore_a_replaced_editor(self, parameter_editor: MagicMock) -> None:
+        """An idle callback cannot replace a component editor opened after the cancelled change."""
+        editor = _create_editor(parameter_editor)
+        editor._update_inline_component_editor = MagicMock()
+        editor.inline_component_editor = MagicMock()
+        editor._schedule_inline_component_rebuild()
+        editor.inline_component_editor = MagicMock()
+        editor.root.after_idle.call_args.args[0]()
+        editor._update_inline_component_editor.assert_not_called()
 
     def test_component_data_change_calls_update_and_refresh(self, parameter_editor: MagicMock) -> None:
         """
