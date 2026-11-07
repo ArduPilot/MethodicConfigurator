@@ -35,6 +35,7 @@ from ardupilot_methodic_configurator.log_analysis.data_model_availability_plane_
 )
 from ardupilot_methodic_configurator.log_analysis.data_model_availability_pm import PmLogAvailabilityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_availability_vibe import VibeLogAnalysis, VibeLogAvailabilityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_gnss_interference import GPSLogAnalysis
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis, LogAnalysisResult
 from ardupilot_methodic_configurator.log_analysis.data_model_log_availability import (
@@ -67,7 +68,7 @@ class LogAnalysisModelSpec:
 
 LOG_ANALYSIS_SUBSYSTEMS: tuple[LogAnalysisModelSpec, ...] = (
     LogAnalysisModelSpec("battery", BatteryLogAvailabilityModel, BatteryLogAnalysis, ("Battery", "Battery Monitor")),
-    LogAnalysisModelSpec("gps", GPSLogAvailabilityModel, component_keys=("GNSS Receiver",)),
+    LogAnalysisModelSpec("gps", GPSLogAvailabilityModel, GPSLogAnalysis, component_keys=("GNSS Receiver",)),
     LogAnalysisModelSpec("esc", EscLogAvailabilityModel, EscLogAnalysis, ("ESC", "Motors")),
     LogAnalysisModelSpec("imu", ImuLogAvailabilityModel, ImuLogAnalysis, ("Flight Controller",)),
     LogAnalysisModelSpec("vibe", VibeLogAvailabilityModel, VibeLogAnalysis, ("Flight Controller",)),

@@ -29,6 +29,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_log_analysis import (
     main,
 )
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import LogSummary
+from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -463,11 +464,9 @@ class TestWindowConstruction:
         analysis_battery = _make_analysis_result(name="Battery Analysis", subsystem_key="battery")
         analysis_imu = _make_analysis_result(name="IMU Analysis", subsystem_key="imu")
 
-        window = self._build_window(
-            mocker, patched_widgets, [availability_battery, availability_imu], [analysis_battery, analysis_imu]
-        )
+        self._build_window(mocker, patched_widgets, [availability_battery, availability_imu], [analysis_battery, analysis_imu])
 
-        cast("MagicMock", window.selector.set).assert_called_once_with("Battery")
+        patched_widgets["combobox"].return_value.set.assert_called_once_with("Battery")
 
     def test_no_selector_default_when_no_subsystems_present(
         self, mocker: MockerFixture, patched_widgets: dict[str, MagicMock]
@@ -479,9 +478,9 @@ class TestWindowConstruction:
         WHEN: The window is constructed
         THEN: The selector's set() is never called
         """
-        window = self._build_window(mocker, patched_widgets, [], [])
+        self._build_window(mocker, patched_widgets, [], [])
 
-        cast("MagicMock", window.selector.set).assert_not_called()
+        patched_widgets["combobox"].return_value.set.assert_not_called()
 
 
 class TestResponsiveWrapping:
@@ -544,6 +543,33 @@ class TestResponsiveWrapping:
 
 class TestOutcomeGrouping:
     """Cover optional consecutive grouping in the shared outcome renderer."""
+
+    def test_event_interval_severity_and_measurements_are_visible(
+        self, bare_window: LogAnalysisReportWindow, patched_widgets: dict[str, MagicMock]
+    ) -> None:
+        """GIVEN a GNSS event WHEN rendered THEN its interval, severity and measurements remain reviewable."""
+        bare_window.body_frame = MagicMock()
+        event = LogAnalysis(
+            "Receiver warning", timestamp_us=1e6, end_timestamp_us=3e6, severity="critical", evidence={"status": 3.0}
+        )
+        bare_window._outcome_line(event)
+        labels = [item.kwargs for item in patched_widgets["label"].call_args_list]
+        assert any(item.get("text") == "0:01.0 - 0:03.0  Receiver warning" for item in labels)
+        assert any(item.get("foreground") == "red3" for item in labels)
+        assert any(item.args[1] == "status: 3" for item in patched_widgets["show_tooltip"].call_args_list)
+
+    def test_evidence_tooltip_preserves_integer_masks(
+        self, bare_window: LogAnalysisReportWindow, patched_widgets: dict[str, MagicMock]
+    ) -> None:
+        """Display integer masks exactly while keeping fractional measurements concise."""
+        bare_window.body_frame = MagicMock()
+        event = LogAnalysis("Receiver warning", evidence={"first": 1024.0, "second": 1025.0, "ratio": 1.23456})
+
+        bare_window._outcome_line(event)
+
+        assert any(
+            item.args[1] == "first: 1024\nsecond: 1025\nratio: 1.23" for item in patched_widgets["show_tooltip"].call_args_list
+        )
 
     def test_ungrouped_outcomes_render_without_headings(self, bare_window: LogAnalysisReportWindow) -> None:
         """Preserve the rendering behavior of analyses that do not provide groups."""
@@ -741,6 +767,30 @@ class TestRenderSubsystem:
         assert mock_outcome_line.call_count == 2
         mock_outcome_line.assert_any_call(outcomes[0])
         mock_outcome_line.assert_any_call(outcomes[1])
+
+    def test_gps_analysis_shows_its_reason_and_all_findings(self, bare_window: LogAnalysisReportWindow) -> None:
+        """GPS assessment limitations and findings remain visible together."""
+        window = self._window_for_render(bare_window)
+        outcomes = [_make_outcome(group="GNSS consistency"), _make_outcome(group="Coverage")]
+        reason = "GNSS assessment complete; undetected spoofing remains possible."
+        window.pairs = [
+            (
+                _make_availability_result(name="GPS", subsystem_key="gps"),
+                _make_analysis_result(reason=reason, outcomes=outcomes),
+            )
+        ]
+        window.report = None
+        window._report_availability_by_name = {}
+        window._report_analysis_by_name = {}
+        with (
+            patch.object(window, "_section_heading"),
+            patch.object(window, "_section_body") as body,
+            patch.object(window, "_group_heading"),
+            patch.object(window, "_outcome_line") as outcome_line,
+        ):
+            window._render_subsystem("GPS")
+        body.assert_any_call(reason)
+        assert outcome_line.call_args_list == [call(item) for item in outcomes]
 
     def test_actionable_outcome_exposes_a_parameter_fix(self, bare_window: LogAnalysisReportWindow) -> None:
         """Analysis recommendations should use the same parameter-fix workflow as availability issues."""

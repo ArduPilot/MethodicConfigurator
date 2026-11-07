@@ -38,7 +38,7 @@ from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result
 
 
 class Severity(Enum):
-    """Severity tiers shown only in the static legend key - not assigned to any finding yet."""
+    """Severity tiers for explicitly rated findings and the legend."""
 
     SEVERE = "severe"
     NEEDS_ATTENTION = "needs_attention"
@@ -286,10 +286,12 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
         self._section_heading(_("Analysis"))
         if analysis_result is None:
             self._section_body(_("Not yet analyzed - {reason}").format(reason=availability_result.reason))
-        elif not analysis_result.outcomes:
-            self._section_body(_("No findings."))
         else:
-            self._render_outcomes(analysis_result.outcomes)
+            self._section_body(analysis_result.reason)
+            if analysis_result.outcomes:
+                self._render_outcomes(analysis_result.outcomes)
+            else:
+                self._section_body(_("No findings."))
 
     def _section_heading(self, text: str) -> None:
         ttk.Label(self.body_frame, text=text, font=("TkDefaultFont", 16, "bold"), foreground="#333333").pack(
@@ -332,8 +334,21 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
 
     def _outcome_line(self, outcome: LogAnalysis) -> None:
         timestamp_text = f"{format_elapsed_time(outcome.timestamp_us / 1e6)}  " if outcome.timestamp_us is not None else ""
+        if isinstance(outcome.end_timestamp_us, (int, float)) and outcome.end_timestamp_us != outcome.timestamp_us:
+            timestamp_text = f"{timestamp_text.strip()} - {format_elapsed_time(outcome.end_timestamp_us / 1e6)}  "
         row = ttk.Frame(self.body_frame)
         row.pack(anchor=tk.W, padx=(10, 0), pady=5, fill=tk.X)
+        severity = (
+            {"critical": Severity.SEVERE, "warning": Severity.NEEDS_ATTENTION, "informational": Severity.INFORMATIONAL}.get(
+                outcome.severity
+            )
+            if isinstance(outcome.severity, str)
+            else None
+        )
+        if severity is not None:
+            marker = ttk.Label(row, text="\u25a0", foreground=_SEVERITY_MARKER_COLOR[severity])
+            marker.pack(side=tk.LEFT, padx=(0, 6), anchor=tk.N)
+            show_tooltip(marker, _SEVERITY_TOOLTIP[severity])
         label = ttk.Label(
             row,
             text=f"{timestamp_text}{outcome.message}",
@@ -342,6 +357,15 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
         )
         label.pack(side=tk.LEFT, fill=tk.X, expand=True)
         label.bind("<Configure>", partial(self._set_wraplength, label))
+
+        if isinstance(outcome.evidence, dict) and outcome.evidence:
+            show_tooltip(
+                label,
+                "\n".join(
+                    f"{name}: {value:.0f}" if float(value).is_integer() else f"{name}: {value:.3g}"
+                    for name, value in outcome.evidence.items()
+                ),
+            )
 
         fixes = self._fix_for_outcome(outcome)
         if fixes:
