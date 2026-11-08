@@ -17,7 +17,7 @@ jobs:
     # Allow manual runs in forks, but avoid unattended weekly runs there.
     if: github.event_name == 'workflow_dispatch' || !github.event.repository.fork
     runs-on: ${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
-    timeout-minutes: 240
+    timeout-minutes: 300
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -63,7 +63,7 @@ jobs:
           PY
 
       - name: Run mutation suite
-        timeout-minutes: 230
+        timeout-minutes: 290
         shell: bash
         run: |
           # Clean-test and framework failures fail this step.
