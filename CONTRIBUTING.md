@@ -128,6 +128,8 @@ ESC log analysis covers armed-period RPM and current comparisons, per-output err
 peaks, motor-spin margins, and documented DShot output rates.
 Parameter-table tests cover add-dialog filtering and selection, bulk-add feedback,
 bitmask editing, and completion of batched rendering.
+PM log checks cover current and pre-4.6 internal-error fields, alias precedence,
+non-finite telemetry, and peak error counts.
 It runs on Linux, macOS, or Windows
 through WSL.
 

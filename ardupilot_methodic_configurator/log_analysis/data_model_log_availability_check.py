@@ -160,7 +160,7 @@ def _pm_non_finite_issues(log_data: LogData, available: set[str]) -> list[str]:
     """Return one issue for each PM field that contains non-finite samples."""
     return [
         _("{field} contains non-finite telemetry values").format(field=field_name)
-        for field_name in ("Load", "NLon", "MaxT", "Mem", "InE", "ErC", "ErrL")
+        for field_name in ("Load", "NLon", "MaxT", "Mem", "InE", "IntE", "ErC", "ErrC", "ErrL")
         if field_name in available and not np.isfinite(log_data.get_field("PM", field_name)).all()
     ]
 
@@ -168,18 +168,20 @@ def _pm_non_finite_issues(log_data: LogData, available: set[str]) -> list[str]:
 def _pm_error_signal_issues(log_data: LogData, available: set[str]) -> list[str]:
     """Return issues reported by finite PM error counters and masks."""
     issues: list[str] = []
-    for field_name, reducer, message in (
-        ("InE", np.max, _("Internal firmware errors were detected (InE)")),
-        ("ErC", np.max, _("Internal error count: {count}")),
-        ("ErrL", np.max, _("An internal error line was recorded (ErrL)")),
-        ("NLon", np.sum, _("Detected {count} scheduler long loops")),
+    for aliases, reducer, message in (
+        (("InE", "IntE"), np.max, _("Internal firmware errors were detected (InE)")),
+        (("ErC", "ErrC"), np.max, _("Internal error count: {count}")),
+        (("ErrL",), np.max, _("An internal error line was recorded (ErrL)")),
+        (("NLon",), np.sum, _("Detected {count} scheduler long loops")),
     ):
-        if field_name in available:
+        field_name = next((name for name in aliases if name in available), None)
+        if field_name is not None:
             values = log_data.get_field("PM", field_name)
             if np.isfinite(values).all():
                 count = int(reducer(values))
                 if count > 0:
-                    issues.append(message.format(count=count) if field_name in {"ErC", "NLon"} else message)
+                    # Preserve the existing translations while displaying the actual log field.
+                    issues.append(message.replace("InE", field_name).format(count=count))
     return issues
 
 

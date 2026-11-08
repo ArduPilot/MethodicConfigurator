@@ -197,6 +197,45 @@ def test_battery_model_checks_failsafes_for_each_enabled_monitor() -> None:
     ]
 
 
+@pytest.mark.parametrize("field", ["Load", "Mem", "NLon", "InE", "IntE", "ErC", "ErrC"])
+@pytest.mark.parametrize("invalid_value", [np.nan, np.inf, -np.inf])
+def test_pm_model_reports_non_finite_optional_fields(field: str, invalid_value: float) -> None:
+    """
+    Apply readability checks to every supported PM field.
+
+    GIVEN a present PM field with both finite and non-finite samples,
+    WHEN PM availability is checked,
+    THEN current and legacy fields receive the same readability warning.
+    """
+    log_data = LogData()
+    log_data.add_message_columns("PM", np.array([(0.0,), (invalid_value,)], dtype=[(field, "f8")]))
+
+    result = PmLogAvailabilityModel(log_data, _context({})).check()
+
+    assert result.available
+    assert result.state == LogAvailabilityState.WARNING
+    assert [issue.message for issue in result.issues] == [f"{field} contains non-finite telemetry values"]
+
+
+@pytest.mark.parametrize(("mask", "counter"), [("InE", "ErC"), ("IntE", "ErrC")])
+def test_pm_model_accepts_readable_internal_error_fields(mask: str, counter: str) -> None:
+    """
+    Allow readable error telemetry to proceed to analysis.
+
+    GIVEN finite current or pre-4.6 internal-error columns,
+    WHEN PM availability is checked,
+    THEN readable telemetry is available for analysis even if the counters are nonzero.
+    """
+    log_data = LogData()
+    log_data.add_message_columns("PM", np.array([(1, 3)], dtype=[(mask, "u4"), (counter, "u4")]))
+
+    result = PmLogAvailabilityModel(log_data, _context({})).check()
+
+    assert result.available
+    assert result.state == LogAvailabilityState.INFO
+    assert not result.issues
+
+
 def test_pm_model_accepts_valid_legacy_schema_without_internal_error_fields() -> None:
     """Older PM schemas do not contain the current InE and ErC fields."""
     log_data = LogData()
