@@ -121,6 +121,149 @@ def test_pm_non_finite_values_are_reported_as_invalid() -> None:
     assert status.healthy is None
 
 
+@pytest.mark.parametrize(("mask", "counter"), [("InE", "ErC"), ("IntE", "ErrC")])
+def test_pm_internal_errors_are_reported_for_each_firmware_schema(mask: str, counter: str) -> None:
+    """Internal error masks and counts are recognized under their historical names."""
+    log_data = LogData()
+    log_data.add_message_columns("PM", np.array([(0, 0), (1, 3)], dtype=[(mask, "i4"), (counter, "i4")]))
+
+    result = check_cpu_performance_message(log_data)
+
+    assert not result.valid
+    assert result.issues == [f"Internal firmware errors were detected ({mask})", "Internal error count: 3"]
+
+
+@pytest.mark.parametrize("field", ["IntE", "ErrC"])
+def test_pm_legacy_internal_error_fields_report_non_finite_values(field: str) -> None:
+    """Unreadable historical error fields cannot silently pass validation."""
+    log_data = LogData()
+    log_data.add_message_columns("PM", np.array([(np.nan,)], dtype=[(field, "f8")]))
+
+    result = check_cpu_performance_message(log_data)
+
+    assert not result.valid
+    assert result.issues == [f"{field} contains non-finite telemetry values"]
+
+
+@pytest.mark.parametrize("error_count", [0, 3])
+def test_pm_42_schema_reports_internal_errors_without_requiring_newer_fields(error_count: int) -> None:
+    """The 4.2 PM schema remains readable with NLoop and no LR field."""
+    fields = ["TimeUS", "NLon", "NLoop", "MaxT", "Mem", "Load", "ErrL", "IntE", "ErrC", "SPIC", "I2CC", "I2CI", "Ex"]
+    columns = np.zeros(2, dtype=[(name, "u8") for name in fields])
+    columns["NLoop"] = 4000
+    columns["IntE"][1] = int(error_count > 0)
+    columns["ErrC"][1] = error_count
+    log_data = LogData()
+    log_data.add_message_columns("PM", columns)
+
+    result = check_cpu_performance_message(log_data)
+
+    assert result.valid is (error_count == 0)
+    assert result.issues == (
+        ["Internal firmware errors were detected (IntE)", "Internal error count: 3"] if error_count else []
+    )
+
+
+def test_pm_prefers_current_error_fields_when_aliases_coexist() -> None:
+    """A mixed schema reports each signal once using the preferred field."""
+    log_data = LogData()
+    log_data.add_message_columns(
+        "PM", np.array([(1, 2, 3, 4)], dtype=[(name, "i4") for name in ("InE", "IntE", "ErC", "ErrC")])
+    )
+
+    result = check_cpu_performance_message(log_data)
+
+    assert result.issues == ["Internal firmware errors were detected (InE)", "Internal error count: 3"]
+
+
+@pytest.mark.parametrize(
+    ("field", "values", "expected_issues"),
+    [
+        ("InE", (0, 0), []),
+        ("IntE", (0, 0), []),
+        ("ErC", (0, 0), []),
+        ("ErrC", (0, 0), []),
+        ("InE", (1, 0), ["Internal firmware errors were detected (InE)"]),
+        ("IntE", (1, 0), ["Internal firmware errors were detected (IntE)"]),
+        ("ErC", (3, 2), ["Internal error count: 3"]),
+        ("ErrC", (3, 2), ["Internal error count: 3"]),
+    ],
+)
+def test_pm_reports_each_internal_error_signal_independently(
+    field: str, values: tuple[int, int], expected_issues: list[str]
+) -> None:
+    """
+    Report each internal-error signal independently.
+
+    GIVEN a single current or legacy PM internal-error field,
+    WHEN the log is validated,
+    THEN zero values pass and nonzero values report the peak rather than the sum or last sample.
+    """
+    log_data = LogData()
+    log_data.add_message_columns("PM", np.array([(value,) for value in values], dtype=[(field, "u4")]))
+
+    result = check_cpu_performance_message(log_data)
+
+    assert result.valid is (not expected_issues)
+    assert result.issues == expected_issues
+
+
+@pytest.mark.parametrize(("mask", "counter"), [("InE", "ErC"), ("InE", "ErrC"), ("IntE", "ErC"), ("IntE", "ErrC")])
+def test_pm_resolves_mask_and_counter_aliases_independently(mask: str, counter: str) -> None:
+    """
+    Resolve the mask and count field names independently.
+
+    GIVEN current or legacy names selected independently for mask and count,
+    WHEN the PM fields are validated,
+    THEN both signals are reported without requiring a matching name pair.
+    """
+    log_data = LogData()
+    log_data.add_message_columns("PM", np.array([(1, 7)], dtype=[(mask, "u4"), (counter, "u4")]))
+
+    result = check_cpu_performance_message(log_data)
+
+    assert not result.valid
+    assert result.issues == [f"Internal firmware errors were detected ({mask})", "Internal error count: 7"]
+
+
+def test_pm_does_not_fall_back_to_legacy_errors_when_current_fields_are_zero() -> None:
+    """
+    Prefer present current fields even when their values are zero.
+
+    GIVEN zero current error fields alongside nonzero legacy aliases,
+    WHEN PM error signals are checked,
+    THEN field presence determines precedence even when the preferred values are zero.
+    """
+    log_data = LogData()
+    log_data.add_message_columns(
+        "PM", np.array([(0, 1, 0, 9)], dtype=[(name, "u4") for name in ("InE", "IntE", "ErC", "ErrC")])
+    )
+
+    result = check_cpu_performance_message(log_data)
+
+    assert result.valid
+    assert not result.issues
+
+
+@pytest.mark.parametrize("field", ["InE", "IntE", "ErC", "ErrC"])
+@pytest.mark.parametrize("invalid_value", [np.nan, np.inf, -np.inf])
+def test_pm_reports_non_finite_error_samples_without_reducing_them(field: str, invalid_value: float) -> None:
+    """
+    Diagnose non-finite error samples before numerical reduction.
+
+    GIVEN a PM error field with both finite and non-finite samples,
+    WHEN the log is validated,
+    THEN it reports unreadable telemetry instead of reducing or converting the invalid samples.
+    """
+    log_data = LogData()
+    log_data.add_message_columns("PM", np.array([(1.0,), (invalid_value,)], dtype=[(field, "f8")]))
+
+    result = check_cpu_performance_message(log_data)
+
+    assert not result.valid
+    assert result.issues == [f"{field} contains non-finite telemetry values"]
+
+
 def test_pm_error_signals_preserve_report_order() -> None:
     """PM error findings retain the established order used by reports and snapshots."""
     log_data = LogData()

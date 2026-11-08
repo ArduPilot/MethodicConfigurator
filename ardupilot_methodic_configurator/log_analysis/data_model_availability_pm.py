@@ -48,6 +48,6 @@ class PmLogAvailabilityModel(BaseLogAvailabilityModel):
 
     def check_pm_fields(self) -> list[AvailabilityIssue]:
         """Validate whichever known PM fields are provided by this firmware's schema."""
-        optional_fields = ("Load", "Mem", "NLon", "InE", "ErC")
+        optional_fields = ("Load", "Mem", "NLon", "InE", "IntE", "ErC", "ErrC")
         available_fields = tuple(field_name for field_name in optional_fields if self.field_available("PM", field_name))
         return self.check_fields_present("PM", available_fields)
