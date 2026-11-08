@@ -416,14 +416,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._updating_inline_editor: bool = False
         self._requested_action = ParameterEditorAction.FINISHED
 
-        self.root.title(
-            _("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - Parameter file editor and uploader")
-        )
-        self.root.geometry(self.calculate_scaled_geometry(990, 630))  # Set the window width and height
-        self.center_window_on_screen(self.root)
-
-        # Bind the close_connection_and_quit function to the window close event
-        self.root.protocol("WM_DELETE_WINDOW", self.close_connection_and_quit)
+        self._configure_root_window()
 
         # Note: Entry and Combobox styles are configured in BaseWindow._setup_theme_and_styling()
 
@@ -454,6 +447,17 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # this one should be on top of the previous one hence the longer time
         if isinstance(self.root, tk.Tk) and UsagePopupWindow.should_display("parameter_editor"):
             self.root.after(100, lambda: display_parameter_editor_usage_popup(cast("tk.Tk", self.root)))
+
+    def _configure_root_window(self) -> None:
+        """Set the initial window geometry and close handler."""
+        self.root.title(
+            _("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - Parameter file editor and uploader")
+        )
+        self.root.geometry(self.calculate_scaled_geometry(990, 630))  # Set the window width and height
+        self.center_window_on_screen(self.root)
+
+        # Bind the close_connection_and_quit function to the window close event
+        self.root.protocol("WM_DELETE_WINDOW", self.close_connection_and_quit)
 
     def run(self) -> ParameterEditorAction:
         """
