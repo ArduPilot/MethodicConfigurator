@@ -982,41 +982,52 @@ def test_macos_key_navigation_selects_and_emits_event_without_idle_update(
 ) -> None:
     """Arrow navigation on macOS changes selection and emits its event without processing idle tasks."""
     test_data = [("key1", "Value 1"), ("key2", "Value 2"), ("key3", "Value 3")]
+    initial_children = tuple(tk_root.winfo_children())
     combobox = PairTupleCombobox(tk_root, test_data, "key1", "test_combo")
     handler = combobox._on_key_up if direction == "up" else combobox._on_key_down
 
-    with (
-        patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.is_macos_sequoia_or_older", return_value=True
-        ),
-        patch.object(combobox, "current") as mock_current,
-        patch.object(combobox, "update_idletasks") as mock_update,
-        patch.object(combobox, "event_generate") as mock_event_gen,
-        patch.object(combobox, "selection_range") as mock_selection,
-    ):
-        mock_current.side_effect = [ValueError("Invalid selection"), None] if invalid_selection else None
-        mock_current.return_value = initial_index
+    try:
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.is_macos_sequoia_or_older",
+                return_value=True,
+            ),
+            patch.object(combobox, "current") as mock_current,
+            patch.object(combobox, "update_idletasks") as mock_update,
+            patch.object(combobox, "event_generate") as mock_event_gen,
+            patch.object(combobox, "selection_range") as mock_selection,
+        ):
+            mock_current.side_effect = [ValueError("Invalid selection"), None] if invalid_selection else None
+            mock_current.return_value = initial_index
 
-        result = handler(None)
+            result = handler(None)
 
-        assert result == "break"
-        assert mock_current.call_args_list[-1].args == (expected_index,)
-        if not invalid_selection or direction == "down":
-            mock_selection.assert_called_once_with(0, tk.END)
-        mock_event_gen.assert_called_once_with("<<ComboboxSelected>>")
-        mock_update.assert_not_called()
+            assert result == "break"
+            assert mock_current.call_args_list[-1].args == (expected_index,)
+            if not invalid_selection or direction == "down":
+                mock_selection.assert_called_once_with(0, tk.END)
+            mock_event_gen.assert_called_once_with("<<ComboboxSelected>>")
+            mock_update.assert_not_called()
+    finally:
+        combobox.destroy()
+        assert tuple(tk_root.winfo_children()) == initial_children
 
 
 @pytest.mark.parametrize("direction", ["up", "down"])
 def test_disabled_combobox_ignores_arrow_selection(tk_root: tk.Tk, direction: str) -> None:
     """Disabled port controls cannot change selection or trigger another connection."""
+    initial_children = tuple(tk_root.winfo_children())
     combobox = PairTupleCombobox(tk_root, [("a", "A"), ("b", "B"), ("c", "C")], "b", "port")
     combobox.state(["disabled"])
     handler = combobox._on_key_up if direction == "up" else combobox._on_key_down
-    with patch.object(combobox, "event_generate") as selected:
-        assert handler(None) == "break"
-        assert combobox.get_selected_key() == "b"
-        selected.assert_not_called()
+    try:
+        with patch.object(combobox, "event_generate") as selected:
+            assert handler(None) == "break"
+            assert combobox.get_selected_key() == "b"
+            selected.assert_not_called()
+    finally:
+        combobox.destroy()
+        assert tuple(tk_root.winfo_children()) == initial_children
 
 
 if __name__ == "__main__":
