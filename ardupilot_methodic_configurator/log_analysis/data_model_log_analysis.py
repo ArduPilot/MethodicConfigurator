@@ -15,6 +15,10 @@ from dataclasses import dataclass, field
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.log_analysis.data_model_availability_arm import ArmLogAvailabilityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_attitude_saturation import (
+    AttitudeSaturationLogAnalysis,
+    AttitudeSaturationLogAvailabilityModel,
+)
 from ardupilot_methodic_configurator.log_analysis.data_model_availability_base import (
     BaseLogAnalysisModel,
     BaseLogAvailabilityModel,
@@ -72,6 +76,12 @@ LOG_ANALYSIS_SUBSYSTEMS: tuple[LogAnalysisModelSpec, ...] = (
     LogAnalysisModelSpec("esc", EscLogAvailabilityModel, EscLogAnalysis, ("ESC", "Motors")),
     LogAnalysisModelSpec("imu", ImuLogAvailabilityModel, ImuLogAnalysis, ("Flight Controller",)),
     LogAnalysisModelSpec("vibe", VibeLogAvailabilityModel, VibeLogAnalysis, ("Flight Controller",)),
+    LogAnalysisModelSpec(
+        "attitude_saturation",
+        AttitudeSaturationLogAvailabilityModel,
+        AttitudeSaturationLogAnalysis,
+        ("Flight Controller",),
+    ),
     LogAnalysisModelSpec("fft", FftLogAvailabilityModel),
     LogAnalysisModelSpec("err", ErrLogAvailabilityModel),
     LogAnalysisModelSpec("pm", PmLogAvailabilityModel),

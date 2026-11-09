@@ -12,6 +12,7 @@ The process is simple:
 
 The current Log Analysis system provides **detailed analysis** for:
 
+* Attitude control saturation
 * Battery
 * ESC
 * GPS/GNSS consistency and interference indicators
@@ -332,6 +333,104 @@ The analysis also checks for accelerometer clipping events.
 Clipping occurs when the measured acceleration reaches the sensor's measurable limit.
 If clipping is reported, investigate the cause before continuing with detailed tuning.
 
+## Attitude Saturation Analysis
+
+Attitude Saturation Analysis checks Copter and helicopter logs for evidence of attitude-control limiting while the vehicle was armed.
+It needs the `ATT` and `RATE` messages (LOG_BITMASK *Fast Attitude* or *Medium Attitude*)
+and the `PIDR`, `PIDP` and `PIDY` messages (LOG_BITMASK *PID*).
+Checks whose messages or parameters are not available are skipped.
+
+Each finding reports elapsed seconds and the percentage of the relevant armed time.
+Sample intervals are weighted before selecting armed periods or flight modes, so uneven logging does not inflate the percentage.
+For these duration estimates, each observed value is held until the next sample,
+splitting its interval at ARM, MODE, mission-item (MISE or legacy CMD), Guided target and parameter changes.
+The final sample contributes no unobserved time beyond the end of the data.
+Before the first ARM transition, the vehicle is assumed to have the opposite state.
+This includes the armed portion of default `LOG_DISARMED=0` logs whose initial arm event occurred before logging started.
+An unmatched arm event remains effective through the end of the observed data.
+When there are no ARM records, the analysis uses all observed time.
+Limits changed during the flight are evaluated using the logged parameter history.
+A finding is rated *critical* when attitude control is severely reduced, otherwise *warning*.
+
+| Limit | Detected by | Critical when |
+| ----- | ----------- | ------------- |
+| `ATC_RATE_R_MAX`, `ATC_RATE_P_MAX` | Normalised roll/pitch target length `sqrt((RDes/R_MAX)^2 + (PDes/P_MAX)^2)` at or above 0.98 when both limits are enabled; otherwise the enabled axis alone | Near the envelope for 10% or more of the armed time |
+| `ATC_RATE_Y_MAX` | Magnitude of `RATE.YDes` at or above 98% of the configured limit | Near the envelope for 10% or more of the armed time |
+| `ATC_RAT_RLL_SMAX`, `ATC_RAT_PIT_SMAX`, `ATC_RAT_YAW_SMAX` | Slew limiter scaling P and D down (`PID*.Dmod`) | Gains below 50% for 5% or more of the armed time |
+| `ATC_RAT_RLL_PDMX`, `ATC_RAT_PIT_PDMX`, `ATC_RAT_YAW_PDMX` | P+D sum limit flag (`PID*.Flags`) | Active for 10% or more of the armed time |
+| `ANGLE_MAX` (`ATC_ANGLE_MAX` since 4.7), `PSC_ANGLE_MAX` | Final desired lean angle (`ATT.DesRoll`, `DesPitch`) at the applicable ceiling | Never, always a warning |
+
+Absent or disabled rate, slew and P+D limit parameters are skipped.
+Short episodes are ignored: a finding needs the limit to be active for at least 1% of the time or at least one second in total.
+Rate targets provide indirect evidence: reaching or exceeding the configured envelope does not prove that a limiter clipped the target.
+Compare desired and measured rates and check disturbances before changing a rate limit.
+The shared roll/pitch ellipse is defined by
+[`AC_AttitudeControl::ang_vel_limit` in Copter 4.6.3](https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/libraries/AC_AttitudeControl/AC_AttitudeControl.cpp).
+
+### Lean-angle limits
+
+The lean-angle check uses the limit that applies to the flight mode (from the `MODE` messages) active at each moment:
+
+* In supported position-controlled modes (including Loiter, Auto and RTL), a positive `PSC_ANGLE_MAX` is used directly,
+  even when it is larger than the vehicle pilot limit.
+  When it is absent or 0, the vehicle limit is used.
+  In Auto, `GUIA` attitude commands (including NAVGUIDED companion and NAV_SCRIPT_TIME Lua attitude legs)
+  bypass the horizontal position controller. Their intervals are skipped until the next `MODE`, `GUIP` or executing
+  navigation item: `MISE` in Copter 4.6+, with `CMD` as the fallback for older logs without `MISE`.
+  DO and condition items do not end an attitude leg; uploaded-mission `CMD` dumps are ignored when `MISE` is present.
+  NAV_ATTITUDE_TIME (`CId` 42703) also bypasses horizontal position control without emitting `GUIA`,
+  so its interval is skipped until navigation resumes.
+* Guided is checked only while `GUIP` records identify position targets in the current Guided session.
+  `GUIA` attitude targets bypass the horizontal position controller, so their intervals are skipped.
+  Guided intervals without target evidence and Guided_NoGPS are also skipped.
+* `LOIT_ANG_MAX` limits the pilot's input in Loiter. Position corrections can produce final ATT targets above that value,
+  so this analysis does not infer pilot-limit saturation from those targets.
+* In supported pilot lean-angle modes, `ANGLE_MAX` (`ATC_ANGLE_MAX`) is used.
+* Land is skipped because `MODE` does not distinguish horizontal position control from the no-GPS pilot lean path.
+* FlowHold is skipped because it uses its own per-axis angle constraints, which this final-tilt check does not model.
+* Acro, Flip, AutoTune, Throw, SystemID, Autorotate and Turtle are ignored because they are not bound by the pilot lean-angle limit.
+* Samples with no known applicable MODE record are skipped.
+
+The Guided target message meanings are defined in
+[`Log.cpp` in Copter 4.6.3](https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/ArduCopter/Log.cpp).
+[`ModeGuided::angle_control_run`](https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/ArduCopter/mode_guided.cpp)
+passes attitude commands directly to the attitude controller;
+[`ModeGuidedNoGPS::run`](https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/ArduCopter/mode_guided_nogps.cpp)
+uses that same path.
+Auto's navigation-item classification is defined in
+[`AP_Mission::is_nav_cmd` in Copter 4.6.3](https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/libraries/AP_Mission/AP_Mission.cpp),
+and [`ModeAuto::nav_attitude_time_run`](https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/ArduCopter/mode_auto.cpp)
+sends roll/pitch targets directly to the attitude controller.
+
+The alternative Land control paths are defined in
+[`ModeLand` in Copter 4.6.3](https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/ArduCopter/mode_land.cpp).
+FlowHold's separate angle constraints are defined in
+[`ModeFlowHold` in Copter 4.6.3](https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/ArduCopter/mode_flowhold.cpp).
+Rate, slew and P+D limit checks still apply in both modes.
+
+See the final position ceiling in
+[`AC_PosControl` in Copter 4.6.3](https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/libraries/AC_AttitudeControl/AC_PosControl.cpp)
+and the separate pilot input limit in
+[`AC_Loiter`](https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/libraries/AC_WPNav/AC_Loiter.cpp).
+The renamed degree-based `ATC_ANGLE_MAX` is present in
+[`AC_AttitudeControl` in Copter 4.7.0](https://github.com/ArduPilot/ardupilot/blob/Copter-4.7.0/libraries/AC_AttitudeControl/AC_AttitudeControl.cpp).
+
+In position-controlled modes, lean-angle saturation indicates that the vehicle could not tilt further to follow the demanded acceleration.
+Raise the reported parameter if the airframe and payload allow it.
+In pilot lean-angle modes such as Stabilize, the finding reports use of the full pilot lean range.
+Review pilot inputs and the configured lean range; full stick alone does not indicate a position-controller limit.
+Pilot and position-controlled periods receive separate findings even when they use the same parameter.
+
+### Rate-controller saturation
+
+A critical rate-limit finding means that RATE targets frequently reached the configured `ATC_RATE_*_MAX` envelope.
+This suggests rate limiting but does not prove clipping.
+Check target tracking and disturbances before raising the limit.
+
+Critical slew-limiter or P+D sum-limit findings indicate reduced attitude-control authority.
+Review the P and D gains and the reported limit.
+A slew limiter that is frequently active also indicates an oscillation tendency.
+
 ## When an analysis is unavailable
 
 You may see a result such as:
@@ -482,7 +581,7 @@ Because an analysis based on missing or invalid data could produce a misleading 
 
 The Log Analysis feature makes it easier to understand what happened during an ArduPilot flight.
 
-Current detailed analyses include Battery, ESC, IMU, Vibration, and GPS/GNSS.
+Current detailed analyses include Attitude Saturation, Battery, ESC, IMU, Vibration, and GPS/GNSS.
 The system also performs data availability checks for other vehicle subsystems (FFT, Errors, Performance Monitor, Arming, and Flight Mode).
 The best results come from a correctly configured vehicle, a complete flight log, and investigating the reported findings
 rather than blindly changing parameters.
