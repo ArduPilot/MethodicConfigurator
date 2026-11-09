@@ -118,6 +118,9 @@ def extract_missing_translations(lang_code: str) -> list[tuple[int, str]]:  # no
     for i, f_line in enumerate(lines):
         line = f_line.strip()
         error_msg = f"Error in line {i}: {line}"
+        is_malformed_candidate = (
+            not line.startswith('"') and not line.startswith("#") and line and not in_msgstr and not in_msgid
+        )
 
         # Start of a new msgid entry
         if line.startswith("msgid "):
@@ -193,11 +196,10 @@ def extract_missing_translations(lang_code: str) -> list[tuple[int, str]]:  # no
                 missing_translations.append((msgstr_line_index, msgid))
             in_msgstr = False
 
-        # Malformed line detection
-        elif not line.startswith('"') and not line.startswith("#") and line and not in_msgstr and not in_msgid:
-            if not line.startswith("msgid"):  # Only log for truly malformed lines
-                logging.error(error_msg)
-                has_malformed_line = True
+        # Only log for truly malformed lines
+        elif is_malformed_candidate and not line.startswith("msgid"):
+            logging.error(error_msg)
+            has_malformed_line = True
 
     # Check for any untranslated entries at the end of the file
     if in_msgstr and not has_malformed_line and msgstr == "" and msgid:
