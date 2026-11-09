@@ -372,6 +372,8 @@ jobs:
         run: |
           APP="$PWD/dist/ArduPilot Methodic Configurator.app/Contents/MacOS/ardupilot_methodic_configurator"
           cd "$RUNNER_TEMP"
+          export MAVLINK_DIALECT=common
+          "$APP" --version
           "$APP" --validate-plugins
 
       - name: Build DMG
@@ -466,6 +468,8 @@ jobs:
         run: |
           APP="$PWD/dist/ardupilot_methodic_configurator/ardupilot_methodic_configurator"
           cd "$RUNNER_TEMP"
+          export MAVLINK_DIALECT=common
+          env -u DISPLAY "$APP" --version
           env -u DISPLAY "$APP" --validate-plugins
 
       - name: Build AppImage
