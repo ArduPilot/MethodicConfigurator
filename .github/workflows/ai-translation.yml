@@ -265,7 +265,7 @@ jobs:
             translation_file: ${{ matrix.file }}
             translation_content: |
               ${{ steps.translation_content.outputs.content }}
-          model: gpt-5.4
+          model: gpt-6.1-terra
         continue-on-error: true
         # This explicit, step-scoped credential takes precedence over the
         # repository's GITHUB_TOKEN, so Copilot usage is billed to the personal
@@ -358,7 +358,7 @@ jobs:
           fi
 
       - name: Handle translation failure
-        if: steps.check_translation.outputs.translation_successful != 'true'
+        if: ${{ !cancelled() && (failure() || steps.check_translation.outputs.translation_successful != 'true') }}
         run: |
           echo "⚠️ AI translation failed for ${{ matrix.language }} (${{ matrix.file }})"
           echo "Language: ${{ matrix.language }} (code: ${{ matrix.lang_code }})"
@@ -371,7 +371,7 @@ jobs:
           echo "# This was part of a chunked translation batch for scalability" >> "${{ matrix.file }}"
 
       - name: Upload translated file
-        if: always()  # Upload even if translation failed, for debugging
+        if: ${{ !cancelled() }}  # Upload failures for debugging, but not unfinished cancelled chunks
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: translated-${{ matrix.lang_code }}${{ matrix.suffix }}
@@ -379,7 +379,7 @@ jobs:
           retention-days: 1
 
       - name: Report translation status
-        if: always()
+        if: ${{ !cancelled() }}
         run: |
           if [ "${{ steps.check_translation.outputs.translation_successful }}" = "true" ]; then
             echo "✅ Successfully translated ${{ matrix.file }} for ${{ matrix.language }}"
@@ -387,13 +387,17 @@ jobs:
           else
             echo "❌ Failed to translate ${{ matrix.file }} for ${{ matrix.language }}"
             echo "📊 Chunk: ${{ matrix.suffix || 'single file' }}"
-            echo "::warning::AI translation failed for ${{ matrix.language }}${{ matrix.suffix }}. Manual translation may be required."
+            echo "::error::AI translation failed for ${{ matrix.language }}${{ matrix.suffix }}. Check the 'Run AI translation' step output, e.g. the model may be unavailable or retired."
+            # Fail the job (the placeholder artifact is already uploaded) so that failures are not silently hidden
+            exit 1
           fi
 
   # Job to collect all translations and create the final PR
   finalize_translations:
     needs: [extract_strings, ai_translate]
-    if: needs.extract_strings.outputs.po-files-changed == 'true'
+    # Run even if some ai_translate jobs failed, so the .pot/.po merge and the successful translations still reach the PR.
+    # The failed ai_translate jobs already turn the workflow run red.
+    if: ${{ !cancelled() && needs.extract_strings.result == 'success' && needs.extract_strings.outputs.po-files-changed == 'true' }}
     permissions:
       actions: read         # needed for downloading translated artifacts
       contents: write       # for creating branches and commits
