@@ -31,6 +31,12 @@ from ardupilot_methodic_configurator.frontend_tkinter_component_editor import Co
 # pylint: disable=redefined-outer-name
 
 
+def cancel_new_after_jobs(root: tk.Tk, initial_jobs: set[str]) -> None:
+    """Cancel callbacks queued during one editor test, preserving earlier jobs."""
+    for after_job in set(root.tk.call("after", "info")) - initial_jobs:
+        root.after_cancel(after_job)
+
+
 @pytest.fixture
 def temp_vehicle_dir() -> Generator[str, None, None]:
     """Create a temporary directory for vehicle files."""
@@ -271,13 +277,39 @@ class TestComponentEditorWithMinimalMocking:
 
     @pytest.fixture
     def editor_root(self, root: tk.Tk) -> Generator[tk.Tk, None, None]:
-        """Remove only frames created by this test from the shared Tk root."""
+        """Remove frames and callbacks created by this test from the shared Tk root."""
         initial_children = tuple(root.winfo_children())
+        initial_after_jobs = set(root.tk.call("after", "info"))
         yield root
         for child in root.winfo_children():
             if child not in initial_children:
                 child.destroy()
+        cancel_new_after_jobs(root, initial_after_jobs)
         assert tuple(root.winfo_children()) == initial_children
+        assert set(root.tk.call("after", "info")) <= initial_after_jobs
+
+    def test_editor_root_cleanup_preserves_existing_callbacks(self, root: tk.Tk) -> None:
+        """A queued component usage popup can be removed without canceling an earlier Tk job."""
+        existing_job = root.after(60_000, lambda: None)
+        initial_jobs = set(root.tk.call("after", "info"))
+        editor = ComponentEditorWindow.__new__(ComponentEditorWindow)
+        editor.root = root
+        try:
+            with patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.UsagePopupWindow.should_display",
+                return_value=True,
+            ):
+                editor._check_show_usage_instructions()
+            popup_jobs = set(root.tk.call("after", "info")) - initial_jobs
+            assert len(popup_jobs) == 1
+
+            cancel_new_after_jobs(root, initial_jobs)
+
+            assert not popup_jobs.intersection(root.tk.call("after", "info"))
+            assert existing_job in root.tk.call("after", "info")
+        finally:
+            cancel_new_after_jobs(root, initial_jobs)
+            root.after_cancel(existing_job)
 
     def test_editor_initialization_process(self, temp_vehicle_dir, editor_root: tk.Tk) -> None:
         """
