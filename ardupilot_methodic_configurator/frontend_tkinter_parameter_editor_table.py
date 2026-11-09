@@ -767,7 +767,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         forced_error_msg = _(
             "This parameter already has the correct value for this configuration step.\n"
             "You must not change it, as this would defeat the purpose of this configuration step.\n\n"
-            "Add it to other configuration step and change it there if you have a good reason to."
+            "Tick the manual override checkbox to the right if you have a good reason to override it."
         )
         derived_error_msg = _(
             "This parameter value has been derived from information you entered in the component editor window.\n"
