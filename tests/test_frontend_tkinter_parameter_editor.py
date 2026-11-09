@@ -458,6 +458,7 @@ class TestWindowSizing:
 
                 if destroy_target == "main-frame":
                     editor.main_frame.destroy()
+                    assert resize_job not in layout_root.tk.call("after", "info")
                 else:
                     editor.parameter_area_container.destroy()
                 layout_root.update_idletasks()
