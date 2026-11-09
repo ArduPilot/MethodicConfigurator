@@ -179,15 +179,6 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
     (master, comport, info). Other managers query the connection manager for
     current state rather than caching it.
 
-    Properties (delegated to managers):
-        master: MAVLink connection object (delegates to connection_manager)
-        comport: Current serial/network port (delegates to connection_manager)
-        comport_device: Device string of current port (delegates to connection_manager)
-        info: Flight controller metadata (delegates to connection_manager)
-        fc_parameters: Parameter dictionary (delegates to params_manager)
-        reboot_time: Time to wait after reboot before reconnecting
-        baudrate: Default baud rate for serial connections
-
     Note on Manager Creation Order:
         Managers must be created in this order due to dependencies:
         1. FlightControllerInfo (shared state object)
