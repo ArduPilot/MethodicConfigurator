@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 """
-Validates all vehicle_components.json files against a JSON schema.
+Validates published vehicle template component files against a JSON schema.
 
-Finds all vehicle_components.json files in the project and its subdirectories, and validates them
+Finds vehicle_components.json files in the packaged vehicle templates, and validates them
 against the JSON schema defined in "ardupilot_methodic_configurator/vehicle_components_schema.json".
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
@@ -14,13 +14,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import json
-import os
+from pathlib import Path
 
 import pytest
 from jsonschema import ValidationError, exceptions, validate, validators
 
 # Path to the schema file
-SCHEMA_FILE_PATH = os.path.join("ardupilot_methodic_configurator", "vehicle_components_schema.json")
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+SCHEMA_FILE_PATH = REPOSITORY_ROOT / "ardupilot_methodic_configurator" / "vehicle_components_schema.json"
 
 # pylint: disable=duplicate-code
 # Load the schema
@@ -38,18 +39,25 @@ def test_schema_validity() -> None:
         pytest.fail(f"The schema file {SCHEMA_FILE_PATH} is not a valid JSON Schema: {e}")
 
 
-def find_json_files(directory) -> list[str]:
-    """Find all vehicle_components.json files in the specified directory and its subdirectories."""
-    json_files = []
-    for root, _, files in os.walk(directory):
-        for file in files:
-            if file == "vehicle_components.json":
-                json_files.append(os.path.join(root, file))  # noqa: PERF401
-    return json_files
+def find_template_component_files(repository_root: Path) -> list[Path]:
+    """Validate shipped templates without collecting temporary projects or test fixtures."""
+    template_root = repository_root / "ardupilot_methodic_configurator" / "vehicle_templates"
+    return sorted(template_root.rglob("vehicle_components.json"))
 
 
-@pytest.mark.parametrize("json_file", find_json_files("."))
-def test_json_schema(json_file) -> None:
+def test_schema_discovery_includes_nested_templates_and_excludes_scratch_projects(tmp_path: Path) -> None:
+    """GIVEN a published template and scratch files, WHEN collecting schemas, THEN validate only the template."""
+    template = tmp_path / "ardupilot_methodic_configurator" / "vehicle_templates" / "ArduCopter" / "vehicle" / "4.7.x"
+    scratch = tmp_path / ".pytest-codex-verify-final" / "test_user_can_compound_uncached"
+    for directory in (template, scratch):
+        directory.mkdir(parents=True)
+        (directory / "vehicle_components.json").write_text("{}", encoding="utf-8")
+
+    assert find_template_component_files(tmp_path) == [template / "vehicle_components.json"]
+
+
+@pytest.mark.parametrize("json_file", find_template_component_files(REPOSITORY_ROOT))
+def test_json_schema(json_file: Path) -> None:
     """Test that the JSON files conform to the predefined schema."""
     with open(json_file, encoding="utf-8") as file:
         json_data = json.load(file)
