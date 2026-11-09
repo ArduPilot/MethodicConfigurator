@@ -213,6 +213,31 @@ class BaseLogAnalysisModel(BaseLogModel):
         """
         return self.parameter_deriver.derived_and_forced_parameters_matching(pattern, self._parameter_derivation_inputs())
 
+    def _armed_time_windows(self) -> list[tuple[float, float]]:
+        """Build canonical-second arm/disarm windows from ARM message transitions."""
+        columns = self.log_data.get_message_columns("ARM")
+        names = tuple(columns.dtype.names or ()) if columns is not None else ()
+        if columns is None or "ArmState" not in names or "TimeUS" not in names:
+            return []
+
+        arm_state = self.log_data.get_field("ARM", "ArmState")
+        time_seconds = self.log_data.get_field("ARM", "TimeUS")
+
+        windows: list[tuple[float, float]] = []
+        arm_time: float | None = None
+        for state, timestamp_seconds in zip(arm_state, time_seconds, strict=True):
+            if state and arm_time is None:
+                arm_time = float(timestamp_seconds)
+            elif not state and arm_time is not None:
+                windows.append((arm_time, float(timestamp_seconds)))
+                arm_time = None
+
+        # Vehicle still armed at end of log (no matching disarm event)
+        if arm_time is not None and len(time_seconds) > 0:
+            windows.append((arm_time, float(time_seconds[-1])))
+
+        return windows
+
     def _parameter_derivation_inputs(self) -> ParameterDerivationInputs:
         """Build the in-memory inputs used by the injected derivation service."""
         return ParameterDerivationInputs(

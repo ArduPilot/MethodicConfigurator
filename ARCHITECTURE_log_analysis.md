@@ -232,6 +232,15 @@ This allows additional analysis models to be added without modifying the log ext
 
 4. **VIBE** - Provides both a VIBE availability model and analysis model.
 
+   **Attitude saturation** - `data_model_availability_attitude_saturation.py` provides an availability model and an analysis model.
+   The analysis detects saturation by `ATC_RATE_*_MAX`, `ATC_RAT_*_SMAX`, `ATC_RAT_*_PDMX` and the lean-angle limits
+   (`ANGLE_MAX`/`ATC_ANGLE_MAX`, `PSC_ANGLE_MAX`) from the `ATT`, `RATE`, `PIDR/P/Y` and `MODE` messages,
+   restricted to the armed time.
+   Guided lean-limit checks additionally use `GUIP` and `GUIA` to distinguish position targets from attitude commands.
+   Auto uses `GUIA` and executed mission navigation items (`MISE`, or `CMD` on older logs) to exclude attitude legs,
+   including NAV_ATTITUDE_TIME even without `GUIA`.
+   Findings distinguish pilot lean-range usage from position-controller limiting.
+
 5. **FFT** - Provides an availability model. An analysis model is not currently registered.
 
 6. **GPS, ERR, PM, ARM, MODE** - Provide availability checks without currently registered analysis models.
@@ -400,6 +409,7 @@ The current implementation provides:
 * ESC analysis
 * IMU analysis
 * VIBE analysis
+* Attitude saturation analysis
 * FFT data availability checking
 * Additional availability checks for ERR, PM, ARM, and MODE
 * Configuration-step validation
