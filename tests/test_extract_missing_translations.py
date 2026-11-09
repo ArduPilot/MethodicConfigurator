@@ -16,6 +16,7 @@ import tempfile
 import unittest
 from collections.abc import Generator
 from importlib import import_module
+from pathlib import Path
 from unittest.mock import MagicMock, call, patch
 
 import pytest
@@ -24,6 +25,50 @@ import pytest
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../.github/skills/update-gui-translations/scripts")))
 
 extract_missing_translations = import_module("extract_missing_translations")
+insert_missing_translations = import_module("insert_missing_translations")
+
+
+def test_partial_translation_chunks_are_inserted_in_numeric_order(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """
+    Successfully translated chunks are inserted even when earlier chunks failed.
+
+    GIVEN: A merged catalog and translated chunks 2, 10 and 100, with chunk 1 missing
+    WHEN: The translations are inserted
+    THEN: All translations are loaded in numeric order and written to the correct entries
+    """
+    locale_dir = tmp_path / "ardupilot_methodic_configurator" / "locale" / "de" / "LC_MESSAGES"
+    locale_dir.mkdir(parents=True)
+    catalog = locale_dir / "ardupilot_methodic_configurator.po"
+    catalog.write_text('msgid "First"\nmsgstr ""\n\nmsgid "Second"\nmsgstr ""\n\nmsgid "Third"\nmsgstr ""\n', encoding="utf-8")
+    basename = tmp_path / "missing_translations"
+    (tmp_path / "missing_translations_de_10.txt").write_text("3:Zweite\n", encoding="utf-8")
+    (tmp_path / "missing_translations_de_100.txt").write_text("6:Dritte\n", encoding="utf-8")
+    (tmp_path / "missing_translations_de_2.txt").write_text("0:Erste\n", encoding="utf-8")
+    (tmp_path / "missing_translations_de_extra.txt").write_text("0:Wrong\n", encoding="utf-8")
+    (tmp_path / "missing_translations_de_extra_2.txt").write_text("0:Wrong\n", encoding="utf-8")
+    monkeypatch.setattr(insert_missing_translations, "PROJECT_ROOT", tmp_path)
+
+    assert insert_missing_translations.load_translations("de", str(basename)) == [(0, "Erste"), (3, "Zweite"), (6, "Dritte")]
+    insert_missing_translations.insert_translations("de", str(basename), catalog.name)
+
+    assert catalog.read_text(encoding="utf-8") == (
+        'msgid "First"\nmsgstr "Erste"\n\nmsgid "Second"\nmsgstr "Zweite"\n\nmsgid "Third"\nmsgstr "Dritte"\n'
+    )
+
+
+def test_unchunked_translation_file_takes_precedence(tmp_path: Path) -> None:
+    """
+    A single translation file retains precedence over numbered chunks.
+
+    GIVEN: Both a single file and a numbered file exist for one language
+    WHEN: Translations are loaded
+    THEN: Only the single file is used
+    """
+    basename = tmp_path / "missing_translations"
+    (tmp_path / "missing_translations_de.txt").write_text("0:Einzeln\n", encoding="utf-8")
+    (tmp_path / "missing_translations_de_2.txt").write_text("1:Andere\n", encoding="utf-8")
+
+    assert insert_missing_translations.load_translations("de", str(basename)) == [(0, "Einzeln")]
 
 
 class TestExtractMissingTranslations(unittest.TestCase):

@@ -11,8 +11,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import argparse
+import glob
 import logging
-import os
 import sys
 from pathlib import Path
 
@@ -78,18 +78,19 @@ def load_translations(lang_code: str, translations_basename: str) -> list[tuple[
     except FileNotFoundError:
         logging.debug("Main translation file %s not found, looking for numbered files", main_file)
 
-        # Try to load numbered files sequentially until one is not found
-        n = 1
-        while n < 99:
-            numbered_file = translations_basename + "_" + lang_code + "_" + str(n) + ".txt"
-            if not os.path.exists(numbered_file):
-                break
-
+        # Failed chunks may be absent; read every numbered chunk in numeric order.
+        pattern = glob.escape(translations_basename + "_" + lang_code) + "_*.txt"
+        prefix = Path(translations_basename).name + "_" + lang_code + "_"
+        numbered_files = [
+            (int(suffix), filename)
+            for filename in glob.glob(pattern)
+            if (suffix := Path(filename).stem.removeprefix(prefix)).isascii() and suffix.isdecimal() and int(suffix) > 0
+        ]
+        for _, numbered_file in sorted(numbered_files):
             with open(numbered_file, encoding="utf-8") as f:
                 file_data = f.read().strip().split("\n")
                 translations_data += file_data
                 logging.debug("Successfully loaded %d lines from: %s", len(file_data), numbered_file)
-            n += 1
 
         if not translations_data:
             logging.error("No translation file(s) found for %s", lang_code)
