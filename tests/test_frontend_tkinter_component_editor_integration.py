@@ -28,7 +28,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_components import Compon
 from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
 
-# pylint: disable=redefined-outer-name
+# pylint: disable=redefined-outer-name,protected-access
 
 
 def cancel_new_after_jobs(root: tk.Tk, initial_jobs: set[str]) -> None:
