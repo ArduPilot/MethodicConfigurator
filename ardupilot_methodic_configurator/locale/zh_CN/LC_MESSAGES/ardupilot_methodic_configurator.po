@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-11-09 18:38+0000\n"
+"POT-Creation-Date: 2026-11-10 18:16+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -2149,7 +2149,9 @@ msgstr "无法刷新飞控参数。正在重试。"
 msgid ""
 "SSL_CERT_FILE points to a missing CA bundle: %s. Fix or unset it to enable "
 "HTTPS."
-msgstr "SSL_CERT_FILE 指向不存在的 CA 证书包：%s。请修正或取消设置该变量以启用 HTTPS。"
+msgstr ""
+"SSL_CERT_FILE 指向不存在的 CA 证书包：%s。请修正或取消设置该变量以启用 "
+"HTTPS。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_internet.py:108
 msgid "Downloading ... {:.1f}%"
@@ -2475,7 +2477,8 @@ msgstr ""
 msgid ""
 "Battery capacity, voltage monitoring and low and critical thresholds support "
 "reliable battery failsafe actions"
-msgstr "电池容量、电压监测以及低电量和严重低电量阈值可确保可靠地执行电池失效保护动作"
+msgstr ""
+"电池容量、电压监测以及低电量和严重低电量阈值可确保可靠地执行电池失效保护动作"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:33
 msgid ""
@@ -2721,7 +2724,9 @@ msgstr ""
 msgid ""
 "The helicopter rotor speed controller must match the ESC operating mode, "
 "rotor speed range and spool-up timing for safe rotor operation"
-msgstr "直升机旋翼转速控制器必须与电调工作模式、旋翼转速范围和启动加速时间相匹配，以确保旋翼安全运行"
+msgstr ""
+"直升机旋翼转速控制器必须与电调工作模式、旋翼转速范围和启动加速时间相匹配，以"
+"确保旋翼安全运行"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:73
 msgid ""
@@ -3284,7 +3289,9 @@ msgstr "配置RC控制器选项，包括解锁方式和RC通道功能分配。"
 msgid ""
 "Configure RC mapping, calibration and controller options. Plugin changes are "
 "staged; press parameter upload to write them to the flight controller"
-msgstr "配置遥控器映射、校准和控制器选项。插件更改已暂存；按下参数上传按钮将其写入飞行控制器"
+msgstr ""
+"配置遥控器映射、校准和控制器选项。插件更改已暂存；按下参数上传按钮将其写入飞"
+"行控制器"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:176
 msgid "Configure aircraft servo output functions."
@@ -3914,7 +3921,11 @@ msgid ""
 "You can skip some steps now.\n"
 "\n"
 "Jump to '70_everyday_use.param' file?"
-msgstr "如果您急于使用且不需要完全优化的飞行控制器\n现在可以跳过一些步骤。\n\n跳转到 '70_everyday_use.param' 文件？"
+msgstr ""
+"如果您急于使用且不需要完全优化的飞行控制器\n"
+"现在可以跳过一些步骤。\n"
+"\n"
+"跳转到 '70_everyday_use.param' 文件？"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:324
 msgid ""
@@ -3922,7 +3933,11 @@ msgid ""
 "You can skip some steps now.\n"
 "\n"
 "Jump to '92_everyday_use.param' file?"
-msgstr "如果您急于使用且不需要完全优化的飞行控制器\n现在可以跳过一些步骤。\n\n跳转到 '92_everyday_use.param' 文件？"
+msgstr ""
+"如果您急于使用且不需要完全优化的飞行控制器\n"
+"现在可以跳过一些步骤。\n"
+"\n"
+"跳转到 '92_everyday_use.param' 文件？"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:328
 msgid ""
@@ -3930,7 +3945,11 @@ msgid ""
 "you can skip some steps now.\n"
 "\n"
 "Jump to '70_everyday_use.param' file?"
-msgstr "如果您不使用光流\n现在可以跳过一些步骤。\n\n跳转到 '70_everyday_use.param' 文件？"
+msgstr ""
+"如果您不使用光流\n"
+"现在可以跳过一些步骤。\n"
+"\n"
+"跳转到 '70_everyday_use.param' 文件？"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:332
 msgid ""
@@ -3938,7 +3957,11 @@ msgid ""
 "you can skip some steps now.\n"
 "\n"
 "Jump to '92_everyday_use.param' file?"
-msgstr "如果您不使用光流\n现在可以跳过一些步骤。\n\n跳转到 '92_everyday_use.param' 文件？"
+msgstr ""
+"如果您不使用光流\n"
+"现在可以跳过一些步骤。\n"
+"\n"
+"跳转到 '92_everyday_use.param' 文件？"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:336
 msgid ""
@@ -3946,7 +3969,11 @@ msgid ""
 "you can skip some steps now.\n"
 "\n"
 "Jump to '64_position_controller.param' file?"
-msgstr "如果您不需要通过分析进行 PID 优化\n现在可以跳过一些步骤。\n\n跳转到 '64_position_controller.param' 文件？"
+msgstr ""
+"如果您不需要通过分析进行 PID 优化\n"
+"现在可以跳过一些步骤。\n"
+"\n"
+"跳转到 '64_position_controller.param' 文件？"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:340
 msgid ""
@@ -3954,14 +3981,20 @@ msgid ""
 "you can skip some steps now.\n"
 "\n"
 "Jump to '86_position_controller.param' file?"
-msgstr "如果不想进行解析式 PID 优化，\n现在可以跳过部分步骤。\n\n跳转到“86_position_controller.param”文件？"
+msgstr ""
+"如果不想进行解析式 PID 优化，\n"
+"现在可以跳过部分步骤。\n"
+"\n"
+"跳转到“86_position_controller.param”文件？"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:346
 msgid ""
 "After the flight, analyze the .bin in the filter review tool, change the "
 "values here and upload to the FC.\n"
 "Repeat the procedure until all post-filter noise peaks are below -50dB."
-msgstr "飞行后，使用滤波器分析工具分析 .bin 文件，修改此处的数值并上传到飞控。\n重复此过程，直到所有滤波后噪声峰值均低于 -50dB。"
+msgstr ""
+"飞行后，使用滤波器分析工具分析 .bin 文件，修改此处的数值并上传到飞控。\n"
+"重复此过程，直到所有滤波后噪声峰值均低于 -50dB。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:348
 msgid ""
@@ -3971,7 +4004,10 @@ msgid ""
 "them.\n"
 "Once the vehicle is tuned, you can remove it and operate the vehicle without "
 "it."
-msgstr "首次配置和调校飞行器需要遥控器。\n将遥控接收机连接到飞控，打开遥控器电源并与接收机对频。\n飞行器调校完成后，可以移除遥控接收机，无需遥控器即可操作飞行器。"
+msgstr ""
+"首次配置和调校飞行器需要遥控器。\n"
+"将遥控接收机连接到飞控，打开遥控器电源并与接收机对频。\n"
+"飞行器调校完成后，可以移除遥控接收机，无需遥控器即可操作飞行器。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:351
 msgid ""
@@ -3989,7 +4025,9 @@ msgid ""
 "This step is optional, only perform it if your vehicle is tiny, huge, or its "
 "motor outputs oscillate.\n"
 "It must be repeated multiple times until outputs no longer oscillate."
-msgstr "此步骤为可选步骤，仅当飞行器极小、极大或电机输出发生振荡时才执行。\n必须多次重复，直到输出不再振荡。"
+msgstr ""
+"此步骤为可选步骤，仅当飞行器极小、极大或电机输出发生振荡时才执行。\n"
+"必须多次重复，直到输出不再振荡。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:357
 msgid ""
@@ -4228,7 +4266,8 @@ msgstr "尽快着陆"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:408
 msgid ""
 "Land: fly the nearest DO_LAND_START landing sequence in AUTO, otherwise RTL"
-msgstr "降落：在 AUTO 模式下执行最近的 DO_LAND_START 降落序列，否则执行 RTL 返航"
+msgstr ""
+"降落：在 AUTO 模式下执行最近的 DO_LAND_START 降落序列，否则执行 RTL 返航"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:409
 msgid "Limit the gain increase for helicopter angle tuning"
@@ -4319,6 +4358,7 @@ msgid ""
 msgstr "执行所有解锁检查。如果有问题请修复源头。不要更改此项"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:429
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:97
 msgid "Pitch"
 msgstr "俯仰"
 
@@ -4399,6 +4439,7 @@ msgid "Return and land at home or rally point"
 msgstr "返回并在家或集结点着陆"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:448
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:97
 msgid "Roll"
 msgstr "横滚"
 
@@ -4622,6 +4663,7 @@ msgid ""
 msgstr "前几次飞行的值将在学习到 Q_M_THST_HOVER 后再进行更改"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:496
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:97
 msgid "Yaw"
 msgstr "偏航"
 
@@ -7469,7 +7511,10 @@ msgid ""
 "the flight controller's ESC telemetry offset. For configured bidirectional "
 "DShot outputs, 0* means the group reported zero RPM; the individual output "
 "may instead be unavailable."
-msgstr "电调实时读数。缺失或过时的数据以 '-' 显示。电调编号遵循飞控的电调遥测偏移量。对于已配置的双向 DShot 输出，0* 表示该组报告的转速为零；但单个输出也可能不可用。"
+msgstr ""
+"电调实时读数。缺失或过时的数据以 '-' 显示。电调编号遵循飞控的电调遥测偏移量。"
+"对于已配置的双向 DShot 输出，0* 表示该组报告的转速为零；但单个输出也可能不可"
+"用。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_esc_telemetry.py:56
 msgid "Scroll to view additional ESC columns."
@@ -8248,7 +8293,9 @@ msgstr ""
 msgid ""
 "{board_name} (APJ board ID {board_id}) — {device}\n"
 "{vehicle_type} {firmware_version} ({git_hash})"
-msgstr "{board_name} (APJ 板卡 ID {board_id}) — {device}\n{vehicle_type} {firmware_version} ({git_hash})"
+msgstr ""
+"{board_name} (APJ 板卡 ID {board_id}) — {device}\n"
+"{vehicle_type} {firmware_version} ({git_hash})"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:411
 msgid "Loading available firmware versions…"
@@ -8685,7 +8732,7 @@ msgid "Total Msgs:"
 msgstr "消息总数:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:314
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:115
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:125
 msgid "System Performance"
 msgstr "系统性能"
 
@@ -9895,7 +9942,11 @@ msgid ""
 "\n"
 "Tick the manual override checkbox to the right if you have a good reason to "
 "override it."
-msgstr "此参数已具有此配置步骤所需的正确值。\n请勿更改它，否则将违背此配置步骤的目的。\n\n如果有充分理由需要覆盖该值，请勾选右侧的手动覆盖复选框。"
+msgstr ""
+"此参数已具有此配置步骤所需的正确值。\n"
+"请勿更改它，否则将违背此配置步骤的目的。\n"
+"\n"
+"如果有充分理由需要覆盖该值，请勾选右侧的手动覆盖复选框。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:772
 msgid ""
@@ -11260,6 +11311,134 @@ msgstr "未找到 ARM 消息，考虑到 arm/disarm 事件始终会被记录，�
 msgid "No ARM messages found"
 msgstr "未找到 ARM 消息"
 
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:165
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:277
+msgid "Attitude saturation analysis applies only to Copter and helicopter logs"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:166
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:187
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:226
+msgid "Attitude saturation"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:192
+msgid ""
+"No RATE messages found, ATC_RATE_*_MAX saturation checks were skipped. Check "
+"Fast Attitude or Medium Attitude logging (LOG_BITMASK bit)"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:214
+msgid ""
+"No PIDR, PIDP or PIDY messages found, ATC_RAT_*_SMAX and ATC_RAT_*_PDMX "
+"saturation cannot be checked"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:236
+msgid "Attitude logging is disabled in LOG_BITMASK"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:239
+msgid "Enable Fast Attitude or Medium Attitude logging (LOG_BITMASK bit)"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:249
+msgid ""
+"Attitude telemetry (ATT, RATE, PID*) not logged but logging enabled; check "
+"the attitude logging options"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:250
+msgid "No ATT, RATE or PID messages found"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:276
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:286
+msgid "Attitude Saturation Analysis"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:287
+msgid "Attitude saturation analysis complete"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:429
+msgid "Roll/pitch"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:431
+msgid "{limit:.0f} deg/s"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:432
+msgid ""
+"{axis} rate target reached the configured {param} envelope ({limits}) for "
+"{percent:.1f}% of the armed time ({seconds:.1f} s). RATE targets near or "
+"above this envelope suggest rate limiting but do not prove clipping. Check "
+"target tracking and disturbances before changing the limits."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:441
+msgid "Frequent rate limiting can severely reduce attitude control."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:465
+msgid ""
+"{axis} rate controller P and D gains were cut below {severe:.0%} by the "
+"{param} slew limiter for {severe_percent:.1f}% of the armed time. This "
+"severely reduces attitude control. Reduce the P and D gains or increase "
+"{param}."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:471
+msgid ""
+"{axis} rate controller P and D gains were reduced below {reduced:.0%} by the "
+"{param} slew limiter for {percent:.1f}% of the armed time ({seconds:.1f} s), "
+"which indicates an oscillation tendency. Check the tune before increasing "
+"{param}."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:516
+msgid ""
+"{axis} rate controller P+D output was clipped by {param} for {percent:.1f}% "
+"of the armed time ({seconds:.1f} s). This severely reduces attitude control. "
+"Increase {param} or lower the P and D gains."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:521
+msgid ""
+"{axis} rate controller P+D output reached the {param} limit for "
+"{percent:.1f}% of the armed time ({seconds:.1f} s), so attitude control was "
+"limited. Consider increasing {param}."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:659
+msgid ""
+"The full pilot lean range of {limit:.0f} deg allowed by {param} was used"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:661
+msgid "The position controller was limited to {limit:.0f} deg by {param}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:663
+msgid "The vehicle lean angle was limited to {limit:.0f} deg by {param}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:665
+msgid ""
+"{details} for {percent:.1f}% of the armed time in the flight modes it "
+"applies to ({seconds:.1f} s). Lean-angle saturation is happening: the "
+"vehicle cannot tilt further to follow the demanded acceleration. Raise "
+"{param} if the airframe and payload allow it."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:671
+msgid ""
+"{details} for {percent:.1f}% of the armed time in the flight modes it "
+"applies to ({seconds:.1f} s). Review pilot inputs and the configured lean "
+"range."
+msgstr ""
+
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_base.py:99
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_availability_check.py:162
 msgid "{field} contains non-finite telemetry values"
@@ -11526,7 +11705,7 @@ msgstr "ESC 分析"
 msgid "ESC analysis complete"
 msgstr "ESC 分析完成"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:204
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:179
 msgid ""
 "ESC output {instance} reported zero RPM throughout an armed period "
 "({start:.1f}s to {end:.1f}s), the motor may not have responded."
@@ -11534,7 +11713,7 @@ msgstr ""
 "ESC 输出 {instance} 在整个解锁期间（{start:.1f}s 到 {end:.1f}s）报告的 RPM 一"
 "直为零，电机可能没有响应。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:225
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:200
 msgid ""
 "MOT_SPIN_MIN ({spin_min:.3f}) is below MOT_SPIN_ARM + {required:.2f} "
 "({required_min:.3f}). AMC's tuning guide requires MOT_SPIN_MIN to be at "
@@ -11545,11 +11724,11 @@ msgstr ""
 "({required_min:.3f})。AMC 的调参指南要求 MOT_SPIN_MIN 至少比 MOT_SPIN_ARM "
 "({spin_arm:.3f}) 高 {required:.2f}。电机在解锁后可能无法可靠地转动。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:267
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:242
 msgid "ESC output {instance} peak error rate: {err:.1f}%"
 msgstr "ESC 输出 {instance} 的峰值错误率：{err:.1f}%"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:336
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:311
 msgid ""
 "ESC output {instance} drew {mean:.2f}A on average, current drawn by the "
 "other {n} ESC output(s) (median {median:.2f}A). If unexpected for this "
@@ -11558,7 +11737,7 @@ msgstr ""
 "ESC 输出 {instance} 的平均电流为 {mean:.2f}A，而其他 {n} 个 ESC 输出的电流中"
 "位数为 {median:.2f}A。如果这不符合此机型配置的预期，请检查机械或接线问题。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:371
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:346
 msgid ""
 "Effective DShot output rate is {rate:.0f}Hz (SCHED_LOOP_RATE={loop:.0f}Hz, "
 "SERVO_DSHOT_RATE={dshot!r}), at or below the {threshold:.0f}Hz level Amilcar "
@@ -12257,14 +12436,19 @@ msgid ""
 "Short windows, healthy IMUs, low rotation and continuous attitude required. "
 "Automatic receiver latency is tested over 0-0.5 s; attitude may itself be "
 "GPS-aided. GPS series with reversed boot timestamps are excluded."
-msgstr "要求使用短时间窗口、状态正常的 IMU、低旋转速率和连续的姿态数据。自动接收机延迟在 0-0.5 秒范围内测试；姿态本身可能受到 GPS 辅助。启动时间戳倒退的 GPS 序列将被排除。"
+msgstr ""
+"要求使用短时间窗口、状态正常的 IMU、低旋转速率和连续的姿态数据。自动接收机延"
+"迟在 0-0.5 秒范围内测试；姿态本身可能受到 GPS 辅助。启动时间戳倒退的 GPS 序列"
+"将被排除。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py:585
 msgid ""
 "EKF lane velocity innovation gate exceeded while GPS velocity fusion is "
 "configured; other velocity sources may contribute; active_primary identifies "
 "lane activity"
-msgstr "配置了 GPS 速度融合时，EKF 通道的速度创新门限被超出；其他速度源也可能产生影响；active_primary 标识通道的活动状态"
+msgstr ""
+"配置了 GPS 速度融合时，EKF 通道的速度创新门限被超出；其他速度源也可能产生影"
+"响；active_primary 标识通道的活动状态"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py:590
 msgid ""
@@ -12329,7 +12513,9 @@ msgid ""
 "GNSS assessment complete. Receiver indications and consistency discrepancies "
 "require review; sensor faults can cause similar symptoms, and undetected "
 "spoofing remains possible."
-msgstr "GNSS 评估已完成。接收机指示和一致性差异需要检查；传感器故障可能导致类似症状，且仍可能存在未检测到的欺骗。"
+msgstr ""
+"GNSS 评估已完成。接收机指示和一致性差异需要检查；传感器故障可能导致类似症状，"
+"且仍可能存在未检测到的欺骗。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_interference.py:80
 msgid ""
@@ -12404,7 +12590,9 @@ msgid ""
 "u-blox jamInd range {minimum:.0f}-{maximum:.0f}; no validated absolute "
 "threshold. Interference present from startup or rising slowly may remain "
 "undetected."
-msgstr "u-blox jamInd 范围为 {minimum:.0f}-{maximum:.0f}；没有经过验证的绝对阈值。从启动时就存在或缓慢增强的干扰可能无法被检测到。"
+msgstr ""
+"u-blox jamInd 范围为 {minimum:.0f}-{maximum:.0f}；没有经过验证的绝对阈值。从"
+"启动时就存在或缓慢增强的干扰可能无法被检测到。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_interference.py:234
 msgid "Suspected jamming: elevated RF indicator coincides with loss of GPS fix"
@@ -12416,22 +12604,22 @@ msgid ""
 "discrepancies coincide"
 msgstr "疑似欺骗或 GPS 故障：惯性数据与位置/速度数据的差异同时出现"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:111
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:121
 msgid "Performance monitor data present and good for analysis"
 msgstr "性能监视器数据已记录且适合分析"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:113
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:123
 msgid "Performance monitor data has availability issues"
 msgstr "性能监视器数据存在可用性问题"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:181
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:191
 msgid ""
 "The selected log is from {log_vehicle_type}, but the currently open vehicle "
 "is {project_vehicle_type}."
 msgstr ""
 "所选日志来自 {log_vehicle_type}，但当前打开的载具是 {project_vehicle_type}。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:188
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:198
 msgid ""
 "The selected log firmware version is {log_version}, but the currently open "
 "vehicle firmware version is {project_version}."
@@ -12706,7 +12894,9 @@ msgstr "参数 {name} 的加速度限制必须为有限的非负数。"
 msgid ""
 "{old_value} scaled by minimum / maximum takeoff weight ({min_tow:g} / "
 "{max_tow:g} kg)"
-msgstr "{old_value} 按最小起飞重量与最大起飞重量之比（{min_tow:g} / {max_tow:g} kg）缩放"
+msgstr ""
+"{old_value} 按最小起飞重量与最大起飞重量之比（{min_tow:g} / {max_tow:g} kg）"
+"缩放"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_autotune_gain_backoff.py:77
 msgid "Gain margin back-off must be a finite number between 0.0 and 0.5."
@@ -13527,7 +13717,12 @@ msgid ""
 "\n"
 "It compensates for the current preset AHRS_ORIENTATION. If a custom "
 "orientation is active, set AHRS_ORIENTATION to 0 and upload parameters first."
-msgstr "在下表中手动设置 AHRS_ORIENTATION，或使用此助手根据飞行器的三个姿态估算该值：水平、机头朝下和右侧朝下。\n\n该助手会补偿当前预设的 AHRS_ORIENTATION。如果已启用自定义方向，请先将 AHRS_ORIENTATION 设置为 0 并上传参数。"
+msgstr ""
+"在下表中手动设置 AHRS_ORIENTATION，或使用此助手根据飞行器的三个姿态估算该值："
+"水平、机头朝下和右侧朝下。\n"
+"\n"
+"该助手会补偿当前预设的 AHRS_ORIENTATION。如果已启用自定义方向，请先将 "
+"AHRS_ORIENTATION 设置为 0 并上传参数。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:121
 msgid "Not Connected"
@@ -13661,14 +13856,18 @@ msgstr "缩放加速度限制"
 msgid ""
 "Multiply current New acceleration limits by minimum / maximum takeoff weight "
 "once. The button then disables."
-msgstr "将当前的新加速度限制乘以最小起飞重量与最大起飞重量之比，操作仅执行一次。随后按钮将被禁用。"
+msgstr ""
+"将当前的新加速度限制乘以最小起飞重量与最大起飞重量之比，操作仅执行一次。随后"
+"按钮将被禁用。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_accel_backoff.py:56
 msgid ""
 "After AutoTune at minimum takeoff weight, scale roll, pitch and yaw "
 "acceleration limits by minimum / maximum takeoff weight. This reduction can "
 "only be applied once."
-msgstr "在最小起飞重量下完成 AutoTune 后，按最小起飞重量与最大起飞重量之比缩放横滚、俯仰和偏航加速度限制。此缩减只能应用一次。"
+msgstr ""
+"在最小起飞重量下完成 AutoTune 后，按最小起飞重量与最大起飞重量之比缩放横滚、"
+"俯仰和偏航加速度限制。此缩减只能应用一次。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_accel_backoff.py:73
 msgid "Enter numeric minimum and maximum takeoff weights in kg."
@@ -14110,7 +14309,9 @@ msgstr "接收机 2"
 msgid ""
 "Flight controller UTC, normally synchronized from GNSS, plus BRD_RTC_TZ_MIN "
 "in minutes. N/A means UTC or the configured timezone offset is unavailable."
-msgstr "飞控的 UTC 时间通常从 GNSS 同步，再加上 BRD_RTC_TZ_MIN 指定的分钟数。N/A 表示 UTC 时间或配置的时区偏移不可用。"
+msgstr ""
+"飞控的 UTC 时间通常从 GNSS 同步，再加上 BRD_RTC_TZ_MIN 指定的分钟数。N/A 表"
+"示 UTC 时间或配置的时区偏移不可用。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_gnss.py:71
 msgid ""

@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-11-09 18:38+0000\n"
+"POT-Creation-Date: 2026-11-10 18:16+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -282,7 +282,8 @@ msgstr "Feldabweichung für {name}. Fehlend: {missing}, zusätzlich: {extra}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_bin_log.py:593
 msgid "Log contains non-finite current parameter values: {parameters}"
-msgstr "Das Protokoll enthält nicht endliche aktuelle Parameterwerte: {parameters}"
+msgstr ""
+"Das Protokoll enthält nicht endliche aktuelle Parameterwerte: {parameters}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_bin_log.py:598
 msgid "No finite parameter default values found in log"
@@ -292,7 +293,9 @@ msgstr "Im Protokoll wurden keine endlichen Parameterstandardwerte gefunden"
 msgid ""
 "Ignoring non-finite parameter defaults from the log: %s. Their current "
 "values will still be imported."
-msgstr "Nicht endliche Parameterstandardwerte aus dem Protokoll werden ignoriert: %s. Ihre aktuellen Werte werden dennoch importiert."
+msgstr ""
+"Nicht endliche Parameterstandardwerte aus dem Protokoll werden ignoriert: "
+"%s. Ihre aktuellen Werte werden dennoch importiert."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_bin_log.py:615
 msgid "No firmware version information found in {bin_file}"
@@ -333,7 +336,9 @@ msgstr "Flugdauer konnte nicht berechnet werden: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:108
 msgid "Git rename failed for %s to %s; falling back to filesystem rename: %s"
-msgstr "Git konnte %s nicht in %s umbenennen; stattdessen wird die Umbenennung im Dateisystem versucht: %s"
+msgstr ""
+"Git konnte %s nicht in %s umbenennen; stattdessen wird die Umbenennung im "
+"Dateisystem versucht: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:219
 msgid "Could not detect vehicle type. Defaulting to %s."
@@ -857,17 +862,23 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:878
 msgid "Preserved configuration file created during template restoration: %s"
-msgstr "Bei der Wiederherstellung der Vorlage erstellte Konfigurationsdatei beibehalten: %s"
+msgstr ""
+"Bei der Wiederherstellung der Vorlage erstellte Konfigurationsdatei "
+"beibehalten: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:903
 msgid ""
 "Cannot restore missing configuration files: firmware type or version is "
 "unavailable."
-msgstr "Fehlende Konfigurationsdateien können nicht wiederhergestellt werden: Firmwaretyp oder -version ist nicht verfügbar."
+msgstr ""
+"Fehlende Konfigurationsdateien können nicht wiederhergestellt werden: "
+"Firmwaretyp oder -version ist nicht verfügbar."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:910
 msgid "Migration template directory not found, skipping missing files: %s"
-msgstr "Verzeichnis der Migrationsvorlage nicht gefunden, fehlende Dateien werden übersprungen: %s"
+msgstr ""
+"Verzeichnis der Migrationsvorlage nicht gefunden, fehlende Dateien werden "
+"übersprungen: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:921
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:1137
@@ -876,15 +887,19 @@ msgstr "Konfigurationsschritte %s können nicht geladen werden: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:926
 msgid "Configuration steps file has no valid steps dictionary: %s"
-msgstr "Die Konfigurationsschrittdatei enthält kein gültiges Dictionary der Schritte: %s"
+msgstr ""
+"Die Konfigurationsschrittdatei enthält kein gültiges Dictionary der "
+"Schritte: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:931
 msgid "Skipping unsafe configuration-step filename: %r"
-msgstr "Unsicherer Dateiname eines Konfigurationsschritts wird übersprungen: %r"
+msgstr ""
+"Unsicherer Dateiname eines Konfigurationsschritts wird übersprungen: %r"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:954
 msgid "Restored missing configuration documentation from template: %s"
-msgstr "Fehlende Konfigurationsdokumentation aus der Vorlage wiederhergestellt: %s"
+msgstr ""
+"Fehlende Konfigurationsdokumentation aus der Vorlage wiederhergestellt: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:957
 msgid "Restored missing configuration file from template: %s"
@@ -941,7 +956,9 @@ msgstr "Veraltete Datei gelöscht: %s"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:1072
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:1099
 msgid "Unmapped parameters from %s copied to mandatory step %s for review: %s"
-msgstr "Nicht zugeordnete Parameter aus %s wurden zur Überprüfung in den Pflichtschritt %s kopiert: %s"
+msgstr ""
+"Nicht zugeordnete Parameter aus %s wurden zur Überprüfung in den "
+"Pflichtschritt %s kopiert: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:1285
 msgid "Deleted %d obsolete parameter line(s) from %s"
@@ -2328,13 +2345,17 @@ msgstr "Wiederverbindung abgebrochen."
 msgid ""
 "The connected flight controller has a different or unknown hardware ID. "
 "Waiting for the original FC."
-msgstr "Der verbundene Flugcontroller hat eine andere oder unbekannte Hardware-ID. Es wird auf den ursprünglichen Flugcontroller gewartet."
+msgstr ""
+"Der verbundene Flugcontroller hat eine andere oder unbekannte Hardware-ID. "
+"Es wird auf den ursprünglichen Flugcontroller gewartet."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_reconnect.py:160
 msgid ""
 "The connected flight controller has a different MAVLink system or component "
 "ID. Waiting for the original FC."
-msgstr "Der verbundene Flugcontroller hat eine andere MAVLink-System- oder Komponenten-ID. Es wird auf den ursprünglichen Flugcontroller gewartet."
+msgstr ""
+"Der verbundene Flugcontroller hat eine andere MAVLink-System- oder "
+"Komponenten-ID. Es wird auf den ursprünglichen Flugcontroller gewartet."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_reconnect.py:167
 msgid "Reconnect attempt on %(device)s failed: %(error)s"
@@ -2342,13 +2363,17 @@ msgstr "Wiederverbindungsversuch auf %(device)s fehlgeschlagen: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_reconnect.py:198
 msgid "Could not refresh flight-controller parameters. Retrying."
-msgstr "Die Flugcontroller-Parameter konnten nicht aktualisiert werden. Erneuter Versuch."
+msgstr ""
+"Die Flugcontroller-Parameter konnten nicht aktualisiert werden. Erneuter "
+"Versuch."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_internet.py:67
 msgid ""
 "SSL_CERT_FILE points to a missing CA bundle: %s. Fix or unset it to enable "
 "HTTPS."
-msgstr "SSL_CERT_FILE verweist auf ein fehlendes CA-Bundle: %s. Korrigieren oder entfernen Sie die Einstellung, um HTTPS zu aktivieren."
+msgstr ""
+"SSL_CERT_FILE verweist auf ein fehlendes CA-Bundle: %s. Korrigieren oder "
+"entfernen Sie die Einstellung, um HTTPS zu aktivieren."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_internet.py:108
 msgid "Downloading ... {:.1f}%"
@@ -2642,19 +2667,27 @@ msgstr ""
 msgid ""
 "Accelerometer calibration values and the accelerometers to use must be "
 "configured before the vehicle can be driven."
-msgstr "Die Kalibrierungswerte der Beschleunigungssensoren und die zu verwendenden Beschleunigungssensoren müssen konfiguriert werden, bevor das Fahrzeug gefahren werden kann."
+msgstr ""
+"Die Kalibrierungswerte der Beschleunigungssensoren und die zu verwendenden "
+"Beschleunigungssensoren müssen konfiguriert werden, bevor das Fahrzeug "
+"gefahren werden kann."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:27
 msgid ""
 "Accelerometer calibration values and the accelerometers to use must be "
 "configured before the vehicle can be flown."
-msgstr "Die Kalibrierungswerte der Beschleunigungssensoren und die zu verwendenden Beschleunigungssensoren müssen konfiguriert werden, bevor das Fahrzeug geflogen werden kann."
+msgstr ""
+"Die Kalibrierungswerte der Beschleunigungssensoren und die zu verwendenden "
+"Beschleunigungssensoren müssen konfiguriert werden, bevor das Fahrzeug "
+"geflogen werden kann."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:28
 msgid ""
 "Accelerometer level trim values compensate for the vehicle attitude when it "
 "is stationary."
-msgstr "Die Trimmwerte für die Ausrichtung der Beschleunigungssensoren gleichen die Lage des Fahrzeugs im Stillstand aus."
+msgstr ""
+"Die Trimmwerte für die Ausrichtung der Beschleunigungssensoren gleichen die "
+"Lage des Fahrzeugs im Stillstand aus."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:29
 msgid ""
@@ -2686,7 +2719,9 @@ msgstr ""
 msgid ""
 "Battery capacity, voltage monitoring and low and critical thresholds support "
 "reliable battery failsafe actions"
-msgstr "Akkukapazität, Spannungsüberwachung sowie niedrige und kritische Schwellenwerte unterstützen zuverlässige Akku-Failsafe-Maßnahmen"
+msgstr ""
+"Akkukapazität, Spannungsüberwachung sowie niedrige und kritische "
+"Schwellenwerte unterstützen zuverlässige Akku-Failsafe-Maßnahmen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:33
 msgid ""
@@ -2700,19 +2735,25 @@ msgstr ""
 msgid ""
 "Compass calibration and ordering are required for reliable heading "
 "estimation."
-msgstr "Die Kalibrierung und Reihenfolge der Kompasse sind für eine zuverlässige Schätzung der Ausrichtung erforderlich."
+msgstr ""
+"Die Kalibrierung und Reihenfolge der Kompasse sind für eine zuverlässige "
+"Schätzung der Ausrichtung erforderlich."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:35
 msgid ""
 "Configure parameters that do not belong to a more specific aircraft setup "
 "step."
-msgstr "Konfigurieren Sie Parameter, die keinem spezifischeren Einrichtungsschritt für das Luftfahrzeug zugeordnet sind."
+msgstr ""
+"Konfigurieren Sie Parameter, die keinem spezifischeren Einrichtungsschritt "
+"für das Luftfahrzeug zugeordnet sind."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:36
 msgid ""
 "Configure the rangefinder and related landing and airspeed parameters used "
 "by the aircraft."
-msgstr "Konfigurieren Sie den Entfernungsmesser und die zugehörigen Lande- und Fluggeschwindigkeitsparameter des Luftfahrzeugs."
+msgstr ""
+"Konfigurieren Sie den Entfernungsmesser und die zugehörigen Lande- und "
+"Fluggeschwindigkeitsparameter des Luftfahrzeugs."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:37
 msgid ""
@@ -2775,13 +2816,17 @@ msgstr ""
 msgid ""
 "Flight modes determine how the aircraft responds to pilot and ground-control "
 "inputs."
-msgstr "Die Flugmodi bestimmen, wie das Luftfahrzeug auf Eingaben des Piloten und der Bodenstation reagiert."
+msgstr ""
+"Die Flugmodi bestimmen, wie das Luftfahrzeug auf Eingaben des Piloten und "
+"der Bodenstation reagiert."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:44
 msgid ""
 "Flight modes determine how the vehicle responds to pilot and ground-control "
 "inputs."
-msgstr "Die Flugmodi bestimmen, wie das Fahrzeug auf Eingaben des Piloten und der Bodenstation reagiert."
+msgstr ""
+"Die Flugmodi bestimmen, wie das Fahrzeug auf Eingaben des Piloten und der "
+"Bodenstation reagiert."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:45
 msgid "For accurate altitude estimation"
@@ -2822,7 +2867,9 @@ msgstr ""
 msgid ""
 "Motor thrust scaling and spin limits determine the response used for "
 "throttle control and throttle-based notch filtering"
-msgstr "Die Skalierung des Motorschubs und die Drehzahlgrenzen bestimmen das Ansprechverhalten für die Gassteuerung und die gasbasierte Kerbfilterung"
+msgstr ""
+"Die Skalierung des Motorschubs und die Drehzahlgrenzen bestimmen das "
+"Ansprechverhalten für die Gassteuerung und die gasbasierte Kerbfilterung"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:51
 msgid "Optical flow sensor calibration is needed before using it"
@@ -2901,13 +2948,17 @@ msgstr ""
 msgid ""
 "Servo output functions define how the flight controller drives the aircraft "
 "control surfaces and accessories."
-msgstr "Die Servoausgangsfunktionen legen fest, wie die Flugsteuerung die Steuerflächen und das Zubehör des Luftfahrzeugs ansteuert."
+msgstr ""
+"Die Servoausgangsfunktionen legen fest, wie die Flugsteuerung die "
+"Steuerflächen und das Zubehör des Luftfahrzeugs ansteuert."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:61
 msgid ""
 "Servo output functions define how the flight controller drives the vehicle "
 "outputs."
-msgstr "Die Servoausgangsfunktionen legen fest, wie die Flugsteuerung die Ausgänge des Fahrzeugs ansteuert."
+msgstr ""
+"Die Servoausgangsfunktionen legen fest, wie die Flugsteuerung die Ausgänge "
+"des Fahrzeugs ansteuert."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:62
 msgid "Some countries require a remote ID for drones to be flown legally."
@@ -2993,13 +3044,18 @@ msgstr ""
 msgid ""
 "The helicopter rotor speed controller must match the ESC operating mode, "
 "rotor speed range and spool-up timing for safe rotor operation"
-msgstr "Der Rotordrehzahlregler des Hubschraubers muss für einen sicheren Rotorbetrieb auf den Betriebsmodus des ESC, den Rotordrehzahlbereich und die Hochlaufzeit abgestimmt sein"
+msgstr ""
+"Der Rotordrehzahlregler des Hubschraubers muss für einen sicheren "
+"Rotorbetrieb auf den Betriebsmodus des ESC, den Rotordrehzahlbereich und die "
+"Hochlaufzeit abgestimmt sein"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:73
 msgid ""
 "The motor battery voltage range sets the limits for battery voltage "
 "compensation as the battery discharges"
-msgstr "Der Spannungsbereich des Motorakkus legt die Grenzen für die Akkuspannungskompensation während der Entladung fest"
+msgstr ""
+"Der Spannungsbereich des Motorakkus legt die Grenzen für die "
+"Akkuspannungskompensation während der Entladung fest"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:74
 msgid ""
@@ -3384,13 +3440,17 @@ msgstr ""
 msgid ""
 "Configure rotor speed control and the HeliRSC servo output range before "
 "calibrating the ESC throttle endpoints"
-msgstr "Konfigurieren Sie die Rotordrehzahlregelung und den HeliRSC-Servoausgangsbereich, bevor Sie die Gasendpunkte des ESC kalibrieren"
+msgstr ""
+"Konfigurieren Sie die Rotordrehzahlregelung und den HeliRSC-"
+"Servoausgangsbereich, bevor Sie die Gasendpunkte des ESC kalibrieren"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:132
 msgid ""
 "Configure the primary battery monitor calibration and failsafe thresholds "
 "before flight testing"
-msgstr "Kalibrieren Sie die primäre Akkuüberwachung und konfigurieren Sie die Failsafe-Schwellenwerte vor den Flugtests"
+msgstr ""
+"Kalibrieren Sie die primäre Akkuüberwachung und konfigurieren Sie die "
+"Failsafe-Schwellenwerte vor den Flugtests"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:133
 msgid ""
@@ -3453,7 +3513,9 @@ msgstr ""
 msgid ""
 "Output functions are assigned after the connected hardware and vehicle type "
 "are known."
-msgstr "Die Ausgangsfunktionen werden zugewiesen, sobald die angeschlossene Hardware und der Fahrzeugtyp bekannt sind."
+msgstr ""
+"Die Ausgangsfunktionen werden zugewiesen, sobald die angeschlossene Hardware "
+"und der Fahrzeugtyp bekannt sind."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:142
 msgid ""
@@ -3517,19 +3579,26 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:149
 msgid ""
 "Review motor thrust and spin limits before configuring the motor notch filter"
-msgstr "Überprüfen Sie den Motorschub und die Drehzahlgrenzen, bevor Sie den Motorkerbfilter konfigurieren"
+msgstr ""
+"Überprüfen Sie den Motorschub und die Drehzahlgrenzen, bevor Sie den "
+"Motorkerbfilter konfigurieren"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:150
 msgid ""
 "Servo outputs are configured after the connected hardware and aircraft type "
 "are known."
-msgstr "Die Servoausgänge werden konfiguriert, sobald die angeschlossene Hardware und der Luftfahrzeugtyp bekannt sind."
+msgstr ""
+"Die Servoausgänge werden konfiguriert, sobald die angeschlossene Hardware "
+"und der Luftfahrzeugtyp bekannt sind."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:151
 msgid ""
 "Set the full and minimum motor battery voltages before configuring the "
 "battery failsafe thresholds"
-msgstr "Stellen Sie die Spannung des voll geladenen Motorakkus und die minimale Motorakkuspannung ein, bevor Sie die Akku-Failsafe-Schwellenwerte konfigurieren"
+msgstr ""
+"Stellen Sie die Spannung des voll geladenen Motorakkus und die minimale "
+"Motorakkuspannung ein, bevor Sie die Akku-Failsafe-Schwellenwerte "
+"konfigurieren"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:152
 msgid ""
@@ -3546,13 +3615,17 @@ msgstr ""
 msgid ""
 "The accelerometers must be calibrated before their level can be checked and "
 "corrected."
-msgstr "Die Beschleunigungssensoren müssen kalibriert werden, bevor ihre Ausrichtung überprüft und korrigiert werden kann."
+msgstr ""
+"Die Beschleunigungssensoren müssen kalibriert werden, bevor ihre Ausrichtung "
+"überprüft und korrigiert werden kann."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:154
 msgid ""
 "The compass hardware and vehicle orientation are configured in the preceding "
 "steps."
-msgstr "Die Kompasshardware und die Fahrzeugausrichtung werden in den vorherigen Schritten konfiguriert."
+msgstr ""
+"Die Kompasshardware und die Fahrzeugausrichtung werden in den vorherigen "
+"Schritten konfiguriert."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:155
 msgid ""
@@ -3566,13 +3639,17 @@ msgstr ""
 msgid ""
 "The flight controller and sensors have been configured in the preceding "
 "steps."
-msgstr "Die Flugsteuerung und die Sensoren wurden in den vorherigen Schritten konfiguriert."
+msgstr ""
+"Die Flugsteuerung und die Sensoren wurden in den vorherigen Schritten "
+"konfiguriert."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:157
 msgid ""
 "The flight controller, sensors, outputs, and safety settings have been "
 "configured in preceding steps."
-msgstr "Die Flugsteuerung, die Sensoren, die Ausgänge und die Sicherheitseinstellungen wurden in den vorherigen Schritten konfiguriert."
+msgstr ""
+"Die Flugsteuerung, die Sensoren, die Ausgänge und die "
+"Sicherheitseinstellungen wurden in den vorherigen Schritten konfiguriert."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:158
 msgid "The following steps require that the orientation is correctly set"
@@ -3592,13 +3669,17 @@ msgstr ""
 msgid ""
 "The radio and flight controller inputs have been configured in the preceding "
 "steps."
-msgstr "Die Fernsteuerung und die Eingänge der Flugsteuerung wurden in den vorherigen Schritten konfiguriert."
+msgstr ""
+"Die Fernsteuerung und die Eingänge der Flugsteuerung wurden in den "
+"vorherigen Schritten konfiguriert."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:161
 msgid ""
 "The sensor connections and core aircraft configuration are available before "
 "position tuning."
-msgstr "Die Sensoranschlüsse und die grundlegende Konfiguration des Luftfahrzeugs sind vor der Positionsabstimmung vorhanden."
+msgstr ""
+"Die Sensoranschlüsse und die grundlegende Konfiguration des Luftfahrzeugs "
+"sind vor der Positionsabstimmung vorhanden."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:162
 msgid "This is the last step in the tuning process"
@@ -3648,7 +3729,9 @@ msgstr "Kalibrieren und konfigurieren Sie die Kompasse."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:171
 msgid "Calibrate the accelerometers and configure the accelerometer sensors."
-msgstr "Kalibrieren Sie die Beschleunigungssensoren und konfigurieren Sie deren Einstellungen."
+msgstr ""
+"Kalibrieren Sie die Beschleunigungssensoren und konfigurieren Sie deren "
+"Einstellungen."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:172
 msgid "Configure Extended Kalman Filter (EKF) noise weights"
@@ -3670,7 +3753,10 @@ msgstr ""
 msgid ""
 "Configure RC mapping, calibration and controller options. Plugin changes are "
 "staged; press parameter upload to write them to the flight controller"
-msgstr "Konfigurieren Sie die RC-Zuordnung, Kalibrierung und Steuerungsoptionen. Plugin-Änderungen werden vorgemerkt; drücken Sie auf „Parameter hochladen“, um sie auf den Flugcontroller zu schreiben"
+msgstr ""
+"Konfigurieren Sie die RC-Zuordnung, Kalibrierung und Steuerungsoptionen. "
+"Plugin-Änderungen werden vorgemerkt; drücken Sie auf „Parameter hochladen“, "
+"um sie auf den Flugcontroller zu schreiben"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:176
 msgid "Configure aircraft servo output functions."
@@ -3680,7 +3766,9 @@ msgstr "Konfigurieren Sie die Servoausgangsfunktionen des Fluggeräts."
 msgid ""
 "Configure helicopter rotor speed control, spool-up timing and ESC output "
 "endpoints"
-msgstr "Konfigurieren Sie die Rotordrehzahlregelung des Hubschraubers, die Hochlaufzeit und die ESC-Ausgangsendpunkte"
+msgstr ""
+"Konfigurieren Sie die Rotordrehzahlregelung des Hubschraubers, die "
+"Hochlaufzeit und die ESC-Ausgangsendpunkte"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:178
 msgid ""
@@ -3692,7 +3780,9 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:179
 msgid "Configure motor battery voltage compensation limits"
-msgstr "Konfigurieren Sie die Grenzwerte für die Akkuspannungskompensation der Motoren"
+msgstr ""
+"Konfigurieren Sie die Grenzwerte für die Akkuspannungskompensation der "
+"Motoren"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:180
 msgid "Configure parameters for everyday use"
@@ -3772,11 +3862,15 @@ msgstr "Konfigurieren Sie Parameter für die Windgeschwindigkeitsschätzung"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:191
 msgid "Configure primary battery monitoring, capacity and failsafe thresholds"
-msgstr "Konfigurieren Sie die Überwachung des Hauptakkus, die Kapazität und die Failsafe-Schwellenwerte"
+msgstr ""
+"Konfigurieren Sie die Überwachung des Hauptakkus, die Kapazität und die "
+"Failsafe-Schwellenwerte"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:192
 msgid "Configure rangefinder and related aircraft parameters."
-msgstr "Konfigurieren Sie den Entfernungsmesser und die zugehörigen Fluggerätparameter."
+msgstr ""
+"Konfigurieren Sie den Entfernungsmesser und die zugehörigen "
+"Fluggerätparameter."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:193
 msgid ""
@@ -3904,7 +3998,9 @@ msgstr ""
 msgid ""
 "Finalize autotune by setting the maximum throttle mix and compensating "
 "acceleration limits for takeoff weight"
-msgstr "Schließen Sie Autotune ab, indem Sie die maximale Gasmischung einstellen und die Beschleunigungsgrenzwerte an das Startgewicht anpassen"
+msgstr ""
+"Schließen Sie Autotune ab, indem Sie die maximale Gasmischung einstellen und "
+"die Beschleunigungsgrenzwerte an das Startgewicht anpassen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:212
 msgid "Finalize autotune by setting the maximum throttle mix parameter"
@@ -4383,7 +4479,12 @@ msgid ""
 "You can skip some steps now.\n"
 "\n"
 "Jump to '70_everyday_use.param' file?"
-msgstr "Wenn Sie ungeduldig sind und keinen vollständig optimierten Flugcontroller benötigen,\nkönnen Sie jetzt einige Schritte überspringen.\n\nZur Datei '70_everyday_use.param' springen?"
+msgstr ""
+"Wenn Sie ungeduldig sind und keinen vollständig optimierten Flugcontroller "
+"benötigen,\n"
+"können Sie jetzt einige Schritte überspringen.\n"
+"\n"
+"Zur Datei '70_everyday_use.param' springen?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:324
 msgid ""
@@ -4391,7 +4492,12 @@ msgid ""
 "You can skip some steps now.\n"
 "\n"
 "Jump to '92_everyday_use.param' file?"
-msgstr "Wenn Sie ungeduldig sind und keinen vollständig optimierten Flugcontroller benötigen,\nkönnen Sie jetzt einige Schritte überspringen.\n\nZur Datei '92_everyday_use.param' springen?"
+msgstr ""
+"Wenn Sie ungeduldig sind und keinen vollständig optimierten Flugcontroller "
+"benötigen,\n"
+"können Sie jetzt einige Schritte überspringen.\n"
+"\n"
+"Zur Datei '92_everyday_use.param' springen?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:328
 msgid ""
@@ -4399,7 +4505,11 @@ msgid ""
 "you can skip some steps now.\n"
 "\n"
 "Jump to '70_everyday_use.param' file?"
-msgstr "Wenn Sie keinen optischen Fluss verwenden,\nkönnen Sie jetzt einige Schritte überspringen.\n\nZur Datei '70_everyday_use.param' springen?"
+msgstr ""
+"Wenn Sie keinen optischen Fluss verwenden,\n"
+"können Sie jetzt einige Schritte überspringen.\n"
+"\n"
+"Zur Datei '70_everyday_use.param' springen?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:332
 msgid ""
@@ -4407,7 +4517,11 @@ msgid ""
 "you can skip some steps now.\n"
 "\n"
 "Jump to '92_everyday_use.param' file?"
-msgstr "Wenn Sie keinen optischen Fluss verwenden,\nkönnen Sie jetzt einige Schritte überspringen.\n\nZur Datei '92_everyday_use.param' springen?"
+msgstr ""
+"Wenn Sie keinen optischen Fluss verwenden,\n"
+"können Sie jetzt einige Schritte überspringen.\n"
+"\n"
+"Zur Datei '92_everyday_use.param' springen?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:336
 msgid ""
@@ -4415,7 +4529,11 @@ msgid ""
 "you can skip some steps now.\n"
 "\n"
 "Jump to '64_position_controller.param' file?"
-msgstr "Wenn Sie keine analytische PID-Optimierung wünschen,\nkönnen Sie jetzt einige Schritte überspringen.\n\nZur Datei '64_position_controller.param' springen?"
+msgstr ""
+"Wenn Sie keine analytische PID-Optimierung wünschen,\n"
+"können Sie jetzt einige Schritte überspringen.\n"
+"\n"
+"Zur Datei '64_position_controller.param' springen?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:340
 msgid ""
@@ -4423,14 +4541,22 @@ msgid ""
 "you can skip some steps now.\n"
 "\n"
 "Jump to '86_position_controller.param' file?"
-msgstr "Wenn Sie keine analytische PID-Optimierung wünschen,\nkönnen Sie jetzt einige Schritte überspringen.\n\nZur Datei '86_position_controller.param' springen?"
+msgstr ""
+"Wenn Sie keine analytische PID-Optimierung wünschen,\n"
+"können Sie jetzt einige Schritte überspringen.\n"
+"\n"
+"Zur Datei '86_position_controller.param' springen?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:346
 msgid ""
 "After the flight, analyze the .bin in the filter review tool, change the "
 "values here and upload to the FC.\n"
 "Repeat the procedure until all post-filter noise peaks are below -50dB."
-msgstr "Analysieren Sie nach dem Flug die .bin-Datei im Filteranalysewerkzeug, ändern Sie hier die Werte und laden Sie sie auf den Flugcontroller hoch.\nWiederholen Sie den Vorgang, bis alle Rauschspitzen nach der Filterung unter -50 dB liegen."
+msgstr ""
+"Analysieren Sie nach dem Flug die .bin-Datei im Filteranalysewerkzeug, "
+"ändern Sie hier die Werte und laden Sie sie auf den Flugcontroller hoch.\n"
+"Wiederholen Sie den Vorgang, bis alle Rauschspitzen nach der Filterung unter "
+"-50 dB liegen."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:348
 msgid ""
@@ -4440,25 +4566,38 @@ msgid ""
 "them.\n"
 "Once the vehicle is tuned, you can remove it and operate the vehicle without "
 "it."
-msgstr "Für die erstmalige Konfiguration und Abstimmung eines Fahrzeugs ist eine RC-Fernsteuerung erforderlich.\nSchließen Sie den RC-Empfänger an den Flugcontroller an, schalten Sie die RC-Fernsteuerung ein und binden Sie beide.\nSobald das Fahrzeug abgestimmt ist, können Sie den Empfänger entfernen und das Fahrzeug ohne ihn betreiben."
+msgstr ""
+"Für die erstmalige Konfiguration und Abstimmung eines Fahrzeugs ist eine RC-"
+"Fernsteuerung erforderlich.\n"
+"Schließen Sie den RC-Empfänger an den Flugcontroller an, schalten Sie die RC-"
+"Fernsteuerung ein und binden Sie beide.\n"
+"Sobald das Fahrzeug abgestimmt ist, können Sie den Empfänger entfernen und "
+"das Fahrzeug ohne ihn betreiben."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:351
 msgid ""
 "Only do this step once. It sets initial values that later steps will improve."
-msgstr "Führen Sie diesen Schritt nur einmal aus. Er legt Anfangswerte fest, die in späteren Schritten verbessert werden."
+msgstr ""
+"Führen Sie diesen Schritt nur einmal aus. Er legt Anfangswerte fest, die in "
+"späteren Schritten verbessert werden."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:352
 msgid ""
 "This step is optional, only perform it if your vehicle is tiny, huge, or its "
 "motor outputs oscillate"
-msgstr "Dieser Schritt ist optional. Führen Sie ihn nur aus, wenn Ihr Fahrzeug winzig oder sehr groß ist oder seine Motorausgänge schwingen"
+msgstr ""
+"Dieser Schritt ist optional. Führen Sie ihn nur aus, wenn Ihr Fahrzeug "
+"winzig oder sehr groß ist oder seine Motorausgänge schwingen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:353
 msgid ""
 "This step is optional, only perform it if your vehicle is tiny, huge, or its "
 "motor outputs oscillate.\n"
 "It must be repeated multiple times until outputs no longer oscillate."
-msgstr "Dieser Schritt ist optional. Führen Sie ihn nur aus, wenn Ihr Fahrzeug winzig oder sehr groß ist oder seine Motorausgänge schwingen.\nEr muss mehrfach wiederholt werden, bis die Ausgänge nicht mehr schwingen."
+msgstr ""
+"Dieser Schritt ist optional. Führen Sie ihn nur aus, wenn Ihr Fahrzeug "
+"winzig oder sehr groß ist oder seine Motorausgänge schwingen.\n"
+"Er muss mehrfach wiederholt werden, bis die Ausgänge nicht mehr schwingen."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:357
 msgid ""
@@ -4716,23 +4855,29 @@ msgstr "Sofort landen"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:408
 msgid ""
 "Land: fly the nearest DO_LAND_START landing sequence in AUTO, otherwise RTL"
-msgstr "Land: die nächstgelegene DO_LAND_START-Landesequenz im AUTO-Modus fliegen, andernfalls RTL"
+msgstr ""
+"Land: die nächstgelegene DO_LAND_START-Landesequenz im AUTO-Modus fliegen, "
+"andernfalls RTL"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:409
 msgid "Limit the gain increase for helicopter angle tuning"
-msgstr "Den Verstärkungsanstieg bei der Hubschrauber-Winkelabstimmung begrenzen"
+msgstr ""
+"Den Verstärkungsanstieg bei der Hubschrauber-Winkelabstimmung begrenzen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:410
 msgid "Limit the gain increase for helicopter rate tuning"
-msgstr "Den Verstärkungsanstieg bei der Hubschrauber-Drehratenabstimmung begrenzen"
+msgstr ""
+"Den Verstärkungsanstieg bei der Hubschrauber-Drehratenabstimmung begrenzen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:411
 msgid "Limit the gain increase for helicopter yaw angle tuning"
-msgstr "Den Verstärkungsanstieg bei der Hubschrauber-Gierwinkelabstimmung begrenzen"
+msgstr ""
+"Den Verstärkungsanstieg bei der Hubschrauber-Gierwinkelabstimmung begrenzen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:412
 msgid "Limit the gain increase for helicopter yaw rate tuning"
-msgstr "Den Verstärkungsanstieg bei der Hubschrauber-Gierratenabstimmung begrenzen"
+msgstr ""
+"Den Verstärkungsanstieg bei der Hubschrauber-Gierratenabstimmung begrenzen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:413
 msgid ""
@@ -4823,6 +4968,7 @@ msgstr ""
 "Sie die Ursache. Ändern Sie NICHT diesen Parameter"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:429
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:97
 msgid "Pitch"
 msgstr "Nicken"
 
@@ -4905,6 +5051,7 @@ msgid "Return and land at home or rally point"
 msgstr "Zurückkehren und am Home- oder Rally-Punkt landen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:448
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:97
 msgid "Roll"
 msgstr "Rollen"
 
@@ -4944,13 +5091,17 @@ msgstr ""
 msgid ""
 "So that it can tune the throttle controller on 28_throttle_controller.param "
 "file"
-msgstr "Damit der Gasregler in der Datei 28_throttle_controller.param abgestimmt werden kann"
+msgstr ""
+"Damit der Gasregler in der Datei 28_throttle_controller.param abgestimmt "
+"werden kann"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:456
 msgid ""
 "So that it can tune the throttle controller on 42_throttle_controller.param "
 "file"
-msgstr "Damit der Gasregler in der Datei 42_throttle_controller.param abgestimmt werden kann"
+msgstr ""
+"Damit der Gasregler in der Datei 42_throttle_controller.param abgestimmt "
+"werden kann"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:457
 msgid "Specified in component editor window"
@@ -5168,6 +5319,7 @@ msgstr ""
 "eingelernt ist"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:496
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:97
 msgid "Yaw"
 msgstr "Gieren"
 
@@ -7954,11 +8106,14 @@ msgstr "{} wurde auf {} angewendet"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_connection_recovery.py:164
 msgid "Flight-controller connection lost. Reconnecting…"
-msgstr "Verbindung zum Flugcontroller verloren. Verbindung wird wiederhergestellt…"
+msgstr ""
+"Verbindung zum Flugcontroller verloren. Verbindung wird wiederhergestellt…"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_connection_recovery.py:174
 msgid "Could not reconnect to the flight controller. Retrying."
-msgstr "Die Verbindung zum Flugcontroller konnte nicht wiederhergestellt werden. Erneuter Versuch."
+msgstr ""
+"Die Verbindung zum Flugcontroller konnte nicht wiederhergestellt werden. "
+"Erneuter Versuch."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:68
 msgid "flight controller connection:"
@@ -8243,7 +8398,12 @@ msgid ""
 "the flight controller's ESC telemetry offset. For configured bidirectional "
 "DShot outputs, 0* means the group reported zero RPM; the individual output "
 "may instead be unavailable."
-msgstr "Aktuelle ESC-Messwerte. Fehlende oder veraltete Daten werden als '-' angezeigt. Die ESC-Nummern entsprechen dem ESC-Telemetrie-Offset des Flugcontrollers. Bei konfigurierten bidirektionalen DShot-Ausgängen bedeutet 0*, dass die Gruppe eine Drehzahl von null gemeldet hat; der einzelne Ausgang kann stattdessen nicht verfügbar sein."
+msgstr ""
+"Aktuelle ESC-Messwerte. Fehlende oder veraltete Daten werden als '-' "
+"angezeigt. Die ESC-Nummern entsprechen dem ESC-Telemetrie-Offset des "
+"Flugcontrollers. Bei konfigurierten bidirektionalen DShot-Ausgängen bedeutet "
+"0*, dass die Gruppe eine Drehzahl von null gemeldet hat; der einzelne "
+"Ausgang kann stattdessen nicht verfügbar sein."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_esc_telemetry.py:56
 msgid "Scroll to view additional ESC columns."
@@ -9031,7 +9191,9 @@ msgstr ""
 msgid ""
 "{board_name} (APJ board ID {board_id}) — {device}\n"
 "{vehicle_type} {firmware_version} ({git_hash})"
-msgstr "{board_name} (APJ-Board-ID {board_id}) — {device}\n{vehicle_type} {firmware_version} ({git_hash})"
+msgstr ""
+"{board_name} (APJ-Board-ID {board_id}) — {device}\n"
+"{vehicle_type} {firmware_version} ({git_hash})"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py:411
 msgid "Loading available firmware versions…"
@@ -9493,7 +9655,7 @@ msgid "Total Msgs:"
 msgstr "Gesamtmeldungen:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:314
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:115
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:125
 msgid "System Performance"
 msgstr "Systemleistung"
 
@@ -10033,7 +10195,9 @@ msgstr " - Parameterdatei-Editor und -Uploader"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:481
 msgid ""
 "Waiting for the original flight controller before resuming FC operations."
-msgstr "Warten auf den ursprünglichen Flugcontroller, bevor die Flugcontroller-Vorgänge fortgesetzt werden."
+msgstr ""
+"Warten auf den ursprünglichen Flugcontroller, bevor die Flugcontroller-"
+"Vorgänge fortgesetzt werden."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:627
 msgid "Current intermediate parameter file:"
@@ -10528,7 +10692,9 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:2432
 msgid "Closing… Waiting for flight-controller recovery to stop."
-msgstr "Wird geschlossen… Warten, bis die Wiederherstellung des Flugcontrollers beendet ist."
+msgstr ""
+"Wird geschlossen… Warten, bis die Wiederherstellung des Flugcontrollers "
+"beendet ist."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:2444
 msgid "Log analysis is running"
@@ -10821,7 +10987,14 @@ msgid ""
 "\n"
 "Tick the manual override checkbox to the right if you have a good reason to "
 "override it."
-msgstr "Dieser Parameter hat bereits den korrekten Wert für diesen Konfigurationsschritt.\nSie dürfen ihn nicht ändern, da dies den Zweck dieses Konfigurationsschritts zunichtemachen würde.\n\nAktivieren Sie das Kontrollkästchen für die manuelle Überschreibung rechts, wenn Sie einen guten Grund für die Überschreibung haben."
+msgstr ""
+"Dieser Parameter hat bereits den korrekten Wert für diesen "
+"Konfigurationsschritt.\n"
+"Sie dürfen ihn nicht ändern, da dies den Zweck dieses Konfigurationsschritts "
+"zunichtemachen würde.\n"
+"\n"
+"Aktivieren Sie das Kontrollkästchen für die manuelle Überschreibung rechts, "
+"wenn Sie einen guten Grund für die Überschreibung haben."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:772
 msgid ""
@@ -12302,6 +12475,134 @@ msgstr ""
 msgid "No ARM messages found"
 msgstr "Keine ARM-Nachrichten gefunden"
 
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:165
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:277
+msgid "Attitude saturation analysis applies only to Copter and helicopter logs"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:166
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:187
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:226
+msgid "Attitude saturation"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:192
+msgid ""
+"No RATE messages found, ATC_RATE_*_MAX saturation checks were skipped. Check "
+"Fast Attitude or Medium Attitude logging (LOG_BITMASK bit)"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:214
+msgid ""
+"No PIDR, PIDP or PIDY messages found, ATC_RAT_*_SMAX and ATC_RAT_*_PDMX "
+"saturation cannot be checked"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:236
+msgid "Attitude logging is disabled in LOG_BITMASK"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:239
+msgid "Enable Fast Attitude or Medium Attitude logging (LOG_BITMASK bit)"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:249
+msgid ""
+"Attitude telemetry (ATT, RATE, PID*) not logged but logging enabled; check "
+"the attitude logging options"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:250
+msgid "No ATT, RATE or PID messages found"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:276
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:286
+msgid "Attitude Saturation Analysis"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:287
+msgid "Attitude saturation analysis complete"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:429
+msgid "Roll/pitch"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:431
+msgid "{limit:.0f} deg/s"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:432
+msgid ""
+"{axis} rate target reached the configured {param} envelope ({limits}) for "
+"{percent:.1f}% of the armed time ({seconds:.1f} s). RATE targets near or "
+"above this envelope suggest rate limiting but do not prove clipping. Check "
+"target tracking and disturbances before changing the limits."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:441
+msgid "Frequent rate limiting can severely reduce attitude control."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:465
+msgid ""
+"{axis} rate controller P and D gains were cut below {severe:.0%} by the "
+"{param} slew limiter for {severe_percent:.1f}% of the armed time. This "
+"severely reduces attitude control. Reduce the P and D gains or increase "
+"{param}."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:471
+msgid ""
+"{axis} rate controller P and D gains were reduced below {reduced:.0%} by the "
+"{param} slew limiter for {percent:.1f}% of the armed time ({seconds:.1f} s), "
+"which indicates an oscillation tendency. Check the tune before increasing "
+"{param}."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:516
+msgid ""
+"{axis} rate controller P+D output was clipped by {param} for {percent:.1f}% "
+"of the armed time ({seconds:.1f} s). This severely reduces attitude control. "
+"Increase {param} or lower the P and D gains."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:521
+msgid ""
+"{axis} rate controller P+D output reached the {param} limit for "
+"{percent:.1f}% of the armed time ({seconds:.1f} s), so attitude control was "
+"limited. Consider increasing {param}."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:659
+msgid ""
+"The full pilot lean range of {limit:.0f} deg allowed by {param} was used"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:661
+msgid "The position controller was limited to {limit:.0f} deg by {param}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:663
+msgid "The vehicle lean angle was limited to {limit:.0f} deg by {param}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:665
+msgid ""
+"{details} for {percent:.1f}% of the armed time in the flight modes it "
+"applies to ({seconds:.1f} s). Lean-angle saturation is happening: the "
+"vehicle cannot tilt further to follow the demanded acceleration. Raise "
+"{param} if the airframe and payload allow it."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:671
+msgid ""
+"{details} for {percent:.1f}% of the armed time in the flight modes it "
+"applies to ({seconds:.1f} s). Review pilot inputs and the configured lean "
+"range."
+msgstr ""
+
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_base.py:99
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_availability_check.py:162
 msgid "{field} contains non-finite telemetry values"
@@ -12591,7 +12892,7 @@ msgstr "ESC-Analyse"
 msgid "ESC analysis complete"
 msgstr "ESC-Analyse abgeschlossen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:204
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:179
 msgid ""
 "ESC output {instance} reported zero RPM throughout an armed period "
 "({start:.1f}s to {end:.1f}s), the motor may not have responded."
@@ -12600,7 +12901,7 @@ msgstr ""
 "({start:.1f}s bis {end:.1f}s) durchgehend 0 U/min; der Motor hat "
 "möglicherweise nicht reagiert."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:225
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:200
 msgid ""
 "MOT_SPIN_MIN ({spin_min:.3f}) is below MOT_SPIN_ARM + {required:.2f} "
 "({required_min:.3f}). AMC's tuning guide requires MOT_SPIN_MIN to be at "
@@ -12612,11 +12913,11 @@ msgstr ""
 "mindestens {required:.2f} über MOT_SPIN_ARM ({spin_arm:.3f}) liegt. Motoren "
 "drehen nach dem Scharfschalten möglicherweise nicht zuverlässig an."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:267
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:242
 msgid "ESC output {instance} peak error rate: {err:.1f}%"
 msgstr "ESC-Ausgang {instance} Spitzfehlerrate: {err:.1f}%"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:336
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:311
 msgid ""
 "ESC output {instance} drew {mean:.2f}A on average, current drawn by the "
 "other {n} ESC output(s) (median {median:.2f}A). If unexpected for this "
@@ -12627,7 +12928,7 @@ msgstr ""
 "die Konfiguration dieses Fahrzeugs unerwartet ist, prüfen Sie auf ein "
 "mechanisches Problem oder einen Verkabelungsfehler."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:371
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:346
 msgid ""
 "Effective DShot output rate is {rate:.0f}Hz (SCHED_LOOP_RATE={loop:.0f}Hz, "
 "SERVO_DSHOT_RATE={dshot!r}), at or below the {threshold:.0f}Hz level Amilcar "
@@ -12676,11 +12977,13 @@ msgstr "{field}-Werte fehlen in ISBD-Datensätzen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_gnss.py:62
 msgid "GNSS evidence available: {sources}. GPS motion data unavailable."
-msgstr "GNSS-Nachweise verfügbar: {sources}. GPS-Bewegungsdaten nicht verfügbar."
+msgstr ""
+"GNSS-Nachweise verfügbar: {sources}. GPS-Bewegungsdaten nicht verfügbar."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_gnss.py:65
 msgid "No GPS messages; motion consistency checks unavailable"
-msgstr "Keine GPS-Nachrichten; Prüfungen der Bewegungskonsistenz nicht verfügbar"
+msgstr ""
+"Keine GPS-Nachrichten; Prüfungen der Bewegungskonsistenz nicht verfügbar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_gnss.py:77
 msgid "Receiver interference indicators: {sources}."
@@ -12688,16 +12991,21 @@ msgstr "Indikatoren für Empfängerstörungen: {sources}."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_gnss.py:78
 msgid "none available; explicit jamming/spoofing assessment unavailable"
-msgstr "keine verfügbar; ausdrückliche Beurteilung von Jamming/Spoofing nicht verfügbar"
+msgstr ""
+"keine verfügbar; ausdrückliche Beurteilung von Jamming/Spoofing nicht "
+"verfügbar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_gnss.py:93
 msgid "{source} unavailable: no numeric timestamped samples in this log"
-msgstr "{source} nicht verfügbar: keine numerischen Messwerte mit Zeitstempel in diesem Log"
+msgstr ""
+"{source} nicht verfügbar: keine numerischen Messwerte mit Zeitstempel in "
+"diesem Log"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_gnss.py:109
 msgid ""
 "{source} unavailable: timestamps, sensor identifiers or values are invalid"
-msgstr "{source} nicht verfügbar: Zeitstempel, Sensor-IDs oder Werte sind ungültig"
+msgstr ""
+"{source} nicht verfügbar: Zeitstempel, Sensor-IDs oder Werte sind ungültig"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_gnss.py:118
 msgid "{source} contains invalid samples; coverage is incomplete"
@@ -12705,7 +13013,9 @@ msgstr "{source} enthält ungültige Messwerte; die Abdeckung ist unvollständig
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_gnss.py:129
 msgid "{source} has timestamp discontinuities; event intervals stop at gaps"
-msgstr "{source} weist Unterbrechungen in den Zeitstempeln auf; Ereignisintervalle enden an Lücken"
+msgstr ""
+"{source} weist Unterbrechungen in den Zeitstempeln auf; Ereignisintervalle "
+"enden an Lücken"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_gnss.py:138
 msgid "check the GPS physical connection"
@@ -13309,7 +13619,8 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py:145
 msgid "{source}: evaluated {count}/{total} samples or intervals. {detail}"
-msgstr "{source}: {count}/{total} Messwerte oder Intervalle ausgewertet. {detail}"
+msgstr ""
+"{source}: {count}/{total} Messwerte oder Intervalle ausgewertet. {detail}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py:150
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_interference.py:66
@@ -13335,31 +13646,43 @@ msgstr "GPS hat die 3D-Positionsbestimmung nach deren Erfassung verloren"
 msgid ""
 "Startup acquisition and recovery after long gaps are excluded from fix-loss "
 "warnings."
-msgstr "Die anfängliche Erfassung und die Wiederherstellung nach langen Ausfällen werden bei Warnungen zum Verlust der Positionsbestimmung ausgeschlossen."
+msgstr ""
+"Die anfängliche Erfassung und die Wiederherstellung nach langen Ausfällen "
+"werden bei Warnungen zum Verlust der Positionsbestimmung ausgeschlossen."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py:246
 msgid "GPS quality deteriorated relative to preceding samples"
-msgstr "Die GPS-Qualität hat sich gegenüber den vorherigen Messwerten verschlechtert"
+msgstr ""
+"Die GPS-Qualität hat sich gegenüber den vorherigen Messwerten verschlechtert"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py:280
 msgid "GPS clock progression disagrees with the boot clock"
-msgstr "Der Verlauf der GPS-Uhr stimmt nicht mit der Systemuhr seit dem Start überein"
+msgstr ""
+"Der Verlauf der GPS-Uhr stimmt nicht mit der Systemuhr seit dem Start überein"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py:286
 msgid "GPS week rollover is included; boot timestamps determine event time."
-msgstr "Der GPS-Wochenüberlauf wird berücksichtigt; Zeitstempel seit dem Systemstart bestimmen den Ereigniszeitpunkt."
+msgstr ""
+"Der GPS-Wochenüberlauf wird berücksichtigt; Zeitstempel seit dem Systemstart "
+"bestimmen den Ereigniszeitpunkt."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py:326
 msgid "GPS position change disagrees with reported velocity"
-msgstr "Die Änderung der GPS-Position stimmt nicht mit der gemeldeten Geschwindigkeit überein"
+msgstr ""
+"Die Änderung der GPS-Position stimmt nicht mit der gemeldeten "
+"Geschwindigkeit überein"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py:333
 msgid "Longitude wrap and reported position uncertainty are accounted for."
-msgstr "Der Längengradüberlauf und die gemeldete Positionsunsicherheit werden berücksichtigt."
+msgstr ""
+"Der Längengradüberlauf und die gemeldete Positionsunsicherheit werden "
+"berücksichtigt."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py:425
 msgid "GPS altitude change disagrees with reported vertical velocity"
-msgstr "Die Änderung der GPS-Höhe stimmt nicht mit der gemeldeten vertikalen Geschwindigkeit überein"
+msgstr ""
+"Die Änderung der GPS-Höhe stimmt nicht mit der gemeldeten vertikalen "
+"Geschwindigkeit überein"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py:431
 msgid "Requires receiver vertical velocity availability."
@@ -13367,33 +13690,48 @@ msgstr "Die vertikale Geschwindigkeit des Empfängers muss verfügbar sein."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py:486
 msgid "GPS velocity change disagrees with gravity-corrected IMU motion"
-msgstr "Die Änderung der GPS-Geschwindigkeit stimmt nicht mit der schwerkraftkorrigierten IMU-Bewegung überein"
+msgstr ""
+"Die Änderung der GPS-Geschwindigkeit stimmt nicht mit der "
+"schwerkraftkorrigierten IMU-Bewegung überein"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py:496
 msgid ""
 "Short windows, healthy IMUs, low rotation and continuous attitude required. "
 "Automatic receiver latency is tested over 0-0.5 s; attitude may itself be "
 "GPS-aided. GPS series with reversed boot timestamps are excluded."
-msgstr "Kurze Zeitfenster, fehlerfreie IMUs, geringe Rotation und kontinuierliche Lagedaten sind erforderlich. Die automatische Empfängerlatenz wird im Bereich von 0 bis 0,5 s geprüft; die Lagebestimmung kann selbst GPS-gestützt sein. GPS-Zeitreihen mit rückläufigen Zeitstempeln seit dem Systemstart werden ausgeschlossen."
+msgstr ""
+"Kurze Zeitfenster, fehlerfreie IMUs, geringe Rotation und kontinuierliche "
+"Lagedaten sind erforderlich. Die automatische Empfängerlatenz wird im "
+"Bereich von 0 bis 0,5 s geprüft; die Lagebestimmung kann selbst GPS-gestützt "
+"sein. GPS-Zeitreihen mit rückläufigen Zeitstempeln seit dem Systemstart "
+"werden ausgeschlossen."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py:585
 msgid ""
 "EKF lane velocity innovation gate exceeded while GPS velocity fusion is "
 "configured; other velocity sources may contribute; active_primary identifies "
 "lane activity"
-msgstr "Der Innovationsgrenzwert für die Geschwindigkeit einer EKF-Lane wurde überschritten, während die GPS-Geschwindigkeitsfusion konfiguriert ist; andere Geschwindigkeitsquellen können dazu beitragen; active_primary kennzeichnet die Aktivität der Lane"
+msgstr ""
+"Der Innovationsgrenzwert für die Geschwindigkeit einer EKF-Lane wurde "
+"überschritten, während die GPS-Geschwindigkeitsfusion konfiguriert ist; "
+"andere Geschwindigkeitsquellen können dazu beitragen; active_primary "
+"kennzeichnet die Aktivität der Lane"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py:590
 msgid ""
 "EKF lane GPS position innovation gate exceeded; active_primary identifies "
 "lane activity"
-msgstr "Der Innovationsgrenzwert für die GPS-Position einer EKF-Lane wurde überschritten; active_primary kennzeichnet die Aktivität der Lane"
+msgstr ""
+"Der Innovationsgrenzwert für die GPS-Position einer EKF-Lane wurde "
+"überschritten; active_primary kennzeichnet die Aktivität der Lane"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py:601
 msgid ""
 "Every logged lane is checked independently; GPS source selection is "
 "required. EKF evidence is GPS-aided."
-msgstr "Jede protokollierte Lane wird unabhängig geprüft; GPS muss als Quelle ausgewählt sein. Die EKF-Ergebnisse sind GPS-gestützt."
+msgstr ""
+"Jede protokollierte Lane wird unabhängig geprüft; GPS muss als Quelle "
+"ausgewählt sein. Die EKF-Ergebnisse sind GPS-gestützt."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py:672
 msgid "EKF lane position reset changed"
@@ -13401,23 +13739,31 @@ msgstr "Der Positions-Reset einer EKF-Lane hat sich geändert"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py:674
 msgid "EKF lane GPS position or velocity measurement timed out"
-msgstr "Zeitüberschreitung bei der GPS-Positions- oder Geschwindigkeitsmessung einer EKF-Lane"
+msgstr ""
+"Zeitüberschreitung bei der GPS-Positions- oder Geschwindigkeitsmessung einer "
+"EKF-Lane"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py:676
 msgid "EKF lane reports a fault or GPS quality check failure"
-msgstr "Eine EKF-Lane meldet einen Fehler oder eine fehlgeschlagene GPS-Qualitätsprüfung"
+msgstr ""
+"Eine EKF-Lane meldet einen Fehler oder eine fehlgeschlagene GPS-"
+"Qualitätsprüfung"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py:709
 msgid ""
 "Samples without a usable GPS navigation source are skipped; startup "
 "exclusions may also apply."
-msgstr "Messwerte ohne nutzbare GPS-Navigationsquelle werden übersprungen; gegebenenfalls gelten auch Ausschlüsse während des Starts."
+msgstr ""
+"Messwerte ohne nutzbare GPS-Navigationsquelle werden übersprungen; "
+"gegebenenfalls gelten auch Ausschlüsse während des Starts."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py:711
 msgid ""
 " XKFS.SS identifies the active source set; FuseAllVelocities can enable GPS "
 "velocity fusion."
-msgstr "XKFS.SS kennzeichnet den aktiven Quellensatz; FuseAllVelocities kann die GPS-Geschwindigkeitsfusion aktivieren."
+msgstr ""
+"XKFS.SS kennzeichnet den aktiven Quellensatz; FuseAllVelocities kann die GPS-"
+"Geschwindigkeitsfusion aktivieren."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_interference.py:44
 msgid "sensor {instance}"
@@ -13446,13 +13792,18 @@ msgid ""
 "GNSS assessment complete. Receiver indications and consistency discrepancies "
 "require review; sensor faults can cause similar symptoms, and undetected "
 "spoofing remains possible."
-msgstr "GNSS-Bewertung abgeschlossen. Empfängeranzeigen und Abweichungen bei der Konsistenzprüfung müssen überprüft werden; Sensorfehler können ähnliche Symptome verursachen, und unerkanntes Spoofing bleibt möglich."
+msgstr ""
+"GNSS-Bewertung abgeschlossen. Empfängeranzeigen und Abweichungen bei der "
+"Konsistenzprüfung müssen überprüft werden; Sensorfehler können ähnliche "
+"Symptome verursachen, und unerkanntes Spoofing bleibt möglich."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_interference.py:80
 msgid ""
 "No supported timestamped GNSS checks could be evaluated; review the coverage "
 "and availability issues"
-msgstr "Es konnten keine unterstützten GNSS-Prüfungen mit Zeitstempel ausgewertet werden; prüfen Sie die Probleme bezüglich Abdeckung und Verfügbarkeit"
+msgstr ""
+"Es konnten keine unterstützten GNSS-Prüfungen mit Zeitstempel ausgewertet "
+"werden; prüfen Sie die Probleme bezüglich Abdeckung und Verfügbarkeit"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_interference.py:84
 msgid "{name} Analysis"
@@ -13486,62 +13837,80 @@ msgstr "kritisch"
 msgid ""
 "Receiver-reported spoofing indication (status {status}; 3 indicates multiple "
 "spoofing)"
-msgstr "Vom Empfänger gemeldeter Spoofing-Hinweis (Status {status}; 3 zeigt mehrfaches Spoofing an)"
+msgstr ""
+"Vom Empfänger gemeldeter Spoofing-Hinweis (Status {status}; 3 zeigt "
+"mehrfaches Spoofing an)"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_interference.py:125
 msgid "Receiver-reported jamming indication with no fix (status 3)"
-msgstr "Vom Empfänger gemeldeter Jamming-Hinweis ohne Positionsbestimmung (Status 3)"
+msgstr ""
+"Vom Empfänger gemeldeter Jamming-Hinweis ohne Positionsbestimmung (Status 3)"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_interference.py:127
 msgid ""
 "Unknown {threat} status {status}; interference cannot be assessed from this "
 "value"
-msgstr "Unbekannter {threat}-Status {status}; anhand dieses Werts können Störungen nicht beurteilt werden"
+msgstr ""
+"Unbekannter {threat}-Status {status}; anhand dieses Werts können Störungen "
+"nicht beurteilt werden"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_interference.py:137
 msgid ""
 "{source}: {count} readable status samples; healthy samples do not exclude "
 "undetected interference"
-msgstr "{source}: {count} lesbare Statuswerte; unauffällige Werte schließen unerkannte Störungen nicht aus"
+msgstr ""
+"{source}: {count} lesbare Statuswerte; unauffällige Werte schließen "
+"unerkannte Störungen nicht aus"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_interference.py:159
 msgid ""
 "Receiver reports no {threat} indication after the warning; detection remains "
 "limited"
-msgstr "Der Empfänger meldet nach der Warnung keinen Hinweis auf {threat}; die Erkennung bleibt eingeschränkt"
+msgstr ""
+"Der Empfänger meldet nach der Warnung keinen Hinweis auf {threat}; die "
+"Erkennung bleibt eingeschränkt"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_interference.py:199
 msgid ""
 "Elevated u-blox jamming indicator relative to preceding samples; possible RF "
 "interference"
-msgstr "Erhöhter u-blox-Jamming-Indikator gegenüber vorherigen Messwerten; mögliche Hochfrequenzstörung"
+msgstr ""
+"Erhöhter u-blox-Jamming-Indikator gegenüber vorherigen Messwerten; mögliche "
+"Hochfrequenzstörung"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_interference.py:208
 msgid ""
 "u-blox jamInd range {minimum:.0f}-{maximum:.0f}; no validated absolute "
 "threshold. Interference present from startup or rising slowly may remain "
 "undetected."
-msgstr "u-blox-jamInd-Bereich {minimum:.0f}-{maximum:.0f}; kein validierter absoluter Schwellenwert. Störungen, die seit dem Start bestehen oder langsam zunehmen, können unentdeckt bleiben."
+msgstr ""
+"u-blox-jamInd-Bereich {minimum:.0f}-{maximum:.0f}; kein validierter "
+"absoluter Schwellenwert. Störungen, die seit dem Start bestehen oder langsam "
+"zunehmen, können unentdeckt bleiben."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_interference.py:234
 msgid "Suspected jamming: elevated RF indicator coincides with loss of GPS fix"
-msgstr "Jamming-Verdacht: Ein erhöhter Hochfrequenzindikator fällt mit dem Verlust der GPS-Positionsbestimmung zusammen"
+msgstr ""
+"Jamming-Verdacht: Ein erhöhter Hochfrequenzindikator fällt mit dem Verlust "
+"der GPS-Positionsbestimmung zusammen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_gnss_interference.py:238
 msgid ""
 "Suspected spoofing or GPS fault: inertial and position/velocity "
 "discrepancies coincide"
-msgstr "Verdacht auf Spoofing oder GPS-Fehler: Abweichungen bei den Inertialdaten und bei Position/Geschwindigkeit treten gleichzeitig auf"
+msgstr ""
+"Verdacht auf Spoofing oder GPS-Fehler: Abweichungen bei den Inertialdaten "
+"und bei Position/Geschwindigkeit treten gleichzeitig auf"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:111
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:121
 msgid "Performance monitor data present and good for analysis"
 msgstr "Leistungsmonitor-Daten vorhanden und für die Analyse gut geeignet"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:113
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:123
 msgid "Performance monitor data has availability issues"
 msgstr "Die Daten des Leistungsmonitors weisen Verfügbarkeitsprobleme auf"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:181
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:191
 msgid ""
 "The selected log is from {log_vehicle_type}, but the currently open vehicle "
 "is {project_vehicle_type}."
@@ -13549,7 +13918,7 @@ msgstr ""
 "Das ausgewählte Log stammt von {log_vehicle_type}, aber das derzeit "
 "geöffnete Fahrzeug ist {project_vehicle_type}."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:188
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:198
 msgid ""
 "The selected log firmware version is {log_version}, but the currently open "
 "vehicle firmware version is {project_version}."
@@ -13828,25 +14197,34 @@ msgstr "Die Beschleunigungsgrenzen wurden für diesen Schritt bereits skaliert."
 msgid ""
 "Takeoff weights must be finite and positive, with minimum no greater than "
 "maximum."
-msgstr "Die Abfluggewichte müssen endlich und positiv sein, wobei das Minimum nicht größer als das Maximum sein darf."
+msgstr ""
+"Die Abfluggewichte müssen endlich und positiv sein, wobei das Minimum nicht "
+"größer als das Maximum sein darf."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_autotune_accel_backoff.py:68
 msgid "The minimum / maximum takeoff weight ratio is too small."
-msgstr "Das Verhältnis zwischen minimalem und maximalem Abfluggewicht ist zu klein."
+msgstr ""
+"Das Verhältnis zwischen minimalem und maximalem Abfluggewicht ist zu klein."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_autotune_accel_backoff.py:76
 msgid "Parameter {name} is not editable; no acceleration limits were changed."
-msgstr "Parameter {name} ist nicht bearbeitbar; es wurden keine Beschleunigungsgrenzen geändert."
+msgstr ""
+"Parameter {name} ist nicht bearbeitbar; es wurden keine "
+"Beschleunigungsgrenzen geändert."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_autotune_accel_backoff.py:77
 msgid "Parameter {name} must have a finite non-negative acceleration limit."
-msgstr "Parameter {name} muss eine endliche, nicht negative Beschleunigungsgrenze haben."
+msgstr ""
+"Parameter {name} muss eine endliche, nicht negative Beschleunigungsgrenze "
+"haben."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_autotune_accel_backoff.py:83
 msgid ""
 "{old_value} scaled by minimum / maximum takeoff weight ({min_tow:g} / "
 "{max_tow:g} kg)"
-msgstr "{old_value} skaliert mit dem Verhältnis von minimalem zu maximalem Abfluggewicht ({min_tow:g} / {max_tow:g} kg)"
+msgstr ""
+"{old_value} skaliert mit dem Verhältnis von minimalem zu maximalem "
+"Abfluggewicht ({min_tow:g} / {max_tow:g} kg)"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_autotune_gain_backoff.py:77
 msgid "Gain margin back-off must be a finite number between 0.0 and 0.5."
@@ -14742,7 +15120,14 @@ msgid ""
 "\n"
 "It compensates for the current preset AHRS_ORIENTATION. If a custom "
 "orientation is active, set AHRS_ORIENTATION to 0 and upload parameters first."
-msgstr "Setzen Sie AHRS_ORIENTATION in der folgenden Tabelle manuell oder verwenden Sie diesen Assistenten, um den Wert anhand von drei Fahrzeugpositionen zu schätzen: WAAGERECHT, NASE NACH UNTEN und RECHTE SEITE NACH UNTEN.\n\nDabei wird die aktuell voreingestellte AHRS_ORIENTATION berücksichtigt. Falls eine benutzerdefinierte Ausrichtung aktiv ist, setzen Sie AHRS_ORIENTATION zunächst auf 0 und laden Sie die Parameter hoch."
+msgstr ""
+"Setzen Sie AHRS_ORIENTATION in der folgenden Tabelle manuell oder verwenden "
+"Sie diesen Assistenten, um den Wert anhand von drei Fahrzeugpositionen zu "
+"schätzen: WAAGERECHT, NASE NACH UNTEN und RECHTE SEITE NACH UNTEN.\n"
+"\n"
+"Dabei wird die aktuell voreingestellte AHRS_ORIENTATION berücksichtigt. "
+"Falls eine benutzerdefinierte Ausrichtung aktiv ist, setzen Sie "
+"AHRS_ORIENTATION zunächst auf 0 und laden Sie die Parameter hoch."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:121
 msgid "Not Connected"
@@ -14882,7 +15267,9 @@ msgstr "Minimales Startgewicht (kg):"
 msgid ""
 "Takeoff weight in kilograms, initially read from the vehicle's Frame "
 "specifications."
-msgstr "Startgewicht in Kilogramm, zunächst aus den Rahmenspezifikationen des Fahrzeugs übernommen."
+msgstr ""
+"Startgewicht in Kilogramm, zunächst aus den Rahmenspezifikationen des "
+"Fahrzeugs übernommen."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_accel_backoff.py:46
 msgid "Scale acceleration limits"
@@ -14892,14 +15279,20 @@ msgstr "Beschleunigungsgrenzen skalieren"
 msgid ""
 "Multiply current New acceleration limits by minimum / maximum takeoff weight "
 "once. The button then disables."
-msgstr "Die aktuellen neuen Beschleunigungsgrenzen einmalig mit dem Verhältnis aus minimalem und maximalem Startgewicht multiplizieren. Danach wird die Schaltfläche deaktiviert."
+msgstr ""
+"Die aktuellen neuen Beschleunigungsgrenzen einmalig mit dem Verhältnis aus "
+"minimalem und maximalem Startgewicht multiplizieren. Danach wird die "
+"Schaltfläche deaktiviert."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_accel_backoff.py:56
 msgid ""
 "After AutoTune at minimum takeoff weight, scale roll, pitch and yaw "
 "acceleration limits by minimum / maximum takeoff weight. This reduction can "
 "only be applied once."
-msgstr "Nach AutoTune bei minimalem Startgewicht die Beschleunigungsgrenzen für Rollen, Nicken und Gieren mit dem Verhältnis aus minimalem und maximalem Startgewicht skalieren. Diese Verringerung kann nur einmal angewendet werden."
+msgstr ""
+"Nach AutoTune bei minimalem Startgewicht die Beschleunigungsgrenzen für "
+"Rollen, Nicken und Gieren mit dem Verhältnis aus minimalem und maximalem "
+"Startgewicht skalieren. Diese Verringerung kann nur einmal angewendet werden."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_accel_backoff.py:73
 msgid "Enter numeric minimum and maximum takeoff weights in kg."
@@ -14923,7 +15316,9 @@ msgstr "Keine Beschleunigungsgrenzen geändert."
 msgid ""
 "The New values were changed, but some acceleration limits are outside their "
 "recommended ranges:"
-msgstr "Die neuen Werte wurden geändert, aber einige Beschleunigungsgrenzen liegen außerhalb ihrer empfohlenen Bereiche:"
+msgstr ""
+"Die neuen Werte wurden geändert, aber einige Beschleunigungsgrenzen liegen "
+"außerhalb ihrer empfohlenen Bereiche:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_autotune_gain_backoff.py:37
 msgid "Gain margin back-off (0.0-0.5):"
@@ -15390,13 +15785,18 @@ msgstr "Empfänger 2"
 msgid ""
 "Flight controller UTC, normally synchronized from GNSS, plus BRD_RTC_TZ_MIN "
 "in minutes. N/A means UTC or the configured timezone offset is unavailable."
-msgstr "UTC des Flugcontrollers, normalerweise mit GNSS synchronisiert, zuzüglich BRD_RTC_TZ_MIN in Minuten. N/A bedeutet, dass UTC oder der konfigurierte Zeitzonenversatz nicht verfügbar ist."
+msgstr ""
+"UTC des Flugcontrollers, normalerweise mit GNSS synchronisiert, zuzüglich "
+"BRD_RTC_TZ_MIN in Minuten. N/A bedeutet, dass UTC oder der konfigurierte "
+"Zeitzonenversatz nicht verfügbar ist."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_gnss.py:71
 msgid ""
 "Live receiver data. N/A means unavailable; readings expire when telemetry "
 "stops."
-msgstr "Live-Empfängerdaten. N/A bedeutet nicht verfügbar; Messwerte verfallen, wenn die Telemetrie aussetzt."
+msgstr ""
+"Live-Empfängerdaten. N/A bedeutet nicht verfügbar; Messwerte verfallen, wenn "
+"die Telemetrie aussetzt."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_level_calibration.py:51
 msgid "Level Calibration (Trim)"
