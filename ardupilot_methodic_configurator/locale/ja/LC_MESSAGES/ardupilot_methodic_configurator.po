@@ -12055,60 +12055,60 @@ msgstr "ARMメッセージが見つかりません"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:165
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:277
 msgid "Attitude saturation analysis applies only to Copter and helicopter logs"
-msgstr ""
+msgstr "姿勢飽和解析はCopterおよびヘリコプターのログにのみ適用されます"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:166
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:187
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:226
 msgid "Attitude saturation"
-msgstr ""
+msgstr "姿勢の飽和"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:192
 msgid ""
 "No RATE messages found, ATC_RATE_*_MAX saturation checks were skipped. Check "
 "Fast Attitude or Medium Attitude logging (LOG_BITMASK bit)"
-msgstr ""
+msgstr "RATEメッセージが見つからなかったため、ATC_RATE_*_MAXの飽和チェックをスキップしました。Fast AttitudeまたはMedium Attitudeのログ記録（LOG_BITMASKのビット）を確認してください"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:214
 msgid ""
 "No PIDR, PIDP or PIDY messages found, ATC_RAT_*_SMAX and ATC_RAT_*_PDMX "
 "saturation cannot be checked"
-msgstr ""
+msgstr "PIDR、PIDP、PIDYのいずれのメッセージも見つからなかったため、ATC_RAT_*_SMAXおよびATC_RAT_*_PDMXの飽和を確認できません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:236
 msgid "Attitude logging is disabled in LOG_BITMASK"
-msgstr ""
+msgstr "LOG_BITMASKで姿勢のログ記録が無効になっています"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:239
 msgid "Enable Fast Attitude or Medium Attitude logging (LOG_BITMASK bit)"
-msgstr ""
+msgstr "Fast AttitudeまたはMedium Attitudeのログ記録（LOG_BITMASKのビット）を有効にしてください"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:249
 msgid ""
 "Attitude telemetry (ATT, RATE, PID*) not logged but logging enabled; check "
 "the attitude logging options"
-msgstr ""
+msgstr "ログ記録は有効ですが、姿勢テレメトリ（ATT、RATE、PID*）が記録されていません。姿勢のログ記録オプションを確認してください"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:250
 msgid "No ATT, RATE or PID messages found"
-msgstr ""
+msgstr "ATT、RATE、PIDのいずれのメッセージも見つかりませんでした"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:276
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:286
 msgid "Attitude Saturation Analysis"
-msgstr ""
+msgstr "姿勢飽和解析"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:287
 msgid "Attitude saturation analysis complete"
-msgstr ""
+msgstr "姿勢飽和解析が完了しました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:429
 msgid "Roll/pitch"
-msgstr ""
+msgstr "ロール/ピッチ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:431
 msgid "{limit:.0f} deg/s"
-msgstr ""
+msgstr "{limit:.0f} 度/秒"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:432
 msgid ""
@@ -12116,11 +12116,11 @@ msgid ""
 "{percent:.1f}% of the armed time ({seconds:.1f} s). RATE targets near or "
 "above this envelope suggest rate limiting but do not prove clipping. Check "
 "target tracking and disturbances before changing the limits."
-msgstr ""
+msgstr "{axis}の角速度目標が、アーム時間の{percent:.1f}%（{seconds:.1f}秒）にわたり、設定された{param}の制限範囲（{limits}）に達しました。この範囲の上限付近またはそれ以上のRATE目標は角速度制限を示唆しますが、クリッピングの証拠にはなりません。制限値を変更する前に、目標への追従と外乱を確認してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:441
 msgid "Frequent rate limiting can severely reduce attitude control."
-msgstr ""
+msgstr "頻繁な角速度制限は、姿勢制御能力を大幅に低下させる可能性があります。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:465
 msgid ""
@@ -12128,7 +12128,7 @@ msgid ""
 "{param} slew limiter for {severe_percent:.1f}% of the armed time. This "
 "severely reduces attitude control. Reduce the P and D gains or increase "
 "{param}."
-msgstr ""
+msgstr "{axis}の角速度コントローラーのPゲインとDゲインが、アーム時間の{severe_percent:.1f}%にわたり、{param}のスルーレートリミッターによって{severe:.0%}未満に低減されました。これは姿勢制御能力を大幅に低下させます。PゲインとDゲインを下げるか、{param}を増やしてください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:471
 msgid ""
@@ -12136,34 +12136,34 @@ msgid ""
 "{param} slew limiter for {percent:.1f}% of the armed time ({seconds:.1f} s), "
 "which indicates an oscillation tendency. Check the tune before increasing "
 "{param}."
-msgstr ""
+msgstr "{axis}の角速度コントローラーのPゲインとDゲインが、アーム時間の{percent:.1f}%（{seconds:.1f}秒）にわたり、{param}のスルーレートリミッターによって{reduced:.0%}未満に低減されました。これは振動傾向を示しています。{param}を増やす前に調整状態を確認してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:516
 msgid ""
 "{axis} rate controller P+D output was clipped by {param} for {percent:.1f}% "
 "of the armed time ({seconds:.1f} s). This severely reduces attitude control. "
 "Increase {param} or lower the P and D gains."
-msgstr ""
+msgstr "{axis}の角速度コントローラーのP+D出力が、アーム時間の{percent:.1f}%（{seconds:.1f}秒）にわたり、{param}によってクリップされました。これは姿勢制御能力を大幅に低下させます。{param}を増やすか、PゲインとDゲインを下げてください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:521
 msgid ""
 "{axis} rate controller P+D output reached the {param} limit for "
 "{percent:.1f}% of the armed time ({seconds:.1f} s), so attitude control was "
 "limited. Consider increasing {param}."
-msgstr ""
+msgstr "{axis}の角速度コントローラーのP+D出力が、アーム時間の{percent:.1f}%（{seconds:.1f}秒）にわたり、{param}の制限値に達したため、姿勢制御が制限されました。{param}を増やすことを検討してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:659
 msgid ""
 "The full pilot lean range of {limit:.0f} deg allowed by {param} was used"
-msgstr ""
+msgstr "{param}で許可されたパイロットの傾斜操作範囲{limit:.0f}度の全域が使用されました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:661
 msgid "The position controller was limited to {limit:.0f} deg by {param}"
-msgstr ""
+msgstr "位置コントローラーは{param}によって{limit:.0f}度に制限されました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:663
 msgid "The vehicle lean angle was limited to {limit:.0f} deg by {param}"
-msgstr ""
+msgstr "機体の傾斜角は{param}によって{limit:.0f}度に制限されました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:665
 msgid ""
@@ -12171,14 +12171,14 @@ msgid ""
 "applies to ({seconds:.1f} s). Lean-angle saturation is happening: the "
 "vehicle cannot tilt further to follow the demanded acceleration. Raise "
 "{param} if the airframe and payload allow it."
-msgstr ""
+msgstr "{details}。これは、適用対象の飛行モードにおけるアーム時間の{percent:.1f}%（{seconds:.1f}秒）にわたりました。傾斜角が飽和しています。機体は要求された加速度に従うために、これ以上傾くことができません。機体とペイロードが許容する場合は、{param}を増やしてください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:671
 msgid ""
 "{details} for {percent:.1f}% of the armed time in the flight modes it "
 "applies to ({seconds:.1f} s). Review pilot inputs and the configured lean "
 "range."
-msgstr ""
+msgstr "{details}。これは、適用対象の飛行モードにおけるアーム時間の{percent:.1f}%（{seconds:.1f}秒）にわたりました。パイロットの入力と設定された傾斜範囲を確認してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_base.py:99
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_availability_check.py:162
