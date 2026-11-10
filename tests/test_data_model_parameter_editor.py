@@ -6008,6 +6008,128 @@ class TestConnectionRenameSaveLifecycle:  # pylint: disable=too-many-public-meth
         assert parameter_editor.current_step_parameters["SERIAL3_OPTIONS"].get_new_value() == 4.0
         assert "SERIAL2_OPTIONS" not in parameter_editor.current_step_parameters
 
+    @pytest.mark.parametrize("vehicle_type", ["Rover", "Heli", "ArduPlane", "ArduCopter"])
+    @pytest.mark.parametrize("save_deselection", [False, True])
+    @pytest.mark.parametrize("disable_previous", [False, True])
+    def test_serial_settings_follow_port_after_none(
+        self, parameter_editor: ParameterEditor, vehicle_type: str, save_deselection: bool, disable_previous: bool
+    ) -> None:
+        """A previous physical port supplies settings after a temporary None selection."""
+        step_file, components = self.prepare(parameter_editor)
+        filesystem = parameter_editor._local_filesystem
+        filesystem.vehicle_type = vehicle_type
+        filesystem.file_parameters[step_file]["SERIAL3_OPTIONS"] = Par(4.0, "independent")
+        parameter_editor.current_step_parameters["SERIAL3_OPTIONS"] = (
+            parameter_editor._config_step_processor.create_ardupilot_parameter(
+                "SERIAL3_OPTIONS", filesystem.file_parameters[step_file]["SERIAL3_OPTIONS"], step_file, {}
+            )
+        )
+        if vehicle_type in ("ArduPlane", "ArduCopter"):
+            filesystem.configuration_steps[step_file]["derived_parameters"] = {}
+
+        def compute(*_args: object) -> None:
+            port = components["port"]
+            filesystem.derived_parameters[step_file] = (
+                ParDict({f"{port}_PROTOCOL": Par(2.0)}) if port.startswith("SERIAL") else ParDict()
+            )
+
+        assert parameter_editor.update_parameter_value("SERIAL1_BAUD", "115").status == ParameterValueUpdateStatus.UPDATED
+        previous = parameter_editor.serial_protocol_snapshot("SERIAL1")
+        parameter_editor.update_vehicle_components({**components, "port": "None"})
+        with patch.object(filesystem, "compute_parameters", side_effect=compute):
+            parameter_editor.refresh_current_step_computed_parameters("SERIAL1")
+        assert parameter_editor.preserve_or_disable_serial_protocol("SERIAL1", previous, disable=disable_previous)
+        if save_deselection:
+            parameter_editor._export_current_file(annotate_doc=False)
+
+        parameter_editor.update_vehicle_components({**components, "port": "SERIAL2"})
+        with patch.object(filesystem, "compute_parameters", side_effect=compute):
+            parameter_editor.refresh_current_step_computed_parameters("None")
+        parameter_editor._export_current_file(annotate_doc=False)
+        saved = filesystem.file_parameters[step_file]
+        assert saved["SERIAL1_PROTOCOL"].value == (-1.0 if disable_previous else 2.0)
+        assert saved["SERIAL2_PROTOCOL"].value == 2.0
+        assert saved["SERIAL2_BAUD"].value == 115.0
+        assert saved["BRD_SER2_RTSCTS"].value == 1.0
+        assert saved["SERIAL3_OPTIONS"].value == 4.0
+        assert saved["OTHER"].value == 4.0
+        assert "SERIAL1_BAUD" not in saved
+        assert "BRD_SER1_RTSCTS" not in saved
+
+        if vehicle_type in ("Rover", "Heli"):
+            second_previous = parameter_editor.serial_protocol_snapshot("SERIAL2")
+            parameter_editor.update_vehicle_components({**components, "port": "None"})
+            parameter_editor.refresh_current_step_computed_parameters("SERIAL2")
+            assert parameter_editor.preserve_or_disable_serial_protocol("SERIAL2", second_previous, disable=True)
+            parameter_editor._export_current_file(annotate_doc=False)
+            deselected = filesystem.file_parameters[step_file]
+            assert deselected["SERIAL1_PROTOCOL"].value == (-1.0 if disable_previous else 2.0)
+            assert deselected["SERIAL2_PROTOCOL"].value == -1.0
+            assert deselected["SERIAL2_BAUD"].value == 115.0
+
+    @pytest.mark.parametrize("vehicle_type", ["Rover", "Heli"])
+    def test_step_reload_prefers_active_protocol_over_saved_disabled_source(
+        self, parameter_editor: ParameterEditor, vehicle_type: str
+    ) -> None:
+        """A disabled old port cannot claim the selected port before its active source."""
+        step_file, components = self.prepare(parameter_editor)
+        filesystem = parameter_editor._local_filesystem
+        filesystem.vehicle_type = vehicle_type
+        previous = parameter_editor.serial_protocol_snapshot("SERIAL1")
+        self.change_port(parameter_editor, components, "SERIAL2")
+        assert parameter_editor.preserve_or_disable_serial_protocol("SERIAL1", previous, disable=True)
+        parameter_editor._export_current_file(annotate_doc=False)
+        assert filesystem.file_parameters[step_file]["SERIAL1_PROTOCOL"].value == -1.0
+
+        parameter_editor.update_vehicle_components({**components, "port": "SERIAL3"})
+        saved = ParDict(
+            dict(sorted(filesystem.file_parameters[step_file].items(), key=lambda item: item[0] != "SERIAL1_PROTOCOL"))
+        )
+        filesystem.file_parameters[step_file] = saved
+        _duplicates, renames = parameter_editor._config_step_processor.calculate_connection_rename_operations(
+            saved, "vehicle_components['port']", {"vehicle_components": components}
+        )
+        assert ("SERIAL2_PROTOCOL", "SERIAL3_PROTOCOL") in renames
+        assert ("SERIAL1_PROTOCOL", "SERIAL3_PROTOCOL") not in renames
+
+        with (
+            patch.object(filesystem, "compute_forced_and_derived_parameters", return_value=(None, None)),
+            patch.object(filesystem, "compute_deletions", return_value=set()),
+            patch.object(filesystem, "compute_add_parameters"),
+        ):
+            parameter_editor._repopulate_configuration_step_parameters(MagicMock(return_value=True))
+        parameter_editor._export_current_file(annotate_doc=False)
+        reloaded = filesystem.file_parameters[step_file]
+        assert reloaded["SERIAL1_PROTOCOL"].value == -1.0
+        assert reloaded["SERIAL3_PROTOCOL"].value == 2.0
+        assert reloaded["SERIAL3_BAUD"].value == 57.0
+        assert reloaded["BRD_SER3_RTSCTS"].value == 1.0
+        assert reloaded["SERIAL2_PROTOCOL"].value == -1.0
+
+    def test_protocol_only_reselection_still_requires_rename_confirmation(self, parameter_editor: ParameterEditor) -> None:
+        """A preserved protocol can move after None even without baud or flow-control rows."""
+        step_file, components = self.prepare(parameter_editor)
+        filesystem = parameter_editor._local_filesystem
+        filesystem.file_parameters[step_file] = ParDict({"SERIAL1_PROTOCOL": Par(2.0)})
+        parameter_editor.current_step_parameters = {
+            "SERIAL1_PROTOCOL": parameter_editor._config_step_processor.create_ardupilot_parameter(
+                "SERIAL1_PROTOCOL", filesystem.file_parameters[step_file]["SERIAL1_PROTOCOL"], step_file, {}
+            )
+        }
+        previous = parameter_editor.serial_protocol_snapshot("SERIAL1")
+        parameter_editor.update_vehicle_components({**components, "port": "None"})
+        parameter_editor.refresh_current_step_computed_parameters("SERIAL1")
+        assert parameter_editor.preserve_or_disable_serial_protocol("SERIAL1", previous, disable=True)
+
+        proposed = {**components, "port": "SERIAL2"}
+        assert parameter_editor.connection_change_will_rename(proposed)
+        parameter_editor.update_vehicle_components(proposed)
+        parameter_editor.refresh_current_step_computed_parameters("None")
+        parameter_editor._export_current_file(annotate_doc=False)
+        saved = filesystem.file_parameters[step_file]
+        assert saved["SERIAL1_PROTOCOL"].value == -1.0
+        assert saved["SERIAL2_PROTOCOL"].value == 2.0
+
     def test_unrelated_component_edit_does_not_infer_connection_renames(self, parameter_editor: ParameterEditor) -> None:
         """Without a connection transition, another port's saved settings stay where they are."""
         step_file, components = self.prepare(parameter_editor)

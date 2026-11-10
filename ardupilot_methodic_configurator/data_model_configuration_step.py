@@ -411,6 +411,11 @@ class ConfigurationStepProcessor:
 
         # Generate the rename mapping
         renames = ConfigurationStepProcessor._generate_connection_renames(list(parameters.keys()), new_connection_prefix)
+        active_protocol_targets = {
+            target
+            for source, target in renames.items()
+            if re.fullmatch(r"SERIAL\d+_PROTOCOL", source) and parameters[source].value != -1
+        }
 
         # Track unique new names and actual renames to perform
         # Initialize with all existing parameter names to prevent conflicts
@@ -418,6 +423,12 @@ class ConfigurationStepProcessor:
         duplicates: set[str] = set()
         renamed_pairs = []
         for old_name, new_name in renames.items():
+            if (
+                re.fullmatch(r"SERIAL\d+_PROTOCOL", old_name)
+                and parameters[old_name].value == -1
+                and new_name in active_protocol_targets
+            ):
+                continue
             if new_name in new_names:
                 # Do not perform rename due to conflict, let the user handle it
                 pass

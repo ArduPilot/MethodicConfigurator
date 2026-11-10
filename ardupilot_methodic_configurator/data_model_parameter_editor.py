@@ -204,6 +204,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         # Saved sources whose row (possibly already renamed) was explicitly deleted during this edit session.
         self._suppressed_connection_renames: set[str] = set()
         self._declined_connection_renames: set[str] = set()
+        # Retain the last physical source through a temporary None selection and save.
+        self._last_connection_port: str | None = None
+        self._last_connection_protocol: Par | None = None
 
         self._at_least_one_changed = False
 
@@ -2157,6 +2160,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self._connection_renames.clear()
         self._suppressed_connection_renames.clear()
         self._declined_connection_renames.clear()
+        self._last_connection_port = None
+        self._last_connection_protocol = None
 
         # Process configuration step and get operations to apply
         (
@@ -3007,6 +3012,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         )
         if old_connection is None:
             return candidates
+        if old_connection == "None" and self._last_connection_port is not None:
+            old_connection = self._last_connection_port
         current_names = {name: self._connection_renames.get(name, name) for name in candidates}
         matches = self._config_step_processor._generate_connection_renames(  # noqa: SLF001  # pylint: disable=protected-access
             list(current_names.values()), old_connection
@@ -3014,6 +3021,35 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         return ParDict(
             {name: par for name, par in candidates.items() if matches.get(current_names[name]) == current_names[name]}
         )
+
+    def _preserved_protocol_copy_target(self, old_connection: str | None, new_connection: str) -> str | None:
+        """Find a new serial target for the preserved protocol after a temporary None selection."""
+        if (
+            old_connection != "None"
+            or self._last_connection_port is None
+            or self._last_connection_protocol is None
+            or self._last_connection_protocol.value == -1
+            or re.fullmatch(r"SERIAL\d+", new_connection) is None
+        ):
+            return None
+        source = f"{self._last_connection_port}_PROTOCOL"
+        target = f"{new_connection}_PROTOCOL"
+        if source not in self._declined_connection_renames or target in self.current_step_parameters:
+            return None
+        return target
+
+    def _copy_preserved_protocol_after_none(self, old_connection: str | None, new_connection: str) -> None:
+        """Carry the last active protocol while leaving an explicitly kept or disabled old row intact."""
+        target = self._preserved_protocol_copy_target(old_connection, new_connection)
+        if target is None or self._last_connection_port is None or self._last_connection_protocol is None:
+            return
+        source = f"{self._last_connection_port}_PROTOCOL"
+        self.current_step_parameters[target] = self._config_step_processor.create_ardupilot_parameter(
+            target, self._last_connection_protocol, self.current_file, self.fc_parameters
+        )
+        self._added_parameters.add(target)
+        self._connection_renames[source] = target
+        self._suppressed_connection_renames.discard(source)
 
     def _refresh_current_step_connection_renames(  # noqa: PLR0915  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
         self, step_info: dict, variables: dict, old_connection: str | None = None
@@ -3032,12 +3068,20 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             return
         is_gnss = "gnss" in self.current_file.lower() and rename_expr == _GNSS_FC_CONNECTION_RENAME_EXPR
 
+        if old_connection is not None and re.fullmatch(r"SERIAL\d+", old_connection):
+            self._last_connection_port = old_connection
+            previous = self.current_step_parameters.get(f"{old_connection}_PROTOCOL")
+            self._last_connection_protocol = (
+                Par(previous.get_new_value(), previous.change_reason_for_file) if previous is not None else None
+            )
+
         variables["new_connection_prefix"] = rename_expr
         original_params = self._local_filesystem.file_parameters.get(self.current_file, ParDict())
         candidates = self._connection_rename_candidates(original_params, old_connection)
 
         # Calculate what the renames SHOULD be with the updated component data
         try:
+            new_connection = safe_evaluate(str(rename_expr), variables)
             _duplicates, new_renamed_pairs = self._config_step_processor.calculate_connection_rename_operations(
                 candidates,
                 rename_expr,
@@ -3107,6 +3151,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 continue  # already handled above
             if orig_name in original_params:
                 self._apply_new_connection_rename(orig_name, new_target, original_params, is_gnss)
+
+        if isinstance(new_connection, str):
+            self._copy_preserved_protocol_after_none(old_connection, new_connection)
 
     def _apply_new_connection_rename(
         self,
@@ -3194,7 +3241,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         desired = dict(pairs)
         if transition is not None:
             old, new = transition
-            if (
+            if self._preserved_protocol_copy_target(old, new) is not None or (
                 not old
                 and re.fullmatch(r"SERIAL\d+", new)
                 and any(
