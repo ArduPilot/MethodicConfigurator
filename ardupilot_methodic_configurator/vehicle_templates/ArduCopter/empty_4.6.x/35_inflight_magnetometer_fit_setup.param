@@ -7,4 +7,4 @@ MAGH_MIN_SPEED,0.4
 MAGH_NUM_WP,18
 MAGH_USE_LOITER,1
 QUIK_ENABLE,0  # Quiktune is now completed. Disable it so that we can use the same RC switch to operate the advance-wp script
-SCR_ENABLE,0  # Use lua scripting for MagFit flight path automation
+SCR_ENABLE,1  # Use lua scripting for MagFit flight path automation

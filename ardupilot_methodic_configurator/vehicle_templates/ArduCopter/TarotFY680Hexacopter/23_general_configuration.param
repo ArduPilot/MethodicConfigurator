@@ -20,7 +20,6 @@ RNGFND2_TYPE,16  # 16, VL531X
 RTL_LOIT_TIME,5000  # The default is too long. This reduces the time
 SCHED_LOOP_RATE,400  # Stay on default loop rate, this is a slow vehicle
 SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and wind speed estimation automation
-ARMING_CHECK,947710  # 1>947710 Disable rangefinder because of intermittent fault, no safety-switch or camera.
 SERIAL4_BAUD,115  # 115, for MTF-01P
 SERIAL4_PROTOCOL,1  # 1, MAVLink1 for MTF-01P
 SERIAL7_PROTOCOL,16  # 16, ESC Telemetry
