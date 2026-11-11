@@ -5867,6 +5867,101 @@ class TestConnectionRenameSaveLifecycle:  # pylint: disable=too-many-public-meth
         )
         assert parameter_editor.current_step_parameters["SERIAL4_PROTOCOL"].get_new_value() == 2
 
+    @pytest.mark.parametrize(
+        ("vehicle", "template", "selected", "destination", "flow_source", "baud"),
+        [
+            ("ArduCopter", "Tarot_X4", "SERIAL2", "SERIAL3", "BRD_SER1_RTSCTS", 921.0),
+            ("ArduCopter", "FETtec-5", "SERIAL2", "SERIAL3", "BRD_SER1_RTSCTS", 115.0),
+            ("ArduPlane", "normal_plane", "SERIAL4", "SERIAL5", "BRD_SER2_RTSCTS", 38.0),
+        ],
+    )
+    def test_native_baud_follows_step_load_rename_and_inline_move(
+        self,
+        parameter_editor: ParameterEditor,
+        vehicle: str,
+        template: str,
+        selected: str,
+        destination: str,
+        flow_source: str,
+        baud: float,
+    ) -> None:
+        """A native saved baud travels with load-renamed flow control on the next move."""
+        package = Path(__file__).parent.parent / "ardupilot_methodic_configurator"
+        template_dir = package / "vehicle_templates" / vehicle / template
+        step_file = "07_telemetry.param"
+        components = json.loads((template_dir / "vehicle_components.json").read_text(encoding="utf-8"))["Components"]
+        assert components["Telemetry"]["FC Connection"]["Type"] == selected
+        filesystem = parameter_editor._local_filesystem
+        filesystem.vehicle_components_fs.data = {"Components": components}
+        filesystem.configuration_steps = {
+            step_file: json.loads((package / f"configuration_steps_{vehicle}.json").read_text(encoding="utf-8"))["steps"][
+                step_file
+            ]
+        }
+        filesystem.file_parameters = {step_file: ParDict.from_file(str(template_dir / step_file))}
+        parameter_editor.current_file = step_file
+        parameter_editor._flight_controller.master = None
+        parameter_editor._flight_controller.fc_parameters = {}
+        parameter_editor._config_step_processor.variables = {"vehicle_components": components}
+        with (
+            patch.object(filesystem, "compute_forced_and_derived_parameters", return_value=(None, None)),
+            patch.object(filesystem, "compute_deletions", return_value=set()),
+            patch.object(filesystem, "compute_add_parameters"),
+        ):
+            parameter_editor._repopulate_configuration_step_parameters(MagicMock(return_value=True))
+        assert flow_source in parameter_editor._connection_renames
+        assert parameter_editor.current_step_parameters[f"{selected}_BAUD"].get_new_value() == baud
+        assert f"{selected}_BAUD" not in parameter_editor._connection_renames
+        filesystem.file_parameters[step_file]["SERIAL8_OPTIONS"] = Par(4.0, "independent")
+        parameter_editor.current_step_parameters["SERIAL8_OPTIONS"] = (
+            parameter_editor._config_step_processor.create_ardupilot_parameter(
+                "SERIAL8_OPTIONS", filesystem.file_parameters[step_file]["SERIAL8_OPTIONS"], step_file, {}
+            )
+        )
+        proposed = json.loads(json.dumps(components))
+        proposed["Telemetry"]["FC Connection"]["Type"] = destination
+        assert parameter_editor.serial_transition_issue(proposed) is None
+        parameter_editor.update_vehicle_components(proposed)
+        parameter_editor.refresh_current_step_computed_parameters(selected)
+        assert parameter_editor.current_step_parameters[f"{destination}_BAUD"].get_new_value() == baud
+        assert parameter_editor.current_step_parameters[f"{destination}_PROTOCOL"].get_new_value() == 2
+        assert f"{destination.replace('SERIAL', 'BRD_SER')}_RTSCTS" in parameter_editor.current_step_parameters
+        assert f"{selected}_BAUD" not in parameter_editor.current_step_parameters
+        assert parameter_editor.current_step_parameters["SERIAL8_OPTIONS"].get_new_value() == 4
+        parameter_editor._export_current_file(annotate_doc=False)
+        saved = filesystem.file_parameters[step_file]
+        assert saved[f"{destination}_BAUD"].value == baud
+        assert saved[f"{destination}_PROTOCOL"].value == 2
+        assert f"{destination.replace('SERIAL', 'BRD_SER')}_RTSCTS" in saved
+        assert f"{selected}_BAUD" not in saved
+        assert saved["SERIAL8_OPTIONS"].value == 4
+
+    def test_deleted_unrelated_row_allows_planner_to_move_live_owner(self, parameter_editor: ParameterEditor) -> None:
+        """Removing an unrelated conflicting row makes both preflight and rename use SERIAL1."""
+        step_file, components = self.prepare(parameter_editor)
+        filesystem = parameter_editor._local_filesystem
+        components["port"] = "None"
+        filesystem.file_parameters[step_file]["SERIAL3_PROTOCOL"] = Par(2.0, "unrelated")
+        with (
+            patch.object(filesystem, "compute_forced_and_derived_parameters", return_value=(None, None)),
+            patch.object(filesystem, "compute_deletions", return_value=set()),
+            patch.object(filesystem, "compute_add_parameters"),
+        ):
+            parameter_editor._repopulate_configuration_step_parameters(MagicMock(return_value=True))
+        proposed = {**components, "port": "SERIAL2"}
+        assert parameter_editor.serial_transition_issue(proposed) == "ambiguous_ownership"
+        parameter_editor.delete_parameter_from_current_file("SERIAL3_PROTOCOL")
+        assert parameter_editor.serial_transition_issue(proposed) is None
+        self.change_port_with_previous(parameter_editor, components, "SERIAL2")
+        assert parameter_editor.current_step_parameters["SERIAL2_PROTOCOL"].get_new_value() == 2
+        assert parameter_editor.current_step_parameters["SERIAL2_BAUD"].get_new_value() == 57
+        parameter_editor._export_current_file(annotate_doc=False)
+        saved = filesystem.file_parameters[step_file]
+        assert saved["SERIAL2_PROTOCOL"].value == 2
+        assert saved["SERIAL2_BAUD"].value == 57
+        assert "SERIAL1_BAUD" not in saved
+        assert "SERIAL3_PROTOCOL" not in saved
+
     def test_omp_heli_missing_protocol_is_blocked_after_step_load(self, parameter_editor: ParameterEditor) -> None:
         """A real Heli template's baud-only rows cannot silently move with telemetry disabled."""
         package = Path(__file__).parent.parent / "ardupilot_methodic_configurator"
