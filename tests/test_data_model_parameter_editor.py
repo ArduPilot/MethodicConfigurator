@@ -5867,25 +5867,11 @@ class TestConnectionRenameSaveLifecycle:  # pylint: disable=too-many-public-meth
         )
         assert parameter_editor.current_step_parameters["SERIAL4_PROTOCOL"].get_new_value() == 2
 
-    @pytest.mark.parametrize(
-        ("vehicle", "template", "selected", "destination", "flow_source", "baud"),
-        [
-            ("ArduCopter", "Tarot_X4", "SERIAL2", "SERIAL3", "BRD_SER1_RTSCTS", 921.0),
-            ("ArduCopter", "FETtec-5", "SERIAL2", "SERIAL3", "BRD_SER1_RTSCTS", 115.0),
-            ("ArduPlane", "normal_plane", "SERIAL4", "SERIAL5", "BRD_SER2_RTSCTS", 38.0),
-        ],
-    )
-    def test_native_baud_follows_step_load_rename_and_inline_move(
-        self,
-        parameter_editor: ParameterEditor,
-        vehicle: str,
-        template: str,
-        selected: str,
-        destination: str,
-        flow_source: str,
-        baud: float,
-    ) -> None:
-        """A native saved baud travels with load-renamed flow control on the next move."""
+    @staticmethod
+    def _prepare_native_baud_template(
+        parameter_editor: ParameterEditor, case: tuple[str, str, str, str, str, float, str | None]
+    ) -> tuple[dict, str]:
+        vehicle, template, selected, _, flow_source, baud, _ = case
         package = Path(__file__).parent.parent / "ardupilot_methodic_configurator"
         template_dir = package / "vehicle_templates" / vehicle / template
         step_file = "07_telemetry.param"
@@ -5918,11 +5904,51 @@ class TestConnectionRenameSaveLifecycle:  # pylint: disable=too-many-public-meth
                 "SERIAL8_OPTIONS", filesystem.file_parameters[step_file]["SERIAL8_OPTIONS"], step_file, {}
             )
         )
+        return components, step_file
+
+    @pytest.mark.parametrize(
+        "case",
+        [
+            (vehicle, template, selected, destination if detour is None else "SERIAL5", flow_source, baud, detour)
+            for vehicle, template, selected, destination, flow_source, baud in (
+                ("ArduCopter", "Tarot_X4", "SERIAL2", "SERIAL3", "BRD_SER1_RTSCTS", 921.0),
+                ("ArduCopter", "FETtec-5", "SERIAL2", "SERIAL3", "BRD_SER1_RTSCTS", 115.0),
+                ("ArduPlane", "normal_plane", "SERIAL4", "SERIAL5", "BRD_SER2_RTSCTS", 38.0),
+            )
+            for detour in (None, "None", "CAN1", "RCin")
+        ],
+    )
+    def test_native_baud_follows_step_load_rename_and_inline_move(
+        self,
+        parameter_editor: ParameterEditor,
+        case: tuple[str, str, str, str, str, float, str | None],
+    ) -> None:
+        """A native saved baud travels with load-renamed flow control on the next move."""
+        _, template, selected, destination, _, baud, detour = case
+        components, step_file = self._prepare_native_baud_template(parameter_editor, case)
+        filesystem = parameter_editor._local_filesystem
+        if detour is not None:
+            previous = parameter_editor.serial_protocol_snapshot(selected)
+            intermediate = json.loads(json.dumps(components))
+            intermediate["Telemetry"]["FC Connection"]["Type"] = detour
+            parameter_editor.update_vehicle_components(intermediate)
+            parameter_editor.refresh_current_step_computed_parameters(selected)
+            assert parameter_editor.preserve_or_disable_serial_protocol(selected, previous, disable=True)
+            if template == "Tarot_X4" and detour == "None":
+                filesystem.file_parameters[step_file]["SERIAL5_BAUD"] = Par(115.0, "independent destination")
+                parameter_editor.current_step_parameters["SERIAL5_BAUD"] = (
+                    parameter_editor._config_step_processor.create_ardupilot_parameter(
+                        "SERIAL5_BAUD", filesystem.file_parameters[step_file]["SERIAL5_BAUD"], step_file, {}
+                    )
+                )
+                assert ("SERIAL2_BAUD", "SERIAL5_BAUD") in parameter_editor.connection_change_conflicts(detour, destination)
+                filesystem.file_parameters[step_file].pop("SERIAL5_BAUD")
+                parameter_editor.current_step_parameters.pop("SERIAL5_BAUD")
         proposed = json.loads(json.dumps(components))
         proposed["Telemetry"]["FC Connection"]["Type"] = destination
         assert parameter_editor.serial_transition_issue(proposed) is None
         parameter_editor.update_vehicle_components(proposed)
-        parameter_editor.refresh_current_step_computed_parameters(selected)
+        parameter_editor.refresh_current_step_computed_parameters(detour or selected)
         assert parameter_editor.current_step_parameters[f"{destination}_BAUD"].get_new_value() == baud
         assert parameter_editor.current_step_parameters[f"{destination}_PROTOCOL"].get_new_value() == 2
         assert f"{destination.replace('SERIAL', 'BRD_SER')}_RTSCTS" in parameter_editor.current_step_parameters

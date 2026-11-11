@@ -206,6 +206,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self._declined_connection_renames: set[str] = set()
         # Retain the saved row owner and active protocol through a temporary non-serial selection and save.
         self._last_connection_port: str | None = None
+        # The complete eligible source set survives a detour until the next step load or export.
+        self._last_connection_source_rows: set[str] = set()
         self._last_selected_serial_port: str | None = None
         self._last_connection_protocol: Par | None = None
 
@@ -2162,6 +2164,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self._suppressed_connection_renames.clear()
         self._declined_connection_renames.clear()
         self._last_connection_port = None
+        self._last_connection_source_rows.clear()
         self._last_selected_serial_port = None
         self._last_connection_protocol = None
 
@@ -2734,6 +2737,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self._retired_inline_derived_parameters.clear()
         # The exported names are now the saved-file sources for the next port change.
         self._connection_renames.clear()
+        self._last_connection_source_rows.clear()
         self._suppressed_connection_renames.clear()
         self._suppressed_connection_renames.update(self._declined_connection_renames & set(export_params))
         # copy parameters new values to their _values_on_file
@@ -3070,6 +3074,13 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                     if not (re.fullmatch(r"SERIAL\d+_PROTOCOL", name) and par.value == -1)
                 }
             )
+        if (
+            re.fullmatch(r"SERIAL\d+", old_connection) is None
+            and new_connection is not None
+            and re.fullmatch(r"SERIAL\d+", new_connection)
+            and self._last_connection_source_rows
+        ):
+            return ParDict({name: par for name, par in candidates.items() if name in self._last_connection_source_rows})
         old_connection = self._serial_rename_source(old_connection, candidates, new_connection)
         if old_connection is None:
             return ParDict()
@@ -3192,7 +3203,10 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             return
         is_gnss = "gnss" in self.current_file.lower() and rename_expr == _GNSS_FC_CONNECTION_RENAME_EXPR
 
+        original_params = self._local_filesystem.file_parameters.get(self.current_file, ParDict())
+
         if old_connection is not None and re.fullmatch(r"SERIAL\d+", old_connection):
+            self._last_connection_source_rows = set(self._connection_rename_candidates(original_params, old_connection))
             self._last_connection_port = self._serial_rename_source(old_connection)
             self._last_selected_serial_port = old_connection
             previous = self.current_step_parameters.get(f"{old_connection}_PROTOCOL")
@@ -3201,7 +3215,6 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             )
 
         variables["new_connection_prefix"] = rename_expr
-        original_params = self._local_filesystem.file_parameters.get(self.current_file, ParDict())
 
         # Calculate what the renames SHOULD be with the updated component data
         try:
@@ -3519,9 +3532,20 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
     def connection_change_conflicts(self, old: str, new: str) -> list[tuple[str, str]]:
         """Identify occupied targets for rows associated with the previous connection."""
         names = list(self.current_step_parameters)
-        if re.fullmatch(r"SERIAL\d+", old) is None:
-            old = self._serial_rename_source(old, new_connection=new) or old
-        old_names = self._config_step_processor._generate_connection_renames(names, old)  # noqa: SLF001  # pylint: disable=protected-access
+        if re.fullmatch(r"SERIAL\d+", old) is None and re.fullmatch(r"SERIAL\d+", new) and self._last_connection_source_rows:
+            candidates = self._connection_rename_candidates(
+                self._local_filesystem.file_parameters.get(self.current_file, ParDict()), old, new
+            )
+            live_sources = {
+                self._connection_renames.get(source, source)
+                for source in candidates
+                if self._connection_renames.get(source, source) in self.current_step_parameters
+            }
+            old_names = {name: name for name in live_sources}
+        else:
+            if re.fullmatch(r"SERIAL\d+", old) is None:
+                old = self._serial_rename_source(old, new_connection=new) or old
+            old_names = self._config_step_processor._generate_connection_renames(names, old)  # noqa: SLF001  # pylint: disable=protected-access
         new_names = self._config_step_processor._generate_connection_renames(names, new)  # noqa: SLF001  # pylint: disable=protected-access
         return [
             (source, target)
