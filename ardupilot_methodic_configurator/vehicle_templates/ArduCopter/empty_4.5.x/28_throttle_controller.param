@@ -2,6 +2,7 @@ ATC_THR_MIX_MAN,0.5  # Because ALTHOLD flight mode was used for more than 30 sec
 MOT_BAT_VOLT_MAX,0
 MOT_BAT_VOLT_MIN,0
 MOT_SPOOL_TIME,0.5
+MOT_THST_HOVER,0.5
 PSC_ACCZ_I,1  # Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned
 PSC_ACCZ_P,0.5  # Use 1 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned
 PSC_ACCZ_SMAX,0

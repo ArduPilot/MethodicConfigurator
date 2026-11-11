@@ -851,6 +851,7 @@
             "auto_changed_by": "First flight in ALT_HOLD mode for at least 30 seconds. If you have not done it yet, close this application and go fly",
             "derived_parameters": {
                 "ATC_THR_MIX_MAN": { "New Value": "0.5", "Change Reason": "Because ALTHOLD flight mode was used for more than 30 seconds to correctly learn the MOT_THST_HOVER value" },
+                "MOT_THST_HOVER": {"New Value": "fc_parameters['MOT_THST_HOVER']", "Change Reason": "ALTHOLD flight mode was used for more than 30 seconds to correctly learn this MOT_THST_HOVER value" },
                 "PSC_ACCZ_I": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7')", "New Value": "2*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" },
                 "PSC_D_ACC_I": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.7')", "New Value": "0.2*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use 0.2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" },
                 "PSC_ACCZ_P": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7')", "New Value": "1*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" },
