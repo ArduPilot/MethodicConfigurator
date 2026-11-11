@@ -95,7 +95,7 @@ def test_log_analysis_optional_group_is_serializable_and_declared_in_schema() ->
     assert LogAnalysis("ungrouped").group is None
     assert asdict(grouped)["group"] == "Attempt 1 — Summary"
 
-    schema_path = Path(__file__).parents[1] / "ardupilot_methodic_configurator/log_analysis/log_analysis_report_schema.json"
+    schema_path = Path(__file__).parents[2] / "ardupilot_methodic_configurator/log_analysis/log_analysis_report_schema.json"
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
     analysis_outcome = schema["$defs"]["analysis_outcome"]
     assert analysis_outcome["properties"]["group"]["type"] == ["string", "null"]
