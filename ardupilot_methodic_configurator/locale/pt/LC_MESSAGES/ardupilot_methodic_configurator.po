@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-11-10 18:16+0000\n"
+"POT-Creation-Date: 2026-11-11 21:45+0000\n"
 "PO-Revision-Date: 2024-12-02 13:20+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -12381,7 +12381,9 @@ msgstr "Não foram encontradas mensagens ARM"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:165
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:277
 msgid "Attitude saturation analysis applies only to Copter and helicopter logs"
-msgstr "A análise da saturação da atitude aplica-se apenas aos registos de Copter e helicópteros"
+msgstr ""
+"A análise da saturação da atitude aplica-se apenas aos registos de Copter e "
+"helicópteros"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:166
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:187
@@ -12393,13 +12395,18 @@ msgstr "Saturação da atitude"
 msgid ""
 "No RATE messages found, ATC_RATE_*_MAX saturation checks were skipped. Check "
 "Fast Attitude or Medium Attitude logging (LOG_BITMASK bit)"
-msgstr "Não foram encontradas mensagens RATE; as verificações de saturação de ATC_RATE_*_MAX foram ignoradas. Verifique o registo Fast Attitude ou Medium Attitude (bit de LOG_BITMASK)"
+msgstr ""
+"Não foram encontradas mensagens RATE; as verificações de saturação de "
+"ATC_RATE_*_MAX foram ignoradas. Verifique o registo Fast Attitude ou Medium "
+"Attitude (bit de LOG_BITMASK)"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:214
 msgid ""
 "No PIDR, PIDP or PIDY messages found, ATC_RAT_*_SMAX and ATC_RAT_*_PDMX "
 "saturation cannot be checked"
-msgstr "Não foram encontradas mensagens PIDR, PIDP ou PIDY; não é possível verificar a saturação de ATC_RAT_*_SMAX e ATC_RAT_*_PDMX"
+msgstr ""
+"Não foram encontradas mensagens PIDR, PIDP ou PIDY; não é possível verificar "
+"a saturação de ATC_RAT_*_SMAX e ATC_RAT_*_PDMX"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:236
 msgid "Attitude logging is disabled in LOG_BITMASK"
@@ -12413,7 +12420,9 @@ msgstr "Ative o registo Fast Attitude ou Medium Attitude (bit de LOG_BITMASK)"
 msgid ""
 "Attitude telemetry (ATT, RATE, PID*) not logged but logging enabled; check "
 "the attitude logging options"
-msgstr "A telemetria de atitude (ATT, RATE, PID*) não foi registada, embora o registo esteja ativado; verifique as opções de registo da atitude"
+msgstr ""
+"A telemetria de atitude (ATT, RATE, PID*) não foi registada, embora o "
+"registo esteja ativado; verifique as opções de registo da atitude"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:250
 msgid "No ATT, RATE or PID messages found"
@@ -12442,11 +12451,19 @@ msgid ""
 "{percent:.1f}% of the armed time ({seconds:.1f} s). RATE targets near or "
 "above this envelope suggest rate limiting but do not prove clipping. Check "
 "target tracking and disturbances before changing the limits."
-msgstr "O valor pretendido da velocidade angular de {axis} atingiu o intervalo configurado por {param} ({limits}) durante {percent:.1f}% do tempo em que o veículo esteve armado ({seconds:.1f} s). Valores pretendidos de RATE próximos ou acima deste intervalo sugerem limitação da velocidade angular, mas não comprovam que tenham sido truncados. Verifique o seguimento do valor pretendido e as perturbações antes de alterar os limites."
+msgstr ""
+"O valor pretendido da velocidade angular de {axis} atingiu o intervalo "
+"configurado por {param} ({limits}) durante {percent:.1f}% do tempo em que o "
+"veículo esteve armado ({seconds:.1f} s). Valores pretendidos de RATE "
+"próximos ou acima deste intervalo sugerem limitação da velocidade angular, "
+"mas não comprovam que tenham sido truncados. Verifique o seguimento do valor "
+"pretendido e as perturbações antes de alterar os limites."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:441
 msgid "Frequent rate limiting can severely reduce attitude control."
-msgstr "A limitação frequente da velocidade angular pode reduzir significativamente o controlo da atitude."
+msgstr ""
+"A limitação frequente da velocidade angular pode reduzir significativamente "
+"o controlo da atitude."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:465
 msgid ""
@@ -12454,7 +12471,12 @@ msgid ""
 "{param} slew limiter for {severe_percent:.1f}% of the armed time. This "
 "severely reduces attitude control. Reduce the P and D gains or increase "
 "{param}."
-msgstr "Os ganhos P e D do controlador da velocidade angular de {axis} foram reduzidos para menos de {severe:.0%} pelo limitador da velocidade de variação {param} durante {severe_percent:.1f}% do tempo em que o veículo esteve armado. Isto reduz significativamente o controlo da atitude. Reduza os ganhos P e D ou aumente {param}."
+msgstr ""
+"Os ganhos P e D do controlador da velocidade angular de {axis} foram "
+"reduzidos para menos de {severe:.0%} pelo limitador da velocidade de "
+"variação {param} durante {severe_percent:.1f}% do tempo em que o veículo "
+"esteve armado. Isto reduz significativamente o controlo da atitude. Reduza "
+"os ganhos P e D ou aumente {param}."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:471
 msgid ""
@@ -12462,26 +12484,41 @@ msgid ""
 "{param} slew limiter for {percent:.1f}% of the armed time ({seconds:.1f} s), "
 "which indicates an oscillation tendency. Check the tune before increasing "
 "{param}."
-msgstr "Os ganhos P e D do controlador da velocidade angular de {axis} foram reduzidos para menos de {reduced:.0%} pelo limitador da velocidade de variação {param} durante {percent:.1f}% do tempo em que o veículo esteve armado ({seconds:.1f} s), o que indica uma tendência para oscilações. Verifique a afinação antes de aumentar {param}."
+msgstr ""
+"Os ganhos P e D do controlador da velocidade angular de {axis} foram "
+"reduzidos para menos de {reduced:.0%} pelo limitador da velocidade de "
+"variação {param} durante {percent:.1f}% do tempo em que o veículo esteve "
+"armado ({seconds:.1f} s), o que indica uma tendência para oscilações. "
+"Verifique a afinação antes de aumentar {param}."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:516
 msgid ""
 "{axis} rate controller P+D output was clipped by {param} for {percent:.1f}% "
 "of the armed time ({seconds:.1f} s). This severely reduces attitude control. "
 "Increase {param} or lower the P and D gains."
-msgstr "A saída P+D do controlador da velocidade angular de {axis} foi truncada por {param} durante {percent:.1f}% do tempo em que o veículo esteve armado ({seconds:.1f} s). Isto reduz significativamente o controlo da atitude. Aumente {param} ou reduza os ganhos P e D."
+msgstr ""
+"A saída P+D do controlador da velocidade angular de {axis} foi truncada por "
+"{param} durante {percent:.1f}% do tempo em que o veículo esteve armado "
+"({seconds:.1f} s). Isto reduz significativamente o controlo da atitude. "
+"Aumente {param} ou reduza os ganhos P e D."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:521
 msgid ""
 "{axis} rate controller P+D output reached the {param} limit for "
 "{percent:.1f}% of the armed time ({seconds:.1f} s), so attitude control was "
 "limited. Consider increasing {param}."
-msgstr "A saída P+D do controlador da velocidade angular de {axis} atingiu o limite de {param} durante {percent:.1f}% do tempo em que o veículo esteve armado ({seconds:.1f} s), pelo que o controlo da atitude foi limitado. Considere aumentar {param}."
+msgstr ""
+"A saída P+D do controlador da velocidade angular de {axis} atingiu o limite "
+"de {param} durante {percent:.1f}% do tempo em que o veículo esteve armado "
+"({seconds:.1f} s), pelo que o controlo da atitude foi limitado. Considere "
+"aumentar {param}."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:659
 msgid ""
 "The full pilot lean range of {limit:.0f} deg allowed by {param} was used"
-msgstr "Foi utilizada toda a amplitude de inclinação de {limit:.0f} graus permitida ao piloto por {param}"
+msgstr ""
+"Foi utilizada toda a amplitude de inclinação de {limit:.0f} graus permitida "
+"ao piloto por {param}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:661
 msgid "The position controller was limited to {limit:.0f} deg by {param}"
@@ -12489,7 +12526,9 @@ msgstr "O controlador de posição foi limitado a {limit:.0f} graus por {param}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:663
 msgid "The vehicle lean angle was limited to {limit:.0f} deg by {param}"
-msgstr "O ângulo de inclinação do veículo foi limitado a {limit:.0f} graus por {param}"
+msgstr ""
+"O ângulo de inclinação do veículo foi limitado a {limit:.0f} graus por "
+"{param}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:665
 msgid ""
@@ -12497,14 +12536,22 @@ msgid ""
 "applies to ({seconds:.1f} s). Lean-angle saturation is happening: the "
 "vehicle cannot tilt further to follow the demanded acceleration. Raise "
 "{param} if the airframe and payload allow it."
-msgstr "{details} durante {percent:.1f}% do tempo em que o veículo esteve armado nos modos de voo a que se aplica ({seconds:.1f} s). Está a ocorrer saturação do ângulo de inclinação: o veículo não consegue inclinar-se mais para acompanhar a aceleração solicitada. Aumente {param} se a estrutura e a carga útil o permitirem."
+msgstr ""
+"{details} durante {percent:.1f}% do tempo em que o veículo esteve armado nos "
+"modos de voo a que se aplica ({seconds:.1f} s). Está a ocorrer saturação do "
+"ângulo de inclinação: o veículo não consegue inclinar-se mais para "
+"acompanhar a aceleração solicitada. Aumente {param} se a estrutura e a carga "
+"útil o permitirem."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:671
 msgid ""
 "{details} for {percent:.1f}% of the armed time in the flight modes it "
 "applies to ({seconds:.1f} s). Review pilot inputs and the configured lean "
 "range."
-msgstr "{details} durante {percent:.1f}% do tempo em que o veículo esteve armado nos modos de voo a que se aplica ({seconds:.1f} s). Reveja os comandos do piloto e a amplitude de inclinação configurada."
+msgstr ""
+"{details} durante {percent:.1f}% do tempo em que o veículo esteve armado nos "
+"modos de voo a que se aplica ({seconds:.1f} s). Reveja os comandos do piloto "
+"e a amplitude de inclinação configurada."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_base.py:99
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_availability_check.py:162
@@ -14668,7 +14715,7 @@ msgstr "Corrente: %(curr).2fA"
 msgid "Current: N/A"
 msgstr "Corrente: N/D"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1286
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1287
 msgid ""
 "IMPORTANT SAFETY WARNING:\n"
 "\n"
@@ -14688,7 +14735,7 @@ msgstr ""
 "\n"
 "Deseja prosseguir com o teste de motores?"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1306
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1307
 msgid ""
 "Battery voltage is outside the safe range for motor testing.\n"
 "\n"

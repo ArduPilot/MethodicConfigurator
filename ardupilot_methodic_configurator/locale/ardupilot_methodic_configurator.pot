@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-11-10 18:16+0000\n"
+"POT-Creation-Date: 2026-11-11 21:45+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -14176,7 +14176,7 @@ msgid "Current: N/A"
 msgstr ""
 
 #:
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1286
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1287
 msgid ""
 "IMPORTANT SAFETY WARNING:\n"
 "\n"
@@ -14189,7 +14189,7 @@ msgid ""
 msgstr ""
 
 #:
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1306
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1307
 msgid ""
 "Battery voltage is outside the safe range for motor testing.\n"
 "\n"
