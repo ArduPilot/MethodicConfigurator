@@ -2012,3 +2012,1252 @@ class TestMotorTestConnectionOwnership:
             motor_view.base_window.navigation_lock.release(owner)
         motor_view._handle_keyboard_shortcut(motor_view._stop_all_motors)
         assert fake_model.emergency_runs == before + 1
+
+
+class TestMotorSwapDialogs:
+    """Operator-facing wording and recovery for the motor swap confirmation flow."""
+
+    def test_declining_a_swap_asks_with_exact_wording_and_clears_the_selection(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, mocker
+    ) -> None:
+        """
+        Declining a swap leaves motors untouched and clears the dropdown.
+
+        GIVEN: Motor A's dropdown set to Motor B
+        WHEN: The operator declines the swap confirmation
+        THEN: The question names both motors, no swap happens and the dropdown is cleared
+        """
+        swap = mocker.patch.object(fake_model, "swap_motor_functions", create=True)
+        dialog_spies.askyesno.return_value = False
+        motor_view.detected_comboboxes[0].set("B")
+
+        motor_view._on_motor_swapped("A", "B")
+
+        dialog_spies.askyesno.assert_called_once_with(
+            "Swapping Motors?",
+            "Are you sure you want to swap the functions of Motor A and Motor B?",
+        )
+        swap.assert_not_called()
+        dialog_spies.showinfo.assert_not_called()
+        assert motor_view.detected_comboboxes[0].get() == ""
+
+    def test_confirmed_swap_reports_success_naming_both_motors(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, mocker
+    ) -> None:
+        """
+        A confirmed swap is applied and reported with the motor labels.
+
+        GIVEN: The operator confirms swapping Motor A and Motor B
+        WHEN: The swap completes without error
+        THEN: The model swaps the two motors and the success dialog names them
+        """
+        swap = mocker.patch.object(fake_model, "swap_motor_functions", create=True)
+        dialog_spies.askyesno.return_value = True
+
+        motor_view._on_motor_swapped("A", "B")
+
+        swap.assert_called_once_with("A", "B")
+        dialog_spies.showinfo.assert_called_once_with("Success", "Motor A and Motor B have been successfully swapped.")
+        dialog_spies.showerror.assert_not_called()
+
+    def test_failed_swap_shows_the_model_error_and_still_clears_the_selection(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, mocker
+    ) -> None:
+        """
+        A rejected swap explains why and leaves the dropdown clean.
+
+        GIVEN: The operator confirms a swap that the model rejects
+        WHEN: The model raises a ParameterError
+        THEN: A "Swap Failed" error shows the model message, no success is reported and the dropdown is cleared
+        """
+        mocker.patch.object(
+            fake_model, "swap_motor_functions", create=True, side_effect=ParameterError("Motor B is not configured")
+        )
+        dialog_spies.askyesno.return_value = True
+        motor_view.detected_comboboxes[0].set("B")
+
+        motor_view._on_motor_swapped("A", "B")
+
+        dialog_spies.showerror.assert_called_once_with("Swap Failed", "Motor B is not configured")
+        dialog_spies.showinfo.assert_not_called()
+        assert motor_view.detected_comboboxes[0].get() == ""
+
+
+class TestMotorThrottleAndDurationRecovery:
+    """Invalid throttle and duration entries are reported and replaced with the last accepted value."""
+
+    def test_non_numeric_throttle_reports_the_accepted_percentage_and_restores_it(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace
+    ) -> None:
+        """
+        A non-numeric throttle entry is rejected and the spinbox shows the model value again.
+
+        GIVEN: A throttle of 25% accepted by the model
+        WHEN: The operator types text that is not a number
+        THEN: The spinbox shows 25 again and the error names 25%
+        """
+        motor_view.throttle_spinbox.delete(0, "end")
+        motor_view.throttle_spinbox.insert(0, "abc")
+
+        motor_view._on_throttle_change()
+
+        dialog_spies.showerror.assert_called_once_with("Throttle value error", "Invalid throttle value entered, reset to 25%")
+        assert motor_view.throttle_spinbox.get() == "25"
+        assert fake_model.get_test_throttle_pct() == 25
+
+    def test_throttle_rejected_by_the_model_shows_the_validation_reason(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, mocker
+    ) -> None:
+        """
+        A throttle the model refuses shows the model reason and restores the accepted value.
+
+        GIVEN: A throttle entry of 150 that the model refuses
+        WHEN: The model raises a ValidationError
+        THEN: A "Throttle value error" shows the validation reason and the spinbox returns to 25
+        """
+        mocker.patch.object(fake_model, "set_test_throttle_pct", side_effect=ValidationError("above maximum"))
+        motor_view.throttle_spinbox.delete(0, "end")
+        motor_view.throttle_spinbox.insert(0, "150")
+
+        motor_view._on_throttle_change()
+
+        dialog_spies.showerror.assert_called_once_with("Throttle value error", "Throttle validation failed: above maximum")
+        assert motor_view.throttle_spinbox.get() == "25"
+
+    def test_non_numeric_duration_reports_the_accepted_seconds_and_restores_them(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace
+    ) -> None:
+        """
+        A non-numeric duration entry is rejected and the spinbox shows the model value again.
+
+        GIVEN: A duration of 3 seconds accepted by the model
+        WHEN: The operator types text that is not a number
+        THEN: The spinbox shows 3.0 again and the error names 3 seconds
+        """
+        motor_view.duration_spinbox.delete(0, "end")
+        motor_view.duration_spinbox.insert(0, "soon")
+
+        motor_view._on_duration_change()
+
+        dialog_spies.showerror.assert_called_once_with(
+            "Duration value error", "Invalid duration value entered, reset to 3 seconds"
+        )
+        assert motor_view.duration_spinbox.get() == "3.0"
+        assert fake_model.get_test_duration_s() == 3.0
+
+    def test_duration_rejected_by_the_model_shows_the_validation_reason(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, mocker
+    ) -> None:
+        """
+        A duration the model refuses shows the model reason and restores the accepted value.
+
+        GIVEN: A duration entry that the model refuses
+        WHEN: The model raises a ParameterError
+        THEN: A "Duration value error" shows the reason and the spinbox returns to 3.0
+        """
+        mocker.patch.object(fake_model, "set_test_duration_s", side_effect=ParameterError("too long"))
+        motor_view.duration_spinbox.delete(0, "end")
+        motor_view.duration_spinbox.insert(0, "999")
+
+        motor_view._on_duration_change()
+
+        dialog_spies.showerror.assert_called_once_with("Duration value error", "Duration validation failed: too long")
+        assert motor_view.duration_spinbox.get() == "3.0"
+
+
+class TestMotorSpinDialogs:
+    """MOT_SPIN_ARM and MOT_SPIN_MIN dialogs keep their wording, bounds and error handling."""
+
+    def test_spin_arm_dialog_is_prefilled_with_the_current_parameter(
+        self, motor_view: MotorTestView, dialog_spies: SimpleNamespace
+    ) -> None:
+        """
+        The spin-arm dialog starts from the value currently on the flight controller.
+
+        GIVEN: MOT_SPIN_ARM currently set to 0.1
+        WHEN: The operator opens the spin-arm dialog
+        THEN: The question shows the margin wording and the input is prefilled with 0.1
+        """
+        motor_view._set_motor_spin_arm()
+
+        dialog_spies.askfloat.assert_called_once_with(
+            "Set Motor Spin Arm",
+            "Enter new value for MOT_SPIN_ARM with 0.02 margin:",
+            initialvalue=0.1,
+        )
+
+    def test_cancelling_spin_arm_dialog_changes_nothing(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, mocker
+    ) -> None:
+        """
+        Cancelling the spin-arm dialog does not write anything to the flight controller.
+
+        GIVEN: The spin-arm dialog is cancelled by the operator
+        WHEN: The dialog returns None
+        THEN: The model is not asked to change MOT_SPIN_ARM and the navigation lock is free
+        """
+        setter = mocker.patch.object(fake_model, "set_motor_spin_arm_value")
+        dialog_spies.askfloat.return_value = None
+
+        motor_view._set_motor_spin_arm()
+
+        setter.assert_not_called()
+        assert not motor_view.base_window.navigation_lock.locked
+
+    def test_accepted_spin_arm_value_is_written_while_the_navigation_lock_is_held(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, mocker
+    ) -> None:
+        """
+        An accepted spin-arm value is written, and other actions are locked out during the write.
+
+        GIVEN: The operator enters 0.15 for MOT_SPIN_ARM
+        WHEN: The write runs
+        THEN: The model receives 0.15, the navigation lock is held during the write and released afterwards
+        """
+        locked_during_write: list[bool] = []
+
+        def record_lock_state(*_args: object) -> None:
+            locked_during_write.append(motor_view.base_window.navigation_lock.locked)
+
+        setter = mocker.patch.object(fake_model, "set_motor_spin_arm_value", side_effect=record_lock_state)
+        dialog_spies.askfloat.return_value = 0.15
+
+        motor_view._set_motor_spin_arm()
+
+        assert setter.call_args.args[0] == 0.15
+        assert locked_during_write == [True]
+        assert not motor_view.base_window.navigation_lock.locked
+
+    def test_spin_arm_parameter_error_is_shown_as_a_plain_error_and_lock_is_released(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, mocker
+    ) -> None:
+        """
+        A rejected spin-arm value shows the reason under the generic Error title.
+
+        GIVEN: The operator enters a value the flight controller rejects
+        WHEN: The model raises a ParameterError
+        THEN: An "Error" dialog shows the reason and the navigation lock is released
+        """
+        mocker.patch.object(fake_model, "set_motor_spin_arm_value", side_effect=ParameterError("out of range"))
+        dialog_spies.askfloat.return_value = 0.9
+
+        motor_view._set_motor_spin_arm()
+
+        dialog_spies.showerror.assert_called_once_with("Error", "out of range")
+        assert not motor_view.base_window.navigation_lock.locked
+
+    def test_spin_min_dialog_is_bounded_between_zero_and_one_and_prefilled(
+        self, motor_view: MotorTestView, dialog_spies: SimpleNamespace
+    ) -> None:
+        """
+        The spin-min dialog offers the full 0.0 to 1.0 range starting from the current value.
+
+        GIVEN: MOT_SPIN_MIN currently set to 0.2
+        WHEN: The operator opens the spin-min dialog
+        THEN: The question explains the 0.02 rule and the input is bounded to 0.0 through 1.0
+        """
+        motor_view._set_motor_spin_min()
+
+        dialog_spies.askfloat.assert_called_once_with(
+            "Set Motor Spin Min",
+            "Enter new value for MOT_SPIN_MIN, must be at least 0.02 higher than MOT_SPIN_ARM:",
+            initialvalue=0.2,
+            minvalue=0.0,
+            maxvalue=1.0,
+        )
+
+    def test_accepted_spin_min_value_is_written_to_the_model(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, mocker
+    ) -> None:
+        """
+        An accepted spin-min value is passed to the model unchanged.
+
+        GIVEN: The operator enters 0.3 for MOT_SPIN_MIN
+        WHEN: The dialog returns 0.3
+        THEN: The model receives 0.3 and no error is shown
+        """
+        setter = mocker.patch.object(fake_model, "set_motor_spin_min_value")
+        dialog_spies.askfloat.return_value = 0.3
+
+        motor_view._set_motor_spin_min()
+
+        setter.assert_called_once_with(0.3)
+        dialog_spies.showerror.assert_not_called()
+
+    def test_spin_min_rejection_is_shown_under_the_generic_error_title(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, mocker
+    ) -> None:
+        """
+        A spin-min value the model rejects is reported to the operator.
+
+        GIVEN: The model rejects MOT_SPIN_MIN because it is too close to MOT_SPIN_ARM
+        WHEN: The operator submits the value
+        THEN: An "Error" dialog shows the model message
+        """
+        mocker.patch.object(fake_model, "set_motor_spin_min_value", side_effect=ValidationError("too close to spin arm"))
+        dialog_spies.askfloat.return_value = 0.11
+
+        motor_view._set_motor_spin_min()
+
+        dialog_spies.showerror.assert_called_once_with("Error", "too close to spin arm")
+
+    def test_cancelling_spin_min_dialog_changes_nothing(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, mocker
+    ) -> None:
+        """
+        Cancelling the spin-min dialog does not write to the flight controller.
+
+        GIVEN: The spin-min dialog is cancelled
+        WHEN: The dialog returns None
+        THEN: The model is not called
+        """
+        setter = mocker.patch.object(fake_model, "set_motor_spin_min_value")
+        dialog_spies.askfloat.return_value = None
+
+        motor_view._set_motor_spin_min()
+
+        setter.assert_not_called()
+
+
+class TestMotorRunFeedback:
+    """Each motor-run failure mode shows its own status label and dialog wording."""
+
+    @pytest.mark.parametrize(
+        ("error", "status", "dialog", "title", "message"),
+        [
+            (
+                MotorTestSafetyError("Battery too low", battery_related=True),
+                "Safety Check Failed",
+                "showwarning",
+                "Battery Voltage Warning",
+                "Unsafe battery: Battery too low",
+            ),
+            (
+                MotorTestSafetyError("Arming check failed"),
+                "Safety Check Failed",
+                "showwarning",
+                "Safety Check Failed",
+                "Arming check failed",
+            ),
+            (ValidationError("bad output"), "Invalid Parameters", "showerror", "Parameter Validation Error", "bad output"),
+            (MotorTestExecutionError("link lost"), "Test Failed", "showerror", "Error", "link lost"),
+            (RuntimeError("kaboom"), "Error", "showerror", "Unexpected Error", "kaboom"),
+        ],
+    )
+    def test_single_motor_failure_marks_only_that_motor_and_explains_the_failure(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+        self,
+        motor_view: MotorTestView,
+        fake_model: FakeMotorTestModel,
+        dialog_spies: SimpleNamespace,
+        mocker,
+        error: Exception,
+        status: str,
+        dialog: str,
+        title: str,
+        message: str,
+    ) -> None:
+        """
+        A failing single-motor test explains itself and marks the affected motor in red.
+
+        GIVEN: A single-motor test on motor output 2 that fails with the given error
+        WHEN: The test is started
+        THEN: Motor 2 shows the failure status in red and the matching dialog shows the title and message
+        """
+        mocker.patch.object(fake_model, "run_single_motor_test", side_effect=error)
+        mocker.patch.object(
+            fake_model, "is_battery_related_safety_issue", return_value=getattr(error, "battery_related", False)
+        )
+
+        motor_view._test_motor(0, 2)
+
+        first, second = motor_view.motor_status_labels
+        assert second.cget("text") == status
+        assert str(second.cget("foreground")) == "red"
+        assert first.cget("text") != status
+        getattr(dialog_spies, dialog).assert_called_once_with(title, message)
+
+    def test_single_motor_test_status_feedback_is_routed_through_the_model_callback(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, mocker
+    ) -> None:
+        """
+        A single-motor test passes its status callback to the model so feedback reaches the labels.
+
+        GIVEN: A healthy model
+        WHEN: Motor output 1 is tested
+        THEN: The model receives the view's status handler and the motor reports it sent the command
+        """
+        run = mocker.patch.object(fake_model, "run_single_motor_test")
+
+        motor_view._test_motor(0, 1)
+
+        run.assert_called_once_with(0, 1, motor_view._handle_status_event)
+
+    @pytest.mark.parametrize(
+        ("error", "dialog", "title", "message"),
+        [
+            (MotorTestSafetyError("Arming check failed"), "showwarning", "Safety Check Failed", "Arming check failed"),
+            (ValidationError("bad output"), "showerror", "Parameter Validation Error", "bad output"),
+            (MotorTestExecutionError("link lost"), "showerror", "Error", "link lost"),
+            (RuntimeError("kaboom"), "showerror", "Unexpected Error", "kaboom"),
+        ],
+    )
+    def test_all_motors_failure_is_explained_with_the_matching_dialog(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+        self,
+        motor_view: MotorTestView,
+        fake_model: FakeMotorTestModel,
+        dialog_spies: SimpleNamespace,
+        mocker,
+        error: Exception,
+        dialog: str,
+        title: str,
+        message: str,
+    ) -> None:
+        """
+        A failed all-motors test shows the dialog that matches the failure.
+
+        GIVEN: An all-motors test that fails with the given error
+        WHEN: The test is started
+        THEN: The matching dialog shows the title and the error text
+        """
+        mocker.patch.object(fake_model, "run_all_motors_test", side_effect=error)
+
+        motor_view._test_all_motors()
+
+        getattr(dialog_spies, dialog).assert_called_once_with(title, message)
+
+    @pytest.mark.parametrize(
+        ("error", "dialog", "title", "message"),
+        [
+            (MotorTestSafetyError("Arming check failed"), "showwarning", "Safety Check Failed", "Arming check failed"),
+            (ValidationError("bad output"), "showerror", "Parameter Validation Error", "bad output"),
+            (MotorTestExecutionError("link lost"), "showerror", "Error", "link lost"),
+            (RuntimeError("kaboom"), "showerror", "Unexpected Error", "kaboom"),
+        ],
+    )
+    def test_sequence_failure_is_explained_with_the_matching_dialog(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+        self,
+        motor_view: MotorTestView,
+        fake_model: FakeMotorTestModel,
+        dialog_spies: SimpleNamespace,
+        mocker,
+        error: Exception,
+        dialog: str,
+        title: str,
+        message: str,
+    ) -> None:
+        """
+        A failed sequence test shows the dialog that matches the failure.
+
+        GIVEN: A sequential test that fails with the given error
+        WHEN: The sequence is started
+        THEN: The matching dialog shows the title and the error text
+        """
+        mocker.patch.object(fake_model, "run_sequential_motor_test", side_effect=error)
+
+        motor_view._test_motors_in_sequence()
+
+        getattr(dialog_spies, dialog).assert_called_once_with(title, message)
+
+    def test_all_motors_run_marks_every_motor_as_command_sent(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel
+    ) -> None:
+        """
+        Running all motors shows each motor as having received its command.
+
+        GIVEN: A two-motor frame
+        WHEN: All motors are tested together
+        THEN: The model runs once and both motor labels read "Command sent" in green
+        """
+        motor_view._test_all_motors()
+
+        assert fake_model.all_motor_runs == 1
+        for label in motor_view.motor_status_labels:
+            assert label.cget("text") == "Command sent"
+            assert str(label.cget("foreground")) == "green"
+
+    def test_emergency_stop_marks_motors_stop_sent_and_reports_failures(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace
+    ) -> None:
+        """
+        Emergency stop marks motors as stopped and reports a failed stop to the operator.
+
+        GIVEN: A two-motor frame
+        WHEN: An emergency stop succeeds, then fails with a model error
+        THEN: The motors show "Stop sent" in red, and the failure is shown under the "Error" title
+        """
+        motor_view._stop_all_motors()
+
+        assert fake_model.emergency_runs == 1
+        for label in motor_view.motor_status_labels:
+            assert label.cget("text") == "Stop sent"
+            assert str(label.cget("foreground")) == "red"
+
+        fake_model.next_emergency_error = MotorTestExecutionError("stop failed")
+        motor_view._stop_all_motors()
+
+        dialog_spies.showerror.assert_called_once_with("Error", "stop failed")
+
+
+def test_throttle_entry_logs_the_requested_value_and_resulting_percentage(
+    motor_view: MotorTestView, fake_model: FakeMotorTestModel, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    A valid throttle entry is logged with both the raw text and the applied percentage.
+
+    GIVEN: A throttle spinbox holding "40"
+    WHEN: The throttle change handler runs
+    THEN: The model stores 40 and the debug log names the entered value and applied percentage
+    """
+    caplog.set_level("DEBUG")
+    motor_view.throttle_spinbox.delete(0, "end")
+    motor_view.throttle_spinbox.insert(0, "40")
+
+    motor_view._on_throttle_change()
+
+    assert fake_model.get_test_throttle_pct() == 40
+    assert "_on_throttle_change called with value: 40" in caplog.messages
+    assert "Throttle set to 40%" in caplog.messages
+
+
+def test_invalid_throttle_entry_logs_and_reports_the_reset_value(
+    motor_view: MotorTestView, dialog_spies: SimpleNamespace, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    A non-numeric throttle entry is reported and replaced with the model value.
+
+    GIVEN: A throttle spinbox holding text that is not a number
+    WHEN: The throttle change handler runs
+    THEN: A warning is logged, the spinbox shows the model value and the operator sees the reset message
+    """
+    caplog.set_level("DEBUG")
+    motor_view.throttle_spinbox.delete(0, "end")
+    motor_view.throttle_spinbox.insert(0, "abc")
+
+    motor_view._on_throttle_change()
+
+    assert any(message.startswith("ValueError in _on_throttle_change: ") for message in caplog.messages)
+    assert motor_view.throttle_spinbox.get() == "25"
+    dialog_spies.showerror.assert_called_once_with("Throttle value error", "Invalid throttle value entered, reset to 25%")
+
+
+def test_rejected_throttle_value_reports_the_validation_message(
+    motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    A throttle value rejected by the model is explained to the operator.
+
+    GIVEN: A model that rejects the throttle value with a parameter error
+    WHEN: The throttle change handler runs
+    THEN: The rejection is logged and the operator sees the validation message under the throttle title
+    """
+    caplog.set_level("DEBUG")
+    fake_model.raise_throttle_error = ParameterError("too high")
+    motor_view.throttle_spinbox.delete(0, "end")
+    motor_view.throttle_spinbox.insert(0, "90")
+
+    motor_view._on_throttle_change()
+
+    assert "ValidationError/ParameterError in _on_throttle_change: too high" in caplog.messages
+    assert motor_view.throttle_spinbox.get() == "25"
+    dialog_spies.showerror.assert_called_once_with("Throttle value error", "Throttle validation failed: too high")
+
+
+def test_duration_entry_logs_the_requested_value_and_applied_seconds(
+    motor_view: MotorTestView, fake_model: FakeMotorTestModel, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    A valid duration entry is logged with the raw text and the applied seconds.
+
+    GIVEN: A duration spinbox holding "4.5"
+    WHEN: The duration change handler runs
+    THEN: The model stores 4.5 and the debug log names the entered value and applied seconds
+    """
+    caplog.set_level("DEBUG")
+    motor_view.duration_spinbox.delete(0, "end")
+    motor_view.duration_spinbox.insert(0, "4.5")
+
+    motor_view._on_duration_change()
+
+    assert fake_model.get_test_duration_s() == 4.5
+    assert "_on_duration_change called with value: 4.5" in caplog.messages
+    assert "Duration set to 4.5 seconds" in caplog.messages
+
+
+def test_invalid_duration_entry_logs_and_reports_the_reset_value(
+    motor_view: MotorTestView, dialog_spies: SimpleNamespace, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    A non-numeric duration entry is reported and replaced with the model value.
+
+    GIVEN: A duration spinbox holding text that is not a number
+    WHEN: The duration change handler runs
+    THEN: A warning is logged, the spinbox shows the model duration and the operator sees the reset message
+    """
+    caplog.set_level("DEBUG")
+    motor_view.duration_spinbox.delete(0, "end")
+    motor_view.duration_spinbox.insert(0, "abc")
+
+    motor_view._on_duration_change()
+
+    assert any(message.startswith("ValueError in _on_duration_change: ") for message in caplog.messages)
+    assert motor_view.duration_spinbox.get() == "3.0"
+    dialog_spies.showerror.assert_called_once_with(
+        "Duration value error", "Invalid duration value entered, reset to 3 seconds"
+    )
+
+
+def test_rejected_duration_value_reports_the_validation_message(
+    motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    A duration value rejected by the model is explained to the operator.
+
+    GIVEN: A model that rejects the duration with a validation error
+    WHEN: The duration change handler runs
+    THEN: The rejection is logged and the operator sees the validation message under the duration title
+    """
+    caplog.set_level("DEBUG")
+    fake_model.raise_duration_error = ValidationError("too long")
+    motor_view.duration_spinbox.delete(0, "end")
+    motor_view.duration_spinbox.insert(0, "99")
+
+    motor_view._on_duration_change()
+
+    assert "ValidationError/ParameterError in _on_duration_change: too long" in caplog.messages
+    assert motor_view.duration_spinbox.get() == "3.0"
+    dialog_spies.showerror.assert_called_once_with("Duration value error", "Duration validation failed: too long")
+
+
+def test_spin_arm_dialog_uses_its_title_and_reports_model_rejections(
+    motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace
+) -> None:
+    """
+    The MOT_SPIN_ARM dialog is titled and rejected values are reported under the generic error title.
+
+    GIVEN: The operator enters a spin-arm value that the model rejects
+    WHEN: The spin-arm dialog is confirmed
+    THEN: The dialog uses its own title and the rejection message is shown under "Error"
+    """
+    dialog_spies.askfloat.return_value = 0.3
+    fake_model.raise_spin_arm_error = ParameterError("out of range")
+
+    motor_view._set_motor_spin_arm()
+
+    assert dialog_spies.askfloat.call_args.args[0] == "Set Motor Spin Arm"
+    dialog_spies.showerror.assert_called_once_with("Error", "out of range")
+
+
+def test_frame_type_change_shows_the_restart_progress_window_with_its_texts(
+    motor_view: MotorTestView, mocker: MockerFixture
+) -> None:
+    """
+    A frame type change shows a restart progress window that only appears for slow restarts.
+
+    GIVEN: A selected frame type and a patched progress window
+    WHEN: The frame type change is handled
+    THEN: The progress window is created with the restart title, status text and auto-close policy
+    """
+    progress_window_cls = mocker.patch.object(motor_test_module, "ProgressWindow")
+    motor_view.frame_type_combobox.current(0)
+
+    motor_view._on_frame_type_change(None)
+
+    progress_window_cls.assert_called_once_with(
+        motor_view.root_window,
+        "Restarting Flight Controller",
+        "Reset command sent",
+        only_show_when_update_progress_called=True,
+        auto_close_on_complete=False,
+    )
+    progress_window_cls.return_value.destroy.assert_called_once_with()
+
+
+def test_frame_type_change_delays_progress_and_forwards_it_to_the_restart_window(
+    motor_view: MotorTestView, fake_model: FakeMotorTestModel, mocker: MockerFixture
+) -> None:
+    """
+    Restart progress is forwarded to the progress window only after one second of waiting.
+
+    GIVEN: A frame type change with a controlled clock
+    WHEN: The model reports progress at 0.0, 0.5 and 1.0 seconds after the first report
+    THEN: Nothing is forwarded before one second and the first report after it reaches the restart progress window
+    """
+    clock = {"now": 100.0}
+    mocker.patch.object(motor_test_module.time, "time", side_effect=lambda: clock["now"])
+    progress_window = MagicMock()
+    mocker.patch.object(motor_test_module, "ProgressWindow", return_value=progress_window)
+    update_progress = mocker.patch.object(motor_test_module, "update_flight_controller_restart_progress")
+    spy = mocker.patch.object(fake_model, "update_frame_type_by_key")
+    motor_view.frame_type_combobox.current(0)
+
+    motor_view._on_frame_type_change(None)
+
+    key, delayed_callback = spy.call_args.args[0], spy.call_args.args[1]
+    assert key == fake_model.get_current_frame_selection_key() or isinstance(key, str)
+    assert spy.call_args.kwargs == {"extra_sleep_time": 2}
+    assert isinstance(delayed_callback, DelayedProgressCallback)
+    assert delayed_callback.delay_seconds == 1.0
+
+    delayed_callback(1, 4)
+    clock["now"] = 100.5
+    delayed_callback(2, 4)
+    update_progress.assert_not_called()
+
+    clock["now"] = 101.0
+    delayed_callback(3, 4)
+    update_progress.assert_called_once_with(progress_window, 3, 4)
+
+
+def test_spin_arm_change_shows_the_restart_progress_window_without_the_slow_only_option(
+    motor_view: MotorTestView, dialog_spies: SimpleNamespace, mocker: MockerFixture
+) -> None:
+    """
+    Changing MOT_SPIN_ARM shows the restart progress window immediately.
+
+    GIVEN: A confirmed spin-arm value and a patched progress window
+    WHEN: The spin-arm change runs
+    THEN: The progress window is created with the restart texts and without the slow-only option
+    """
+    dialog_spies.askfloat.return_value = 0.3
+    progress_window_cls = mocker.patch.object(motor_test_module, "ProgressWindow")
+
+    motor_view._set_motor_spin_arm()
+
+    progress_window_cls.assert_called_once_with(
+        motor_view.root_window,
+        "Restarting Flight Controller",
+        "Reset command sent",
+        auto_close_on_complete=False,
+    )
+    progress_window_cls.return_value.destroy.assert_called_once_with()
+
+
+def test_frame_type_change_marks_the_diagram_for_refresh(motor_view: MotorTestView, mocker: MockerFixture) -> None:
+    """
+    A frame type change makes the next view refresh redraw the motor diagram.
+
+    GIVEN: A selected frame type and a spy on the diagram update
+    WHEN: The frame type change completes and the view refreshes
+    THEN: The diagram update runs
+    """
+    mocker.patch.object(motor_test_module, "ProgressWindow")
+    diagram_update = mocker.spy(motor_view, "_update_diagram")
+    motor_view.frame_type_combobox.current(0)
+
+    motor_view._on_frame_type_change(None)
+    motor_view._update_view()
+
+    diagram_update.assert_called_once_with()
+
+
+def test_restart_keeps_telemetry_suspended_while_the_view_is_suspended(
+    motor_view: MotorTestView, mocker: MockerFixture
+) -> None:
+    """
+    A restart does not resume telemetry while the view is suspended.
+
+    GIVEN: A suspended motor test view and a spy on telemetry resume
+    WHEN: A restart task runs
+    THEN: Telemetry is not resumed
+    """
+    resume = mocker.patch.object(motor_view.esc_telemetry_view, "on_resume")
+    motor_view._suspended = True
+
+    motor_view._run_restart_task(MagicMock(), lambda _report: None, lambda _current, _total: None)
+
+    resume.assert_not_called()
+
+
+def test_restart_resumes_telemetry_when_the_view_is_active(motor_view: MotorTestView, mocker: MockerFixture) -> None:
+    """
+    A restart resumes telemetry once it completes for an active view.
+
+    GIVEN: An active motor test view and a spy on telemetry resume
+    WHEN: A restart task runs
+    THEN: Telemetry is resumed exactly once
+    """
+    resume = mocker.patch.object(motor_view.esc_telemetry_view, "on_resume")
+
+    motor_view._run_restart_task(MagicMock(), lambda _report: None, lambda _current, _total: None)
+
+    resume.assert_called_once_with()
+
+
+def test_restart_reschedules_updates_only_when_they_were_running(
+    motor_view: MotorTestView, motor_update_timers: dict[str, Callable[[], None]]
+) -> None:
+    """
+    Restarting does not start the update clock when it was not running before.
+
+    GIVEN: A motor test view whose update clock is stopped
+    WHEN: A restart task runs
+    THEN: No update timer is pending afterwards
+    """
+    motor_view._timer_id = None
+    timers_before_restart = set(motor_update_timers)
+
+    motor_view._run_restart_task(MagicMock(), lambda _report: None, lambda _current, _total: None)
+
+    assert motor_view._timer_id is None
+    assert set(motor_update_timers) == timers_before_restart
+
+
+def test_restart_reschedules_updates_that_were_running_before(
+    motor_view: MotorTestView, motor_update_timers: dict[str, Callable[[], None]]
+) -> None:
+    """
+    Restarting restores the update clock that was running before it started.
+
+    GIVEN: A motor test view with a pending update timer
+    WHEN: A restart task runs
+    THEN: The previous timer is cancelled and a new one is pending
+    """
+    motor_view._update_view()
+    previous_timer = motor_view._timer_id
+    assert previous_timer in motor_update_timers
+
+    motor_view._run_restart_task(MagicMock(), lambda _report: None, lambda _current, _total: None)
+
+    assert previous_timer not in motor_update_timers
+    assert motor_view._timer_id is not None
+    assert motor_view._timer_id in motor_update_timers
+
+
+def test_deactivation_cancels_the_pending_update_timer(
+    motor_view: MotorTestView, motor_update_timers: dict[str, Callable[[], None]]
+) -> None:
+    """
+    Leaving the plugin cancels the pending update timer and clears its handle.
+
+    GIVEN: A motor test view with a pending update timer
+    WHEN: The plugin is deactivated
+    THEN: The timer is cancelled and no timer handle remains
+    """
+    motor_view._update_view()
+    timer_id = motor_view._timer_id
+    assert timer_id in motor_update_timers
+
+    motor_view.on_deactivate()
+
+    assert timer_id not in motor_update_timers
+    assert motor_view._timer_id is None
+
+
+def test_suspending_for_recovery_yields_without_stopping_motors(
+    motor_view: MotorTestView, fake_model: FakeMotorTestModel, mocker: MockerFixture
+) -> None:
+    """
+    Connection recovery suspends the view without commanding motors to stop.
+
+    GIVEN: A motor test view and a spy on telemetry suspension
+    WHEN: The view is suspended for connection recovery
+    THEN: Telemetry is suspended with that reason, no motor stop is sent and the view is marked suspended
+    """
+    suspend = mocker.patch.object(motor_view.esc_telemetry_view, "on_suspend")
+    deactivate = mocker.spy(motor_view, "on_deactivate")
+
+    motor_view.on_suspend(PluginPauseReason.CONNECTION_RECOVERY)
+
+    suspend.assert_called_once_with(PluginPauseReason.CONNECTION_RECOVERY)
+    deactivate.assert_not_called()
+    assert fake_model.stop_calls == 0
+    assert motor_view._suspended is True
+
+
+def test_exclusive_suspend_defaults_the_telemetry_reason_and_cancels_updates(
+    motor_view: MotorTestView, motor_update_timers: dict[str, Callable[[], None]], mocker: MockerFixture
+) -> None:
+    """
+    An exclusive operation suspends telemetry with its reason and cancels the update clock.
+
+    GIVEN: A motor test view with a pending update timer
+    WHEN: The view is suspended without an explicit reason
+    THEN: Telemetry is suspended for an exclusive operation, the timer is cancelled and the view is deactivated
+    """
+    suspend = mocker.patch.object(motor_view.esc_telemetry_view, "on_suspend")
+    motor_view._update_view()
+    timer_id = motor_view._timer_id
+
+    motor_view.on_suspend()
+
+    suspend.assert_called_once_with(PluginPauseReason.EXCLUSIVE_OPERATION)
+    assert timer_id not in motor_update_timers
+    assert motor_view._timer_id is None
+
+
+def test_resume_warns_when_the_frame_cannot_be_refreshed(
+    motor_view: MotorTestView, fake_model: FakeMotorTestModel, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    A failed frame refresh on resume is logged as a warning.
+
+    GIVEN: A flight controller whose frame configuration cannot be refreshed
+    WHEN: The plugin resumes
+    THEN: A warning explains that the frame configuration could not be refreshed
+    """
+    caplog.set_level("DEBUG")
+    fake_model.refresh_returns = False
+
+    motor_view.on_resume()
+
+    assert "Could not refresh frame configuration from flight controller" in caplog.messages
+
+
+def test_motor_status_defaults_to_black_text(motor_view: MotorTestView) -> None:
+    """
+    A motor status update without an explicit colour is shown in black.
+
+    GIVEN: A motor test view
+    WHEN: A status is set without a colour
+    THEN: The status label text is black
+    """
+    motor_view._update_motor_status(1, "Running")
+
+    labels = [label for label in motor_view.motor_status_labels if label.cget("text") == "Running"]
+    assert len(labels) == 1
+    assert str(labels[0].cget("foreground")) == "black"
+
+
+def test_resetting_motor_status_restores_ready_in_blue(motor_view: MotorTestView) -> None:
+    """
+    Resetting motor status returns every motor to the ready state in blue.
+
+    GIVEN: A motor status that was shown in red
+    WHEN: All motor statuses are reset
+    THEN: Every motor status reads "Ready" in blue
+    """
+    motor_view._update_motor_status(1, "Failed", "red")
+
+    motor_view._reset_all_motor_status()
+
+    for label in motor_view.motor_status_labels:
+        assert label.cget("text") == "Ready"
+        assert str(label.cget("foreground")) == "blue"
+
+
+def test_sequence_test_reports_status_through_the_view_handler(
+    motor_view: MotorTestView, fake_model: FakeMotorTestModel, caplog: pytest.LogCaptureFixture, mocker: MockerFixture
+) -> None:
+    """
+    The sequential motor test streams its status updates to the view.
+
+    GIVEN: A confirmed sequential motor test
+    WHEN: The sequence is started
+    THEN: The model receives the view's status handler and the start is logged
+    """
+    caplog.set_level("DEBUG")
+    run_sequence = mocker.patch.object(fake_model, "run_sequential_motor_test")
+
+    motor_view._test_motors_in_sequence()
+
+    run_sequence.assert_called_once_with(motor_view._handle_status_event)
+    assert "Testing motors in sequence" in caplog.messages
+
+
+def test_all_motors_and_stop_all_log_their_actions(motor_view: MotorTestView, caplog: pytest.LogCaptureFixture) -> None:
+    """
+    Testing all motors and stopping them are both recorded in the debug log.
+
+    GIVEN: A motor test view
+    WHEN: All motors are tested and then stopped
+    THEN: Each action is logged with its description
+    """
+    caplog.set_level("DEBUG")
+
+    motor_view._test_all_motors()
+    motor_view._stop_all_motors()
+
+    assert "Testing all motors" in caplog.messages
+    assert "Stopping all motors" in caplog.messages
+
+
+def test_single_motor_test_logs_the_sequence_and_output_numbers(
+    motor_view: MotorTestView, fake_model: FakeMotorTestModel, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    A single motor test records which sequence position and motor output it addresses.
+
+    GIVEN: A motor test view with three motor sequence labels
+    WHEN: Motor sequence position 2 is tested on motor output 1
+    THEN: The debug log names the sequence label and the motor output
+    """
+    caplog.set_level("DEBUG")
+    fake_model.motor_labels = ["A", "B", "C"]
+
+    motor_view._test_motor(2, 1)
+
+    assert "Testing motor C at motor output 1" in caplog.messages
+
+
+def _mock_png_loader(mocker: MockerFixture, dummy_base_window: DummyBaseWindow, tk_root: tk.Tk) -> MagicMock:
+    """Make the diagram loader return a label carrying a real image, so Tk can display it."""
+    photo = tk.PhotoImage(master=tk_root, width=1, height=1)
+    label = ttk.Label(tk_root)
+    cast("Any", label).image = photo
+    return mocker.patch.object(dummy_base_window, "put_image_in_label", return_value=label)
+
+
+def test_png_diagram_load_logs_the_path_and_success(
+    motor_view: MotorTestView,
+    dummy_base_window: DummyBaseWindow,
+    tk_root: tk.Tk,
+    mocker: MockerFixture,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """
+    A loaded PNG diagram is logged with its path and a success message.
+
+    GIVEN: A diagram file that the image loader can display
+    WHEN: The diagram is loaded
+    THEN: The debug log names the diagram path and reports the successful display
+    """
+    caplog.set_level("DEBUG")
+    _mock_png_loader(mocker, dummy_base_window, tk_root)
+
+    motor_view._load_png_diagram("layout.png")
+
+    assert "Found PNG diagram at: layout.png" in caplog.messages
+    assert "Image loaded and displayed successfully" in caplog.messages
+
+
+def test_png_diagram_loader_uses_the_motor_diagram_height_and_fallback(
+    motor_view: MotorTestView, dummy_base_window: DummyBaseWindow, tk_root: tk.Tk, mocker: MockerFixture
+) -> None:
+    """
+    The diagram loader asks for the motor diagram height and a translated fallback text.
+
+    GIVEN: A diagram loader spy
+    WHEN: A diagram is loaded
+    THEN: The loader receives the 230 pixel height, the fallback text and a parent under the diagram's container
+    """
+    loader = _mock_png_loader(mocker, dummy_base_window, tk_root)
+
+    motor_view._load_png_diagram("layout.png")
+
+    kwargs = loader.call_args.kwargs
+    assert kwargs["filepath"] == "layout.png"
+    assert kwargs["image_height"] == 230
+    assert kwargs["fallback_text"] == "Error loading diagram"
+    assert str(kwargs["parent"].master) == str(motor_view.diagram_label.master)
+
+
+def test_failed_png_load_clears_the_previously_shown_diagram(
+    motor_view: MotorTestView,
+    dummy_base_window: DummyBaseWindow,
+    tk_root: tk.Tk,
+    mocker: MockerFixture,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """
+    A diagram that fails to load does not leave the previous diagram image in place.
+
+    GIVEN: A diagram that was displayed successfully
+    WHEN: A later diagram file is missing
+    THEN: The image reference is cleared, the label reads "Diagram not found" and the missing path is logged
+    """
+    caplog.set_level("DEBUG")
+    loader = _mock_png_loader(mocker, dummy_base_window, tk_root)
+    motor_view._load_png_diagram("layout.png")
+    assert motor_view._current_diagram_image is not None
+    loader.side_effect = FileNotFoundError("missing")
+
+    motor_view._load_png_diagram("missing.png")
+
+    assert motor_view._current_diagram_image is None
+    assert motor_view.diagram_label.cget("text") == "Diagram not found"
+    assert "Image file not found: missing.png" in caplog.messages
+
+
+def test_png_diagram_decoding_error_is_logged_with_its_reason(
+    motor_view: MotorTestView, dummy_base_window: DummyBaseWindow, mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    A diagram that cannot be decoded is logged with the underlying reason.
+
+    GIVEN: An image loader that fails with an OS error
+    WHEN: The diagram is loaded
+    THEN: The error is logged with its reason and the label reads "Error loading diagram"
+    """
+    caplog.set_level("DEBUG")
+    mocker.patch.object(dummy_base_window, "put_image_in_label", side_effect=OSError("corrupt"))
+
+    motor_view._load_png_diagram("layout.png")
+
+    assert "Error loading PNG diagram: corrupt" in caplog.messages
+    assert motor_view.diagram_label.cget("text") == "Error loading diagram"
+    assert motor_view._current_diagram_image is None
+
+
+def test_deactivation_reports_an_expected_motor_stop_failure(
+    motor_view: MotorTestView, fake_model: FakeMotorTestModel, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    A motor stop failure during deactivation is logged as a warning for the operator to verify.
+
+    GIVEN: A model whose stop command fails with a motor test execution error
+    WHEN: The plugin is deactivated
+    THEN: A warning asks the operator to verify the motors are stopped
+    """
+    caplog.set_level("DEBUG")
+    fake_model.raise_stop_error = MotorTestExecutionError("stop failed")
+
+    motor_view.on_deactivate()
+
+    assert "Motor stop failed during deactivation: stop failed. Please verify motors are stopped." in caplog.messages
+
+
+def test_deactivation_logs_and_re_raises_unexpected_motor_stop_errors(
+    motor_view: MotorTestView, fake_model: FakeMotorTestModel, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    An unexpected motor stop error during deactivation is logged as critical and re-raised.
+
+    GIVEN: A model whose stop command fails unexpectedly
+    WHEN: The plugin is deactivated
+    THEN: The error is logged with its reason and propagated to the caller
+    """
+    caplog.set_level("DEBUG")
+    fake_model.raise_stop_error = RuntimeError("boom")
+
+    with pytest.raises(RuntimeError, match="boom"):
+        motor_view.on_deactivate()
+
+    assert "Critical error during motor stop at deactivation: boom" in caplog.messages
+
+
+def _build_motor_window(mocker: MockerFixture, model: FakeMotorTestModel) -> tuple[MotorTestWindow, MagicMock, MagicMock]:
+    root_mock = MagicMock()
+
+    def fake_base_init(self) -> None:
+        self.root = root_mock
+        self.main_frame = MagicMock(name="main_frame")
+        self.dpi_scaling_factor = 1.0
+
+    mocker.patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test.BaseWindow.__init__", fake_base_init)
+    view_cls = mocker.patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test.MotorTestView")
+    window = MotorTestWindow(cast("MotorTestDataModel", model))
+    return window, root_mock, view_cls
+
+
+def test_standalone_window_is_titled_sized_and_wired_to_its_view(
+    fake_model: FakeMotorTestModel, mocker: MockerFixture
+) -> None:
+    """
+    The standalone motor test window is titled, sized and built around its model and close handler.
+
+    GIVEN: A patched base window and a motor test model
+    WHEN: The standalone window is created
+    THEN: It keeps the model, has the motor test title, uses the scaled 400x610 geometry, builds its view
+          with the main frame, model and window, and routes the close button to on_close
+    """
+    window, root_mock, view_cls = _build_motor_window(mocker, fake_model)
+
+    assert window.model is fake_model
+    root_mock.title.assert_called_once_with("ArduPilot Motor Test")
+    root_mock.geometry.assert_called_once_with(window.calculate_scaled_geometry(400, 610))
+    assert root_mock.geometry.call_args.args[0] == "400x610"
+    view_cls.assert_called_once_with(window.main_frame, fake_model, window)
+    root_mock.protocol.assert_called_once_with("WM_DELETE_WINDOW", window.on_close)
+
+
+def test_standalone_window_close_stops_motors_and_destroys_the_root(
+    fake_model: FakeMotorTestModel, mocker: MockerFixture
+) -> None:
+    """
+    Closing the standalone window stops the motors and then destroys the window.
+
+    GIVEN: A standalone motor test window whose stop command succeeds
+    WHEN: The window is closed
+    THEN: The stop command runs and the root window is destroyed
+    """
+    window, root_mock, _view_cls = _build_motor_window(mocker, fake_model)
+    window.view.model = fake_model
+    stop = mocker.spy(fake_model, "stop_all_motors")
+
+    window.on_close()
+
+    stop.assert_called_once_with()
+    root_mock.destroy.assert_called_once_with()
+
+
+def test_standalone_window_close_logs_expected_stop_refusals_at_debug(
+    fake_model: FakeMotorTestModel, mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    Frame types without motor commands are logged quietly when the window closes.
+
+    GIVEN: A model whose stop command reports that the frame type does not support it
+    WHEN: The standalone window is closed
+    THEN: A debug message explains the refusal is normal and the root window is still destroyed
+    """
+    caplog.set_level("DEBUG")
+    window, root_mock, _view_cls = _build_motor_window(mocker, fake_model)
+    window.view.model = fake_model
+    fake_model.raise_stop_error = MotorTestExecutionError("unsupported")
+
+    window.on_close()
+
+    assert "Motor stop command failed during shutdown - this is normal for some frame types" in caplog.messages
+    root_mock.destroy.assert_called_once_with()
+
+
+def test_standalone_window_close_logs_unexpected_stop_errors_and_still_closes(
+    fake_model: FakeMotorTestModel, mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    An unexpected stop error does not prevent the standalone window from closing.
+
+    GIVEN: A model whose stop command fails unexpectedly
+    WHEN: The standalone window is closed
+    THEN: A warning names the error and the root window is still destroyed
+    """
+    caplog.set_level("DEBUG")
+    window, root_mock, _view_cls = _build_motor_window(mocker, fake_model)
+    window.view.model = fake_model
+    fake_model.raise_stop_error = RuntimeError("unexpected")
+
+    window.on_close()
+
+    assert "Unexpected error during motor stop at shutdown: unexpected" in caplog.messages
+    root_mock.destroy.assert_called_once_with()
+
+
+def test_motor_view_factory_passes_its_arguments_to_the_view(
+    mocker: MockerFixture, fake_model: FakeMotorTestModel, dummy_base_window: DummyBaseWindow
+) -> None:
+    """
+    The plugin factory builds the motor test view from the parent, model and base window it receives.
+
+    GIVEN: A patched view class, a parent frame, a model and a base window
+    WHEN: The factory creates the view
+    THEN: The view is built with exactly those three arguments
+    """
+    view_cls = mocker.patch.object(motor_test_module, "MotorTestView")
+    parent = MagicMock(name="parent")
+
+    result = _create_motor_test_view(parent, fake_model, dummy_base_window)
+
+    view_cls.assert_called_once_with(parent, fake_model, dummy_base_window)
+    assert result is view_cls.return_value
+
+
+def test_delayed_progress_callback_measures_elapsed_time_from_its_first_report(mocker: MockerFixture) -> None:
+    """
+    A delayed progress callback waits for the configured time measured from its first report.
+
+    GIVEN: A progress callback delayed by one second and a controlled clock
+    WHEN: Reports arrive at 100.0, 100.5 and 101.0 seconds
+    THEN: Only the report that is at least one second after the first report is forwarded
+    """
+    clock = {"now": 100.0}
+    mocker.patch.object(motor_test_module.time, "time", side_effect=lambda: clock["now"])
+    received: list[tuple[int, int]] = []
+    delayed = DelayedProgressCallback(lambda current, total: received.append((current, total)), 1.0)
+
+    delayed(1, 10)
+    clock["now"] = 100.5
+    delayed(2, 10)
+    assert not received
+    clock["now"] = 101.0
+    delayed(3, 10)
+    assert received == [(3, 10)]

@@ -1275,6 +1275,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         """Record that the user has accepted the first-time warning."""
         self._first_test_acknowledged = True
 
+    # pylint: disable=duplicate-code  # Warning wording is mirrored verbatim by the exact-wording tests
     def get_safety_warning_message(self) -> str:
         """
         Get the safety warning message for first motor test.
@@ -1311,6 +1312,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             "• Check BATT_ARM_VOLT and MOT_BAT_VOLT_MAX parameters\n\n"
             "Reason: %(reason)s"
         ) % {"reason": reason}
+        # pylint: enable=duplicate-code
 
     def is_battery_related_safety_issue(self, error: MotorTestSafetyError) -> bool:
         """
