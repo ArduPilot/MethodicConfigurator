@@ -3038,6 +3038,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             {
                 name: par
                 for name, par in original.items()
+                if name not in self._suppressed_connection_renames
+                and self._connection_renames.get(name, name) in self.current_step_parameters
                 if name not in self._declined_connection_renames or name in self._connection_renames
             }
         )
@@ -3050,7 +3052,13 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 if self._serial_port_for_row(target) == old_connection and target in self.current_step_parameters
             }
             if mapped_sources:
-                return ParDict({name: par for name, par in candidates.items() if name in mapped_sources})
+                return ParDict(
+                    {
+                        name: par
+                        for name, par in candidates.items()
+                        if name in mapped_sources or self._serial_port_for_row(name) == old_connection
+                    }
+                )
         if (
             re.fullmatch(r"SERIAL\d+", old_connection) is None
             and self._last_connection_protocol is None
@@ -3064,7 +3072,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                     if not (re.fullmatch(r"SERIAL\d+_PROTOCOL", name) and par.value == -1)
                 }
             )
-        old_connection = self._serial_rename_source(old_connection, original, new_connection)
+        old_connection = self._serial_rename_source(old_connection, candidates, new_connection)
         if old_connection is None:
             return ParDict()
         matches = self._config_step_processor._generate_connection_renames(  # noqa: SLF001  # pylint: disable=protected-access
@@ -3227,7 +3235,10 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                         del self._connection_renames[orig_name]
                         continue
                 else:
-                    self._connection_renames[orig_name] = new_rename_map.get(orig_name, orig_name)
+                    if current_target in self.current_step_parameters or new_connection != self._serial_port_for_row(
+                        current_target
+                    ):
+                        self._connection_renames[orig_name] = new_rename_map.get(orig_name, orig_name)
                     continue
             if (
                 current_target in self.current_step_parameters
