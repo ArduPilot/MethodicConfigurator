@@ -1857,6 +1857,20 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             disable_old = False
             if isinstance(transition, tuple) and len(transition) == 2:
                 old_port, new_port = transition
+                serial_issue = self.parameter_editor.serial_transition_issue(editor_data["Components"])
+                if serial_issue is not None:
+                    if serial_issue == "ambiguous_ownership":
+                        message = _(
+                            "Saved serial parameters have ambiguous ownership. Resolve their ports before selecting {port}."
+                        ).format(port=new_port)
+                    else:
+                        message = _(
+                            "No active serial protocol is available to transfer; it is missing or was disabled and saved. "
+                            "Add or set {port}_PROTOCOL to an active value in this step before selecting {port}."
+                        ).format(port=new_port)
+                    self.ui.show_warning(_("Serial connection unresolved"), message)
+                    self._schedule_inline_component_rebuild()
+                    return
                 if not old_port and self.parameter_editor.connection_change_will_rename(editor_data["Components"]) is True:
                     self.ui.show_warning(
                         _("Unknown previous connection"),

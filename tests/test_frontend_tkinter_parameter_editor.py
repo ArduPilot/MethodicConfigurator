@@ -283,6 +283,7 @@ def parameter_editor() -> MagicMock:
     manager.get_plugin.return_value = None
     manager.get_current_component.return_value = None
     manager.update_vehicle_components.return_value = True
+    manager.serial_transition_issue.return_value = None
     manager.handle_write_changes_workflow = MagicMock()
     manager.handle_copy_fc_values_workflow = MagicMock(return_value="close")
     manager.open_documentation_in_browser = MagicMock()
@@ -4650,6 +4651,37 @@ class TestStepInstructionsPopupWorkflows:
 
 class TestInlineComponentEditorCallbacks:
     """Tests for the inline component editor data-sync and table-refresh callback."""
+
+    @pytest.mark.parametrize(
+        ("issue", "expected_text"),
+        [
+            ("ambiguous_ownership", "ownership"),
+            ("active_protocol_unavailable", "missing or was disabled"),
+        ],
+    )
+    def test_unresolved_serial_connection_warns_and_defers_editor_rebuild(
+        self, parameter_editor: MagicMock, issue: str, expected_text: str
+    ) -> None:
+        """A serial change with unresolved settings is rejected before component data changes."""
+        editor = _create_editor(parameter_editor)
+        editor._update_inline_component_editor = MagicMock()
+        editor._inline_component_name = "Telemetry"
+        editor.inline_component_editor = MagicMock()
+        editor.inline_component_editor.get_component_data.return_value = {"Components": {"port": "SERIAL3"}}
+        parameter_editor.component_connection_transition.return_value = ("None", "SERIAL3")
+        parameter_editor.serial_transition_issue.return_value = issue
+
+        editor._on_component_data_changed()
+
+        parameter_editor.serial_transition_issue.assert_called_once_with({"port": "SERIAL3"})
+        editor.ui.show_warning.assert_called_once()
+        assert expected_text in editor.ui.show_warning.call_args.args[1].lower()
+        parameter_editor.update_vehicle_components.assert_not_called()
+        parameter_editor.refresh_current_step_computed_parameters.assert_not_called()
+        editor.ui.ask_yesno.assert_not_called()
+        editor._update_inline_component_editor.assert_not_called()
+        editor.root.after_idle.call_args.args[0]()
+        editor._update_inline_component_editor.assert_called_once_with("Telemetry")
 
     @pytest.mark.parametrize(
         ("path", "original", "edited"),
