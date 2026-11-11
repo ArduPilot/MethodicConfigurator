@@ -5810,6 +5810,147 @@ class TestConnectionRenameSaveLifecycle:  # pylint: disable=too-many-public-meth
         parameter_editor.update_vehicle_components({**components, "port": port})
         parameter_editor.refresh_current_step_computed_parameters(old_port)
 
+    def test_step_load_rename_uses_live_protocol_for_following_move(self, parameter_editor: ParameterEditor) -> None:
+        """A confirmed load rename keeps its live protocol available for the next inline move."""
+        _step_file, components = self.prepare(parameter_editor)
+        filesystem = parameter_editor._local_filesystem
+        components["port"] = "SERIAL2"
+        with (
+            patch.object(filesystem, "compute_forced_and_derived_parameters", return_value=(None, None)),
+            patch.object(filesystem, "compute_deletions", return_value=set()),
+            patch.object(filesystem, "compute_add_parameters"),
+        ):
+            parameter_editor._repopulate_configuration_step_parameters(MagicMock(return_value=True))
+        assert parameter_editor.current_step_parameters["SERIAL1_PROTOCOL"].get_new_value() == -1
+        assert parameter_editor.current_step_parameters["SERIAL2_PROTOCOL"].get_new_value() == 2
+        proposed = {**components, "port": "SERIAL3"}
+        assert parameter_editor.serial_transition_issue(proposed) is None
+        self.change_port_with_previous(parameter_editor, components, "SERIAL3")
+        assert parameter_editor.current_step_parameters["SERIAL3_PROTOCOL"].get_new_value() == 2
+        assert parameter_editor.current_step_parameters["SERIAL3_BAUD"].get_new_value() == 57
+
+    @pytest.mark.parametrize("template", ["Tarot_X4", "FETtec-5", "Marmotte5v2"])
+    def test_real_copter_telemetry_step_load_rename_follows_next_move(
+        self, parameter_editor: ParameterEditor, template: str
+    ) -> None:
+        """A real template's saved telemetry rows remain active through a load rename and inline move."""
+        package = Path(__file__).parent.parent / "ardupilot_methodic_configurator"
+        template_dir = package / "vehicle_templates" / "ArduCopter" / template
+        step_file = "07_telemetry.param"
+        components = json.loads((template_dir / "vehicle_components.json").read_text(encoding="utf-8"))["Components"]
+        components["Telemetry"]["FC Connection"]["Type"] = "SERIAL3"
+        step = json.loads((package / "configuration_steps_ArduCopter.json").read_text(encoding="utf-8"))["steps"][step_file]
+        filesystem = parameter_editor._local_filesystem
+        filesystem.vehicle_components_fs.data = {"Components": components}
+        filesystem.configuration_steps = {step_file: step}
+        filesystem.file_parameters = {step_file: ParDict.from_file(str(template_dir / step_file))}
+        parameter_editor.current_file = step_file
+        parameter_editor._flight_controller.master = None
+        parameter_editor._flight_controller.fc_parameters = {}
+        parameter_editor._config_step_processor.variables = {"vehicle_components": components}
+        with (
+            patch.object(filesystem, "compute_forced_and_derived_parameters", return_value=(None, None)),
+            patch.object(filesystem, "compute_deletions", return_value=set()),
+            patch.object(filesystem, "compute_add_parameters"),
+        ):
+            parameter_editor._repopulate_configuration_step_parameters(MagicMock(return_value=True))
+        assert parameter_editor.current_step_parameters["SERIAL3_PROTOCOL"].get_new_value() == 2
+        proposed = json.loads(json.dumps(components))
+        proposed["Telemetry"]["FC Connection"]["Type"] = "SERIAL4"
+        assert parameter_editor.serial_transition_issue(proposed) is None
+        parameter_editor.update_vehicle_components(proposed)
+        parameter_editor.refresh_current_step_computed_parameters("SERIAL3")
+        assert "SERIAL4_PROTOCOL" in parameter_editor.current_step_parameters, (
+            parameter_editor._connection_renames,
+            list(parameter_editor.current_step_parameters),
+            parameter_editor._last_connection_port,
+        )
+        assert parameter_editor.current_step_parameters["SERIAL4_PROTOCOL"].get_new_value() == 2
+
+    def test_omp_heli_missing_protocol_is_blocked_after_step_load(self, parameter_editor: ParameterEditor) -> None:
+        """A real Heli template's baud-only rows cannot silently move with telemetry disabled."""
+        package = Path(__file__).parent.parent / "ardupilot_methodic_configurator"
+        template_dir = package / "vehicle_templates" / "Heli" / "OMP_M4"
+        step_file = "13_telemetry.param"
+        components = json.loads((template_dir / "vehicle_components.json").read_text(encoding="utf-8"))["Components"]
+        step = json.loads((package / "configuration_steps_Heli.json").read_text(encoding="utf-8"))["steps"][step_file]
+        filesystem = parameter_editor._local_filesystem
+        filesystem.vehicle_components_fs.data = {"Components": components}
+        filesystem.configuration_steps = {step_file: step}
+        filesystem.file_parameters = {step_file: ParDict.from_file(str(template_dir / step_file))}
+        parameter_editor.current_file = step_file
+        parameter_editor._flight_controller.master = None
+        parameter_editor._flight_controller.fc_parameters = {}
+        parameter_editor._config_step_processor.variables = {"vehicle_components": components}
+        with (
+            patch.object(filesystem, "compute_forced_and_derived_parameters", return_value=(None, None)),
+            patch.object(filesystem, "compute_deletions", return_value=set()),
+            patch.object(filesystem, "compute_add_parameters"),
+        ):
+            parameter_editor._repopulate_configuration_step_parameters(MagicMock(return_value=True))
+        proposed = json.loads(json.dumps(components))
+        proposed["Telemetry"]["FC Connection"]["Type"] = "SERIAL8"
+        assert parameter_editor.serial_transition_issue(proposed) == "active_protocol_unavailable"
+
+    def test_hoverit_gnss_disabled_ports_allow_selected_mavlink_transport(self, parameter_editor: ParameterEditor) -> None:
+        """The real Hoverit GNSS step retains disabled rows and sets the chosen UART to protocol 5."""
+        package = Path(__file__).parent.parent / "ardupilot_methodic_configurator"
+        template_dir = package / "vehicle_templates" / "ArduCopter" / "Hoverit_X13"
+        step_file = "18_gnss.param"
+        components = json.loads((template_dir / "vehicle_components.json").read_text(encoding="utf-8"))["Components"]
+        step = json.loads((package / "configuration_steps_ArduCopter.json").read_text(encoding="utf-8"))["steps"][step_file]
+        filesystem = parameter_editor._local_filesystem
+        filesystem.vehicle_components_fs.data = {"Components": components}
+        filesystem.configuration_steps = {step_file: step}
+        filesystem.file_parameters = {step_file: ParDict.from_file(str(template_dir / step_file))}
+        parameter_editor.current_file = step_file
+        parameter_editor._flight_controller.master = None
+        parameter_editor._flight_controller.fc_parameters = {}
+        parameter_editor._config_step_processor.variables = {"vehicle_components": components}
+        parameter_editor.current_step_parameters = {
+            name: parameter_editor._config_step_processor.create_ardupilot_parameter(name, par, step_file, {})
+            for name, par in filesystem.file_parameters[step_file].items()
+        }
+        proposed = json.loads(json.dumps(components))
+        proposed["GNSS Receiver"]["FC Connection"]["Type"] = "SERIAL3"
+        assert parameter_editor.serial_transition_issue(proposed) is None
+        parameter_editor.update_vehicle_components(proposed)
+        parameter_editor.refresh_current_step_computed_parameters("CAN2")
+        assert parameter_editor.current_step_parameters["SERIAL3_PROTOCOL"].get_new_value() == 5
+        assert parameter_editor.current_step_parameters["SERIAL4_PROTOCOL"].get_new_value() == -1
+
+    @pytest.mark.parametrize("save_disable", [False, True])
+    def test_deleted_disabled_protocol_is_not_restored_on_same_port(
+        self, parameter_editor: ParameterEditor, save_disable: bool
+    ) -> None:
+        """A deleted protocol must not trigger a KeyError or be silently resurrected."""
+        step_file, components = self.prepare(parameter_editor)
+        previous = parameter_editor.serial_protocol_snapshot("SERIAL1")
+        self.change_port_with_previous(parameter_editor, components, "None")
+        assert parameter_editor.preserve_or_disable_serial_protocol("SERIAL1", previous, disable=True)
+        if save_disable:
+            parameter_editor._export_current_file(annotate_doc=False)
+        parameter_editor.delete_parameter_from_current_file("SERIAL1_PROTOCOL")
+        assert parameter_editor.serial_transition_issue({**components, "port": "SERIAL1"}) == "active_protocol_unavailable"
+        self.change_port_with_previous(parameter_editor, components, "SERIAL1")
+        assert "SERIAL1_PROTOCOL" not in parameter_editor.current_step_parameters
+        assert step_file == parameter_editor.current_file
+
+    def test_deleted_old_protocol_stays_deleted_on_later_none_selection(self, parameter_editor: ParameterEditor) -> None:
+        """Deleting an old-port row remains an explicit decision when the live port is deselected."""
+        step_file, components = self.prepare(parameter_editor)
+        previous = parameter_editor.serial_protocol_snapshot("SERIAL1")
+        self.change_port_with_previous(parameter_editor, components, "SERIAL2")
+        assert parameter_editor.preserve_or_disable_serial_protocol("SERIAL1", previous, disable=True)
+        parameter_editor.delete_parameter_from_current_file("SERIAL1_PROTOCOL")
+        next_previous = parameter_editor.serial_protocol_snapshot("SERIAL2")
+        self.change_port_with_previous(parameter_editor, components, "None")
+        assert parameter_editor.preserve_or_disable_serial_protocol("SERIAL2", next_previous, disable=True)
+        parameter_editor._export_current_file(annotate_doc=False)
+        saved = parameter_editor._local_filesystem.file_parameters[step_file]
+        assert "SERIAL1_PROTOCOL" not in saved
+        assert saved["SERIAL2_PROTOCOL"].value == -1
+
     def test_export_then_unrelated_edit_preserves_saved_serial_values(self, parameter_editor: ParameterEditor) -> None:
         """GIVEN a saved rename, WHEN another component field changes, THEN both exports retain serial settings."""
         step_file, components = self.prepare(parameter_editor)
@@ -6515,6 +6656,58 @@ class TestConnectionRenameSaveLifecycle:  # pylint: disable=too-many-public-meth
             }
         }
         assert parameter_editor.serial_transition_issue({**components, "port": "SERIAL4"}) == expected_issue
+
+    @pytest.mark.parametrize("derived_value", ["2", "'MAVLink2'"])
+    def test_serial_transition_resolves_derived_protocol_metadata(
+        self, parameter_editor: ParameterEditor, derived_value: str
+    ) -> None:
+        """The preflight accepts the same numeric and named values as normal derivation."""
+        step_file, components = self.prepare(parameter_editor)
+        filesystem = parameter_editor._local_filesystem
+        filesystem.file_parameters[step_file] = ParDict({"SERIAL1_PROTOCOL": Par(-1.0), "SERIAL1_BAUD": Par(57.0)})
+        components["port"] = "None"
+        parameter_editor.current_step_parameters = {
+            name: parameter_editor._config_step_processor.create_ardupilot_parameter(name, par, step_file, {})
+            for name, par in filesystem.file_parameters[step_file].items()
+        }
+        filesystem.doc_dict["SERIAL4_PROTOCOL"] = {"values": {"2": "MAVLink2"}, "Bitmask": {}}
+        parameter_editor._config_step_processor.variables["doc_dict"] = filesystem.doc_dict
+        filesystem.configuration_steps[step_file]["derived_parameters"] = {
+            "SERIAL4_PROTOCOL": {"if": "vehicle_components['port'] == 'SERIAL4'", "New Value": derived_value}
+        }
+        assert parameter_editor.serial_transition_issue({**components, "port": "SERIAL4"}) is None
+
+    @pytest.mark.parametrize("old_connection", ["None", "CAN1"])
+    def test_gnss_disabled_unrelated_ports_do_not_block_new_serial_transport(
+        self, parameter_editor: ParameterEditor, old_connection: str
+    ) -> None:
+        """GNSS may assign protocol 5 without claiming several unrelated disabled ports."""
+        step_file = "10_gnss.param"
+        connection = {"Type": old_connection}
+        components = {"GNSS Receiver": {"FC Connection": connection}}
+        filesystem = parameter_editor._local_filesystem
+        filesystem.vehicle_components_fs.data = {"Components": components}
+        filesystem.configuration_steps = {
+            step_file: {"rename_connection": "vehicle_components['GNSS Receiver']['FC Connection']['Type']"}
+        }
+        filesystem.file_parameters = {step_file: ParDict({"SERIAL1_PROTOCOL": Par(-1.0), "SERIAL2_PROTOCOL": Par(-1.0)})}
+        parameter_editor.current_file = step_file
+        parameter_editor._flight_controller.master = None
+        parameter_editor._flight_controller.fc_parameters = {}
+        parameter_editor._config_step_processor.variables = {"vehicle_components": components}
+        parameter_editor.current_step_parameters = {
+            name: parameter_editor._config_step_processor.create_ardupilot_parameter(name, par, step_file, {})
+            for name, par in filesystem.file_parameters[step_file].items()
+        }
+        proposed = {"GNSS Receiver": {"FC Connection": {"Type": "SERIAL4"}}}
+        assert parameter_editor.serial_transition_issue(proposed) is None
+        assert parameter_editor.current_step_parameters["SERIAL1_PROTOCOL"].get_new_value() == -1
+        assert parameter_editor.current_step_parameters["SERIAL2_PROTOCOL"].get_new_value() == -1
+        parameter_editor.update_vehicle_components(proposed)
+        parameter_editor.refresh_current_step_computed_parameters(old_connection)
+        assert parameter_editor.current_step_parameters["SERIAL4_PROTOCOL"].get_new_value() == 5
+        assert parameter_editor.current_step_parameters["SERIAL1_PROTOCOL"].get_new_value() == -1
+        assert parameter_editor.current_step_parameters["SERIAL2_PROTOCOL"].get_new_value() == -1
 
     @pytest.mark.parametrize(
         ("eligibility", "expected_issue"),

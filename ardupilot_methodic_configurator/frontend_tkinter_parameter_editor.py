@@ -1866,7 +1866,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     else:
                         message = _(
                             "No active serial protocol is available to transfer; it is missing or was disabled and saved. "
-                            "Add or set {port}_PROTOCOL to an active value in this step before selecting {port}."
+                            "Resolve the source protocol and any destination conflicts before selecting {port}."
                         ).format(port=new_port)
                     self.ui.show_warning(_("Serial connection unresolved"), message)
                     self._schedule_inline_component_rebuild()
@@ -1874,7 +1874,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 if not old_port and self.parameter_editor.connection_change_will_rename(editor_data["Components"]) is True:
                     self.ui.show_warning(
                         _("Unknown previous connection"),
-                        _("Cannot rename connection parameters because the previous connection is unknown."),
+                        _("Cannot identify the previous connection for a safe parameter rename."),
                     )
                     self._schedule_inline_component_rebuild()
                     return

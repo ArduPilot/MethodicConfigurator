@@ -33,7 +33,7 @@ from typing import Any, Literal
 
 from ardupilot_methodic_configurator import _, data_model_parameter_export
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
-from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import PhaseData
+from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps, PhaseData
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerLogFile, LastLogDownloadResult
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url, webbrowser_open_url
@@ -2413,6 +2413,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         )
         if is_preserved_rename_source:
             self._declined_connection_renames.discard(param_name)
+            self._suppressed_connection_renames.add(param_name)
         elif param_name in self._local_filesystem.file_parameters.get(self.current_file, ParDict()):
             self._suppressed_connection_renames.add(param_name)
         is_derived = param_name in self._inline_derived_parameters or (
@@ -3005,6 +3006,28 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         with contextlib.suppress(ParameterUnchangedError, ParameterForcedOrDerivedError):
             self.current_step_parameters[target_name].set_new_value(_GNSS_MAVLINK_PROTOCOL_VALUE, ignore_out_of_range=True)
 
+    def _gnss_assigns_serial_protocol(self, port: str) -> bool:
+        """Recognize the GNSS step's fixed MAVLink serial protocol assignment."""
+        return (
+            re.fullmatch(r"SERIAL\d+", port) is not None
+            and "gnss" in self.current_file.lower()
+            and self._local_filesystem.configuration_steps.get(self.current_file, {}).get("rename_connection")
+            == _GNSS_FC_CONNECTION_RENAME_EXPR
+        )
+
+    def _ensure_gnss_protocol_without_source(self, port: str, original_params: ParDict) -> None:
+        """Assign the selected GNSS port without moving unrelated disabled protocol rows."""
+        serial_rows = [(name, par) for name, par in original_params.items() if self._serial_port_for_row(name) is not None]
+        if not serial_rows or not all(name.endswith("_PROTOCOL") and par.value == -1 for name, par in serial_rows):
+            return
+        target = f"{port}_PROTOCOL"
+        if target not in self.current_step_parameters:
+            self.current_step_parameters[target] = self._config_step_processor.create_ardupilot_parameter(
+                target, Par(5.0), self.current_file, self.fc_parameters
+            )
+            self._added_parameters.add(target)
+        self._apply_gnss_protocol_value(target)
+
     def _connection_rename_candidates(
         self, original: ParDict, old_connection: str | None, new_connection: str | None = None
     ) -> ParDict:
@@ -3018,6 +3041,14 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         )
         if old_connection is None:
             return candidates
+        if re.fullmatch(r"SERIAL\d+", old_connection):
+            mapped_sources = {
+                source
+                for source, target in self._connection_renames.items()
+                if self._serial_port_for_row(target) == old_connection and target in self.current_step_parameters
+            }
+            if mapped_sources:
+                return ParDict({name: par for name, par in candidates.items() if name in mapped_sources})
         if (
             re.fullmatch(r"SERIAL\d+", old_connection) is None
             and self._last_connection_protocol is None
@@ -3116,7 +3147,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         )
         source = f"{self._last_selected_serial_port}_PROTOCOL"
         if target == source:
-            existing = self.current_step_parameters[target]
+            existing = self.current_step_parameters.get(target)
+            if existing is None:
+                return
             with contextlib.suppress(ParameterUnchangedError):
                 existing.set_new_value(str(self._last_connection_protocol.value), ignore_out_of_range=True)
             existing.set_change_reason(self._last_connection_protocol.comment or "")
@@ -3134,7 +3167,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self._connection_renames[f"{self._last_connection_port}_PROTOCOL"] = target
         self._suppressed_connection_renames.discard(source)
 
-    def _refresh_current_step_connection_renames(  # noqa: PLR0915  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
+    def _refresh_current_step_connection_renames(  # noqa: C901, PLR0912, PLR0915  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
         self, step_info: dict, variables: dict, old_connection: str | None = None
     ) -> None:
         """
@@ -3183,15 +3216,22 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         for orig_name, current_target in list(self._connection_renames.items()):
             if old_connection is not None and orig_name not in candidates:
                 continue
+            new_target = new_rename_map.get(orig_name)
             if orig_name in self._suppressed_connection_renames:
-                self._connection_renames[orig_name] = new_rename_map.get(orig_name, orig_name)
-                continue
+                if orig_name in self._deleted_parameters and current_target in self.current_step_parameters:
+                    if new_target is None and new_connection == self._serial_port_for_row(orig_name):
+                        new_target = orig_name
+                    elif new_target is None:
+                        del self._connection_renames[orig_name]
+                        continue
+                else:
+                    self._connection_renames[orig_name] = new_rename_map.get(orig_name, orig_name)
+                    continue
             if (
                 current_target in self.current_step_parameters
                 and self.current_step_parameters[current_target].is_manual_override is True
             ):
                 continue
-            new_target = new_rename_map.get(orig_name)
             if new_target is None:
                 # Rename no longer applicable — restore original name
                 self._transfer_inline_derived_ownership(current_target, orig_name)
@@ -3227,6 +3267,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                             self._apply_gnss_protocol_value(new_target)
                         self._added_parameters.add(new_target)
                     self._connection_renames[orig_name] = new_target
+                    if new_target == orig_name:
+                        self._suppressed_connection_renames.discard(orig_name)
+                        self._deleted_parameters.discard(orig_name)
                     logging_info(_("Renamed connection parameter %s → %s"), current_target, new_target)
 
         # Apply renames that are new (not previously tracked)
@@ -3240,6 +3283,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         if isinstance(new_connection, str):
             self._copy_preserved_protocol_after_none(old_connection, new_connection)
+            if is_gnss and self._gnss_assigns_serial_protocol(new_connection) and not candidates:
+                self._ensure_gnss_protocol_without_source(new_connection, original_params)
 
     def _apply_new_connection_rename(
         self,
@@ -3303,7 +3348,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             return None
         return old, new
 
-    def serial_transition_issue(
+    def serial_transition_issue(  # noqa: PLR0911  # pylint: disable=too-many-locals,too-many-return-statements
         self, components: dict
     ) -> Literal["ambiguous_ownership", "active_protocol_unavailable"] | None:
         """Explain when a proposed serial selection cannot safely reuse saved settings."""
@@ -3314,6 +3359,13 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         target = self.current_step_parameters.get(f"{new}_PROTOCOL")
         if target is not None and target.get_new_value() != -1:
             return None
+        if re.fullmatch(r"SERIAL\d+", old) and any(
+            self._serial_port_for_row(target_name) == old for target_name in self._connection_renames.values()
+        ):
+            live_protocol = self.current_step_parameters.get(f"{old}_PROTOCOL")
+            if live_protocol is None or live_protocol.get_new_value() == -1:
+                return None if self._derived_serial_protocol_available(new, components) else "active_protocol_unavailable"
+            return None
         saved = self._local_filesystem.file_parameters.get(self.current_file, ParDict())
         live_saved = ParDict(
             {
@@ -3323,24 +3375,35 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 and self._connection_renames.get(name, name) in self.current_step_parameters
             }
         )
-        if not any(self._serial_port_for_row(name) is not None for name in live_saved):
+        serial_rows = [(name, par) for name, par in live_saved.items() if self._serial_port_for_row(name) is not None]
+        if not serial_rows or (
+            self._gnss_assigns_serial_protocol(new)
+            and all(name.endswith("_PROTOCOL") and par.value == -1 for name, par in serial_rows)
+        ):
             return None
         source = self._serial_rename_source(old, live_saved, new)
         if source is None:
             return "ambiguous_ownership"
         if not any(self._serial_port_for_row(name) == source for name in live_saved):
             return None
-        protocol = self.current_step_parameters.get(f"{source}_PROTOCOL")
+        source_protocol = f"{source}_PROTOCOL"
+        live_protocol_name = self._connection_renames.get(source_protocol, source_protocol)
+        protocol = self.current_step_parameters.get(live_protocol_name)
+        explicitly_deleted = protocol is None and (
+            source_protocol in self._deleted_parameters or source_protocol in self._suppressed_connection_renames
+        )
         if protocol is None:
-            saved_protocol = saved.get(f"{source}_PROTOCOL")
-            protocol_value = saved_protocol.value if saved_protocol is not None else None
+            saved_protocol = saved.get(source_protocol)
+            protocol_value = saved_protocol.value if saved_protocol is not None and not explicitly_deleted else None
         else:
             protocol_value = protocol.get_new_value()
         return (
             "active_protocol_unavailable"
             if (
-                protocol_value in (None, -1)
-                and (self._last_connection_protocol is None or self._last_connection_protocol.value == -1)
+                (explicitly_deleted or protocol_value in (None, -1))
+                and (
+                    self._last_connection_protocol is None or self._last_connection_protocol.value == -1 or explicitly_deleted
+                )
                 and not self._derived_serial_protocol_available(new, components)
             )
             else None
@@ -3366,7 +3429,23 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             return False
         try:
             condition = safe_evaluate(str(rule.get("if", "True")), variables)
-            value = float(safe_evaluate(str(rule["New Value"]), variables))
+            result, error = ConfigurationSteps._eval_new_value(  # noqa: SLF001  # pylint: disable=protected-access
+                self._local_filesystem, rule["New Value"], self.current_file, f"{port}_PROTOCOL", "derived", variables
+            )
+            if error:
+                return False
+            if isinstance(result, str):
+                result, error = ConfigurationSteps._resolve_string_result(  # noqa: SLF001  # pylint: disable=protected-access
+                    self._local_filesystem,
+                    result,
+                    f"{port}_PROTOCOL",
+                    variables.get("doc_dict", self._local_filesystem.doc_dict),
+                    self.current_file,
+                    "derived",
+                )
+                if error:
+                    return False
+            value = float(result)
         except (ConfigurationStepEvalError, KeyError, TypeError, ValueError):
             return False
         return bool(condition) and value != -1
