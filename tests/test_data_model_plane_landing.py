@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # pylint: disable=too-many-lines
 
+import math
 from collections.abc import Sequence
 
 import numpy as np
@@ -41,6 +42,7 @@ from ardupilot_methodic_configurator.log_analysis.data_model_plane_landing impor
     PlaneLandingRangefinderEvidenceExtractor,
     PlaneLandingStage,
     PlaneLandingStageEvidence,
+    PlaneLandingTargetDistanceEvidence,
 )
 
 
@@ -3103,3 +3105,718 @@ def test_plane_landing_models_are_registered_as_one_subsystem_pair() -> None:
 
     assert spec.availability_model is PlaneLandingAvailabilityModel
     assert spec.analysis_model is PlaneLandingAnalysis
+
+
+def _segment(start_s: float = 0.0, end_s: float = 100.0) -> FlightSegment:
+    return FlightSegment(start_s=start_s, end_s=end_s, is_complete=True)
+
+
+def _attempt(
+    start_s: float,
+    end_s: float,
+    end_reason: PlaneLandingEndReason = PlaneLandingEndReason.ABORT,
+    *,
+    start_stage: int = 1,
+    segment: FlightSegment | None = None,
+) -> PlaneLandingAttempt:
+    return PlaneLandingAttempt(
+        flight_segment=segment or _segment(),
+        start_s=start_s,
+        end_s=end_s,
+        end_reason=end_reason,
+        mode_number=10,
+        start_stage=start_stage,
+    )
+
+
+def _gps_stop_position_log(
+    target: tuple[float, float],
+    aircraft: tuple[float, float],
+) -> LogData:
+    """Return a GPS-stop landing whose mission LAND target and stop position are explicit."""
+    log_data = _plane_log(
+        gps=((0.0, 6.0), (2.0, 6.0), (15.0, 5.0), (20.0, 2.0), (22.0, 2.0), (30.0, 6.0)),
+        land=((5.0, 0), (10.0, 1), (12.0, 2), (14.0, 3)),
+    )
+    _add_columns(
+        log_data,
+        "GPS",
+        (
+            (0.0, 6.0, 0.0, 0.0),
+            (2.0, 6.0, 0.0, 0.0),
+            (15.0, 5.0, aircraft[0], aircraft[1]),
+            (20.0, 2.0, aircraft[0], aircraft[1]),
+            (22.0, 2.0, aircraft[0], aircraft[1]),
+            (30.0, 6.0, aircraft[0], aircraft[1]),
+        ),
+        [("TimeUS", "f8"), ("Spd", "f8"), ("Lat", "f8"), ("Lng", "f8")],
+    )
+    _add_columns(
+        log_data,
+        "CMD",
+        ((1.0, 1, 0, 21, target[0], target[1]),),
+        [("TimeUS", "f8"), ("CTot", "f8"), ("CNum", "f8"), ("CId", "f8"), ("Lat", "f8"), ("Lng", "f8")],
+    )
+    return log_data
+
+
+@pytest.mark.parametrize(("start_s", "end_s"), [(10.0, 10.0), (12.0, 10.0)], ids=("empty", "inverted"))
+def test_attempt_rejects_empty_or_inverted_span_with_exact_message(start_s: float, end_s: float) -> None:
+    """Given a non-positive attempt span, when constructed, then the rejection names the span rule."""
+    with pytest.raises(ValueError, match=r"^Plane landing attempt start_s must be before end_s$"):
+        _attempt(start_s, end_s)
+
+
+@pytest.mark.parametrize(("start_s", "end_s"), [(-1.0, 10.0), (10.0, 101.0)], ids=("starts-early", "ends-late"))
+def test_attempt_rejects_span_outside_its_flight_segment(start_s: float, end_s: float) -> None:
+    """Given an attempt extending past its flight, when constructed, then containment is rejected."""
+    with pytest.raises(ValueError, match=r"^Plane landing attempt must be contained by its flight segment$"):
+        _attempt(start_s, end_s)
+
+
+def test_attempt_accepts_span_touching_flight_segment_edges() -> None:
+    """Given an attempt spanning the whole flight, when constructed, then it is accepted."""
+    attempt = _attempt(0.0, 100.0)
+
+    assert (attempt.start_s, attempt.end_s) == (0.0, 100.0)
+
+
+@pytest.mark.parametrize("stage", [1, 2, 3])
+def test_attempt_accepts_each_active_land_stage(stage: int) -> None:
+    """Given an active LAND stage, when an attempt starts there, then the stage is retained."""
+    assert _attempt(10.0, 20.0, start_stage=stage).start_stage == stage
+
+
+@pytest.mark.parametrize("stage", [0, 4])
+def test_attempt_rejects_inactive_land_stage_with_exact_message(stage: int) -> None:
+    """Given a LAND stage outside the active sequence, when an attempt starts there, then it is rejected."""
+    with pytest.raises(ValueError, match=r"^Plane landing attempt start_stage must be an active LAND stage$"):
+        _attempt(10.0, 20.0, start_stage=stage)
+
+
+def test_attempt_duration_is_end_minus_start() -> None:
+    """Given an attempt, when its duration is read, then it equals end minus start."""
+    assert _attempt(10.0, 17.5).duration_s == pytest.approx(7.5)
+
+
+@pytest.mark.parametrize(
+    ("time_s", "end_reason"),
+    [(9.0, PlaneLandingEndReason.ABORT), (20.5, PlaneLandingEndReason.ABORT), (20.0, PlaneLandingEndReason.STAGE_RESTART)],
+    ids=("before-start", "after-end", "at-restart-end"),
+)
+def test_stage_evidence_outside_attempt_is_rejected_with_exact_message(
+    time_s: float, end_reason: PlaneLandingEndReason
+) -> None:
+    """Given a stage transition outside its attempt's observation window, when built, then it is rejected."""
+    attempt = _attempt(10.0, 20.0, end_reason)
+
+    with pytest.raises(ValueError, match=r"^Plane landing stage evidence must be contained by its landing attempt$"):
+        PlaneLandingStageEvidence(attempt=attempt, stage=PlaneLandingStage.FLARE, time_s=time_s)
+
+
+@pytest.mark.parametrize(
+    ("time_s", "end_reason"),
+    [(10.0, PlaneLandingEndReason.STAGE_RESTART), (20.0, PlaneLandingEndReason.ABORT)],
+    ids=("restart-start-inclusive", "termination-end-inclusive"),
+)
+def test_stage_evidence_at_observation_window_edges_follows_end_reason(
+    time_s: float, end_reason: PlaneLandingEndReason
+) -> None:
+    """Given a stage transition at a window edge, when built, then the end reason decides whether it belongs."""
+    attempt = _attempt(10.0, 20.0, end_reason)
+
+    evidence = PlaneLandingStageEvidence(attempt=attempt, stage=PlaneLandingStage.FLARE, time_s=time_s)
+
+    assert evidence.time_s == time_s
+
+
+def test_stage_evidence_freezes_a_copy_of_parameter_values() -> None:
+    """Given a mutable parameter mapping, when evidence is built, then later edits do not change the evidence."""
+    attempt = _attempt(10.0, 20.0)
+    values = {"LAND_FLARE_ALT": 2.0}
+
+    evidence = PlaneLandingStageEvidence(attempt=attempt, stage=PlaneLandingStage.FLARE, time_s=15.0, parameter_values=values)
+    values["LAND_FLARE_ALT"] = 9.0
+
+    assert evidence.parameter_values["LAND_FLARE_ALT"] == 2.0
+    with pytest.raises(TypeError):
+        evidence.parameter_values["LAND_FLARE_ALT"] = 3.0  # type: ignore[index]
+
+
+@pytest.mark.parametrize("time_s", [9.0, 20.5], ids=("before-start", "after-end"))
+def test_firmware_flare_outside_attempt_is_rejected_with_exact_message(time_s: float) -> None:
+    """Given a firmware Flare message outside the attempt, when evidence is built, then it is rejected."""
+    with pytest.raises(ValueError, match=r"^Plane firmware flare evidence must be contained by its landing attempt$"):
+        PlaneLandingFirmwareFlareEvidence(
+            attempt=_attempt(10.0, 20.0),
+            time_s=time_s,
+            altitude_m=2.0,
+            sink_rate_m_s=1.0,
+            groundspeed_m_s=10.0,
+            distance_to_target_m=30.0,
+        )
+
+
+def test_left_truncated_flare_requires_a_stage_three_opened_attempt() -> None:
+    """Given a pre-start Flare on an attempt that did not open at stage 3, when built, then it is rejected."""
+    with pytest.raises(ValueError, match=r"^Plane firmware flare evidence must be contained by its landing attempt$"):
+        PlaneLandingFirmwareFlareEvidence(
+            attempt=_attempt(10.0, 20.0, start_stage=1),
+            time_s=9.0,
+            altitude_m=2.0,
+            sink_rate_m_s=1.0,
+            groundspeed_m_s=10.0,
+            distance_to_target_m=30.0,
+            associated_before_attempt_start=True,
+        )
+
+
+def test_left_truncated_flare_accepted_within_its_flight_for_stage_three_attempt() -> None:
+    """Given a stage-3 attempt and a Flare just before its start inside the flight, when built, then it is kept."""
+    evidence = PlaneLandingFirmwareFlareEvidence(
+        attempt=_attempt(10.0, 20.0, start_stage=3, segment=_segment(5.0, 100.0)),
+        time_s=9.0,
+        altitude_m=2.0,
+        sink_rate_m_s=1.0,
+        groundspeed_m_s=10.0,
+        distance_to_target_m=30.0,
+        associated_before_attempt_start=True,
+    )
+
+    assert evidence.time_s == 9.0
+
+
+def test_left_truncated_flare_before_flight_start_is_rejected() -> None:
+    """Given a pre-start Flare that precedes the parent flight, when built, then it is rejected."""
+    with pytest.raises(ValueError, match=r"^Plane firmware flare evidence must be contained by its landing attempt$"):
+        PlaneLandingFirmwareFlareEvidence(
+            attempt=_attempt(10.0, 20.0, start_stage=3, segment=_segment(5.0, 100.0)),
+            time_s=4.0,
+            altitude_m=2.0,
+            sink_rate_m_s=1.0,
+            groundspeed_m_s=10.0,
+            distance_to_target_m=30.0,
+            associated_before_attempt_start=True,
+        )
+
+
+@pytest.mark.parametrize("time_s", [9.0, 20.5], ids=("before-start", "after-end"))
+def test_glide_slope_outside_attempt_is_rejected_with_exact_message(time_s: float) -> None:
+    """Given a glide-slope message outside the attempt, when evidence is built, then it is rejected."""
+    with pytest.raises(ValueError, match=r"^Plane firmware glide-slope evidence must be contained by its landing attempt$"):
+        PlaneLandingFirmwareGlideSlopeEvidence(attempt=_attempt(10.0, 20.0), time_s=time_s, glide_slope_degrees=3.0)
+
+
+def test_mission_target_snapshot_completed_after_attempt_start_is_rejected() -> None:
+    """Given a CMD snapshot completing after the attempt began, when the target is built, then it is rejected."""
+    with pytest.raises(ValueError, match=r"^Plane mission target snapshot must complete at or before the landing attempt$"):
+        PlaneLandingMissionTarget(
+            attempt=_attempt(10.0, 20.0),
+            snapshot_completed_s=10.5,
+            latitude_deg=1.0,
+            longitude_deg=2.0,
+        )
+
+
+def test_mission_target_snapshot_completed_exactly_at_attempt_start_is_accepted() -> None:
+    """Given a CMD snapshot completing exactly at the attempt start, when the target is built, then it is kept."""
+    target = PlaneLandingMissionTarget(
+        attempt=_attempt(10.0, 20.0),
+        snapshot_completed_s=10.0,
+        latitude_deg=1.0,
+        longitude_deg=2.0,
+    )
+
+    assert target.snapshot_completed_s == 10.0
+
+
+def _distance_evidence_kwargs(attempt: PlaneLandingAttempt, **overrides: object) -> dict[str, object]:
+    target = PlaneLandingMissionTarget(attempt=attempt, snapshot_completed_s=1.0, latitude_deg=1.0, longitude_deg=2.0)
+    values: dict[str, object] = {
+        "attempt": attempt,
+        "time_s": attempt.end_s,
+        "aircraft_position_time_s": attempt.end_s,
+        "aircraft_latitude_deg": 1.0,
+        "aircraft_longitude_deg": 2.0,
+        "target": target,
+        "distance_m": 0.0,
+    }
+    values.update(overrides)
+    return values
+
+
+def test_target_distance_requires_the_authoritative_gps_stop_end() -> None:
+    """Given a target distance tied to a non-GPS-stop attempt end, when built, then it is rejected."""
+    attempt = _attempt(10.0, 20.0, PlaneLandingEndReason.ABORT)
+
+    with pytest.raises(
+        ValueError,
+        match=r"^Plane target-distance evidence requires the authoritative GPS-stop attempt end$",
+    ):
+        PlaneLandingTargetDistanceEvidence(**_distance_evidence_kwargs(attempt))  # type: ignore[arg-type]
+
+
+def test_target_distance_time_must_equal_the_gps_stop_end() -> None:
+    """Given a GPS-stop attempt, when distance is timed away from its end, then it is rejected."""
+    attempt = _attempt(10.0, 20.0, PlaneLandingEndReason.GPS_STOP)
+
+    with pytest.raises(
+        ValueError,
+        match=r"^Plane target-distance evidence requires the authoritative GPS-stop attempt end$",
+    ):
+        PlaneLandingTargetDistanceEvidence(**_distance_evidence_kwargs(attempt, time_s=19.0))  # type: ignore[arg-type]
+
+
+def test_target_distance_position_must_lie_inside_the_attempt() -> None:
+    """Given an aircraft position sampled before the attempt began, when built, then it is rejected."""
+    attempt = _attempt(10.0, 20.0, PlaneLandingEndReason.GPS_STOP)
+
+    with pytest.raises(ValueError, match=r"^Plane target-distance position must be contained by its landing attempt$"):
+        PlaneLandingTargetDistanceEvidence(
+            **_distance_evidence_kwargs(attempt, aircraft_position_time_s=9.5),  # type: ignore[arg-type]
+        )
+
+
+def test_target_distance_target_must_belong_to_the_same_attempt_instance() -> None:
+    """Given a target built for an equal-looking but different attempt object, when distance is built, then it is rejected."""
+    attempt = _attempt(10.0, 20.0, PlaneLandingEndReason.GPS_STOP)
+    equal_attempt = _attempt(10.0, 20.0, PlaneLandingEndReason.GPS_STOP)
+    assert equal_attempt == attempt
+
+    with pytest.raises(ValueError, match=r"^Plane mission target must be associated with the same landing attempt$"):
+        PlaneLandingTargetDistanceEvidence(
+            **_distance_evidence_kwargs(
+                attempt,
+                target=PlaneLandingMissionTarget(
+                    attempt=equal_attempt,
+                    snapshot_completed_s=1.0,
+                    latitude_deg=1.0,
+                    longitude_deg=2.0,
+                ),
+            ),  # type: ignore[arg-type]
+        )
+
+
+@pytest.mark.parametrize(
+    ("target", "aircraft"),
+    [
+        ((10.0, 10.0), (11.0, 10.0)),
+        ((60.0, 10.0), (60.0, 11.0)),
+        ((10.0, 10.0), (40.0, 40.0)),
+    ],
+    ids=("one-degree-north", "one-degree-east-at-60N", "far-diagonal"),
+)
+def test_gps_stop_target_distance_is_the_great_circle_distance(
+    target: tuple[float, float], aircraft: tuple[float, float]
+) -> None:
+    """Given a GPS-stop position and a mission LAND target, when distance is reported, then it is the great-circle distance."""
+    log_data = _gps_stop_position_log(target, aircraft)
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    distance = PlaneLandingMissionTargetExtractor.distance_at_gps_stop(log_data, attempt)
+
+    lat1, lon1 = math.radians(target[0]), math.radians(target[1])
+    lat2, lon2 = math.radians(aircraft[0]), math.radians(aircraft[1])
+    central_angle = math.acos(math.sin(lat1) * math.sin(lat2) + math.cos(lat1) * math.cos(lat2) * math.cos(lon2 - lon1))
+    assert distance is not None
+    assert distance.distance_m == pytest.approx(6_371_000.0 * central_angle, rel=1e-6)
+
+
+@pytest.mark.parametrize(("speed", "expects_gps_stop"), [(2.9, True), (3.0, False)], ids=("below-threshold", "at-threshold"))
+def test_gps_stop_speed_threshold_is_strictly_below_three_metres_per_second(speed: float, expects_gps_stop: bool) -> None:
+    """Given a ground speed at or above 3 m/s, when the aircraft is slow, then only sub-threshold speed ends the attempt."""
+    log_data = _plane_log(
+        gps=((0.0, 6.0), (15.0, 6.0), (20.0, speed), (22.0, speed), (30.0, 6.0)),
+        land=((5.0, 0), (10.0, 1), (12.0, 2), (14.0, 3)),
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    assert (attempt.end_reason is PlaneLandingEndReason.GPS_STOP) is expects_gps_stop
+    if expects_gps_stop:
+        assert attempt.end_s == pytest.approx(20.0)
+
+
+def test_gps_stop_requires_speed_to_persist_for_two_seconds() -> None:
+    """Given a brief slow dip that recovers before two seconds, when the attempt is detected, then no GPS stop is recorded."""
+    log_data = _plane_log(
+        gps=((0.0, 6.0), (15.0, 6.0), (20.0, 2.0), (21.0, 6.0), (30.0, 6.0)),
+        land=((5.0, 0), (10.0, 1), (12.0, 2), (14.0, 3)),
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    assert attempt.end_reason is not PlaneLandingEndReason.GPS_STOP
+
+
+def test_landing_message_exactly_at_attempt_start_does_not_terminate_it() -> None:
+    """Given an abort message stamped at the attempt start, when the attempt is detected, then only later messages end it."""
+    log_data = _plane_log(
+        land=((5.0, 0), (10.0, 1), (11.0, 2)),
+        messages=((10.0, "Landing aborted"),),
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    assert attempt.end_reason is not PlaneLandingEndReason.ABORT
+
+
+def test_landing_abort_message_terminates_attempt_case_insensitively() -> None:
+    """Given an upper-case abort message after the start, when the attempt is detected, then it ends at that message."""
+    log_data = _plane_log(
+        land=((5.0, 0), (10.0, 1), (11.0, 2)),
+        messages=((15.0, "LANDING ABORTED by pilot"),),
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    assert (attempt.end_s, attempt.end_reason) == (15.0, PlaneLandingEndReason.ABORT)
+
+
+def test_stage_restart_from_final_stage_begins_a_new_attempt() -> None:
+    """Given LAND returning to stage 1 after stage 3, when detected, then the restart closes and reopens attempts."""
+    log_data = _plane_log(
+        land=((5.0, 0), (10.0, 1), (12.0, 2), (13.0, 3), (14.0, 1), (25.0, 2)),
+        messages=((40.0, "Throttle disarmed"),),
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+
+    attempts = PlaneLandingAttemptDetector.detect(log_data, segment)
+
+    assert [(a.start_s, a.end_s, a.end_reason, a.start_stage) for a in attempts] == [
+        (10.0, 14.0, PlaneLandingEndReason.STAGE_RESTART, 1),
+        (14.0, 40.0, PlaneLandingEndReason.DISARM, 1),
+    ]
+
+
+@pytest.mark.parametrize(("mode_number", "expected_mode"), [(10, 10), (26, 26)], ids=("auto", "autoland"))
+def test_each_supported_landing_mode_gates_an_attempt(mode_number: int, expected_mode: int) -> None:
+    """Given AUTO or AUTOLAND mode during an active LAND sequence, when detected, then the attempt records that mode."""
+    log_data = _plane_log(
+        land=((5.0, 0), (10.0, 1), (11.0, 2)), mode=((0.0, mode_number),), messages=((40.0, "Throttle disarmed"),)
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+
+    attempts = PlaneLandingAttemptDetector.detect(log_data, segment)
+
+    assert [a.mode_number for a in attempts] == [expected_mode]
+
+
+def test_non_landing_mode_does_not_start_an_attempt() -> None:
+    """Given a manual flight mode during LAND stages, when detected, then no landing attempt is created."""
+    log_data = _plane_log(land=((5.0, 0), (10.0, 1), (11.0, 2)), mode=((0.0, 0),), messages=((40.0, "Throttle disarmed"),))
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+
+    assert not PlaneLandingAttemptDetector.detect(log_data, segment)
+
+
+def test_mode_change_at_the_stage_start_instant_prevents_the_attempt() -> None:
+    """Given the mode switches away from landing at the same timestamp as the stage, when detected, then no attempt starts."""
+    log_data = _plane_log(
+        land=((5.0, 0), (10.0, 1), (11.0, 2)),
+        mode=((0.0, 10), (10.0, 0)),
+        messages=((40.0, "Throttle disarmed"),),
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+
+    assert not PlaneLandingAttemptDetector.detect(log_data, segment)
+
+
+def test_leaving_landing_mode_ends_attempt_with_mode_exit_at_that_time() -> None:
+    """Given the flight mode changes to manual mid-attempt, when detected, then the attempt ends at the mode change."""
+    log_data = _plane_log(
+        land=((5.0, 0), (10.0, 1), (11.0, 2)),
+        mode=((0.0, 10), (15.0, 0)),
+        messages=((40.0, "Throttle disarmed"),),
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    assert (attempt.end_s, attempt.end_reason) == (15.0, PlaneLandingEndReason.MODE_EXIT)
+
+
+def test_preflare_sink_rate_uses_baro_samples_inside_the_half_second_window_inclusively() -> None:
+    """Given BARO samples exactly at the ±0.5 s window edges, when preflare sink rate is computed, then edges count."""
+    log_data = _plane_log(land=((5.0, 1), (10.0, 2), (11.0, 3)), messages=((40.0, "Throttle disarmed"),), include_baro=False)
+    _add_columns(
+        log_data,
+        "BARO",
+        ((9.4, 500.0), (9.5, 100.0), (10.5, 99.0), (10.6, 1.0)),
+        [("TimeUS", "f8"), ("Alt", "f8")],
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    evidence = PlaneLandingEvidenceExtractor.extract(log_data, attempt, ParameterHistory())
+    preflare = next(item for item in evidence if item.stage is PlaneLandingStage.PREFLARE)
+
+    assert preflare.barometric_sink_rate_m_s == pytest.approx(1.0)
+
+
+def test_preflare_sink_rate_is_omitted_with_only_one_sample_in_the_window() -> None:
+    """Given only one BARO sample inside the window, when the preflare sink rate is computed, then it is omitted."""
+    log_data = _plane_log(land=((5.0, 1), (10.0, 2), (11.0, 3)), messages=((40.0, "Throttle disarmed"),), include_baro=False)
+    _add_columns(log_data, "BARO", ((9.4, 500.0), (9.5, 100.0), (10.6, 1.0)), [("TimeUS", "f8"), ("Alt", "f8")])
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    evidence = PlaneLandingEvidenceExtractor.extract(log_data, attempt, ParameterHistory())
+    preflare = next(item for item in evidence if item.stage is PlaneLandingStage.PREFLARE)
+
+    assert preflare.barometric_sink_rate_m_s is None
+
+
+def test_truncated_firmware_flare_field_does_not_corroborate_gps_stop() -> None:
+    """
+    Given a Flare message whose last named field has no value.
+
+    When the attempt is detected, then the message does not corroborate a GPS stop.
+    """
+    log_data = _plane_log(
+        gps=((0.0, 6.0), (2.0, 6.0), (12.0, 2.0), (14.0, 2.0), (30.0, 6.0)),
+        land=((5.0, 0), (10.0, 1), (11.0, 2)),
+        messages=((11.5, "Flare 2.0m sink=1.0 speed=10.0 dist="), (25.0, "Throttle disarmed")),
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    assert (attempt.end_s, attempt.end_reason) == (25.0, PlaneLandingEndReason.DISARM)
+
+
+def _stage_evidence_for_land_records(land: Sequence[tuple[object, ...]]) -> tuple[PlaneLandingStageEvidence, ...]:
+    log_data = _plane_log(
+        gps=(
+            (0.0, 6.0),
+            (2.0, 6.0),
+            (14.9, 8.0),
+            (15.0, 7.0),
+            (19.9, 6.0),
+            (20.0, 5.0),
+            (60.0, 6.0),
+            (61.0, 0.0),
+            (91.0, 0.0),
+        ),
+        land=land,
+        messages=((40.0, "Throttle disarmed"),),
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+    return PlaneLandingEvidenceExtractor.extract(log_data, attempt, ParameterHistory())
+
+
+def test_repeated_land_stage_record_does_not_hide_later_stage_transition() -> None:
+    """
+    Given a repeated preflare LAND record before the flare record.
+
+    When stage transitions are extracted, then the flare transition is still found.
+    """
+    evidence = _stage_evidence_for_land_records(
+        ((5.0, 0, 0.0), (10.0, 1, 20.0), (15.0, 2, 5.5), (15.5, 2, 5.4), (20.0, 3, 1.2))
+    )
+
+    assert [(item.stage, item.time_s) for item in evidence] == [
+        (PlaneLandingStage.PREFLARE, 15.0),
+        (PlaneLandingStage.FLARE, 20.0),
+    ]
+
+
+def test_returning_to_an_earlier_land_stage_does_not_duplicate_its_transition() -> None:
+    """
+    Given LAND returns to the preflare stage after flare.
+
+    When stage transitions are extracted, then each stage is reported once.
+    """
+    evidence = _stage_evidence_for_land_records(
+        ((5.0, 0, 0.0), (10.0, 1, 20.0), (15.0, 2, 5.5), (18.0, 3, 1.2), (19.0, 2, 5.0))
+    )
+
+    assert [(item.stage, item.time_s) for item in evidence] == [
+        (PlaneLandingStage.PREFLARE, 15.0),
+        (PlaneLandingStage.FLARE, 18.0),
+    ]
+
+
+def test_stage_extraction_without_land_message_returns_no_evidence() -> None:
+    """
+    Given a log without a LAND message and an attempt scoped to it.
+
+    When stage evidence is extracted, then no evidence is returned.
+    """
+    log_data = _plane_log(gps=((0.0, 6.0), (30.0, 6.0)), include_land=False)
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttempt(
+        flight_segment=segment,
+        start_s=5.0,
+        end_s=20.0,
+        end_reason=PlaneLandingEndReason.DISARM,
+        mode_number=10,
+    )
+
+    assert not PlaneLandingEvidenceExtractor.extract(log_data, attempt, ParameterHistory())
+
+
+def _flare_evidence(log_data: LogData, attempt: PlaneLandingAttempt) -> list[PlaneLandingFirmwareFlareEvidence]:
+    return [
+        evidence
+        for evidence in PlaneLandingFirmwareMessageExtractor.extract(log_data, attempt)
+        if isinstance(evidence, PlaneLandingFirmwareFlareEvidence)
+    ]
+
+
+def test_left_truncated_flare_at_previous_attempt_end_is_rejected() -> None:
+    """Given a pre-start Flare at the instant the previous attempt ended, when extracted, then it is not associated."""
+    log_data = _plane_log(
+        land=((9.998, 0), (10.0, 3)),
+        messages=((9.999, "Flare 2.0m sink=1.0 speed=10.0 dist=20.0"), (40.0, "Throttle disarmed")),
+    )
+    attempt = PlaneLandingAttempt(
+        flight_segment=_segment(5.0, 100.0),
+        start_s=10.0,
+        end_s=20.0,
+        end_reason=PlaneLandingEndReason.ABORT,
+        mode_number=10,
+        start_stage=3,
+        previous_attempt_end_s=9.999,
+    )
+
+    assert not _flare_evidence(log_data, attempt)
+
+
+def test_left_truncated_flare_at_latest_landing_record_is_rejected() -> None:
+    """
+    Given a pre-start Flare at the same instant as the last preceding landing record.
+
+    When firmware evidence is extracted, then the Flare is rejected.
+    """
+    log_data = _plane_log(
+        land=((9.999, 0), (10.0, 3)),
+        messages=((9.999, "Flare 2.0m sink=1.0 speed=10.0 dist=20.0"), (40.0, "Throttle disarmed")),
+    )
+
+    assert not _flare_evidence(log_data, _attempt(10.0, 20.0, start_stage=3, segment=_segment(5.0, 100.0)))
+
+
+def test_left_truncated_flare_at_flight_start_keeps_every_measured_field() -> None:
+    """Given a pre-start Flare exactly at the flight start, when extracted, then all its measured fields are kept."""
+    log_data = _plane_log(
+        land=((8.0, 0), (10.0, 3)),
+        messages=((9.0, "Flare 2.0m sink=1.0 speed=10.0 dist=20.0"), (40.0, "Throttle disarmed")),
+    )
+
+    flares = _flare_evidence(log_data, _attempt(10.0, 20.0, start_stage=3, segment=_segment(9.0, 100.0)))
+
+    assert [
+        (
+            flare.time_s,
+            flare.altitude_m,
+            flare.sink_rate_m_s,
+            flare.groundspeed_m_s,
+            flare.distance_to_target_m,
+            flare.associated_before_attempt_start,
+        )
+        for flare in flares
+    ] == [(9.0, 2.0, 1.0, 10.0, 20.0, True)]
+
+
+def test_left_truncated_flare_uses_latest_preceding_flare_by_time() -> None:
+    """Given two pre-start Flares whose text sorts opposite to their time, when extracted, then the latest in time is kept."""
+    log_data = _plane_log(
+        land=((8.0, 0), (10.0, 3)),
+        messages=(
+            (8.5, "Flare 9.0m sink=1.0 speed=10.0 dist=20.0"),
+            (9.5, "Flare 1.0m sink=2.0 speed=12.0 dist=30.0"),
+            (40.0, "Throttle disarmed"),
+        ),
+    )
+
+    flares = _flare_evidence(log_data, _attempt(10.0, 20.0, start_stage=3, segment=_segment(5.0, 100.0)))
+
+    assert [(flare.time_s, flare.altitude_m) for flare in flares] == [(9.5, 1.0)]
+
+
+def test_left_truncated_flare_is_not_invalidated_by_abort_at_its_own_instant() -> None:
+    """Given a landing abort at the same instant as the pre-start Flare, when extracted, then the Flare stays associated."""
+    log_data = _plane_log(
+        land=((9.998, 0), (10.0, 3)),
+        messages=(
+            (9.999, "Flare 2.0m sink=1.0 speed=10.0 dist=20.0"),
+            (9.999, "Landing aborted"),
+            (40.0, "Throttle disarmed"),
+        ),
+    )
+
+    flares = _flare_evidence(log_data, _attempt(10.0, 20.0, start_stage=3, segment=_segment(5.0, 100.0)))
+
+    assert [(flare.time_s, flare.associated_before_attempt_start) for flare in flares] == [(9.999, True)]
+
+
+def test_left_truncated_flare_is_not_invalidated_by_abort_at_attempt_start() -> None:
+    """Given a landing abort exactly at the attempt start, when extracted, then the pre-start Flare stays associated."""
+    log_data = _plane_log(
+        land=((9.998, 0), (10.0, 3)),
+        messages=(
+            (9.999, "Flare 2.0m sink=1.0 speed=10.0 dist=20.0"),
+            (10.0, "Landing aborted"),
+            (40.0, "Throttle disarmed"),
+        ),
+    )
+
+    flares = _flare_evidence(log_data, _attempt(10.0, 20.0, start_stage=3, segment=_segment(5.0, 100.0)))
+
+    assert [(flare.time_s, flare.associated_before_attempt_start) for flare in flares] == [(9.999, True)]
+
+
+@pytest.mark.parametrize(
+    "mode",
+    [((0.0, 10), (40.0, 5)), ((0.0, 10), (9.999, 5)), ((0.0, 10), (10.0, 26))],
+    ids=("later-mode-outside-window", "other-mode-at-flare-instant", "other-mode-at-attempt-start"),
+)
+def test_left_truncated_flare_is_only_invalidated_by_mode_changes_inside_its_window(
+    mode: Sequence[tuple[float, int]],
+) -> None:
+    """
+    Given a mode record outside the open flare-to-start window that differs from the attempt.
+
+    When firmware evidence is extracted, then the pre-start Flare stays associated.
+    """
+    log_data = _plane_log(
+        land=((9.998, 0), (10.0, 3)),
+        mode=mode,
+        messages=((9.999, "Flare 2.0m sink=1.0 speed=10.0 dist=20.0"), (40.0, "Throttle disarmed")),
+    )
+
+    flares = _flare_evidence(log_data, _attempt(10.0, 20.0, start_stage=3, segment=_segment(5.0, 100.0)))
+
+    assert [(flare.time_s, flare.associated_before_attempt_start) for flare in flares] == [(9.999, True)]
+
+
+def test_firmware_extraction_keeps_only_first_flare_and_first_glide_slope_in_attempt() -> None:
+    """
+    Given repeated Flare and glide-slope messages inside one attempt.
+
+    When firmware evidence is extracted, then only the first in time of each kind is kept.
+    """
+    log_data = _plane_log(
+        messages=(
+            (15.0, "Flare 9.0m sink=1.0 speed=10.0 dist=20.0"),
+            (16.0, "Flare 1.0m sink=2.0 speed=12.0 dist=30.0"),
+            (17.0, "Landing glide slope 4.7 degrees"),
+            (18.0, "Landing glide slope 5.0 degrees"),
+            (40.0, "Throttle disarmed"),
+        )
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    evidence = PlaneLandingFirmwareMessageExtractor.extract(log_data, attempt)
+
+    glide_slopes = [item for item in evidence if isinstance(item, PlaneLandingFirmwareGlideSlopeEvidence)]
+    assert [(flare.time_s, flare.altitude_m) for flare in _flare_evidence(log_data, attempt)] == [(15.0, 9.0)]
+    assert [(glide_slope.time_s, glide_slope.glide_slope_degrees) for glide_slope in glide_slopes] == [(17.0, 4.7)]

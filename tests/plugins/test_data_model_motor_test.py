@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from logging import LogRecord
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -3594,3 +3595,1740 @@ def test_user_cannot_test_motors_with_unsafe_battery_in_a_translated_ui(
 
     assert motor_test_model.is_battery_related_safety_issue(safety_error.value)
     motor_test_model.flight_controller.test_all_motors.assert_not_called()
+
+
+class TestMotorTestSettingsBoundariesAndMessages:
+    """Exact boundary values and user-facing messages for motor test settings."""
+
+    def test_user_can_save_duration_at_exact_minimum(self, motor_test_model) -> None:
+        """
+        A duration of exactly 1 second is valid and is persisted.
+
+        GIVEN: The minimum allowed duration
+        WHEN: The user saves it
+        THEN: It is stored unchanged and becomes the active duration
+        """
+        motor_test_model.set_test_duration_s(1.0)
+
+        assert ProgramSettings.get_setting("motor_test/duration") == 1.0
+        assert motor_test_model.get_test_duration_s() == 1
+
+    def test_user_can_save_duration_at_exact_maximum(self, motor_test_model) -> None:
+        """
+        A duration of exactly 60 seconds is valid and is persisted.
+
+        GIVEN: The maximum allowed duration
+        WHEN: The user saves it
+        THEN: It is stored unchanged and becomes the active duration
+        """
+        motor_test_model.set_test_duration_s(60.0)
+
+        assert ProgramSettings.get_setting("motor_test/duration") == 60.0
+        assert motor_test_model.get_test_duration_s() == 60
+
+    def test_fractional_duration_is_truncated_to_whole_seconds_for_the_active_value(self, motor_test_model) -> None:
+        """
+        A fractional duration is stored as entered but applied as whole seconds.
+
+        GIVEN: A duration of 2.7 seconds
+        WHEN: The user saves it
+        THEN: The persisted value keeps 2.7 and the active duration is 2 whole seconds
+        """
+        motor_test_model.set_test_duration_s(2.7)
+
+        assert ProgramSettings.get_setting("motor_test/duration") == 2.7
+        assert motor_test_model.get_test_duration_s() == 2
+
+    def test_duration_below_minimum_shows_exact_message_and_keeps_previous_value(self, motor_test_model) -> None:
+        """
+        An invalid duration reports the exact minimum message and does not change state.
+
+        GIVEN: An active duration of 5 seconds
+        WHEN: The user saves 0.5 seconds
+        THEN: The exact minimum message is raised and logged, and the previous value is kept
+        """
+        motor_test_model.set_test_duration_s(5)
+        with (
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_error") as mock_log,
+            pytest.raises(ValueError, match=r"^Motor test duration must be at least 1 second$"),
+        ):
+            motor_test_model.set_test_duration_s(0.5)
+
+        mock_log.assert_called_once()
+        assert motor_test_model.get_test_duration_s() == 5
+        assert ProgramSettings.get_setting("motor_test/duration") == 5
+
+    def test_duration_above_maximum_shows_exact_message_and_keeps_previous_value(self, motor_test_model) -> None:
+        """
+        An invalid duration reports the exact maximum message and does not change state.
+
+        GIVEN: An active duration of 5 seconds
+        WHEN: The user saves 60.5 seconds
+        THEN: The exact maximum message is raised, and the previous value is kept
+        """
+        motor_test_model.set_test_duration_s(5)
+        with pytest.raises(ValueError, match=r"^Motor test duration must not exceed 60 seconds$"):
+            motor_test_model.set_test_duration_s(60.5)
+
+        assert motor_test_model.get_test_duration_s() == 5
+        assert ProgramSettings.get_setting("motor_test/duration") == 5
+
+    def test_user_can_save_throttle_at_exact_bounds(self, motor_test_model) -> None:
+        """
+        Throttle values of exactly 1% and 100% are valid and persisted.
+
+        GIVEN: The lowest and highest allowed throttle percentages
+        WHEN: The user saves each one
+        THEN: Each is stored and becomes the active throttle
+        """
+        motor_test_model.set_test_throttle_pct(1)
+        assert ProgramSettings.get_setting("motor_test/throttle_pct") == 1
+        assert motor_test_model.get_test_throttle_pct() == 1
+
+        motor_test_model.set_test_throttle_pct(100)
+        assert ProgramSettings.get_setting("motor_test/throttle_pct") == 100
+        assert motor_test_model.get_test_throttle_pct() == 100
+
+    def test_throttle_below_minimum_shows_exact_message_and_keeps_previous_value(self, motor_test_model) -> None:
+        """
+        An invalid throttle reports the exact minimum message and keeps the previous value.
+
+        GIVEN: An active throttle of 50%
+        WHEN: The user saves 0%
+        THEN: The exact minimum message is raised and logged, and 50% stays active
+        """
+        motor_test_model.set_test_throttle_pct(50)
+        with (
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_error") as mock_log,
+            pytest.raises(ValueError, match=r"^Motor test throttle percentage must be at least 1%$"),
+        ):
+            motor_test_model.set_test_throttle_pct(0)
+
+        mock_log.assert_called_once()
+        assert motor_test_model.get_test_throttle_pct() == 50
+
+    def test_throttle_above_maximum_shows_exact_message_and_keeps_previous_value(self, motor_test_model) -> None:
+        """
+        An invalid throttle reports the exact maximum message and keeps the previous value.
+
+        GIVEN: An active throttle of 50%
+        WHEN: The user saves 101%
+        THEN: The exact maximum message is raised, and 50% stays active
+        """
+        motor_test_model.set_test_throttle_pct(50)
+        with pytest.raises(ValueError, match=r"^Motor test throttle percentage must not exceed 100%$"):
+            motor_test_model.set_test_throttle_pct(101)
+
+        assert motor_test_model.get_test_throttle_pct() == 50
+
+
+class TestMotorTestParameterWriteBehavior:
+    """Parameter write validation, verification tolerance, and reboot handling."""
+
+    def test_spin_parameter_range_message_names_the_value_and_limits(self, motor_test_model) -> None:
+        """
+        MOT_SPIN_ARM values outside 0.0-1.0 are rejected with the exact message.
+
+        GIVEN: A MOT_SPIN_ARM value of 1.5
+        WHEN: The user writes it
+        THEN: A ValidationError explains the valid range and nothing is sent to the flight controller
+        """
+        with pytest.raises(ValidationError, match=r"^MOT_SPIN_ARM value 1\.500 is outside valid range \(0\.0 - 1\.0\)$"):
+            motor_test_model.set_parameter("MOT_SPIN_ARM", 1.5)
+
+        motor_test_model.flight_controller.set_param.assert_not_called()
+
+    @pytest.mark.parametrize("value", [0.0, 1.0])
+    def test_spin_parameter_accepts_exact_range_limits(self, motor_test_model, value: float) -> None:
+        """
+        MOT_SPIN_MIN accepts exactly 0.0 and 1.0.
+
+        GIVEN: A MOT_SPIN_MIN value at a range limit
+        WHEN: The user writes it
+        THEN: The value is sent to the flight controller
+        """
+        motor_test_model.filesystem.doc_dict = {}
+
+        motor_test_model.set_parameter("MOT_SPIN_MIN", value)
+
+    def test_value_below_documented_minimum_shows_exact_message(self, motor_test_model) -> None:
+        """
+        A value below the documented minimum is rejected with the exact message.
+
+        GIVEN: A parameter documented with a minimum of 2.0
+        WHEN: The user writes 1.0
+        THEN: A ValidationError states the minimum and nothing is sent
+        """
+        motor_test_model.filesystem.doc_dict = {"TEST_PARAM": {"min": 2.0}}
+
+        with pytest.raises(ValidationError, match=r"^TEST_PARAM value 1\.000 is smaller than 2\.000000$"):
+            motor_test_model.set_parameter("TEST_PARAM", 1.0)
+
+        motor_test_model.flight_controller.set_param.assert_not_called()
+
+    def test_value_equal_to_documented_bounds_is_accepted(self, motor_test_model) -> None:
+        """
+        Values exactly at the documented minimum and maximum are accepted.
+
+        GIVEN: A parameter documented with min 2.0 and max 5.0
+        WHEN: The user writes 2.0 and then 5.0
+        THEN: Both values are sent to the flight controller
+        """
+        motor_test_model.filesystem.doc_dict = {"TEST_PARAM": {"min": 2.0, "max": 5.0}}
+
+        motor_test_model.set_parameter("TEST_PARAM", 2.0)
+        motor_test_model.set_parameter("TEST_PARAM", 5.0)
+
+        assert motor_test_model.flight_controller.set_param.call_count == 2
+
+    def test_value_above_documented_maximum_shows_exact_message(self, motor_test_model) -> None:
+        """
+        A value above the documented maximum is rejected with the exact message.
+
+        GIVEN: A parameter documented with a maximum of 5.0
+        WHEN: The user writes 5.5
+        THEN: A ValidationError states the maximum and nothing is sent
+        """
+        motor_test_model.filesystem.doc_dict = {"TEST_PARAM": {"max": 5.0}}
+
+        with pytest.raises(ValidationError, match=r"^TEST_PARAM value 5\.500 is greater than 5\.000000$"):
+            motor_test_model.set_parameter("TEST_PARAM", 5.5)
+
+    def test_reboot_required_parameter_triggers_reset_with_default_zero_sleep(self, motor_test_model) -> None:
+        """
+        Writing a parameter that requires reboot resets and reconnects the flight controller.
+
+        GIVEN: A parameter documented with RebootRequired true
+        WHEN: The user writes it without extra sleep
+        THEN: The flight controller is reset with the progress callback and zero extra sleep
+        """
+        motor_test_model.filesystem.doc_dict = {"TEST_PARAM": {"RebootRequired": True}}
+        callback = MagicMock()
+
+        motor_test_model.set_parameter("TEST_PARAM", 3.0, callback)
+
+        motor_test_model.flight_controller.reset_and_reconnect.assert_called_once_with(callback, 0)
+
+    def test_parameter_without_reboot_requirement_does_not_reset_flight_controller(self, motor_test_model) -> None:
+        """
+        A parameter that does not require reboot never resets the flight controller.
+
+        GIVEN: A parameter documented without RebootRequired
+        WHEN: The user writes it
+        THEN: No reset is triggered
+        """
+        motor_test_model.filesystem.doc_dict = {"TEST_PARAM": {"min": 0.0}}
+
+        motor_test_model.set_parameter("TEST_PARAM", 3.0)
+
+        motor_test_model.flight_controller.reset_and_reconnect.assert_not_called()
+
+    def test_undocumented_parameter_is_written_without_bounds_or_reset(self, motor_test_model) -> None:
+        """
+        A parameter absent from the documentation is written without bound checks or reset.
+
+        GIVEN: A parameter that is not in the documentation dictionary
+        WHEN: The user writes a large value
+        THEN: The value is written and no reboot is triggered
+        """
+        motor_test_model.filesystem.doc_dict = {}
+
+        motor_test_model.set_parameter("UNDOCUMENTED", 1e6)
+
+        motor_test_model.flight_controller.set_param.assert_called_once_with("UNDOCUMENTED", 1e6)
+        motor_test_model.flight_controller.reset_and_reconnect.assert_not_called()
+
+    def test_read_back_within_tolerance_is_accepted(self, motor_test_model) -> None:
+        """
+        A read-back differing by less than 0.001 counts as verified.
+
+        GIVEN: A write of 0.200 whose read-back is 0.2005
+        WHEN: The user writes the parameter
+        THEN: The write succeeds without error
+        """
+        motor_test_model.flight_controller.fetch_param.side_effect = None
+        motor_test_model.flight_controller.fetch_param.return_value = 0.2005
+
+        motor_test_model.set_parameter("MOT_SPIN_MIN", 0.2)
+
+        motor_test_model.flight_controller.set_param.assert_called_once_with("MOT_SPIN_MIN", 0.2)
+
+    def test_read_back_outside_tolerance_fails_verification(self, motor_test_model) -> None:
+        """
+        A read-back differing by 0.001 or more fails verification with the exact message.
+
+        GIVEN: A write of 0.200 whose read-back is 0.201
+        WHEN: The user writes the parameter
+        THEN: A ParameterError reports expected and actual values
+        """
+        motor_test_model.flight_controller.fetch_param.side_effect = None
+        motor_test_model.flight_controller.fetch_param.return_value = 0.201
+
+        with pytest.raises(
+            ParameterError,
+            match=r"^Parameter MOT_SPIN_MIN verification failed: expected 0\.200, got 0\.201$",
+        ):
+            motor_test_model.set_parameter("MOT_SPIN_MIN", 0.2)
+
+    def test_missing_read_back_is_reported_as_none(self, motor_test_model) -> None:
+        """
+        A missing read-back value is reported with the literal text None.
+
+        GIVEN: A write where the flight controller returns no read-back value
+        WHEN: The user writes the parameter
+        THEN: The verification error states the actual value is None
+        """
+        motor_test_model.flight_controller.fetch_param.side_effect = None
+        motor_test_model.flight_controller.fetch_param.return_value = None
+
+        with pytest.raises(ParameterError, match=r"^Parameter MOT_SPIN_MIN verification failed: expected 0\.200, got None$"):
+            motor_test_model.set_parameter("MOT_SPIN_MIN", 0.2)
+
+    def test_successful_write_logs_the_exact_info_message(self, motor_test_model) -> None:
+        """
+        A verified write logs the parameter name and the value with three decimals.
+
+        GIVEN: A successful write of 0.2
+        WHEN: The user writes the parameter
+        THEN: An info message reports the parameter set to 0.200
+        """
+        with patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_info") as mock_info:
+            motor_test_model.set_parameter("MOT_SPIN_MIN", 0.2)
+
+        mock_info.assert_called_once_with("Parameter %(param)s set to %(value).3f", {"param": "MOT_SPIN_MIN", "value": 0.2})
+
+    def test_rejected_write_shows_exact_failure_message(self, motor_test_model) -> None:
+        """
+        A rejected write reports the flight controller's error text.
+
+        GIVEN: The flight controller rejects the write with "bad index"
+        WHEN: The user writes the parameter
+        THEN: A ParameterError includes the parameter name and error text
+        """
+        motor_test_model.flight_controller.set_param.side_effect = None
+        motor_test_model.flight_controller.set_param.return_value = (False, "bad index")
+
+        with pytest.raises(ParameterError, match=r"^Failed to set parameter MOT_SPIN_MIN: bad index$"):
+            motor_test_model.set_parameter("MOT_SPIN_MIN", 0.2)
+
+    def test_disconnected_flight_controller_is_reported_with_exact_message(self, motor_test_model) -> None:
+        """
+        Writing without a connection fails before any parameter is sent.
+
+        GIVEN: No flight controller master connection
+        WHEN: The user writes a parameter
+        THEN: A connection error with the exact message is raised and nothing is sent
+        """
+        motor_test_model.flight_controller.master = None
+
+        with pytest.raises(FlightControllerConnectionError, match=r"^No flight controller connection available$"):
+            motor_test_model.set_parameter("MOT_SPIN_MIN", 0.2)
+
+        motor_test_model.flight_controller.set_param.assert_not_called()
+
+    def test_unexpected_failure_is_wrapped_with_exact_message_and_logged(self, motor_test_model) -> None:
+        """
+        An unexpected exception during write is wrapped and logged with context.
+
+        GIVEN: The flight controller raises RuntimeError("boom") during the write
+        WHEN: The user writes the parameter
+        THEN: A ParameterError names the parameter and cause, and the error is logged
+        """
+        motor_test_model.flight_controller.set_param.side_effect = RuntimeError("boom")
+
+        with (
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_error") as mock_error,
+            pytest.raises(ParameterError, match=r"^Error setting parameter MOT_SPIN_MIN: boom$"),
+        ):
+            motor_test_model.set_parameter("MOT_SPIN_MIN", 0.2)
+
+        mock_error.assert_called_once_with("Error setting parameter MOT_SPIN_MIN: boom")
+
+    def test_timeout_during_write_propagates_unchanged(self, motor_test_model) -> None:
+        """
+        A timeout is not rewrapped, so callers can handle it specifically.
+
+        GIVEN: The flight controller times out during the write
+        WHEN: The user writes the parameter
+        THEN: The TimeoutError propagates unchanged
+        """
+        motor_test_model.flight_controller.set_param.side_effect = TimeoutError("slow link")
+
+        with pytest.raises(TimeoutError, match="slow link"):
+            motor_test_model.set_parameter("MOT_SPIN_MIN", 0.2)
+
+
+def _quad_layouts() -> list[dict[str, Any]]:
+    """Two QUAD frame types: Plus with two motors and X with four motors."""
+    return [
+        {
+            "Class": 1,
+            "ClassName": "QUAD",
+            "Type": 0,
+            "TypeName": "Plus",
+            "motors": [
+                {"Number": 1, "TestOrder": 1, "Rotation": "CW"},
+                {"Number": 2, "TestOrder": 2, "Rotation": "CCW"},
+            ],
+        },
+        {
+            "Class": 1,
+            "ClassName": "QUAD",
+            "Type": 1,
+            "TypeName": "X",
+            "motors": [
+                {"Number": 1, "TestOrder": 1, "Rotation": "CW"},
+                {"Number": 2, "TestOrder": 2, "Rotation": "CCW"},
+                {"Number": 3, "TestOrder": 3, "Rotation": "CW"},
+                {"Number": 4, "TestOrder": 4, "Rotation": "CCW"},
+            ],
+        },
+    ]
+
+
+def _use_layouts(model: MotorTestDataModel, layouts: list[dict[str, Any]]) -> None:
+    """Replace the motor data layouts and drop any cached frame options."""
+    model._motor_data_loader.data = {"layouts": layouts}
+    model._cached_frame_options = None
+
+
+class TestMotorTestFrameLayoutDetails:
+    """Motor numbering, labels, and messages derived from the frame layout."""
+
+    def test_motor_without_test_order_keeps_empty_direction_and_zero_number(self, motor_test_model) -> None:
+        """
+        A motor that has no TestOrder does not fill any test slot.
+
+        GIVEN: A layout where the second motor has no TestOrder
+        WHEN: The frame layout is configured
+        THEN: Only the ordered motor fills its slot and the other slot keeps its defaults
+        """
+        layout = {
+            "Class": 1,
+            "ClassName": "QUAD",
+            "Type": 0,
+            "TypeName": "Plus",
+            "motors": [{"Number": 1, "TestOrder": 1, "Rotation": "CW"}, {"Number": 2, "Rotation": "CCW"}],
+        }
+        _use_layouts(motor_test_model, [layout])
+
+        motor_test_model._configure_frame_layout(1, 0)
+
+        assert motor_test_model.motor_numbers == [1, 0]
+        assert motor_test_model.motor_directions == ["CW", ""]
+
+    def test_unknown_frame_class_zero_logs_exact_error_and_yields_empty_layout(self, motor_test_model) -> None:
+        """
+        Frame class 0 without a matching layout is logged and leaves no layout.
+
+        GIVEN: No layout for frame class 0
+        WHEN: The frame layout is configured
+        THEN: The exact error is logged, no exception is raised, and the layout is empty
+        """
+        _use_layouts(motor_test_model, _quad_layouts())
+
+        with patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_error") as mock_error:
+            motor_test_model._configure_frame_layout(0, 0)
+
+        mock_error.assert_called_once_with("No motor configuration found for frame class %d and type %d", 0, 0)
+        assert motor_test_model.motor_count == 0
+        assert motor_test_model._frame_layout == {}
+
+    def test_unknown_nonzero_frame_class_raises_exact_runtime_error(self, motor_test_model) -> None:
+        """
+        A frame class with no motor layout raises an error naming class and type.
+
+        GIVEN: No layout for frame class 5 and type 3
+        WHEN: The frame layout is configured
+        THEN: A RuntimeError with the exact message is raised
+        """
+        _use_layouts(motor_test_model, _quad_layouts())
+
+        with pytest.raises(RuntimeError, match=r"^No motor configuration found for frame class 5 and type 3$"):
+            motor_test_model._configure_frame_layout(5, 3)
+
+    def test_successful_layout_logs_exact_debug_summary(self, motor_test_model) -> None:
+        """
+        A configured layout logs its class, type, and motor count.
+
+        GIVEN: A QUAD Plus layout with two motors
+        WHEN: The frame layout is configured
+        THEN: A debug message reports class 1, type 0, and two motors
+        """
+        _use_layouts(motor_test_model, _quad_layouts())
+
+        with patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_debug") as mock_debug:
+            motor_test_model._configure_frame_layout(1, 0)
+
+        mock_debug.assert_called_once_with(
+            "Frame configuration updated: Class=%(class)d, Type=%(type)d, Motors=%(motors)d",
+            {"class": 1, "type": 0, "motors": 2},
+        )
+
+    def test_motors_beyond_26_get_double_letter_labels(self, motor_test_model) -> None:
+        """
+        Motor labels continue as AA, AB after Z.
+
+        GIVEN: A layout with 28 motors
+        WHEN: The frame layout is configured
+        THEN: Labels run A to Z and then AA and AB
+        """
+        motors = [{"Number": i, "TestOrder": i, "Rotation": "CW"} for i in range(1, 29)]
+        _use_layouts(motor_test_model, [{"Class": 1, "ClassName": "QUAD", "Type": 0, "TypeName": "Big", "motors": motors}])
+
+        motor_test_model._configure_frame_layout(1, 0)
+
+        labels = motor_test_model.motor_labels
+        assert labels[0] == "A"
+        assert labels[25] == "Z"
+        assert labels[26] == "AA"
+        assert labels[27] == "AB"
+
+
+class TestMotorTestFrameOptionsDetails:
+    """Frame option grouping, fallbacks, and caching."""
+
+    def test_layout_missing_a_required_field_is_skipped_without_hiding_later_layouts(self, motor_test_model) -> None:
+        """
+        An incomplete layout is skipped, and the layouts after it are still listed.
+
+        GIVEN: A layout missing TypeName followed by a complete layout
+        WHEN: The frame options are requested
+        THEN: Only the complete layouts appear, and the warning is logged
+        """
+        _use_layouts(
+            motor_test_model,
+            [
+                {"Type": 0, "ClassName": "QUAD", "TypeName": "Plus"},
+                {"Type": 1, "ClassName": "QUAD"},
+                {"Type": 1, "ClassName": "QUAD", "TypeName": "X"},
+            ],
+        )
+
+        with patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_warning") as mock_warning:
+            options = motor_test_model.get_frame_options()
+
+        assert options == {"QUAD": {0: "Plus", 1: "X"}}
+        mock_warning.assert_called_once_with("Skipping motor layout with missing required fields")
+
+    def test_frame_options_are_grouped_by_class_name(self, motor_test_model) -> None:
+        """
+        Frame types are grouped under their class name with their codes.
+
+        GIVEN: Two QUAD types
+        WHEN: The frame options are requested
+        THEN: They appear under QUAD keyed by type code
+        """
+        _use_layouts(motor_test_model, _quad_layouts())
+
+        assert motor_test_model.get_frame_options() == {"QUAD": {0: "Plus", 1: "X"}}
+
+    def test_doc_dict_fallback_parses_names_and_skips_entries_without_colon(self, motor_test_model) -> None:
+        """
+        Without motor layouts, frame options come from FRAME_TYPE parameter metadata.
+
+        GIVEN: No motor layouts and FRAME_TYPE values with and without a class prefix
+        WHEN: The frame options are requested
+        THEN: Class names are upper-cased and the entry without a colon is ignored
+        """
+        _use_layouts(motor_test_model, [])
+        motor_test_model.filesystem.doc_dict = {
+            "FRAME_TYPE": {"values": {0: "Quad: Plus", "1": " quad :  X ", 2: "no colon here"}}
+        }
+
+        assert motor_test_model.get_frame_options() == {"QUAD": {0: "Plus", 1: "X"}}
+
+    def test_empty_sources_log_exact_warning_and_return_nothing(self, motor_test_model) -> None:
+        """
+        With no motor data and no parameter metadata, the user is warned.
+
+        GIVEN: No motor layouts and no FRAME_TYPE metadata
+        WHEN: The frame options are requested
+        THEN: An empty result is returned and the exact warning is logged
+        """
+        _use_layouts(motor_test_model, [])
+        motor_test_model.filesystem.doc_dict = {}
+
+        with patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_warning") as mock_warning:
+            assert motor_test_model.get_frame_options() == {}
+
+        mock_warning.assert_called_once_with("No frame options could be loaded from motor data or parameter metadata")
+
+    def test_frame_options_are_cached_after_first_load(self, motor_test_model) -> None:
+        """
+        Later changes to the layouts do not change already-loaded frame options.
+
+        GIVEN: Frame options were already loaded
+        WHEN: The layouts change and options are requested again
+        THEN: The cached result is returned
+        """
+        _use_layouts(motor_test_model, _quad_layouts())
+        first = motor_test_model.get_frame_options()
+
+        motor_test_model._motor_data_loader.data = {"layouts": []}
+
+        assert motor_test_model.get_frame_options() is first
+
+
+class TestMotorTestCurrentFrameClassTypes:
+    """Frame types for the frame class currently on the flight controller."""
+
+    def test_only_types_of_the_current_frame_class_are_returned(self, motor_test_model) -> None:
+        """
+        The current class's types are returned without other classes.
+
+        GIVEN: QUAD and HEXA layouts and FRAME_CLASS set to QUAD
+        WHEN: The current frame class types are requested
+        THEN: Only the QUAD types are returned
+        """
+        layouts = [*_quad_layouts(), {"Class": 2, "ClassName": "HEXA", "Type": 1, "TypeName": "X", "motors": []}]
+        _use_layouts(motor_test_model, layouts)
+        motor_test_model.flight_controller.fc_parameters["FRAME_CLASS"] = 1
+
+        assert motor_test_model.get_current_frame_class_types() == {0: "Plus", 1: "X"}
+
+    def test_missing_frame_class_parameter_logs_exact_warning(self, motor_test_model) -> None:
+        """
+        Without FRAME_CLASS, no types are returned and the warning is logged.
+
+        GIVEN: FRAME_CLASS is absent from the flight controller parameters
+        WHEN: The current frame class types are requested
+        THEN: An empty dictionary is returned and the exact warning is logged
+        """
+        del motor_test_model.flight_controller.fc_parameters["FRAME_CLASS"]
+
+        with patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_warning") as mock_warning:
+            assert motor_test_model.get_current_frame_class_types() == {}
+
+        mock_warning.assert_called_once_with("FRAME_CLASS parameter not found in flight controller")
+
+    def test_undefined_frame_class_warns_with_maximum_defined_class(self, motor_test_model) -> None:
+        """
+        A frame class missing from the layouts reports the highest defined class.
+
+        GIVEN: Layouts that define only class 1 and FRAME_CLASS set to 7
+        WHEN: The current frame class types are requested
+        THEN: An empty dictionary is returned and the warning names class 7 and max 1
+        """
+        _use_layouts(motor_test_model, _quad_layouts())
+        motor_test_model.flight_controller.fc_parameters["FRAME_CLASS"] = 7
+
+        with patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_warning") as mock_warning:
+            assert motor_test_model.get_current_frame_class_types() == {}
+
+        mock_warning.assert_called_once_with(
+            "Current frame class %(class)d is not defined in motor configuration (max defined: %(max)d)",
+            {"class": 7, "max": 1},
+        )
+
+    def test_disconnected_controller_logs_exact_warning(self, motor_test_model) -> None:
+        """
+        Without a connection, no types are returned.
+
+        GIVEN: No flight controller master connection
+        WHEN: The current frame class types are requested
+        THEN: An empty dictionary is returned and the exact warning is logged
+        """
+        motor_test_model.flight_controller.master = None
+
+        with patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_warning") as mock_warning:
+            assert motor_test_model.get_current_frame_class_types() == {}
+
+        mock_warning.assert_called_once_with("Flight controller connection required for current frame class")
+
+    def test_current_frame_selection_text_falls_back_to_type_number(self, motor_test_model) -> None:
+        """
+        The selection text uses the type name, or a numbered fallback when unknown.
+
+        GIVEN: The current frame type is X in QUAD, and later a type with no name
+        WHEN: The selection text is requested for each
+        THEN: The name X is shown first and "Type 9" is shown for the unknown type
+        """
+        _use_layouts(motor_test_model, _quad_layouts())
+        motor_test_model.flight_controller.fc_parameters["FRAME_CLASS"] = 1
+        motor_test_model._frame_type = 1
+
+        assert motor_test_model.get_current_frame_selection_text() == "X"
+
+        motor_test_model._frame_type = 9
+        assert motor_test_model.get_current_frame_selection_text() == "Type 9"
+
+
+class TestMotorTestFrameTypeSelection:
+    """Applying a user's frame type choice to the flight controller."""
+
+    def test_selecting_a_frame_type_uploads_its_code_and_updates_motor_count(self, motor_test_model) -> None:
+        """
+        Choosing a frame type writes FRAME_TYPE and updates the motor count.
+
+        GIVEN: The controller is QUAD X and the user selects Plus
+        WHEN: The frame type selection is applied
+        THEN: FRAME_TYPE 0 is written, FRAME_CLASS is untouched, and two motors are configured
+        """
+        _use_layouts(motor_test_model, _quad_layouts())
+        motor_test_model.flight_controller.fc_parameters["FRAME_CLASS"] = 1
+        motor_test_model.flight_controller.fc_parameters["FRAME_TYPE"] = 1
+
+        assert motor_test_model.update_frame_type_from_selection("Plus") is True
+
+        motor_test_model.flight_controller.set_param.assert_called_once_with("FRAME_TYPE", 0)
+        assert motor_test_model.motor_count == 2
+
+    def test_selection_matching_is_case_insensitive_and_ignores_surrounding_spaces(self, motor_test_model) -> None:
+        """
+        Frame type names match regardless of case and surrounding spaces.
+
+        GIVEN: The user types " plus " for the Plus frame type
+        WHEN: The frame type selection is parsed
+        THEN: The code for Plus is returned
+        """
+        _use_layouts(motor_test_model, _quad_layouts())
+        motor_test_model.flight_controller.fc_parameters["FRAME_CLASS"] = 1
+
+        assert motor_test_model.parse_frame_type_selection(" plus ") == (1, 0)
+
+    def test_unknown_frame_type_is_rejected_with_exact_message(self, motor_test_model) -> None:
+        """
+        A name not offered for the current class is rejected with the exact message.
+
+        GIVEN: The current class is QUAD
+        WHEN: The user selects "Hexa Y"
+        THEN: A ValidationError names the rejected text and nothing is uploaded
+        """
+        _use_layouts(motor_test_model, _quad_layouts())
+        motor_test_model.flight_controller.fc_parameters["FRAME_CLASS"] = 1
+
+        with pytest.raises(ValidationError, match=r"^Could not find frame type 'Hexa Y' in current frame class$"):
+            motor_test_model.update_frame_type_from_selection("Hexa Y")
+
+        motor_test_model.flight_controller.set_param.assert_not_called()
+
+    def test_unexpected_failure_while_applying_selection_is_wrapped_and_logged(self, motor_test_model) -> None:
+        """
+        An unexpected failure becomes a FrameConfigurationError with the exact message.
+
+        GIVEN: Parsing the selection fails with an unexpected RuntimeError
+        WHEN: The frame type selection is applied
+        THEN: A FrameConfigurationError with the message is raised and logged
+        """
+        with (
+            patch.object(motor_test_model, "parse_frame_type_selection", side_effect=RuntimeError("bad state")),
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_error") as mock_error,
+            pytest.raises(FrameConfigurationError, match=r"^Failed to update frame configuration: bad state$"),
+        ):
+            motor_test_model.update_frame_type_from_selection("Plus")
+
+        mock_error.assert_called_once_with("Failed to update frame configuration: bad state")
+
+    def test_key_selection_uses_the_type_name_for_the_chosen_code(self, motor_test_model) -> None:
+        """
+        A combobox key selects the frame type with that code.
+
+        GIVEN: The current class offers Plus as code 0
+        WHEN: The user selects key "0"
+        THEN: The Plus type is applied
+        """
+        _use_layouts(motor_test_model, _quad_layouts())
+        motor_test_model.flight_controller.fc_parameters["FRAME_CLASS"] = 1
+        motor_test_model.flight_controller.fc_parameters["FRAME_TYPE"] = 1
+
+        assert motor_test_model.update_frame_type_by_key("0") is True
+        assert motor_test_model.flight_controller.fc_parameters["FRAME_TYPE"] == 0
+
+    def test_non_numeric_key_is_rejected_with_exact_message(self, motor_test_model) -> None:
+        """
+        A key that is not a number is rejected with the exact message.
+
+        GIVEN: A combobox key "plus"
+        WHEN: The user selects it
+        THEN: A ValidationError with the exact message is raised
+        """
+        with pytest.raises(ValidationError, match=r"^Invalid frame type selection$"):
+            motor_test_model.update_frame_type_by_key("plus")
+
+    def test_key_for_unavailable_type_is_rejected_with_exact_message(self, motor_test_model) -> None:
+        """
+        A numeric key with no matching type is rejected and names the key.
+
+        GIVEN: The current class offers no type 7
+        WHEN: The user selects key "7"
+        THEN: A ValidationError names key 7
+        """
+        _use_layouts(motor_test_model, _quad_layouts())
+        motor_test_model.flight_controller.fc_parameters["FRAME_CLASS"] = 1
+
+        with pytest.raises(ValidationError, match=r"^Frame type 7 is not available for current frame class$"):
+            motor_test_model.update_frame_type_by_key("7")
+
+
+class TestMotorTestBatteryDisplayAndSafetyText:
+    """Battery readout text and safety message wording."""
+
+    def test_disabled_battery_monitor_shows_disabled_labels(self, motor_test_model) -> None:
+        """
+        With BATT_MONITOR 0, both readouts say disabled.
+
+        GIVEN: BATT_MONITOR is 0
+        WHEN: The battery display text is requested
+        THEN: Voltage and current read Disabled
+        """
+        motor_test_model.flight_controller.fc_parameters["BATT_MONITOR"] = 0
+
+        assert motor_test_model.get_battery_display_text() == ("Voltage: Disabled", "Current: Disabled")
+
+    def test_battery_readings_are_shown_with_two_decimals_and_units(self, motor_test_model) -> None:
+        """
+        Voltage and current are shown with two decimals and their units.
+
+        GIVEN: Battery 1 reports 12.4 V and 2.1 A
+        WHEN: The battery display text is requested
+        THEN: The text reads "Voltage: 12.40V" and "Current: 2.10A"
+        """
+        motor_test_model.flight_controller.get_battery_statuses.return_value = ({0: (12.4, 2.1)}, "")
+
+        assert motor_test_model.get_battery_display_text() == ("Voltage: 12.40V", "Current: 2.10A")
+
+    def test_nan_readings_are_shown_as_not_available(self, motor_test_model) -> None:
+        """
+        NaN voltage or current is shown as N/A for that value only.
+
+        GIVEN: Battery 1 reports NaN voltage and 2.1 A
+        WHEN: The battery display text is requested
+        THEN: Voltage reads N/A and current still shows its value
+        """
+        motor_test_model.flight_controller.get_battery_statuses.return_value = ({0: (float("nan"), 2.1)}, "")
+
+        assert motor_test_model.get_battery_display_text() == ("Voltage: N/A", "Current: 2.10A")
+
+    def test_missing_battery_status_is_shown_as_not_available(self, motor_test_model) -> None:
+        """
+        With no battery 1 telemetry, both readouts show N/A.
+
+        GIVEN: Monitoring is enabled but no battery 1 telemetry is reported
+        WHEN: The battery display text is requested
+        THEN: Voltage and current both read N/A
+        """
+        motor_test_model.flight_controller.get_battery_statuses.return_value = ({}, "")
+
+        assert motor_test_model.get_battery_display_text() == ("Voltage: N/A", "Current: N/A")
+
+    # pylint: disable=duplicate-code  # Exact-wording tests intentionally mirror the shipped message text
+    def test_battery_safety_message_gives_exact_guidance_and_reason(self, motor_test_model) -> None:
+        """
+        The battery safety message includes the guidance and the given reason.
+
+        GIVEN: A failure reason "voltage 9.0V below minimum"
+        WHEN: The battery safety message is requested
+        THEN: The exact guidance text is shown followed by the reason
+        """
+        expected = (
+            "Battery voltage is outside the safe range for motor testing.\n\n"
+            "Please:\n"
+            "• Connect a properly charged battery\n"
+            "• Ensure battery voltage is within the safe operating range\n"
+            "• Check BATT_ARM_VOLT and MOT_BAT_VOLT_MAX parameters\n\n"
+            "Reason: voltage 9.0V below minimum"
+        )
+
+        assert motor_test_model.get_battery_safety_message("voltage 9.0V below minimum") == expected
+
+    def test_first_test_safety_warning_has_exact_wording(self, motor_test_model) -> None:
+        """
+        The first-test warning lists the required precautions verbatim.
+
+        GIVEN: The user has not yet acknowledged the first test
+        WHEN: The safety warning is requested
+        THEN: The exact warning text is returned
+        """
+        expected = (
+            "IMPORTANT SAFETY WARNING:\n\n"
+            "• Propellers MUST be removed\n"
+            "• Vehicle MUST be secured\n"
+            "• Stay clear of rotating parts\n"
+            "• Emergency stop available at all times\n\n"
+            "Do you want to proceed with motor testing?"
+        )
+
+        assert motor_test_model.get_safety_warning_message() == expected
+        # pylint: enable=duplicate-code
+
+
+class TestMotorTestServoFunctionSwap:
+    """Swapping SERVOx_FUNCTION between two motors."""
+
+    def test_swapping_motors_exchanges_their_servo_functions(self, motor_test_model) -> None:
+        """
+        The servo functions of the expected and detected motors are exchanged.
+
+        GIVEN: Motor A is SERVO1 with function 33 and motor C is SERVO3 with function 34
+        WHEN: The user reports that C spun when A was tested
+        THEN: SERVO1 gets 34 and SERVO3 gets 33
+        """
+        motor_test_model._motor_labels = ["A", "B", "C", "D"]
+        motor_test_model._motor_numbers = [1, 2, 3, 4]
+        motor_test_model.flight_controller.fc_parameters.update({"SERVO1_FUNCTION": 33, "SERVO3_FUNCTION": 34})
+
+        motor_test_model.swap_motor_functions("A", "C")
+
+        assert motor_test_model.flight_controller.fc_parameters["SERVO1_FUNCTION"] == 34
+        assert motor_test_model.flight_controller.fc_parameters["SERVO3_FUNCTION"] == 33
+
+    def test_swapping_a_motor_with_itself_writes_nothing(self, motor_test_model) -> None:
+        """
+        Reporting the expected motor as detected changes nothing.
+
+        GIVEN: The expected and detected motor are both A
+        WHEN: The swap is requested
+        THEN: No parameter is written
+        """
+        motor_test_model.swap_motor_functions("A", "A")
+
+        motor_test_model.flight_controller.set_param.assert_not_called()
+
+    def test_unreadable_servo_function_is_reported_with_exact_message(self, motor_test_model) -> None:
+        """
+        A missing SERVO function stops the swap with the exact message.
+
+        GIVEN: SERVO3_FUNCTION is not on the flight controller
+        WHEN: The user swaps A and C
+        THEN: A ParameterError names both parameters and nothing is written
+        """
+        motor_test_model._motor_labels = ["A", "B", "C", "D"]
+        motor_test_model._motor_numbers = [1, 2, 3, 4]
+        motor_test_model.flight_controller.fc_parameters.update({"SERVO1_FUNCTION": 33})
+        motor_test_model.flight_controller.fc_parameters.pop("SERVO3_FUNCTION", None)
+
+        with pytest.raises(
+            ParameterError,
+            match=r"^Could not read parameters SERVO1_FUNCTION or SERVO3_FUNCTION from flight controller\.$",
+        ):
+            motor_test_model.swap_motor_functions("A", "C")
+
+        motor_test_model.flight_controller.set_param.assert_not_called()
+
+    def test_unknown_motor_label_is_rejected_with_exact_message(self, motor_test_model) -> None:
+        """
+        A motor label that is not in the layout is rejected.
+
+        GIVEN: The layout has labels A to D
+        WHEN: The user swaps A with Z
+        THEN: A ValidationError with the exact message is raised
+        """
+        motor_test_model._motor_labels = ["A", "B", "C", "D"]
+
+        with pytest.raises(ValidationError, match=r"^Invalid motor labels provided for swapping\.$"):
+            motor_test_model.swap_motor_functions("A", "Z")
+
+    def test_swap_logs_the_exact_info_message(self, motor_test_model) -> None:
+        """
+        The swap logs which motors and parameters were exchanged.
+
+        GIVEN: Motors A and C with readable SERVO functions
+        WHEN: The swap is performed
+        THEN: The info message names both motors and parameters
+        """
+        motor_test_model._motor_labels = ["A", "B", "C", "D"]
+        motor_test_model._motor_numbers = [1, 2, 3, 4]
+        motor_test_model.flight_controller.fc_parameters.update({"SERVO1_FUNCTION": 33, "SERVO3_FUNCTION": 34})
+
+        with patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_info") as mock_info:
+            motor_test_model.swap_motor_functions("A", "C")
+
+        mock_info.assert_any_call(
+            "Swapping motor %(exp)s (%(p1)s) with motor %(det)s (%(p2)s)",
+            {"exp": "A", "det": "C", "p1": "SERVO1_FUNCTION", "p2": "SERVO3_FUNCTION"},
+        )
+
+
+class TestMotorTestRunAndEmergencyStopEvents:
+    """Test execution using stored settings, status events, and emergency stop."""
+
+    def test_single_motor_run_uses_stored_settings_and_reports_command_sent(self, motor_test_model_with_json_data) -> None:
+        """
+        A single motor run uses the saved throttle and whole-second duration and reports the motor.
+
+        GIVEN: Saved throttle 30% and duration 2.5 seconds
+        WHEN: The user runs the first motor in the test sequence
+        THEN: The flight controller receives 30% for 2 seconds and the callback reports that motor
+        """
+        model = motor_test_model_with_json_data
+        model.set_test_throttle_pct(30)
+        model.set_test_duration_s(2.5)
+        motor_output = model.motor_numbers[0]
+        events: list[tuple[int, MotorStatusEvent]] = []
+
+        model.run_single_motor_test(0, motor_output, lambda number, event: events.append((number, event)))
+
+        model.flight_controller.test_motor.assert_called_once_with(0, "A", motor_output, 30, 2)
+        assert events == [(motor_output, MotorStatusEvent.COMMAND_SENT)]
+
+    def test_all_motors_run_reports_every_motor_as_command_sent(self, motor_test_model_with_json_data) -> None:
+        """
+        Running all motors reports each motor number once.
+
+        GIVEN: A layout with four motors and saved settings
+        WHEN: The user runs all motors
+        THEN: All motors are commanded and the callback reports 1 to 4 as command sent
+        """
+        model = motor_test_model_with_json_data
+        model.set_test_throttle_pct(40)
+        model.set_test_duration_s(3)
+        events: list[tuple[int, MotorStatusEvent]] = []
+
+        model.run_all_motors_test(lambda number, event: events.append((number, event)))
+
+        model.flight_controller.test_all_motors.assert_called_once_with(4, 40, 3)
+        assert events == [(n, MotorStatusEvent.COMMAND_SENT) for n in range(1, 5)]
+
+    def test_sequential_run_commands_motors_from_one_and_reports_each(self, motor_test_model_with_json_data) -> None:
+        """
+        A sequential run starts at motor 1 and reports each motor.
+
+        GIVEN: A layout with four motors and saved settings
+        WHEN: The user runs the sequence
+        THEN: The flight controller gets start 1, count 4, and the callback reports 1 to 4
+        """
+        model = motor_test_model_with_json_data
+        model.set_test_throttle_pct(25)
+        model.set_test_duration_s(4)
+        events: list[tuple[int, MotorStatusEvent]] = []
+
+        model.run_sequential_motor_test(lambda number, event: events.append((number, event)))
+
+        model.flight_controller.test_motors_in_sequence.assert_called_once_with(1, 4, 25, 4)
+        assert events == [(n, MotorStatusEvent.COMMAND_SENT) for n in range(1, 5)]
+
+    def test_emergency_stop_reports_stop_sent_for_every_motor(self, motor_test_model_with_json_data) -> None:
+        """
+        Emergency stop halts all motors and reports each as stop sent.
+
+        GIVEN: A layout with four motors
+        WHEN: The user presses emergency stop
+        THEN: stop_all_motors is called and each motor reports STOP_SENT
+        """
+        model = motor_test_model_with_json_data
+        events: list[tuple[int, MotorStatusEvent]] = []
+
+        model.emergency_stop_motors(lambda number, event: events.append((number, event)))
+
+        model.flight_controller.stop_all_motors.assert_called_once_with()
+        assert events == [(n, MotorStatusEvent.STOP_SENT) for n in range(1, 5)]
+
+    def test_emergency_stop_without_callback_still_stops_motors(self, motor_test_model_with_json_data) -> None:
+        """
+        Emergency stop works without a status listener.
+
+        GIVEN: No status callback
+        WHEN: The user presses emergency stop
+        THEN: The motors are stopped without error
+        """
+        motor_test_model_with_json_data.emergency_stop_motors()
+
+        motor_test_model_with_json_data.flight_controller.stop_all_motors.assert_called_once_with()
+
+    def test_failed_emergency_stop_raises_with_controller_message_and_reports_nothing(
+        self, motor_test_model_with_json_data
+    ) -> None:
+        """
+        A failed stop raises with the controller's text and emits no stop events.
+
+        GIVEN: The flight controller reports the stop failed with "link lost"
+        WHEN: The user presses emergency stop
+        THEN: MotorTestExecutionError carries "link lost" and no motor is reported as stopped
+        """
+        model = motor_test_model_with_json_data
+        model.flight_controller.stop_all_motors.return_value = (False, "link lost")
+        events: list[tuple[int, MotorStatusEvent]] = []
+
+        with pytest.raises(MotorTestExecutionError, match="link lost"):
+            model.emergency_stop_motors(lambda number, event: events.append((number, event)))
+
+        assert not events
+
+    def test_test_motor_rejects_duration_outside_one_to_sixty_with_exact_message(
+        self, motor_test_model_with_json_data
+    ) -> None:
+        """
+        Durations outside 1 to 60 seconds are rejected with the exact range message.
+
+        GIVEN: A valid motor and sequence
+        WHEN: The user tests with a duration of 0 seconds, then 61 seconds
+        THEN: Each request raises a ValidationError naming the duration and range
+        """
+        model = motor_test_model_with_json_data
+        motor_output = model.motor_numbers[0]
+
+        with pytest.raises(ValidationError, match=r"^Invalid test duration 0 \(valid range: 1-60\)$"):
+            model.test_motor(0, motor_output, 50, 0)
+        with pytest.raises(ValidationError, match=r"^Invalid test duration 61 \(valid range: 1-60\)$"):
+            model.test_motor(0, motor_output, 50, 61)
+
+        model.flight_controller.test_motor.assert_not_called()
+
+    def test_test_motor_rejects_throttle_outside_one_to_hundred_with_exact_message(
+        self, motor_test_model_with_json_data
+    ) -> None:
+        """
+        Throttle outside 1 to 100 percent is rejected with the exact range message.
+
+        GIVEN: A valid motor and sequence
+        WHEN: The user tests with throttle 0
+        THEN: A ValidationError names the throttle and range
+        """
+        model = motor_test_model_with_json_data
+
+        with pytest.raises(ValidationError, match=r"^Invalid throttle percentage 0 \(valid range: 1-100\)$"):
+            model.test_motor(0, model.motor_numbers[0], 0, 2)
+
+        model.flight_controller.test_motor.assert_not_called()
+
+    def test_test_motor_rejects_sequence_number_outside_layout_with_exact_message(
+        self, motor_test_model_with_json_data
+    ) -> None:
+        """
+        A sequence number outside the layout is rejected with the valid range.
+
+        GIVEN: A layout with four motors
+        WHEN: The user tests sequence number 4
+        THEN: A ValidationError states the valid range 0 to 3
+        """
+        with pytest.raises(ValidationError, match=r"^Invalid test sequence number 4 \(valid range: 0-3\)$"):
+            motor_test_model_with_json_data.test_motor(4, 1, 50, 2)
+
+
+NAN = float("nan")
+
+
+def _hexa_plus_layout() -> dict[str, Any]:
+    """One HEXA frame type with four motors, used to exercise frame class changes."""
+    return {
+        "Class": 2,
+        "ClassName": "HEXA",
+        "Type": 0,
+        "TypeName": "Plus",
+        "motors": [{"Number": number, "TestOrder": number, "Rotation": "CW"} for number in range(1, 5)],
+    }
+
+
+def _configure_layout(model: MotorTestDataModel, layouts: list[dict[str, Any]], frame_class: int, frame_type: int) -> None:
+    """Install the layouts and configure the frame, bypassing the same-frame early return."""
+    _use_layouts(model, layouts)
+    model._frame_class = -1
+    model._configure_frame_layout(frame_class, frame_type)
+
+
+def _single_record(caplog: pytest.LogCaptureFixture, message: str) -> LogRecord:
+    """Return the only captured log record whose formatted message matches exactly."""
+    matches = [record for record in caplog.records if record.getMessage() == message]
+    assert len(matches) == 1, f"expected one record for {message!r}, captured: {caplog.messages}"
+    return matches[0]
+
+
+class TestMotorTestMotorDataLoadingMessages:
+    """Motor data loading reports its outcome with exact messages and payloads."""
+
+    def test_failed_motor_data_load_logs_exact_error_and_clears_data(self, motor_test_model, caplog) -> None:
+        """
+        A motor data file that cannot be loaded is reported as an error.
+
+        GIVEN: The motor data loader returns no data
+        WHEN: The motor data is loaded
+        THEN: An error with the exact text is logged and the motor data is empty
+        """
+        caplog.set_level("DEBUG")
+        with patch.object(motor_test_model._motor_data_loader, "load_json_data", return_value={}):
+            motor_test_model._load_motor_data()
+
+        record = _single_record(caplog, "Failed to load motor test data from AP_Motors_test.json")
+        assert record.levelname == "ERROR"
+        assert motor_test_model._motor_data == {}
+
+    def test_successful_motor_data_load_logs_layout_count_payload(self, motor_test_model, caplog) -> None:
+        """
+        A successful motor data load reports how many layouts it found.
+
+        GIVEN: A motor data file with two layouts
+        WHEN: The motor data is loaded
+        THEN: A debug message reports the layout count in its payload
+        """
+        caplog.set_level("DEBUG")
+        with patch.object(motor_test_model._motor_data_loader, "load_json_data", return_value={"layouts": _quad_layouts()}):
+            motor_test_model._load_motor_data()
+
+        record = _single_record(caplog, "Successfully loaded motor test data with 2 layouts")
+        assert record.levelname == "DEBUG"
+        assert record.args == {"layouts": 2}
+
+    def test_motor_data_exception_logs_error_text_and_clears_data(self, motor_test_model, caplog) -> None:
+        """
+        An exception while loading motor data is logged with its text and clears the data.
+
+        GIVEN: The motor data loader raises an OSError
+        WHEN: The motor data is loaded
+        THEN: An error with the exception text is logged and the motor data is empty
+        """
+        caplog.set_level("DEBUG")
+        with patch.object(motor_test_model._motor_data_loader, "load_json_data", side_effect=OSError("disk unreadable")):
+            motor_test_model._load_motor_data()
+
+        record = _single_record(caplog, "Error loading motor test data: disk unreadable")
+        assert record.levelname == "ERROR"
+        assert record.args == {"error": "disk unreadable"}
+        assert motor_test_model._motor_data == {}
+
+
+class TestMotorTestFrameLayoutConfiguration:
+    """Frame layout configuration derives motor labels, numbers, and directions from the layout."""
+
+    def test_unmatched_frame_class_zero_logs_error_and_leaves_no_motors(self, motor_test_model, caplog) -> None:
+        """
+        An unmatched frame class 0 is logged as an error without raising.
+
+        GIVEN: Motor data without a configuration for frame class 0
+        WHEN: Frame class 0 with type 1 is configured
+        THEN: An error with the exact text is logged and the motor count is zero
+        """
+        caplog.set_level("DEBUG")
+        _use_layouts(motor_test_model, _quad_layouts())
+
+        motor_test_model._configure_frame_layout(0, 1)
+
+        record = _single_record(caplog, "No motor configuration found for frame class 0 and type 1")
+        assert record.levelname == "ERROR"
+        assert record.args == (0, 1), "the frame class and type are passed as the message arguments"
+        assert motor_test_model.motor_count == 0
+        assert motor_test_model.frame_class == 0
+        assert motor_test_model.frame_type == 1
+
+    def test_unmatched_nonzero_frame_raises_runtime_error_with_exact_text(self, motor_test_model) -> None:
+        """
+        An unmatched non-zero frame raises a RuntimeError with the full message.
+
+        GIVEN: Motor data without a configuration for frame class 9 and type 9
+        WHEN: That frame is configured
+        THEN: A RuntimeError with the exact text is raised
+        """
+        _use_layouts(motor_test_model, _quad_layouts())
+
+        with pytest.raises(RuntimeError) as exc_info:
+            motor_test_model._configure_frame_layout(9, 9)
+
+        assert str(exc_info.value) == "No motor configuration found for frame class 9 and type 9"
+
+    def test_configured_frame_logs_debug_payload_with_motor_count(self, motor_test_model, caplog) -> None:
+        """
+        A configured frame logs its class, type and motor count.
+
+        GIVEN: Motor data with the QUAD Plus layout
+        WHEN: Frame class 1 with type 0 is configured
+        THEN: A debug message with the exact payload reports two motors
+        """
+        caplog.set_level("DEBUG")
+        _configure_layout(motor_test_model, _quad_layouts(), 1, 0)
+
+        record = _single_record(caplog, "Frame configuration updated: Class=1, Type=0, Motors=2")
+        assert record.levelname == "DEBUG"
+        assert record.args == {"class": 1, "type": 0, "motors": 2}
+
+    def test_motor_labels_continue_past_z_with_double_letter_labels(self, motor_test_model) -> None:
+        """
+        Motor labels continue from Z to AA and AB for motors beyond the 26th.
+
+        GIVEN: A layout with 28 motors
+        WHEN: The frame is configured
+        THEN: Labels run A to Z and then AA and AB
+        """
+        motors = [{"Number": number, "TestOrder": number, "Rotation": "CW"} for number in range(1, 29)]
+        layout = {"Class": 3, "ClassName": "OCTA", "Type": 0, "TypeName": "Plus", "motors": motors}
+
+        _configure_layout(motor_test_model, [layout], 3, 0)
+
+        assert motor_test_model.motor_count == 28
+        assert motor_test_model.motor_labels[0] == "A"
+        assert motor_test_model.motor_labels[25] == "Z"
+        assert motor_test_model.motor_labels[26] == "AA"
+        assert motor_test_model.motor_labels[27] == "AB"
+
+    def test_motor_numbers_and_directions_follow_test_order(self, motor_test_model) -> None:
+        """
+        Motor numbers and rotations are ordered by their test order.
+
+        GIVEN: A layout whose motor 4 is tested second and motor 2 first
+        WHEN: The frame is configured
+        THEN: Motor numbers and directions are sorted by test order and test_order is zero based
+        """
+        layout = {
+            "Class": 1,
+            "ClassName": "QUAD",
+            "Type": 5,
+            "TypeName": "Custom",
+            "motors": [
+                {"Number": 4, "TestOrder": 2, "Rotation": "CCW"},
+                {"Number": 2, "TestOrder": 1, "Rotation": "CW"},
+            ],
+        }
+
+        _configure_layout(motor_test_model, [layout], 1, 5)
+
+        assert motor_test_model.motor_numbers == [2, 4]
+        assert motor_test_model.motor_directions == ["CW", "CCW"]
+        assert motor_test_model.test_order(1) == 1
+        assert motor_test_model.test_order(2) == 0
+
+    def test_test_order_beyond_motor_count_is_excluded_from_numbering(self, motor_test_model) -> None:
+        """
+        A test order larger than the motor count does not assign a motor slot.
+
+        GIVEN: A two-motor layout whose second motor has test order 3
+        WHEN: The frame is configured
+        THEN: Only the motor with test order 2 is numbered and the other slot stays empty
+        """
+        layout = {
+            "Class": 1,
+            "ClassName": "QUAD",
+            "Type": 5,
+            "TypeName": "Custom",
+            "motors": [
+                {"Number": 5, "TestOrder": 2, "Rotation": "CW"},
+                {"Number": 6, "TestOrder": 3, "Rotation": "CCW"},
+            ],
+        }
+
+        _configure_layout(motor_test_model, [layout], 1, 5)
+
+        assert motor_test_model.motor_numbers == [0, 5]
+        assert motor_test_model.motor_directions == ["", "CW"]
+
+
+class TestMotorTestTestOrderLookup:
+    """Test order lookup accepts exactly the configured motor numbers."""
+
+    def test_test_order_accepts_first_and_last_motor_numbers(self, motor_test_model) -> None:
+        """
+        Test order lookup works for the first and last configured motors.
+
+        GIVEN: A configured QUAD X frame with four motors
+        WHEN: The test order of motors 1 and 4 is requested
+        THEN: Zero based test orders 0 and 3 are returned
+        """
+        _configure_layout(motor_test_model, _quad_layouts(), 1, 1)
+
+        assert motor_test_model.test_order(1) == 0
+        assert motor_test_model.test_order(4) == 3
+
+    def test_test_order_rejects_motor_numbers_outside_configured_range(self, motor_test_model) -> None:
+        """
+        Test order lookup rejects motor numbers below one or above the motor count.
+
+        GIVEN: A configured QUAD X frame with four motors
+        WHEN: The test order of motor 0 or motor 5 is requested
+        THEN: A ValueError with the exact message is raised
+        """
+        _configure_layout(motor_test_model, _quad_layouts(), 1, 1)
+
+        with pytest.raises(ValueError, match=r"^Invalid motor number: 0$"):
+            motor_test_model.test_order(0)
+        with pytest.raises(ValueError, match=r"^Invalid motor number: 5$"):
+            motor_test_model.test_order(5)
+
+
+class TestMotorTestConnectionRequirementsForFrameUpdates:
+    """Frame and connection checks report exact messages and only run with a connection."""
+
+    def test_update_frame_configuration_without_master_raises_exact_text(self, motor_test_model) -> None:
+        """
+        Frame updates need a live connection, even when parameters were read earlier.
+
+        GIVEN: A flight controller with parameters but no master connection
+        WHEN: A frame configuration update is requested
+        THEN: A FlightControllerConnectionError with the exact text is raised
+        """
+        motor_test_model.flight_controller.master = None
+
+        with pytest.raises(FlightControllerConnectionError) as exc_info:
+            motor_test_model.update_frame_configuration(1, 0)
+
+        assert str(exc_info.value) == "Flight controller connection required for frame configuration update"
+
+    def test_update_frame_configuration_without_parameters_raises_exact_text(self, motor_test_model) -> None:
+        """
+        Frame updates need flight controller parameters to be loaded.
+
+        GIVEN: A connected flight controller with no parameters loaded
+        WHEN: A frame configuration update is requested
+        THEN: A FlightControllerConnectionError with the exact text is raised
+        """
+        motor_test_model.flight_controller.fc_parameters = {}
+
+        with pytest.raises(FlightControllerConnectionError) as exc_info:
+            motor_test_model.update_frame_configuration(1, 0)
+
+        assert str(exc_info.value) == "Flight controller connection required for frame configuration update"
+
+    def test_update_frame_configuration_motor_data_failure_is_wrapped(self, motor_test_model, caplog) -> None:
+        """
+        Unexpected failures while recalculating motors are wrapped with the exact text.
+
+        GIVEN: Motor data whose layouts value cannot be iterated
+        WHEN: The frame configuration is updated
+        THEN: A FrameConfigurationError with the exact text is raised and logged as an error
+        """
+        motor_test_model._motor_data_loader.data = {"layouts": None}
+
+        with pytest.raises(FrameConfigurationError) as exc_info:
+            motor_test_model.update_frame_configuration(1, 1)
+
+        expected = "Failed to update frame configuration: 'NoneType' object is not iterable"
+        assert str(exc_info.value) == expected
+        assert _single_record(caplog, expected).levelname == "ERROR"
+
+    def test_update_flight_controller_read_without_master_raises_exact_text(self, motor_test_model, caplog) -> None:
+        """
+        Reading the frame from a disconnected controller is an error with the exact text.
+
+        GIVEN: A flight controller with no master connection
+        WHEN: The frame configuration is refreshed from the flight controller
+        THEN: A RuntimeError with the exact text is raised and logged
+        """
+        caplog.set_level("DEBUG")
+        motor_test_model.flight_controller.master = None
+
+        with pytest.raises(RuntimeError) as exc_info:
+            motor_test_model._update_frame_configuration()
+
+        message = "Flight controller connection required for motor testing"
+        assert str(exc_info.value) == message
+        assert _single_record(caplog, message).levelname == "ERROR"
+
+    def test_update_flight_controller_read_without_parameters_raises(self, motor_test_model) -> None:
+        """
+        Reading the frame needs loaded parameters, not just a master connection.
+
+        GIVEN: A connected master with an empty parameter dictionary
+        WHEN: The frame configuration is refreshed from the flight controller
+        THEN: A RuntimeError with the exact text is raised
+        """
+        motor_test_model.flight_controller.fc_parameters = {}
+
+        with pytest.raises(RuntimeError, match=r"^Flight controller connection required for motor testing$"):
+            motor_test_model._update_frame_configuration()
+
+    def test_frame_read_failure_is_logged_with_error_text_and_reraised(self, motor_test_model, caplog) -> None:
+        """
+        A failure reading the frame info is logged with its text and re-raised.
+
+        GIVEN: The flight controller fails to report the frame info
+        WHEN: The frame configuration is refreshed
+        THEN: The original exception is re-raised and an error with its text is logged
+        """
+        caplog.set_level("DEBUG")
+        motor_test_model.flight_controller.get_frame_info.side_effect = OSError("link lost")
+
+        with pytest.raises(OSError, match="link lost"):
+            motor_test_model._update_frame_configuration()
+
+        record = _single_record(caplog, "Failed to update frame configuration: link lost")
+        assert record.levelname == "ERROR"
+        assert record.args == {"error": "link lost"}
+
+    def test_set_parameter_without_master_raises_exact_connection_text(self, motor_test_model) -> None:
+        """
+        Parameter writes need a live connection.
+
+        GIVEN: A flight controller with no master connection
+        WHEN: A parameter is set
+        THEN: A FlightControllerConnectionError with the exact text is raised and nothing is written
+        """
+        motor_test_model.flight_controller.master = None
+
+        with pytest.raises(FlightControllerConnectionError) as exc_info:
+            motor_test_model.set_parameter("BATT_ARM_VOLT", 11.0)
+
+        assert str(exc_info.value) == "No flight controller connection available"
+        motor_test_model.flight_controller.set_param.assert_not_called()
+
+
+class TestMotorTestParameterRangeAndVerification:
+    """Parameter writes validate ranges and verify readback with exact messages."""
+
+    def test_mot_spin_min_above_one_is_rejected_with_exact_text(self, motor_test_model) -> None:
+        """
+        MOT_SPIN_MIN values above 1.0 are rejected before anything is written.
+
+        GIVEN: A request to set MOT_SPIN_MIN to 1.5
+        WHEN: The parameter is set
+        THEN: A ValidationError with the exact range text is raised and nothing is written
+        """
+        with pytest.raises(ValidationError) as exc_info:
+            motor_test_model.set_parameter("MOT_SPIN_MIN", 1.5)
+
+        assert str(exc_info.value) == "MOT_SPIN_MIN value 1.500 is outside valid range (0.0 - 1.0)"
+        motor_test_model.flight_controller.set_param.assert_not_called()
+
+    def test_mot_spin_arm_below_zero_is_rejected_with_exact_text(self, motor_test_model) -> None:
+        """
+        MOT_SPIN_ARM values below 0.0 are rejected before anything is written.
+
+        GIVEN: A request to set MOT_SPIN_ARM to -0.1
+        WHEN: The parameter is set
+        THEN: A ValidationError with the exact range text is raised
+        """
+        with pytest.raises(ValidationError) as exc_info:
+            motor_test_model.set_parameter("MOT_SPIN_ARM", -0.1)
+
+        assert str(exc_info.value) == "MOT_SPIN_ARM value -0.100 is outside valid range (0.0 - 1.0)"
+
+    def test_spin_range_check_applies_only_to_spin_parameters(self, motor_test_model) -> None:
+        """
+        Values above 1.0 are not range-checked for other parameters.
+
+        GIVEN: A parameter outside the spin family with no documented limits
+        WHEN: A value of 1.5 is written
+        THEN: The write is accepted and the value is read back
+        """
+        motor_test_model.set_parameter("BATT_ARM_VOLT", 1.5)
+
+        assert motor_test_model.flight_controller.fc_parameters["BATT_ARM_VOLT"] == 1.5
+
+    def test_value_below_documented_minimum_reports_exact_text(self, motor_test_model) -> None:
+        """
+        A value below the documented minimum is rejected with the minimum in the text.
+
+        GIVEN: MOT_SPIN_MIN documented with a minimum of 0.07
+        WHEN: A value of 0.01 is written
+        THEN: A ValidationError states the value and the exact minimum
+        """
+        with pytest.raises(ValidationError) as exc_info:
+            motor_test_model.set_parameter("MOT_SPIN_MIN", 0.01)
+
+        assert str(exc_info.value) == "MOT_SPIN_MIN value 0.010 is smaller than 0.070000"
+
+    def test_value_above_documented_maximum_reports_exact_text(self, motor_test_model) -> None:
+        """
+        A value above the documented maximum is rejected with the maximum in the text.
+
+        GIVEN: MOT_SPIN_MIN documented with a maximum of 0.5
+        WHEN: A value of 0.9 is written
+        THEN: A ValidationError states the value and the exact maximum
+        """
+        with pytest.raises(ValidationError) as exc_info:
+            motor_test_model.set_parameter("MOT_SPIN_MIN", 0.9)
+
+        assert str(exc_info.value) == "MOT_SPIN_MIN value 0.900 is greater than 0.500000"
+
+    def test_successful_write_logs_info_with_three_decimal_value(self, motor_test_model, caplog) -> None:
+        """
+        A verified write logs its success with the value at three decimals.
+
+        GIVEN: A parameter that reads back as written
+        WHEN: The parameter is set
+        THEN: An info message with the exact text and payload is logged
+        """
+        caplog.set_level("DEBUG")
+
+        motor_test_model.set_parameter("BATT_ARM_VOLT", 11.0)
+
+        record = _single_record(caplog, "Parameter BATT_ARM_VOLT set to 11.000")
+        assert record.levelname == "INFO"
+        assert record.args == {"param": "BATT_ARM_VOLT", "value": 11.0}
+
+    def test_readback_difference_of_exactly_one_thousandth_fails_verification(self, motor_test_model, caplog) -> None:
+        """
+        A readback exactly 0.001 away from the written value fails verification.
+
+        GIVEN: A parameter written as 0.0 that reads back as 0.001
+        WHEN: The parameter is set
+        THEN: A ParameterError with the expected and actual values is raised and nothing is logged as set
+        """
+        caplog.set_level("DEBUG")
+        motor_test_model.flight_controller.fetch_param.side_effect = None
+        motor_test_model.flight_controller.fetch_param.return_value = 0.001
+
+        with pytest.raises(ParameterError) as exc_info:
+            motor_test_model.set_parameter("BATT_ARM_VOLT", 0.0)
+
+        assert str(exc_info.value) == "Parameter BATT_ARM_VOLT verification failed: expected 0.000, got 0.001"
+        assert not [record for record in caplog.records if record.getMessage().startswith("Parameter BATT_ARM_VOLT set")]
+
+    def test_readback_difference_below_one_thousandth_passes_verification(self, motor_test_model) -> None:
+        """
+        A readback less than 0.001 away from the written value is accepted.
+
+        GIVEN: A parameter written as 0.0 that reads back as 0.0005
+        WHEN: The parameter is set
+        THEN: The write is accepted without raising
+        """
+        motor_test_model.flight_controller.fetch_param.side_effect = None
+        motor_test_model.flight_controller.fetch_param.return_value = 0.0005
+
+        motor_test_model.set_parameter("BATT_ARM_VOLT", 0.0)
+
+    def test_missing_readback_reports_none_in_verification_text(self, motor_test_model) -> None:
+        """
+        A parameter that cannot be read back reports the actual value as None.
+
+        GIVEN: A parameter whose readback returns no value
+        WHEN: The parameter is set to 11.0
+        THEN: A ParameterError states the expected value and actual None
+        """
+        motor_test_model.flight_controller.fetch_param.side_effect = None
+        motor_test_model.flight_controller.fetch_param.return_value = None
+
+        with pytest.raises(ParameterError) as exc_info:
+            motor_test_model.set_parameter("BATT_ARM_VOLT", 11.0)
+
+        assert str(exc_info.value) == "Parameter BATT_ARM_VOLT verification failed: expected 11.000, got None"
+
+    def test_rejected_write_reports_controller_error_text(self, motor_test_model) -> None:
+        """
+        A write the controller rejects reports the controller's error text.
+
+        GIVEN: The flight controller rejects the parameter write
+        WHEN: The parameter is set
+        THEN: A ParameterError with the exact controller error text is raised
+        """
+        motor_test_model.flight_controller.set_param.side_effect = None
+        motor_test_model.flight_controller.set_param.return_value = (False, "bad ack")
+
+        with pytest.raises(ParameterError) as exc_info:
+            motor_test_model.set_parameter("BATT_ARM_VOLT", 11.0)
+
+        assert str(exc_info.value) == "Failed to set parameter BATT_ARM_VOLT: bad ack"
+
+    def test_unexpected_write_exception_is_wrapped_and_logged(self, motor_test_model, caplog) -> None:
+        """
+        An unexpected exception while writing is wrapped with the parameter name and logged.
+
+        GIVEN: The flight controller raises an OSError while writing
+        WHEN: The parameter is set
+        THEN: A ParameterError with the exact text is raised and logged as an error
+        """
+        caplog.set_level("DEBUG")
+        motor_test_model.flight_controller.set_param.side_effect = OSError("serial lost")
+
+        with pytest.raises(ParameterError) as exc_info:
+            motor_test_model.set_parameter("BATT_ARM_VOLT", 11.0)
+
+        expected = "Error setting parameter BATT_ARM_VOLT: serial lost"
+        assert str(exc_info.value) == expected
+        assert _single_record(caplog, expected).levelname == "ERROR"
+
+    def test_reboot_required_parameter_passes_callback_and_sleep_to_reconnect(self, motor_test_model) -> None:
+        """
+        A parameter that requires a reboot forwards the progress callback and sleep time.
+
+        GIVEN: MOT_SPIN_ARM documented as requiring a reboot
+        WHEN: It is set to 0.2 with a progress callback and extra sleep of 5 seconds
+        THEN: The reconnect receives the same callback and sleep time
+        """
+        progress_callback = MagicMock()
+
+        motor_test_model.set_parameter("MOT_SPIN_ARM", 0.2, progress_callback, 5)
+
+        motor_test_model.flight_controller.reset_and_reconnect.assert_called_once_with(progress_callback, 5)
+
+    def test_parameter_without_reboot_requirement_does_not_reconnect(self, motor_test_model) -> None:
+        """
+        A parameter that does not require a reboot never triggers a reconnect.
+
+        GIVEN: MOT_SPIN_MIN documented as not requiring a reboot
+        WHEN: It is set to 0.2
+        THEN: No reconnect is requested
+        """
+        motor_test_model.set_parameter("MOT_SPIN_MIN", 0.2)
+
+        motor_test_model.flight_controller.reset_and_reconnect.assert_not_called()
+
+
+class TestMotorTestSpinMarginBoundaries:
+    """MOT_SPIN_ARM and MOT_SPIN_MIN keep a 0.02 margin, inclusive at the boundary."""
+
+    def test_spin_arm_exactly_at_margin_below_spin_min_is_accepted(self, motor_test_model) -> None:
+        """
+        MOT_SPIN_ARM may sit exactly 0.02 below MOT_SPIN_MIN.
+
+        GIVEN: MOT_SPIN_MIN of 0.3 on the flight controller
+        WHEN: MOT_SPIN_ARM is set to exactly 0.02 below it
+        THEN: The value is written
+        """
+        motor_test_model.flight_controller.fc_parameters["MOT_SPIN_MIN"] = 0.3
+        boundary = 0.3 - 0.02
+
+        motor_test_model.set_motor_spin_arm_value(boundary)
+
+        assert motor_test_model.flight_controller.fc_parameters["MOT_SPIN_ARM"] == boundary
+
+    def test_spin_arm_just_above_margin_is_rejected_with_exact_text(self, motor_test_model) -> None:
+        """
+        MOT_SPIN_ARM closer than 0.02 to MOT_SPIN_MIN is rejected with the current minimum.
+
+        GIVEN: MOT_SPIN_MIN of 0.3 on the flight controller
+        WHEN: MOT_SPIN_ARM is set to 0.001 above the margin boundary
+        THEN: A ValidationError with the exact text naming the current minimum is raised
+        """
+        motor_test_model.flight_controller.fc_parameters["MOT_SPIN_MIN"] = 0.3
+        boundary = 0.3 - 0.02
+
+        with pytest.raises(ValidationError) as exc_info:
+            motor_test_model.set_motor_spin_arm_value(boundary + 0.001)
+
+        assert str(exc_info.value) == "MOT_SPIN_ARM must stay at least 0.02 below MOT_SPIN_MIN (current 0.30)."
+        motor_test_model.flight_controller.set_param.assert_not_called()
+
+    def test_spin_arm_write_forwards_progress_callback_to_reconnect(self, motor_test_model) -> None:
+        """
+        Setting MOT_SPIN_ARM forwards the progress callback to the reconnect step.
+
+        GIVEN: MOT_SPIN_MIN of 0.15 and a progress callback
+        WHEN: MOT_SPIN_ARM is set to 0.12
+        THEN: The reconnect step receives the callback
+        """
+        progress_callback = MagicMock()
+
+        motor_test_model.set_motor_spin_arm_value(0.12, progress_callback)
+
+        motor_test_model.flight_controller.reset_and_reconnect.assert_called_once_with(progress_callback, 0)
+
+    def test_spin_min_exactly_at_margin_above_spin_arm_is_accepted(self, motor_test_model) -> None:
+        """
+        MOT_SPIN_MIN may sit exactly 0.02 above MOT_SPIN_ARM.
+
+        GIVEN: MOT_SPIN_ARM of 0.10 on the flight controller
+        WHEN: MOT_SPIN_MIN is set to exactly 0.02 above it
+        THEN: The value is written
+        """
+        boundary = 0.10 + 0.02
+
+        motor_test_model.set_motor_spin_min_value(boundary)
+
+        assert motor_test_model.flight_controller.fc_parameters["MOT_SPIN_MIN"] == boundary
+
+    def test_spin_min_just_below_margin_is_rejected_with_exact_text(self, motor_test_model) -> None:
+        """
+        MOT_SPIN_MIN closer than 0.02 to MOT_SPIN_ARM is rejected with the current arm value.
+
+        GIVEN: MOT_SPIN_ARM of 0.10 on the flight controller
+        WHEN: MOT_SPIN_MIN is set to 0.001 below the margin boundary
+        THEN: A ValidationError with the exact text naming the current arm value is raised
+        """
+        boundary = 0.10 + 0.02
+
+        with pytest.raises(ValidationError) as exc_info:
+            motor_test_model.set_motor_spin_min_value(boundary - 0.001)
+
+        assert str(exc_info.value) == "MOT_SPIN_MIN must be at least 0.02 higher than MOT_SPIN_ARM (current 0.10)."
+
+    def test_spin_min_without_spin_arm_reports_exact_text(self, motor_test_model) -> None:
+        """
+        MOT_SPIN_MIN cannot be validated when MOT_SPIN_ARM is unavailable.
+
+        GIVEN: A flight controller without MOT_SPIN_ARM
+        WHEN: MOT_SPIN_MIN is set
+        THEN: A ParameterError with the exact text is raised
+        """
+        del motor_test_model.flight_controller.fc_parameters["MOT_SPIN_ARM"]
+
+        with pytest.raises(ParameterError) as exc_info:
+            motor_test_model.set_motor_spin_min_value(0.2)
+
+        assert str(exc_info.value) == "MOT_SPIN_ARM must be available before updating MOT_SPIN_MIN."
