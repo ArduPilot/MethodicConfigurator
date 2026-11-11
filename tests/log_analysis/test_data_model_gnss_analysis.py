@@ -241,7 +241,7 @@ def test_default_registry_runs_receiver_analysis_and_event_schema_preserves_evid
     assert pair[1] is not None
     event = _warnings(pair[1].outcomes, "AERG.Spf")[0]
     exported = asdict(event) | {"step_info": None, "param_info": None}
-    schema_path = Path(__file__).parents[1] / "ardupilot_methodic_configurator/log_analysis/log_analysis_report_schema.json"
+    schema_path = Path(__file__).parents[2] / "ardupilot_methodic_configurator/log_analysis/log_analysis_report_schema.json"
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
     jsonschema.Draft202012Validator({"$ref": "#/$defs/analysis_outcome", "$defs": schema["$defs"]}).validate(exported)
     assert json.loads(json.dumps(exported))["evidence"] == {"status": 3.0}

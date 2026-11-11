@@ -1058,3 +1058,684 @@ def test_lean_angle_check_uses_historical_limits() -> None:
     assert len(outcomes) == 1
     assert outcomes[0].evidence is not None
     assert outcomes[0].evidence["saturated_seconds"] == pytest.approx(50.0)
+
+
+# Samples spaced 0.5 s apart keep every duration exact in binary floating point, so fractions can land on the
+# thresholds exactly: 101 samples give 100 intervals of 0.5 s, i.e. 50 s of armed time.
+HALF_SECOND = 0.5
+BOUNDARY_SAMPLES = 101
+
+
+def _leading(count: int, value: float, total: int, base: float = 0.0) -> np.ndarray:
+    """Return a series that holds ``value`` for the first ``count`` samples and ``base`` afterwards."""
+    series = np.full(total, base)
+    series[:count] = value
+    return series
+
+
+def _add_spaced_pid(
+    log: LogData, message: str, total: int, *, dmod: np.ndarray | None = None, flags: np.ndarray | None = None
+) -> None:
+    time_s = np.arange(total) * HALF_SECOND
+    log.add_message_columns(
+        message,
+        _array(
+            TimeUS=time_s,
+            Dmod=np.ones(total) if dmod is None else dmod,
+            Flags=np.zeros(total) if flags is None else flags,
+        ),
+    )
+
+
+def test_pd_sum_limit_active_for_exactly_ten_percent_of_armed_time_is_critical() -> None:
+    """
+    Ten percent of armed time is the inclusive threshold for a critical PD-sum finding.
+
+    GIVEN the PD-sum flag set for 5 s of a 50 s armed log
+    WHEN the analysis runs
+    THEN the finding is critical and reports exactly 10% saturation
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    _add_spaced_pid(log, "PIDP", BOUNDARY_SAMPLES, flags=_leading(10, 2.0, BOUNDARY_SAMPLES))
+
+    outcomes = _analyse(log, {"ATC_RAT_PIT_PDMX": 0.5})
+
+    assert [outcome.severity for outcome in outcomes] == ["critical"]
+    assert outcomes[0].evidence is not None
+    assert outcomes[0].evidence["saturated_percent"] == pytest.approx(10.0)
+
+
+def test_pd_sum_limit_active_for_less_than_ten_percent_of_armed_time_is_only_a_warning() -> None:
+    """
+    Saturation just below ten percent of armed time is only a warning.
+
+    GIVEN the PD-sum flag set for 4.5 s of a 50 s armed log
+    WHEN the analysis runs
+    THEN the finding is a warning rather than critical
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    _add_spaced_pid(log, "PIDP", BOUNDARY_SAMPLES, flags=_leading(9, 2.0, BOUNDARY_SAMPLES))
+
+    outcomes = _analyse(log, {"ATC_RAT_PIT_PDMX": 0.5})
+
+    assert [outcome.severity for outcome in outcomes] == ["warning"]
+
+
+def test_one_percent_saturation_is_reported_even_when_shorter_than_one_second() -> None:
+    """
+    A brief saturation that makes up one percent of armed time is reported.
+
+    GIVEN the PD-sum flag set for a single 0.5 s sample, which is exactly 1% of a 50 s armed log
+    WHEN the analysis runs
+    THEN the finding is reported because the percentage threshold is inclusive
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    _add_spaced_pid(log, "PIDP", BOUNDARY_SAMPLES, flags=_leading(1, 2.0, BOUNDARY_SAMPLES))
+
+    outcomes = _analyse(log, {"ATC_RAT_PIT_PDMX": 0.5})
+
+    assert [outcome.severity for outcome in outcomes] == ["warning"]
+
+
+@pytest.mark.parametrize(("saturated_samples", "reported"), [(1, False), (2, True)])
+def test_brief_saturation_is_only_reported_once_it_lasts_one_second(saturated_samples: int, reported: bool) -> None:
+    """
+    Saturation below one percent of armed time is reported only once it lasts at least one second.
+
+    GIVEN the PD-sum flag set for 0.5 s or 1.0 s of a 500 s armed log, which is 0.1% or 0.2% of the time
+    WHEN the analysis runs
+    THEN only the 1.0 s episode is reported
+    """
+    total = 1001
+    log = LogData(vehicle_type="ArduCopter")
+    _add_spaced_pid(log, "PIDP", total, flags=_leading(saturated_samples, 2.0, total))
+
+    outcomes = _analyse(log, {"ATC_RAT_PIT_PDMX": 0.5})
+
+    assert bool(outcomes) is reported
+
+
+def test_finding_timestamps_span_the_first_sample_to_the_end_of_the_saturated_interval() -> None:
+    """
+    Finding timestamps cover the whole saturated interval, not just its first sample.
+
+    GIVEN the PD-sum flag set for samples 10 to 19, spanning 5.0 s to 10.0 s
+    WHEN the analysis runs
+    THEN the finding starts at 5.0 s, ends at 10.0 s and reports 5.0 saturated seconds
+    """
+    flags = np.zeros(BOUNDARY_SAMPLES)
+    flags[10:20] = 2.0
+    log = LogData(vehicle_type="ArduCopter")
+    _add_spaced_pid(log, "PIDP", BOUNDARY_SAMPLES, flags=flags)
+
+    outcomes = _analyse(log, {"ATC_RAT_PIT_PDMX": 0.5})
+
+    assert len(outcomes) == 1
+    assert outcomes[0].timestamp_us == pytest.approx(5.0e6)
+    assert outcomes[0].end_timestamp_us == pytest.approx(10.0e6)
+    assert outcomes[0].evidence is not None
+    assert outcomes[0].evidence["saturated_seconds"] == pytest.approx(5.0)
+
+
+@pytest.mark.parametrize(("target_percent", "reported"), [(97.0, False), (99.0, True)])
+def test_rate_target_must_come_within_two_percent_of_the_envelope_to_count_as_limited(
+    target_percent: float, reported: bool
+) -> None:
+    """
+    Rate targets count as limited only when they reach 98% of the configured envelope.
+
+    GIVEN roll rate targets at 97% or 99% of ATC_RATE_R_MAX for half of the armed time
+    WHEN the analysis runs
+    THEN only the target at 99% of the envelope is reported
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    _add_rate(log, RDes=_window(0.5, target_percent))
+
+    outcomes = _analyse(log, {"ATC_RATE_R_MAX": 100.0})
+
+    assert bool(outcomes) is reported
+
+
+def test_yaw_rate_limit_is_reported_with_yaw_specific_evidence() -> None:
+    """
+    A yaw rate limit is reported on its own parameter, without roll or pitch evidence.
+
+    GIVEN yaw rate targets at ATC_RATE_Y_MAX for 30% of the time
+    WHEN the analysis runs
+    THEN the finding names ATC_RATE_Y_MAX, mentions Yaw and reports the single yaw limit
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    _add_rate(log, YDes=_window(0.3, 180.0))
+
+    outcomes = _analyse(log, {"ATC_RATE_Y_MAX": 180.0})
+
+    assert len(outcomes) == 1
+    assert outcomes[0].param_name == "ATC_RATE_Y_MAX"
+    assert "Yaw" in outcomes[0].message
+    assert outcomes[0].evidence is not None
+    assert outcomes[0].evidence["limit"] == pytest.approx(180.0)
+    assert "roll_limit" not in outcomes[0].evidence
+
+
+@pytest.mark.parametrize(
+    ("samples", "dmod", "expected_severity"),
+    [
+        (5, 0.4, "critical"),  # 5% of armed time with Dmod below 0.5 is the severe threshold
+        (4, 0.4, "warning"),  # 4% is below it
+        (5, 0.5, "warning"),  # Dmod exactly 0.5 is not below the severe Dmod threshold
+    ],
+)
+def test_slew_limiter_severity_follows_inclusive_thresholds(samples: int, dmod: float, expected_severity: str) -> None:
+    """
+    The slew limiter is critical only when severe Dmod reductions cover at least 5% of armed time.
+
+    GIVEN the roll slew limiter scaling P and D for 0.5 s per sample across a 50 s armed log
+    WHEN the number of severely reduced samples and their Dmod value change
+    THEN the severity follows the inclusive 5% and strict Dmod 0.5 thresholds
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    _add_spaced_pid(log, "PIDR", BOUNDARY_SAMPLES, dmod=_leading(samples, dmod, BOUNDARY_SAMPLES, base=1.0))
+
+    outcomes = _analyse(log, {"ATC_RAT_RLL_SMAX": 25.0})
+
+    assert [outcome.severity for outcome in outcomes] == [expected_severity]
+
+
+def test_slew_limiter_at_dmod_point_nine_is_not_a_reduction() -> None:
+    """
+    A Dmod of exactly 0.9 does not count as a slew-limited reduction.
+
+    GIVEN Dmod equal to 0.9 for the whole armed time on the roll axis
+    WHEN the analysis runs with ATC_RAT_RLL_SMAX enabled
+    THEN nothing is reported
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    _add_spaced_pid(log, "PIDR", BOUNDARY_SAMPLES, dmod=np.full(BOUNDARY_SAMPLES, 0.9))
+
+    assert not _analyse(log, {"ATC_RAT_RLL_SMAX": 25.0})
+
+
+def test_non_finite_slew_limit_is_treated_as_disabled() -> None:
+    """
+    A non-finite limiter value disables the check instead of producing a finding.
+
+    GIVEN a clearly reduced roll slew-limiter Dmod
+    WHEN ATC_RAT_RLL_SMAX is NaN
+    THEN nothing is reported
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    _add_spaced_pid(log, "PIDR", BOUNDARY_SAMPLES, dmod=_leading(20, 0.3, BOUNDARY_SAMPLES, base=1.0))
+
+    assert not _analyse(log, {"ATC_RAT_RLL_SMAX": float("nan")})
+
+
+@pytest.mark.parametrize(("roll_deg", "clipped"), [(29.6, True), (29.2, False)])
+def test_lean_angle_counts_as_clipped_only_within_half_a_degree_of_the_limit(roll_deg: float, clipped: bool) -> None:
+    """
+    Desired lean angles count as clipped only within half a degree of the configured limit.
+
+    GIVEN a desired roll of 29.6 or 29.2 degrees for half of the time with ATC_ANGLE_MAX at 30 degrees
+    WHEN the analysis runs in Stabilize mode
+    THEN only 29.6 degrees, which is within 0.5 degrees of the limit, is reported
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    _add_att(log, _window(0.5, roll_deg))
+    _add_modes(log, (0.0, STABILIZE))
+
+    outcomes = _analyse(log, {"ATC_ANGLE_MAX": 30.0})
+
+    assert bool(outcomes) is clipped
+
+
+def test_availability_explains_missing_messages_when_attitude_logging_is_already_enabled() -> None:
+    """
+    Missing attitude messages with attitude logging enabled point to the logging options, not LOG_BITMASK.
+
+    GIVEN no ATT, RATE or PID messages and LOG_BITMASK with the Fast Attitude bit set
+    WHEN availability is checked
+    THEN the analysis is unavailable with a warning and no LOG_BITMASK change is suggested
+    """
+    context = _context(
+        {"LOG_BITMASK": 1.0}, apm_doc={"LOG_BITMASK": {"fields": {"Bitmask": "0:Fast Attitude,1:Medium Attitude"}}}
+    )
+
+    result = AttitudeSaturationLogAvailabilityModel(LogData(vehicle_type="ArduCopter"), context).check()
+
+    assert result.available is False
+    assert result.state == LogAvailabilityState.WARNING
+    assert "logging enabled" in result.reason
+    assert len(result.issues) == 1
+    assert result.issues[0].param_name is None
+    assert result.issues[0].suggested_value is None
+
+
+def test_availability_without_bitmask_metadata_gives_a_generic_attitude_diagnosis() -> None:
+    """
+    Without LOG_BITMASK metadata the attitude diagnosis cannot suggest a bit to enable.
+
+    GIVEN no attitude messages and no LOG_BITMASK parameter or metadata
+    WHEN availability is checked
+    THEN the analysis is unavailable with a warning and no parameter change is suggested
+    """
+    result = AttitudeSaturationLogAvailabilityModel(LogData(vehicle_type="ArduCopter"), _context({})).check()
+
+    assert result.available is False
+    assert result.state == LogAvailabilityState.WARNING
+    assert len(result.issues) == 1
+    assert result.issues[0].param_name is None
+    assert result.issues[0].suggested_value is None
+
+
+def test_pid_logging_is_not_suggested_again_when_the_pid_bit_is_already_enabled() -> None:
+    """
+    A PID bit that is already enabled does not produce a LOG_BITMASK suggestion.
+
+    GIVEN ATT and RATE messages without PID messages and LOG_BITMASK already including the PID bit
+    WHEN availability is checked
+    THEN the user is told PID messages are missing but no LOG_BITMASK change is suggested
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    _add_att(log, np.zeros(SAMPLES))
+    _add_rate(log)
+    context = _context(
+        {"LOG_BITMASK": float(1 << 12)}, apm_doc={"LOG_BITMASK": {"fields": {"Bitmask": "0:Fast Attitude,12:PID"}}}
+    )
+
+    result = AttitudeSaturationLogAvailabilityModel(log, context).check()
+
+    assert result.available is True
+    assert len(result.issues) == 1
+    assert result.issues[0].param_name is None
+    assert result.issues[0].suggested_value is None
+
+
+def test_pid_logging_is_not_suggested_without_bitmask_value() -> None:
+    """
+    Without a LOG_BITMASK value the missing-PID warning gives no parameter suggestion.
+
+    GIVEN ATT and RATE messages without PID messages and no LOG_BITMASK parameter
+    WHEN availability is checked
+    THEN the user is warned about missing PID messages without a suggested LOG_BITMASK change
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    _add_att(log, np.zeros(SAMPLES))
+    _add_rate(log)
+
+    result = AttitudeSaturationLogAvailabilityModel(log, _context({})).check()
+
+    assert len(result.issues) == 1
+    assert result.issues[0].param_name is None
+    assert result.issues[0].suggested_value is None
+
+
+# Fast Attitude sits at bit 2 and Medium Attitude at bit 3 so that bit-shift mistakes change the outcome
+_BITMASK_DOC = {"LOG_BITMASK": {"fields": {"Bitmask": "2:Fast Attitude,3:Medium Attitude,12:PID"}}}
+_TELEMETRY_REASON = "Attitude telemetry (ATT, RATE, PID*) not logged but logging enabled; check the attitude logging options"
+
+
+def test_disabled_attitude_logging_suggests_the_medium_attitude_bit_with_full_guidance() -> None:
+    """
+    Disabled attitude logging gets a complete explanation and the Medium Attitude bit suggestion.
+
+    GIVEN no attitude messages and LOG_BITMASK with both attitude bits disabled
+    WHEN availability is checked
+    THEN the result is named, explains the disabled logging and suggests setting the Medium Attitude bit
+    """
+    context = _context({"LOG_BITMASK": 0.0}, apm_doc=_BITMASK_DOC)
+
+    result = AttitudeSaturationLogAvailabilityModel(LogData(vehicle_type="ArduCopter"), context).check()
+
+    assert result.available is False
+    assert result.state == LogAvailabilityState.WARNING
+    assert result.name == "Attitude saturation"
+    assert result.reason == "Attitude logging is disabled in LOG_BITMASK"
+    assert len(result.issues) == 1
+    issue = result.issues[0]
+    assert issue.message == "Enable Fast Attitude or Medium Attitude logging (LOG_BITMASK bit)"
+    assert issue.config_step == "28_attitude.param"
+    assert issue.param_name == "LOG_BITMASK"
+    assert issue.suggested_value == float(1 << 3)
+
+
+@pytest.mark.parametrize("bitmask", [float(1 << 2), float(1 << 3)])
+def test_attitude_logging_enabled_on_either_bit_is_not_reported_as_disabled(bitmask: float) -> None:
+    """
+    Enabling either attitude bit is recognised, so the user is not told to enable logging again.
+
+    GIVEN no attitude messages and LOG_BITMASK with only the Fast or only the Medium Attitude bit set
+    WHEN availability is checked
+    THEN the user is pointed at the attitude logging options instead of LOG_BITMASK
+    """
+    context = _context({"LOG_BITMASK": bitmask}, apm_doc=_BITMASK_DOC)
+
+    result = AttitudeSaturationLogAvailabilityModel(LogData(vehicle_type="ArduCopter"), context).check()
+
+    assert result.reason == _TELEMETRY_REASON
+    assert [issue.message for issue in result.issues] == ["No ATT, RATE or PID messages found"]
+    assert result.issues[0].param_name is None
+    assert result.issues[0].suggested_value is None
+
+
+def test_missing_log_bitmask_parameter_gives_a_generic_diagnosis_without_error() -> None:
+    """
+    A missing LOG_BITMASK parameter must not stop the availability check.
+
+    GIVEN no attitude messages, no LOG_BITMASK parameter and LOG_BITMASK metadata available
+    WHEN availability is checked
+    THEN the generic attitude diagnosis is returned without suggesting a parameter change
+    """
+    context = _context({}, apm_doc=_BITMASK_DOC)
+
+    result = AttitudeSaturationLogAvailabilityModel(LogData(vehicle_type="ArduCopter"), context).check()
+
+    assert result.available is False
+    assert result.state == LogAvailabilityState.WARNING
+    assert result.reason == _TELEMETRY_REASON
+    assert [issue.message for issue in result.issues] == ["No ATT, RATE or PID messages found"]
+    assert result.issues[0].param_name is None
+
+
+def test_missing_rate_messages_suggest_the_medium_attitude_bit_with_exact_guidance() -> None:
+    """
+    Missing RATE messages name the skipped checks and suggest enabling attitude logging.
+
+    GIVEN ATT and PID messages without RATE messages and attitude logging disabled in LOG_BITMASK
+    WHEN availability is checked
+    THEN the analysis stays available and the RATE warning names the skipped checks and the Medium Attitude bit
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    _add_att(log, np.zeros(SAMPLES))
+    _add_pid(log, "PIDR")
+    context = _context({"LOG_BITMASK": 0.0}, apm_doc=_BITMASK_DOC)
+
+    result = AttitudeSaturationLogAvailabilityModel(log, context).check()
+
+    assert result.available is True
+    assert result.name == "Attitude saturation"
+    assert len(result.issues) == 1
+    issue = result.issues[0]
+    assert issue.message == (
+        "No RATE messages found, ATC_RATE_*_MAX saturation checks were skipped. "
+        "Check Fast Attitude or Medium Attitude logging (LOG_BITMASK bit)"
+    )
+    assert issue.config_step == "28_attitude.param"
+    assert issue.param_name == "LOG_BITMASK"
+    assert issue.suggested_value == float(1 << 3)
+
+
+def test_missing_pid_messages_suggest_the_pid_bit_with_exact_guidance() -> None:
+    """
+    Missing PID messages name the skipped checks and suggest the PID logging bit.
+
+    GIVEN ATT and RATE messages without PID messages and PID logging disabled in LOG_BITMASK
+    WHEN availability is checked
+    THEN the PID warning names the skipped checks and suggests the PID bit
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    _add_att(log, np.zeros(SAMPLES))
+    _add_rate(log)
+    context = _context({"LOG_BITMASK": 0.0}, apm_doc=_BITMASK_DOC)
+
+    result = AttitudeSaturationLogAvailabilityModel(log, context).check()
+
+    assert len(result.issues) == 1
+    issue = result.issues[0]
+    assert issue.message == (
+        "No PIDR, PIDP or PIDY messages found, ATC_RAT_*_SMAX and ATC_RAT_*_PDMX saturation cannot be checked"
+    )
+    assert issue.config_step == "28_attitude.param"
+    assert issue.param_name == "LOG_BITMASK"
+    assert issue.suggested_value == float(1 << 12)
+
+
+def test_missing_pid_messages_without_a_log_bitmask_value_warn_without_error() -> None:
+    """
+    Without a LOG_BITMASK value the PID warning is still shown and no parameter change is suggested.
+
+    GIVEN ATT and RATE messages without PID messages, no LOG_BITMASK parameter and LOG_BITMASK metadata
+    WHEN availability is checked
+    THEN the PID warning is shown without a suggested parameter change
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    _add_att(log, np.zeros(SAMPLES))
+    _add_rate(log)
+    context = _context({}, apm_doc=_BITMASK_DOC)
+
+    result = AttitudeSaturationLogAvailabilityModel(log, context).check()
+
+    assert len(result.issues) == 1
+    assert result.issues[0].message.startswith("No PIDR, PIDP or PIDY messages found")
+    assert result.issues[0].param_name is None
+    assert result.issues[0].suggested_value is None
+
+
+def test_single_attitude_sample_is_enough_to_count_as_logged() -> None:
+    """
+    A single logged attitude sample means ATT is present, so the absence diagnosis is not shown.
+
+    GIVEN an ATT message holding one sample and no other attitude messages
+    WHEN availability is checked
+    THEN the absence diagnosis is not reported
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    log.add_message_columns("ATT", _array(TimeUS=np.array([0.0]), DesRoll=np.array([0.0]), DesPitch=np.array([0.0])))
+
+    result = AttitudeSaturationLogAvailabilityModel(log, _context({})).check()
+
+    assert "No ATT, RATE or PID messages found" not in [issue.message for issue in result.issues]
+
+
+def test_availability_is_informational_for_vehicles_other_than_copter_and_heli() -> None:
+    """
+    Attitude saturation is not checked for other vehicles, and the user is told why.
+
+    GIVEN a log from a Plane
+    WHEN availability is checked
+    THEN the result is an unavailable informational note with no issues
+    """
+    result = AttitudeSaturationLogAvailabilityModel(LogData(vehicle_type="Plane"), _context({})).check()
+
+    assert result.available is False
+    assert result.state == LogAvailabilityState.INFO
+    assert not result.issues
+    assert result.reason == "Attitude saturation analysis applies only to Copter and helicopter logs"
+    assert result.name == "Attitude saturation"
+
+
+def test_critical_slew_limit_finding_has_exact_wording_and_evidence() -> None:
+    """
+    The critical slew limiter finding tells the user exactly what happened and what to change.
+
+    GIVEN the roll slew limiter scaling P and D to 0.3 for 20% of the armed time
+    WHEN the analysis runs
+    THEN the message names the axis, parameter, percentages and advice verbatim
+    AND the finding is attributed to the PIDR message with the minimum Dmod as evidence
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    _add_pid(log, "PIDR", dmod=_window(0.2, 0.3, base=1.0))
+
+    outcomes = _analyse(log, {"ATC_RAT_RLL_SMAX": 25.0})
+
+    assert len(outcomes) == 1
+    assert outcomes[0].message == (
+        "Roll rate controller P and D gains were cut below 50% by the ATC_RAT_RLL_SMAX slew limiter for "
+        "20.0% of the armed time. This severely reduces attitude control. "
+        "Reduce the P and D gains or increase ATC_RAT_RLL_SMAX."
+    )
+    assert outcomes[0].source == "PIDR"
+    assert outcomes[0].evidence is not None
+    assert outcomes[0].evidence["severe_percent"] == pytest.approx(20.02, abs=0.01)
+    assert outcomes[0].evidence["minimum_dmod"] == pytest.approx(0.3)
+
+
+def test_warning_slew_limit_finding_has_exact_wording() -> None:
+    """
+    The warning slew limiter finding explains the oscillation risk and how to proceed.
+
+    GIVEN the yaw slew limiter reducing P and D to 0.8 for 5% of the armed time, but never below 0.5
+    WHEN the analysis runs
+    THEN the warning message gives the reduction threshold, percentage, seconds and advice verbatim
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    _add_pid(log, "PIDY", dmod=_window(0.05, 0.8, base=1.0))
+
+    outcomes = _analyse(log, {"ATC_RAT_YAW_SMAX": 10.0})
+
+    assert len(outcomes) == 1
+    assert outcomes[0].severity == "warning"
+    assert outcomes[0].message == (
+        "Yaw rate controller P and D gains were reduced below 90% by the ATC_RAT_YAW_SMAX slew limiter for "
+        "5.0% of the armed time (5.0 s), which indicates an oscillation tendency. "
+        "Check the tune before increasing ATC_RAT_YAW_SMAX."
+    )
+
+
+def test_slew_limit_scan_continues_to_the_next_axis_when_one_axis_is_not_reportable() -> None:
+    """
+    An unremarkable roll axis does not hide a slew-limited pitch axis.
+
+    GIVEN roll Dmod at 1.0 everywhere, which is never reportable, and pitch Dmod at 0.3 for 20% of the time
+    WHEN the analysis runs
+    THEN the pitch finding is still reported
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    _add_pid(log, "PIDR")
+    _add_pid(log, "PIDP", dmod=_window(0.2, 0.3, base=1.0))
+
+    outcomes = _analyse(log, {"ATC_RAT_RLL_SMAX": 25.0, "ATC_RAT_PIT_SMAX": 25.0})
+
+    assert [outcome.param_name for outcome in outcomes] == ["ATC_RAT_PIT_SMAX"]
+
+
+def test_slew_minimum_dmod_ignores_intervals_where_the_slew_limiter_is_disabled() -> None:
+    """
+    Evidence reports the lowest Dmod only while the slew limiter is enabled.
+
+    GIVEN ATC_RAT_RLL_SMAX is 0 for the first half of the log with Dmod at 0.1, then 25
+    AND Dmod is reduced to 0.3 for 2 s after it is enabled
+    WHEN the analysis runs
+    THEN the reported minimum Dmod is 0.3, not the disabled-interval 0.1
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    dmod = np.ones(SAMPLES)
+    dmod[: SAMPLES // 2] = 0.1
+    dmod[SAMPLES // 2 : SAMPLES // 2 + 20] = 0.3
+    _add_pid(log, "PIDR", dmod=dmod)
+    history = ParameterHistory(
+        initial_values={"ATC_RAT_RLL_SMAX": 0.0},
+        changes={"ATC_RAT_RLL_SMAX": (ParameterChange(50.0, 25.0),)},
+    )
+
+    outcomes = _analyse(log, {"ATC_RAT_RLL_SMAX": 25.0}, history=history)
+
+    assert len(outcomes) == 1
+    assert outcomes[0].evidence is not None
+    assert outcomes[0].evidence["minimum_dmod"] == pytest.approx(0.3)
+
+
+def test_slew_minimum_dmod_ignores_the_final_untimed_sample() -> None:
+    """
+    The last logged sample has no elapsed time, so its Dmod must not reach the evidence.
+
+    GIVEN roll Dmod at 0.3 for 20% of the time and a final sample at 0.1 with zero weight
+    WHEN the analysis runs
+    THEN the reported minimum Dmod is 0.3
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    dmod = _window(0.2, 0.3, base=1.0)
+    dmod[-1] = 0.1
+    _add_pid(log, "PIDR", dmod=dmod)
+
+    outcomes = _analyse(log, {"ATC_RAT_RLL_SMAX": 25.0})
+
+    assert len(outcomes) == 1
+    assert outcomes[0].evidence is not None
+    assert outcomes[0].evidence["minimum_dmod"] == pytest.approx(0.3)
+
+
+def test_roll_and_pitch_rate_limit_is_reported_once_as_a_shared_envelope() -> None:
+    """
+    Roll and pitch rate limits share one ellipse, so the finding names both axes together.
+
+    GIVEN roll and pitch rate targets at 200 and 90 deg/s for 30% of the armed time
+    WHEN the analysis runs
+    THEN a single warning names the roll/pitch envelope and its limits verbatim
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    _add_rate(log, RDes=_window(0.3, 200.0), PDes=_window(0.3, 90.0))
+
+    outcomes = _analyse(log, {"ATC_RATE_R_MAX": 200.0, "ATC_RATE_P_MAX": 90.0})
+
+    assert len(outcomes) == 1
+    assert outcomes[0].severity == "critical"
+    assert outcomes[0].message == (
+        "Roll/pitch rate target reached the configured ATC_RATE_R_MAX / ATC_RATE_P_MAX envelope "
+        "(200 deg/s / 90 deg/s) for 30.0% of the armed time (30.0 s). "
+        "RATE targets near or above this envelope suggest rate limiting but do not prove clipping. "
+        "Check target tracking and disturbances before changing the limits. "
+        "Frequent rate limiting can severely reduce attitude control."
+    )
+
+
+def test_analysis_result_for_copter_reports_available_named_outcomes() -> None:
+    """
+    A Copter log yields an available analysis result carrying its named outcomes.
+
+    GIVEN a Copter log with roll rate targets at the envelope for 30% of the armed time
+    WHEN the full analysis is run
+    THEN the result is available, named Attitude Saturation Analysis, and carries the finding
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    _add_rate(log, RDes=_window(0.3, 200.0))
+    context = _context({"ATC_RATE_R_MAX": 200.0})
+
+    result = AttitudeSaturationLogAnalysis(log, context).analyse()
+
+    assert result.available is True
+    assert result.name == "Attitude Saturation Analysis"
+    assert result.reason == "Attitude saturation analysis complete"
+    assert [outcome.param_name for outcome in result.outcomes] == ["ATC_RATE_R_MAX"]
+
+
+def test_analysis_result_for_plane_is_unavailable_with_an_explanation() -> None:
+    """
+    Attitude saturation analysis is not applied to Plane logs, and the result says why.
+
+    GIVEN a Plane log that contains roll rate targets at the envelope
+    WHEN the full analysis is run
+    THEN the result is unavailable with no outcomes and the Copter and helicopter explanation
+    """
+    log = LogData(vehicle_type="ArduPlane")
+    _add_rate(log, RDes=_window(0.3, 200.0))
+    context = _context({"ATC_RATE_R_MAX": 200.0})
+
+    result = AttitudeSaturationLogAnalysis(log, context).analyse()
+
+    assert result.available is False
+    assert not result.outcomes
+    assert result.name == "Attitude Saturation Analysis"
+    assert result.reason == "Attitude saturation analysis applies only to Copter and helicopter logs"
+
+
+def test_lean_angle_limit_finding_has_exact_wording() -> None:
+    """
+    The lean-angle finding gives the limited angle, parameter, share of time and advice verbatim.
+
+    GIVEN a desired roll of 29.6 degrees for half of the armed time in Stabilize with ATC_ANGLE_MAX at 30
+    WHEN the analysis runs
+    THEN the single finding message matches the expected wording exactly
+    """
+    log = LogData(vehicle_type="ArduCopter")
+    _add_att(log, _window(0.5, 29.6))
+    _add_modes(log, (0.0, STABILIZE))
+
+    outcomes = _analyse(log, {"ATC_ANGLE_MAX": 30.0})
+
+    assert len(outcomes) == 1
+    assert outcomes[0].severity == "warning"
+    assert outcomes[0].source == "ATT"
+    assert outcomes[0].message == (
+        "The full pilot lean range of 30 deg allowed by ATC_ANGLE_MAX was used for 50.1% of the armed time "
+        "in the flight modes it applies to (50.0 s). "
+        "Review pilot inputs and the configured lean range."
+    )
