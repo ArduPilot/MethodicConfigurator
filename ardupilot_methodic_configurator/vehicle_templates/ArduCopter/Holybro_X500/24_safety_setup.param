@@ -8,6 +8,7 @@ BRD_SAFETYOPTION,0
 FENCE_ALT_MAX,120
 FENCE_ENABLE,1
 FENCE_MARGIN,1
+FENCE_RADIUS,150
 FENCE_TYPE,7  # obey local regulations and safety measures
 FS_EKF_ACTION,1
 FS_OPTIONS,24
@@ -15,4 +16,3 @@ FS_THR_VALUE,970
 LAND_ALT_LOW,1000
 PSC_ACCZ_SMAX,1000  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
 RTL_ALT,500  # RTL at 5m is needed inside the hangar
-FENCE_RADIUS,150
