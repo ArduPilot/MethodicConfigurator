@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-11-10 18:16+0000\n"
+"POT-Creation-Date: 2026-11-12 15:25+0000\n"
 "PO-Revision-Date: 2024-12-02 13:20+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -770,7 +770,7 @@ msgstr ""
 "'{parameter}' de '{filename}' não pôde ser calculado: {e}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:681
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:374
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:375
 msgid "Copied from the connected flight controller"
 msgstr "Copiado do controlador de voo ligado"
 
@@ -4588,26 +4588,32 @@ msgstr ""
 "filtro notch da hélice'"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:359
+msgid ""
+"ALTHOLD flight mode was used for more than 30 seconds to correctly learn "
+"this MOT_THST_HOVER value"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:360
 msgid "Activates the logging of the MAGH.Active message"
 msgstr "Ativa o registo da mensagem MAGH.Active"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:360
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:361
 msgid "Activates the temperature calibration for IMU 1 at the next start"
 msgstr "Ativa a calibração de temperatura para a IMU 1 no próximo arranque"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:361
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:362
 msgid "Activates the temperature calibration for IMU 2 at the next start"
 msgstr "Ativa a calibração de temperatura para a IMU 2 no próximo arranque"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:362
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:363
 msgid "Activates the temperature calibration for IMU 3 at the next start"
 msgstr "Ativa a calibração de temperatura para a IMU 3 no próximo arranque"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:363
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:364
 msgid "Add Navigation logging"
 msgstr "Adicionar registo de Navegação"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:364
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:365
 msgid ""
 "After a successful IMU temperature calibration, the FC will automatically "
 "set this to 1"
@@ -4615,36 +4621,36 @@ msgstr ""
 "Após uma calibração de temperatura da IMU bem-sucedida, o FC definirá isto "
 "automaticamente para 1"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:365
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:366
 msgid "Angle P"
 msgstr "P do ângulo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:366
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:367
 msgid "AutoTune acceleration limit before takeoff weight compensation"
 msgstr ""
 "Limite de aceleração do AutoTune antes da compensação do peso à descolagem"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:367
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:368
 msgid "Autotune pitch axis"
 msgstr "Autotune do eixo de inclinação"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:368
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:369
 msgid "Autotune roll and pitch axis"
 msgstr "Autotune dos eixos de rolamento e inclinação"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:369
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:370
 msgid "Autotune roll axis"
 msgstr "Autotune do eixo de rolamento"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:370
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:371
 msgid "Autotune yaw D axis"
 msgstr "Autotune do eixo D de guinada"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:371
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:372
 msgid "Autotune yaw axis"
 msgstr "Autotune do eixo de guinada"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:372
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:373
 msgid ""
 "Because ALTHOLD flight mode was used for more than 30 seconds to correctly "
 "learn the MOT_THST_HOVER value"
@@ -4652,7 +4658,7 @@ msgstr ""
 "Porque o modo de voo ALTHOLD foi usado durante mais de 30 segundos para "
 "aprender corretamente o valor MOT_THST_HOVER"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:373
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:374
 msgid ""
 "Because ALTHOLD flight mode was used for more than 30 seconds to correctly "
 "learn the Q_M_THST_HOVER value"
@@ -4660,84 +4666,84 @@ msgstr ""
 "Porque o modo de voo ALTHOLD foi utilizado durante mais de 30 segundos para "
 "aprender corretamente o valor de Q_M_THST_HOVER"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:375
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:376
 msgid "Critical failsafe voltage x nr. of cells"
 msgstr "Tensão crítica de segurança x número de células"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:376
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:377
 msgid "Current RC pitch channel mapping; editable in the RC calibration plugin"
 msgstr ""
 "Mapeamento atual do canal RC de pitch; editável no plugin de calibração de RC"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:377
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:378
 msgid "Current RC roll channel mapping; editable in the RC calibration plugin"
 msgstr ""
 "Mapeamento atual do canal RC de roll; editável no plugin de calibração de RC"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:378
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:379
 msgid ""
 "Current RC throttle channel mapping; editable in the RC calibration plugin"
 msgstr ""
 "Mapeamento atual do canal RC do acelerador; editável no plugin de calibração "
 "de RC"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:379
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:380
 msgid "Current RC yaw channel mapping; editable in the RC calibration plugin"
 msgstr ""
 "Mapeamento atual do canal RC de yaw; editável no plugin de calibração de RC"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:380
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:381
 msgid "Defined in ESC specifications above"
 msgstr "Definido nas especificações dos ESC acima"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:381
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:382
 msgid "Defined in component editor"
 msgstr "Definido no editor de componentes"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:382
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:383
 msgid "Derived from vehicle component editor propeller size"
 msgstr "Derivado do tamanho da hélice no editor de componentes do veículo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:383
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:384
 msgid "Digital ESC protocol maximum is per definition 2000"
 msgstr "O máximo do protocolo ESC digital é por definição 2000"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:384
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:385
 msgid "Digital ESC protocol minimum is per definition 1000"
 msgstr "O mínimo do protocolo ESC digital é por definição 1000"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:385
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:386
 msgid "Disable fast harmonic notch logging"
 msgstr "Desativar registo rápido do filtro notch harmónico"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:386
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:387
 msgid "EKF primary gyro raw logging"
 msgstr "Registo bruto do gyro primário do EKF"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:387
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:388
 msgid "ESC RPM telemetry requires lua scripting"
 msgstr "A telemetria de RPM de ESC requer scripting em lua"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:388
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:389
 msgid "ExpressLRS requires FLTMODE_CH != 5"
 msgstr "ExpressLRS requer FLTMODE_CH != 5"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:389
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:390
 msgid "ExpressLRS requires RC5 to be used for arming (Arm/Disarm function)"
 msgstr "ExpressLRS requer RC5 para ser usado para armar (função Arm/Disarm)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:390
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:391
 msgid "Feedforward"
 msgstr "Ação antecipativa"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:391
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:392
 msgid ""
 "For safety reasons, only start takeoff if all motors spin above this RPM"
 msgstr ""
 "Por motivos de segurança, só inicie a descolagem se todos os motores rodarem "
 "acima deste RPM"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:392
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:393
 msgid ""
 "Gather data for the offline IMU temperature calibration while the FC is "
 "disarmed"
@@ -4745,7 +4751,7 @@ msgstr ""
 "Recolher dados para a calibração offline de temperatura da IMU enquanto o FC "
 "está desarmado"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:393
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:394
 msgid ""
 "Gyro raw logging no longer required, notch filter setup is complete, this "
 "reduces processor load and log file size"
@@ -4754,15 +4760,15 @@ msgstr ""
 "notch está completa, isto reduz a carga do processador e o tamanho do "
 "ficheiro de registo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:394
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:395
 msgid "Hold: stop the vehicle"
 msgstr "Hold: parar o veículo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:395
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:396
 msgid "Hover learn will improve this initial guess"
 msgstr "A aprendizagem em modo pairado irá melhorar esta estimativa inicial"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:396
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:397
 msgid ""
 "IMU batch logging no longer required, notch filter setup is complete, this "
 "reduces processor load and log file size"
@@ -4771,7 +4777,7 @@ msgstr ""
 "está completa, isto reduz a carga do processador e o tamanho do ficheiro de "
 "registo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:397
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:398
 msgid ""
 "IMU temperature calibration is finished, we no longer need to log data when "
 "disarmed"
@@ -4779,76 +4785,76 @@ msgstr ""
 "A calibração da temperatura da IMU está concluída, já não é necessário "
 "registar dados quando desarmado"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:398
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:399
 msgid "INS_GYRO_FILTER / 2"
 msgstr "INS_GYRO_FILTER / 2"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:399
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:400
 msgid "Initial value, will be improved at a later step"
 msgstr "Valor inicial, será melhorado numa etapa posterior"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:400
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:401
 msgid "Inject chip on the input pitch signal"
 msgstr "Injetar chip no sinal de pitch de entrada"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:401
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:402
 msgid "Inject chip on the input roll signal"
 msgstr "Injetar chip no sinal de roll de entrada"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:402
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:403
 msgid "Inject chip on the input yaw signal"
 msgstr "Injetar chip no sinal de yaw de entrada"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:403
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:404
 msgid "Inject chip on the mixer pitch signal"
 msgstr "Injetar chip no sinal de misturador de inclinação"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:404
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:405
 msgid "Inject chip on the mixer roll signal"
 msgstr "Injetar chip no sinal de misturador de rolamento"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:405
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:406
 msgid "Inject chip on the mixer thrust signal"
 msgstr "Injetar chip no sinal de misturador de impulso"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:406
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:407
 msgid "Inject chip on the mixer yaw signal"
 msgstr "Injetar chip no sinal de misturador de guinada"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:407
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:408
 msgid "Land ASAP"
 msgstr "Aterrar o mais rápido possível"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:408
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:409
 msgid ""
 "Land: fly the nearest DO_LAND_START landing sequence in AUTO, otherwise RTL"
 msgstr ""
 "Land: executar em voo a sequência de aterragem DO_LAND_START mais próxima em "
 "AUTO; caso contrário, RTL"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:409
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:410
 msgid "Limit the gain increase for helicopter angle tuning"
 msgstr "Limitar o aumento do ganho para a afinação do ângulo do helicóptero"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:410
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:411
 msgid "Limit the gain increase for helicopter rate tuning"
 msgstr ""
 "Limitar o aumento do ganho para a afinação da velocidade angular do "
 "helicóptero"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:411
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:412
 msgid "Limit the gain increase for helicopter yaw angle tuning"
 msgstr ""
 "Limitar o aumento do ganho para a afinação do ângulo de guinada do "
 "helicóptero"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:412
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:413
 msgid "Limit the gain increase for helicopter yaw rate tuning"
 msgstr ""
 "Limitar o aumento do ganho para a afinação da velocidade angular de guinada "
 "do helicóptero"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:413
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:414
 msgid ""
 "Log relevant data for PID notch filters tuning. Later on we'll change this "
 "to other subsystems"
@@ -4856,7 +4862,7 @@ msgstr ""
 "Registe os dados relevantes para ajuste dos filtros notch de PID. Mais tarde "
 "mudaremos isto para outros subsistemas"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:414
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:415
 msgid ""
 "Log relevant data for dynamic notch filter tuning. Later on we'll change "
 "this to other subsystems"
@@ -4864,41 +4870,41 @@ msgstr ""
 "Registar dados relevantes para afinação dinâmica do filtro notch. Mais tarde "
 "iremos alterar isto para outros subsistemas"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:415
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:416
 msgid "Low failsafe voltage x nr. of cells"
 msgstr "Tensão baixa de segurança x número de células"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:416
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:417
 msgid "MOT_SPIN_ARM plus at least 0.03"
 msgstr "MOT_SPIN_ARM mais pelo menos 0.03"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:417
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:418
 msgid "Maximize attitude control authority at high throttle"
 msgstr "Maximize a autoridade de controlo de atitude com o acelerador alto"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:418
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:419
 msgid "No more system identification chip injections"
 msgstr "Sem mais injeções de chip de identificação do sistema"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:419
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:420
 msgid "No need to log raw data for IMU temperature calibration"
 msgstr ""
 "Não é necessário registar dados brutos para a calibração de temperatura do "
 "IMU"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:420
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:421
 msgid "Normal state for everyday use"
 msgstr "Estado normal para uso diário"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:421
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:422
 msgid "Now that IMU temperature is calibrated, arm ASAP"
 msgstr "Agora que a temperatura da IMU está calibrada, arme assim que possível"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:422
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:423
 msgid "One .bin log file per flight, not per battery/reboot"
 msgstr "Um ficheiro de registo .bin por voo, não por bateria/reinicialização"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:423
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:424
 msgid ""
 "Only arm above this voltage, to avoid taking off with insufficient battery "
 "capacity"
@@ -4906,25 +4912,25 @@ msgstr ""
 "Apenas armar acima desta tensão, para evitar descolar com capacidade da "
 "bateria insuficiente"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:424
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:425
 msgid "Only for IMU and Raw-IMU"
 msgstr "Apenas para IMU e Raw-IMU"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:425
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:426
 msgid "PID notch filters require EKF primary batch logging, not raw logging"
 msgstr ""
 "Os filtros notch PID requerem registo em lote primário do EKF, não registo "
 "bruto"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:426
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:427
 msgid "PID notch filters require batch logging, not raw logging"
 msgstr "Os filtros notch de PID requerem registo em lote, não registo bruto"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:427
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:428
 msgid "PID notch filters require batch pre- and post- filters logging"
 msgstr "Os filtros notch de PID requerem registo em lote pré e pós-filtros"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:428
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:429
 msgid ""
 "Perform all arming checks. If you have a problem fix its source. Do NOT "
 "change this"
@@ -4932,20 +4938,20 @@ msgstr ""
 "Realizar todas as verificações de armamento. Se tiver um problema, corrija a "
 "sua origem. NÃO altere isto"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:429
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:430
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:97
 msgid "Pitch"
 msgstr "Inclinação"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:430
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:431
 msgid "Pitch and Roll"
 msgstr "Inclinação e rolamento"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:431
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:432
 msgid "Q_M_SPIN_ARM plus at least 0.03"
 msgstr "Q_M_SPIN_ARM mais pelo menos 0.03"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:432
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:433
 msgid ""
 "Quiktune is now completed. Disable it so that we can use the same RC switch "
 "to operate the advance-wp script"
@@ -4953,98 +4959,98 @@ msgstr ""
 "O Quiktune está agora concluído. Desative-o para que possamos usar o mesmo "
 "interruptor RC para operar o script advance-wp"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:433
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:434
 msgid "RC receiver on SERIAL1 requires RCIN"
 msgstr "O recetor RC em SERIAL1 requer RCIN"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:434
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:435
 msgid "RC receiver on SERIAL2 requires RCIN"
 msgstr "O recetor RC em SERIAL2 requer RCIN"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:435
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:436
 msgid "RC receiver on SERIAL3 requires RCIN"
 msgstr "O recetor RC em SERIAL3 requer RCIN"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:436
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:437
 msgid "RC receiver on SERIAL4 requires RCIN"
 msgstr "O recetor RC em SERIAL4 requer RCIN"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:437
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:438
 msgid "RC receiver on SERIAL5 requires RCIN"
 msgstr "O recetor RC em SERIAL5 requer RCIN"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:438
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:439
 msgid "RC receiver on SERIAL6 requires RCIN"
 msgstr "O recetor RC em SERIAL6 requer RCIN"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:439
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:440
 msgid "RC receiver on SERIAL7 requires RCIN"
 msgstr "O recetor RC em SERIAL7 requer RCIN"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:440
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:441
 msgid "RC receiver on SERIAL8 requires RCIN"
 msgstr "O recetor RC em SERIAL8 requer RCIN"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:441
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:442
 msgid "RC receiver on SERIAL9 requires RCIN"
 msgstr "O recetor RC em SERIAL9 requer RCIN"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:442
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:443
 msgid "RTL: return to launch"
 msgstr "RTL: regressar ao ponto de descolagem"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:443
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:444
 msgid "Rate D and Rate P"
 msgstr "D e P da velocidade angular"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:444
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:445
 msgid "Reasonable for most places on this planet"
 msgstr "Razoável para a maioria dos locais neste planeta"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:445
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:446
 msgid "Reset to default after offline IMU temperature calibration"
 msgstr ""
 "Repor para o valor predefinido após a calibração offline de temperatura da "
 "IMU"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:446
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:447
 msgid "Restore value now that system identification is done"
 msgstr "Restaurar valor agora que a identificação do sistema está concluída"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:447
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:448
 msgid "Return and land at home or rally point"
 msgstr "Regressar e aterrar no ponto inicial ou ponto de concentração"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:448
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:449
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:97
 msgid "Roll"
 msgstr "Rolamento"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:449
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:450
 msgid "Roll and Pitch"
 msgstr "Rolamento e inclinação"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:450
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:451
 msgid "Scale the PIDs up when battery voltage is above this threshold"
 msgstr ""
 "Escalar os PIDs para cima quando a tensão da bateria estiver acima deste "
 "limite"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:451
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:452
 msgid "Scale the PIDs up when battery voltage is below this threshold"
 msgstr ""
 "Escalar os PIDs para cima quando a tensão da bateria estiver abaixo deste "
 "limite"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:452
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:453
 msgid "Selected in component editor window"
 msgstr "Selecionado no editor de componentes"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:453
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:454
 msgid "Selected in the component editor"
 msgstr "Selecionado no editor de componentes"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:454
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:455
 msgid ""
 "So that it can tune the throttle controller on 24_throttle_controller.param "
 "file"
@@ -5052,7 +5058,7 @@ msgstr ""
 "Para que este possa afinar o controlador de acelerador no ficheiro "
 "24_throttle_controller.param"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:455
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:456
 msgid ""
 "So that it can tune the throttle controller on 28_throttle_controller.param "
 "file"
@@ -5060,7 +5066,7 @@ msgstr ""
 "Para que possa afinar o controlador de aceleração no ficheiro "
 "28_throttle_controller.param"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:456
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:457
 msgid ""
 "So that it can tune the throttle controller on 42_throttle_controller.param "
 "file"
@@ -5068,71 +5074,71 @@ msgstr ""
 "Para que possa afinar o controlador de aceleração no ficheiro "
 "42_throttle_controller.param"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:457
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:458
 msgid "Specified in component editor window"
 msgstr "Especificado na janela do editor de componentes"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:458
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:459
 msgid "Telemetry on SERIAL1 protocol defined in component editor"
 msgstr "Telemetria em SERIAL1 com protocolo definido no editor de componentes"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:459
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:460
 msgid "Telemetry on SERIAL2 protocol defined in component editor"
 msgstr "Telemetria em SERIAL2 com protocolo definido no editor de componentes"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:460
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:461
 msgid "Telemetry on SERIAL3 protocol defined in component editor"
 msgstr "Telemetria em SERIAL3 com protocolo definido no editor de componentes"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:461
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:462
 msgid "Telemetry on SERIAL4 protocol defined in component editor"
 msgstr "Telemetria em SERIAL4 com protocolo definido no editor de componentes"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:462
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:463
 msgid "Telemetry on SERIAL5 protocol defined in component editor"
 msgstr "Telemetria no protocolo SERIAL5 definida no editor de componentes"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:463
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:464
 msgid "Telemetry on SERIAL6 protocol defined in component editor"
 msgstr "Telemetria no protocolo SERIAL6 definida no editor de componentes"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:464
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:465
 msgid "Telemetry on SERIAL7 protocol defined in component editor"
 msgstr "Telemetria no protocolo SERIAL7 definida no editor de componentes"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:465
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:466
 msgid "Telemetry on SERIAL8 protocol defined in component editor"
 msgstr "Telemetria no protocolo SERIAL8 definida no editor de componentes"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:466
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:467
 msgid "Telemetry on SERIAL9 protocol defined in component editor"
 msgstr "Telemetria no protocolo SERIAL9 definida no editor de componentes"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:467
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:468
 msgid "The default is 20Hz but that is too high in most situations"
 msgstr ""
 "O valor predefinido é 20Hz, mas isso é demasiado alto na maioria das "
 "situações"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:468
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:469
 msgid "The maximum value at which the motors spin"
 msgstr "O valor máximo ao qual os motores giram"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:469
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:470
 msgid "The minimum value at which the motors start spinning reliably"
 msgstr "O valor mínimo ao qual os motores começam a girar de forma fiável"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:470
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:471
 msgid "The vehicle TOW weight does not change, so no need to save it"
 msgstr "O peso TOW do veículo não muda, pelo que não é necessário guardá-lo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:471
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:472
 msgid "Throttle exponential curve from datasheet or from motor thrust stand"
 msgstr ""
 "Curva exponencial do acelerador a partir da ficha técnica ou de uma bancada "
 "de medição de impulso do motor"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:472
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:473
 msgid ""
 "To correctly scale the PID gains. Voltage of a healthy, fully charged "
 "battery immediately after takeoff. Read from a flight log"
@@ -5141,93 +5147,93 @@ msgstr ""
 "estado, totalmente carregada, imediatamente após a descolagem. Ler a partir "
 "de um registo de voo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:473
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:474
 msgid "Total battery capacity specified in the component editor"
 msgstr "Capacidade total da bateria especificada no editor de componentes"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:474
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:475
 msgid "Tuned by quiktune"
 msgstr "Afinado pelo quiktune"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:475
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:476
 msgid ""
 "Use 0.1 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned"
 msgstr ""
 "Use 0.1 * MOT_THST_HOVER assumindo que o MOT_THST_HOVER foi corretamente "
 "aprendido"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:476
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:477
 msgid ""
 "Use 0.1 * Q_M_THST_HOVER assuming Q_M_THST_HOVER has been correctly learned"
 msgstr ""
 "Usar 0.1 * Q_M_THST_HOVER, assumindo que Q_M_THST_HOVER foi corretamente "
 "aprendido"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:477
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:478
 msgid ""
 "Use 0.2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned"
 msgstr ""
 "Utilize 0.2 * MOT_THST_HOVER assumindo que o MOT_THST_HOVER foi corretamente "
 "aprendido"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:478
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:479
 msgid ""
 "Use 0.2 * Q_M_THST_HOVER assuming Q_M_THST_HOVER has been correctly learned"
 msgstr ""
 "Usar 0.2 * Q_M_THST_HOVER, assumindo que Q_M_THST_HOVER foi corretamente "
 "aprendido"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:479
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:480
 msgid "Use 1.4 * INS_GYRO_FILTER as a first guess"
 msgstr "Usar 1,4 * INS_GYRO_FILTER como primeira aproximação"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:480
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:481
 msgid ""
 "Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned"
 msgstr ""
 "Usar 2 * MOT_THST_HOVER assumindo que MOT_THST_HOVER foi corretamente "
 "aprendido"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:481
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:482
 msgid ""
 "Use 2 * Q_M_THST_HOVER assuming Q_M_THST_HOVER has been correctly learned"
 msgstr ""
 "Usar 2 * Q_M_THST_HOVER, assumindo que Q_M_THST_HOVER foi corretamente "
 "aprendido"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:482
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:483
 msgid ""
 "Use EKF primary acc and gyro batch logging on F4 processors or big props"
 msgstr ""
 "Usar registo em lote do acc e do gyro primários do EKF em processadores F4 "
 "ou hélices grandes"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:483
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:484
 msgid "Use ESC telemetry RPM to dynamically adjust the propeller notch filter"
 msgstr ""
 "Utilizar as RPM da telemetria do ESC para ajustar dinamicamente o filtro "
 "notch da hélice"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:484
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:485
 msgid "Use INS_GYRO_FILTER / 4 as a first guess"
 msgstr "Usar INS_GYRO_FILTER / 4 como primeira aproximação"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:485
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:486
 msgid "Use MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned"
 msgstr ""
 "Usar MOT_THST_HOVER assumindo que MOT_THST_HOVER foi corretamente aprendido"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:486
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:487
 msgid "Use Q_M_THST_HOVER assuming Q_M_THST_HOVER has been correctly learned"
 msgstr ""
 "Usar Q_M_THST_HOVER, assumindo que Q_M_THST_HOVER foi corretamente aprendido"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:487
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:488
 msgid "Use VTOL-Quicktune lua script to estimate a good PID starting values"
 msgstr ""
 "Usar o script lua VTOL-Quicktune para estimar bons valores iniciais de PID"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:488
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:489
 msgid ""
 "Use acc and gyro batch logging on F4 processors or big props, gyro raw "
 "logging on others"
@@ -5235,15 +5241,15 @@ msgstr ""
 "Usar registo em lote de acc e gyro em processadores F4 ou hélices grandes, "
 "registo raw de gyro noutros"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:489
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:490
 msgid "Use lua scripting for MagFit flight path automation"
 msgstr "Usar scripting lua para automação do percurso de voo MagFit"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:490
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:491
 msgid "Use lua scripting for VTOL-Quicktune"
 msgstr "Usar scripting lua para VTOL-Quicktune"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:491
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:492
 msgid ""
 "Use pre and post filters acc and gyro batch logging on F4 processors or big "
 "props, pre-post gyro raw logging on others"
@@ -5251,7 +5257,7 @@ msgstr ""
 "Usar filtros pré e pós, registo em lote de acc e gyro em processadores F4 ou "
 "hélices grandes, registo raw pré-pós de gyro noutros"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:492
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:493
 msgid ""
 "Use the first notch filter to filter the noise created by the motors/"
 "propellers"
@@ -5259,13 +5265,13 @@ msgstr ""
 "Utilizar o primeiro filtro notch para filtrar o ruído criado pelos motores/"
 "hélices"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:493
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:494
 msgid "Use throttle-based dynamic notch filter to reduce propeller noise"
 msgstr ""
 "Utilizar filtro notch dinâmico baseado em throttle para reduzir o ruído da "
 "hélice"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:494
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:495
 msgid ""
 "Value for the first couple of flights will be changed later once "
 "MOT_THST_HOVER is learned"
@@ -5273,7 +5279,7 @@ msgstr ""
 "O valor para os primeiros voos será alterado mais tarde quando "
 "MOT_THST_HOVER for aprendido"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:495
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:496
 msgid ""
 "Value for the first couple of flights will be changed later once "
 "Q_M_THST_HOVER is learned"
@@ -5281,120 +5287,120 @@ msgstr ""
 "O valor para os primeiros voos será alterado mais tarde, quando "
 "Q_M_THST_HOVER tiver sido aprendido"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:496
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:497
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:97
 msgid "Yaw"
 msgstr "Guinada"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:497
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:498
 msgid "allow post flight tuning with Replay"
 msgstr "permitir afinação pós-voo com Replay"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:498
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:499
 msgid "re-enable normal operation, activate input shaping"
 msgstr "reativar operação normal, ativar moldagem de entrada"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:499
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:500
 msgid "test the stabilization loops independent of the input shaping"
 msgstr ""
 "testar os ciclos de estabilização independentemente da moldagem de entrada"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:500
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:501
 msgid "was only needed for wind speed estimation"
 msgstr "era apenas necessário para estimativa de velocidade do vento"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:503
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:504
 msgid "Analytical PID optimization"
 msgstr "Otimização analítica de PID"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:504
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:518
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:505
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:519
 msgid "Assemble all components except the propellers"
 msgstr "Montar todos os componentes exceto as hélices"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:505
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:519
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:506
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:520
 msgid "Assemble the propellers and perform the first flight"
 msgstr "Montar as hélices e realizar o primeiro voo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:506
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:507
 msgid "Basic mandatory configuration"
 msgstr "Configuração básica obrigatória"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:507
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:508
 msgid "Everyday use"
 msgstr "Utilização diária"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:508
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:521
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:509
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:522
 msgid "Guided operation"
 msgstr "Operação guiada"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:509
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:510
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:328
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:339
 msgid "IMU temperature calibration"
 msgstr "Calibração da temperatura do IMU"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:510
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:511
 msgid "Improve altitude control"
 msgstr "Melhorar controlo de altitude"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:511
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:512
 msgid "Minimalistic mandatory tuning"
 msgstr "Afinação obrigatória minimalista"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:512
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:513
 msgid "Optical flow calibration"
 msgstr "Calibração de fluxo ótico"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:513
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:526
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:514
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:527
 msgid "Position controller tuning"
 msgstr "Afinação do controlador de posição"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:514
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:527
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:515
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:528
 msgid "Precision landing"
 msgstr "Aterragem de precisão"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:515
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:516
 msgid "Standard tuning"
 msgstr "Afinação padrão"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:520
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:521
 msgid "Calibrate the IMU sensors for at different temperatures"
 msgstr "Calibrar os sensores IMU para diferentes temperaturas"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:522
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:523
 msgid "Improve altitude under windy conditions"
 msgstr "Melhorar a altitude em condições de vento"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:523
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:524
 msgid "Improve tuning with more test flight data"
 msgstr "Melhorar a afinação com mais dados de voo de teste"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:524
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:525
 msgid "Minimalistic mandatory tuning using test flight data"
 msgstr "Afinação obrigatória minimalista usando dados de voo de teste"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:525
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:526
 msgid "Optical flow sensor calibration"
 msgstr "Calibração do sensor de fluxo ótico"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:528
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:529
 msgid "Set up the basic parameters for the vehicle"
 msgstr "Configurar os parâmetros básicos para o veículo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:529
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:530
 msgid "Switch tests off, configure for productive work"
 msgstr "Desativar testes, configurar para trabalho produtivo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:530
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:531
 msgid "System identification and analytical PID optimization"
 msgstr "Identificação do sistema e otimização analítica de PID"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:542
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:543
 msgid ""
 "A list of regular expressions to match parameters for automatic import if "
 "they have non-default values."
@@ -5402,40 +5408,40 @@ msgstr ""
 "Uma lista de expressões regulares para corresponder parâmetros para "
 "importação automática caso tenham valores não padrão."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:545
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:546
 msgid "ArduPilot log messages related to this configuration step"
 msgstr ""
 "Mensagens de log do ArduPilot relacionadas com este passo de configuração"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:546
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:547
 msgid "Computed value: evaluate New Value expression and set the parameter"
 msgstr "Valor calculado: avaliar a expressão Novo Valor e definir o parâmetro"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:547
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:548
 msgid "Description of the phase"
 msgstr "Descrição da fase"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:548
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:549
 msgid "Explanation of why this step is needed"
 msgstr "Explicação de por que este passo é necessário"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:549
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:550
 msgid "Explanation of why this step needs to be done at this point"
 msgstr "Explicação de por que este passo precisa de ser feito neste ponto"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:550
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:551
 msgid "Expression to derive new parameter value"
 msgstr "Expressão para derivar novo valor de parâmetro"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:551
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:552
 msgid "Expression to rename connection"
 msgstr "Expressão para renomear ligação"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:552
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:553
 msgid "Human readable name of the log message"
 msgstr "Nome legível por humanos da mensagem de log"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:553
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:554
 msgid ""
 "If not already present, add parameter to the file: use 'New Value' if "
 "provided, otherwise copy the current FC value. Optionally conditioned on a "
@@ -5445,30 +5451,30 @@ msgstr ""
 "'Novo Valor' se fornecido, caso contrário copie o valor atual do FC. "
 "Opcionalmente condicionado por uma expressão Python."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:556
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:557
 msgid "Message about possible jump to another step"
 msgstr "Mensagem sobre possível salto para outro passo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:557
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:558
 msgid "Name of the vehicle component edited inline for this configuration step"
 msgstr ""
 "Nome do componente do veículo editado diretamente para este passo de "
 "configuração"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:558
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:559
 msgid "Name of tool/process that automatically changes these parameters"
 msgstr ""
 "Nome da ferramenta/processo que altera automaticamente estes parâmetros"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:559
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:560
 msgid "Name/description of external tool needed"
 msgstr "Nome/descrição da ferramenta externa necessária"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:560
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:561
 msgid "New value for the parameter"
 msgstr "Novo valor para o parâmetro"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:561
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:562
 msgid ""
 "One download object (legacy) or a non-empty array of download objects; "
 "normalized to an array when loaded."
@@ -5476,7 +5482,7 @@ msgstr ""
 "Um objeto de transferência (legado) ou um array não vazio de objetos de "
 "transferência; normalizado para um array quando carregado."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:564
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:565
 msgid ""
 "One upload object (legacy) or a non-empty array of upload objects; "
 "normalized to an array when loaded."
@@ -5484,7 +5490,7 @@ msgstr ""
 "Um objeto de envio (legado) ou um array não vazio de objetos de envio; "
 "normalizado para um array quando carregado."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:567
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:568
 msgid ""
 "Optional Python expression; if present, the parameter is only applied when "
 "this expression evaluates to true"
@@ -5492,7 +5498,7 @@ msgstr ""
 "Expressão Python opcional; se existir, o parâmetro só é aplicado quando esta "
 "expressão se avaliar como verdadeira"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:570
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:571
 msgid ""
 "Optional Python expression; if present, the parameter is only deleted when "
 "this expression evaluates to true"
@@ -5500,7 +5506,7 @@ msgstr ""
 "Expressão Python opcional; se presente, o parâmetro só é eliminado quando "
 "esta expressão for verdadeira"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:573
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:574
 msgid ""
 "Optional Python expression; if present, the plugin is only shown when this "
 "expression evaluates to true"
@@ -5508,7 +5514,7 @@ msgstr ""
 "Expressão Python opcional; se presente, o plugin só é mostrado quando esta "
 "expressão for avaliada como verdadeira"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:576
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:577
 msgid ""
 "Optional Python expression; the parameter is only added when this evaluates "
 "to true"
@@ -5516,7 +5522,7 @@ msgstr ""
 "Expressão Python opcional; o parâmetro só é adicionado quando esta expressão "
 "for verdadeira"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:577
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:578
 msgid ""
 "Optional expression for the parameter value; if absent, the current FC value "
 "is used"
@@ -5524,15 +5530,15 @@ msgstr ""
 "Expressão opcional para o valor do parâmetro; se não for indicada, é usado o "
 "valor atual do FC"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:578
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:579
 msgid "Optional instructions to display as a popup when entering this step"
 msgstr "Instruções opcionais a apresentar como popup ao entrar neste passo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:579
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:580
 msgid "Optional reason for the parameter value"
 msgstr "Razão opcional para o valor do parâmetro"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:580
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:581
 msgid ""
 "Parameters to add to the configuration file, if not already present, "
 "editable in the UI. Value comes from 'New Value' expression if given, "
@@ -5542,7 +5548,7 @@ msgstr ""
 "presentes, editáveis na interface. O valor provém da expressão 'Novo Valor' "
 "se existir, caso contrário é copiado do FC."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:583
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:584
 msgid ""
 "Parameters to remove from the configuration file, optionally conditioned on "
 "a Python expression"
@@ -5550,70 +5556,70 @@ msgstr ""
 "Parâmetros a remover do ficheiro de configuração, opcionalmente "
 "condicionados por uma expressão Python"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:586
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:587
 msgid ""
 "Parameters whose values are derived from vehicle component data or FC state."
 msgstr ""
 "Parâmetros cujos valores são derivados de dados de componentes do veículo ou "
 "do estado do FC."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:587
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:588
 msgid "Phases of the configuration process"
 msgstr "Fases do processo de configuração"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:588
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:589
 msgid "Previous filenames for this step"
 msgstr "Nomes de ficheiros anteriores para este passo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:589
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:590
 msgid "Reason for changing the parameter"
 msgstr "Motivo para alterar o parâmetro"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:590
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:591
 msgid "Reason for the derived parameter"
 msgstr "Motivo para o parâmetro derivado"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:591
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:592
 msgid "Short description for blog reference"
 msgstr "Breve descrição para referência no blog"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:592
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:593
 msgid "Short description for wiki reference"
 msgstr "Breve descrição para referência na wiki"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:593
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:594
 msgid "Starting step number of this phase"
 msgstr "Número do passo inicial desta fase"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:594
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:595
 msgid "Text indicating if step is mandatory or optional with percentages"
 msgstr "Texto indicando se o passo é obrigatório ou opcional com percentagens"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:595
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:596
 msgid "The instruction message to display to the user"
 msgstr "A mensagem de instrução a apresentar ao utilizador"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:596
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:597
 msgid "The name of the plugin to load"
 msgstr "O nome do plugin a carregar"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:597
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:598
 msgid "The type of popup dialog to display (info or warning)"
 msgstr "O tipo de diálogo popup a apresentar (informação ou aviso)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:598
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:599
 msgid "URL to blog documentation"
 msgstr "URL para documentação no blog"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:599
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:600
 msgid "URL to external tool"
 msgstr "URL para ferramenta externa"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:600
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:601
 msgid "URL to wiki documentation"
 msgstr "URL para documentação na wiki"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:601
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:602
 msgid ""
 "Where to place the plugin: 'left' for left of scrollable frame, 'top' for "
 "above contents"
@@ -5621,11 +5627,11 @@ msgstr ""
 "Onde colocar o plugin: 'left' para esquerda da moldura deslocável, 'top' "
 "para acima do conteúdo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:602
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:603
 msgid "Whether this message is required for the step"
 msgstr "Se esta mensagem é necessária para o passo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:603
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:604
 msgid "Whether this phase is optional"
 msgstr "Se esta fase é opcional"
 
@@ -12381,7 +12387,9 @@ msgstr "Não foram encontradas mensagens ARM"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:165
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:277
 msgid "Attitude saturation analysis applies only to Copter and helicopter logs"
-msgstr "A análise da saturação da atitude aplica-se apenas aos registos de Copter e helicópteros"
+msgstr ""
+"A análise da saturação da atitude aplica-se apenas aos registos de Copter e "
+"helicópteros"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:166
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:187
@@ -12393,13 +12401,18 @@ msgstr "Saturação da atitude"
 msgid ""
 "No RATE messages found, ATC_RATE_*_MAX saturation checks were skipped. Check "
 "Fast Attitude or Medium Attitude logging (LOG_BITMASK bit)"
-msgstr "Não foram encontradas mensagens RATE; as verificações de saturação de ATC_RATE_*_MAX foram ignoradas. Verifique o registo Fast Attitude ou Medium Attitude (bit de LOG_BITMASK)"
+msgstr ""
+"Não foram encontradas mensagens RATE; as verificações de saturação de "
+"ATC_RATE_*_MAX foram ignoradas. Verifique o registo Fast Attitude ou Medium "
+"Attitude (bit de LOG_BITMASK)"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:214
 msgid ""
 "No PIDR, PIDP or PIDY messages found, ATC_RAT_*_SMAX and ATC_RAT_*_PDMX "
 "saturation cannot be checked"
-msgstr "Não foram encontradas mensagens PIDR, PIDP ou PIDY; não é possível verificar a saturação de ATC_RAT_*_SMAX e ATC_RAT_*_PDMX"
+msgstr ""
+"Não foram encontradas mensagens PIDR, PIDP ou PIDY; não é possível verificar "
+"a saturação de ATC_RAT_*_SMAX e ATC_RAT_*_PDMX"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:236
 msgid "Attitude logging is disabled in LOG_BITMASK"
@@ -12413,7 +12426,9 @@ msgstr "Ative o registo Fast Attitude ou Medium Attitude (bit de LOG_BITMASK)"
 msgid ""
 "Attitude telemetry (ATT, RATE, PID*) not logged but logging enabled; check "
 "the attitude logging options"
-msgstr "A telemetria de atitude (ATT, RATE, PID*) não foi registada, embora o registo esteja ativado; verifique as opções de registo da atitude"
+msgstr ""
+"A telemetria de atitude (ATT, RATE, PID*) não foi registada, embora o "
+"registo esteja ativado; verifique as opções de registo da atitude"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:250
 msgid "No ATT, RATE or PID messages found"
@@ -12442,11 +12457,19 @@ msgid ""
 "{percent:.1f}% of the armed time ({seconds:.1f} s). RATE targets near or "
 "above this envelope suggest rate limiting but do not prove clipping. Check "
 "target tracking and disturbances before changing the limits."
-msgstr "O valor pretendido da velocidade angular de {axis} atingiu o intervalo configurado por {param} ({limits}) durante {percent:.1f}% do tempo em que o veículo esteve armado ({seconds:.1f} s). Valores pretendidos de RATE próximos ou acima deste intervalo sugerem limitação da velocidade angular, mas não comprovam que tenham sido truncados. Verifique o seguimento do valor pretendido e as perturbações antes de alterar os limites."
+msgstr ""
+"O valor pretendido da velocidade angular de {axis} atingiu o intervalo "
+"configurado por {param} ({limits}) durante {percent:.1f}% do tempo em que o "
+"veículo esteve armado ({seconds:.1f} s). Valores pretendidos de RATE "
+"próximos ou acima deste intervalo sugerem limitação da velocidade angular, "
+"mas não comprovam que tenham sido truncados. Verifique o seguimento do valor "
+"pretendido e as perturbações antes de alterar os limites."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:441
 msgid "Frequent rate limiting can severely reduce attitude control."
-msgstr "A limitação frequente da velocidade angular pode reduzir significativamente o controlo da atitude."
+msgstr ""
+"A limitação frequente da velocidade angular pode reduzir significativamente "
+"o controlo da atitude."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:465
 msgid ""
@@ -12454,7 +12477,12 @@ msgid ""
 "{param} slew limiter for {severe_percent:.1f}% of the armed time. This "
 "severely reduces attitude control. Reduce the P and D gains or increase "
 "{param}."
-msgstr "Os ganhos P e D do controlador da velocidade angular de {axis} foram reduzidos para menos de {severe:.0%} pelo limitador da velocidade de variação {param} durante {severe_percent:.1f}% do tempo em que o veículo esteve armado. Isto reduz significativamente o controlo da atitude. Reduza os ganhos P e D ou aumente {param}."
+msgstr ""
+"Os ganhos P e D do controlador da velocidade angular de {axis} foram "
+"reduzidos para menos de {severe:.0%} pelo limitador da velocidade de "
+"variação {param} durante {severe_percent:.1f}% do tempo em que o veículo "
+"esteve armado. Isto reduz significativamente o controlo da atitude. Reduza "
+"os ganhos P e D ou aumente {param}."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:471
 msgid ""
@@ -12462,26 +12490,41 @@ msgid ""
 "{param} slew limiter for {percent:.1f}% of the armed time ({seconds:.1f} s), "
 "which indicates an oscillation tendency. Check the tune before increasing "
 "{param}."
-msgstr "Os ganhos P e D do controlador da velocidade angular de {axis} foram reduzidos para menos de {reduced:.0%} pelo limitador da velocidade de variação {param} durante {percent:.1f}% do tempo em que o veículo esteve armado ({seconds:.1f} s), o que indica uma tendência para oscilações. Verifique a afinação antes de aumentar {param}."
+msgstr ""
+"Os ganhos P e D do controlador da velocidade angular de {axis} foram "
+"reduzidos para menos de {reduced:.0%} pelo limitador da velocidade de "
+"variação {param} durante {percent:.1f}% do tempo em que o veículo esteve "
+"armado ({seconds:.1f} s), o que indica uma tendência para oscilações. "
+"Verifique a afinação antes de aumentar {param}."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:516
 msgid ""
 "{axis} rate controller P+D output was clipped by {param} for {percent:.1f}% "
 "of the armed time ({seconds:.1f} s). This severely reduces attitude control. "
 "Increase {param} or lower the P and D gains."
-msgstr "A saída P+D do controlador da velocidade angular de {axis} foi truncada por {param} durante {percent:.1f}% do tempo em que o veículo esteve armado ({seconds:.1f} s). Isto reduz significativamente o controlo da atitude. Aumente {param} ou reduza os ganhos P e D."
+msgstr ""
+"A saída P+D do controlador da velocidade angular de {axis} foi truncada por "
+"{param} durante {percent:.1f}% do tempo em que o veículo esteve armado "
+"({seconds:.1f} s). Isto reduz significativamente o controlo da atitude. "
+"Aumente {param} ou reduza os ganhos P e D."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:521
 msgid ""
 "{axis} rate controller P+D output reached the {param} limit for "
 "{percent:.1f}% of the armed time ({seconds:.1f} s), so attitude control was "
 "limited. Consider increasing {param}."
-msgstr "A saída P+D do controlador da velocidade angular de {axis} atingiu o limite de {param} durante {percent:.1f}% do tempo em que o veículo esteve armado ({seconds:.1f} s), pelo que o controlo da atitude foi limitado. Considere aumentar {param}."
+msgstr ""
+"A saída P+D do controlador da velocidade angular de {axis} atingiu o limite "
+"de {param} durante {percent:.1f}% do tempo em que o veículo esteve armado "
+"({seconds:.1f} s), pelo que o controlo da atitude foi limitado. Considere "
+"aumentar {param}."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:659
 msgid ""
 "The full pilot lean range of {limit:.0f} deg allowed by {param} was used"
-msgstr "Foi utilizada toda a amplitude de inclinação de {limit:.0f} graus permitida ao piloto por {param}"
+msgstr ""
+"Foi utilizada toda a amplitude de inclinação de {limit:.0f} graus permitida "
+"ao piloto por {param}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:661
 msgid "The position controller was limited to {limit:.0f} deg by {param}"
@@ -12489,7 +12532,9 @@ msgstr "O controlador de posição foi limitado a {limit:.0f} graus por {param}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:663
 msgid "The vehicle lean angle was limited to {limit:.0f} deg by {param}"
-msgstr "O ângulo de inclinação do veículo foi limitado a {limit:.0f} graus por {param}"
+msgstr ""
+"O ângulo de inclinação do veículo foi limitado a {limit:.0f} graus por "
+"{param}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:665
 msgid ""
@@ -12497,14 +12542,22 @@ msgid ""
 "applies to ({seconds:.1f} s). Lean-angle saturation is happening: the "
 "vehicle cannot tilt further to follow the demanded acceleration. Raise "
 "{param} if the airframe and payload allow it."
-msgstr "{details} durante {percent:.1f}% do tempo em que o veículo esteve armado nos modos de voo a que se aplica ({seconds:.1f} s). Está a ocorrer saturação do ângulo de inclinação: o veículo não consegue inclinar-se mais para acompanhar a aceleração solicitada. Aumente {param} se a estrutura e a carga útil o permitirem."
+msgstr ""
+"{details} durante {percent:.1f}% do tempo em que o veículo esteve armado nos "
+"modos de voo a que se aplica ({seconds:.1f} s). Está a ocorrer saturação do "
+"ângulo de inclinação: o veículo não consegue inclinar-se mais para "
+"acompanhar a aceleração solicitada. Aumente {param} se a estrutura e a carga "
+"útil o permitirem."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py:671
 msgid ""
 "{details} for {percent:.1f}% of the armed time in the flight modes it "
 "applies to ({seconds:.1f} s). Review pilot inputs and the configured lean "
 "range."
-msgstr "{details} durante {percent:.1f}% do tempo em que o veículo esteve armado nos modos de voo a que se aplica ({seconds:.1f} s). Reveja os comandos do piloto e a amplitude de inclinação configurada."
+msgstr ""
+"{details} durante {percent:.1f}% do tempo em que o veículo esteve armado nos "
+"modos de voo a que se aplica ({seconds:.1f} s). Reveja os comandos do piloto "
+"e a amplitude de inclinação configurada."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_base.py:99
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_availability_check.py:162
@@ -14668,7 +14721,7 @@ msgstr "Corrente: %(curr).2fA"
 msgid "Current: N/A"
 msgstr "Corrente: N/D"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1286
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1287
 msgid ""
 "IMPORTANT SAFETY WARNING:\n"
 "\n"
@@ -14688,7 +14741,7 @@ msgstr ""
 "\n"
 "Deseja prosseguir com o teste de motores?"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1306
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1307
 msgid ""
 "Battery voltage is outside the safe range for motor testing.\n"
 "\n"
