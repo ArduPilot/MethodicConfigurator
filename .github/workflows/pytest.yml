@@ -30,13 +30,18 @@ jobs:
         os:
           - ${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
           - windows-latest
-          - macos-latest
+          - macos-15
+          - macos-26
         python-version: ["3.15.2"]  # to make sure the latest AMC supported python version does not break
         exclude:
-          - os: macos-latest
+          - os: macos-15
+            python-version: "3.15.2"
+          - os: macos-26
             python-version: "3.15.2"
         include:
-          - os: macos-latest
+          - os: macos-15
+            python-version: "3.14"
+          - os: macos-26
             python-version: "3.14"
           - os: ${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
             python-version: "3.11"  # to make sure the minimum AMC supported python version does not break
@@ -80,7 +85,7 @@ jobs:
           python3 --version && python3 -c "import tkinter; print(tkinter.TclVersion, tkinter.TkVersion)"
 
       - name: Cache Homebrew packages (macOS)
-        if: matrix.os == 'macos-latest'
+        if: startsWith(matrix.os, 'macos-')
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/Library/Caches/Homebrew
@@ -89,7 +94,7 @@ jobs:
             brew-${{ runner.os }}-python-tk-
 
       - name: Install system dependencies for GUI testing on macOS
-        if: matrix.os == 'macos-latest'
+        if: startsWith(matrix.os, 'macos-')
         run: brew list python-tk &>/dev/null || brew install python-tk
 
       - name: Ensure Tcl/Tk search paths
@@ -250,7 +255,7 @@ jobs:
 
       - name: Upload coverage to Coveralls (parallel)
         # https://docs.coveralls.io/parallel-builds
-        if: always() && github.repository == 'ArduPilot/MethodicConfigurator' && matrix.os != 'macos-latest'
+        if: always() && github.repository == 'ArduPilot/MethodicConfigurator' && !startsWith(matrix.os, 'macos-')
         uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
