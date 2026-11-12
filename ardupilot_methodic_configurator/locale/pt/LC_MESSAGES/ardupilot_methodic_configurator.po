@@ -4591,7 +4591,7 @@ msgstr ""
 msgid ""
 "ALTHOLD flight mode was used for more than 30 seconds to correctly learn "
 "this MOT_THST_HOVER value"
-msgstr ""
+msgstr "O modo de voo ALTHOLD foi utilizado durante mais de 30 segundos para aprender corretamente este valor de MOT_THST_HOVER"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:360
 msgid "Activates the logging of the MAGH.Active message"
