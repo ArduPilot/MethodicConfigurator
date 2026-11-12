@@ -261,10 +261,7 @@ class LogAvailabilityReportWindow(BaseWindow):  # pylint: disable=too-many-insta
                     proposed |= int(issue.suggested_value)  # type: ignore[arg-type]
                 proposed_value = float(proposed)
             else:
-                first_suggested = param_issues[0].suggested_value
-                if first_suggested is None:
-                    continue
-                proposed_value = first_suggested
+                proposed_value = cast("float", param_issues[0].suggested_value)
 
             if proposed_value != current:
                 fixes.append((param_name, current, proposed_value, [i.message for i in param_issues]))
