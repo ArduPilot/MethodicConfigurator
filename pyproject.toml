@@ -357,6 +357,15 @@ also_copy = [
 process_isolation = "forkserver"
 # Tk imports must initialize inside each worker, not the fork server.
 forkserver_warmup = "none"
+# Preserve unchanged function results across source revisions. Existing test edits
+# and runtime inputs need a full reset because function hashes cannot track them.
+on_dependency_change = "rerun"
+# Explicit hashes also work when CI's shallow checkout lacks the previous commit.
+cache_invalidation_files = [
+    "tests/**/*.py", "pytest.ini", ".cache/mutation/dependencies.txt",
+    "TUNING_GUIDE_Heli.md", "ardupilot_methodic_configurator_command_line_completion.psm1",
+    "windows/*.spec", "linux/*.spec", "macos/*.spec",
+]
 
 [tool.ruff]
 target-version = "py311"
