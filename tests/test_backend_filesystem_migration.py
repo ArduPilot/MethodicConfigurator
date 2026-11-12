@@ -1019,7 +1019,7 @@ class TestV1ToV2ParameterExtractions:
             "24_safety_setup.param": "FENCE_ACTION,3 # return home\nFENCE_ENABLE,1 # enabled\n",
             "11_servo_outputs.param": "FRAME_TYPE,12 # custom frame\n",
             "10_battery.param": "MOT_BAT_VOLT_MAX,52.2 # full pack\nMOT_BAT_VOLT_MIN,42 # low pack\n",
-            "13_initial_atc.param": "MOT_THST_HOVER,0.28 # measured hover\n",
+            "28_throttle_controller.param": "MOT_THST_HOVER,0.28 # measured hover\n",
         }
         hardware.write_text("".join(values_by_step.values()), encoding="utf-8")
         for filename, lines in values_by_step.items():
@@ -1033,6 +1033,30 @@ class TestV1ToV2ParameterExtractions:
         assert not hardware.exists()
         for filename, lines in values_by_step.items():
             assert (vehicle_dir / filename).read_text(encoding="utf-8") == lines
+
+    @pytest.mark.parametrize(
+        ("vehicle_type", "parameter"), [("ArduCopter", "MOT_THST_HOVER"), ("ArduPlane", "Q_M_THST_HOVER")]
+    )
+    @pytest.mark.parametrize("destination_preexisting", [True, False])
+    def test_hover_thrust_preserves_project_order_and_overrides_restored_defaults(
+        self, vehicle_dir: Path, vehicle_type: str, parameter: str, destination_preexisting: bool
+    ) -> None:
+        """A later project step wins, while a restored default yields to the legacy value."""
+        hardware = vehicle_dir / "14_mp_setup_mandatory_hardware.param"
+        hardware.write_text(f"{parameter},0.32 # measured hover\n", encoding="utf-8")
+        throttle = vehicle_dir / "28_throttle_controller.param"
+        throttle.write_text(f"{parameter},0.25 # existing value\n", encoding="utf-8")
+        original_files = {hardware.name, throttle.name} if destination_preexisting else {hardware.name}
+
+        migration_module._migrate_v1_to_v2(  # pylint: disable=protected-access
+            vehicle_dir, vehicle_type, preexisting_filenames=original_files
+        )
+
+        expected = (
+            f"{parameter},0.25 # existing value\n" if destination_preexisting else f"{parameter},0.32 # measured hover\n"
+        )
+        assert throttle.read_text(encoding="utf-8") == expected
+        assert not hardware.exists()
 
     @pytest.mark.parametrize(
         "hardware_filename",
@@ -1602,9 +1626,7 @@ class TestVehicleSpecificV1ToV2Migration:
         ]
         if vehicle_type == "Rover":
             retained_lines.append("FENCE_ALT_MAX,80 # legacy altitude setting\n")
-        elif vehicle_type == "ArduPlane":
-            retained_lines.append("Q_M_THST_HOVER,0.32 # quadplane setting\n")
-        else:
+        elif vehicle_type == "Heli":
             retained_lines.append("H_RSC_MODE,3 # helicopter rotor control\n")
         moved = {
             "03_imu_temperature_calibration_results.param": "INS_ACC1_CALTEMP,45 # measured temperature\n",
@@ -1614,6 +1636,8 @@ class TestVehicleSpecificV1ToV2Migration:
         }
         if vehicle_type != "Rover":
             moved["16_safety_setup.param"] += "FENCE_ALT_MAX,80 # altitude fence\n"
+        if vehicle_type == "ArduPlane":
+            moved["28_throttle_controller.param"] = "Q_M_THST_HOVER,0.32 # quadplane setting\n"
         source = vehicle_dir / source_name
         source.write_text("".join(retained_lines) + "".join(moved.values()), encoding="utf-8")
         (vehicle_dir / "16_safety_setup.param").write_text(

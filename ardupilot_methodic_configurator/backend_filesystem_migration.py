@@ -422,7 +422,7 @@ _PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str], bool]]] = {
         ),
         (
             "14_mp_setup_mandatory_hardware.param",
-            "13_initial_atc.param",
+            "28_throttle_controller.param",
             ["MOT_THST_HOVER"],
             True,
         ),
@@ -452,6 +452,12 @@ _PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str], bool]]] = {
         ),
     ],
     "ArduPlane": [
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "28_throttle_controller.param",
+            ["Q_M_THST_HOVER"],
+            True,
+        ),
         (
             "14_mp_setup_mandatory_hardware.param",
             "16_accelerometer_calibration.param",

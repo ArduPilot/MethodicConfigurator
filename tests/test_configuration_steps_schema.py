@@ -341,8 +341,8 @@ def test_arduplane_initial_attitude_formulas_evaluate_for_both_parameter_generat
 @pytest.mark.parametrize(
     ("firmware_version", "expected_parameter_names"),
     [
-        ("4.6.3", {"Q_A_THR_MIX_MAN", "Q_P_ACCZ_I", "Q_P_ACCZ_P"}),
-        ("4.7.0", {"Q_A_THR_MIX_MAN", "Q_P_D_ACC_I", "Q_P_D_ACC_P"}),
+        ("4.6.3", {"Q_A_THR_MIX_MAN", "Q_M_THST_HOVER", "Q_P_ACCZ_I", "Q_P_ACCZ_P"}),
+        ("4.7.0", {"Q_A_THR_MIX_MAN", "Q_M_THST_HOVER", "Q_P_D_ACC_I", "Q_P_D_ACC_P"}),
     ],
 )
 def test_arduplane_throttle_controller_uses_quadplane_parameters(
@@ -366,6 +366,7 @@ def test_arduplane_throttle_controller_uses_quadplane_parameters(
 
     assert error == ""
     assert set(config_steps.derived_parameters[throttle_step_file]) == expected_parameter_names
+    assert config_steps.derived_parameters[throttle_step_file]["Q_M_THST_HOVER"].value == 0.2
 
 
 def test_arduplane_quadplane_only_steps_skip_missing_hover_thrust_without_warnings() -> None:
