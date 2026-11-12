@@ -58,7 +58,7 @@ dependencies = [
     "pymavlink==2.4.50",
     "pyserial==3.5",
     "screeninfo==0.8.1",
-    "selenium==4.51.0",
+    "selenium==4.52.0",
     "simpleeval==1.0.8",
 ]
 
