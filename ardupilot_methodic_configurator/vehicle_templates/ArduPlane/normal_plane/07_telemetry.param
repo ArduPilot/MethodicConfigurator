@@ -1,3 +1,0 @@
-BRD_SER2_RTSCTS,2
-SERIAL4_BAUD,38
-SERIAL4_PROTOCOL,2  # Telemetry on SERIAL4 protocol defined in component editor
