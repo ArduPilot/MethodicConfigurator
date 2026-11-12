@@ -33,20 +33,23 @@ class EscLogAvailabilityModel(BaseLogAvailabilityModel):
     """Checks ESC telemetry and configuration availability."""
 
     def check(self) -> LogAvailabilityResult:
+        protocol_issues = self.check_pwm_type_matches_connection_protocol()
         records = self.log_data.get_message_columns("ESC")
         if records is None or len(records) == 0:
-            return self._diagnose_absence()
+            return self._diagnose_absence(protocol_issues)
 
-        issues: list[AvailabilityIssue] = []
+        issues: list[AvailabilityIssue] = list(protocol_issues)
         for check in (self.check_rpm, self.check_current, self.check_error_rate):
             issues += check()
 
         _, name = self.resolve_message_step("ESC", "ESC")
         return self.build_result(issues, name)
 
-    def _diagnose_absence(self) -> LogAvailabilityResult:
+    def _diagnose_absence(self, protocol_issues: list[AvailabilityIssue]) -> LogAvailabilityResult:
         """Diagnose why ESC data is absent."""
         step, name = self.resolve_message_step("ESC", "ESC")
+
+        issues = list(protocol_issues)
 
         dshot_values = find_matching_param_values(self.apm_doc, "MOT_PWM_TYPE", "DShot") if self.apm_doc else set()
         pwm_type = self.parameters.get("MOT_PWM_TYPE")
@@ -54,23 +57,23 @@ class EscLogAvailabilityModel(BaseLogAvailabilityModel):
 
         if pwm_type is not None and str(int(pwm_type)) not in dshot_values:
             reason = _("ESC telemetry not logged")
-            issues = [
+            issues.append(
                 AvailabilityIssue(
                     _("Set MOT_PWM_TYPE to a DShot variant for ESC telemetry support"),
                     self.step_for_parameter("MOT_PWM_TYPE"),
                 )
-            ]
+            )
         elif scr_enabled == 0:
             reason = _("ESC telemetry not logged, scripting is disabled")
-            issues = [
+            issues.append(
                 AvailabilityIssue(
                     _("Enable SCR_ENABLE if using scripted ESC telemetry"),
                     self.step_for_parameter("SCR_ENABLE"),
                 )
-            ]
+            )
         else:
             reason = _("ESC telemetry not logged, check ESC hardware supports telemetry and is wired correctly")
-            issues = [AvailabilityIssue(_("No ESC messages found"), step)]
+            issues.append(AvailabilityIssue(_("No ESC messages found"), step))
 
         return LogAvailabilityResult(
             available=False, state=LogAvailabilityState.WARNING, reason=reason, issues=issues, name=name
@@ -109,34 +112,54 @@ class EscLogAvailabilityModel(BaseLogAvailabilityModel):
             issues.append(AvailabilityIssue(_("ESC error rate detected on at least one ESC instance"), step))
         return issues
 
+    def _pwm_type_parameter_name(self) -> str:
+        """Return the PWM parameter used by the current vehicle type."""
+        return "Q_M_PWM_TYPE" if self.log_data.vehicle_type == "ArduPlane" else "MOT_PWM_TYPE"
+
     def _pwm_type_mismatch_issue(self) -> AvailabilityIssue | None:
-        """Return issue if MOT_PWM_TYPE doesn't match the declared ESC connection protocol."""
-        declared = self.vehicle_components.get("ESC", {}).get("FC->ESC Connection", {}).get("Protocol")
-        if self.apm_doc is None or declared is None:
+        """Return an issue if the actual PWM type differs from the declared ESC protocol."""
+        esc_component = self.vehicle_components.get("ESC", {})
+        connection = esc_component.get("FC->ESC Connection", {})
+
+        connection_type = connection.get("Type")
+        declared = connection.get("Protocol")
+
+        if connection_type not in ("Main Out", "AIO"):
             return None
 
-        actual = self.parameters.get("MOT_PWM_TYPE")
+        if not declared or self.apm_doc is None:
+            return None
+
+        pwm_param = self._pwm_type_parameter_name()
+        actual = self.parameters.get(pwm_param)
+
         if actual is None:
             return None
 
-        actual_protocol = enum_value_name(self.apm_doc, "MOT_PWM_TYPE", actual)
+        actual_protocol = enum_value_name(self.apm_doc, pwm_param, actual)
 
         if actual_protocol is None or actual_protocol == declared:
             return None
 
         return AvailabilityIssue(
             _(
-                "MOT_PWM_TYPE is {actual}, but the ESC's FC->ESC Connection protocol is declared as "
-                "{declared} in your vehicle_components specifications."
-            ).format(actual=int(actual), declared=declared),
-            self.step_for_parameter("MOT_PWM_TYPE"),
-            param_name="MOT_PWM_TYPE",
+                "{parameter} is configured as {actual}, but the ESC's FC->ESC "
+                "Connection protocol is declared as {declared} in your vehicle "
+                "component specifications."
+            ).format(
+                parameter=pwm_param,
+                actual=actual_protocol,
+                declared=declared,
+            ),
+            self.step_for_parameter(pwm_param),
+            param_name=pwm_param,
         )
 
     def check_pwm_type_matches_connection_protocol(self) -> list[AvailabilityIssue]:
-        """Check that MOT_PWM_TYPE matches the ESC connection protocol declared in vehicle_components."""
+        """Check that the vehicle's PWM type parameter matches the declared ESC connection protocol."""
         issue = self._pwm_type_mismatch_issue()
         return [issue] if issue is not None else []
+
 
 class EscLogAnalysis(BaseLogAnalysisModel):
     """
