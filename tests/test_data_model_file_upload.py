@@ -15,6 +15,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller_protocols import FileUploadCheckStatus, FileUploadResult
 from ardupilot_methodic_configurator.data_model_file_upload import (
     FileUploadDisposition,
@@ -218,8 +219,9 @@ def test_nested_upload_batch_is_rejected_without_disturbing_outer_batch(callback
     workflow, _size, check, upload, confirm, progress_factory = _create_workflow()
 
     def attempt_nested_upload(*_args: object) -> bool:
-        with pytest.raises(RuntimeError, match="already in progress"):
+        with pytest.raises(RuntimeError) as error:
             workflow.upload_files([("nested.lua", "/APM/Scripts/nested.lua")], set(), Mock(), Mock())
+        assert str(error.value) == _("Another file operation is already in progress.")
         return True
 
     def report_progress(_local: str, _remote: str, callback: Callable[[int, int], None]) -> FileUploadResult:
@@ -280,11 +282,12 @@ def test_provider_exception_does_not_skip_later_uploads(
         FileUploadOutcome("second.lua", "/APM/Scripts/second.lua", FileUploadDisposition.UPLOADED),
     ]
     assert upload.call_args.args[:2] == ("second.lua", "/APM/Scripts/second.lua")
-    assert "file operation failed" in caplog.text
-    if provider_stage in {"size", "upload"}:
-        assert "local-first.lua" in caplog.text
-    if provider_stage in {"check", "upload"}:
-        assert "/APM/Scripts/remote-first.lua" in caplog.text
+    expected_warning = {
+        "size": "Could not read upload file local-first.lua: file operation failed",
+        "check": "Could not check upload target /APM/Scripts/remote-first.lua: file operation failed",
+        "upload": "Could not upload file local-first.lua to /APM/Scripts/remote-first.lua: file operation failed",
+    }[provider_stage]
+    assert caplog.messages == [expected_warning]
 
 
 def test_confirmation_exception_releases_batch_for_a_later_request() -> None:

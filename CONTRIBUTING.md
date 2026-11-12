@@ -113,7 +113,8 @@ The optional [Mutmut](https://mutmut.readthedocs.io/en/latest/) suite checks whe
 existing tests detect small changes to modules covering battery voltages,
 parameter validation and serialization, firmware version parsing, parameter
 history, AutoTune acceleration/gain backoff, IMU helpers, firmware upload,
-log-analysis orchestration, usage popups, file browsing and task scheduling, motor-test UI,
+log-analysis orchestration, usage popups, About window preferences and links,
+file browsing and task scheduling, motor-test UI,
 bootloader protocol handling, schema-validated filesystem IO, IMU log analysis,
 vehicle-component validation/display, flight-controller business rules, transfer
 progress accounting, configuration expression evaluation, firmware parameter
@@ -216,6 +217,35 @@ the extra zero in `max(previous, current, 0)` is redundant while the previous
 counter starts at zero and never decreases. Changes to the evaluator's
 `typing.cast` type argument also have no runtime effect. Retain these equivalent
 survivors rather than weakening the mutation scope or testing invalid counter states.
+
+For ESC telemetry, a missing BDShot mask results in no configured outputs whether
+the fallback is zero or conversion of a missing value fails. An offset at the
+32-output limit cannot produce an in-range output for a valid nonnegative index.
+The initial or cleared connection sentinel is also replaced before processing
+real connection objects or disconnected snapshots. Review these separately
+from signed-mask boundaries, invalid entries, and stale readings.
+
+For configured file uploads, the inactive and progress-created flags use only
+truth-value checks, so replacing their initial `False` values with `None` does
+not change the workflow. Missing and empty local files return before the upload
+starts, making the later file-size fallback unreachable for those values.
+
+In the About window's current widget order, omitting the explicit row or column,
+or passing `None`, can select the same grid cell as the original argument. The
+default pack side is also the configured top side. Equal column weights of one
+or two distribute extra space in the same proportions. Review these Tk layout
+mutations separately from changes that overlap controls or break resizing.
+The current variants produced identical rendered About-window pixels at widths
+of 650 and 800 pixels in a Linux/Xvfb comparison.
+In the same environment, comparisons at two DPI scales and four window widths
+also matched for enabled, disabled, and mixed popup preferences, including
+preference toggles and all five external-link actions.
+A one-pixel change to text wrapping can depend on the font and the displayed
+version string; inspect its effect rather than assuming it is equivalent. For
+example, with version `1.2.3` and a 21-point Bitstream Charter font on Linux,
+changing the wrap width from 450 to 451 changes the label's requested width.
+The narrow-window regression exercises this font and skips when it is unavailable
+or its platform-specific metrics differ from the reproduced case.
 
 For firmware parameter migrations, verify release boundaries and the file,
 parameter names, and version inputs shown in diagnostic warnings. Some survivors

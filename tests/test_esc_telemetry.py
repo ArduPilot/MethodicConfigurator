@@ -280,6 +280,96 @@ def test_bdshot_zero_padding_respects_mask_and_mavlink_offset(link: SimpleNamesp
     assert rows[0][4:8] == ("-", "0*", "-", "-")
 
 
+@pytest.mark.parametrize(
+    ("parameters", "expected_rpm", "expected_indices"),
+    [
+        ({"SERVO_BLH_BDMASK": 1.0}, "0*", (0,)),
+        ({"ESC_TLM_MAV_OFS": 0.0}, "-", ()),
+        ({"SERVO_BLH_BDMASK": float("inf"), "ESC_TLM_MAV_OFS": 0.0}, "-", ()),
+        ({"SERVO_BLH_BDMASK": 1.0, "ESC_TLM_MAV_OFS": float("nan")}, "-", ()),
+    ],
+)
+def test_stopped_esc_display_handles_missing_or_invalid_bdshot_settings(
+    link: SimpleNamespace, parameters: dict[str, float], expected_rpm: str, expected_indices: tuple[int, ...]
+) -> None:
+    """
+    Show ambiguous stopped RPM only when the controller configuration supports it.
+
+    GIVEN: A zero-filled ESC packet and missing or invalid BDShot settings
+    WHEN: Telemetry is displayed for the first output
+    THEN: A missing offset defaults to the first output, and invalid or missing masks do not invent an ESC
+    """
+    link.controller.fc_parameters = parameters
+    model = EscTelemetryDataModel(link.controller)
+    reading = EscTelemetryReading((0, 0, 0, 0, 0, 0))
+
+    rows = model.update(EscTelemetrySnapshot(object(), 0, {0: reading}))
+
+    assert rows[0][0] == expected_rpm
+    assert all(row[0] == "-" for row in rows[1:])
+    assert model.visible_esc_indices == expected_indices
+
+
+@pytest.mark.parametrize(
+    ("bad_index", "bad_reading"),
+    [
+        (-1, EscTelemetryReading((1200, 2450, 123, 42, 77, 10))),
+        (0, EscTelemetryReading((1200,))),
+    ],
+)
+def test_invalid_esc_entry_does_not_hide_later_valid_readings(
+    model: EscTelemetryDataModel, bad_index: int, bad_reading: EscTelemetryReading
+) -> None:
+    """
+    A malformed entry cannot hide another ESC in the same snapshot.
+
+    GIVEN: An invalid ESC entry followed by a valid reading
+    WHEN: The telemetry snapshot is displayed
+    THEN: The valid ESC remains visible with its measurements
+    """
+    valid = EscTelemetryReading((1200, 2450, 123, 42, 77, 10))
+    rows = model.update(EscTelemetrySnapshot(object(), 0, {bad_index: bad_reading, 1: valid}))
+
+    assert [row[1] for row in rows] == ["1200", "24.50", "1.23", "42", "77", "10"]
+    assert model.visible_esc_indices == (1,)
+
+
+def test_delayed_stopped_esc_reading_expires_from_its_receipt_time(link: SimpleNamespace) -> None:
+    """
+    Delayed stopped-motor telemetry does not appear fresh indefinitely.
+
+    GIVEN: A configured BDShot output and an old zero-filled reading
+    WHEN: The snapshot is processed after the reading has expired
+    THEN: The stale stopped-RPM indication is not displayed
+    """
+    link.controller.fc_parameters = {"SERVO_BLH_BDMASK": 1.0}
+    model = EscTelemetryDataModel(link.controller)
+    reading = EscTelemetryReading((0, 0, 0, 0, 0, 0), received_at=1.0)
+
+    rows = model.update(EscTelemetrySnapshot(object(), 4.0, {0: reading}))
+
+    assert rows[0][0] == "-"
+    assert model.visible_esc_indices == (0,)
+
+
+def test_signed_bdshot_mask_does_not_enable_output_past_32(link: SimpleNamespace) -> None:
+    """
+    A signed all-outputs mask cannot enable a nonexistent output.
+
+    GIVEN: A signed 32-bit all-ones BDShot mask and a one-output MAVLink offset
+    WHEN: Zero-filled readings arrive for the last two telemetry indices
+    THEN: The last real output is visible and the out-of-range output is ignored
+    """
+    link.controller.fc_parameters = {"SERVO_BLH_BDMASK": -1.0, "ESC_TLM_MAV_OFS": 1.0}
+    model = EscTelemetryDataModel(link.controller)
+    reading = EscTelemetryReading((0, 0, 0, 0, 0, 0))
+
+    rows = model.update(EscTelemetrySnapshot(object(), 0, {30: reading, 31: reading}))
+
+    assert rows[0][30:32] == ("0*", "-")
+    assert model.visible_esc_indices == (30,)
+
+
 def test_counter_wrap_and_connection_boundaries(model: EscTelemetryDataModel) -> None:
     """
     A reporting ESC near counter wrap.

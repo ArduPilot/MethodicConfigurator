@@ -11,6 +11,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -96,9 +97,7 @@ def test_collision_warnings_identify_the_file_and_preserved_parameter(
     assert old_name not in parameters["tuning.param"]
     assert parameters["tuning.param"][new_name] == Par(7, "keep this tuning")
     messages = [record.getMessage() for record in caplog.records if "collision" in record.getMessage().lower()]
-    assert len(messages) == 1
-    assert "'tuning.param'" in messages[0]
-    assert conflict_description in messages[0]
+    assert messages == [f"Parameter collision in 'tuning.param': {conflict_description}. Keeping the already-upgraded entry."]
 
 
 @pytest.mark.parametrize(("source_version", "target_version"), [("invalid-source", "4.7"), ("4.6", "invalid-target")])
@@ -118,8 +117,69 @@ def test_invalid_version_warnings_identify_both_versions_without_changing_tuning
     upgrade_parameters_for_firmware_version(source_version, target_version, parameters)
 
     assert parameters["tuning.param"] == original
-    assert f"param_files='{source_version}'" in caplog.text
-    assert f"fc='{target_version}'" in caplog.text
+    assert caplog.messages == [
+        (
+            f"Invalid firmware version string(s): param_files='{source_version}', fc='{target_version}'. "
+            "Parameter upgrades will be skipped."
+        )
+    ]
+
+
+@pytest.mark.parametrize(
+    ("source_version", "target_version", "missing_version"),
+    [
+        ("", "4.7", "Parameter files"),
+        ("4.6", "", "Flight controller"),
+    ],
+)
+def test_unknown_firmware_version_warns_that_upgrades_are_skipped(
+    source_version: str, target_version: str, missing_version: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    Explain why a firmware migration cannot safely proceed.
+
+    GIVEN: An unknown source or flight-controller firmware version
+    WHEN: The parameter upgrade is requested
+    THEN: The warning identifies the missing version and tells the user to verify compatibility
+    AND: The original parameters remain unchanged
+    """
+    original = ParDict({"GPS_TYPE": Par(2, "GPS"), "LAND_SPEED": Par(150, "landing speed")})
+    parameters = {"tuning.param": ParDict(original)}
+
+    upgrade_parameters_for_firmware_version(source_version, target_version, parameters)
+
+    assert parameters["tuning.param"] == original
+    assert caplog.messages == [
+        (
+            f"{missing_version} firmware version is unknown. Parameter file upgrades will be skipped. "
+            "Please ensure the parameter files match the target flight controller firmware version."
+        )
+    ]
+
+
+@pytest.mark.parametrize(
+    ("upgrade", "expected_notice"),
+    [
+        (upgrade_file_parameters_46, "Upgrading parameter names for ArduPilot 4.6 firmware..."),
+        (upgrade_file_parameters_47, "Upgrading parameter names and values for ArduPilot 4.7 firmware..."),
+    ],
+)
+def test_upgrade_reports_the_migration_being_applied(
+    upgrade: Callable[[dict[str, ParDict]], None], expected_notice: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    Users can identify which migration was applied to their parameter files.
+
+    GIVEN: A parameter file ready for a firmware migration
+    WHEN: The migration runs
+    THEN: Its firmware version and migration scope are reported
+    """
+    parameters = {"tuning.param": ParDict({"UNRELATED": Par(1)})}
+
+    upgrade(parameters)
+
+    assert caplog.messages == [expected_notice]
+    assert parameters["tuning.param"] == ParDict({"UNRELATED": Par(1)})
 
 
 def test_mavlink_ports_are_deduplicated_and_sorted_numerically_across_files() -> None:
