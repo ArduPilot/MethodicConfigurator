@@ -932,6 +932,27 @@ class TestConfigurationStepProcessorDomainModel:
 class TestConfigurationStepProcessorConnectionRenamingLogic:
     """Test connection renaming logic and edge cases."""
 
+    @pytest.mark.parametrize("active_source", ["SERIAL2_PROTOCOL", "SERIAL3_PROTOCOL"])
+    def test_active_protocol_outranks_disabled_source_for_same_target(self, active_source: str) -> None:
+        """A saved disabled old port cannot claim the destination before an active port."""
+        parameters = ParDict({"SERIAL1_PROTOCOL": Par(-1.0), active_source: Par(2.0)})
+
+        _duplicates, renames = ConfigurationStepProcessor.calculate_connection_rename_operations(parameters, "SERIAL3")
+
+        assert ("SERIAL1_PROTOCOL", "SERIAL3_PROTOCOL") not in renames
+        if active_source == "SERIAL2_PROTOCOL":
+            assert ("SERIAL2_PROTOCOL", "SERIAL3_PROTOCOL") in renames
+        else:
+            assert not renames
+
+    def test_disabled_protocol_can_move_when_it_is_the_only_source(self) -> None:
+        """An explicit disabled value remains movable when no active source competes."""
+        parameters = ParDict({"SERIAL1_PROTOCOL": Par(-1.0)})
+
+        _duplicates, renames = ConfigurationStepProcessor.calculate_connection_rename_operations(parameters, "SERIAL3")
+
+        assert renames == [("SERIAL1_PROTOCOL", "SERIAL3_PROTOCOL")]
+
     def test_generate_renames_can(self, connection_params) -> None:
         """
         Test generating renames for CAN parameters follows expected patterns.

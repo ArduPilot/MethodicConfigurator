@@ -14,6 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import contextlib
 import platform
+import re
 import subprocess
 import textwrap
 from collections.abc import Callable
@@ -32,7 +33,7 @@ from typing import Any, Literal
 
 from ardupilot_methodic_configurator import _, data_model_parameter_export
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
-from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import PhaseData
+from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps, PhaseData
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerLogFile, LastLogDownloadResult
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url, webbrowser_open_url
@@ -187,13 +188,28 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         # Track parameters added by user (not in original file) or renamed by the system in the current configuration step
         self._added_parameters: set[str] = set()
+        # Rows created by conditional derivation in this editing session, including after export.
+        self._inline_derived_parameters: set[str] = set()
+        # Saved automatic rows retired since the last export, rather than explicitly deleted.
+        self._retired_inline_derived_parameters: set[str] = set()
 
         # Track parameters deleted by user (were in original file) or renamed by the system in the current configuration step
         self._deleted_parameters: set[str] = set()
+        # Keep explicit derived-row deletions suppressed after export until the step is reloaded.
+        self._suppressed_derived_parameters: set[str] = set()
 
         # Track connection renames applied for the current step: maps original_file_param_name → current renamed name.
         # Used by refresh_current_step_connection_renames() to undo/redo renames without a full rebuild.
         self._connection_renames: dict[str, str] = {}
+        # Saved sources whose row (possibly already renamed) was explicitly deleted during this edit session.
+        self._suppressed_connection_renames: set[str] = set()
+        self._declined_connection_renames: set[str] = set()
+        # Retain the saved row owner and active protocol through a temporary non-serial selection and save.
+        self._last_connection_port: str | None = None
+        # The complete eligible source set survives a detour until the next step load or export.
+        self._last_connection_source_rows: set[str] = set()
+        self._last_selected_serial_port: str | None = None
+        self._last_connection_protocol: Par | None = None
 
         self._at_least_one_changed = False
 
@@ -682,7 +698,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             self.open_documentation_in_browser(self.current_file)
 
         # Process configuration step and create domain model parameters
-        (ui_errors, ui_infos) = self._repopulate_configuration_step_parameters()
+        (ui_errors, ui_infos) = self._repopulate_configuration_step_parameters(ask_confirmation)
 
         for title, msg in ui_errors:
             show_error(title, msg)
@@ -2078,8 +2094,58 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             }
         )
 
-    def _repopulate_configuration_step_parameters(  # pylint: disable=too-many-locals, too-many-branches
+    def _confirm_step_renames(
+        self, renames: list[tuple[str, str]], infos: list[tuple[str, str]], confirm: AskConfirmationCallback | None
+    ) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+        """Ask before applying renames proposed during step loading."""
+        if not renames or confirm is None:
+            return renames, infos
+        changes = "\n".join(f"{old} → {new}" for old, new in renames)
+        if not confirm(
+            _("Rename connection parameters?"),
+            _("Rename these parameters to match the selected connection?\n\n{changes}").format(changes=changes),
+        ):
+            self._suppressed_connection_renames.update(old for old, _new in renames)
+            self._declined_connection_renames.update(old for old, _new in renames)
+            renames = []
+        return renames, [(title, message) for title, message in infos if title != _("Parameter Renamed")]
+
+    def _confirm_step_serial_disables(
+        self, renames: list[tuple[str, str]], confirm: AskConfirmationCallback | None
+    ) -> list[tuple[str, str]]:
+        """Ask whether each renamed saved serial protocol should be disabled at its old port."""
+        infos: list[tuple[str, str]] = []
+        if confirm is None:
+            return infos
+        original = self._local_filesystem.file_parameters.get(self.current_file, ParDict())
+        for old, new in renames:
+            match = re.fullmatch(r"(SERIAL\d+)_PROTOCOL", old)
+            if match is None or re.fullmatch(r"SERIAL\d+_PROTOCOL", new) is None or old not in original:
+                continue
+            port = match.group(1)
+            if not self.can_disable_serial_protocol(port, original[old]):
+                self.preserve_or_disable_serial_protocol(port, original[old], disable=False)
+                infos.append(
+                    (
+                        _("Serial port unchanged"),
+                        _("Cannot disable {name}: it is unavailable, read-only, or not verified.").format(name=old),
+                    )
+                )
+                continue
+            disable = confirm(
+                _("Disable previous serial port?"),
+                _(
+                    "Set {port}_PROTOCOL to -1 (disabled)?\n\n"
+                    "Yes stages the change for upload. No keeps the existing assignment."
+                ).format(port=port),
+            )
+            if not self.preserve_or_disable_serial_protocol(port, original[old], disable=disable):
+                infos.append((_("Serial port unchanged"), _("Could not change {name}; it was not disabled.").format(name=old)))
+        return infos
+
+    def _repopulate_configuration_step_parameters(  # noqa: PLR0915  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         self,
+        ask_rename_confirmation: AskConfirmationCallback | None = None,
     ) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
         """
         Process the configuration step for the current file and update the self.current_step_parameters.
@@ -2090,8 +2156,17 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         """
         # Reset tracking sets when navigating to new file
         self._added_parameters.clear()
+        self._inline_derived_parameters.clear()
+        self._retired_inline_derived_parameters.clear()
         self._deleted_parameters.clear()
+        self._suppressed_derived_parameters.clear()
         self._connection_renames.clear()
+        self._suppressed_connection_renames.clear()
+        self._declined_connection_renames.clear()
+        self._last_connection_port = None
+        self._last_connection_source_rows.clear()
+        self._last_selected_serial_port = None
+        self._last_connection_protocol = None
 
         # Process configuration step and get operations to apply
         (
@@ -2103,6 +2178,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             derived_params,
             autoimported_parameters,
         ) = self._config_step_processor.process_configuration_step(self.current_file, self.fc_parameters)
+        renames_to_apply, ui_infos = self._confirm_step_renames(renames_to_apply, ui_infos, ask_rename_confirmation)
         self._added_parameters.update(autoimported_parameters)
         derived_params = self._filter_derived_parameters_for_manual_overrides(derived_params)
 
@@ -2127,6 +2203,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                     param_name, derived_par, self.current_file, self.fc_parameters
                 )
                 self._added_parameters.add(param_name)
+                self._inline_derived_parameters.add(param_name)
 
         # Apply rename operations to domain model using add/delete tracking
         for old_name in duplicates_to_remove:
@@ -2143,6 +2220,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             if old_name in original_params:
                 # Mark old parameter as deleted
                 self._deleted_parameters.add(old_name)
+
+                # The saved source, not the temporary derived destination, owns this row.
+                self._inline_derived_parameters.discard(new_name)
 
                 # Create new parameter with renamed name
                 old_par = original_params[old_name]
@@ -2194,11 +2274,17 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             actually_deleted = [p for p in sorted(to_delete) if p in self.current_step_parameters]
             if actually_deleted:
                 logging_info(_("Deleting parameters %s from '%s'"), actually_deleted, self.current_file)
+            self._retired_inline_derived_parameters.update(
+                set(actually_deleted)
+                & set(step_info.get("derived_parameters", {}))
+                & set(self._local_filesystem.file_parameters.get(self.current_file, ParDict()))
+            )
             for param_name in to_delete:
                 if param_name in self.current_step_parameters:
                     self._deleted_parameters.add(param_name)
                     del self.current_step_parameters[param_name]
 
+        ui_infos.extend(self._confirm_step_serial_disables(renames_to_apply, ask_rename_confirmation))
         return ui_errors, ui_infos
 
     def update_parameter_value(
@@ -2321,12 +2407,29 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             param_name: The name of the parameter to delete
 
         """
-        # If parameter was in original file, mark as deleted
-        if param_name in self._local_filesystem.file_parameters.get(self.current_file, ParDict()):
+        self._retired_inline_derived_parameters.discard(param_name)
+        self._suppressed_connection_renames.update(
+            source for source, target in self._connection_renames.items() if target == param_name
+        )
+        is_preserved_rename_source = param_name in self._declined_connection_renames and (
+            self._connection_renames.get(param_name) in self.current_step_parameters
+        )
+        if is_preserved_rename_source:
+            self._declined_connection_renames.discard(param_name)
+            self._suppressed_connection_renames.add(param_name)
+        elif param_name in self._local_filesystem.file_parameters.get(self.current_file, ParDict()):
+            self._suppressed_connection_renames.add(param_name)
+        is_derived = param_name in self._inline_derived_parameters or (
+            param_name in self.current_step_parameters and self.current_step_parameters[param_name].is_derived
+        )
+        if is_derived:
+            self._suppressed_derived_parameters.add(param_name)
+        if param_name in self._local_filesystem.file_parameters.get(self.current_file, ParDict()) or is_derived:
             self._deleted_parameters.add(param_name)
 
         # If it was previously added in this session, remove from added set
         self._added_parameters.discard(param_name)
+        self._inline_derived_parameters.discard(param_name)
 
         # Remove from runtime state
         if param_name in self.current_step_parameters:
@@ -2347,6 +2450,16 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         possible_add_param_names = [param_name for param_name in param_dict if param_name not in active_params]
         possible_add_param_names.sort()
         return possible_add_param_names
+
+    def _unsuppress_readded_connection_renames(self, param_name: str) -> None:
+        """Restore tracking for a saved source when its renamed target is re-added."""
+        self._declined_connection_renames.discard(param_name)
+        if param_name in self._suppressed_connection_renames:
+            self._connection_renames.pop(param_name, None)
+        self._suppressed_connection_renames.discard(param_name)
+        self._suppressed_connection_renames.difference_update(
+            source for source, target in self._connection_renames.items() if target == param_name
+        )
 
     def add_parameter_to_current_file(self, param_name: str) -> bool:
         """
@@ -2382,6 +2495,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 self._added_parameters.add(param_name)
             # If was previously deleted, remove from deleted set
             self._deleted_parameters.discard(param_name)
+            self._retired_inline_derived_parameters.discard(param_name)
+            self._suppressed_derived_parameters.discard(param_name)
+            self._unsuppress_readded_connection_renames(param_name)
 
             return True
 
@@ -2398,6 +2514,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                     self._added_parameters.add(param_name)
                 # If was previously deleted, remove from deleted set
                 self._deleted_parameters.discard(param_name)
+                self._retired_inline_derived_parameters.discard(param_name)
+                self._suppressed_derived_parameters.discard(param_name)
+                self._unsuppress_readded_connection_renames(param_name)
 
                 return True
             if fc_parameters:
@@ -2615,6 +2734,12 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         self._added_parameters.clear()
         self._deleted_parameters.clear()
+        self._retired_inline_derived_parameters.clear()
+        # The exported names are now the saved-file sources for the next port change.
+        self._connection_renames.clear()
+        self._last_connection_source_rows.clear()
+        self._suppressed_connection_renames.clear()
+        self._suppressed_connection_renames.update(self._declined_connection_renames & set(export_params))
         # copy parameters new values to their _values_on_file
         for param in self.current_step_parameters.values():
             param.copy_new_value_to_file()
@@ -2753,19 +2878,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         """Return True if the in-memory component data differs from what was last saved to disk."""
         return self._local_filesystem.vehicle_components_fs.has_unsaved_changes("Components")
 
-    def refresh_current_step_computed_parameters(self) -> None:
-        """
-        Recompute derived parameters and connection renames for the current step after component data changed.
-
-        Unlike _repopulate_configuration_step_parameters(), this performs a lightweight
-        in-place update: only the derived parameter *values* are recalculated and patched
-        into the existing current_step_parameters dict, and any rename_connection renames
-        are re-evaluated and applied.  The full parameter set is NOT rebuilt from
-        file_parameters and the delete_parameters logic is NOT re-run, so:
-          - parameters that were already removed by the delete logic stay removed
-          - user edits to non-derived parameters are preserved
-          - the 'show only differences' filter does not cause derived params to disappear
-        """
+    def refresh_current_step_computed_parameters(self, old_connection: str | None = None) -> None:  # noqa: PLR0915  # pylint: disable=too-many-branches,too-many-statements
+        """Reconcile conditional derived rows and connection renames after a component edit."""
         if not self.current_file or self.current_file not in self._local_filesystem.configuration_steps:
             return
         step_info = self._local_filesystem.configuration_steps[self.current_file]
@@ -2781,16 +2895,51 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             # Recompute derived params with the updated vehicle_components dict
             self._local_filesystem.compute_parameters(self.current_file, step_info, "derived", variables)
 
-        # Patch only the derived values in the existing domain model - no rebuild, no deletions
-        for param_name, derived_par in self._local_filesystem.derived_parameters.get(self.current_file, ParDict()).items():
+        # A newly computed row must not occupy a saved connection's rename destination.
+        if "rename_connection" in step_info:
+            self._refresh_current_step_connection_renames(step_info, variables, old_connection)
+
+        if "derived_parameters" not in step_info:
+            return
+
+        derived_params = self._local_filesystem.derived_parameters.get(self.current_file, ParDict())
+        available = set(self.fc_parameters) if self.fc_parameters else None
+        deleted_by_step = self._local_filesystem.compute_deletions(self.current_file, step_info, variables)
+        self._restore_applicable_retired_parameters(set(derived_params), deleted_by_step, available)
+        applicable = {name for name in derived_params if self._derived_parameter_applicable(name, available, deleted_by_step)}
+
+        for param_name in self._inline_derived_parameters - applicable:
+            existing = self.current_step_parameters.get(param_name)
+            if existing is not None and existing.is_manual_override:
+                self._inline_derived_parameters.discard(param_name)
+                continue
+            if existing is not None and self._is_selected_gnss_transport(param_name, step_info, variables):
+                continue
+            self.current_step_parameters.pop(param_name, None)
+            self._added_parameters.discard(param_name)
+            if param_name in self._local_filesystem.file_parameters.get(self.current_file, ParDict()):
+                self._deleted_parameters.add(param_name)
+                self._retired_inline_derived_parameters.add(param_name)
+        self._inline_derived_parameters.intersection_update(applicable | set(self.current_step_parameters))
+
+        for param_name in applicable:
+            derived_par = derived_params[param_name]
             if param_name in self.current_step_parameters:
                 existing = self.current_step_parameters[param_name]
+                if existing.is_manual_override:
+                    continue
+                if (
+                    "gnss" in self.current_file.lower()
+                    and step_info.get("rename_connection") == _GNSS_FC_CONNECTION_RENAME_EXPR
+                    and param_name in self._connection_renames.values()
+                ):
+                    continue
                 if not (existing.is_forced or existing.is_derived):
                     # The parameter was created before its derived value could be evaluated (e.g. the
                     # vehicle_components dict was incomplete at step-load time).  Now that evaluation
                     # succeeded, re-create it so it carries the derived flag and the correct value.
                     original_par = self._local_filesystem.file_parameters.get(self.current_file, ParDict()).get(param_name)
-                    if original_par is not None:
+                    if original_par is not None and not existing.is_dirty:
                         self.current_step_parameters[param_name] = self._config_step_processor.create_ardupilot_parameter(
                             param_name, original_par, self.current_file, self.fc_parameters or {}
                         )
@@ -2801,16 +2950,245 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                         self.current_step_parameters[param_name].set_forced_or_derived_change_reason(derived_par.comment)
                 except (ValueError, TypeError) as e:
                     logging_error(_("Failed to patch derived parameter %s: %s"), param_name, str(e))
+            else:
+                saved_par = self._local_filesystem.file_parameters.get(self.current_file, ParDict()).get(param_name)
+                self.current_step_parameters[param_name] = self._config_step_processor.create_ardupilot_parameter(
+                    param_name,
+                    saved_par if saved_par is not None else derived_par,
+                    self.current_file,
+                    self.fc_parameters or {},
+                )
+                if saved_par is None:
+                    self._added_parameters.add(param_name)
+                self._inline_derived_parameters.add(param_name)
 
-        if "rename_connection" in step_info:
-            self._refresh_current_step_connection_renames(step_info, variables)
+    def _derived_parameter_applicable(self, name: str, available: set[str] | None, deleted_by_step: set[str]) -> bool:
+        """Apply the same availability and user-decision checks during refresh and preflight."""
+        return (
+            (available is None or name in available)
+            and name not in deleted_by_step
+            and name not in self._deleted_parameters
+            and name not in self._suppressed_derived_parameters
+        )
+
+    def _restore_applicable_retired_parameters(
+        self, derived_names: set[str], deleted_by_step: set[str], available: set[str] | None
+    ) -> None:
+        """Cancel automatic retirement when a saved derived row becomes applicable again."""
+        restored = self._retired_inline_derived_parameters & derived_names - deleted_by_step
+        if available is not None:
+            restored &= available
+        restored -= self._suppressed_derived_parameters
+        self._deleted_parameters.difference_update(restored)
+        self._retired_inline_derived_parameters.difference_update(restored)
+
+    @staticmethod
+    def _is_selected_gnss_transport(param_name: str, step_info: dict, variables: dict) -> bool:
+        """Keep a same-UART GNSS transport when its driver no longer derives it."""
+        if step_info.get("rename_connection") != _GNSS_FC_CONNECTION_RENAME_EXPR:
+            return False
+        selected = variables.get("vehicle_components", {}).get("GNSS Receiver", {}).get("FC Connection", {}).get("Type")
+        return selected is not None and param_name == f"{selected}_PROTOCOL"
+
+    def _transfer_inline_derived_ownership(self, old_name: str, new_name: str) -> None:
+        """Keep same-session derivation ownership when a saved source is renamed."""
+        if old_name in self._inline_derived_parameters or old_name in self._retired_inline_derived_parameters:
+            self._inline_derived_parameters.discard(old_name)
+            self._retired_inline_derived_parameters.discard(old_name)
+            self._inline_derived_parameters.add(new_name)
+
+    def _take_current_rename_par(self, current_target: str, original_par: Par | None) -> Par | None:
+        """Remove a rename target and retain its current value for the next name."""
+        current = self.current_step_parameters.pop(current_target, None)
+        if current is None:
+            return original_par
+        self._added_parameters.discard(current_target)
+        return Par(current.get_new_value(), current.change_reason_for_file) if original_par is not None else None
 
     def _apply_gnss_protocol_value(self, target_name: str) -> None:
         """Set the GNSS MAVLink protocol value on a newly renamed _PROTOCOL parameter, ignoring no-op updates."""
-        with contextlib.suppress(ParameterUnchangedError):
+        with contextlib.suppress(ParameterUnchangedError, ParameterForcedOrDerivedError):
             self.current_step_parameters[target_name].set_new_value(_GNSS_MAVLINK_PROTOCOL_VALUE, ignore_out_of_range=True)
 
-    def _refresh_current_step_connection_renames(self, step_info: dict, variables: dict) -> None:  # pylint: disable=too-many-branches
+    def _gnss_assigns_serial_protocol(self, port: str) -> bool:
+        """Recognize the GNSS step's fixed MAVLink serial protocol assignment."""
+        return (
+            re.fullmatch(r"SERIAL\d+", port) is not None
+            and "gnss" in self.current_file.lower()
+            and self._local_filesystem.configuration_steps.get(self.current_file, {}).get("rename_connection")
+            == _GNSS_FC_CONNECTION_RENAME_EXPR
+        )
+
+    def _ensure_gnss_protocol_without_source(self, port: str, original_params: ParDict) -> None:
+        """Assign the selected GNSS port without moving unrelated disabled protocol rows."""
+        serial_rows = [(name, par) for name, par in original_params.items() if self._serial_port_for_row(name) is not None]
+        if not serial_rows or not all(name.endswith("_PROTOCOL") and par.value == -1 for name, par in serial_rows):
+            return
+        target = f"{port}_PROTOCOL"
+        if target not in self.current_step_parameters:
+            self.current_step_parameters[target] = self._config_step_processor.create_ardupilot_parameter(
+                target, Par(5.0), self.current_file, self.fc_parameters
+            )
+            self._added_parameters.add(target)
+        self._apply_gnss_protocol_value(target)
+
+    def _connection_rename_candidates(
+        self, original: ParDict, old_connection: str | None, new_connection: str | None = None
+    ) -> ParDict:
+        """Limit inline renames to sources known to belong to the previous connection."""
+        candidates = ParDict(
+            {
+                name: par
+                for name, par in original.items()
+                if name not in self._suppressed_connection_renames
+                and self._connection_renames.get(name, name) in self.current_step_parameters
+                if name not in self._declined_connection_renames or name in self._connection_renames
+            }
+        )
+        if old_connection is None:
+            return candidates
+        if re.fullmatch(r"SERIAL\d+", old_connection):
+            mapped_sources = {
+                source
+                for source, target in self._connection_renames.items()
+                if self._serial_port_for_row(target) == old_connection and target in self.current_step_parameters
+            }
+            if mapped_sources:
+                return ParDict(
+                    {
+                        name: par
+                        for name, par in candidates.items()
+                        if name in mapped_sources or self._serial_port_for_row(name) == old_connection
+                    }
+                )
+        if (
+            re.fullmatch(r"SERIAL\d+", old_connection) is None
+            and self._last_connection_protocol is None
+            and new_connection is not None
+            and re.fullmatch(r"SERIAL\d+", new_connection) is not None
+        ):
+            candidates = ParDict(
+                {
+                    name: par
+                    for name, par in candidates.items()
+                    if not (re.fullmatch(r"SERIAL\d+_PROTOCOL", name) and par.value == -1)
+                }
+            )
+        if (
+            re.fullmatch(r"SERIAL\d+", old_connection) is None
+            and new_connection is not None
+            and re.fullmatch(r"SERIAL\d+", new_connection)
+            and self._last_connection_source_rows
+        ):
+            return ParDict({name: par for name, par in candidates.items() if name in self._last_connection_source_rows})
+        old_connection = self._serial_rename_source(old_connection, candidates, new_connection)
+        if old_connection is None:
+            return ParDict()
+        matches = self._config_step_processor._generate_connection_renames(  # noqa: SLF001  # pylint: disable=protected-access
+            list(candidates), old_connection
+        )
+        return ParDict({name: par for name, par in candidates.items() if matches.get(name) == name})
+
+    def _serial_rename_source(
+        self, old_connection: str, original: ParDict | None = None, new_connection: str | None = None
+    ) -> str | None:
+        """Find the saved port owning a selected serial connection's rows."""
+        if original is None:
+            original = self._local_filesystem.file_parameters.get(self.current_file, ParDict())
+        if re.fullmatch(r"SERIAL\d+", old_connection):
+            mapped = {
+                source_port
+                for source, target in self._connection_renames.items()
+                if (source_port := self._serial_port_for_row(source)) is not None
+                and self._serial_port_for_row(target) == old_connection
+            }
+            return mapped.pop() if len(mapped) == 1 else old_connection
+        if new_connection is None or re.fullmatch(r"SERIAL\d+", new_connection) is None:
+            return old_connection
+        if self._last_connection_port is not None:
+            return self._last_connection_port
+        ports = {match.group(1) for name in original if (match := re.fullmatch(r"(SERIAL\d+)_.*", name)) is not None}
+        ports.update(
+            f"SERIAL{match.group(1)}" for name in original if (match := re.fullmatch(r"BRD_SER(\d+)_RTSCTS", name)) is not None
+        )
+        # After a step reload, a lone baud/flow group identifies the movable source;
+        # options-only rows on another port remain independent.
+        transport_ports = {
+            match.group(1) for name in original if (match := re.fullmatch(r"(SERIAL\d+)_BAUD", name)) is not None
+        }
+        transport_ports.update(
+            f"SERIAL{match.group(1)}" for name in original if (match := re.fullmatch(r"BRD_SER(\d+)_RTSCTS", name)) is not None
+        )
+        if len(transport_ports) == 1:
+            source = transport_ports.pop()
+            protocol_ports = {
+                match.group(1) for name in original if (match := re.fullmatch(r"(SERIAL\d+)_PROTOCOL", name)) is not None
+            }
+            return source if protocol_ports <= {source} else None
+        return ports.pop() if len(ports) == 1 else None
+
+    @staticmethod
+    def _serial_port_for_row(name: str) -> str | None:
+        """Return the physical serial port represented by a serial or flow-control row."""
+        match = re.fullmatch(r"SERIAL(\d+)_.*|BRD_SER(\d+)_RTSCTS", name)
+        return f"SERIAL{match.group(1) or match.group(2)}" if match else None
+
+    def _preserved_protocol_copy_target(self, old_connection: str | None, new_connection: str) -> str | None:
+        """Find a new serial target for the preserved protocol after a temporary None selection."""
+        if old_connection is None or re.fullmatch(r"SERIAL\d+", old_connection):
+            return None
+        if (
+            self._last_connection_port is None
+            or self._last_selected_serial_port is None
+            or self._last_connection_protocol is None
+            or self._last_connection_protocol.value == -1
+            or re.fullmatch(r"SERIAL\d+", new_connection) is None
+        ):
+            return None
+        source = f"{self._last_selected_serial_port}_PROTOCOL"
+        target = f"{new_connection}_PROTOCOL"
+        if source not in self._declined_connection_renames:
+            return None
+        existing = self.current_step_parameters.get(target)
+        if existing is not None and (target != source or existing.get_new_value() != -1 or existing.is_manual_override):
+            return None
+        return target
+
+    def _copy_preserved_protocol_after_none(self, old_connection: str | None, new_connection: str) -> None:
+        """Carry the last active protocol while leaving an explicitly kept or disabled old row intact."""
+        target = self._preserved_protocol_copy_target(old_connection, new_connection)
+        if target is None or self._last_connection_port is None or self._last_connection_protocol is None:
+            return
+        is_gnss = (
+            "gnss" in self.current_file.lower()
+            and self._local_filesystem.configuration_steps.get(self.current_file, {}).get("rename_connection")
+            == _GNSS_FC_CONNECTION_RENAME_EXPR
+        )
+        source = f"{self._last_selected_serial_port}_PROTOCOL"
+        if target == source:
+            existing = self.current_step_parameters.get(target)
+            if existing is None:
+                return
+            with contextlib.suppress(ParameterUnchangedError):
+                existing.set_new_value(str(self._last_connection_protocol.value), ignore_out_of_range=True)
+            existing.set_change_reason(self._last_connection_protocol.comment or "")
+            if is_gnss:
+                self._apply_gnss_protocol_value(target)
+            self._declined_connection_renames.discard(source)
+            self._suppressed_connection_renames.discard(source)
+            return
+        self.current_step_parameters[target] = self._config_step_processor.create_ardupilot_parameter(
+            target, self._last_connection_protocol, self.current_file, self.fc_parameters
+        )
+        if is_gnss:
+            self._apply_gnss_protocol_value(target)
+        self._added_parameters.add(target)
+        self._connection_renames[f"{self._last_connection_port}_PROTOCOL"] = target
+        self._suppressed_connection_renames.discard(source)
+
+    def _refresh_current_step_connection_renames(  # noqa: C901, PLR0912, PLR0915  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
+        self, step_info: dict, variables: dict, old_connection: str | None = None
+    ) -> None:
         """
         Re-evaluate the rename_connection expression and apply any changed renames in-place.
 
@@ -2825,13 +3203,29 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             return
         is_gnss = "gnss" in self.current_file.lower() and rename_expr == _GNSS_FC_CONNECTION_RENAME_EXPR
 
-        variables["new_connection_prefix"] = rename_expr
         original_params = self._local_filesystem.file_parameters.get(self.current_file, ParDict())
+
+        if old_connection is not None and re.fullmatch(r"SERIAL\d+", old_connection):
+            self._last_connection_source_rows = set(self._connection_rename_candidates(original_params, old_connection))
+            self._last_connection_port = self._serial_rename_source(old_connection)
+            self._last_selected_serial_port = old_connection
+            previous = self.current_step_parameters.get(f"{old_connection}_PROTOCOL")
+            self._last_connection_protocol = (
+                Par(previous.get_new_value(), previous.change_reason_for_file) if previous is not None else None
+            )
+
+        variables["new_connection_prefix"] = rename_expr
 
         # Calculate what the renames SHOULD be with the updated component data
         try:
+            new_connection = safe_evaluate(str(rename_expr), variables)
+            candidates = self._connection_rename_candidates(
+                original_params, old_connection, new_connection if isinstance(new_connection, str) else None
+            )
             _duplicates, new_renamed_pairs = self._config_step_processor.calculate_connection_rename_operations(
-                original_params, rename_expr, variables
+                candidates,
+                rename_expr,
+                variables,
             )
         except Exception as exc:  # pylint: disable=broad-except
             logging_warning(_("rename_connection eval failed for %s: %s"), self.current_file, exc)
@@ -2841,42 +3235,80 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         # Process renames that already exist: update if the target changed
         for orig_name, current_target in list(self._connection_renames.items()):
+            if old_connection is not None and orig_name not in candidates:
+                continue
             new_target = new_rename_map.get(orig_name)
+            if orig_name in self._suppressed_connection_renames:
+                if orig_name in self._deleted_parameters and current_target in self.current_step_parameters:
+                    if new_target is None and new_connection == self._serial_port_for_row(orig_name):
+                        new_target = orig_name
+                    elif new_target is None:
+                        del self._connection_renames[orig_name]
+                        continue
+                else:
+                    if current_target in self.current_step_parameters or new_connection != self._serial_port_for_row(
+                        current_target
+                    ):
+                        self._connection_renames[orig_name] = new_rename_map.get(orig_name, orig_name)
+                    continue
+            if (
+                current_target in self.current_step_parameters
+                and self.current_step_parameters[current_target].is_manual_override is True
+            ):
+                continue
             if new_target is None:
                 # Rename no longer applicable — restore original name
-                if current_target in self.current_step_parameters:
-                    self._added_parameters.discard(current_target)
-                    del self.current_step_parameters[current_target]
-                if orig_name in original_params:
+                self._transfer_inline_derived_ownership(current_target, orig_name)
+                previous = self.current_step_parameters.get(current_target)
+                current_par = self._take_current_rename_par(current_target, original_params.get(orig_name))
+                if previous is not None and previous.is_derived and not previous.is_manual_override:
+                    current_par = original_params.get(orig_name)
+                if current_par is not None and not (
+                    orig_name in self._declined_connection_renames and orig_name in self.current_step_parameters
+                ):
                     self.current_step_parameters[orig_name] = self._config_step_processor.create_ardupilot_parameter(
-                        orig_name, original_params[orig_name], self.current_file, self.fc_parameters
+                        orig_name, current_par, self.current_file, self.fc_parameters
                     )
                     self._deleted_parameters.discard(orig_name)
+                    saved_par = original_params.get(orig_name)
+                    if saved_par is None or (
+                        current_par.value != saved_par.value or (current_par.comment or "") != (saved_par.comment or "")
+                    ):
+                        self._added_parameters.add(orig_name)
                 del self._connection_renames[orig_name]
             elif new_target != current_target:
                 # Target changed — move the parameter to the new name
                 if new_target in self.current_step_parameters and new_target not in self._connection_renames.values():
                     logging_warning(_("Skipping connection rename %s → %s: target already exists"), current_target, new_target)
                 else:
-                    if current_target in self.current_step_parameters:
-                        self._added_parameters.discard(current_target)
-                        del self.current_step_parameters[current_target]
-                    if orig_name in original_params:
+                    self._transfer_inline_derived_ownership(current_target, new_target)
+                    current_par = self._take_current_rename_par(current_target, original_params.get(orig_name))
+                    if current_par is not None:
                         self.current_step_parameters[new_target] = self._config_step_processor.create_ardupilot_parameter(
-                            new_target, original_params[orig_name], self.current_file, self.fc_parameters
+                            new_target, current_par, self.current_file, self.fc_parameters
                         )
                         if is_gnss and new_target.endswith("_PROTOCOL"):
                             self._apply_gnss_protocol_value(new_target)
                         self._added_parameters.add(new_target)
                     self._connection_renames[orig_name] = new_target
+                    if new_target == orig_name:
+                        self._suppressed_connection_renames.discard(orig_name)
+                        self._deleted_parameters.discard(orig_name)
                     logging_info(_("Renamed connection parameter %s → %s"), current_target, new_target)
 
         # Apply renames that are new (not previously tracked)
         for orig_name, new_target in new_rename_map.items():
+            if orig_name in self._suppressed_connection_renames:
+                continue
             if orig_name in self._connection_renames:
                 continue  # already handled above
             if orig_name in original_params:
                 self._apply_new_connection_rename(orig_name, new_target, original_params, is_gnss)
+
+        if isinstance(new_connection, str):
+            self._copy_preserved_protocol_after_none(old_connection, new_connection)
+            if is_gnss and self._gnss_assigns_serial_protocol(new_connection) and not candidates:
+                self._ensure_gnss_protocol_without_source(new_connection, original_params)
 
     def _apply_new_connection_rename(
         self,
@@ -2886,15 +3318,20 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         is_gnss: bool,
     ) -> None:
         """Apply a single connection rename that was not previously tracked."""
+        if orig_name in self.current_step_parameters and self.current_step_parameters[orig_name].is_manual_override is True:
+            return
         if new_target in self.current_step_parameters:
             logging_warning(_("Skipping connection rename %s → %s: target already exists"), orig_name, new_target)
             return
-        # Remove the original (un-renamed) parameter if it is still present
-        if orig_name in self.current_step_parameters:
-            del self.current_step_parameters[orig_name]
+        self._transfer_inline_derived_ownership(orig_name, new_target)
+        # Carry unsaved edits along with the renamed row.
+        current_par = self._take_current_rename_par(orig_name, original_params[orig_name])
+        if orig_name in original_params:
             self._deleted_parameters.add(orig_name)
+        if current_par is None:
+            return
         self.current_step_parameters[new_target] = self._config_step_processor.create_ardupilot_parameter(
-            new_target, original_params[orig_name], self.current_file, self.fc_parameters
+            new_target, current_par, self.current_file, self.fc_parameters
         )
         if is_gnss and new_target.endswith("_PROTOCOL"):
             self._apply_gnss_protocol_value(new_target)
@@ -2910,6 +3347,280 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         restored dict is the same object already referenced by expression evaluators.
         """
         self._local_filesystem.vehicle_components_fs.revert_key_in_place("Components")
+
+    def component_connection_transition(self, components: dict) -> tuple[str, str] | None:
+        """Return an explicitly configured step connection change, if it can be evaluated."""
+        step = self._local_filesystem.configuration_steps.get(self.current_file, {})
+        expression = step.get("rename_connection")
+        fs_data = self._local_filesystem.vehicle_components_fs.data
+        if not expression or not isinstance(fs_data, dict) or not isinstance(fs_data.get("Components"), dict):
+            return None
+        variables = self._config_step_processor.variables.copy()
+        try:
+            variables["vehicle_components"] = fs_data["Components"]
+            old = safe_evaluate(str(expression), variables)
+        except (ConfigurationStepEvalError, KeyError, TypeError, ValueError):
+            old = ""
+        try:
+            variables["vehicle_components"] = components
+            new = safe_evaluate(str(expression), variables)
+        except (ConfigurationStepEvalError, KeyError, TypeError, ValueError):
+            return None
+        if not isinstance(old, str):
+            old = ""
+        if not isinstance(new, str) or old == new:
+            return None
+        return old, new
+
+    def serial_transition_issue(  # noqa: PLR0911  # pylint: disable=too-many-locals,too-many-return-statements
+        self, components: dict
+    ) -> Literal["ambiguous_ownership", "active_protocol_unavailable"] | None:
+        """Explain when a proposed serial selection cannot safely reuse saved settings."""
+        transition = self.component_connection_transition(components)
+        if transition is None or re.fullmatch(r"SERIAL\d+", transition[1]) is None:
+            return None
+        old, new = transition
+        target = self.current_step_parameters.get(f"{new}_PROTOCOL")
+        if target is not None and target.get_new_value() != -1:
+            return None
+        if re.fullmatch(r"SERIAL\d+", old) and any(
+            self._serial_port_for_row(target_name) == old for target_name in self._connection_renames.values()
+        ):
+            live_protocol = self.current_step_parameters.get(f"{old}_PROTOCOL")
+            if live_protocol is None or live_protocol.get_new_value() == -1:
+                return None if self._derived_serial_protocol_available(new, components) else "active_protocol_unavailable"
+            return None
+        saved = self._local_filesystem.file_parameters.get(self.current_file, ParDict())
+        live_saved = ParDict(
+            {
+                name: par
+                for name, par in saved.items()
+                if name not in self._suppressed_connection_renames
+                and self._connection_renames.get(name, name) in self.current_step_parameters
+            }
+        )
+        serial_rows = [(name, par) for name, par in live_saved.items() if self._serial_port_for_row(name) is not None]
+        if not serial_rows or (
+            self._gnss_assigns_serial_protocol(new)
+            and all(name.endswith("_PROTOCOL") and par.value == -1 for name, par in serial_rows)
+        ):
+            return None
+        source = self._serial_rename_source(old, live_saved, new)
+        if source is None:
+            return "ambiguous_ownership"
+        if not any(self._serial_port_for_row(name) == source for name in live_saved):
+            return None
+        source_protocol = f"{source}_PROTOCOL"
+        live_protocol_name = self._connection_renames.get(source_protocol, source_protocol)
+        protocol = self.current_step_parameters.get(live_protocol_name)
+        explicitly_deleted = protocol is None and (
+            source_protocol in self._deleted_parameters or source_protocol in self._suppressed_connection_renames
+        )
+        if protocol is None:
+            saved_protocol = saved.get(source_protocol)
+            protocol_value = saved_protocol.value if saved_protocol is not None and not explicitly_deleted else None
+        else:
+            protocol_value = protocol.get_new_value()
+        return (
+            "active_protocol_unavailable"
+            if (
+                (explicitly_deleted or protocol_value in (None, -1))
+                and (
+                    self._last_connection_protocol is None or self._last_connection_protocol.value == -1 or explicitly_deleted
+                )
+                and not self._derived_serial_protocol_available(new, components)
+            )
+            else None
+        )
+
+    def _derived_serial_protocol_available(self, port: str, components: dict) -> bool:
+        """Check a configured derivation without changing the saved or live parameter state."""
+        step = self._local_filesystem.configuration_steps.get(self.current_file, {})
+        rule = step.get("derived_parameters", {}).get(f"{port}_PROTOCOL")
+        if not isinstance(rule, dict) or "New Value" not in rule:
+            return False
+        variables = self._config_step_processor.variables.copy()
+        variables["vehicle_components"] = components
+        if self.fc_parameters:
+            variables["fc_parameters"] = self.fc_parameters
+        available = set(self.fc_parameters) if self.fc_parameters else None
+        deleted_by_step = (
+            self._local_filesystem.compute_deletions(self.current_file, step, variables)
+            if "delete_parameters" in step
+            else set()
+        )
+        if not self._derived_parameter_applicable(f"{port}_PROTOCOL", available, deleted_by_step):
+            return False
+        try:
+            condition = safe_evaluate(str(rule.get("if", "True")), variables)
+            result, error = ConfigurationSteps._eval_new_value(  # noqa: SLF001  # pylint: disable=protected-access
+                self._local_filesystem, rule["New Value"], self.current_file, f"{port}_PROTOCOL", "derived", variables
+            )
+            if error:
+                return False
+            if isinstance(result, str):
+                result, error = ConfigurationSteps._resolve_string_result(  # noqa: SLF001  # pylint: disable=protected-access
+                    self._local_filesystem,
+                    result,
+                    f"{port}_PROTOCOL",
+                    variables.get("doc_dict", self._local_filesystem.doc_dict),
+                    self.current_file,
+                    "derived",
+                )
+                if error:
+                    return False
+            value = float(result)
+        except (ConfigurationStepEvalError, KeyError, TypeError, ValueError):
+            return False
+        return bool(condition) and value != -1
+
+    def connection_change_will_rename(self, components: dict) -> bool:
+        """Check whether the proposed component values would rename current saved rows."""
+        step = self._local_filesystem.configuration_steps.get(self.current_file, {})
+        expression = step.get("rename_connection")
+        if not expression:
+            return False
+        variables = self._config_step_processor.variables.copy()
+        variables["vehicle_components"] = components
+        transition = self.component_connection_transition(components)
+        old_connection = transition[0] if transition and transition[0] else None
+        candidates = self._connection_rename_candidates(
+            self._local_filesystem.file_parameters.get(self.current_file, ParDict()),
+            old_connection,
+            transition[1] if transition else None,
+        )
+        try:
+            _duplicates, pairs = self._config_step_processor.calculate_connection_rename_operations(
+                candidates,
+                expression,
+                variables,
+            )
+        except (ConfigurationStepEvalError, KeyError, TypeError, ValueError):
+            return False
+        desired = dict(pairs)
+        if transition is not None:
+            old, new = transition
+            if self._preserved_protocol_copy_target(old, new) is not None or (
+                not old
+                and re.fullmatch(r"SERIAL\d+", new)
+                and any(
+                    re.fullmatch(r"SERIAL\d+_PROTOCOL", name)
+                    and name != f"{new}_PROTOCOL"
+                    and name in self.current_step_parameters
+                    for name in self._inline_derived_parameters
+                )
+            ):
+                return True
+            if (
+                re.fullmatch(r"SERIAL\d+", old)
+                and re.fullmatch(r"SERIAL\d+", new)
+                and f"{old}_PROTOCOL" in self._inline_derived_parameters
+                and f"{old}_PROTOCOL" in self.current_step_parameters
+            ):
+                return True
+        if any(
+            source in candidates
+            and source not in self._suppressed_connection_renames
+            and desired.get(source, source) != target
+            for source, target in self._connection_renames.items()
+        ):
+            return True
+        return any(
+            source not in self._suppressed_connection_renames and source not in self._connection_renames for source in desired
+        )
+
+    def connection_change_conflicts(self, old: str, new: str) -> list[tuple[str, str]]:
+        """Identify occupied targets for rows associated with the previous connection."""
+        names = list(self.current_step_parameters)
+        if re.fullmatch(r"SERIAL\d+", old) is None and re.fullmatch(r"SERIAL\d+", new) and self._last_connection_source_rows:
+            candidates = self._connection_rename_candidates(
+                self._local_filesystem.file_parameters.get(self.current_file, ParDict()), old, new
+            )
+            live_sources = {
+                self._connection_renames.get(source, source)
+                for source in candidates
+                if self._connection_renames.get(source, source) in self.current_step_parameters
+            }
+            old_names = {name: name for name in live_sources}
+        else:
+            if re.fullmatch(r"SERIAL\d+", old) is None:
+                old = self._serial_rename_source(old, new_connection=new) or old
+            old_names = self._config_step_processor._generate_connection_renames(names, old)  # noqa: SLF001  # pylint: disable=protected-access
+        new_names = self._config_step_processor._generate_connection_renames(names, new)  # noqa: SLF001  # pylint: disable=protected-access
+        return [
+            (source, target)
+            for source, target in new_names.items()
+            if old_names.get(source) == source and target != source and target in self.current_step_parameters
+        ]
+
+    def serial_protocol_snapshot(self, port: str) -> ArduPilotParameter | None:
+        """Snapshot an existing serial protocol row before reconciling a connection change."""
+        if re.fullmatch(r"SERIAL\d+", port) is None:
+            return None
+        param = self.current_step_parameters.get(f"{port}_PROTOCOL")
+        return deepcopy(param) if param is not None else None
+
+    def can_disable_serial_protocol(self, port: str, previous: Par | ArduPilotParameter | None) -> bool:
+        """Allow disabling only a known serial protocol supported by available FC parameters."""
+        if re.fullmatch(r"SERIAL\d+", port) is None:
+            return False
+        name = f"{port}_PROTOCOL"
+        if self._local_filesystem.doc_dict.get(name, {}).get("ReadOnly", False):
+            return False
+        if self.fc_parameters:
+            return name in self.fc_parameters
+        if self.is_fc_link_connected:
+            return False
+        return previous is not None or name in self._local_filesystem.doc_dict
+
+    def preserve_or_disable_serial_protocol(
+        self, port: str, previous: Par | ArduPilotParameter | None, *, disable: bool
+    ) -> bool:
+        """Retain the old assignment or stage its explicitly requested disabled value."""
+        if re.fullmatch(r"SERIAL\d+", port) is None:
+            return False
+        name = f"{port}_PROTOCOL"
+        if disable and not self.can_disable_serial_protocol(port, previous):
+            return False
+        if previous is None:
+            if not disable:
+                return True
+            previous = Par(-1.0, _("Disable the previously selected serial connection"))
+        saved = self._local_filesystem.file_parameters.get(self.current_file, ParDict()).get(name)
+        if not disable and isinstance(previous, ArduPilotParameter) and previous.is_manual_override:
+            self.current_step_parameters[name] = previous
+            self._inline_derived_parameters.discard(name)
+            self._retired_inline_derived_parameters.discard(name)
+            self._deleted_parameters.discard(name)
+            if saved is None:
+                self._added_parameters.add(name)
+            else:
+                self._added_parameters.discard(name)
+            self._declined_connection_renames.add(name)
+            return True
+        if isinstance(previous, ArduPilotParameter):
+            previous = Par(previous.get_new_value(), previous.change_reason_for_file)
+        if disable:
+            previous = Par(-1.0, _("Disable the previously selected serial connection"))
+        param = self._config_step_processor.create_ardupilot_parameter(
+            name, saved or previous, self.current_file, self.fc_parameters
+        )
+        if param.is_forced or param.is_derived:
+            return False
+        with contextlib.suppress(ParameterUnchangedError):
+            param.set_new_value(str(previous.value), ignore_out_of_range=True)
+        param.set_change_reason(previous.comment or "")
+        self.current_step_parameters[name] = param
+        self._inline_derived_parameters.discard(name)
+        self._retired_inline_derived_parameters.discard(name)
+        self._deleted_parameters.discard(name)
+        if saved is None:
+            self._added_parameters.add(name)
+        else:
+            self._added_parameters.discard(name)
+        # This old-port row is independent of the selected connection after export.
+        self._declined_connection_renames.add(name)
+        return True
 
     def update_vehicle_components(self, components: dict) -> bool:
         """
