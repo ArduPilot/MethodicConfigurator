@@ -13,7 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from collections import deque
 from collections.abc import Callable
 from threading import Event
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock, call, patch
 from weakref import ref
 
 import pytest
@@ -23,6 +23,26 @@ from ardupilot_methodic_configurator.frontend_tkinter_file_browser_tasks import 
 
 class TestBackgroundTaskRunner:
     """The single scheduling boundary serializes work and delivers on poll."""
+
+    def test_worker_start_failure_does_not_prevent_retry(self) -> None:
+        """GIVEN a thread-start failure, WHEN the user retries, THEN a new task can complete normally."""
+        runner = BackgroundTaskRunner(MagicMock())
+        done = MagicMock()
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_file_browser_tasks.Thread.start", side_effect=RuntimeError
+            ),
+            pytest.raises(RuntimeError),
+        ):
+            runner.start(lambda _report: "ready", None, done)
+        assert not runner.active
+        done.assert_not_called()
+
+        assert runner.start(lambda _report: "ready", None, done)
+        assert runner.thread is not None
+        runner.thread.join(timeout=2)
+        runner.poll()
+        done.assert_called_once_with("ready", None)
 
     def test_user_receives_keyword_progress_arguments_on_the_ui_thread(self) -> None:
         """Given a typed callback boundary, preserve positional and keyword arguments."""

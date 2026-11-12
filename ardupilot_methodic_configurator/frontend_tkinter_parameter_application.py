@@ -45,6 +45,7 @@ class ParameterApplicationHost:
         self.parameter_editor = parameter_editor
         self.ui = ui
         self.gui_complexity = gui_complexity or str(ProgramSettings.get_setting("gui_complexity"))
+        self.confirmed_absent_fc_parameter_names: set[str] = set()
         self._on_close = on_close
 
     def repopulate_parameter_table(self) -> None:

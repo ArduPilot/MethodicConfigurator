@@ -91,6 +91,7 @@ class ParameterEditorTableHost(Protocol):
     """The parent-window operations used by a parameter table."""
 
     gui_complexity: str
+    confirmed_absent_fc_parameter_names: set[str]
 
     def repopulate_parameter_table(self) -> None: ...
 
@@ -300,18 +301,31 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         self.upload_checkbutton_var = {}
         self._new_value_widgets = {}
 
-        parameters = self.parameters if self.parameters is not None else self.parameter_editor.current_step_parameters
+        absent_names = self._confirmed_absent_parameter_names()
+        parameters = (
+            self.parameters
+            if self.parameters is not None
+            else {
+                name: parameter
+                for name, parameter in self.parameter_editor.current_step_parameters.items()
+                if name not in absent_names
+            }
+        )
         if show_only_differences:
             # Filter to show only different parameters
-            different_params = (
-                self.parameter_editor.get_different_parameters()
+            parameters = (
+                {
+                    name: parameter
+                    for name, parameter in self.parameter_editor.get_different_parameters().items()
+                    if name not in absent_names
+                }
                 if self.parameters is None
                 else {
                     name: param for name, param in parameters.items() if param.is_different_from_fc or not param.has_fc_value
                 }
             )
-            self._render_table(different_params, self.parameter_editor_window.gui_complexity, scroll_to_bottom)
-            if not different_params and self.options.skip_when_no_differences:
+            self._render_table(parameters, self.parameter_editor_window.gui_complexity, scroll_to_bottom)
+            if not parameters and self.options.skip_when_no_differences and not absent_names:
                 info_msg = _("No different parameters found in {selected_file}. Skipping...").format(
                     selected_file=self.parameter_editor.current_file
                 )
@@ -321,6 +335,29 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
                 return
         else:
             self._render_table(parameters, self.parameter_editor_window.gui_complexity, scroll_to_bottom)
+
+    def show_parameter_presence_check_in_progress(self) -> None:
+        """Replace stale rows while direct parameter reads are in progress."""
+        self._table_render_generation += 1
+        self.upload_checkbutton_var.clear()
+        self._new_value_widgets.clear()
+        self._last_return_values.clear()
+        for widget in self.view_port.winfo_children():
+            widget.destroy()
+        ttk.Label(self.view_port, text=_("Checking flight-controller parameter availability...")).grid(
+            row=0, column=0, sticky="w", padx=4, pady=4
+        )
+
+    def _confirmed_absent_parameter_names(self) -> set[str]:
+        """Hide only current-step parameters that still have no FC value."""
+        if self.parameters is not None:
+            return set()
+        parameters = self.parameter_editor.current_step_parameters
+        return {
+            name
+            for name in self.parameter_editor_window.confirmed_absent_fc_parameter_names
+            if name in parameters and not parameters[name].has_fc_value
+        }
 
     def _render_table(self, params: dict[str, ArduPilotParameter], gui_complexity: str, scroll_to_bottom: bool) -> None:
         """Render immediately or in UI-friendly batches according to the table options."""
@@ -1377,13 +1414,18 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
 
     def get_upload_selected_params(self, gui_complexity: str) -> ParDict:
         """Get the parameters selected for upload."""
+        absent_names = self._confirmed_absent_parameter_names()
         # Check if we should show upload column based on GUI complexity
         if not self._should_show_upload_column(gui_complexity):
-            # All parameters are selected for upload in simple mode
-            return self.parameter_editor.get_parameters_as_par_dict()
+            parameters = self.parameter_editor.get_parameters_as_par_dict()
+            return ParDict({name: parameter for name, parameter in parameters.items() if name not in absent_names})
 
         # Get only selected parameters
-        selected_names = [name for name, checkbutton_state in self.upload_checkbutton_var.items() if checkbutton_state.get()]
+        selected_names = [
+            name
+            for name, checkbutton_state in self.upload_checkbutton_var.items()
+            if checkbutton_state.get() and name not in absent_names
+        ]
         if self.parameters is not None:
             return self.parameter_editor.parameters_as_par_dict(selected_external_parameters(self.parameters, selected_names))
         return self.parameter_editor.get_parameters_as_par_dict(selected_names)

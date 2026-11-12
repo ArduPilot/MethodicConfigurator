@@ -73,6 +73,8 @@ class FlightControllerParams:
     PARAM_RESET_TIMEOUT: float = 10.0
     MAVFTP_GETPARAMS_TIMEOUT: float = 40.0
     MAVFTP_GETPARAMS_TELEMETRY_TIMEOUT: float = 120.0
+    MAV_PARAM_ERROR_DOES_NOT_EXIST: int = 1
+    PARAM_PRESENCE_BATCH_SIZE: int = 10
 
     def __init__(
         self,
@@ -430,6 +432,99 @@ class FlightControllerParams:
             time_sleep(self.PARAM_FETCH_POLL_DELAY)  # Small sleep to prevent busy waiting
 
         raise TimeoutError(_("Timeout waiting for parameter %s") % param_name)
+
+    def get_nonexistent_parameters(
+        self,
+        param_names: list[str],
+        timeout: float = 2.0,
+        *,
+        cancellation_requested: Callable[[], bool] | None = None,
+    ) -> set[str]:
+        """
+        Return only parameters explicitly reported absent by the FC.
+
+        A direct PARAM_REQUEST_READ returns PARAM_VALUE for a parameter that
+        exists but is hidden from the normal parameter list.  An explicit
+        PARAM_ERROR/DOES_NOT_EXIST is the sole result treated as absence;
+        timeouts and any other errors deliberately remain inconclusive. Reads
+        use batches of ten with one retry, below ArduPilot's twenty-entry queue.
+        The timeout applies to each batch. The caller owns exclusive reception.
+        """
+        master = self.master
+        cancelled = cancellation_requested or (lambda: False)
+        if master is None or cancelled():
+            return set()
+        if timeout <= 0:
+            msg = _("Timeout for parameter presence check is non-positive, skipping request")
+            logging_error(msg)
+            raise ValueError(msg)
+
+        names = sorted(set(param_names))
+        for param_name in names:
+            is_valid_name, name_error = validate_param_name(param_name)
+            if not is_valid_name:
+                logging_error(name_error)
+                raise IndexError(name_error)
+        nonexistent: set[str] = set()
+        for start in range(0, len(names), self.PARAM_PRESENCE_BATCH_SIZE):
+            if cancelled():
+                return set()
+            nonexistent.update(
+                self._probe_parameter_presence_batch(
+                    master, names[start : start + self.PARAM_PRESENCE_BATCH_SIZE], timeout, cancelled
+                )
+            )
+        return set() if cancelled() else nonexistent
+
+    @staticmethod
+    def _send_parameter_presence_requests(master: "MavlinkConnection", names: set[str]) -> None:
+        for name in sorted(names):
+            master.mav.param_request_read_send(master.target_system, master.target_component, name.encode("ascii"), -1)
+
+    @staticmethod
+    def _is_parameter_presence_response(master: "MavlinkConnection", response: Any) -> bool:  # noqa: ANN401
+        """Accept only the selected controller and errors addressed to this client."""
+        if (response.get_srcSystem(), response.get_srcComponent()) != (master.target_system, master.target_component):
+            return False
+        if response.get_type() == "PARAM_ERROR":
+            return (
+                response.target_system in (0, master.source_system)
+                and response.target_component in (0, master.source_component)
+                and response.param_index == -1
+            )
+        return True
+
+    def _probe_parameter_presence_batch(
+        self, master: "MavlinkConnection", names: list[str], timeout: float, cancelled: Callable[[], bool]
+    ) -> set[str]:
+        pending = set(names)
+        nonexistent: set[str] = set()
+        deadline = time_monotonic() + timeout
+        retry_at = deadline - timeout / 2
+        retried = False
+        self._send_parameter_presence_requests(master, pending)
+        while pending and time_monotonic() < deadline and not cancelled():
+            if not retried and time_monotonic() >= retry_at:
+                self._send_parameter_presence_requests(master, pending)
+                retried = True
+            # pymavlink 2.4.50 decodes PARAM_ERROR natively, including CRC/signature checks.
+            response = master.recv_match(type=["PARAM_VALUE", "PARAM_ERROR"], blocking=False)
+            if cancelled():
+                break
+            if response is None:
+                time_sleep(self.PARAM_FETCH_POLL_DELAY)
+                continue
+            if not self._is_parameter_presence_response(master, response):
+                continue
+            param_name = response.param_id.rstrip("\x00")
+            if param_name not in pending:
+                continue
+            pending.remove(param_name)
+            if response.get_type() == "PARAM_VALUE":
+                self.fc_parameters[param_name] = float(response.param_value)
+            elif response.error == self.MAV_PARAM_ERROR_DOES_NOT_EXIST:
+                nonexistent.add(param_name)
+        return nonexistent
 
     def clear_parameters(self) -> None:
         """

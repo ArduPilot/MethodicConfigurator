@@ -179,15 +179,6 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
     (master, comport, info). Other managers query the connection manager for
     current state rather than caching it.
 
-    Properties (delegated to managers):
-        master: MAVLink connection object (delegates to connection_manager)
-        comport: Current serial/network port (delegates to connection_manager)
-        comport_device: Device string of current port (delegates to connection_manager)
-        info: Flight controller metadata (delegates to connection_manager)
-        fc_parameters: Parameter dictionary (delegates to params_manager)
-        reboot_time: Time to wait after reboot before reconnecting
-        baudrate: Default baud rate for serial connections
-
     Note on Manager Creation Order:
         Managers must be created in this order due to dependencies:
         1. FlightControllerInfo (shared state object)
@@ -786,6 +777,14 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
     def fetch_param(self, param_name: str, timeout: int = 5) -> float | None:
         """Fetch a parameter from the flight controller - delegates to params manager."""
         return self._params_manager.fetch_param(param_name, timeout)
+
+    def get_nonexistent_parameters(
+        self, param_names: list[str], timeout: float = 2.0, *, cancellation_requested: Callable[[], bool] | None = None
+    ) -> set[str]:
+        """Return parameters explicitly reported absent by the flight controller."""
+        return self._params_manager.get_nonexistent_parameters(
+            param_names, timeout, cancellation_requested=cancellation_requested
+        )
 
     def reset_all_parameters_to_default(self) -> tuple[bool, str]:
         """Reset all parameters to their factory default values - delegates to commands manager."""

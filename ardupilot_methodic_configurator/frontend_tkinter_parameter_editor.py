@@ -413,7 +413,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._parameter_area_resize_running = False
         self._inline_component_name: str | None = None
         self._updating_inline_editor: bool = False
-        self._requested_action = ParameterEditorAction.FINISHED
+        self._initialize_editor_session_state()
 
         self.root.title(
             _("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - Parameter file editor and uploader")
@@ -551,7 +551,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Lifecycle hooks stop timers but need not disable plugin buttons.
         # Keep user actions from entering the worker's connection too.
         plugin_lock = NavigationLock()
-        widgets: list[object] = [self.current_plugin_view]
+        widgets: list[object] = [self.current_plugin_view, self.inline_component_container]
         while widgets:
             widget = widgets.pop()
             if isinstance(widget, tk.Misc):
@@ -578,6 +578,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         fc_parameters = self.parameter_editor.flight_controller.fc_parameters
         for name, parameter in self.parameter_editor.current_step_parameters.items():
             parameter.set_fc_value(fc_parameters.get(name))
+            if parameter.has_fc_value:
+                self.confirmed_absent_fc_parameter_names.discard(name)
         # A component edit during recovery may have left only a connection placeholder.
         if self.current_plugin is not None and self.current_plugin_view is None:
             self._update_plugin_layout(self.current_plugin, force_reload=True)
@@ -1733,7 +1735,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     self.gui_complexity,
                     self.documentation_frame.get_auto_open_documentation_in_browser(),
                     handle_imu_temp_cal=self._do_tempcal_imu,
-                    handle_copy_fc_values=self._should_copy_fc_values_to_file,
+                    handle_copy_fc_values=(
+                        self._defer_copy_fc_values_to_file
+                        if self.parameter_editor.supports_fc_parameter_presence_check is True
+                        else self._should_copy_fc_values_to_file
+                    ),
                     handle_upload_file=self._should_upload_file_to_fc,
                     ask_confirmation=self.ui.ask_yesno,
                     show_error=self.ui.show_error,
@@ -1765,13 +1771,18 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             plugin = self.parameter_editor.get_plugin(final_file)
             self._update_plugin_layout(plugin, force_reload=True)
 
-            # Repopulate parameter table with new file
-            self.repopulate_parameter_table()
+            # Create inline controls before the presence check locks their widgets.
+            self._update_inline_component_editor(self.parameter_editor.get_current_component())
+
+            # A direct read distinguishes a hidden parameter from one that is
+            # absent from this firmware.  Wait for that inexpensive batch
+            # check before rendering, so confirmed-absent rows never flash.
+            if not self._queue_parameter_presence_check():
+                self._finish_parameter_presence_check()
+                if self._close_pending:
+                    return
             self._update_skip_button_state()
             self._update_previous_button_state()
-
-            # Update inline component editor for the current step
-            self._update_inline_component_editor(self.parameter_editor.get_current_component())
 
             # Display optional instruction step
             popup_data = self.parameter_editor.get_instructions_popup(final_file)
@@ -1837,8 +1848,168 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def repopulate_parameter_table(self) -> None:
         if not self.parameter_editor.current_file:
             return  # no file was yet selected, so skip it
+        if self._parameter_presence_check_is_pending_for_current_file():
+            return
         # Re-populate the table with the new parameters
         self.parameter_editor_table.repopulate_table(self.show_only_differences.get(), self.gui_complexity)
+
+    def _initialize_editor_session_state(self) -> None:
+        """Initialize the editor outcome and cancellable parameter presence checks."""
+        self._requested_action = ParameterEditorAction.FINISHED
+        self._pending_fc_value_copy_file: str | None = None
+        self.confirmed_absent_fc_parameter_names: set[str] = set()
+        self._checked_parameter_presence_names: set[str] = set()
+        self._parameter_presence_runner = BackgroundTaskRunner(self.root.after)
+        self._parameter_presence_file: str | None = None
+        self._parameter_presence_cancelled = threading.Event()
+        self._parameter_presence_release_access: Callable[[], None] | None = None
+        self.root.bind("<Destroy>", self._on_parameter_presence_destroy, add="+")
+
+    def _queue_parameter_presence_check(self, reset: bool = True) -> bool:
+        """Run one probe at a time; resets cancel it and recheck candidates on completion."""
+        if self._close_pending:
+            return False
+        if reset:
+            self._parameter_presence_cancelled.set()
+            self.confirmed_absent_fc_parameter_names.clear()
+            self._checked_parameter_presence_names.clear()
+        if self._parameter_presence_runner.active:
+            return True
+        if self.parameter_editor.supports_fc_parameter_presence_check is not True:
+            return False
+
+        param_names = tuple(
+            name
+            for name in sorted(self.parameter_editor.get_fc_parameter_presence_candidates())
+            if name not in self._checked_parameter_presence_names
+        )
+        if not param_names:
+            return False
+
+        filename = self.parameter_editor.current_file
+        cancelled = threading.Event()
+        self._parameter_presence_cancelled = cancelled
+        self._parameter_presence_file = filename
+
+        def probe(_report: ProgressCallback) -> set[str]:
+            return self.parameter_editor.get_nonexistent_fc_parameters(
+                list(param_names), cancellation_requested=cancelled.is_set
+            )
+
+        def done(result: object | None, error: Exception | None) -> None:
+            # A callback from an earlier batch must never release a newer batch's lease.
+            if cancelled is not self._parameter_presence_cancelled:
+                return
+            try:
+                if self._close_pending:
+                    return
+                if cancelled.is_set() or filename != self.parameter_editor.current_file:
+                    if not self._queue_parameter_presence_check(reset=False):
+                        self._finish_parameter_presence_check()
+                    return
+                if error is not None:
+                    logging_warning("Could not check flight-controller parameter presence: %s", error)
+                else:
+                    self.confirmed_absent_fc_parameter_names.update(cast("set[str]", result))
+                self._checked_parameter_presence_names.update(param_names)
+                self._apply_parameter_presence_result()
+            finally:
+                if not self._parameter_presence_runner.active:
+                    self._parameter_presence_file = None
+                    self._release_parameter_presence_access()
+
+        try:
+            self._acquire_parameter_presence_access()
+            self.parameter_editor_table.show_parameter_presence_check_in_progress()
+            self._parameter_presence_runner.start(probe, None, done)
+        except Exception:
+            self._parameter_presence_file = None
+            self._release_parameter_presence_access()
+            raise
+        return True
+
+    def _acquire_parameter_presence_access(self) -> None:
+        """Keep controls, plugin receivers and the connection monitor idle until all batches finish."""
+        if self._parameter_presence_release_access is not None:
+            return
+        recovery = self._connection_recovery
+        with contextlib.ExitStack() as cleanup:
+            release_operation = recovery.acquire_operation() if recovery is not None else lambda: None
+            cleanup.callback(release_operation)
+            unlock = self._lock_connection_plugin(self._parameter_presence_runner)
+            cleanup.callback(unlock)
+            resume_plugin = self._pause_plugin_receiver()
+            cleanup.pop_all()
+
+        def release() -> None:
+            try:
+                unlock()
+                if not self._close_pending:
+                    resume_plugin()
+                    self._update_skip_button_state()
+                    self._update_previous_button_state()
+            finally:
+                release_operation()
+
+        self._parameter_presence_release_access = release
+
+    def _release_parameter_presence_access(self) -> None:
+        release, self._parameter_presence_release_access = self._parameter_presence_release_access, None
+        if release is not None:
+            release()
+
+    def _apply_parameter_presence_result(self) -> None:
+        """Rebuild computed rows without losing edits, then probe any newly introduced N/A rows."""
+        ui_errors, ui_infos = self.parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update()
+        for title, message in ui_errors:
+            self.ui.show_error(title, message)
+        for title, message in ui_infos:
+            self.ui.show_info(title, message)
+        if not self._close_pending and not self._queue_parameter_presence_check(reset=False):
+            self._finish_parameter_presence_check()
+
+    def _defer_copy_fc_values_to_file(self, selected_file: str) -> ExperimentChoice:
+        """Wait for direct reads before offering to copy the step's FC values."""
+        self._pending_fc_value_copy_file = selected_file
+        return False
+
+    def _finish_parameter_presence_check(self) -> None:
+        """Apply the copy decision and plugin condition using the completed FC snapshot."""
+        filename, self._pending_fc_value_copy_file = self._pending_fc_value_copy_file, None
+        if (
+            filename is not None
+            and filename == self.parameter_editor.current_file
+            and self._should_copy_fc_values_to_file(filename) == "close"
+        ):
+            self.close_connection_and_quit()
+            return
+        had_probe = self._parameter_presence_release_access is not None
+        self._parameter_presence_file = None
+        self._release_parameter_presence_access()
+        if had_probe:
+            self._update_plugin_layout(self.parameter_editor.get_plugin(self.parameter_editor.current_file))
+        self.repopulate_parameter_table()
+
+    def _stop_parameter_presence_check(self) -> bool:
+        """Cancel reception and retain the connection lease until the worker has exited."""
+        self._parameter_presence_cancelled.set()
+        thread = self._parameter_presence_runner.thread
+        if thread is not None and thread.is_alive():
+            return False
+        self._parameter_presence_file = None
+        self._release_parameter_presence_access()
+        return True
+
+    def _on_parameter_presence_destroy(self, event: tk.Event) -> None:
+        """A destroyed editor must never let an outstanding probe change its model."""
+        if event.widget is self.root:
+            self._close_pending = True
+            self._parameter_presence_cancelled.set()
+
+    def _parameter_presence_check_is_pending_for_current_file(self) -> bool:
+        return (
+            self._parameter_presence_file is not None and self._parameter_presence_file == self.parameter_editor.current_file
+        )
 
     def _on_component_data_changed(self) -> None:
         """Called when a field in the inline component editor is changed by the user."""
@@ -2428,6 +2599,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def _finish_pending_close(self) -> None:
         """Wait for recovery through one retry chain, then offer to save once."""
+        if not self._stop_parameter_presence_check():
+            self.root.after(25, self._finish_pending_close)
+            return
         if not self._stop_connection_monitor():
             self._show_connection_status(_("Closing… Waiting for flight-controller recovery to stop."))
             self.root.after(50, self._finish_pending_close)
