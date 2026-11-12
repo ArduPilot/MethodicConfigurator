@@ -178,13 +178,21 @@ Plugin packaging regressions also require the `windows/`, `linux/`, and `macos/`
 directories containing the frozen-build specifications.
 Generated copies and results are stored in the ignored `mutants/` directory;
 Mutmut resumes previous work there. For a fresh baseline, remove that generated
-directory first, especially after changing tests or dependencies. Run from the
-repository root so that Mutmut reads its configuration.
+directory first. Run from the repository root so that Mutmut reads its configuration.
+Changed source functions are retested while unchanged function results are reused.
+The configured test and runtime-input hashes force a full rerun when those inputs
+change, including edits to existing tests. Dependency and Mutmut configuration
+changes are also checked by Mutmut.
 
 The [mutation workflow](.github/workflows/mutation.yml) runs manually or weekly on
 Ubuntu with Python 3.11. It uploads results without enforcing a mutation score;
 clean-test and framework failures still fail the job. Per-mutant timeouts and
 crashes are reported for review. Scheduled runs are disabled in forks.
+Saved state is shared across source revisions on the same branch, with separate
+names for the operating system, Python version, and Mutmut version. CI also hashes
+the resolved dependency list so transitive upgrades invalidate saved results.
+The artifact fallback accepts the earlier fingerprinted v2 state artifacts for
+Mutmut 3.8.1; introducing test-input tracking can require an initial full rerun.
 The job summary groups all mutation outcomes by module; the
 artifact retains individual results and execution logs. The existing coverage
 gate remains independent.

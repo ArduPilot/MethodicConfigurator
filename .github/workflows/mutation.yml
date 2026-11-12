@@ -49,17 +49,22 @@ jobs:
       - name: Install dependencies
         run: uv pip install --editable '.[dev,mutation]'
 
-      # Fingerprint before the baseline run: pytest writes __pycache__ files whose headers embed checkout mtimes.
       - name: Identify compatible mutation state
         id: mutation_state
         shell: bash
-        env:
-          # Invalidate verdicts when tests, source, or direct dependency pins in pyproject.toml change.
-          # Transitive dependency versions are not covered: uv.lock is not tracked, so they resolve fresh on each install.
-          STATE_FINGERPRINT: ${{ hashFiles('tests/**', '!tests/**/__pycache__/**', 'ardupilot_methodic_configurator/**', '!ardupilot_methodic_configurator/**/__pycache__/**', 'pyproject.toml', 'pytest.ini', 'TUNING_GUIDE_Heli.md', 'ardupilot_methodic_configurator_command_line_completion.psm1', 'windows/**', 'linux/**', 'macos/**') }}
         run: |
-          echo "cache_prefix=mutmut-state-${RUNNER_OS}-py311-v2-${STATE_FINGERPRINT}-" >> "$GITHUB_OUTPUT"
-          echo "artifact_name=mutmut-state-${RUNNER_OS}-py311-v2-${STATE_FINGERPRINT}" >> "$GITHUB_OUTPUT"
+          # Mutmut invalidates changed functions; do not partition state by source revision.
+          mutmut_version=$(python -c 'from importlib.metadata import version; print(version("mutmut"))')
+          state_name="mutmut-state-${RUNNER_OS}-py311-v3-${mutmut_version}"
+          echo "cache_prefix=${state_name}-" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=${state_name}" >> "$GITHUB_OUTPUT"
+          # Existing v2 artifacts were produced with Mutmut 3.8.1.
+          if [[ "$mutmut_version" == "3.8.1" ]]; then
+            echo "legacy_artifact_prefix=mutmut-state-${RUNNER_OS}-py311-v2-" >> "$GITHUB_OUTPUT"
+          fi
+          mkdir -p .cache/mutation
+          # Include resolved transitive dependencies in Mutmut's invalidation checks.
+          uv pip freeze | LC_ALL=C sort > .cache/mutation/dependencies.txt
 
       - name: Verify unmodified selected tests
         shell: bash
@@ -97,23 +102,38 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           STATE_ARTIFACT_NAME: ${{ steps.mutation_state.outputs.artifact_name }}
+          LEGACY_ARTIFACT_PREFIX: ${{ steps.mutation_state.outputs.legacy_artifact_prefix }}
         run: |
           python - <<'PY'
           import json
           import os
-          from urllib.parse import urlencode
           from urllib.request import Request, urlopen
 
-          query = urlencode({"name": os.environ["STATE_ARTIFACT_NAME"], "per_page": 100})
-          url = f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts?{query}"
-          request = Request(url, headers={
+          url = f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts?per_page=100"
+          headers = {
               "Accept": "application/vnd.github+json",
               "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
               "X-GitHub-Api-Version": "2022-11-28",
-          })
-          with urlopen(request, timeout=30) as response:
-              artifacts = json.load(response)["artifacts"]
-          for artifact in artifacts:
+          }
+
+          def previous_artifacts():
+              next_url = url
+              while next_url:
+                  with urlopen(Request(next_url, headers=headers), timeout=30) as response:
+                      artifacts = json.load(response)["artifacts"]
+                      next_url = response.headers.get("Link", "")
+                  next_url = next((
+                      link.split(";")[0].strip().strip("<>")
+                      for link in next_url.split(",") if 'rel="next"' in link
+                  ), None)
+                  yield from artifacts
+
+          for artifact in previous_artifacts():
+              legacy_prefix = os.environ.get("LEGACY_ARTIFACT_PREFIX", "")
+              if artifact["name"] != os.environ["STATE_ARTIFACT_NAME"] and not (
+                  legacy_prefix and artifact["name"].startswith(legacy_prefix)
+              ):
+                  continue
               run = artifact.get("workflow_run") or {}
               if artifact["expired"] or run.get("head_branch") != os.environ["GITHUB_REF_NAME"]:
                   continue
