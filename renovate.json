@@ -52,7 +52,9 @@
     }
   ],
   "pin": {"enabled": true},
-  "dependencyDashboard": true,
+  "dependencyDashboard": {
+    "enabled": true
+  },
   "osvVulnerabilityAlerts": true,
   "vulnerabilityAlerts": {"enabled": true},
   "ignorePaths": ["**/node_modules/**", "**/bower_components/**", "**/.git/**"],
