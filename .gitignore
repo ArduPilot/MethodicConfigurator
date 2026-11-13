@@ -40,3 +40,6 @@ tuning_report.csv
 .pytest*/
 /migration_test/
 /mutants/
+
+.python-version
+uv.lock
