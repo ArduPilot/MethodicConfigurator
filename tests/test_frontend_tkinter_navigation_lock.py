@@ -164,6 +164,7 @@ def test_every_requested_editor_control_is_locked_and_restored(root, mocker, gui
             window.on_fc_banner_click,
             window.on_zip_vehicle_for_forum_help_click,
             window.on_analyse_log_click,
+            window.on_analyse_log_with_skybrush_click,
             window.on_edit_vehicle_components_click,
         }
         assert len(buttons) == len(expected_commands)
@@ -197,6 +198,7 @@ def test_every_requested_editor_control_is_locked_and_restored(root, mocker, gui
         "on_fc_banner_click",
         "on_zip_vehicle_for_forum_help_click",
         "on_analyse_log_click",
+        "on_analyse_log_with_skybrush_click",
         "on_edit_vehicle_components_click",
     ],
 )

@@ -79,6 +79,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_progress_window import (
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText, get_widget_font_family_and_size
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import get_monitor_bounds, show_tooltip
+from ardupilot_methodic_configurator.frontend_tkinter_skybrush_log_analysis import SkybrushLogAnalysisWindow
 from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import UsagePopupWindow
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import (
@@ -932,6 +933,15 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             if (self.parameter_editor.is_fc_connected and self.parameter_editor.is_mavftp_supported)
             else _("No flight controller connected or MAVFTP not supported"),
         )
+        # Create Skybrush log analysis button
+        skybrush_log_button = ttk.Button(
+            buttons_frame,
+            text=_("Analyse log\nwith Skybrush"),
+            command=self.on_analyse_log_with_skybrush_click,
+        )
+        skybrush_log_button.pack(side=tk.LEFT, padx=(8, 8))
+        self.navigation_lock.register(skybrush_log_button)
+        show_tooltip(skybrush_log_button, _("Select a .bin flight log to open the Skybrush Log Analysis window"))
         # Create skip buttons
         self.skip_button = ttk.Button(buttons_frame, text=_("Skip >"), command=self.on_skip_click)
         self.skip_button.configure(
@@ -1065,6 +1075,18 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if not filepath:
             return
         self._analyse_log_file(filepath)
+
+    def on_analyse_log_with_skybrush_click(self) -> None:
+        """Open the Skybrush Log Analysis window for a selected log."""
+        if self.navigation_lock.locked:
+            return
+        filepath = self.ui.askopenfilename(
+            title=_("Select a flight log"),
+            filetypes=[(_("ArduPilot binary log files"), "*.bin"), (_("All files"), "*.*")],
+        )
+        if not filepath:
+            return
+        SkybrushLogAnalysisWindow(self.root, filepath)
 
     def _navigate_to_config_step(self, step: str) -> None:
         if self.navigation_lock.locked:
