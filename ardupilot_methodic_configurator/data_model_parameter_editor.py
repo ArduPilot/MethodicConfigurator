@@ -2685,9 +2685,25 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
     # plugin API begin
 
+    def _quadplane_servo_output_enabled(self) -> bool:
+        """Use the active FC setting, or an explicit saved setting for offline projects."""
+        if self.is_fc_link_connected:
+            return self.fc_parameters.get("Q_ENABLE") == 1
+        saved_parameters, _first_file = self._local_filesystem.compound_params()
+        saved_enable = saved_parameters.get("Q_ENABLE")
+        return saved_enable is not None and saved_enable.value == 1
+
     def get_plugin(self, filename: str) -> dict | None:
         plugin = self._local_filesystem.get_plugin(filename)
         if plugin is None:
+            return None
+
+        if (
+            filename == "11_servo_outputs.param"
+            and plugin.get("name") == "servo_out"
+            and self._local_filesystem.vehicle_type == "ArduPlane"
+            and not self._quadplane_servo_output_enabled()
+        ):
             return None
 
         condition = plugin.get("if")
