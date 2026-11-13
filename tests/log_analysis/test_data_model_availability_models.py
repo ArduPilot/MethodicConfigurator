@@ -7,6 +7,8 @@ This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPil
 
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
+SPDX-FileCopyrightText: 2026 Omkar Sarkar <omkarsarkar24@gmail.com>
+
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
@@ -25,6 +27,8 @@ from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result
 from ardupilot_methodic_configurator.log_analysis.data_model_log_availability import LogAvailabilityState
 from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
 
+# pylint: disable=too-many-lines
+
 
 def _esc_log(
     records: list[tuple[float, float, float, float, float]],
@@ -41,10 +45,11 @@ def _esc_log(
     return log
 
 
-def _esc_context(parameters: dict[str, float]) -> LogAnalysisContext:
+def _esc_context(parameters: dict[str, float], *, vehicle_components: dict | None = None) -> LogAnalysisContext:
     """Resolve ESC findings against realistic parameter and configuration metadata."""
     context = _context(
         parameters,
+        vehicle_components=vehicle_components,
         apm_doc={
             "MOT_PWM_TYPE": {"values": {"0": "Normal", "6": "DShot150", "9": "DShot600"}},
             "SERVO_DSHOT_RATE": {
@@ -138,6 +143,149 @@ def test_esc_model_uses_apm_doc_to_detect_non_dshot_configuration() -> None:
     assert result.issues[0].config_step == "07_esc.param"
     assert result.reason == "ESC telemetry not logged"
     assert result.issues[0].message == "Set MOT_PWM_TYPE to a DShot variant for ESC telemetry support"
+
+
+@pytest.mark.parametrize("connection_type", ["Main Out", "AIO"])
+def test_esc_availability_accepts_a_matching_connection_protocol(connection_type: str) -> None:
+    """
+    Accept the PWM type declared in the vehicle's ESC specifications.
+
+    GIVEN healthy ESC records and matching documented and declared DShot protocols,
+    WHEN availability is checked,
+    THEN telemetry is available without a protocol warning.
+    """
+    context = _esc_context(
+        {"MOT_PWM_TYPE": 6.0},
+        vehicle_components={"ESC": {"FC->ESC Connection": {"Type": connection_type, "Protocol": "DShot150"}}},
+    )
+
+    result = EscLogAvailabilityModel(_esc_log([(7, 1, 1000, 2, 0)]), context).check()
+
+    assert result.available is True
+    assert result.state == LogAvailabilityState.INFO
+    assert not result.issues
+
+
+@pytest.mark.parametrize("connection_type", ["Main Out", "AIO"])
+@pytest.mark.parametrize("stream", ["present", "absent", "empty"])
+def test_esc_availability_reports_a_protocol_mismatch_with_or_without_telemetry(connection_type: str, stream: str) -> None:
+    """
+    Preserve the configuration warning independently of ESC telemetry availability.
+
+    GIVEN a documented PWM type differing from the declared ESC connection protocol,
+    WHEN availability is checked with present, absent, or empty ESC records,
+    THEN the warning names both protocols and links to the PWM parameter and configuration step.
+    """
+    context = _esc_context(
+        {"MOT_PWM_TYPE": 9.0, "SCR_ENABLE": 1.0},
+        vehicle_components={"ESC": {"FC->ESC Connection": {"Type": connection_type, "Protocol": "DShot150"}}},
+    )
+    log = LogData() if stream == "absent" else _esc_log([(7, 1, 1000, 2, 0)] if stream == "present" else [])
+
+    result = EscLogAvailabilityModel(log, context).check()
+
+    assert result.available is (stream == "present")
+    assert result.state == LogAvailabilityState.WARNING
+    assert [(issue.message, issue.param_name, issue.config_step) for issue in result.issues] == [
+        (
+            (
+                "MOT_PWM_TYPE is configured as DShot600, but the ESC's FC->ESC Connection protocol is declared as "
+                "DShot150 in your vehicle component specifications."
+            ),
+            "MOT_PWM_TYPE",
+            "07_esc.param",
+        ),
+    ] + ([] if stream == "present" else [("No ESC messages found", None, "07_esc.param")])
+
+
+@pytest.mark.parametrize("connection_type", ["Serial", "CAN"])
+def test_esc_availability_skips_pwm_protocol_comparison_for_serial_and_can(connection_type: str) -> None:
+    """
+    Allow ESC connections that do not use the PWM output protocol.
+
+    GIVEN healthy ESC telemetry and a Serial or CAN connection with a different declared protocol,
+    WHEN availability is checked,
+    THEN the unrelated PWM setting produces no warning.
+    """
+    context = _esc_context(
+        {"MOT_PWM_TYPE": 9.0},
+        vehicle_components={"ESC": {"FC->ESC Connection": {"Type": connection_type, "Protocol": "DShot150"}}},
+    )
+
+    result = EscLogAvailabilityModel(_esc_log([(7, 1, 1000, 2, 0)]), context).check()
+
+    assert result.available is True
+    assert result.state == LogAvailabilityState.INFO
+    assert not result.issues
+
+
+@pytest.mark.parametrize(("plane_pwm", "copter_pwm"), [(6.0, 9.0), (9.0, 6.0)])
+def test_esc_availability_uses_quadplane_pwm_type_for_arduplane(plane_pwm: float, copter_pwm: float) -> None:
+    """
+    Diagnose QuadPlane ESC configuration using its own PWM parameter.
+
+    GIVEN an ArduPlane log whose Q_M_PWM_TYPE and MOT_PWM_TYPE disagree,
+    WHEN ESC availability is checked against the declared protocol,
+    THEN only Q_M_PWM_TYPE determines the warning and its parameter link.
+    """
+    log = _esc_log([(7, 1, 1000, 2, 0)])
+    log.vehicle_type = "ArduPlane"
+    context = _esc_context(
+        {"Q_M_PWM_TYPE": plane_pwm, "MOT_PWM_TYPE": copter_pwm},
+        vehicle_components={"ESC": {"FC->ESC Connection": {"Type": "Main Out", "Protocol": "DShot150"}}},
+    )
+    assert context.apm_doc is not None
+    context.apm_doc["Q_M_PWM_TYPE"] = context.apm_doc["MOT_PWM_TYPE"]
+    context.configuration_steps["07_esc.param"]["derived_parameters"]["Q_M_PWM_TYPE"] = 6.0
+
+    result = EscLogAvailabilityModel(log, context).check()
+
+    assert result.available is True
+    if plane_pwm == 6.0:
+        assert result.state == LogAvailabilityState.INFO
+        assert not result.issues
+    else:
+        assert result.state == LogAvailabilityState.WARNING
+        assert [(issue.message, issue.param_name, issue.config_step) for issue in result.issues] == [
+            (
+                (
+                    "Q_M_PWM_TYPE is configured as DShot600, but the ESC's FC->ESC Connection protocol is declared as "
+                    "DShot150 in your vehicle component specifications."
+                ),
+                "Q_M_PWM_TYPE",
+                "07_esc.param",
+            )
+        ]
+
+
+@pytest.mark.parametrize("missing_input", ["documentation", "enum_code", "parameter", "declared_protocol"])
+def test_esc_availability_skips_protocol_warnings_when_configuration_cannot_be_resolved(missing_input: str) -> None:
+    """
+    Avoid speculative protocol warnings when configuration metadata is incomplete.
+
+    GIVEN a declared ESC connection but missing documentation, an unknown code, or an absent setting,
+    WHEN availability is checked,
+    THEN healthy telemetry stays available without a protocol mismatch issue.
+    """
+    connection = {"Type": "Main Out", "Protocol": "DShot150"}
+    context = _esc_context(
+        {"MOT_PWM_TYPE": 9.0},
+        vehicle_components={"ESC": {"FC->ESC Connection": connection}},
+    )
+    if missing_input == "documentation":
+        context.apm_doc = None
+    elif missing_input == "enum_code":
+        context.parameters["MOT_PWM_TYPE"] = 999.0
+    elif missing_input == "parameter":
+        context.parameters.clear()
+    else:
+        connection.pop("Protocol")
+
+    result = EscLogAvailabilityModel(_esc_log([(7, 1, 1000, 2, 0)]), context).check()
+
+    assert result.available is True
+    assert result.state == LogAvailabilityState.INFO
+    assert not result.issues
 
 
 def test_battery_model_checks_present_log_data_without_datasource_access() -> None:
