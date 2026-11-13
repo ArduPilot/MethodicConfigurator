@@ -30,7 +30,7 @@ import time
 import tkinter as tk
 import tkinter.font as tk_font
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from tkinter import simpledialog, ttk
@@ -39,6 +39,7 @@ from unittest.mock import MagicMock, patch
 
 import pyautogui
 from PIL import Image, ImageDraw
+from skybrush_log_analyzer.config import Config as SkybrushConfig
 
 from ardupilot_methodic_configurator import _ as translate
 from ardupilot_methodic_configurator import __version__
@@ -69,6 +70,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_mavlink_inspector import M
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_project_creator import VehicleProjectCreatorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_project_opener import VehicleProjectOpenerWindow
+from ardupilot_methodic_configurator.frontend_tkinter_skybrush_log_analysis import FeedbackDialog, SkybrushLogAnalysisWindow
 from ardupilot_methodic_configurator.frontend_tkinter_template_overview import TemplateOverviewWindow
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import display_parameter_editor_usage_popup
 from ardupilot_methodic_configurator.plugins.data_model_rc_calibration import RCCalibrationDataModel
@@ -117,6 +119,9 @@ TARGETS: tuple[CaptureTarget, ...] = (
     CaptureTarget("App_screenshot_MAVLink_inspector.png", "mavlink_inspector", variant="radio"),
     CaptureTarget("App_screenshot_MAVLink_inspector_no_radio.png", "mavlink_inspector", variant="no_radio"),
     CaptureTarget("App_screenshot_MAVLink_inspector_collapsed.png", "mavlink_inspector", variant="collapsed"),
+    CaptureTarget("App_screenshot_Skybrush_log_analysis_login.png", "skybrush_log_analysis", scale=0.666, variant="login"),
+    CaptureTarget("App_screenshot_Skybrush_log_analysis.png", "skybrush_log_analysis", scale=0.666, variant="results"),
+    CaptureTarget("App_screenshot_Skybrush_log_analysis_feedback.png", "skybrush_log_analysis", variant="feedback"),
     CaptureTarget("App_screenshot_Firmware_upload.png", "firmware_upload"),
     CaptureTarget("App_screenshot_Firmware_upload_progress.png", "firmware_upload_progress"),
     CaptureTarget(
@@ -1333,6 +1338,183 @@ def _capture_mavlink_inspector(output_path: Path, delay: float, padding: int, va
             window.close()
 
 
+_SKYBRUSH_MODULE = "ardupilot_methodic_configurator.frontend_tkinter_skybrush_log_analysis"
+
+
+def _skybrush_message(text: str, severity: str, **extra: object) -> dict[str, object]:
+    """Build one illustrative Skybrush test-case message."""
+    return {"text": text, "severity": severity, **extra}
+
+
+def _skybrush_analysis_response() -> dict[str, object]:
+    """Provide an illustrative raw Skybrush analysis response, independent of network access."""
+    return {
+        "test_results": [
+            {
+                "test_name": "paplan.tests.vibration",
+                "status": "WARN",
+                "title": "IMU vibration levels",
+                "messages": [
+                    _skybrush_message("Peak Z-axis vibration", "WARN", value=42.7, unit="m/s/s", timestamp=312.4),
+                    _skybrush_message("Accelerometer clipping events", "INFO", value=3),
+                ],
+            },
+            {
+                "test_name": "paplan.tests.battery",
+                "status": "PASS",
+                "title": "Battery voltage sag",
+                "messages": [_skybrush_message("Minimum cell voltage under load", "PASS", value=3.62, unit="V")],
+            },
+            {
+                "test_name": "paplan.tests.gnss",
+                "status": "PASS",
+                "title": "GNSS reception quality",
+                "messages": [_skybrush_message("Minimum number of satellites", "PASS", value=17)],
+            },
+            {
+                "test_name": "paplan.tests.ekf",
+                "status": "INFO",
+                "title": "EKF innovations",
+                "messages": [_skybrush_message("EKF lane switch", "INFO", timestamp=96.0)],
+            },
+            {
+                "test_name": "paplan.tests.motor_balance",
+                "status": "PASS",
+                "title": "Motor output balance",
+                "messages": [_skybrush_message("Maximum motor output spread", "PASS", value=8.5, unit="%")],
+            },
+            {"test_name": "paplan.tests.rtk", "status": "NOT_APPLICABLE", "title": "RTK fix quality"},
+        ],
+    }
+
+
+class _SkybrushScreenshotClient:
+    """Answer the Skybrush API calls locally, so no account, API key or network is needed."""
+
+    def __init__(self, config: SkybrushConfig) -> None:
+        self.config = config
+
+    @staticmethod
+    def version() -> dict[str, str]:
+        return {"app_version": "1.0.0"}
+
+    @staticmethod
+    def analyze(_path: Path) -> dict[str, object]:
+        return _skybrush_analysis_response()
+
+
+def _wait_for_tk(root: tk.Misc, predicate: Callable[[], bool], error_msg: str, timeout: float = 5.0) -> None:
+    """Process Tk events until the predicate holds, raising when it times out."""
+    deadline = time.monotonic() + timeout
+    while not predicate():
+        if time.monotonic() > deadline:
+            raise RuntimeError(error_msg)
+        root.update()
+        time.sleep(0.05)
+
+
+def _fill_skybrush_feedback_dialog(dialog: tk.Toplevel) -> None:
+    """Enter illustrative feedback into the dialog fields, without submitting it."""
+    title_entry = _find_descendant(
+        dialog, lambda widget: isinstance(widget, ttk.Entry) and not isinstance(widget, ttk.Combobox)
+    )
+    description_text = _find_descendant(dialog, lambda widget: isinstance(widget, tk.Text))
+    category_box = _find_descendant(dialog, lambda widget: isinstance(widget, ttk.Combobox))
+    if (
+        not isinstance(title_entry, ttk.Entry)
+        or not isinstance(description_text, tk.Text)
+        or not isinstance(category_box, ttk.Combobox)
+    ):
+        msg = "Could not find the feedback dialog category, title and description fields"
+        raise RuntimeError(msg)
+    category_box.set("other")
+    title_entry.insert(0, "Great log analysis")
+    description_text.insert("1.0", "The Skybrush Log Analyzer works great, thank you! 👍")
+
+
+def _capture_skybrush_log_analysis(  # pylint: disable=too-many-locals
+    output_path: Path, delay: float, padding: int, variant: str, scale: float = 1.0
+) -> None:
+    """Capture the Skybrush log analysis window logged out, with results, or with the feedback dialog."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # An empty config directory yields the default service URLs without reading the user's API key.
+        config_dir = Path(tmpdir) / "skybrush-log-analyzer"
+        config_dir.mkdir()
+        config = SkybrushConfig.load(config_dir=config_dir)
+        if variant != "login":
+            config = replace(config, api_key="screenshot-api-key")
+        logfile = Path(tmpdir) / "00000158.BIN"
+        logfile.write_bytes(b"\0")
+
+        with (
+            hidden_root() as root,
+            patch(f"{_SKYBRUSH_MODULE}.Config.load", return_value=config),
+            patch(f"{_SKYBRUSH_MODULE}.APIClient", _SkybrushScreenshotClient),
+            patch.object(FeedbackDialog, "show"),
+        ):
+            window = SkybrushLogAnalysisWindow(root, str(logfile))
+            try:
+                # Set topmost first: on Windows it reverts a still-pending geometry change.
+                window.root.attributes("-topmost", 1)
+                window.root.geometry("+100+80")
+                window.root.lift()
+                pyautogui.moveTo(20, 20)  # Keep hover tooltips out of the documentation screenshots.
+                header_text = (
+                    translate("Skybrush API version: requires logging in")
+                    if variant == "login"
+                    else translate("Skybrush API version: {version}").format(version="1.0.0")
+                )
+                _wait_for_tk(
+                    window.root,
+                    lambda: _find_descendant(window.root, lambda widget: _widget_text(widget) == header_text) is not None,
+                    "The Skybrush log analysis header did not show the API version before the timeout",
+                )
+                if variant == "login":
+                    capture_widget(window.root, output_path, delay, padding, scale=scale)
+                    return
+
+                analyze_button = _find_descendant(window.root, lambda widget: _widget_text(widget) == translate("Analyze"))
+                if not isinstance(analyze_button, ttk.Button):
+                    msg = "Could not find the Skybrush Analyze button"
+                    raise RuntimeError(msg)
+                analyze_button.invoke()
+                _wait_for_tk(
+                    window.root,
+                    lambda: _widget_text(window.status_label) == translate("Analysis completed"),
+                    "The illustrative Skybrush analysis did not complete before the timeout",
+                )
+                if variant == "results":
+                    capture_widget(window.root, output_path, delay, padding, scale=scale)
+                    return
+
+                feedback_button = _find_descendant(
+                    window.root, lambda widget: _widget_text(widget) == translate("Send feedback")
+                )
+                if not isinstance(feedback_button, ttk.Button):
+                    msg = "Could not find the Skybrush Send feedback button"
+                    raise RuntimeError(msg)
+                feedback_button.invoke()
+                dialog = next(
+                    (
+                        child
+                        for child in window.root.winfo_children()
+                        if isinstance(child, tk.Toplevel) and child.title() == translate("Send feedback")
+                    ),
+                    None,
+                )
+                if dialog is None:
+                    msg = "Could not find the Skybrush feedback dialog"
+                    raise RuntimeError(msg)
+                dialog.attributes("-topmost", 1)
+                dialog.lift()
+                dialog.focus_force()  # Show the dialog with an active title bar.
+                _fill_skybrush_feedback_dialog(dialog)
+                capture_widget(dialog, output_path, delay, padding, scale=scale)
+            finally:
+                if window.root.winfo_exists():
+                    window.root.destroy()
+
+
 def _capture_firmware_upload(output_path: Path, delay: float, padding: int, show_progress: bool) -> None:
     """Capture the real firmware UI with sample catalog data and no hardware or downloads."""
     controller = MagicMock(spec=FlightController)
@@ -1523,6 +1705,8 @@ def capture_target(target: CaptureTarget, output_path: Path, args: argparse.Name
             )
         case "mavlink_inspector":
             _capture_mavlink_inspector(output_path, delay, padding, target.variant or "radio")
+        case "skybrush_log_analysis":
+            _capture_skybrush_log_analysis(output_path, delay, padding, target.variant or "results", target.scale)
         case "firmware_upload" | "firmware_upload_progress":
             _capture_firmware_upload(
                 output_path,
