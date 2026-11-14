@@ -23,6 +23,8 @@ import pytest
 from ardupilot_methodic_configurator.plugins.data_model_battery_monitor import BatteryMonitorDataModel
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_battery_monitor import BatteryMonitorView
 
+pytestmark = pytest.mark.usefixtures("cleanup_battery_monitor_views")
+
 # pylint: disable=redefined-outer-name,protected-access
 
 

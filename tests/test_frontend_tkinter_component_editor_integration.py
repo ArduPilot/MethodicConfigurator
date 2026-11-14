@@ -28,7 +28,13 @@ from ardupilot_methodic_configurator.data_model_vehicle_components import Compon
 from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
 
-# pylint: disable=redefined-outer-name
+# pylint: disable=redefined-outer-name,protected-access
+
+
+def cancel_new_after_jobs(root: tk.Tk, initial_jobs: set[str]) -> None:
+    """Cancel callbacks queued during one editor test, preserving earlier jobs."""
+    for after_job in set(root.tk.call("after", "info")) - initial_jobs:
+        root.after_cancel(after_job)
 
 
 @pytest.fixture
@@ -269,7 +275,43 @@ class TestComponentEditorWithMinimalMocking:
     while mocking only the absolute minimum required to avoid UI rendering.
     """
 
-    def test_editor_initialization_process(self, temp_vehicle_dir, root) -> None:
+    @pytest.fixture
+    def editor_root(self, root: tk.Tk) -> Generator[tk.Tk, None, None]:
+        """Remove frames and callbacks created by this test from the shared Tk root."""
+        initial_children = tuple(root.winfo_children())
+        initial_after_jobs = set(root.tk.call("after", "info"))
+        yield root
+        for child in root.winfo_children():
+            if child not in initial_children:
+                child.destroy()
+        cancel_new_after_jobs(root, initial_after_jobs)
+        assert tuple(root.winfo_children()) == initial_children
+        assert set(root.tk.call("after", "info")) <= initial_after_jobs
+
+    def test_editor_root_cleanup_preserves_existing_callbacks(self, root: tk.Tk) -> None:
+        """A queued component usage popup can be removed without canceling an earlier Tk job."""
+        existing_job = root.after(60_000, lambda: None)
+        initial_jobs = set(root.tk.call("after", "info"))
+        editor = ComponentEditorWindow.__new__(ComponentEditorWindow)
+        editor.root = root
+        try:
+            with patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.UsagePopupWindow.should_display",
+                return_value=True,
+            ):
+                editor._check_show_usage_instructions()
+            popup_jobs = set(root.tk.call("after", "info")) - initial_jobs
+            assert len(popup_jobs) == 1
+
+            cancel_new_after_jobs(root, initial_jobs)
+
+            assert not popup_jobs.intersection(root.tk.call("after", "info"))
+            assert existing_job in root.tk.call("after", "info")
+        finally:
+            cancel_new_after_jobs(root, initial_jobs)
+            root.after_cancel(existing_job)
+
+    def test_editor_initialization_process(self, temp_vehicle_dir, editor_root: tk.Tk) -> None:
         """
         Test the full initialization process with minimal mocking.
 
@@ -287,6 +329,7 @@ class TestComponentEditorWithMinimalMocking:
         )
 
         # Mock only the UI rendering parts, use the real root from conftest.py
+        root = editor_root
         with (
             patch.object(ComponentEditorWindow, "_create_scroll_frame") as mock_scroll_frame,
             patch.object(ComponentEditorWindow, "_create_intro_frame") as mock_intro_frame,
@@ -318,7 +361,7 @@ class TestComponentEditorWithMinimalMocking:
             assert isinstance(components, dict)
             assert len(components) > 0
 
-    def test_editor_with_real_data_model(self, temp_vehicle_dir, root) -> None:
+    def test_editor_with_real_data_model(self, temp_vehicle_dir, editor_root: tk.Tk) -> None:
         """
         Test the editor with a real data model but minimal UI mocking.
 
@@ -341,6 +384,7 @@ class TestComponentEditorWithMinimalMocking:
         data_model = ComponentDataModel(REALISTIC_VEHICLE_DATA, component_datatypes, schema)
 
         # Bypass UI initialization but use real data model and real root
+        root = editor_root
         with (
             patch.object(ComponentEditorWindow, "_initialize_ui"),
             patch("tkinter.PhotoImage"),

@@ -299,7 +299,7 @@ jobs:
     runs-on: 'macos-latest'
     strategy:
       matrix:
-        python-version: ['3.13']
+        python-version: ['3.15.2']
 
     permissions:
       contents: write
@@ -368,12 +368,13 @@ jobs:
       - name: Verify frozen plugin and log-analysis modules
         run: python scripts/verify_packaged_modules.py build/ardupilot_methodic_configurator/PYZ-00.pyz
 
-      - name: Smoke-test frozen plugin registration without GUI
+      - name: Smoke-test frozen Tcl/Tk and plugin registration
         run: |
           APP="$PWD/dist/ArduPilot Methodic Configurator.app/Contents/MacOS/ardupilot_methodic_configurator"
           cd "$RUNNER_TEMP"
           export MAVLINK_DIALECT=common
           "$APP" --version
+          "$APP" --validate-tkinter
           "$APP" --validate-plugins
 
       - name: Build DMG

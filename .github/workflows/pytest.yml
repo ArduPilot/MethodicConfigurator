@@ -33,16 +33,7 @@ jobs:
           - macos-15
           - macos-26
         python-version: ["3.15.2"]  # to make sure the latest AMC supported python version does not break
-        exclude:
-          - os: macos-15
-            python-version: "3.15.2"
-          - os: macos-26
-            python-version: "3.15.2"
         include:
-          - os: macos-15
-            python-version: "3.14"
-          - os: macos-26
-            python-version: "3.14"
           - os: ${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
             python-version: "3.11"  # to make sure the minimum AMC supported python version does not break
             # this is also the version used to report test coverage, other versions do not report coverage
@@ -56,14 +47,38 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Set up Python on macOS
+        if: startsWith(matrix.os, 'macos-')
+        id: macos-python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
       # https://docs.astral.sh/uv/guides/integration/github/
       - name: Install uv and set the Python version
+        if: ${{ !startsWith(matrix.os, 'macos-') }}
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           python-version: ${{ matrix.python-version }}
           activate-environment: true
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
+
+      - name: Install uv on macOS
+        if: startsWith(matrix.os, 'macos-')
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+
+      - name: Create macOS virtual environment
+        if: startsWith(matrix.os, 'macos-')
+        env:
+          MACOS_PYTHON: ${{ steps.macos-python.outputs.python-path }}
+        run: |
+          uv venv --python "$MACOS_PYTHON"
+          echo "VIRTUAL_ENV=$GITHUB_WORKSPACE/.venv" >> "$GITHUB_ENV"
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Cache apt packages (Linux)
         if: matrix.os == (vars.UBUNTU_RUNNER || 'ubuntu-latest')
@@ -83,19 +98,6 @@ jobs:
           # to avoid version conflicts (system has Tcl 8.6, uv Python links against Tcl 9.0)
           sudo apt-get install -y scrot xdotool x11-utils gnome-screenshot
           python3 --version && python3 -c "import tkinter; print(tkinter.TclVersion, tkinter.TkVersion)"
-
-      - name: Cache Homebrew packages (macOS)
-        if: startsWith(matrix.os, 'macos-')
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/Library/Caches/Homebrew
-          key: brew-${{ runner.os }}-python-tk-${{ hashFiles('.github/workflows/pytest.yml') }}
-          restore-keys: |
-            brew-${{ runner.os }}-python-tk-
-
-      - name: Install system dependencies for GUI testing on macOS
-        if: startsWith(matrix.os, 'macos-')
-        run: brew list python-tk &>/dev/null || brew install python-tk
 
       - name: Ensure Tcl/Tk search paths
         if: matrix.os == (vars.UBUNTU_RUNNER || 'ubuntu-latest')
@@ -125,6 +127,7 @@ jobs:
       - name: Install project in editable mode
         # Installs only the project itself (no deps) - always runs, but is fast
         # without --editable, the coverage report is not generated correctly
+        shell: bash
         run: uv pip install --editable "." --no-deps
 
       - name: Verify clean non-editable wheel installation

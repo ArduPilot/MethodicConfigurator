@@ -257,6 +257,7 @@ def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:  # noq
     editor._inline_component_chrome_height = 0
     editor._parameter_area_resize_pending = False
     editor._parameter_area_resize_running = False
+    editor._parameter_area_resize_job = None
     editor._inline_component_name = None
     editor._updating_inline_editor = False
     editor._requested_action = ParameterEditorAction.FINISHED
@@ -427,6 +428,48 @@ class TestParameterEditorUiServices:  # pylint: disable=too-few-public-methods
 
 class TestWindowSizing:
     """Keep navigation controls visible while respecting the user's window size."""
+
+    @pytest.mark.parametrize("destroy_target", ["main-frame", "parameter-area"])
+    def test_user_can_close_editor_with_resize_queued(
+        self, parameter_editor_window: ParameterEditorWindow, layout_root: tk.Tk, destroy_target: str
+    ) -> None:
+        """
+        A deferred layout fit must not touch widgets destroyed before Tk runs it.
+
+        GIVEN: A real editor frame with a parameter area and one queued resize
+        WHEN: The frame or parameter area is destroyed before idle tasks run
+        THEN: Tk reports no callback error and the queued job is cleared
+        """
+        editor = parameter_editor_window
+        editor.root = layout_root
+        editor.main_frame = ttk.Frame(layout_root)
+        editor.main_frame.pack()
+        editor.parameter_area_container = ttk.Frame(editor.main_frame)
+        editor.parameter_area_container.pack()
+        editor._bind_parameter_layout_events()
+
+        try:
+            with patch.object(layout_root, "report_callback_exception") as report_callback_exception:
+                editor._on_main_frame_resize(tk.Event())
+                resize_job = editor._parameter_area_resize_job
+                assert resize_job is not None
+                editor._on_main_frame_resize(tk.Event())
+                assert editor._parameter_area_resize_job == resize_job
+
+                if destroy_target == "main-frame":
+                    editor.main_frame.destroy()
+                    assert resize_job not in layout_root.tk.call("after", "info")
+                else:
+                    editor.parameter_area_container.destroy()
+                layout_root.update_idletasks()
+
+                report_callback_exception.assert_not_called()
+                assert resize_job not in layout_root.tk.call("after", "info")
+                assert editor._parameter_area_resize_job is None
+                assert not editor._parameter_area_resize_pending
+        finally:
+            if editor.main_frame.winfo_exists():
+                editor.main_frame.destroy()
 
     @pytest.mark.parametrize("ambient_dpi", [96, 144], ids=["96dpi-desktop", "144dpi-desktop"])
     @pytest.mark.parametrize("fail", [False, True], ids=["success", "failure"])
