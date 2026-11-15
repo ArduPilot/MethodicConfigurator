@@ -539,7 +539,7 @@ def test_reset_defaults_is_cancelled_without_confirmation() -> None:
 
 @pytest.mark.parametrize("use_current_directory", [False, True])
 @pytest.mark.parametrize("background_reset", [False, True], ids=["synchronous", "sequoia-worker"])
-def test_standalone_reset_preserves_project_defaults_when_defaults_become_available(
+def test_standalone_reset_preserves_project_defaults_when_defaults_become_available(  # pylint: disable=too-many-locals
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, use_current_directory: bool, tk_root: Tk, background_reset: bool
 ) -> None:
     """
