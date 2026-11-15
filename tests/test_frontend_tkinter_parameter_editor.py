@@ -124,7 +124,8 @@ def _layout_display(root: tk.Tk, dpi: int = 96) -> Generator[tk.Tk, None, None]:
     try:
         style.theme_use("alt")
         _set_layout_dpi(root, dpi)
-        root.update_idletasks()
+        # These settings are synchronous. Let each layout scenario settle its own
+        # widgets instead of draining every idle callback on the shared interpreter.
         yield root
     finally:
         root.tk.call("tk", "scaling", original_scaling)
@@ -133,7 +134,6 @@ def _layout_display(root: tk.Tk, dpi: int = 96) -> Generator[tk.Tk, None, None]:
             assert original_font is not None
             font.configure(**original_font)
         style.theme_use(original_theme)
-        root.update_idletasks()
 
 
 @pytest.fixture

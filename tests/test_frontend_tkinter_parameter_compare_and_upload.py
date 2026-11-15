@@ -14,6 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from argparse import Namespace
 from pathlib import Path
+from tkinter import Tk
 from types import SimpleNamespace
 from unittest.mock import MagicMock, call, patch
 
@@ -537,8 +538,9 @@ def test_reset_defaults_is_cancelled_without_confirmation() -> None:
 
 
 @pytest.mark.parametrize("use_current_directory", [False, True])
+@pytest.mark.parametrize("background_reset", [False, True], ids=["synchronous", "sequoia-worker"])
 def test_standalone_reset_preserves_project_defaults_when_defaults_become_available(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, use_current_directory: bool
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, use_current_directory: bool, tk_root: Tk, background_reset: bool
 ) -> None:
     """
     Reset the FC without overwriting a user's project defaults.
@@ -585,7 +587,12 @@ def test_standalone_reset_preserves_project_defaults_when_defaults_become_availa
     ui = ParameterEditorUiServices.__new__(ParameterEditorUiServices)
     ui.create_progress_window = MagicMock()
     ui.show_error = MagicMock()
-    host = StandaloneUploadHost(MagicMock(), editor, ui, gui_complexity="simple")
+    # The background task owner creates a real Toplevel and needs a real Tk parent.
+    host = StandaloneUploadHost(tk_root, editor, ui, gui_complexity="simple")
+    monkeypatch.setattr(
+        "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.is_macos_sequoia_or_older",
+        lambda: background_reset,
+    )
 
     assert host.reset_all_parameters_to_default() is True
 

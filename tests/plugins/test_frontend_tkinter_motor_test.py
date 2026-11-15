@@ -300,8 +300,12 @@ def motor_view(
     tk_root,
     fake_model,
     dummy_base_window,
+    mocker: MockerFixture,
     motor_update_timers: dict[str, Callable[[], None]],  # noqa: ARG001 # pylint: disable=unused-argument
 ) -> Generator[MotorTestView, None, None]:
+    # Tests with synchronous progress doubles must not inherit the host's restart path.
+    # Background restart tests explicitly enable the Sequoia path after fixture setup.
+    mocker.patch.object(motor_test_module, "is_macos_sequoia_or_older", return_value=False)
     parent = ttk.Frame(tk_root)
     view = MotorTestView(parent, fake_model, dummy_base_window)
     # Keep Tk's scheduler live for progress tasks; motor_update_timers controls
