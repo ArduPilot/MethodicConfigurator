@@ -1,6 +1,6 @@
 [rules]
 invalid-argument-type = "ignore"
-unresolved-attribute = "ignore"
+missing-attribute = "ignore"
 invalid-assignment = "ignore"
 
 [src]
