@@ -27,11 +27,49 @@ from ardupilot_methodic_configurator.data_model_par_dict import (
     Par,
     ParamFileError,
     ParDict,
+    _detect_param_file_encoding,
+    _has_zero_byte_pattern,
     is_within_tolerance,
     validate_param_name,
 )
 
 # pylint: disable=redefined-outer-name, too-many-lines
+
+
+@pytest.mark.parametrize(
+    ("sample", "stride", "zero_offsets", "expected"),
+    [
+        (b"A\0B\0", 2, (1,), True),
+        (b"A\0", 2, (1,), False),
+        (b"AB\0\0", 4, (2, 3), False),
+        (b"A\0B\0C\0", 2, (1,), True),
+        (b"A\0B\x01", 2, (1,), False),
+        (b"\0A\0B", 2, (0,), True),
+    ],
+)
+def test_fixed_width_encoding_detection_checks_complete_zero_byte_pattern(
+    sample: bytes, stride: int, zero_offsets: tuple[int, ...], expected: bool
+) -> None:
+    """Only complete fixed-width samples with every expected zero offset match."""
+    assert _has_zero_byte_pattern(sample, stride, zero_offsets) is expected
+
+
+@pytest.mark.parametrize(
+    ("sample", "expected"),
+    [
+        (b"\xff\xfeA\0", "utf-16"),
+        (b"\xfe\xff\0A", "utf-16"),
+        (b"\xff\xfe\0\0A\0\0\0", "utf-32"),
+        (b"A\0B\0", "utf-16-le"),
+        (b"\0A\0B", "utf-16-be"),
+        (b"A\0\0\0B\0\0\0", "utf-32-le"),
+        (b"\0\0\0A\0\0\0B", "utf-32-be"),
+        (b"PARAM,1.0\n", "utf-8-sig"),
+    ],
+)
+def test_parameter_file_encoding_detection_handles_boms_and_ascii_layouts(sample: bytes, expected: str) -> None:
+    """Recognize supported BOMs and fixed-width encodings, with UTF-8 as the fallback."""
+    assert _detect_param_file_encoding(sample) == expected
 
 
 def test_editing_a_parameter_copy_preserves_the_original_snapshot() -> None:
@@ -283,7 +321,7 @@ class TestParTolerance:
         assert not is_within_tolerance(float("nan"), float("inf"))
 
 
-class TestParameterNameValidation:  # pylint: disable=too-few-public-methods
+class TestParameterNameValidation:
     """Test user-facing validation of parameter names."""
 
     def test_user_receives_clear_feedback_when_validating_parameter_names(self) -> None:
@@ -308,6 +346,22 @@ class TestParameterNameValidation:  # pylint: disable=too-few-public-methods
             is_valid, error_message = validate_param_name(candidate)
             assert not is_valid
             assert expected_snippet in error_message
+
+    @pytest.mark.parametrize(
+        ("candidate", "expected"),
+        [
+            ("A" * 16, (True, "")),
+            ("A" * 17, (False, "Parameter name too long (max 16 characters): " + "A" * 17)),
+            ("", (False, "Parameter name cannot be empty")),
+            (
+                "lower",
+                (False, "Invalid parameter name format (must start with capital letter, contain only A-Z, 0-9, _): lower"),
+            ),
+        ],
+    )
+    def test_parameter_name_errors_and_maximum_length_are_exact(self, candidate: str, expected: tuple[bool, str]) -> None:
+        """Provide stable guidance and accept the inclusive maximum name length."""
+        assert validate_param_name(candidate) == expected
 
 
 class TestParClassBehavior:

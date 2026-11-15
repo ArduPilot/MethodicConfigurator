@@ -616,6 +616,83 @@ class TestComponentDataModelImportInternals:
 
         assert result == 0
 
+    @pytest.mark.parametrize(
+        ("parameter", "value"),
+        [
+            ("MOT_BAT_VOLT_MAX", "invalid"),
+            ("BATT_LOW_VOLT", "invalid"),
+            ("BATT_CRT_VOLT", "invalid"),
+            ("BATT_ARM_VOLT", "invalid"),
+            ("MOT_BAT_VOLT_MIN", "invalid"),
+        ],
+    )
+    def test_invalid_voltage_fallback_reports_the_parameter_name(self, realistic_model, parameter, value) -> None:
+        """A malformed preferred reading reports its source before fallback continues."""
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as log_error:
+            realistic_model._estimate_battery_cell_count({parameter: value})
+
+        assert any(parameter in " ".join(str(part) for part in call.args) for call in log_error.call_args_list)
+
+    @pytest.mark.parametrize(
+        ("parameter", "spec"),
+        [
+            ("MOT_BAT_VOLT_MAX", "Volt per cell max"),
+            ("BATT_LOW_VOLT", "Volt per cell low"),
+            ("BATT_CRT_VOLT", "Volt per cell crit"),
+            ("BATT_ARM_VOLT", "Volt per cell arm"),
+            ("MOT_BAT_VOLT_MIN", "Volt per cell min"),
+        ],
+    )
+    def test_each_voltage_fallback_uses_its_source_name_and_spec(self, realistic_model, parameter, spec) -> None:
+        """Interpret each FC voltage reading with its matching chemistry recommendation."""
+        voltage = 12.0
+        with patch.object(realistic_model, "_estimate_cells_from_voltage_param_default", return_value=3) as estimate:
+            assert realistic_model._estimate_battery_cell_count({parameter: voltage}) == 3
+
+        estimate.assert_called_once_with(parameter, voltage, spec, "Lipo")
+
+    @pytest.mark.parametrize("bound", ["min", "max"])
+    def test_existing_cell_count_at_validation_boundary_is_preserved(self, realistic_model, bound) -> None:
+        """Sparse parameter imports preserve a template cell count at either allowed boundary."""
+        cell_path = ("Battery", "Specifications", "Number of cells")
+        _value_type, (minimum, maximum), _documentation = ComponentDataModelValidation.VALIDATION_RULES[cell_path]
+        existing_cells = minimum if bound == "min" else maximum
+        realistic_model.set_component_value(cell_path, existing_cells)
+
+        assert realistic_model._estimate_battery_cell_count({}) == existing_cells
+
+    def test_invalid_existing_cell_count_logs_clear_failure(self, realistic_model) -> None:
+        """A sparse import with no usable template cell count reports why estimation failed."""
+        with (
+            patch.object(realistic_model, "get_component_value", return_value=None),
+            patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as log_error,
+        ):
+            assert realistic_model._estimate_battery_cell_count({}) == 0
+
+        log_error.assert_called_once_with("All volt per cell values are zero or invalid; cannot estimate battery cell count")
+
+    @pytest.mark.parametrize(("cell_count", "voltage"), [(2, 8.4), (4, 16.8)])
+    def test_estimated_cell_count_accepts_validation_boundaries(self, realistic_model, cell_count, voltage) -> None:
+        """Valid voltage estimates at the declared minimum and maximum are accepted inclusively."""
+        cell_path = ("Battery", "Specifications", "Number of cells")
+        original_rule = ComponentDataModelValidation.VALIDATION_RULES[cell_path]
+        bounded_rule = (original_rule[0], (2, 4), original_rule[2])
+        with patch.object(ComponentDataModelValidation, "VALIDATION_RULES", {cell_path: bounded_rule}):
+            assert realistic_model._estimate_battery_cell_count({"MOT_BAT_VOLT_MAX": voltage}) == cell_count
+
+    def test_out_of_range_estimate_logs_count_and_both_limits(self, realistic_model) -> None:
+        """Explain the rejected count and inclusive allowed range when an estimate is outside it."""
+        cell_path = ("Battery", "Specifications", "Number of cells")
+        original_rule = ComponentDataModelValidation.VALIDATION_RULES[cell_path]
+        bounded_rule = (original_rule[0], (2, 4), original_rule[2])
+        with (
+            patch.object(ComponentDataModelValidation, "VALIDATION_RULES", {cell_path: bounded_rule}),
+            patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as log_error,
+        ):
+            assert realistic_model._estimate_battery_cell_count({"MOT_BAT_VOLT_MAX": 21.0}) == 0
+
+        log_error.assert_called_once_with("Estimated battery cell count %s is out of valid range (%d to %d)", 5, 2, 4)
+
     def test_set_battery_type_handles_string_type_in_batt_monitor_connection(self, realistic_model) -> None:
         """
         Battery type setter handles non-list (string) type in BATT_MONITOR_CONNECTION.
