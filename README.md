@@ -257,7 +257,7 @@ These are the [standard tuning steps](https://ardupilot.github.io/MethodicConfig
   angle PIDs
 - [47_autotune_roll_pitch_retune_setup.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#945-roll-and-pitch-axis-re-autotune) and
   [48_autotune_roll_pitch_retune_results.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#945-roll-and-pitch-axis-re-autotune) re-tune roll
-  and pitch pitch axis rate and angle PIDs
+  and pitch axis rate and angle PIDs
 - [49_autotune_finish.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#96-finish-autotune)
   performance evaluation flight after autotune
 - [50_pid_d_ff.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#97-angle-rate-derivative-feed-forward-calculation)
