@@ -382,14 +382,20 @@ def monitor_bounds() -> Iterator[MagicMock]:
         yield bounds
 
 
+@pytest.fixture(name="_synchronous_mock_editor")
+def synchronous_mock_editor(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Use synchronous workflows for editors with mocked roots; worker tests opt in."""
+    monkeypatch.setattr(parameter_editor_module, "is_macos_sequoia_or_older", lambda: False)
+
+
 @pytest.fixture
-def parameter_editor_window(parameter_editor: MagicMock) -> ParameterEditorWindow:
+def parameter_editor_window(parameter_editor: MagicMock, _synchronous_mock_editor: None) -> ParameterEditorWindow:
     """Create a headless parameter editor instance."""
     return _create_editor(parameter_editor)
 
 
 @pytest.fixture
-def editor_factory(parameter_editor: MagicMock) -> Callable[[], ParameterEditorWindow]:
+def editor_factory(parameter_editor: MagicMock, _synchronous_mock_editor: None) -> Callable[[], ParameterEditorWindow]:
     """Factory fixture that returns isolated editor instances."""
 
     def _factory() -> ParameterEditorWindow:

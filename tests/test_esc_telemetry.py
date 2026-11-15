@@ -44,12 +44,15 @@ from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory
 
 
 @pytest.fixture
-def link() -> SimpleNamespace:
+def link() -> Generator[SimpleNamespace, None, None]:
     """Provide a real MAVLink parser with an isolated byte transport."""
     result = create_telemetry_link()
     result.master.target_system = 1
     result.controller.info.set_system_id_and_component_id("1", "1")
-    return result
+    try:
+        yield result
+    finally:
+        result.controller.disconnect()
 
 
 @pytest.fixture

@@ -164,6 +164,8 @@ def test_user_sees_unknown_size_animation_continue_across_updates_and_refreshes(
     window, clock, scheduler = download_popup
     maximum = window.progress_bar["maximum"]
     assert maximum > 1
+    # Freeze Tk's own animation timer so it cannot advance between comparisons.
+    window.progress_bar.stop()
     window.progress_bar.step(17)
     value = window.progress_bar["value"]
     clock[0] = 2
