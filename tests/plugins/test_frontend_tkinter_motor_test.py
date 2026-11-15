@@ -300,13 +300,12 @@ def motor_view(
     tk_root,
     fake_model,
     dummy_base_window,
-    mocker,
     motor_update_timers: dict[str, Callable[[], None]],  # noqa: ARG001 # pylint: disable=unused-argument
 ) -> Generator[MotorTestView, None, None]:
     parent = ttk.Frame(tk_root)
     view = MotorTestView(parent, fake_model, dummy_base_window)
-    mocker.patch.object(parent, "after")
-    mocker.patch.object(tk_root, "after")
+    # Keep Tk's scheduler live for progress tasks; motor_update_timers controls
+    # only the view's periodic updates.
     try:
         yield view
     finally:
@@ -758,12 +757,6 @@ class TestMotorTestView:  # pylint: disable=too-many-public-methods
         rendered: list[int] = []
         mocker.patch("tkinter.Misc.update")
         mocker.patch("tkinter.Misc.update_idletasks")
-        # The general view fixture stubs after(); this integration case needs real polling.
-        mocker.patch.object(
-            motor_view.root_window,
-            "after",
-            new=tk.Misc.after.__get__(motor_view.root_window, type(motor_view.root_window)),  # pylint: disable=no-value-for-parameter
-        )
         mocker.patch.object(motor_test_module, "is_macos_sequoia_or_older", return_value=True)
         mocker.patch.object(motor_test_module, "DelayedProgressCallback", side_effect=lambda callback, _delay: callback)
 
@@ -2204,8 +2197,9 @@ class TestMotorSpinDialogs:
         setter.assert_not_called()
         assert not motor_view.base_window.navigation_lock.locked
 
+    @pytest.mark.parametrize("sequoia", [False, True], ids=["synchronous", "background-restart"])
     def test_accepted_spin_arm_value_is_written_while_the_navigation_lock_is_held(
-        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, mocker
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, mocker, sequoia: bool
     ) -> None:
         """
         An accepted spin-arm value is written, and other actions are locked out during the write.
@@ -2215,6 +2209,7 @@ class TestMotorSpinDialogs:
         THEN: The model receives 0.15, the navigation lock is held during the write and released afterwards
         """
         locked_during_write: list[bool] = []
+        mocker.patch.object(motor_test_module, "is_macos_sequoia_or_older", return_value=sequoia)
 
         def record_lock_state(*_args: object) -> None:
             locked_during_write.append(motor_view.base_window.navigation_lock.locked)
