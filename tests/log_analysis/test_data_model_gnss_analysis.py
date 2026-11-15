@@ -28,13 +28,37 @@ from ardupilot_methodic_configurator.log_analysis.data_model_gnss_consistency im
     _interpolate,
     _prediction_residual,
 )
-from ardupilot_methodic_configurator.log_analysis.data_model_gnss_interference import GPSLogAnalysis
-from ardupilot_methodic_configurator.log_analysis.data_model_gnss_samples import SensorSeries, event_intervals
+from ardupilot_methodic_configurator.log_analysis.data_model_gnss_interference import GPSLogAnalysis, interval_finding
+from ardupilot_methodic_configurator.log_analysis.data_model_gnss_samples import (
+    SensorSeries,
+    aligned_values,
+    event_intervals,
+    numeric_fields,
+    receiver_gap_limit,
+    sensor_series,
+)
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import analyze_log
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis
 from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData, MessageSchema
 from ardupilot_methodic_configurator.log_analysis.data_model_parameter_history import ParameterChange, ParameterHistory
+
+
+@pytest.mark.parametrize(
+    ("times", "expected"),
+    [
+        ([], 2.0),
+        ([0, 0, 0], 2.0),
+        ([0, 0.5, 1], 2.0),
+        ([0, 1, 2], 3.0),
+        ([0, 0, 2, 2, 4], 6.0),
+        ([0, 2, float("inf")], 6.0),
+        ([0, 6, 12], 15.0),
+    ],
+)
+def test_receiver_gap_limit_uses_valid_cadence_with_bounded_limits(times: list[float], expected: float) -> None:
+    """Receiver cadence excludes invalid intervals and respects the two- and fifteen-second limits."""
+    assert receiver_gap_limit(np.asarray(times, dtype=float)) == expected
 
 
 def _add(log: LogData, message: str, **fields: np.ndarray | list[float]) -> None:
@@ -43,6 +67,144 @@ def _add(log: LogData, message: str, **fields: np.ndarray | list[float]) -> None
     for name, values in fields.items():
         columns[name] = values
     log.add_message_columns(message, columns)
+
+
+@pytest.mark.parametrize(
+    ("instance", "identity"),
+    [(0, "sensor 0"), (3, "sensor 3"), (None, "unidentified sensor")],
+)
+def test_receiver_interval_finding_preserves_identity_timestamps_and_evidence(instance: int | None, identity: str) -> None:
+    """A receiver indication retains its source, interval, severity, and supplied evidence."""
+    series = SensorSeries(instance, {"TimeUS": np.array([1.25, 2.5, 3.75])})
+
+    finding = interval_finding(
+        series,
+        0,
+        2,
+        "spoofing warning",
+        "AERG.Spf",
+        severity="critical",
+        evidence={"status": 3.0},
+    )
+
+    assert finding.message == f"AERG.Spf, {identity}: spoofing warning"
+    assert finding.timestamp_us == 1_250_000
+    assert finding.end_timestamp_us == 3_750_000
+    assert finding.source == "AERG.Spf"
+    assert finding.instance == instance
+    assert finding.severity == "critical"
+    assert finding.evidence == {"status": 3.0}
+    assert finding.group == "Receiver indications"
+
+
+@pytest.mark.parametrize(
+    ("message", "field", "status", "severity", "text"),
+    [
+        ("AERG", "Jam", 2.0, "warning", "Receiver-reported jamming warning (status 2)"),
+        ("AERG", "Jam", 3.0, "critical", "Receiver-reported jamming critical (status 3)"),
+        ("AERG", "Spf", 2.0, "warning", "Receiver-reported spoofing warning (status 2)"),
+        ("AERG", "Spf", 3.0, "critical", "Receiver-reported spoofing critical (status 3)"),
+        ("ILB5", "GSS", 2.0, "warning", "Receiver-reported spoofing indication (status 2; 3 indicates multiple spoofing)"),
+        ("ILB5", "GSS", 3.0, "warning", "Receiver-reported spoofing indication (status 3; 3 indicates multiple spoofing)"),
+        ("ILB5", "GJS", 3.0, "critical", "Receiver-reported jamming indication with no fix (status 3)"),
+        ("ILB5", "GJS", 2.0, "informational", "Unknown jamming status 2; interference cannot be assessed from this value"),
+        ("ILB5", "GJS", 0.0, "informational", "Unknown jamming status 0; interference cannot be assessed from this value"),
+    ],
+)
+def test_status_indication_maps_receiver_status_to_precise_finding(
+    message: str, field: str, status: float, severity: str, text: str
+) -> None:
+    """Map raw receiver status codes to the correct threat, severity, and evidence."""
+    series = SensorSeries(1, {"TimeUS": np.array([1.0]), field: np.array([status])})
+
+    outcomes = GPSLogAnalysis._status_indications(series, message, field)  # pylint: disable=protected-access
+    finding = next(outcome for outcome in outcomes if outcome.timestamp_us is not None)
+
+    assert finding.message == f"{message}.{field}, sensor 1: {text}"
+    assert finding.severity == severity
+    assert finding.source == f"{message}.{field}"
+    assert finding.evidence == {"status": status}
+    assert finding.timestamp_us == finding.end_timestamp_us == 1_000_000
+
+
+@pytest.mark.parametrize(
+    ("message", "field", "threat", "previous", "current_time", "current_status", "recovered"),
+    [
+        ("AERG", "Jam", "jamming", 2.0, 3.0, 1.0, True),
+        ("AERG", "Jam", "jamming", 3.0, 3.0, 1.0, True),
+        ("AERG", "Spf", "spoofing", 3.0, 3.0, 1.0, True),
+        ("ILB5", "GSS", "spoofing", 2.0, 3.0, 1.0, True),
+        ("ILB5", "GSS", "spoofing", 3.0, 3.0, 1.0, True),
+        ("ILB5", "GJS", "jamming", 3.0, 3.0, 1.0, True),
+        ("ILB5", "GJS", "jamming", 2.0, 3.0, 1.0, False),
+        ("AERG", "Jam", "jamming", 1.0, 3.0, 1.0, False),
+        ("AERG", "Jam", "jamming", 3.0, 3.000001, 1.0, False),
+        ("AERG", "Jam", "jamming", 3.0, 0.5, 1.0, False),
+    ],
+)
+def test_receiver_recovery_requires_an_indicated_status_and_contiguous_time(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    message: str,
+    field: str,
+    threat: str,
+    previous: float,
+    current_time: float,
+    current_status: float,
+    recovered: bool,
+) -> None:
+    """Report recovery only after the matching warning and within the two-second evidence window."""
+    series = SensorSeries(
+        0,
+        {
+            "TimeUS": np.array([1.0, current_time]),
+            field: np.array([previous, current_status]),
+        },
+    )
+
+    outcomes = GPSLogAnalysis._recoveries(series, message, field, threat)  # pylint: disable=protected-access
+
+    assert bool(outcomes) is recovered
+    if recovered:
+        assert len(outcomes) == 1
+        assert outcomes[0].message == (
+            f"{message}.{field}, sensor 0: Receiver reports no {threat} indication after the warning; "
+            "detection remains limited"
+        )
+        assert outcomes[0].timestamp_us == current_time * 1e6
+        assert outcomes[0].source == f"{message}.{field}"
+        assert outcomes[0].evidence == {"status": 1.0}
+
+
+def test_receiver_series_accepts_the_largest_valid_instance_only() -> None:
+    """The byte-sized instance limit includes 255 but excludes 256."""
+    log = LogData()
+    _add(log, "UBX1", TimeUS=[1, 2], Instance=[255, 256], jamInd=[30, 90])
+
+    series = sensor_series(log, "UBX1", ("jamInd",))
+
+    assert [item.instance for item in series] == [255]
+    np.testing.assert_array_equal(series[0].fields["jamInd"], [30])
+
+
+def test_integer_receiver_fields_are_returned_as_float_samples() -> None:
+    """Integer log fields are converted to floating-point values for numeric analysis."""
+    log = LogData()
+    log.add_message_columns("UBX1", np.array([(1, 30)], dtype=[("TimeUS", "i4"), ("jamInd", "i4")]))
+
+    fields = numeric_fields(log, "UBX1", ("TimeUS", "jamInd"))
+
+    assert fields is not None
+    assert all(values.dtype == np.float64 for values in fields.values())
+    np.testing.assert_array_equal(fields["jamInd"], [30.0])
+
+
+def test_alignment_rejects_reversed_time_and_keeps_exact_observations() -> None:
+    """A reboot makes alignment ambiguous; ordered exact timestamps retain their readings."""
+    query_times = np.array([1.0, 2.0])
+    ordered = SensorSeries(0, {"TimeUS": np.array([1.0, 2.0]), "Status": np.array([3.0, 4.0])})
+    reversed_time = SensorSeries(0, {"TimeUS": np.array([2.0, 1.0]), "Status": np.array([3.0, 4.0])})
+
+    np.testing.assert_array_equal(aligned_values(ordered, query_times, "Status", 1.0), [3.0, 4.0])
+    assert np.isnan(aligned_values(reversed_time, query_times, "Status", 1.0)).all()
 
 
 def _context() -> LogAnalysisContext:
