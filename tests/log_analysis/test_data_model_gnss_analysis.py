@@ -127,6 +127,25 @@ def test_status_indication_maps_receiver_status_to_precise_finding(
     assert finding.timestamp_us == finding.end_timestamp_us == 1_000_000
 
 
+def test_status_indications_exclude_invalid_values_from_readable_coverage() -> None:
+    """Valid status samples produce findings while healthy and invalid samples affect coverage correctly."""
+    series = SensorSeries(
+        2,
+        {"TimeUS": np.arange(1.0, 6.0), "GSS": np.array([1.0, 0.0, 2.5, 256.0, 3.0])},
+    )
+
+    outcomes = GPSLogAnalysis._status_indications(series, "ILB5", "GSS")  # pylint: disable=protected-access
+    findings = [item for item in outcomes if item.timestamp_us is not None]
+    coverage = next(item for item in outcomes if item.group == "Coverage")
+
+    assert [(item.timestamp_us, _evidence(item)) for item in findings] == [
+        (2_000_000, {"status": 0.0}),
+        (5_000_000, {"status": 3.0}),
+    ]
+    assert [item.severity for item in findings] == ["informational", "warning"]
+    assert _evidence(coverage) == {"readable": 3.0}
+
+
 @pytest.mark.parametrize(
     ("message", "field", "threat", "previous", "current_time", "current_status", "recovered"),
     [
@@ -364,6 +383,25 @@ def test_no_timestamped_capability_is_not_reported_as_completed_analysis() -> No
     result = GPSLogAnalysis(log, _context()).analyse()
     assert not result.available
     assert "No supported timestamped GNSS checks" in result.reason
+
+
+def test_receiver_analysis_sorts_findings_and_reports_available_guidance() -> None:
+    """Receiver findings are ordered by time and the completed assessment carries usable guidance."""
+    log = LogData()
+    _add(log, "AERG", TimeUS=[2, 1], Jam=[2, 3], Spf=[3, 2])
+
+    result = GPSLogAnalysis(log, _context()).analyse()
+
+    assert result.available is True
+    assert result.name.endswith(" Analysis")
+    assert result.reason.startswith("GNSS assessment complete.")
+    group_order = {"Receiver indications": 0, "GNSS consistency": 1, "Correlated evidence": 2, "Coverage": 3}
+    actual_groups = [group_order.get(item.group or "", 4) for item in result.outcomes]
+    assert actual_groups == sorted(actual_groups)
+    indications = [item for item in result.outcomes if item.group == "Receiver indications"]
+    assert [(item.timestamp_us, item.source) for item in indications] == sorted(
+        (item.timestamp_us, item.source) for item in indications
+    )
 
 
 def test_ublox_rise_is_receiver_specific_and_constant_levels_are_not_an_attack() -> None:

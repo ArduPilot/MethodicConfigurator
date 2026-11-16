@@ -139,6 +139,71 @@ def test_radio_panel_shows_three_name_value_unit_tuples(inspector: MavlinkInspec
     assert all(panel.values[key].grid_info() for key, _name, _unit in panel._RADIO_METRICS)
 
 
+def test_inspector_initializes_its_window_guidance_and_fields(inspector: MavlinkInspectorWindow) -> None:
+    """The inspector opens with its identifying title, usable size, and fresh-data guidance."""
+    assert inspector.root.title() == _("MAVLink inspector")
+    expected_geometry = inspector.calculate_scaled_geometry(750, 650).split("+", maxsplit=1)[0]
+    assert inspector.root.geometry().split("+", maxsplit=1)[0] == expected_geometry
+    assert inspector._state == TelemetryState()
+    assert inspector._closed is False
+    assert inspector._hovered_cell is None
+    assert inspector._timer_id is None
+    assert inspector._minimum_section_height == round(60 * inspector.dpi_scaling_factor)
+    assert inspector.root.protocol("WM_DELETE_WINDOW")
+    assert inspector.root.bind("<Destroy>")
+    assert inspector.status.cget("text") == _("No current MAVLink messages. Check the telemetry connection.")
+    assert int(inspector.status.cget("wraplength")) == max(1, inspector.main_frame.winfo_width() - 16)
+    assert int(inspector.status.cget("width")) == 1
+    assert inspector.status.master is inspector.main_frame
+    assert inspector.status.pack_info()["fill"] == "x"
+    assert int(inspector.status.pack_info()["padx"]) == 8
+    assert int(inspector.status.pack_info()["pady"]) == 8
+    assert inspector.connection_note.cget("text") == _(
+        "A USB connection measures USB traffic, not the telemetry radio link. "
+        "Connect through the telemetry link you want to test."
+    )
+    assert int(inspector.connection_note.cget("wraplength")) == max(1, inspector.main_frame.winfo_width() - 16)
+    assert int(inspector.connection_note.cget("width")) == 1
+    assert inspector.message_contents.title == _("MAVLink message contents")
+    assert int(inspector.fields.cget("height")) == 8
+    assert inspector.fields.cget("wrap") == "word"
+    assert inspector.fields.cget("state") == "disabled"
+
+
+def test_message_table_has_expected_columns_headings_and_scrolling(inspector: MavlinkInspectorWindow) -> None:
+    """The table exposes its seven documented columns with sorting and scrolling controls."""
+    expected_headings = ("System", "Component", "Message", "Count", "Hz", "B/s", "Age (s)")
+    assert tuple(inspector.table.cget("columns")) == tuple(frontend.MESSAGE_COLUMNS)
+    assert str(inspector.table.cget("show")[0]) == "headings"
+    assert str(inspector.table.cget("selectmode")) == "browse"
+    assert int(inspector.table.cget("height")) == 12
+
+    for column, heading in zip(frontend.MESSAGE_COLUMNS, expected_headings, strict=True):
+        assert inspector.table.heading(column, "text") == _(heading)
+        assert inspector.table.heading(column, "command")
+        assert int(inspector.table.column(column, "width")) == (220 if column == "message" else 85)
+        assert bool(int(inspector.table.column(column, "stretch")))
+
+    assert int(inspector.section_panes.panecget(inspector.table_frame, "minsize")) == inspector._minimum_section_height
+    assert inspector.section_panes.panecget(inspector.table_frame, "stretch") == "always"
+    assert inspector.section_panes.panecget(inspector.table_frame, "sticky") == "nesw"
+    assert inspector.table.master is inspector.table_frame
+    assert str(inspector.table.tag_configure("striped", "background")) == "#eeeeee"
+    assert inspector.table.pack_info()["fill"] == "both"
+    assert bool(int(inspector.table.pack_info()["expand"]))
+    assert inspector.table_scrollbar.master is inspector.table_frame
+    assert inspector.table_scrollbar.pack_info()["side"] == "right"
+    assert inspector.table_scrollbar.pack_info()["fill"] == "y"
+    assert str(inspector.table_scrollbar.cget("orient")) == "vertical"
+    assert inspector.table_scrollbar.cget("command")
+    assert inspector.table.cget("yscrollcommand")
+    assert inspector.table.bind("<<TreeviewSelect>>")
+    assert inspector.table.bind("<Enter>")
+    assert inspector.table.bind("<Motion>")
+    for sequence in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
+        assert inspector.table.bind(sequence)
+
+
 @pytest.mark.parametrize("with_radio", [False, True])
 @pytest.mark.skipif(sys.platform == "darwin", reason="Window geometry requires rendering, unsafe on headless macOS CI")
 def test_radio_explanation_wraps_when_window_narrows(inspector: MavlinkInspectorWindow, with_radio: bool) -> None:
@@ -187,6 +252,61 @@ def test_every_inspector_control_and_reading_has_beginner_help(inspector: Mavlin
     assert "not a percentage" in hints[inspector.radio_status.values["rssi"]].text
     assert "Errors/s is a count rate" in hints[inspector.radio_status.values["rx_error_rate"]].text
     assert "not editable parameters" in hints[inspector.fields].text
+
+    fields_help = _(
+        "Latest decoded fields of the selected message. These are received data, not editable parameters. "
+        "Field units depend on the message; Help links to the reference."
+    )
+    pane_help = _(
+        "Drag the horizontal divider to give more height to the message table or decoded fields. The "
+        "status footer stays visible."
+    )
+    expected_tooltips = {
+        inspector.main_frame: _(
+            "Monitor messages reaching AMC through its active connection. Use Help for a step-by-step introduction."
+        ),
+        inspector.status: _(
+            "Shows whether recent MAVLink messages are arriving. Increasing counts and small ages indicate fresh data."
+        ),
+        inspector.connection_note: _(
+            "To test a wireless telemetry link, connect AMC through that link. Direct USB traffic measures the USB path."
+        ),
+        inspector.section_panes: pane_help,
+        inspector.table_frame: MavlinkInspectorWindow._TABLE_HELP,
+        inspector.table: MavlinkInspectorWindow._TABLE_HELP,
+        inspector.table_scrollbar: _(
+            "Drag to scroll through received message types. Scrolling does not change the selected message."
+        ),
+        inspector._message_fields_pane: fields_help,
+        inspector.message_contents: fields_help,
+        inspector.message_contents.content_frame: fields_help,
+        inspector.fields: fields_help,
+        inspector.fields_scrollbar: _(
+            "Scroll through all decoded fields of the selected message. Select another table row to "
+            "inspect a different message."
+        ),
+        inspector.footer: _(
+            "Connection traffic and radio readings stay visible here while the message table and decoded fields are resized."
+        ),
+        inspector.buttons_frame: _(
+            "Help opens the beginner's manual. Close returns to AMC, or ends the standalone inspector."
+        ),
+        inspector.help_button: _(
+            "Open the MAVLink inspector beginner's manual in your web browser. It explains the "
+            "columns, radio readings and connection checks; internet access is needed."
+        ),
+        inspector.close_button: _(
+            "Stop monitoring and close this window. AMC keeps its connection; the standalone "
+            "inspector closes its own connection."
+        ),
+    }
+    for widget, expected_text in expected_tooltips.items():
+        assert hints[widget].text == expected_text
+
+    assert inspector.message_contents.header_tooltip.text == _(
+        "Click to hide or restore decoded message fields and give the table more room. You can also "
+        "focus this title with Tab and press Enter or Space."
+    )
 
 
 @pytest.mark.parametrize("region", ["heading", "cell"])
