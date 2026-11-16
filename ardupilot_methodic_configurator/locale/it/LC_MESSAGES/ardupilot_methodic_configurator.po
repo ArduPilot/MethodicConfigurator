@@ -12943,7 +12943,7 @@ msgstr "Rilevato un tasso di errore ESC su almeno un'istanza ESC"
 msgid ""
 "{parameter} is configured as {actual}, but the ESC's FC->ESC Connection "
 "protocol is declared as {declared} in your vehicle component specifications."
-msgstr ""
+msgstr "{parameter} è configurato come {actual}, ma il protocollo di connessione FC->ESC dell'ESC è dichiarato come {declared} nelle specifiche dei componenti del veicolo."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:174
 msgid "No ESC data available"

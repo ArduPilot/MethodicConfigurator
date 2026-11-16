@@ -12845,7 +12845,7 @@ msgstr "Taxa de erros do ESC detetada em pelo menos uma instância de ESC"
 msgid ""
 "{parameter} is configured as {actual}, but the ESC's FC->ESC Connection "
 "protocol is declared as {declared} in your vehicle component specifications."
-msgstr ""
+msgstr "{parameter} está configurado como {actual}, mas o protocolo de ligação FC->ESC do ESC está declarado como {declared} nas especificações dos componentes do veículo."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:174
 msgid "No ESC data available"
