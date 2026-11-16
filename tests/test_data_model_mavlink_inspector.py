@@ -55,6 +55,7 @@ def test_each_heading_sorts_by_its_meaning_and_reverses(
     THEN its ascending order reverses without comparing formatted strings.
     """
     model = MavlinkInspectorDataModel()
+    assert model.sort_descending is False
     model.update(TelemetryState(messages=messages))
     assert model.rows == messages
     model.sort_by(column)

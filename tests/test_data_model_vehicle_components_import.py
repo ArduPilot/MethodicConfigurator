@@ -378,15 +378,24 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         fc_parameters = {
             "MOT_PWM_TYPE": 6,
             "SERVO1_FUNCTION": 33,  # Motor1
+            "SERVO15_FUNCTION": 33,  # Outside the AIO output range
         }
         doc = {"MOT_PWM_TYPE": {"values": {"6": "DShot600"}}}
 
+        realistic_model.set_component_value(("ESC", "FC->ESC Connection", "Type"), "AIO")
+        realistic_model.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), "PWM")
+        realistic_model.set_component_value(("ESC", "ESC->FC Telemetry", "Type"), "None")
+        realistic_model.set_component_value(("ESC", "ESC->FC Telemetry", "Protocol"), "None")
         realistic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
 
         esc_type = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type"))
         esc_protocol = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol"))
+        telemetry_type = realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Type"))
+        telemetry_protocol = realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Protocol"))
         assert esc_type == "Main Out"
         assert esc_protocol == "DShot600"
+        assert telemetry_type == "Main Out"
+        assert telemetry_protocol == "BDShotOnly"
 
     @patch(
         "ardupilot_methodic_configurator.data_model_vehicle_components_import.get_esc_connection_sub_dict",
@@ -410,12 +419,20 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         }
         doc: dict[str, Any] = {}
 
+        realistic_model.set_component_value(("ESC", "FC->ESC Connection", "Type"), "Main Out")
+        realistic_model.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), "PWM")
+        realistic_model.set_component_value(("ESC", "ESC->FC Telemetry", "Type"), "None")
+        realistic_model.set_component_value(("ESC", "ESC->FC Telemetry", "Protocol"), "None")
         realistic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
 
         esc_type = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type"))
         esc_protocol = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol"))
+        telemetry_type = realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Type"))
+        telemetry_protocol = realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Protocol"))
         assert esc_type == "AIO"
         assert esc_protocol == "DShot600"
+        assert telemetry_type == "AIO"
+        assert telemetry_protocol == "BDShotOnly"
 
     def test_user_can_import_frame_class_from_fc(self, realistic_model) -> None:
         """Given FRAME_CLASS from FC, set Frame.Specifications.Class."""
@@ -722,8 +739,14 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         fc_parameters = {"MOT_PWM_TYPE": 999}  # Non-existent type
         doc = {"MOT_PWM_TYPE": {"values": {"6": "DShot600"}}}  # Doesn't contain 999
 
+        realistic_model.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), "DShot600")
+        realistic_model.set_component_value(("ESC", "ESC->FC Telemetry", "Type"), "AIO")
+        realistic_model.set_component_value(("ESC", "ESC->FC Telemetry", "Protocol"), "BDShotOnly")
         realistic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
-        # Should handle gracefully without setting protocol
+
+        assert realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) == "DShot600"
+        assert realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Type")) == "None"
+        assert realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Protocol")) == "None"
 
     def test_system_handles_battery_monitor_key_error(self, realistic_model) -> None:
         """
@@ -1204,26 +1227,49 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
             "SERVO2_FUNCTION": 34,  # Motor2 on main out
             "SERVO_BLH_POLES": 14,  # Motor poles for DShot
             "BATT_MONITOR": 4,  # Analog voltage and current
+            "FRAME_CLASS": 3,  # Octa
         }
 
         doc = {
             "SERIAL1_PROTOCOL": sample_doc_dict["SERIAL1_PROTOCOL"],
             "BATT_MONITOR": sample_doc_dict["BATT_MONITOR"],
             "GPS_TYPE": sample_doc_dict["GPS_TYPE"],
+            "GPS1_TYPE": sample_doc_dict["GPS_TYPE"],
             "MOT_PWM_TYPE": sample_doc_dict["MOT_PWM_TYPE"],
             "RC_PROTOCOLS": sample_doc_dict["RC_PROTOCOLS"],
+            "FRAME_CLASS": {"values": {"3": "Octa"}},
         }
 
-        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True) as verify_documentation:
             realistic_model.process_fc_parameters(fc_parameters, doc)
+
+        verification_calls = [call.args for call in verify_documentation.call_args_list]
+        firmware_type = str(realistic_model.get_component_value(("Flight Controller", "Firmware", "Type")))
+        expected_verifications = [
+            (doc, _import_module.SERIAL_PROTOCOLS_DICT, "SERIAL1_PROTOCOL", "values"),
+            (doc, _import_module.BATT_MONITOR_CONNECTION, "BATT_MONITOR", "values"),
+            (doc, _import_module.GNSS_RECEIVER_CONNECTION, "GPS1_TYPE", "values"),
+            (doc, _import_module.get_esc_connection_sub_dict(firmware_type), "MOT_PWM_TYPE", "values"),
+            (doc, _import_module.RC_PROTOCOLS_DICT, "RC_PROTOCOLS", "Bitmask"),
+            (
+                doc,
+                _import_module.get_frame_class_as_protocol_dict(firmware_type),
+                "FRAME_CLASS",
+                "values",
+            ),
+        ]
+        assert all(expected in verification_calls for expected in expected_verifications)
 
         # Verify all components were configured correctly
         assert realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type")) == "SERIAL2"
+        assert realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Protocol")) == "uBlox"
         assert realistic_model.get_component_value(("RC Receiver", "FC Connection", "Type")) == "SERIAL3"
         assert realistic_model.get_component_value(("RC Receiver", "FC Connection", "Protocol")) == "CRSF"
         assert realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type")) == "Main Out"
         assert realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) == "DShot600"
         assert realistic_model.get_component_value(("Motors", "Specifications", "Poles")) == 14
+        assert realistic_model.get_component_value(("Frame", "Specifications", "Frame class")) == "Octa"
+        assert realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Type")) == "Analog"
         assert (
             realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Protocol"))
             == "Analog Voltage and Current"
@@ -1738,6 +1784,20 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         assert capacity == 6500
         assert cell_count == 6
 
+    def test_user_can_import_voltage_evidence_that_corrects_template_battery_chemistry(self, realistic_model) -> None:
+        """
+        Imported pack voltage corrects an incompatible template chemistry.
+
+        GIVEN: A vehicle template marked as LiIon and a 12-cell LiIonSS critical-voltage threshold
+        WHEN: Battery settings are imported
+        THEN: Chemistry should match the clearly different voltage evidence
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "LiIon")
+
+        realistic_model._set_battery_type_from_fc_parameters({"BATT_MONITOR": 0, "BATT_CRT_VOLT": 32.4})
+
+        assert realistic_model.get_component_value(("Battery", "Specifications", "Chemistry")) == "LiIonSS"
+
     # ---- Tests for new battery arm/min voltage import (PR: Batt specifications) ----
 
     def test_user_can_import_arm_voltage_from_batt_arm_volt(self, basic_model) -> None:
@@ -2113,8 +2173,12 @@ class TestComponentDataModelImportUncoveredBranches:
         with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn:
             realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
 
-        texts = " ".join(str(c) for c in mock_warn.call_args_list)
-        assert "out of range" in texts or "BATT_I2C_BUS" in texts
+        mock_warn.assert_called_once_with(
+            "BATT_I2C_BUS value %d out of range (0-%d), defaulting to first bus",
+            99,
+            len(_import_module.BATT_MONITOR_CONNECTION["5"]["type"]) - 1,
+        )
+        assert realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Type")) == "I2C1"
 
     def test_system_warns_when_i2c_bus_value_is_not_an_integer(self, realistic_model) -> None:
         """
@@ -2129,8 +2193,7 @@ class TestComponentDataModelImportUncoveredBranches:
         with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn:
             realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
 
-        texts = " ".join(str(c) for c in mock_warn.call_args_list)
-        assert "Invalid BATT_I2C_BUS" in texts or "defaulting" in texts
+        mock_warn.assert_called_once_with("Invalid BATT_I2C_BUS value, defaulting to first bus")
 
     def test_system_warns_when_batt_monitor_parameter_is_absent(self, basic_model) -> None:
         """
@@ -2321,21 +2384,44 @@ class TestComponentDataModelImportUncoveredBranches:
     # _set_battery_type_from_fc_parameters — valid I2C bus index (line 363)
     # and non-I2C list type (Analog) (line 376)
     # ------------------------------------------------------------------
-    def test_system_selects_i2c_bus_by_index_when_batt_i2c_bus_is_valid(self, basic_model) -> None:
+    def test_system_selects_second_i2c_bus_when_batt_i2c_bus_is_one(self, basic_model) -> None:
         """
         _set_battery_type_from_fc_parameters uses BATT_I2C_BUS index to select the I2C bus.
 
-        GIVEN: BATT_MONITOR=5 (Solo, I2C type) and BATT_I2C_BUS=1 (selects I2C2 = index 1)
+        GIVEN: BATT_MONITOR=5 (Solo, I2C type) and BATT_I2C_BUS=1
         WHEN: _set_battery_type_from_fc_parameters is called
-        THEN: FC Connection Type should be set to 'I2C2' (fc_conn_type[1]) (line 363 exercised)
+        THEN: FC Connection Type should be I2C2 without an out-of-range warning
         """
         fc_parameters: dict[str, Any] = {"BATT_MONITOR": 5, "BATT_I2C_BUS": 1}
 
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning"):
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn:
             basic_model._set_battery_type_from_fc_parameters(fc_parameters)
 
         result = basic_model.get_component_value(("Battery Monitor", "FC Connection", "Type"))
         assert result == "I2C2"
+        mock_warn.assert_not_called()
+
+    def test_system_selects_first_i2c_bus_when_batt_i2c_bus_is_zero(self, basic_model) -> None:
+        """A zero BATT_I2C_BUS index selects the first I2C bus."""
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn:
+            basic_model._set_battery_type_from_fc_parameters({"BATT_MONITOR": 5, "BATT_I2C_BUS": 0})
+
+        assert basic_model.get_component_value(("Battery Monitor", "FC Connection", "Type")) == "I2C1"
+        mock_warn.assert_not_called()
+
+    def test_system_defaults_to_first_i2c_bus_when_index_equals_bus_count(self, basic_model) -> None:
+        """An index equal to the number of I2C choices is out of range."""
+        i2c_choices = _import_module.BATT_MONITOR_CONNECTION["5"]["type"]
+        bus_count = len(i2c_choices)
+
+        with (
+            patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn,
+            patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"),
+        ):
+            basic_model._set_battery_type_from_fc_parameters({"BATT_MONITOR": 5, "BATT_I2C_BUS": bus_count})
+
+        mock_warn.assert_called_once()
+        assert basic_model.get_component_value(("Battery Monitor", "FC Connection", "Type")) == "I2C1"
 
     def test_system_defaults_to_first_element_for_non_i2c_list_battery_type(self, basic_model) -> None:
         """
@@ -2395,12 +2481,11 @@ class TestComponentDataModelImportUncoveredBranches:
         fake_gnss_conn: dict[str, Any] = {"99": {"type": ["USB"], "protocol": "Unknown"}}
         monkeypatch.setattr(_import_module, "GNSS_RECEIVER_CONNECTION", fake_gnss_conn)
 
+        basic_model.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "SERIAL3")
         with patch.object(_import_module, "logging_error") as mock_err:
             basic_model._set_gnss_type_from_fc_parameters({"GPS_TYPE": 99})
 
-        # Verify error was logged about invalid connection type
-        logged_text = " ".join(str(call) for call in mock_err.call_args_list)
-        assert "Invalid GNSS connection type" in logged_text
+        mock_err.assert_called_once_with("Invalid GNSS connection type %s", ["USB"])
 
         result = basic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
         assert result == "None"

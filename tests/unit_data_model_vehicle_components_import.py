@@ -251,7 +251,8 @@ class TestComponentDataModelImportInternals:
             result = realistic_model._verify_dict_is_uptodate(doc, incomplete_dict, "PARAM", "values")
             assert result is False
 
-    def test_set_gnss_type_handles_invalid_gps_type_value(self, realistic_model) -> None:
+    @pytest.mark.parametrize("param_name", ["GPS_TYPE", "GPS1_TYPE"])
+    def test_set_gnss_type_handles_invalid_gps_type_value(self, realistic_model, param_name: str) -> None:  # type: ignore[misc]
         """
         Internal GNSS type setter handles invalid GPS_TYPE value.
 
@@ -260,13 +261,17 @@ class TestComponentDataModelImportInternals:
         THEN: Error should be logged
         AND: GNSS type should default to None
         """
-        fc_parameters = {"GPS_TYPE": "invalid"}
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
+        fc_parameters = {param_name: "invalid"}
+        realistic_model.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "SERIAL3")
+        realistic_model.set_component_value(("GNSS Receiver", "FC Connection", "Protocol"), "uBlox")
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as mock_log:
             realistic_model._set_gnss_type_from_fc_parameters(fc_parameters)
-        gnss_type = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
-        assert gnss_type == "None"
+        mock_log.assert_called_once_with("Invalid non-integer value for %s: %s", param_name, "invalid")
+        assert realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type")) == "None"
+        assert realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Protocol")) == "None"
 
-    def test_set_gnss_type_handles_unknown_gps_type(self, realistic_model) -> None:
+    @pytest.mark.parametrize("param_name", ["GPS_TYPE", "GPS1_TYPE"])
+    def test_set_gnss_type_handles_unknown_gps_type(self, realistic_model, param_name: str) -> None:  # type: ignore[misc]
         """
         Internal GNSS type setter handles unknown GPS_TYPE value.
 
@@ -275,9 +280,10 @@ class TestComponentDataModelImportInternals:
         THEN: Error should be logged
         AND: GNSS type should default to None
         """
-        fc_parameters = {"GPS_TYPE": 999}
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
+        fc_parameters = {param_name: 999}
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as mock_log:
             realistic_model._set_gnss_type_from_fc_parameters(fc_parameters)
+        mock_log.assert_called_once_with("%s value %u not in GNSS_RECEIVER_CONNECTION", param_name, 999)
         gnss_type = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
         assert gnss_type == "None"
 
@@ -332,8 +338,10 @@ class TestComponentDataModelImportInternals:
         """
         fc_parameters = {"MOT_PWM_TYPE": "invalid"}
         doc: dict = {}
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as mock_log:
             realistic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
+        mock_log.assert_called_once()
+        assert realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type")) == "Main Out"
 
     def test_set_battery_type_handles_invalid_value(self, realistic_model) -> None:
         """
@@ -345,8 +353,17 @@ class TestComponentDataModelImportInternals:
         AND: System should not crash
         """
         fc_parameters = {"BATT_MONITOR": "invalid"}
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
+        realistic_model.set_component_value(("Battery Monitor", "FC Connection", "Type"), "Analog")
+        realistic_model.set_component_value(("Battery Monitor", "FC Connection", "Protocol"), "Analog Voltage and Current")
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as mock_log:
             realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+        assert mock_log.call_args.args[0] == "Error processing BATT_MONITOR parameter: %s"
+        assert "invalid" in mock_log.call_args.args[1]
+        assert realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Type")) == "Analog"
+        assert (
+            realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Protocol"))
+            == "Analog Voltage and Current"
+        )
 
     def test_set_battery_type_handles_key_error(self, realistic_model) -> None:
         """
@@ -358,8 +375,16 @@ class TestComponentDataModelImportInternals:
         AND: Error should be logged
         """  # pylint: disable=duplicate-code  # Common error handling test pattern
         fc_parameters = {"BATT_MONITOR": 999}
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
+        realistic_model.set_component_value(("Battery Monitor", "FC Connection", "Type"), "Analog")
+        realistic_model.set_component_value(("Battery Monitor", "FC Connection", "Protocol"), "Analog Voltage and Current")
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as mock_log:
             realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+        mock_log.assert_called_once_with("BATT_MONITOR value %s not found in BATT_MONITOR_CONNECTION", 999)
+        assert realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Type")) == "Analog"
+        assert (
+            realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Protocol"))
+            == "Analog Voltage and Current"
+        )
         # pylint: enable=duplicate-code
 
     def test_set_battery_type_handles_type_error(self, realistic_model) -> None:
@@ -372,8 +397,17 @@ class TestComponentDataModelImportInternals:
         AND: Error should be logged
         """  # pylint: disable=duplicate-code  # Common error handling test pattern
         fc_parameters = {"BATT_MONITOR": None}
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
+        realistic_model.set_component_value(("Battery Monitor", "FC Connection", "Type"), "Analog")
+        realistic_model.set_component_value(("Battery Monitor", "FC Connection", "Protocol"), "Analog Voltage and Current")
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as mock_log:
             realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+        assert mock_log.call_args.args[0] == "Error processing BATT_MONITOR parameter: %s"
+        assert "NoneType" in mock_log.call_args.args[1]
+        assert realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Type")) == "Analog"
+        assert (
+            realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Protocol"))
+            == "Analog Voltage and Current"
+        )
         # pylint: enable=duplicate-code
 
     def test_set_battery_type_handles_tuple_type_values(self, realistic_model) -> None:
