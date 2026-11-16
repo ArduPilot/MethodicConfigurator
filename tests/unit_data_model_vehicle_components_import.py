@@ -297,8 +297,13 @@ class TestComponentDataModelImportInternals:
         AND: System should not crash
         """
         fc_parameters = {"RC_PROTOCOLS": "invalid"}
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
+        realistic_model.set_component_value(("RC Receiver", "FC Connection", "Type"), "SERIAL2")
+        realistic_model.set_component_value(("RC Receiver", "FC Connection", "Protocol"), "CRSF")
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as mock_log:
             realistic_model._set_serial_type_from_fc_parameters(fc_parameters)
+        mock_log.assert_called_once_with("Invalid non-integer value for RC_PROTOCOLS %s", "invalid")
+        assert realistic_model.get_component_value(("RC Receiver", "FC Connection", "Type")) == "SERIAL2"
+        assert realistic_model.get_component_value(("RC Receiver", "FC Connection", "Protocol")) == "CRSF"
 
     def test_set_serial_type_handles_multiple_rc_protocols(self, realistic_model) -> None:
         """
@@ -309,8 +314,25 @@ class TestComponentDataModelImportInternals:
         THEN: Protocol should not be set due to ambiguity
         """
         fc_parameters = {"RC_PROTOCOLS": 3}  # Not a power of 2
-        realistic_model._set_serial_type_from_fc_parameters(fc_parameters)
-        # Should not set protocol for non-power of 2 values
+        realistic_model.set_component_value(("RC Receiver", "FC Connection", "Type"), "SERIAL2")
+        realistic_model.set_component_value(("RC Receiver", "FC Connection", "Protocol"), "CRSF")
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as mock_log:
+            realistic_model._set_serial_type_from_fc_parameters(fc_parameters)
+        mock_log.assert_called_once_with(
+            "RC_PROTOCOLS has multiple protocols enabled (%d). Cannot determine active protocol.", 3
+        )
+        assert realistic_model.get_component_value(("RC Receiver", "FC Connection", "Type")) == "SERIAL2"
+        assert realistic_model.get_component_value(("RC Receiver", "FC Connection", "Protocol")) == "CRSF"
+
+    def test_set_rc_protocols_identifies_single_enabled_protocol(self, realistic_model) -> None:
+        """One known RC protocol bit selects its protocol and supplies the default type."""
+        realistic_model.set_component_value(("RC Receiver", "FC Connection", "Type"), None)
+        realistic_model.set_component_value(("RC Receiver", "FC Connection", "Protocol"), None)
+
+        realistic_model._process_rc_protocols({"RC_PROTOCOLS": 512})
+
+        assert realistic_model.get_component_value(("RC Receiver", "FC Connection", "Type")) == "RCin/SBUS"
+        assert realistic_model.get_component_value(("RC Receiver", "FC Connection", "Protocol")) == "CRSF"
 
     def test_set_serial_type_handles_invalid_serial_protocol_value(self, realistic_model) -> None:
         """
