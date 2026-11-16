@@ -403,6 +403,15 @@ class SkybrushLogAnalysisWindow(BaseWindow):  # pylint: disable=too-many-instanc
     def _build_footer(self) -> None:
         footer = ttk.Frame(self.main_frame)
         footer.pack(side=tk.BOTTOM, fill=tk.X, padx=20, pady=(0, 14))
+        self._help_button = ttk.Button(
+            footer,
+            text=_("Help"),
+            command=lambda: webbrowser_open_url(
+                "https://ardupilot.github.io/MethodicConfigurator/USERMANUAL_skybrush_log_analyzer.html"
+            ),
+        )
+        self._help_button.pack(side=tk.LEFT)
+        show_tooltip(self._help_button, _("Open the Skybrush Log Analysis user manual in a web browser"))
         ttk.Button(footer, text=_("Close"), command=self.root.destroy).pack(side=tk.RIGHT)
 
     def _build_results_area(self) -> None:
