@@ -9,6 +9,7 @@ SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import builtins
 import threading
 from collections.abc import Generator
 from dataclasses import replace
@@ -24,6 +25,7 @@ from pymavlink import mavutil
 from pymavlink.dialects.v20 import ardupilotmega as mavlink
 from telemetry_test_helpers import connected_telemetry_link, create_telemetry_link, feed
 
+from ardupilot_methodic_configurator import data_model_data_telemetry
 from ardupilot_methodic_configurator.backend_data_telemetry import DataTelemetryBackend
 from ardupilot_methodic_configurator.backend_esc_telemetry import EscTelemetryBackend
 from ardupilot_methodic_configurator.backend_mavftp import FTP_OP, MAVFTP, OP_WriteFile
@@ -33,9 +35,10 @@ from ardupilot_methodic_configurator.data_model_data_telemetry import (
     MessageSample,
     RadioSample,
     TelemetrySample,
+    TelemetryState,
 )
 
-# pylint: disable=protected-access,redefined-outer-name
+# pylint: disable=protected-access,redefined-outer-name,too-many-lines
 
 
 @pytest.fixture
@@ -815,6 +818,57 @@ def test_radio_error_rate_is_unavailable_when_reports_are_three_seconds_apart() 
     model.update(TelemetrySample(connection, 0, radio=radio))
     state = model.update(TelemetrySample(connection, 3, radio=replace(radio, time=3, rxerrors=5)))
     assert state.radio_error_rate is None
+
+
+def test_telemetry_model_initialization_and_clear_reset_live_state() -> None:
+    """Start with an empty state and clear both the snapshot and cached readings."""
+    model = DataTelemetryDataModel(MagicMock())
+    assert model._state == TelemetryState()
+
+    connection = object()
+    model.update(TelemetrySample(connection, 0, rx_bytes=10))
+    model.clear_live_data()
+
+    assert model._previous is None
+    assert model._state == TelemetryState()
+
+
+def test_telemetry_model_baseline_produces_byte_and_error_rates() -> None:
+    """Measure cumulative counters only after a same-connection baseline."""
+    model = DataTelemetryDataModel(MagicMock())
+    connection = object()
+    baseline = TelemetrySample(connection, 0, rx_bytes=100, tx_bytes=50, parse_errors=2)
+    assert model.update(baseline).connected is True
+
+    measured = model.update(TelemetrySample(connection, 1, rx_bytes=130, tx_bytes=62, parse_errors=4))
+
+    assert (measured.rx_rate, measured.tx_rate, measured.parse_error_rate) == (30, 12, 2)
+
+
+def test_radio_counter_rewind_discards_the_previous_rate_baseline() -> None:
+    """Do not calculate a rate against a modem count superseded by a reset."""
+    model = DataTelemetryDataModel(MagicMock())
+    connection = object()
+    radio = RadioSample((51, 68), 0, 30, 40, 0, 0, 100, 10, 2)
+    model.update(TelemetrySample(connection, 0, radio=radio))
+    model.update(TelemetrySample(connection, 0.5, radio=replace(radio, time=0.5, rxerrors=12)))
+
+    reset = model.update(TelemetrySample(connection, 1, radio=replace(radio, time=1, rxerrors=11)))
+
+    assert reset.radio_error_rate is None
+
+
+def test_rate_calculation_uses_strictly_paired_counter_samples(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep the three cumulative counters paired when calculating rates."""
+    zip_spy = MagicMock(wraps=builtins.zip)
+    monkeypatch.setattr(data_model_data_telemetry, "zip", zip_spy, raising=False)
+    model = DataTelemetryDataModel(MagicMock())
+    connection = object()
+    model.update(TelemetrySample(connection, 0, rx_bytes=100, tx_bytes=50, parse_errors=2))
+
+    model.update(TelemetrySample(connection, 1, rx_bytes=130, tx_bytes=62, parse_errors=4))
+
+    zip_spy.assert_called_once_with((130, 62, 4), (100, 50, 2), strict=True)
 
 
 def test_heartbeat_sender_reuses_the_existing_encoder_lock_and_preserves_requested_mavlink_version(

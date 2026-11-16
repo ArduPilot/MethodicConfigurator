@@ -115,6 +115,7 @@ class DataTelemetryDataModel:
             and radio.source == cached_radio.source
             and radio.rxerrors >= cached_radio.rxerrors
         )
+        old_radio = previous.radio if same_counter else None
         if not same_counter:
             # Rebaseline the radio independently; preserve byte/message measurement intervals.
             previous = replace(previous, radio=radio)
@@ -131,7 +132,6 @@ class DataTelemetryDataModel:
                     strict=True,
                 )
             )
-            old_radio = previous.radio if same_counter else None
             # Polling the same fresh report must retain its last measured rate.
             if radio is None or old_radio is None or radio.time != old_radio.time:
                 radio_error_rate = None
