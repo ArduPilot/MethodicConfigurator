@@ -205,6 +205,23 @@ def _headless_browser_window(mock_tkinter_context) -> typing.Iterator[FileBrowse
             yield window
 
 
+@pytest.fixture(name="real_widget_browser")
+def _real_widget_browser(
+    tk_root: tk.Tk,
+) -> typing.Iterator[tuple[FileBrowserWindow, MagicMock]]:
+    """Build a real browser window and capture its user-facing tooltip guidance."""
+    parameter_editor = MagicMock()
+    parameter_editor.get_vehicle_directory.return_value = str(Path.cwd())
+    with patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser.show_tooltip") as add_tooltip:
+        window = FileBrowserWindow(tk_root, parameter_editor, MagicMock(), task_runner=ImmediateTaskRunner())
+    try:
+        yield window, add_tooltip
+    finally:
+        with contextlib.suppress(tk.TclError):
+            window.root.grab_release()
+            window.root.destroy()
+
+
 class TestFileBrowserWindow:
     """Verify browser interactions, lifecycle, and backend dispatch."""
 
@@ -263,6 +280,107 @@ class TestFileBrowserWindow:
             with contextlib.suppress(tk.TclError):
                 window.root.grab_release()
                 window.root.destroy()
+
+    def test_user_sees_side_by_side_local_and_remote_panels(self, real_widget_browser) -> None:
+        """
+        The browser gives both local and flight-controller files a usable directory view.
+
+        GIVEN: A user opens the file browser
+        WHEN: The browser lays out its two file panels
+        THEN: Both directories are visible side by side with working entry fields
+        """
+        window, _tooltips = real_widget_browser
+        remote_panel = window.remote_tree.master
+        local_panel = window.local_tree.master
+        panels = remote_panel.master
+
+        assert isinstance(panels, ttk.PanedWindow)
+        assert str(panels.cget("orient")) == "horizontal"
+        assert panels.panes() == (str(remote_panel), str(local_panel))
+        assert int(panels.pane(remote_panel)["weight"]) == 1
+        assert int(panels.pane(local_panel)["weight"]) == 1
+        assert panels.pack_info()["side"] == "top"
+        assert panels.pack_info()["fill"] == "both"
+        assert bool(int(panels.pack_info()["expand"]))
+        assert int(panels.pack_info()["padx"]) == 8
+        assert tuple(map(int, panels.pack_info()["pady"])) == (8, 4)
+        assert window.remote_directory_var.get() == FileBrowserWindow.DEFAULT_REMOTE_DIRECTORY
+        assert window.local_directory_var.get() == str(Path.cwd())
+        assert window.remote_directory_entry.master.master is remote_panel
+        assert window.local_directory_entry.master.master is local_panel
+        assert window.remote_directory_entry.bind("<Return>")
+        assert window.local_directory_entry.bind("<Return>")
+        for entry in (window.remote_directory_entry, window.local_directory_entry):
+            assert entry.pack_info()["side"] == "left"
+            assert entry.pack_info()["fill"] == "x"
+            assert bool(int(entry.pack_info()["expand"]))
+
+    def test_user_can_navigate_and_select_files_in_either_panel(self, real_widget_browser) -> None:
+        """Each panel offers its own directory navigation and multi-file selection controls."""
+        window, _tooltips = real_widget_browser
+        assert window.remote_parent_button.cget("text") == "↑"
+        assert int(window.remote_parent_button.cget("width")) == 3
+        assert window.remote_parent_button.cget("command")
+        assert window.local_parent_button.cget("text") == "↑"
+        assert int(window.local_parent_button.cget("width")) == 3
+        assert window.local_parent_button.cget("command")
+        assert window.browse_local_button.cget("text") == "Browse"
+        assert window.browse_local_button.cget("command")
+        remote_controls = [
+            widget for widget in window.remote_directory_entry.master.winfo_children() if isinstance(widget, ttk.Button)
+        ]
+        local_controls = [
+            widget for widget in window.local_directory_entry.master.winfo_children() if isinstance(widget, ttk.Button)
+        ]
+        assert [button.cget("text") for button in remote_controls] == ["↑", "⟳", "Select all"]
+        assert [button.cget("text") for button in local_controls] == ["↑", "Browse", "⟳", "Select all"]
+        assert all(button.cget("command") for button in (*remote_controls, *local_controls))
+        assert window.remote_tree.master is window.remote_directory_entry.master.master
+        assert window.local_tree.master is window.local_directory_entry.master.master
+        for tree in (window.remote_tree, window.local_tree):
+            assert tuple(tree.cget("columns")) == ("name", "type", "size", "modified")
+            assert str(tree.cget("selectmode")) == "extended"
+
+    def test_user_can_transfer_files_and_choose_transfer_verification(self, real_widget_browser) -> None:
+        """The action area labels transfers clearly and links checksum verification to its setting."""
+        window, _tooltips = real_widget_browser
+        assert window.download_button.cget("text") == "Download selected →"
+        assert window.upload_button.cget("text") == "← Upload selected"
+        assert window.verify_checkbox.cget("text") == "Verify transfers with CRC32"
+        assert window.verify_checkbox.cget("variable") == str(window.verify_transfers_var)
+        assert window.download_button.cget("command")
+        assert window.upload_button.cget("command")
+        assert window.last_log_button.cget("text") == "Download last FC log"
+        assert window.help_button.cget("text") == "Help"
+        assert window.close_button.cget("text") == "Close"
+        action_frame = window.download_button.master
+        assert action_frame.pack_info()["side"] == "bottom"
+        assert action_frame.pack_info()["fill"] == "x"
+        assert int(action_frame.pack_info()["padx"]) == 8
+        assert tuple(map(int, action_frame.pack_info()["pady"])) == (4, 8)
+        for column in range(4):
+            assert int(action_frame.grid_columnconfigure(column, "weight")) == 1
+            assert action_frame.grid_columnconfigure(column, "uniform") == "action"
+
+    def test_browser_help_explains_directory_controls_and_file_actions(self, real_widget_browser) -> None:
+        """Tooltips explain where files move and what each directory control does."""
+        _window, add_tooltip = real_widget_browser
+        expected_tooltips = [
+            "Download selected files and directories from the flight controller to the local computer",
+            "Upload selected files and directories from the local computer to the flight controller",
+            "Compare local and flight-controller checksums after each transfer",
+            "Download the last flight-controller .bin log file",
+            "Open the MAVFTP file browser user manual",
+            "Close the file browser",
+            "Go to the parent directory on the flight controller",
+            "Open the remote directory and refresh its contents",
+            "Select all remote files and directories",
+            "Go to the parent directory on the local computer",
+            "Choose a local directory",
+            "Refresh the local directory contents",
+            "Select all local files and directories",
+        ]
+        assert sorted(tooltip.args[1] for tooltip in add_tooltip.call_args_list) == sorted(expected_tooltips)
 
     def test_local_panel_defaults_to_current_vehicle_directory(self) -> None:
         """The local browser starts in the vehicle directory used by the editor."""
