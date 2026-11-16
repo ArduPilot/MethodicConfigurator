@@ -515,6 +515,83 @@ class TestFileBrowserWindow:
         assert window.help_button is not None
         assert window.close_button is not None
 
+    @pytest.mark.parametrize("remote", [False, True], ids=["local-panel", "remote-panel"])
+    def test_each_tree_has_expected_options_bindings_and_context_panel(self, remote: bool) -> None:
+        """
+        Each file panel's tree is configured for multi-selection and routes navigation to that panel.
+
+        GIVEN: A browser window creating either its local or remote tree
+        WHEN: The panel tree is created
+        THEN: Its options, keyboard bindings, context menu, and scrollbar are connected
+        """
+        window = _bare_window()
+        parent = MagicMock()
+        tree = MagicMock()
+        scrollbar = MagicMock()
+        window._configure_tree_columns = MagicMock()
+        window._show_context_menu = MagicMock(return_value="break")
+        window._remember_panel = MagicMock()
+        window._remember_panel_from_click = MagicMock()
+        window._remember_panel_from_selection = MagicMock()
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_file_browser.ttk.Treeview",
+                return_value=tree,
+            ) as make_tree,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_file_browser.ttk.Scrollbar",
+                return_value=scrollbar,
+            ) as make_scrollbar,
+        ):
+            result = window._create_tree(parent, remote=remote)
+
+        assert result is tree
+        make_tree.assert_called_once_with(
+            parent,
+            columns=("name", "type", "size", "modified"),
+            show="headings",
+            selectmode="extended",
+        )
+        window._configure_tree_columns.assert_called_once_with(tree, "remote" if remote else "local")
+        tree.pack.assert_called_once_with(side="left", fill="both", expand=True)
+        make_scrollbar.assert_called_once_with(parent, orient="vertical", command=tree.yview)
+        scrollbar.pack.assert_called_once_with(side="right", fill="y")
+        tree.configure.assert_called_once_with(yscrollcommand=scrollbar.set)
+
+        bindings = {binding.args[0]: binding.args[1] for binding in tree.bind.call_args_list}
+        expected_events = [
+            "<Double-1>",
+            "<Control-a>",
+            "<Command-a>",
+            "<Delete>",
+            "<F2>",
+            "<BackSpace>",
+            "<F5>",
+            "<Left>",
+            "<Right>",
+            "<Button-3>",
+        ]
+        if sys.platform == "darwin":
+            expected_events.append("<Control-Button-1>")
+        expected_events.extend(("<FocusIn>", "<ButtonRelease-1>", "<<TreeviewSelect>>"))
+        assert list(bindings) == expected_events
+        expected_double_click = (
+            FileBrowserWindow._on_remote_double_click if remote else FileBrowserWindow._on_local_double_click
+        )
+        actual_double_click = bindings["<Double-1>"]
+        assert actual_double_click.__self__ is window
+        assert actual_double_click.__func__ is expected_double_click
+        event = MagicMock()
+        assert bindings["<Button-3>"](event) == "break"
+        window._show_context_menu.assert_called_once_with(event, remote)
+        bindings["<FocusIn>"](None)
+        window._remember_panel.assert_called_once_with("remote" if remote else "local")
+        bindings["<ButtonRelease-1>"](event)
+        window._remember_panel_from_click.assert_called_once_with("remote" if remote else "local", event)
+        bindings["<<TreeviewSelect>>"](None)
+        window._remember_panel_from_selection.assert_called_once_with("remote" if remote else "local")
+
     def test_last_log_without_logs_does_not_report_disconnected_fc(self) -> None:
         """A live MAVFTP link need not have downloaded parameters or flight logs."""
         window = _bare_window()
@@ -1129,9 +1206,165 @@ class TestFileBrowserWindow:
 
         title, message = window.ui.show_error.call_args.args
         assert title == "Download error"
-        assert "Several selected entries map to the same local target:" in message
-        assert str(target) in message
+        assert message == f"Several selected entries map to the same local target:\n\n{target}"
         window.parameter_editor.download_remote_file.assert_not_called()
+
+    @pytest.mark.parametrize(
+        ("result", "error", "expected_message"),
+        [
+            (None, RuntimeError("remote listing failed"), "remote listing failed"),
+            (object(), None, "Could not prepare the selected remote entries."),
+        ],
+        ids=["preflight-error", "invalid-preflight-result"],
+    )
+    def test_download_preflight_failures_show_exact_guidance(
+        self, tmp_path: Path, result: object, error: Exception | None, expected_message: str
+    ) -> None:
+        """
+        A failed or malformed download preflight gives the user a clear error.
+
+        GIVEN: A selected remote file and a failed or malformed preflight result
+        WHEN: The preflight callback completes
+        THEN: The browser shows the corresponding error and does not start a transfer
+        """
+        window = _bare_window()
+        entry = FlightControllerLogFile("log.bin", "/APM/LOGS/log.bin", 1)
+        window.remote_entries = [entry]
+        window.remote_tree = MagicMock()
+        window.remote_tree.selection.return_value = ("0",)
+        window.local_directory_var = MagicMock()
+        window.local_directory_var.get.return_value = str(tmp_path)
+        window.parameter_editor = MagicMock()
+        window.ui = MagicMock()
+        window._start_remote_task = MagicMock()
+        window._run_transfer_batch = MagicMock()
+
+        window.download_selected_remote_entries()
+        completion = window._start_remote_task.call_args.args[1]
+        completion(result, error)
+
+        window.ui.show_error.assert_called_once_with("Download error", expected_message)
+        window._run_transfer_batch.assert_not_called()
+
+    def test_download_confirmation_uses_exact_overwrite_prompt(self, tmp_path: Path) -> None:
+        """
+        Existing local entries are protected by a clear overwrite confirmation.
+
+        GIVEN: The download preflight finds an existing local target
+        WHEN: The user is asked whether to continue
+        THEN: The browser uses the overwrite title and message and honors a refusal
+        """
+        window = _bare_window()
+        entry = FlightControllerLogFile("log.bin", "/APM/LOGS/log.bin", 1)
+        target = tmp_path / entry.name
+        window.remote_entries = [entry]
+        window.remote_tree = MagicMock()
+        window.remote_tree.selection.return_value = ("0",)
+        window.local_directory_var = MagicMock()
+        window.local_directory_var.get.return_value = str(tmp_path)
+        window.parameter_editor = MagicMock()
+        window.ui = MagicMock()
+        window.ui.ask_yesno.return_value = False
+        window._start_remote_task = MagicMock()
+        window._run_transfer_batch = MagicMock()
+
+        window.download_selected_remote_entries()
+        completion = window._start_remote_task.call_args.args[1]
+        completion(RemoteDownloadPreflight(RemoteDownloadPlan((), ((entry, target),)), (), (target,)), None)
+
+        window.ui.ask_yesno.assert_called_once_with(
+            "Overwrite existing local entries?", "Some local entries already exist. Overwrite them?"
+        )
+        window._run_transfer_batch.assert_not_called()
+
+    def test_empty_download_plan_shows_the_download_summary(self, tmp_path: Path) -> None:
+        """
+        A valid plan with no transferable entries reports its accumulated failures.
+
+        GIVEN: A selected remote entry whose preflight produces an empty plan
+        WHEN: The preflight callback completes
+        THEN: The user sees the download summary without a transfer window
+        """
+        window = _bare_window()
+        entry = FlightControllerLogFile("log.bin", "/APM/LOGS/log.bin", 1)
+        window.remote_entries = [entry]
+        window.remote_tree = MagicMock()
+        window.remote_tree.selection.return_value = ("0",)
+        window.local_directory_var = MagicMock()
+        window.local_directory_var.get.return_value = str(tmp_path)
+        window.parameter_editor = MagicMock()
+        window.ui = MagicMock()
+        window._start_remote_task = MagicMock()
+        window._show_summary = MagicMock()
+        window._run_transfer_batch = MagicMock()
+
+        window.download_selected_remote_entries()
+        completion = window._start_remote_task.call_args.args[1]
+        completion(RemoteDownloadPreflight(RemoteDownloadPlan((), (), failed=["unreadable.bin"]), (), ()), None)
+
+        window._show_summary.assert_called_once_with("Download summary", [], ["unreadable.bin"])
+        window._run_transfer_batch.assert_not_called()
+
+    def test_download_transfer_request_contains_user_facing_batch_labels(self, tmp_path: Path) -> None:
+        """
+        A prepared download uses consistent progress, summary, retry, and direction labels.
+
+        GIVEN: A selected remote file and a nonempty download plan
+        WHEN: The preflight callback starts the transfer batch
+        THEN: The transfer request carries the expected user-facing text and download direction
+        """
+        window = _bare_window()
+        entry = FlightControllerLogFile("log.bin", "/APM/LOGS/log.bin", 1)
+        target = tmp_path / entry.name
+        plan = RemoteDownloadPlan((), ((entry, target),))
+        window.remote_entries = [entry]
+        window.remote_tree = MagicMock()
+        window.remote_tree.selection.return_value = ("0",)
+        window.local_directory_var = MagicMock()
+        window.local_directory_var.get.return_value = str(tmp_path)
+        window.parameter_editor = MagicMock()
+        window.ui = MagicMock()
+        window._start_remote_task = MagicMock()
+        window._run_transfer_batch = MagicMock()
+
+        window.download_selected_remote_entries()
+        completion = window._start_remote_task.call_args.args[1]
+        completion(RemoteDownloadPreflight(plan, (), ()), None)
+
+        request = window._run_transfer_batch.call_args.args[0]
+        assert request.batch == plan
+        assert request.ui.title == "Downloading selected entries"
+        assert request.ui.progress_message == "Downloaded {} of {} bytes"
+        assert request.ui.summary_title == "Download summary"
+        assert request.ui.retry_prompt == (
+            "Retry failed downloads?",
+            "Retry only the failed file downloads?",
+        )
+        assert request.ui.direction is TransferDirection.DOWNLOAD
+
+    def test_download_reports_when_the_local_destination_is_missing(self, tmp_path: Path) -> None:
+        """
+        A remote download cannot start when its selected local destination is missing.
+
+        GIVEN: A selected remote log and a local destination that does not exist
+        WHEN: The user starts downloading the selected entry
+        THEN: The browser explains the missing destination and does not start preflight
+        """
+        window = _bare_window()
+        entry = FlightControllerLogFile("log.bin", "/APM/LOGS/log.bin", 1)
+        window.remote_entries = [entry]
+        window.remote_tree = MagicMock()
+        window.remote_tree.selection.return_value = ("0",)
+        window.local_directory_var = MagicMock()
+        window.local_directory_var.get.return_value = str(tmp_path / "missing")
+        window.parameter_editor = MagicMock()
+        window.ui = MagicMock()
+        window._start_remote_task = MagicMock()
+
+        window.download_selected_remote_entries()
+
+        window.ui.show_error.assert_called_once_with("Download error", "The selected local directory does not exist.")
+        window._start_remote_task.assert_not_called()
 
     def test_summary_cap_keeps_failures_visible(self) -> None:
         """Successful entries cannot hide failures."""
@@ -1855,7 +2088,9 @@ class TestFileBrowserWindow:
         window._task_runner.finish()
 
         window.parameter_editor.download_remote_file.assert_not_called()
-        window.ui.show_error.assert_called()
+        window.ui.show_error.assert_called_once_with(
+            "Download error", "The local destination changed while preparing the download. Please try again."
+        )
         window.ui.ask_yesno.assert_not_called()
 
     def test_retry_replaces_failed_crc_with_successful_verification(self, tmp_path: Path) -> None:
