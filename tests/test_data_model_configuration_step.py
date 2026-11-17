@@ -372,6 +372,42 @@ def test_failed_connection_expression_reports_the_missing_input_and_leaves_opera
     assert renames == []
     assert "missing_connection_choice" in caplog.text
     assert "NameNotDefined" in caplog.text
+    assert any(
+        record.getMessage().startswith("Skipping connection renaming because evaluation failed:")
+        for record in caplog.records
+    )
+
+
+def test_connection_renaming_reports_exact_duplicate_and_rename_feedback(
+    processor: ConfigurationStepProcessor, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Duplicate removal and rename operations produce complete log and UI messages."""
+    duplicated = {"SERIAL1_PROTOCOL"}
+    renamed = [("SERIAL1_BAUD", "SERIAL3_BAUD")]
+    with (
+        patch.object(processor, "calculate_connection_rename_operations", return_value=(duplicated, renamed)),
+        caplog.at_level(INFO),
+    ):
+        infos, actual_duplicates, actual_renames = processor._handle_connection_renaming(
+            "test_file.param", {"new_connection_prefix": "SERIAL3"}
+        )
+
+    assert actual_duplicates == duplicated
+    assert actual_renames == renamed
+    assert infos == [
+        ("Parameter Removed", "The parameter 'SERIAL1_PROTOCOL' was removed due to duplication."),
+        (
+            "Parameter Renamed",
+            (
+                "The parameter 'SERIAL1_BAUD' was renamed to 'SERIAL3_BAUD'.\n"
+                "to obey the flight controller connection defined in the component editor window."
+            ),
+        ),
+    ]
+    assert [record.getMessage() for record in caplog.records] == [
+        "Removing duplicate parameter SERIAL1_PROTOCOL",
+        "Renaming parameter SERIAL1_BAUD to SERIAL3_BAUD",
+    ]
 
 
 @pytest.fixture
@@ -418,6 +454,25 @@ def mock_local_filesystem() -> MagicMock:
 def processor(mock_local_filesystem) -> ConfigurationStepProcessor:
     """Fixture providing a configured ConfigurationStepProcessor."""
     return ConfigurationStepProcessor(mock_local_filesystem)
+
+
+def test_processor_keeps_transient_evaluation_variables_out_of_step_state(mock_local_filesystem) -> None:
+    """Transient FC and connection variables are omitted from the processor's shared variables."""
+    source_variables = {
+        "fc_parameters": {"GPS_TYPE": 1.0},
+        "new_connection_prefix": "CAN2",
+        "vehicle": "test vehicle",
+    }
+    mock_local_filesystem.get_eval_variables.return_value = source_variables.copy()
+
+    processor = ConfigurationStepProcessor(mock_local_filesystem)
+
+    assert processor.variables == {"vehicle": "test vehicle"}
+    assert source_variables == {
+        "fc_parameters": {"GPS_TYPE": 1.0},
+        "new_connection_prefix": "CAN2",
+        "vehicle": "test vehicle",
+    }
 
 
 @pytest.fixture
@@ -792,6 +847,7 @@ class TestConfigurationStepProcessorConnectionRenaming:
         assert renames_first  # Sanity check that renaming took place
 
         # Later step must not inherit previous rename configuration
+        processor.variables["new_connection_prefix"] = "'SERIAL7'"
         (
             _params_second,
             _errors_second,
@@ -1251,6 +1307,21 @@ class TestConfigurationStepProcessorConnectionRenamingLogic:
         # Assert
         assert renames == {"CAN1_DRIVER": "CAN2_DRIVER"}
 
+    def test_generate_connection_renames_short_can_names_and_replaces_only_prefix(self) -> None:
+        """CAN port names with no suffix still rename, while later prefix text stays unchanged."""
+        parameters = ["CAN_P1", "CAN_D1", "CAN_P1_CAN_P1"]
+
+        renames = ConfigurationStepProcessor._generate_connection_renames(parameters, "CAN3")
+
+        assert renames == {
+            "CAN_P1": "CAN_P3",
+            "CAN_D1": "CAN_D3",
+            "CAN_P1_CAN_P1": "CAN_P3_CAN_P1",
+        }
+        assert ConfigurationStepProcessor._generate_connection_renames(["BRD_SER1"], "SERIAL3") == {
+            "BRD_SER1": "BRD_SER3"
+        }
+
     def test_generate_connection_renames_invalid_prefix_returns_empty(self) -> None:
         """
         A prefix with no trailing digits returns an empty rename dict.
@@ -1423,6 +1494,11 @@ class TestConfigurationStepProcessorErrorHandling:
         assert ui_infos[0][0] == "ExpressLRS Configuration Warning"
         assert "FLTMODE_CH must be set to a channel other than 5" in ui_infos[0][1]
         assert "RC5 arming channel" in ui_infos[0][1]
+        assert ui_infos[0][1] == (
+            "FLTMODE_CH must be set to a channel other than 5 (currently set to 5).\n"
+            "Please change FLTMODE_CH to a different channel (e.g., 6, 7, 8, etc.)\n"
+            "to avoid conflicts with the required RC5 arming channel."
+        )
         assert ui_errors == []
 
     def test_user_does_not_receive_expresslrs_warning_when_fltmode_ch_is_not_5_and_expresslrs_detected(
@@ -1749,6 +1825,8 @@ class TestDeleteParametersPriority:
         if passed_delete_set is None and len(call_kwargs.args) > 4:
             passed_delete_set = call_kwargs.args[4]
         assert passed_delete_set == {"BATT_OPTIONS"}
+        assert call_kwargs.args[0] == selected_file
+        assert processor.local_filesystem.compute_deletions.call_args.args[0] == selected_file
 
     def test_apply_auto_imports_skips_parameters_in_delete_set(self, processor) -> None:
         """

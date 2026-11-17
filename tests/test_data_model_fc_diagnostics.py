@@ -401,6 +401,32 @@ def test_standalone_text_transports_decode_utf8_and_discard_null_padding(text: s
     assert diagnostics.StatusTextAssembler().assemble(SimpleNamespace(text=text)) == "café"
 
 
+def test_missing_text_attribute_defaults_to_an_empty_payload() -> None:
+    """A message without either wire bytes or a text field has no diagnostic text."""
+    assert diagnostics.status_text_bytes(object()) == b""
+
+
+@pytest.mark.parametrize("other_source", [(1, 0), (0, 1)])
+def test_missing_source_chunks_do_not_mix_with_a_real_zero_component(
+    other_source: tuple[int, int],
+) -> None:
+    """Anonymous STATUSTEXT chunks remain separate from a real vehicle/component source."""
+    assembler = diagnostics.StatusTextAssembler()
+    anonymous_start = SimpleNamespace(id=42, chunk_seq=0, _text_raw=b"A" * 50)
+    sourced_start = SimpleNamespace(
+        id=42,
+        chunk_seq=0,
+        _text_raw=b"B" * 50,
+        get_srcSystem=lambda: other_source[0],
+        get_srcComponent=lambda: other_source[1],
+    )
+    anonymous_end = SimpleNamespace(id=42, chunk_seq=1, _text_raw=b"A tail")
+
+    assert assembler.assemble(anonymous_start) is None
+    assert assembler.assemble(sourced_start) is None
+    assert assembler.assemble(anonymous_end) == "A" * 50 + "A tail"
+
+
 @pytest.mark.parametrize(("system", "component"), [(None, None), (1, None), (None, 1), ("1", 1), (1, "1")])
 def test_incomplete_source_identifiers_are_reported_as_unknown(system: object, component: object) -> None:
     """

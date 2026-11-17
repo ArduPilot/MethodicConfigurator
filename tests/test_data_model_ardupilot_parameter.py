@@ -587,8 +587,9 @@ def test_set_forced_or_derived_value(param_fixture) -> None:
     )
 
     # Act & Assert: System attempting to use method on regular parameter fails
-    with pytest.raises(ValueError, match="This method is only for forced or derived parameters"):
+    with pytest.raises(ValueError, match="only for forced or derived") as error:
         regular_param.set_forced_or_derived_value(123.0)
+    assert str(error.value) == "This method is only for forced or derived parameters."
 
 
 def test_fc_value_equals_default_value_for_bitmask_parameter(param_fixture) -> None:
@@ -659,8 +660,9 @@ def test_set_new_value_bitmask_unchanged_raises() -> None:
     }
     param = ArduPilotParameter("BM_PARAM", Par(3.0, ""), bitmask_metadata)
 
-    with pytest.raises(ParameterUnchangedError):
+    with pytest.raises(ParameterUnchangedError) as error:
         param.set_new_value("3")
+    assert str(error.value) == "The provided bitmask value for BM_PARAM would not change the parameter."
 
 
 def test_set_new_value_bitmask_ignores_unknown_bits_when_flag_set() -> None:
@@ -733,8 +735,9 @@ def test_set_forced_or_derived_value_readonly_raises() -> None:
         forced_par=Par(1.0, ""),
     )
 
-    with pytest.raises(ValueError, match="Readonly"):
+    with pytest.raises(ValueError, match="Readonly parameters") as error:
         param.set_forced_or_derived_value(2.0)
+    assert str(error.value) == "Readonly parameters cannot be forced or derived."
 
 
 def test_set_forced_or_derived_change_reason_readonly_raises() -> None:
@@ -758,8 +761,9 @@ def test_set_forced_or_derived_change_reason_readonly_raises() -> None:
         derived_par=Par(1.0, ""),
     )
 
-    with pytest.raises(ValueError, match="Readonly"):
+    with pytest.raises(ValueError, match="Readonly parameters") as error:
         param.set_forced_or_derived_change_reason("new reason")
+    assert str(error.value) == "Readonly parameters cannot be forced or derived."
 
 
 def test_bitmask_helper_get_checked_keys() -> None:
@@ -1131,8 +1135,9 @@ def test_set_forced_or_derived_change_reason(param_fixture) -> None:
     )
 
     # Act & Assert: System attempting to use method on regular parameter fails
-    with pytest.raises(ValueError, match="This method is only for forced or derived parameters"):
+    with pytest.raises(ValueError, match="only for forced or derived") as error:
         regular_param.set_forced_or_derived_change_reason("Some reason")
+    assert str(error.value) == "This method is only for forced or derived parameters."
 
 
 def test_forced_or_derived_setters_make_parameter_dirty(param_fixture) -> None:
@@ -1245,3 +1250,133 @@ def test_set_fc_value_maintains_comparison_state() -> None:
 
     # Assert: No longer different
     assert param.is_different_from_fc is False
+
+
+@pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf])
+def test_invalid_numbers_name_the_parameter_for_every_nonfinite_value(value: float) -> None:
+    """Given NaN or either infinity, return the same finite-number guidance with the parameter name."""
+    param = ArduPilotParameter("TEST_NUMBER", Par(1.0, ""))
+
+    assert param.is_invalid_number(value) == "The value for TEST_NUMBER must be a finite number."
+
+
+def test_bitmask_validation_identifies_unknown_bits_and_ignores_missing_fc_values() -> None:
+    """Given an undeclared bit or absent controller value, report only actual unknown staged bits."""
+    metadata = {"Bitmask": {1: "Second option"}, "ReadOnly": False}
+    param = ArduPilotParameter("TEST_MASK", Par(1.0, ""), metadata)
+
+    assert param.has_unknown_bits_set() == "The value for TEST_MASK contains unknown bit(s)."
+
+    missing_fc = ArduPilotParameter("TEST_MASK", Par(4.0, ""), {"Bitmask": {0: "First option"}})
+    assert missing_fc.fc_value_has_unknown_bits_set() == ""
+
+
+def test_missing_fc_value_does_not_reuse_an_out_of_range_staged_value() -> None:
+    """Given a staged value below minimum and no FC value, do not show controller feedback."""
+    param = ArduPilotParameter("TEST_LIMIT", Par(0.0, ""), {"min": 2.0}, fc_value=None)
+
+    assert param.fc_value_is_below_limit() == ""
+
+
+def test_new_value_errors_include_exact_guidance_and_accept_hex_bitmasks() -> None:
+    """Given invalid edits, identify the parameter and preserve supported hexadecimal bitmasks."""
+    forced = ArduPilotParameter("FORCED_PARAM", Par(1.0, ""), forced_par=Par(2.0, ""))
+    with pytest.raises(ParameterForcedOrDerivedError) as forced_error:
+        forced.set_new_value("3")
+    assert str(forced_error.value) == "This parameter is forced or derived and cannot be changed."
+
+    with pytest.raises(TypeError) as type_error:
+        ArduPilotParameter("TYPE_PARAM", Par(1.0, "")).set_new_value(2)  # type: ignore[arg-type]
+    assert str(type_error.value) == "Parameter value must be provided as a string."
+
+    with pytest.raises(ValueError, match="Empty value") as empty_error:
+        ArduPilotParameter("EMPTY_PARAM", Par(1.0, "")).set_new_value(" ")
+    assert str(empty_error.value) == "Empty value is not allowed for EMPTY_PARAM"
+
+    choices = ArduPilotParameter("CHOICE_PARAM", Par(1.0, ""), {"values": {"1": "One", "2": "Two"}})
+    with pytest.raises(ParameterUnchangedError) as choice_error:
+        choices.set_new_value("1")
+    assert str(choice_error.value) == "The provided value for CHOICE_PARAM would not change the parameter."
+
+    bitmask = ArduPilotParameter("MASK_PARAM", Par(0.0, ""), {"Bitmask": {1: "Second option"}})
+    assert bitmask.set_new_value("0x2") == 2.0
+    with pytest.raises(ParameterOutOfRangeError) as unknown_bit_error:
+        bitmask.set_new_value("0x4")
+    assert str(unknown_bit_error.value) == "The value for MASK_PARAM contains unknown bit(s)."
+
+    with pytest.raises(ValueError, match="integer for bitmask") as bitmask_error:
+        bitmask.set_new_value("not-an-integer")
+    assert str(bitmask_error.value) == "The value for MASK_PARAM must be an integer for bitmask parameters."
+
+
+def test_numeric_new_value_errors_include_exact_parameter_context() -> None:
+    """Given invalid, nonfinite, unchanged or out-of-range numeric edits, return stable guidance."""
+    param = ArduPilotParameter("NUM_PARAM", Par(5.0, ""), {"min": 2.0, "max": 8.0})
+
+    with pytest.raises(ValueError, match="must be a number") as format_error:
+        param.set_new_value("not-a-number")
+    assert str(format_error.value) == "The value for NUM_PARAM must be a number."
+
+    with pytest.raises(ValueError, match="finite number") as finite_error:
+        param.set_new_value("inf")
+    assert str(finite_error.value) == "The value for NUM_PARAM must be a finite number."
+
+    with pytest.raises(ParameterUnchangedError) as unchanged_error:
+        param.set_new_value("5.0")
+    assert str(unchanged_error.value) == (
+        "The provided numeric value for NUM_PARAM is within tolerance and would not change the parameter."
+    )
+
+    with pytest.raises(ParameterOutOfRangeError) as range_error:
+        param.set_new_value("9.0")
+    assert str(range_error.value) == "The value for NUM_PARAM (9.0) should be smaller than 8.0\n"
+
+
+@pytest.mark.parametrize("forced", [True, False])
+def test_manual_override_restores_forced_or_derived_values_and_blank_reasons(forced: bool) -> None:
+    """Given a forced or derived value, toggle manual editing and restore its exact configured state."""
+    parameter = ArduPilotParameter(
+        "OVERRIDE_PARAM",
+        Par(7.0, "file reason"),
+        forced_par=Par(3.0, "") if forced else None,
+        derived_par=Par(4.0, "") if not forced else None,
+    )
+
+    parameter.set_manual_override(True)
+    assert parameter.is_manual_override is True
+    assert parameter.get_new_value() == (3.0 if forced else 4.0)
+    assert parameter.change_reason == ""
+
+    parameter.set_new_value("6.0")
+    parameter.set_change_reason("manual reason")
+    parameter.set_manual_override(False)
+
+    assert parameter.is_manual_override is False
+    assert parameter.get_new_value() == (3.0 if forced else 4.0)
+    assert parameter.change_reason == ""
+
+
+def test_manual_override_reloads_values_and_reason_already_saved_in_the_file() -> None:
+    """Given a persisted manual override, re-enabling it restores the file value and reason."""
+    parameter = ArduPilotParameter(
+        "OVERRIDE_PARAM",
+        Par(7.0, "@manual_override previous user reason"),
+        forced_par=Par(3.0, "forced reason"),
+    )
+
+    parameter.set_manual_override(False)
+    parameter.set_manual_override(True)
+
+    assert parameter.is_manual_override is True
+    assert parameter.get_new_value() == 7.0
+    assert parameter.change_reason == "previous user reason"
+
+
+def test_manual_override_rejects_regular_parameters_with_actionable_error() -> None:
+    """Given a regular parameter, manual override explains that only forced values are eligible."""
+    parameter = ArduPilotParameter("REGULAR_PARAM", Par(1.0, ""))
+
+    with pytest.raises(ValueError, match="only applicable to forced or derived") as error:
+        parameter.set_manual_override(True)
+
+    assert str(error.value) == "Manual override is only applicable to forced or derived parameters."

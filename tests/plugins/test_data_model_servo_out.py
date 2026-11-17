@@ -206,6 +206,10 @@ class TestServoOutputRecommendations:  # pylint: disable=too-many-public-methods
 
         assert "tricopter" not in message.lower()
 
+    def test_recommended_message_does_not_assume_a_tricopter_yaw_servo(self) -> None:
+        """The default message describes motor outputs without adding tricopter guidance."""
+        assert ServoOutDataModel._recommended_message(1) == "Recommended 1 motor output assignment(s)."
+
     def test_existing_nonzero_assignment_is_preserved(self, servo_model_factory) -> None:
         """
         Existing user assignments are never overwritten.
@@ -298,6 +302,68 @@ class TestServoOutputRecommendations:  # pylint: disable=too-many-public-methods
 
         assert "SERVO7_FUNCTION" not in recommendations
         assert "SERVO7_FUNCTION (14_later_setup.param)" in message
+
+    def test_recommendations_resume_after_assigning_a_pinned_motor(self, servo_model_factory) -> None:
+        """A pinned motor assignment does not prevent assigning the remaining motors."""
+        model = servo_model_factory("Main Out", 1)
+
+        recommendations = model._recommend_assignments((1, 2), (1, 2), {}, pinned={33: 1})
+
+        assert recommendations == {"SERVO1_FUNCTION": 33, "SERVO2_FUNCTION": 34}
+
+    def test_recommendations_assign_each_motor_function_only_once(self, servo_model_factory) -> None:
+        """Duplicate layout entries cannot route one motor function to multiple outputs."""
+        model = servo_model_factory("Main Out", 1)
+
+        recommendations = model._recommend_assignments((1, 2), (1, 1), {})
+
+        assert recommendations == {"SERVO1_FUNCTION": 33}
+
+    def test_missing_connection_type_defaults_to_empty_text(self, servo_model_factory) -> None:
+        """Missing ESC connection type is treated as an unselected value."""
+        model = servo_model_factory("Main Out", 1)
+        del model._local_filesystem.vehicle_components_fs.data["Components"]["ESC"]["FC->ESC Connection"]["Type"]
+
+        assert model._get_connection_type() == ""
+
+    def test_future_function_scan_continues_after_malformed_file_parameters(self, servo_model_factory) -> None:
+        """Malformed later-step data does not hide valid servo assignments in subsequent files."""
+        model = servo_model_factory("Main Out", 1)
+        model._parameter_editor.current_file = "10_servo_out.param"
+        model._local_filesystem.file_parameters = {
+            "10_servo_out.param": ParDict(),
+            "12_malformed.param": None,
+            "14_later_setup.param": ParDict({"SERVO1_FUNCTION": Par(0)}),
+        }
+
+        assert model._future_step_function_files() == {"SERVO1_FUNCTION": "14_later_setup.param"}
+
+    def test_future_function_scan_ignores_names_that_are_not_servo_function_parameters(self, servo_model_factory) -> None:
+        """Only complete SERVOx_FUNCTION names block future output assignments."""
+        model = servo_model_factory("Main Out", 1)
+        model._parameter_editor.current_file = "10_servo_out.param"
+        model._local_filesystem.file_parameters = {
+            "10_servo_out.param": ParDict(),
+            "14_later_setup.param": ParDict({"OTHER_FUNCTION": Par(1), "SERVO1_LABEL": Par(2)}),
+        }
+
+        assert model._future_step_function_files() == {}
+
+    def test_future_function_scan_returns_empty_when_current_file_is_not_saved(self, servo_model_factory) -> None:
+        """A current file absent from saved project order has no future assignments."""
+        model = servo_model_factory("Main Out", 1)
+        model._parameter_editor.current_file = "10_servo_out.param"
+        model._local_filesystem.file_parameters = {"14_later_setup.param": ParDict({"SERVO1_FUNCTION": Par(0)})}
+
+        assert model._future_step_function_files() == {}
+
+    def test_future_function_scan_handles_unavailable_saved_parameters(self, servo_model_factory) -> None:
+        """Unavailable saved parameter data yields no future output blockers."""
+        model = servo_model_factory("Main Out", 1)
+        model._parameter_editor.current_file = "10_servo_out.param"
+        model._local_filesystem.file_parameters = None
+
+        assert model._future_step_function_files() == {}
 
     def test_malformed_frame_component_data_returns_a_recommendation_error(self, servo_model_factory) -> None:
         """Malformed nested vehicle data falls back to a clear unsupported-frame result."""
