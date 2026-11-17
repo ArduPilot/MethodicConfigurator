@@ -28,7 +28,10 @@ jobs:
 
       - name: Reserve time for mutation state and reports
         shell: bash
-        run: echo "MUTATION_CUTOFF=$(( $(date +%s) + 305 * 60 ))" >> "$GITHUB_ENV"
+        run: |
+          started_at=$(date +%s)
+          echo "MUTATION_JOB_STARTED_AT=${started_at}" >> "$GITHUB_ENV"
+          echo "MUTATION_CUTOFF=$(( started_at + 305 * 60 ))" >> "$GITHUB_ENV"
 
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -44,7 +47,7 @@ jobs:
       - name: Install virtual display
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb xauth
+          sudo apt-get install -y xvfb xauth time
 
       - name: Install dependencies
         run: uv pip install --editable '.[dev,mutation]'
@@ -67,21 +70,35 @@ jobs:
           uv pip freeze | LC_ALL=C sort > .cache/mutation/dependencies.txt
 
       - name: Verify unmodified selected tests
+        id: baseline
         shell: bash
         run: |
           mkdir -p .cache/mutation
-          xvfb-run -a python - <<'PY'
+          xvfb-run -a python - <<'PY' 2>&1 | tee .cache/mutation/baseline.log
+          import json
           import tomllib
+          from pathlib import Path
+          from time import perf_counter
 
           import pytest
 
-          with open("pyproject.toml", "rb") as config_file:
-              config = tomllib.load(config_file)["tool"]["mutmut"]
-          raise SystemExit(pytest.main([
-              *config["pytest_add_cli_args_test_selection"],
-              *config["pytest_add_cli_args"],
-              "--junit-xml=.cache/mutation/baseline.xml",
-          ]))
+          started_at = perf_counter()
+          exit_code = None
+          try:
+              with open("pyproject.toml", "rb") as config_file:
+                  config = tomllib.load(config_file)["tool"]["mutmut"]
+              exit_code = pytest.main([
+                  *config["pytest_add_cli_args_test_selection"],
+                  *config["pytest_add_cli_args"],
+                  "--junit-xml=.cache/mutation/baseline.xml",
+                  "--durations=50", "--durations-min=0.1",
+              ])
+          finally:
+              Path(".cache/mutation/baseline-timing.json").write_text(json.dumps({
+                  "wall_seconds": perf_counter() - started_at,
+                  "exit_code": exit_code,
+              }))
+          raise SystemExit(exit_code)
           PY
 
       - name: Restore mutation state
@@ -180,6 +197,7 @@ jobs:
           PY
 
       - name: Run mutation suite
+        id: mutation_run
         timeout-minutes: 310
         shell: bash
         run: |
@@ -190,11 +208,42 @@ jobs:
             echo "No time remains to run mutation tests before the CI cutoff."
             exit 1
           fi
+          started_at=$(date +%s)
           set +e
-          timeout --signal=INT --kill-after=120s "${remaining}s" \
-            xvfb-run -a mutmut run --max-children 2 | tee .cache/mutation/run.log
+          /usr/bin/time --verbose --output=.cache/mutation/resources.txt \
+            timeout --signal=INT --kill-after=120s "${remaining}s" \
+            xvfb-run -a python - <<'PY' 2>&1 | tee .cache/mutation/run.log
+          from pathlib import Path
+
+          from mutmut.__main__ import cli
+          from mutmut.configuration import config
+
+          # Enable CI-only diagnostics without changing the cached configuration.
+          # Forkserver completion logs contain measured worker durations even when
+          # Mutmut 3.8.1 writes duration=0.0 into the .meta files.
+          config().log_to_file = True
+          config().log_file_path = str(Path(".cache/mutation/forkserver.log").resolve())
+          cli(["run", "--max-children", "2"])
+          PY
           statuses=( "${PIPESTATUS[@]}" )
           set -e
+          python - "$started_at" "${statuses[0]}" "${statuses[1]}" <<'PY'
+          import json
+          import sys
+          import time
+          from pathlib import Path
+
+          started_at, exit_code, log_exit_code = map(int, sys.argv[1:])
+          Path(".cache/mutation/run-timing.json").write_text(json.dumps({
+              "started_at": started_at,
+              "wall_seconds": time.time() - started_at,
+              "exit_code": exit_code,
+              "log_exit_code": log_exit_code,
+              "cutoff_reached": exit_code == 124,
+              "terminated_by_sigkill": exit_code == 137,
+              "max_children": 2,
+          }))
+          PY
           if (( statuses[0] == 124 )); then
             echo "Mutation run stopped at the CI cutoff; completed results will be cached."
             exit "${statuses[1]}"
@@ -213,6 +262,7 @@ jobs:
           from pathlib import Path
 
           state_dir = Path("mutants")
+          discarded = []
           for path in (*state_dir.rglob("*.meta"), state_dir / "mutmut-stats.json"):
               if not path.is_file():
                   continue
@@ -220,7 +270,11 @@ jobs:
                   json.loads(path.read_text(encoding="utf-8"))
               except (json.JSONDecodeError, UnicodeDecodeError):
                   path.unlink()
+                  discarded.append(str(path))
                   print(f"Discarded incomplete mutation state: {path}")
+          report_dir = Path(".cache/mutation")
+          report_dir.mkdir(parents=True, exist_ok=True)
+          (report_dir / "discarded-state.json").write_text(json.dumps(discarded))
           PY
 
       - name: Save mutation state
@@ -247,27 +301,19 @@ jobs:
         if: always()
         shell: bash
         run: |
-          if [ -d mutants ]; then
+          if [ -d mutants ] && command -v mutmut >/dev/null; then
             mutmut results --all true | tee .cache/mutation/results.txt
-            python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
-          from collections import Counter, defaultdict
-          from pathlib import Path
-
-          counts = defaultdict(Counter)
-          for line in Path(".cache/mutation/results.txt").read_text().splitlines():
-              mutant, status = line.strip().rsplit(": ", 1)
-              module = mutant.rsplit(".", 1)[0].removeprefix("ardupilot_methodic_configurator.")
-              counts[module][status] += 1
-          statuses = sorted({status for counts_by_status in counts.values() for status in counts_by_status})
-          print("### Mutation testing\n")
-          print("Survivors are reported for review; no mutation-score threshold is enforced yet.\n")
-          print("| Module | " + " | ".join(statuses) + " |")
-          print("| --- | " + " | ".join("---:" for _ in statuses) + " |")
-          for module, counts_by_status in sorted(counts.items()):
-              print(f"| `{module}` | " + " | ".join(str(counts_by_status[status]) for status in statuses) + " |")
-          print("\nDownload the mutation artifact for individual results and execution logs.")
-          PY
           fi
+
+      - name: Collect mutation timing and diagnostics
+        if: always()
+        shell: bash
+        env:
+          MUTATION_CACHE_KEY: ${{ steps.restore_mutation_state.outputs.cache-matched-key }}
+          MUTATION_PREVIOUS_ARTIFACT_ID: ${{ steps.previous_mutation_artifact.outputs.artifact_id }}
+          MUTATION_BASELINE_OUTCOME: ${{ steps.baseline.outcome }}
+          MUTATION_RUN_OUTCOME: ${{ steps.mutation_run.outcome }}
+        run: python .github/scripts/mutation_report.py
 
       - name: Upload mutation reports
         if: always()
@@ -278,4 +324,5 @@ jobs:
             .cache/mutation/
           include-hidden-files: true
           if-no-files-found: warn
-          retention-days: 15
+          # Retain measurements across several weekly runs for shard planning.
+          retention-days: 90

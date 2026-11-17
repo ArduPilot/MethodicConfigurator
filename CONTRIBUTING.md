@@ -197,6 +197,19 @@ The job summary groups all mutation outcomes by module; the
 artifact retains individual results and execution logs. The existing coverage
 gate remains independent.
 
+The `mutation-py311` report artifact is retained for 90 days. It includes
+`diagnostics.json` (runner, versions, configuration, cache provenance, baseline and
+mutation elapsed time, throughput, and pending work), `modules.csv`, `tests.csv`,
+`worker-timings.jsonl`, and the test-association snapshot in `mutmut-stats.json`.
+Baseline JUnit results, slow-test output, process resource usage, and forkserver
+logs are also included. Use these measurements to balance future mutation shards.
+Worker timings describe completions observed in the current run, including retries;
+outcome counts also include cached results. Parallel worker durations overlap in
+wall time. Test-only estimates exclude startup and timeout costs and can come from
+cached associations. Missing measurements are unavailable, rather than zero.
+The reporter reads actual forkserver completion logs because Mutmut 3.8.1 can write
+zero durations into its metadata. Interrupted workers have no completed timing.
+
 For surviving mutations, inspect the diff with `mutmut show <mutant-name>` and add
 assertions for observable behavior. Some mutations are equivalent; review those
 individually rather than adding broad suppressions. Mutmut 3 primarily mutates
