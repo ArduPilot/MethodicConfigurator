@@ -736,9 +736,7 @@ ACRO_YAW_P,6.0  # Duplicate parameter"""
             )
         assert str(exc_info.value) == f"Caused by line 1 of file test.param: {original_line}"
 
-    def test_loader_includes_the_original_source_line_when_assignment_fails(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    def test_loader_includes_the_original_source_line_when_assignment_fails(self, caplog: pytest.LogCaptureFixture) -> None:
         """The loader preserves the original source line for a write-failure diagnostic."""
         original_line = "ACRO_YAW_P,4.5  # source comment"
         with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as f:
@@ -1581,9 +1579,7 @@ class TestParameterParsingEdgeCases:
             ("ACRO\fYAW_P\t4.5", "ACRO\fYAW_P"),
         ],
     )
-    def test_loader_reports_mixed_whitespace_inside_parameter_names(
-        self, content: str, invalid_name: str
-    ) -> None:
+    def test_loader_reports_mixed_whitespace_inside_parameter_names(self, content: str, invalid_name: str) -> None:
         """Whitespace inside a parameter name is rejected with a name-specific diagnostic."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as parameter_file:
             parameter_file.write(content)

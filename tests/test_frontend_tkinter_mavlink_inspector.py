@@ -253,6 +253,7 @@ def test_every_inspector_control_and_reading_has_beginner_help(inspector: Mavlin
     assert "Errors/s is a count rate" in hints[inspector.radio_status.values["rx_error_rate"]].text
     assert "not editable parameters" in hints[inspector.fields].text
 
+    # pylint: disable=duplicate-code  # Keep exact help copy covered by its UI regression assertion.
     fields_help = _(
         "Latest decoded fields of the selected message. These are received data, not editable parameters. "
         "Field units depend on the message; Help links to the reference."
@@ -261,6 +262,7 @@ def test_every_inspector_control_and_reading_has_beginner_help(inspector: Mavlin
         "Drag the horizontal divider to give more height to the message table or decoded fields. The "
         "status footer stays visible."
     )
+    # pylint: enable=duplicate-code
     expected_tooltips = {
         inspector.main_frame: _(
             "Monitor messages reaching AMC through its active connection. Use Help for a step-by-step introduction."

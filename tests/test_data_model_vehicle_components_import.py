@@ -860,6 +860,7 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
             realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
         # pylint: enable=duplicate-code
 
+    # pylint: disable=duplicate-code  # These behavior checks complement the matching low-level unit tests.
     def test_user_can_import_battery_capacity_from_fc_parameters(self, realistic_model) -> None:
         """
         User can import battery capacity from flight controller parameters.
@@ -920,6 +921,8 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
 
         with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
             realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+    # pylint: enable=duplicate-code
 
     def test_system_handles_negative_battery_capacity(self, realistic_model) -> None:
         """
@@ -2690,6 +2693,7 @@ class TestComponentDataModelImportUncoveredBranches:
         frame_dict.assert_called_once_with("ArduPlane")
         frame_info.assert_called_once_with(fc_parameters, "ArduPlane")
 
+    # pylint: disable=duplicate-code  # The same missing-firmware setup is reused for the motor-import unit test.
     def test_process_fc_parameters_uses_empty_firmware_type_when_model_has_none(self, realistic_model) -> None:
         """Missing firmware metadata is passed as an empty type to protocol dictionary lookups."""
         original_get = realistic_model.get_component_value
@@ -2710,6 +2714,8 @@ class TestComponentDataModelImportUncoveredBranches:
 
         assert [call.args for call in esc_dict.call_args_list] == [("",), ("",)]
         frame_dict.assert_called_once_with("")
+
+    # pylint: enable=duplicate-code
 
     def test_arduplane_without_frame_parameters_clears_template_frame_class(self, realistic_model) -> None:
         """An ArduPlane import without frame data clears the template's stale Quad frame class."""
@@ -2776,9 +2782,9 @@ class TestComponentDataModelImportUncoveredBranches:
         )
         monkeypatch.setattr(BatteryCell, "best_chemistry_for_voltage", staticmethod(lambda _voltage, _kind: None))
 
-        assert basic_model._detect_battery_chemistry_from_voltages(
-            {"MOT_BAT_VOLT_MAX": 0, "BATT_ARM_VOLT": 15.2}, "Lipo"
-        ) is None
+        assert (
+            basic_model._detect_battery_chemistry_from_voltages({"MOT_BAT_VOLT_MAX": 0, "BATT_ARM_VOLT": 15.2}, "Lipo") is None
+        )
         assert scored_voltages == [15.2]
 
     def test_battery_chemistry_detection_scores_one_volt_before_lower_priority_clue(self, basic_model, monkeypatch) -> None:
@@ -2791,15 +2797,11 @@ class TestComponentDataModelImportUncoveredBranches:
         )
         monkeypatch.setattr(BatteryCell, "best_chemistry_for_voltage", staticmethod(lambda _voltage, _kind: None))
 
-        basic_model._detect_battery_chemistry_from_voltages(
-            {"MOT_BAT_VOLT_MAX": 1.0, "BATT_ARM_VOLT": 15.2}, "Lipo"
-        )
+        basic_model._detect_battery_chemistry_from_voltages({"MOT_BAT_VOLT_MAX": 1.0, "BATT_ARM_VOLT": 15.2}, "Lipo")
 
         assert scored_voltages == [1.0, 15.2]
 
-    def test_battery_chemistry_nan_score_warning_identifies_chemistry_and_voltage_type(
-        self, basic_model, monkeypatch
-    ) -> None:
+    def test_battery_chemistry_nan_score_warning_identifies_chemistry_and_voltage_type(self, basic_model, monkeypatch) -> None:
         """A NaN compatibility score is logged with the exact chemistry and input voltage type."""
         monkeypatch.setattr(
             BatteryCell,
@@ -2829,9 +2831,7 @@ class TestComponentDataModelImportUncoveredBranches:
     def test_cell_estimation_logs_exact_unreasonable_cell_count(self, basic_model) -> None:
         """Pack estimates beyond the supported 50-cell range identify the estimate and parameter."""
         with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as log_warning:
-            result = basic_model._estimate_cells_from_voltage_param_default(
-                "BATT_LOW_VOLT", 220, "Volt per cell low", "Lipo"
-            )
+            result = basic_model._estimate_cells_from_voltage_param_default("BATT_LOW_VOLT", 220, "Volt per cell low", "Lipo")
 
         assert result is None
         log_warning.assert_called_once_with("Estimated cell count %d from %s seems unreasonable", 61, "BATT_LOW_VOLT")
@@ -2848,9 +2848,7 @@ class TestComponentDataModelImportUncoveredBranches:
         )
 
         with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as log_error:
-            result = basic_model._estimate_cells_from_voltage_param_default(
-                "BATT_LOW_VOLT", 18.0, "Volt per cell low", "Lipo"
-            )
+            result = basic_model._estimate_cells_from_voltage_param_default("BATT_LOW_VOLT", 18.0, "Volt per cell low", "Lipo")
 
         assert result is None
         log_error.assert_called_once_with("No recommended voltage for %s %s", "Lipo", "Volt per cell low")
@@ -2864,9 +2862,7 @@ class TestComponentDataModelImportUncoveredBranches:
     def test_cell_estimation_rejects_one_volt_pack_at_zero_boundary(self, basic_model) -> None:
         """A one-volt total reading is rejected as invalid before cell estimation."""
         with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as log_warning:
-            result = basic_model._estimate_cells_from_voltage_param_default(
-                "BATT_LOW_VOLT", 1.0, "Volt per cell low", "Lipo"
-            )
+            result = basic_model._estimate_cells_from_voltage_param_default("BATT_LOW_VOLT", 1.0, "Volt per cell low", "Lipo")
 
         assert result is None
         log_warning.assert_called_once_with("Estimated cell count %d from %s seems unreasonable", 0, "BATT_LOW_VOLT")
@@ -2884,7 +2880,10 @@ class TestComponentDataModelImportUncoveredBranches:
         """Unparsable pack voltages report the source parameter and original conversion exception."""
         with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as log_error:
             result = basic_model._estimate_cells_from_voltage_param_default(
-                "BATT_LOW_VOLT", value, "Volt per cell low", "Lipo"  # type: ignore[arg-type]
+                "BATT_LOW_VOLT",
+                value,
+                "Volt per cell low",
+                "Lipo",  # type: ignore[arg-type]
             )
 
         assert result is None
@@ -2916,8 +2915,9 @@ class TestComponentDataModelImportUncoveredBranches:
             BatteryCell,
             "chemistry_voltage_score",
             staticmethod(
-                lambda _chemistry, _voltage, voltage_type: scored_types.append(voltage_type)
-                or (float("nan") if voltage_type == "Volt per cell max" else 0.5)
+                lambda _chemistry, _voltage, voltage_type: (
+                    scored_types.append(voltage_type) or (float("nan") if voltage_type == "Volt per cell max" else 0.5)
+                )
             ),
         )
         monkeypatch.setattr(
@@ -2926,9 +2926,7 @@ class TestComponentDataModelImportUncoveredBranches:
             staticmethod(lambda _voltage, voltage_type: "LiIon" if voltage_type == "Volt per cell arm" else None),
         )
 
-        result = basic_model._detect_battery_chemistry_from_voltages(
-            {"MOT_BAT_VOLT_MAX": 16.8, "BATT_ARM_VOLT": 15.2}, "Lipo"
-        )
+        result = basic_model._detect_battery_chemistry_from_voltages({"MOT_BAT_VOLT_MAX": 16.8, "BATT_ARM_VOLT": 15.2}, "Lipo")
 
         assert result == "LiIon"
         assert scored_types == ["Volt per cell max", "Volt per cell arm"]

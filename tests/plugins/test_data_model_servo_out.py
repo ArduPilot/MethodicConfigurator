@@ -3,8 +3,7 @@
 """
 Behavior-driven tests for servo-output recommendations.
 
-This file is part of ArduPilot Methodic Configurator.
-https://github.com/ArduPilot/MethodicConfigurator
+This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas
 
@@ -33,7 +32,7 @@ if TYPE_CHECKING:
     from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 
 # pytest injects fixtures by matching the test function parameter name.
-# pylint: disable=redefined-outer-name,protected-access
+# pylint: disable=redefined-outer-name,protected-access,too-many-lines
 
 
 @pytest.fixture

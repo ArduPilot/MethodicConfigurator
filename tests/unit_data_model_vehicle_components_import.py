@@ -75,9 +75,7 @@ class TestComponentDataModelImportInternals:
         WHEN: Searching for non-existent protocol names
         THEN: Fallback keys should be returned
         """
-        with patch(
-            "ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"
-        ) as mock_log:
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as mock_log:
             result = realistic_model._reverse_key_search(sample_doc_dict, "SERIAL1_PROTOCOL", ["NonExistent"], [99])
 
         assert result == [99]
@@ -99,9 +97,7 @@ class TestComponentDataModelImportInternals:
                 ["GPS", "RCIN"],
                 [5],  # Mismatched lengths
             )
-            mock_log.assert_called_once_with(
-                "Length of values %u and fallbacks %u differ for %s", 2, 1, "SERIAL1_PROTOCOL"
-            )
+            mock_log.assert_called_once_with("Length of values %u and fallbacks %u differ for %s", 2, 1, "SERIAL1_PROTOCOL")
             assert result == [5, 23]
 
     def test_reverse_key_search_handles_empty_documentation(self, realistic_model) -> None:
@@ -198,9 +194,7 @@ class TestComponentDataModelImportInternals:
             "5": {"protocol": "GPS"},
             "23": {"protocol": "RCIN"},
         }
-        with patch(
-            "ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning"
-        ) as mock_warning:
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warning:
             result = realistic_model._verify_dict_is_uptodate(sample_doc_dict, dict_mismatch, "SERIAL1_PROTOCOL", "values")
             assert result is False
         mock_warning.assert_called_once_with(
@@ -275,9 +269,7 @@ class TestComponentDataModelImportInternals:
             "1": {"protocol": "Protocol1"},
             # Missing key "2" and "3"
         }
-        with patch(
-            "ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning"
-        ) as mock_warning:
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warning:
             result = realistic_model._verify_dict_is_uptodate(doc, incomplete_dict, "PARAM", "values")
             assert result is False
         assert [call.args for call in mock_warning.call_args_list] == [
@@ -285,16 +277,12 @@ class TestComponentDataModelImportInternals:
             ("Protocol %s (%s) not found in %s code dictionary (firmware may be newer)", "Protocol3", "3", "PARAM"),
         ]
 
-    def test_verify_bitmask_protocols_expands_bit_positions_and_continues_after_invalid_keys(
-        self, realistic_model
-    ) -> None:
+    def test_verify_bitmask_protocols_expands_bit_positions_and_continues_after_invalid_keys(self, realistic_model) -> None:
         """Bitmask metadata maps positions to powers of two and skips malformed positions."""
         doc = {"RC_PROTOCOLS": {"Bitmask": {"invalid": "Ignored", "0": "Unexpected", "2": "Third"}}}
         protocols = {"1": {"protocol": "First"}, "4": {"protocol": "Third"}}
 
-        with patch(
-            "ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning"
-        ) as mock_warning:
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warning:
             result = realistic_model._verify_dict_is_uptodate(doc, protocols, "RC_PROTOCOLS", "Bitmask")
 
         assert result is False
@@ -308,15 +296,11 @@ class TestComponentDataModelImportInternals:
         doc = {"PARAM": {"values": {"1": "MAV", "2": "Different"}}}
         protocols = {"1": {"protocol": "MAVLink"}, "2": {"protocol": "Expected"}}
 
-        with patch(
-            "ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning"
-        ) as mock_warning:
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warning:
             result = realistic_model._verify_dict_is_uptodate(doc, protocols, "PARAM", "values")
 
         assert result is False
-        mock_warning.assert_called_once_with(
-            "Protocol %s does not match %s in %s metadata", "Expected", "Different", "PARAM"
-        )
+        mock_warning.assert_called_once_with("Protocol %s does not match %s in %s metadata", "Expected", "Different", "PARAM")
 
     @pytest.mark.parametrize("param_name", ["GPS_TYPE", "GPS1_TYPE"])
     def test_set_gnss_type_handles_invalid_gps_type_value(self, realistic_model, param_name: str) -> None:  # type: ignore[misc]
@@ -412,9 +396,7 @@ class TestComponentDataModelImportInternals:
         """
         with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.SERIAL_PORTS", ["SERIAL1"]):
             fc_parameters = {"SERIAL1_PROTOCOL": "invalid"}
-            with patch(
-                "ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"
-            ) as mock_log:
+            with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as mock_log:
                 result = realistic_model._set_serial_type_from_fc_parameters(fc_parameters)
             assert result is False
         mock_log.assert_called_once_with("Invalid non-integer value for SERIAL1_PROTOCOL invalid")
@@ -437,9 +419,7 @@ class TestComponentDataModelImportInternals:
                 },
             ),
         ):
-            realistic_model._set_serial_type_from_fc_parameters(
-                {"SERIAL1_PROTOCOL": first_protocol, "SERIAL2_PROTOCOL": 2}
-            )
+            realistic_model._set_serial_type_from_fc_parameters({"SERIAL1_PROTOCOL": first_protocol, "SERIAL2_PROTOCOL": 2})
 
         assert realistic_model.get_component_value(("Telemetry", "FC Connection", "Type")) == "SERIAL2"
         assert realistic_model.get_component_value(("Telemetry", "FC Connection", "Protocol")) == "MAVLink2"
@@ -552,9 +532,7 @@ class TestComponentDataModelImportInternals:
 
     def test_missing_motor_pwm_type_uses_the_zero_default(self, realistic_model) -> None:
         """A missing MOT_PWM_TYPE uses firmware's default value zero when metadata is available."""
-        realistic_model._set_esc_type_from_fc_parameters(
-            {}, {"MOT_PWM_TYPE": {"values": {"0": "Normal", "1": "OneShot"}}}
-        )
+        realistic_model._set_esc_type_from_fc_parameters({}, {"MOT_PWM_TYPE": {"values": {"0": "Normal", "1": "OneShot"}}})
 
         assert realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) == "Normal"
 
@@ -569,9 +547,7 @@ class TestComponentDataModelImportInternals:
         realistic_model.set_component_value(("ESC", "ESC->FC Telemetry", "Type"), telemetry_type)
         realistic_model.set_component_value(("ESC", "ESC->FC Telemetry", "Protocol"), telemetry_protocol)
 
-        realistic_model._set_esc_type_from_fc_parameters(
-            {"MOT_PWM_TYPE": 6}, {"MOT_PWM_TYPE": {"values": {"6": "DShot600"}}}
-        )
+        realistic_model._set_esc_type_from_fc_parameters({"MOT_PWM_TYPE": 6}, {"MOT_PWM_TYPE": {"values": {"6": "DShot600"}}})
 
         assert realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Type")) == telemetry_type
         assert realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Protocol")) == telemetry_protocol
@@ -581,9 +557,7 @@ class TestComponentDataModelImportInternals:
         realistic_model.set_component_value(("ESC", "ESC->FC Telemetry", "Type"), "SERIAL4")
         realistic_model.set_component_value(("ESC", "ESC->FC Telemetry", "Protocol"), "ESC Telemetry")
 
-        realistic_model._set_esc_type_from_fc_parameters(
-            {"MOT_PWM_TYPE": 0}, {"MOT_PWM_TYPE": {"values": {"0": "Normal"}}}
-        )
+        realistic_model._set_esc_type_from_fc_parameters({"MOT_PWM_TYPE": 0}, {"MOT_PWM_TYPE": {"values": {"0": "Normal"}}})
 
         assert realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Type")) == "SERIAL4"
         assert realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Protocol")) == "ESC Telemetry"
@@ -810,9 +784,7 @@ class TestComponentDataModelImportInternals:
     def test_battery_capacity_rejection_logs_exact_value(self, realistic_model, capacity: int) -> None:
         """Zero and negative capacities are rejected with the exact FC value in the warning."""
         with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as log_warning:
-            realistic_model._import_bat_values_from_fc(
-                BatteryVoltageSpecs(0, 3.0, 4.2, "Lipo", {"BATT_CAPACITY": capacity})
-            )
+            realistic_model._import_bat_values_from_fc(BatteryVoltageSpecs(0, 3.0, 4.2, "Lipo", {"BATT_CAPACITY": capacity}))
 
         log_warning.assert_called_once_with("BATT_CAPACITY is zero or negative: %s", capacity)
 
@@ -820,9 +792,7 @@ class TestComponentDataModelImportInternals:
     def test_battery_capacity_conversion_error_logs_exact_parameter_and_error(self, realistic_model, capacity) -> None:
         """Invalid capacity values report their conversion failure with the parameter name."""
         with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as log_error:
-            realistic_model._import_bat_values_from_fc(
-                BatteryVoltageSpecs(0, 3.0, 4.2, "Lipo", {"BATT_CAPACITY": capacity})
-            )
+            realistic_model._import_bat_values_from_fc(BatteryVoltageSpecs(0, 3.0, 4.2, "Lipo", {"BATT_CAPACITY": capacity}))
 
         log_error.assert_called_once()
         args = log_error.call_args.args

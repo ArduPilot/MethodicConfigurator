@@ -373,8 +373,7 @@ def test_failed_connection_expression_reports_the_missing_input_and_leaves_opera
     assert "missing_connection_choice" in caplog.text
     assert "NameNotDefined" in caplog.text
     assert any(
-        record.getMessage().startswith("Skipping connection renaming because evaluation failed:")
-        for record in caplog.records
+        record.getMessage().startswith("Skipping connection renaming because evaluation failed:") for record in caplog.records
     )
 
 
@@ -1318,9 +1317,7 @@ class TestConfigurationStepProcessorConnectionRenamingLogic:
             "CAN_D1": "CAN_D3",
             "CAN_P1_CAN_P1": "CAN_P3_CAN_P1",
         }
-        assert ConfigurationStepProcessor._generate_connection_renames(["BRD_SER1"], "SERIAL3") == {
-            "BRD_SER1": "BRD_SER3"
-        }
+        assert ConfigurationStepProcessor._generate_connection_renames(["BRD_SER1"], "SERIAL3") == {"BRD_SER1": "BRD_SER3"}
 
     def test_generate_connection_renames_invalid_prefix_returns_empty(self) -> None:
         """

@@ -308,9 +308,7 @@ class TestWidgetConfigurationPreparation:
 
         # Assert: Description is enhanced for optional field
         assert "MCU series description" in config["description"]
-        assert config["description"] == (
-            "MCU series description\nThis is optional and can be left blank"
-        )
+        assert config["description"] == ("MCU series description\nThis is optional and can be left blank")
         assert config["is_optional"] is True
 
     def test_system_handles_empty_descriptions_gracefully(self, display_model) -> None:

@@ -3708,6 +3708,7 @@ def test_parameter_add_dialog_widgets_explain_filtering_and_selection() -> None:
     listbox.configure.assert_called_once_with(yscrollcommand=scrollbar.set)
     button.assert_called_once_with(window.main_frame, text=_("No parameter selected"), state="disabled")
     add_button.pack.assert_called_once_with(pady=10)
+    # pylint: disable=duplicate-code  # The complete user-facing tooltip text is asserted verbatim.
     assert show_tooltip.call_args_list == [
         call(
             search_entry,
@@ -3729,6 +3730,7 @@ def test_parameter_add_dialog_widgets_explain_filtering_and_selection() -> None:
             ),
         ),
     ]
+    # pylint: enable=duplicate-code
 
 
 def test_parameter_dialog_parent_resolution_reports_when_no_toplevel_exists(

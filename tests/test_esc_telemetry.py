@@ -283,7 +283,7 @@ def test_bdshot_zero_padding_respects_mask_and_mavlink_offset(link: SimpleNamesp
     assert rows[0][4:8] == ("-", "0*", "-", "-")
 
 
-def test_missing_bdshot_mask_uses_a_zero_default(link: SimpleNamespace) -> None:
+def test_missing_bdshot_mask_uses_a_zero_default(link: SimpleNamespace, monkeypatch: pytest.MonkeyPatch) -> None:
     """Treat an absent output mask as disabled while preserving the explicit zero fallback."""
 
     class TrackingParameters(dict[str, float]):
@@ -291,10 +291,12 @@ def test_missing_bdshot_mask_uses_a_zero_default(link: SimpleNamespace) -> None:
 
         mask_default: object = None
 
-        def get(self, key: str, default: object = None) -> object:
-            if key == "SERVO_BLH_BDMASK":
-                self.mask_default = default
-            return super().get(key, default)
+    def tracking_get(parameters: TrackingParameters, key: object, default: object = None) -> object:
+        if key == "SERVO_BLH_BDMASK":
+            parameters.mask_default = default
+        return dict.get(parameters, key, default)
+
+    monkeypatch.setattr(TrackingParameters, "get", tracking_get)
 
     parameters = TrackingParameters({"ESC_TLM_MAV_OFS": 0.0})
     link.controller.fc_parameters = parameters

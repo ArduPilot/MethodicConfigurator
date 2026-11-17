@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from copy import deepcopy
 from logging import WARNING
 from math import isnan
+from typing import Any
 from unittest.mock import MagicMock, Mock
 
 import pytest
@@ -101,10 +102,11 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         class RejectMeta(type):
             """Hide the usual class name so the warning uses its representation fallback."""
 
-            @property
-            def __name__(cls) -> str:
-                msg = "class name unavailable"
-                raise AttributeError(msg)
+            def __getattribute__(cls, name: str) -> Any:  # noqa: ANN401 # Mirrors type.__getattribute__.
+                if name == "__name__":
+                    msg = "class name unavailable"
+                    raise AttributeError(msg)
+                return super().__getattribute__(name)
 
             def __call__(cls, _value: object) -> None:
                 msg = "unsupported input"

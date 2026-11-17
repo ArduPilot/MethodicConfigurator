@@ -392,9 +392,7 @@ class TestAhrsOrientationDataModelCaptureAndEstimate:
 
         assert model._capture_alignment(matrix) == 0.0
 
-    def test_matrix_estimation_keeps_axes_when_orientation_sign_is_exactly_zero(
-        self, connected_flight_controller
-    ) -> None:
+    def test_matrix_estimation_keeps_axes_when_orientation_sign_is_exactly_zero(self, connected_flight_controller) -> None:
         """A perpendicular level vector does not trigger the negative-dot correction."""
         model = AhrsOrientationDataModel(connected_flight_controller)
         model._samples = {

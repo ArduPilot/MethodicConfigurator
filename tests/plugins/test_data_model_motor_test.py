@@ -347,9 +347,7 @@ def motor_test_model_with_corrupted_json_data(mock_flight_controller, mock_files
 class TestMotorTestDataModelInitialization:
     """Test motor test data model initialization and configuration."""
 
-    def test_unconfigured_model_starts_with_empty_configuration_state(
-        self, mock_flight_controller, mock_filesystem
-    ) -> None:
+    def test_unconfigured_model_starts_with_empty_configuration_state(self, mock_flight_controller, mock_filesystem) -> None:
         """Constructor defaults remain empty until loading, configuration, and settings run."""
         with (
             patch.object(MotorTestDataModel, "_load_motor_data"),
@@ -2130,9 +2128,7 @@ class TestMotorTestDataModelConnectionRefresh:
             # Assert: Exception handled gracefully
             assert result is False
 
-        warning_log.assert_called_once_with(
-            _("Failed to refresh frame configuration: %(error)s"), {"error": "Update failed"}
-        )
+        warning_log.assert_called_once_with(_("Failed to refresh frame configuration: %(error)s"), {"error": "Update failed"})
 
     def test_refresh_connection_status_succeeds_with_successful_update(self, motor_test_model) -> None:
         """
@@ -4314,9 +4310,7 @@ class TestMotorTestFrameOptionsDetails:
         with patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_debug") as debug_log:
             assert motor_test_model.get_frame_options() is options
 
-        debug_log.assert_called_once_with(
-            _("Returning cached frame options with %(count)d classes"), {"count": 1}
-        )
+        debug_log.assert_called_once_with(_("Returning cached frame options with %(count)d classes"), {"count": 1})
 
 
 class TestMotorTestCurrentFrameClassTypes:
@@ -4354,17 +4348,13 @@ class TestMotorTestCurrentFrameClassTypes:
 
     def test_defined_frame_class_without_matching_types_returns_empty_mapping(self, motor_test_model) -> None:
         """A defined class with no frame-type options returns an empty mapping."""
-        motor_test_model._motor_data_loader.data = {
-            "layouts": [{"Class": 1, "ClassName": "QUAD"}]
-        }
+        motor_test_model._motor_data_loader.data = {"layouts": [{"Class": 1, "ClassName": "QUAD"}]}
         with patch.object(motor_test_model, "get_frame_options", return_value={}):
             assert motor_test_model.get_current_frame_class_types() == {}
 
     def test_current_frame_class_requires_both_class_metadata_fields(self, motor_test_model) -> None:
         """A class number without a class name cannot identify available frame types."""
-        motor_test_model._motor_data_loader.data = {
-            "layouts": [{"Class": 1, "Type": 0, "TypeName": "Plus"}]
-        }
+        motor_test_model._motor_data_loader.data = {"layouts": [{"Class": 1, "Type": 0, "TypeName": "Plus"}]}
         with (
             patch.object(motor_test_model, "get_frame_options", return_value={}),
             patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_warning") as warning_log,

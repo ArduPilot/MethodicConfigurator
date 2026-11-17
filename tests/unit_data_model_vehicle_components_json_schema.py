@@ -391,9 +391,12 @@ class TestVehicleComponentsJsonSchemaInternals:
             json_schema.modify_schema_for_mcu_series(is_optional=False)
             assert mock_debug.call_count == 1
             assert mock_debug.call_args.args == ("Modified schema: MCU Series x-is-optional=%s to value=%u", False, False)
-        assert json_schema.schema["definitions"]["flightController"]["allOf"][0]["properties"]["Specifications"][
-            "properties"
-        ]["MCU Series"].get("x-is-optional") is None
+        assert (
+            json_schema.schema["definitions"]["flightController"]["allOf"][0]["properties"]["Specifications"]["properties"][
+                "MCU Series"
+            ].get("x-is-optional")
+            is None
+        )
 
     def test_error_handling_in_schema_modification(self) -> None:
         """

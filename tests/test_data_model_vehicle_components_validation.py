@@ -438,9 +438,7 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
             ("not-a-number", "Invalid float value for Takeoff Weight"),
         ],
     )
-    def test_validate_entry_limits_reports_the_field_and_type(
-        self, realistic_model, value: str, expected_error: str
-    ) -> None:
+    def test_validate_entry_limits_reports_the_field_and_type(self, realistic_model, value: str, expected_error: str) -> None:
         """Invalid numeric values identify the field and expected data type."""
         field = "min" if "min" in expected_error else "max"
         path = ("Frame", "Specifications", f"TOW {field} Kg")
@@ -1035,9 +1033,7 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         if path[0] == "Battery":
             model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
         expected_error, correction = (
-            model.validate_entry_limits(value, path)
-            if path[0] == "Frame"
-            else model.validate_cell_voltage(value, path)
+            model.validate_entry_limits(value, path) if path[0] == "Frame" else model.validate_cell_voltage(value, path)
         )
         errors: list[str] = []
 
@@ -2608,9 +2604,7 @@ class TestFirmwareMetadataChoices:
 
         assert choice_model.get_combobox_values_for_path(protocol_path) == ("None",)
 
-    def test_none_esc_telemetry_type_only_allows_none_protocol(
-        self, choice_model: ComponentDataModelValidation
-    ) -> None:
+    def test_none_esc_telemetry_type_only_allows_none_protocol(self, choice_model: ComponentDataModelValidation) -> None:
         """Disabling ESC telemetry exposes only the None protocol."""
         protocol_path = ("ESC", "ESC->FC Telemetry", "Protocol")
 
@@ -2920,13 +2914,9 @@ class TestFirmwareMetadataChoices:
 
         monkeypatch.setattr(validation_module, "get_esc_connection_sub_dict", connection_options)
 
-        choice_model._update_esc_telemetry_type_protocol_choices(
-            "SERIAL1", ("ESC", "ESC->FC Telemetry", "Protocol")
-        )
+        choice_model._update_esc_telemetry_type_protocol_choices("SERIAL1", ("ESC", "ESC->FC Telemetry", "Protocol"))
 
-        assert choice_model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Protocol")) == (
-            "Scripting",
-        )
+        assert choice_model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Protocol")) == ("Scripting",)
         assert requested_firmware_types == ["ArduCopter"]
 
     def test_current_esc_protocol_without_a_backchannel_has_no_telemetry_mapping(
