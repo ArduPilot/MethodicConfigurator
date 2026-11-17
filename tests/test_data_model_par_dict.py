@@ -22,7 +22,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 import ardupilot_methodic_configurator.data_model_par_dict as par_dict_module
-from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_par_dict import (
     Par,
     ParamFileError,
@@ -45,6 +44,9 @@ from ardupilot_methodic_configurator.data_model_par_dict import (
         (b"A\0B\0C\0", 2, (1,), True),
         (b"A\0B\x01", 2, (1,), False),
         (b"\0A\0B", 2, (0,), True),
+        (b"A\0B", 2, (1,), False),
+        (b"A\x01\0\0", 4, (1, 2, 3), False),
+        (b"\x01\0\0A", 4, (0, 1, 2), False),
     ],
 )
 def test_fixed_width_encoding_detection_checks_complete_zero_byte_pattern(
@@ -60,16 +62,33 @@ def test_fixed_width_encoding_detection_checks_complete_zero_byte_pattern(
         (b"\xff\xfeA\0", "utf-16"),
         (b"\xfe\xff\0A", "utf-16"),
         (b"\xff\xfe\0\0A\0\0\0", "utf-32"),
+        (b"\0\0\xfe\xff\0\0\0A", "utf-32"),
         (b"A\0B\0", "utf-16-le"),
         (b"\0A\0B", "utf-16-be"),
         (b"A\0\0\0B\0\0\0", "utf-32-le"),
         (b"\0\0\0A\0\0\0B", "utf-32-be"),
+        (b"A\x01\0\0A\x01\0\0", "utf-8-sig"),
+        (b"\x01\0\0A\x01\0\0A", "utf-8-sig"),
         (b"PARAM,1.0\n", "utf-8-sig"),
     ],
 )
 def test_parameter_file_encoding_detection_handles_boms_and_ascii_layouts(sample: bytes, expected: str) -> None:
     """Recognize supported BOMs and fixed-width encodings, with UTF-8 as the fallback."""
     assert _detect_param_file_encoding(sample) == expected
+
+
+def test_loader_detects_utf16_when_non_ascii_text_appears_after_the_sample_window() -> None:
+    """A later Unicode comment does not change the encoding inferred from the ASCII header."""
+    contents = "".join(f"P{index},1.0\n" for index in range(40)) + "# あ\n"
+    with tempfile.NamedTemporaryFile(mode="wb", suffix=".param", delete=False) as parameter_file:
+        parameter_file.write(contents.encode("utf-16-le"))
+        file_path = parameter_file.name
+
+    try:
+        loaded = ParDict.load_param_file_into_dict(file_path)
+        assert loaded == {f"P{index}": Par(1.0) for index in range(40)}
+    finally:
+        os.unlink(file_path)
 
 
 def test_editing_a_parameter_copy_preserves_the_original_snapshot() -> None:
@@ -119,6 +138,38 @@ def test_absolute_tolerance_accepts_its_exact_boundary() -> None:
     """
     assert is_within_tolerance(2.0, 1.0, atol=1.0, rtol=0.0)
     assert not is_within_tolerance(2.001, 1.0, atol=1.0, rtol=0.0)
+
+
+def test_custom_tolerance_is_used_for_both_mutating_and_non_mutating_comparisons() -> None:
+    """Custom value tolerances consistently filter near-equal parameters."""
+    current = ParDict({"NEAR": Par(1.0005), "DIFFERENT": Par(2.0)})
+    comparison = ParDict({"NEAR": Par(1.0), "DIFFERENT": Par(2.1)})
+
+    def within_one_mill(self_value: float, other_value: float) -> bool:
+        return abs(self_value - other_value) <= 0.001
+
+    assert current.get_missing_or_different(comparison, within_one_mill) == {"DIFFERENT": Par(2.0)}
+
+    current.remove_if_value_is_similar(comparison, within_one_mill)
+
+    assert current == {"DIFFERENT": Par(2.0)}
+
+
+def test_documentation_filters_treat_missing_flags_as_false() -> None:
+    """Missing read-only and calibration flags do not classify a parameter."""
+    parameters = ParDict({"READONLY": Par(1), "CALIBRATION": Par(2), "UNSPECIFIED": Par(3)})
+    documentation = {
+        "READONLY": {"ReadOnly": True},
+        "CALIBRATION": {"Calibration": True},
+        "UNSPECIFIED": {},
+    }
+
+    readonly, calibration, ids, other = parameters.categorize_by_documentation(documentation, ParDict())
+
+    assert readonly == {"READONLY": Par(1)}
+    assert calibration == {"CALIBRATION": Par(2)}
+    assert not ids
+    assert other == {"UNSPECIFIED": Par(3)}
 
 
 @pytest.fixture
@@ -609,8 +660,10 @@ ACRO_YAW_P,6.0  # Duplicate parameter"""
             bad_file = f.name
 
         try:
-            with pytest.raises(ParamFileError, match="UTF-8"):
+            with pytest.raises(ParamFileError) as exc_info:
                 ParDict.load_param_file_into_dict(bad_file)
+            prefix = f"Fatal error reading {bad_file}, file must be UTF-8, UTF-16, or UTF-32 encoded: "
+            assert str(exc_info.value) == prefix + str(exc_info.value.__cause__)
         finally:
             os.unlink(bad_file)
 
@@ -670,7 +723,7 @@ ACRO_YAW_P,6.0  # Duplicate parameter"""
         original_line = "ACRO_YAW_P,4.5"
         with (
             patch.object(ParDict, "__setitem__", side_effect=OSError("disk full"), autospec=True),
-            pytest.raises(ParamFileError, match="Caused by line 1"),
+            pytest.raises(ParamFileError) as exc_info,
         ):
             ParDict._validate_parameter(  # pylint: disable=protected-access
                 "test.param",
@@ -681,6 +734,32 @@ ACRO_YAW_P,6.0  # Duplicate parameter"""
                 "ACRO_YAW_P",
                 "4.5",
             )
+        assert str(exc_info.value) == f"Caused by line 1 of file test.param: {original_line}"
+
+    def test_loader_includes_the_original_source_line_when_assignment_fails(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """The loader preserves the original source line for a write-failure diagnostic."""
+        original_line = "ACRO_YAW_P,4.5  # source comment"
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as f:
+            f.write(original_line)
+            f.flush()
+            file_path = f.name
+
+        try:
+            with (
+                patch.object(ParDict, "__setitem__", side_effect=OSError("disk full"), autospec=True),
+                pytest.raises(ParamFileError) as exc_info,
+            ):
+                ParDict.load_param_file_into_dict(file_path)
+            assert str(exc_info.value) == f"Caused by line 1 of file {file_path}: {original_line}"
+            critical_messages = [record.getMessage() for record in caplog.records if record.levelname == "CRITICAL"]
+            assert len(critical_messages) == 1
+            assert critical_messages[0].startswith("in line ")
+            assert critical_messages[0].split()[2].isdigit()
+            assert critical_messages[0].endswith("of file data_model_par_dict.py: disk full")
+        finally:
+            os.unlink(file_path)
 
     def test_user_can_ignore_blank_and_comment_only_lines_when_loading(self) -> None:
         """
@@ -874,8 +953,9 @@ class TestParameterMergingWorkflows:
         invalid_data = {"PARAM": Par(1.0)}
 
         # Act & Assert: User gets helpful error message
-        with pytest.raises(TypeError, match="Can only append another ParDict instance"):
+        with pytest.raises(TypeError) as exc_info:
             parameter_dict.append(invalid_data)
+        assert str(exc_info.value) == "Can only append another ParDict instance"
 
 
 class TestParameterComparisonWorkflows:
@@ -923,8 +1003,9 @@ class TestParameterComparisonWorkflows:
         invalid_data = {"PARAM": 1.0}
 
         # Act & Assert: User gets clear error message
-        with pytest.raises(TypeError, match="Can only compare with another ParDict instance"):
+        with pytest.raises(TypeError) as exc_info:
             parameter_dict.remove_if_value_is_similar(invalid_data)
+        assert str(exc_info.value) == "Can only compare with another ParDict instance"
 
     def test_user_can_find_missing_or_different_parameters(self, parameter_dict, alternate_parameter_dict) -> None:
         """
@@ -954,8 +1035,9 @@ class TestParameterComparisonWorkflows:
         WHEN: They call get_missing_or_different
         THEN: A TypeError should explain that only ParDict instances are supported
         """
-        with pytest.raises(TypeError, match="Can only compare with another ParDict instance"):
+        with pytest.raises(TypeError) as exc_info:
             parameter_dict.get_missing_or_different({"PARAM": Par(1.0)})
+        assert str(exc_info.value) == "Can only compare with another ParDict instance"
 
 
 class TestParameterCreationFromDifferentSources:
@@ -1155,6 +1237,8 @@ class TestParameterUtilities:
         assert sorted_names[1].startswith("ACRO")
         assert sorted_names[2].startswith("BATT")
         assert sorted_names[3].startswith("BATT")
+        assert ParDict.missionplanner_sort("SERIAL1_PROTOCOL") == ("SERIAL1", "PROTOCOL")
+        assert ParDict.missionplanner_sort("AA_B") == ("AA", "B")
 
     def test_user_can_format_parameters_for_missionplanner(self, parameter_dict) -> None:
         """
@@ -1166,13 +1250,32 @@ class TestParameterUtilities:
         """
         # Arrange: Parameter dictionary with mixed comments
 
+        parameter_dict["A_B"] = Par(2.0)
+        parameter_dict["AA"] = Par(3.0)
+        parameter_dict["NO_COMMENT"] = Par(0.001)
+        parameter_dict["PRECISION"] = Par(1.23456789, "Precision")
+        parameter_dict["RAW_VALUE"] = 3.251234567
+
         # Act: Format for Mission Planner
         formatted = parameter_dict._format_params("missionplanner")  # pylint: disable=protected-access
 
         # Assert: Correct Mission Planner format
-        assert any("ACRO_YAW_P,4.5  # Yaw P gain" in line for line in formatted)
-        assert any("GPS_TYPE,1" in line for line in formatted)  # No comment case
-        assert len(formatted) == 5  # All parameters formatted
+        assert formatted == [
+            "A_B,2",
+            "AA,3",
+            "ACRO_YAW_P,4.5  # Yaw P gain",
+            "BATT_CAPACITY,5000  # Battery capacity in mAh",
+            "COMPASS_ENABLE,1  # Enable compass",
+            "GPS_TYPE,1  # GPS type",
+            "NO_COMMENT,0.001",
+            "PILOT_SPEED_UP,250  # Pilot controlled climb rate",
+            "PRECISION,1.234568  # Precision",
+            "RAW_VALUE,3.251235",
+        ]
+
+    def test_user_gets_missionplanner_format_by_default(self, parameter_dict) -> None:
+        """Omitting the format selects the documented Mission Planner output."""
+        assert parameter_dict._format_params() == parameter_dict._format_params("missionplanner")  # pylint: disable=protected-access
 
     def test_user_can_format_parameters_for_mavproxy(self, parameter_dict) -> None:
         """
@@ -1184,12 +1287,28 @@ class TestParameterUtilities:
         """
         # Arrange: Parameter dictionary
 
+        parameter_dict["A_B"] = Par(2.0)
+        parameter_dict["AA"] = Par(3.0)
+        parameter_dict["NO_COMMENT"] = Par(0.001)
+        parameter_dict["PRECISION"] = Par(1.23456789, "Precision")
+        parameter_dict["RAW_VALUE"] = 3.251234567
+
         # Act: Format for MAVProxy
         formatted = parameter_dict._format_params("mavproxy")  # pylint: disable=protected-access
 
         # Assert: Correct MAVProxy format (space-separated, fixed width)
-        yaw_line = next((line for line in formatted if "ACRO_YAW_P" in line), "")
-        assert yaw_line == "ACRO_YAW_P       4.500000  # Yaw P gain"
+        assert formatted == [
+            "AA               3.000000",
+            "ACRO_YAW_P       4.500000  # Yaw P gain",
+            "A_B              2.000000",
+            "BATT_CAPACITY    5000.000000  # Battery capacity in mAh",
+            "COMPASS_ENABLE   1.000000  # Enable compass",
+            "GPS_TYPE         1.000000  # GPS type",
+            "NO_COMMENT       0.001000",
+            "PILOT_SPEED_UP   250.000000  # Pilot controlled climb rate",
+            "PRECISION        1.234568  # Precision",
+            "RAW_VALUE        3.251235",
+        ]
 
     def test_user_receives_error_for_unsupported_format(self, parameter_dict) -> None:
         """
@@ -1202,8 +1321,9 @@ class TestParameterUtilities:
         # Arrange: Invalid format string
 
         # Act & Assert: User gets error for unsupported format
-        with pytest.raises(ParamFileError, match="Unsupported file format"):
+        with pytest.raises(ParamFileError) as exc_info:
             parameter_dict._format_params("invalid_format")  # pylint: disable=protected-access
+        assert str(exc_info.value) == "ERROR: Unsupported file format invalid_format"
 
     def test_user_can_annotate_parameters_with_comments(self, parameter_dict) -> None:
         """
@@ -1274,13 +1394,27 @@ class TestParameterUtilities:
         monkeypatch.setattr(par_dict_module, "__name__", "__main__")
         mock_input = MagicMock(return_value="")
         monkeypatch.setattr("builtins.input", mock_input)
+        events = []
 
         with patch("builtins.print") as mock_print:
+            mock_print.side_effect = lambda text: events.append(("print", text))
+            mock_input.side_effect = lambda prompt: events.append(("input", prompt)) or ""
             ParDict.print_out([f"PARAM_{i},1.0" for i in range(6)], "CLI Parameters")
 
-        assert mock_input.call_count >= 1
-        assert mock_get_terminal_size.call_count >= 2  # Initial size read and refresh after pagination pause
-        mock_print.assert_any_call("\nCLI Parameters has 6 parameters:")
+        prompt = "\nCLI Parameters list is long hit enter to continue"
+        assert [call.args[0] for call in mock_input.call_args_list] == [prompt, prompt]
+        assert mock_get_terminal_size.call_count == 3
+        assert events == [
+            ("print", "\nCLI Parameters has 6 parameters:"),
+            ("input", prompt),
+            ("print", "PARAM_0,1.0"),
+            ("print", "PARAM_1,1.0"),
+            ("print", "PARAM_2,1.0"),
+            ("input", prompt),
+            ("print", "PARAM_3,1.0"),
+            ("print", "PARAM_4,1.0"),
+            ("print", "PARAM_5,1.0"),
+        ]
 
 
 class TestParameterCategorization:
@@ -1343,6 +1477,14 @@ class TestParameterCategorization:
 
 class TestParameterCommentAnnotation:
     """Test parameter comment annotation workflows."""
+
+    def test_annotation_preserves_values_and_keeps_missing_comments_blank(self) -> None:
+        """Annotations keep parameter values and normalize absent comments to blank text."""
+        original = ParDict({"NO_COMMENT": Par(7.5, None), "EMPTY_COMMENT": Par(8.5, "")})
+
+        annotated = original.annotate_with_comments({})
+
+        assert annotated == {"NO_COMMENT": Par(7.5, ""), "EMPTY_COMMENT": Par(8.5, "")}
 
     def test_user_can_annotate_parameters_with_new_comments(self, parameter_dict) -> None:
         """
@@ -1432,6 +1574,56 @@ class TestParameterSortingBehavior:
 class TestParameterParsingEdgeCases:
     """Test edge cases in parameter file parsing."""
 
+    @pytest.mark.parametrize(
+        ("content", "invalid_name"),
+        [
+            ("ACRO\tYAW_P 4.5", "ACRO\tYAW_P"),
+            ("ACRO\fYAW_P\t4.5", "ACRO\fYAW_P"),
+        ],
+    )
+    def test_loader_reports_mixed_whitespace_inside_parameter_names(
+        self, content: str, invalid_name: str
+    ) -> None:
+        """Whitespace inside a parameter name is rejected with a name-specific diagnostic."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as parameter_file:
+            parameter_file.write(content)
+            file_path = parameter_file.name
+
+        try:
+            with pytest.raises(ParamFileError) as exc_info:
+                ParDict.load_param_file_into_dict(file_path)
+            assert str(exc_info.value) == f"Invalid characters in parameter name {invalid_name} in {file_path} line 1"
+        finally:
+            os.unlink(file_path)
+
+    def test_loader_preserves_additional_hashes_in_comments(self) -> None:
+        """Only the first hash starts a comment; later hashes remain part of it."""
+        content = "ACRO_YAW_P,4.5  # first note # retained note"
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as f:
+            f.write(content)
+            f.flush()
+            file_path = f.name
+
+        try:
+            assert ParDict.load_param_file_into_dict(file_path) == {"ACRO_YAW_P": Par(4.5, "first note # retained note")}
+        finally:
+            os.unlink(file_path)
+
+    def test_loader_keeps_extra_commas_in_the_value_for_validation(self) -> None:
+        """The first comma separates a name and value; the invalid remainder gets a clear error."""
+        content = "ACRO_YAW_P,4.5,6.0"
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as f:
+            f.write(content)
+            f.flush()
+            file_path = f.name
+
+        try:
+            with pytest.raises(ParamFileError) as exc_info:
+                ParDict.load_param_file_into_dict(file_path)
+            assert str(exc_info.value) == f"Invalid parameter value '4.5,6.0' in {file_path} line 1"
+        finally:
+            os.unlink(file_path)
+
     def test_user_can_parse_parameters_with_tab_separators(self) -> None:
         """
         User can parse parameter files that use tab separators.
@@ -1478,8 +1670,9 @@ class TestParameterParsingEdgeCases:
 
             try:
                 # Act & Assert: Clear error for missing separator
-                with pytest.raises(ParamFileError, match="Missing parameter-value separator"):
+                with pytest.raises(ParamFileError) as exc_info:
                     ParDict.load_param_file_into_dict(f.name)
+                assert str(exc_info.value) == f"Missing parameter-value separator: {malformed_content} in {f.name} line 1"
             finally:
                 os.unlink(f.name)
 
@@ -1502,8 +1695,9 @@ class TestParameterParsingEdgeCases:
 
             try:
                 # Act & Assert: Error for too long parameter name
-                with pytest.raises(ParamFileError, match="Too long parameter name"):
+                with pytest.raises(ParamFileError) as exc_info:
                     ParDict.load_param_file_into_dict(f.name)
+                assert str(exc_info.value) == f"Too long parameter name: {long_name} in {f.name} line 1"
             finally:
                 os.unlink(f.name)
 
@@ -1525,8 +1719,9 @@ class TestParameterParsingEdgeCases:
 
             try:
                 # Act & Assert: Error for invalid characters
-                with pytest.raises(ParamFileError, match="Invalid characters in parameter name"):
+                with pytest.raises(ParamFileError) as exc_info:
                     ParDict.load_param_file_into_dict(f.name)
+                assert str(exc_info.value) == f"Invalid characters in parameter name invalid_name in {f.name} line 1"
             finally:
                 os.unlink(f.name)
 
@@ -1548,8 +1743,9 @@ class TestParameterParsingEdgeCases:
 
             try:
                 # Act & Assert: Error for duplicate parameters
-                with pytest.raises(ParamFileError, match="Duplicated parameter"):
+                with pytest.raises(ParamFileError) as exc_info:
                     ParDict.load_param_file_into_dict(f.name)
+                assert str(exc_info.value) == f"Duplicated parameter ACRO_YAW_P in {f.name} line 2"
             finally:
                 os.unlink(f.name)
 
@@ -1742,8 +1938,9 @@ class TestParameterDictionaryEdgeCases:
 
         try:
             # Act & Assert: Invalid values rejected
-            with pytest.raises(ParamFileError, match=_("Invalid parameter value {value!r}").format(value="not_a_number")):
+            with pytest.raises(ParamFileError) as exc_info:
                 ParDict.load_param_file_into_dict(file_path)
+            assert str(exc_info.value) == f"Invalid parameter value 'not_a_number' in {file_path} line 1"
         finally:
             os.unlink(file_path)
 
@@ -1766,7 +1963,12 @@ class TestParameterDictionaryEdgeCases:
                 file_path = f.name
 
             try:
-                with pytest.raises(ParamFileError, match=_("Non-finite parameter value {value!r}").format(value=bad_value)):
+                with pytest.raises(ParamFileError) as exc_info:
                     ParDict.load_param_file_into_dict(file_path)
+                parsed_value = float(bad_value)
+                assert str(exc_info.value) == (
+                    f"Non-finite parameter value {bad_value!r} (parsed as {parsed_value}) "
+                    f"for VALID_PARAM in {file_path} line 1"
+                )
             finally:
                 os.unlink(file_path)
