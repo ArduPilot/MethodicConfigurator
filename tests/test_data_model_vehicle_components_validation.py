@@ -21,6 +21,7 @@ from test_data_model_vehicle_components_common import (
     RealisticDataTestMixin,
 )
 
+import ardupilot_methodic_configurator.data_model_vehicle_components_validation as validation_module
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.battery_cell_voltages import BatteryCell
 from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
@@ -299,6 +300,61 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         # Should have fallback choices for missing parameters
         assert isinstance(model._possible_choices, dict)
 
+    def test_correct_display_values_recurses_through_nested_component_data(self, empty_model) -> None:
+        """Loaded serial display labels are corrected inside nested component records."""
+        display, serial_port = next(iter(validation_module.SERIAL_DISPLAY_TO_KEY.items()))
+        nested_component = {"FC Connection": {"Type": display}}
+
+        empty_model._correct_values_recursive(nested_component, ("Telemetry",))
+
+        assert nested_component["FC Connection"]["Type"] == serial_port
+
+    def test_tuple_protocol_metadata_uses_its_first_protocol(self, empty_model, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Multi-protocol metadata maps to its first firmware-supported choice."""
+        monkeypatch.setattr(
+            validation_module,
+            "RC_PROTOCOLS_DICT",
+            {"receiver": {"protocol": ("FirstProtocol", "SecondProtocol"), "type": "UART"}},
+        )
+
+        empty_model.init_possible_choices({})
+
+        assert empty_model.get_combobox_values_for_path(("RC Receiver", "FC Connection", "Type")) == ("UART",)
+        assert empty_model.get_combobox_values_for_path(("RC Receiver", "FC Connection", "Protocol")) == ("FirstProtocol",)
+
+    def test_init_possible_choices_does_not_log_errors_without_metadata(self, empty_model, caplog) -> None:
+        """Offline fallback choices initialize without reporting missing optional metadata as an error."""
+        empty_model.init_possible_choices({})
+
+        assert not [record for record in caplog.records if record.levelname == "ERROR"]
+
+    def test_offline_choice_initialization_uses_the_empty_firmware_name(
+        self, empty_model, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Choice initialization asks firmware metadata for the actual empty firmware selection."""
+        empty_model.set_component_value(("Flight Controller", "Firmware", "Type"), "")
+        requested_firmware_types: list[str] = []
+
+        def connection_options(firmware_type: str) -> dict:
+            requested_firmware_types.append(firmware_type)
+            return {}
+
+        monkeypatch.setattr(validation_module, "get_esc_connection_sub_dict", connection_options)
+
+        empty_model.init_possible_choices({})
+
+        assert requested_firmware_types == ["", ""]
+
+    def test_init_possible_choices_logs_the_missing_frame_class_values(self, empty_model, caplog) -> None:
+        """Unavailable frame-class metadata logs both the missing values and missing fallback names."""
+        empty_model.init_possible_choices({"FRAME_CLASS": {}})
+
+        errors = [record for record in caplog.records if record.levelname == "ERROR"]
+        assert [(record.msg, record.args) for record in errors] == [
+            ("No values found for %s in the metadata", ("FRAME_CLASS",)),
+            ("No fallback values found for %s", ("FRAME_CLASS",)),
+        ]
+
     # Test validate_entry_limits method
     def test_validate_entry_limits_valid_values(self, realistic_model) -> None:
         """
@@ -375,6 +431,22 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
             assert error_msg != ""
             assert corrected_value is None
 
+    @pytest.mark.parametrize(
+        ("value", "expected_error"),
+        [
+            ("heavy", "Invalid float value for Takeoff Weight"),
+            ("not-a-number", "Invalid float value for Takeoff Weight"),
+        ],
+    )
+    def test_validate_entry_limits_reports_the_field_and_type(
+        self, realistic_model, value: str, expected_error: str
+    ) -> None:
+        """Invalid numeric values identify the field and expected data type."""
+        field = "min" if "min" in expected_error else "max"
+        path = ("Frame", "Specifications", f"TOW {field} Kg")
+
+        assert realistic_model.validate_entry_limits(value, path) == (expected_error, None)
+
     def test_validate_entry_limits_tow_relationships(self, realistic_model) -> None:
         """
         Test validate_entry_limits for takeoff weight relationships.
@@ -420,9 +492,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         model = realistic_model
 
         # Test with a path not in VALIDATION_RULES
-        error_msg, corrected_value = model.validate_entry_limits("any_value", ("Unknown", "Path", "Value"))
-        assert error_msg == ""
-        assert corrected_value is None
+        for path in (
+            ("Unknown", "Path", "Value"),
+            ("Battery", "Specifications", "TOW min Kg"),
+        ):
+            error_msg, corrected_value = model.validate_entry_limits("any_value", path)
+            assert error_msg == ""
+            assert corrected_value is None
 
     # Test validate_cell_voltage method
     def test_validate_cell_voltage_valid_voltages(self, realistic_model) -> None:
@@ -876,6 +952,53 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert len(errors) > 0
         assert "Duplicate FC connection" in errors[0]
 
+    def test_validate_all_data_reports_every_duplicate_connection(self, realistic_model) -> None:
+        """Validation continues after a duplicate so users see every conflicting field."""
+        realistic_model.init_possible_choices({})
+        entries = {
+            ("RC Receiver", "FC Connection", "Type"): "SERIAL3",
+            ("GNSS Receiver", "FC Connection", "Type"): "SERIAL3",
+            ("ESC", "FC->ESC Connection", "Type"): "SERIAL3",
+        }
+
+        is_valid, errors = realistic_model.validate_all_data(entries)
+
+        assert is_valid is False
+        assert errors == [
+            "Duplicate FC connection type 'SERIAL3' for GNSS Receiver>FC Connection>Type",
+            "Duplicate FC connection type 'SERIAL3' for ESC>FC->ESC Connection>Type",
+        ]
+
+    def test_validate_all_data_keeps_checking_after_an_allowed_shared_connection(self, realistic_model) -> None:
+        """An allowed telemetry/receiver pair does not stop later connection checks."""
+        realistic_model.init_possible_choices({})
+        entries = {
+            ("Telemetry", "FC Connection", "Type"): "SERIAL1",
+            ("RC Receiver", "FC Connection", "Type"): "SERIAL1",
+            ("GNSS Receiver", "FC Connection", "Type"): "SERIAL1",
+        }
+
+        is_valid, errors = realistic_model.validate_all_data(entries)
+
+        assert is_valid is False
+        assert errors == ["Duplicate FC connection type 'SERIAL1' for GNSS Receiver>FC Connection>Type"]
+
+    @pytest.mark.parametrize("connection", ["I2C1", "I2C2", "I2C3", "I2C4"])
+    def test_validate_all_data_allows_shared_i2c_connections(self, realistic_model, connection: str) -> None:
+        """I2C buses can be shared by FC components without duplicate-port errors."""
+        realistic_model.init_possible_choices({})
+        realistic_model._possible_choices[("RC Receiver", "FC Connection", "Type")] = (connection,)
+        realistic_model._possible_choices[("GNSS Receiver", "FC Connection", "Type")] = (connection,)
+        is_valid, errors = realistic_model.validate_all_data(
+            {
+                ("RC Receiver", "FC Connection", "Type"): connection,
+                ("GNSS Receiver", "FC Connection", "Type"): connection,
+            }
+        )
+
+        assert is_valid is True
+        assert errors == []
+
     def test_validate_all_data_allowed_duplicates(self, realistic_model) -> None:
         """
         Test validate_all_data with allowed duplicate connections.
@@ -896,6 +1019,33 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         is_valid, errors = model.validate_all_data(allowed_entries)
         assert is_valid is True
         assert len(errors) == 0
+
+    @pytest.mark.parametrize(
+        ("path", "value"),
+        [
+            (("Frame", "Specifications", "TOW max Kg"), "1000"),
+            (("Battery", "Specifications", "Volt per cell max"), "9.0"),
+        ],
+    )
+    def test_limit_validation_reports_errors_and_stores_clamped_values(
+        self, realistic_model, path: tuple[str, str, str], value: str
+    ) -> None:
+        """General limit validation reports the specific validator result and stores its correction."""
+        model = realistic_model
+        if path[0] == "Battery":
+            model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+        expected_error, correction = (
+            model.validate_entry_limits(value, path)
+            if path[0] == "Frame"
+            else model.validate_cell_voltage(value, path)
+        )
+        errors: list[str] = []
+
+        model._validate_limits_and_voltages(path, value, ">".join(path), errors)
+
+        assert errors == [expected_error]
+        assert correction is not None
+        assert model.get_component_value(path) == correction
 
     def test_validate_all_data_telemetry_rc_combinations(self, realistic_model) -> None:
         """
@@ -1005,7 +1155,7 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         is_valid, errors = model.validate_all_data(invalid_entries)
         assert is_valid is False
         assert len(errors) > 0
-        assert "must be even" in errors[0]
+        assert errors == ["Number of magnetic rotor poles must be even for Motors>Specifications>Poles"]
 
     def test_validate_all_data_motor_poles_invalid_string(self, realistic_model) -> None:
         """
@@ -1025,7 +1175,7 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         is_valid, errors = model.validate_all_data(invalid_entries)
         assert is_valid is False
         assert len(errors) > 0
-        assert "Invalid int value" in errors[0]
+        assert errors == ["Invalid int value for Motor Poles"]
 
     # Test get_combobox_values_for_path method (inherited from base class)
     def test_get_combobox_values_for_path(self, realistic_model) -> None:
@@ -1789,11 +1939,14 @@ class TestComponentDataModelValidationUncoveredBranches:
         model.init_possible_choices({})
         model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduCopter")
         choices_before = model._possible_choices.get(("Frame", "Specifications", "Frame class"), ())
+        chemistry_before = model._battery_chemistry
 
         model.set_component_value(("Frame", "Specifications", "TOW min Kg"), 0.5)
+        model.set_component_value(("Frame", "Notes"), "ArduPlane")
 
         choices_after = model._possible_choices.get(("Frame", "Specifications", "Frame class"), ())
         assert choices_after == choices_before
+        assert model._battery_chemistry == chemistry_before
 
     def test_init_possible_choices_includes_frame_class_for_default_firmware_type(self, empty_model) -> None:
         """
@@ -2423,6 +2576,95 @@ class TestEscTelemetrySelection:
 class TestFirmwareMetadataChoices:
     """Firmware metadata and offline defaults supply the component editor's choices."""
 
+    def test_esc_protocol_choices_match_the_selected_output_type_and_keep_order(
+        self, choice_model: ComponentDataModelValidation, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """ESC output choices include only matching tuple types and preserve unique protocol order."""
+        choice_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduCopter")
+        requested_firmware_types: list[str] = []
+
+        def connection_options(firmware_type: str) -> dict:
+            requested_firmware_types.append(firmware_type)
+            return {
+                "first": {"type": ("SERIAL1", "Main Out"), "protocol": "Shared"},
+                "duplicate": {"type": ("Main Out",), "protocol": "Shared"},
+                "second": {"type": ("Main Out",), "protocol": "DShot"},
+                "scalar": {"type": "Main Out", "protocol": "Ignored"},
+            }
+
+        monkeypatch.setattr(validation_module, "get_esc_connection_sub_dict", connection_options)
+
+        assert choice_model._get_esc_connection_protocols_for_type("Main Out") == ("Shared", "DShot")
+        assert requested_firmware_types == ["ArduCopter"]
+
+    def test_unknown_can_esc_telemetry_type_keeps_none_protocol_fallback(
+        self, choice_model: ComponentDataModelValidation, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A CAN telemetry type with no firmware mapping remains a valid disabled choice."""
+        monkeypatch.setattr(validation_module, "get_esc_connection_sub_dict", lambda _firmware_type: {})
+        protocol_path = ("ESC", "ESC->FC Telemetry", "Protocol")
+
+        choice_model._update_esc_telemetry_type_protocol_choices("CAN2", protocol_path)
+
+        assert choice_model.get_combobox_values_for_path(protocol_path) == ("None",)
+
+    def test_none_esc_telemetry_type_only_allows_none_protocol(
+        self, choice_model: ComponentDataModelValidation
+    ) -> None:
+        """Disabling ESC telemetry exposes only the None protocol."""
+        protocol_path = ("ESC", "ESC->FC Telemetry", "Protocol")
+
+        choice_model._update_esc_telemetry_type_protocol_choices("None", protocol_path)
+
+        assert choice_model.get_combobox_values_for_path(protocol_path) == ("None",)
+
+    def test_unmapped_esc_control_type_keeps_none_protocol_fallback(
+        self, choice_model: ComponentDataModelValidation, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """An ESC control type without firmware mappings retains a valid None protocol."""
+        monkeypatch.setattr(validation_module, "get_esc_connection_sub_dict", lambda _firmware_type: {})
+        protocol_path = ("ESC", "FC->ESC Connection", "Protocol")
+
+        choice_model._update_esc_fc_connection_choices("CAN1", protocol_path)
+
+        assert choice_model.get_combobox_values_for_path(protocol_path) == ("None",)
+
+    def test_esc_telemetry_choices_keep_none_when_a_can_type_has_no_protocols(
+        self, choice_model: ComponentDataModelValidation, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A CAN back-channel with no supported protocols still exposes the None choice."""
+        monkeypatch.setattr(validation_module, "get_esc_connection_sub_dict", lambda _firmware_type: {})
+
+        assert choice_model._compute_esc_telemetry_choices("CAN1") == (("CAN1",), ("None",))
+
+    @pytest.mark.parametrize(
+        ("component", "section", "expected"),
+        [
+            ("Battery Monitor", "FC Connection", ("Disabled",)),
+            ("GNSS Receiver", "FC Connection", ("None",)),
+        ],
+    )
+    def test_disabled_battery_and_gnss_connections_keep_their_protocol_fallbacks(
+        self, choice_model: ComponentDataModelValidation, component: str, section: str, expected: tuple[str, ...]
+    ) -> None:
+        """Selecting None retains the defined disabled protocol choice for each component."""
+        protocol_path = (component, section, "Protocol")
+
+        choice_model._update_possible_choices_for_path((component, section, "Type"), "None")
+
+        assert choice_model.get_combobox_values_for_path(protocol_path) == expected
+
+    @pytest.mark.parametrize("component", ["Battery Monitor", "GNSS Receiver"])
+    def test_unsupported_battery_and_gnss_connections_fall_back_to_none(
+        self, choice_model: ComponentDataModelValidation, component: str
+    ) -> None:
+        """Unknown connection types retain a safe None protocol option."""
+        protocol_path = (component, "FC Connection", "Protocol")
+
+        choice_model._update_possible_choices_for_path((component, "FC Connection", "Type"), "unsupported")
+
+        assert choice_model.get_combobox_values_for_path(protocol_path) == ("None",)
+
     @pytest.fixture
     def choice_model(self) -> ComponentDataModelValidation:
         """Provide a real model with no saved connection types to override initial choices."""
@@ -2589,6 +2831,161 @@ class TestFirmwareMetadataChoices:
         choice_model.set_component_value(("ESC", "FC->ESC Connection", "Type"), "Main Out")
 
         assert choice_model.get_combobox_values_for_path(("ESC", "FC->ESC Connection", "Protocol")) == expected
+
+    @pytest.mark.parametrize("mode", ["union", "specific"])
+    def test_pwm_telemetry_choices_skip_unsupported_modes_and_keep_empty_fallbacks(
+        self, choice_model: ComponentDataModelValidation, monkeypatch: pytest.MonkeyPatch, mode: str
+    ) -> None:
+        """PWM telemetry choices union supported mappings and retain a safe None fallback."""
+        choice_model.set_component_value(("Flight Controller", "Firmware", "Type"), "")
+        entries = {
+            "serial-only": {"type": ("SERIAL8",), "protocol": "FETtecOneWire", "ESC_to_FC": {}},
+            "unmapped-pwm": {"type": validation_module.PWM_OUT_PORTS, "protocol": "Unmapped"},
+            "mapped-pwm": {
+                "type": validation_module.PWM_OUT_PORTS,
+                "protocol": "Normal",
+                "ESC_to_FC": {
+                    ("same_as_FC_to_ESC",): "BDShotOnly",
+                    ("SERIAL1",): "Scripting",
+                    ("SERIAL2",): "same_as_FC_to_ESC",
+                    ("SERIAL3",): "ESC Telemetry",
+                },
+            },
+        }
+        requested_firmware_types: list[str] = []
+
+        def connection_options(firmware_type: str) -> dict:
+            requested_firmware_types.append(firmware_type)
+            return entries
+
+        monkeypatch.setattr(validation_module, "get_esc_connection_sub_dict", connection_options)
+
+        if mode == "union":
+            choices = choice_model._compute_esc_telemetry_choices_union_pwm("Main Out")
+        else:
+            choices = choice_model._compute_esc_telemetry_choices_pwm("Main Out", "Normal")
+
+        assert requested_firmware_types == [""]
+        assert choices == (
+            ("None", "Main Out", "SERIAL1", "SERIAL3"),
+            ("None", "BDShotOnly", "Scripting", "ESC Telemetry"),
+        )
+
+    @pytest.mark.parametrize("mode", ["union", "specific"])
+    def test_pwm_telemetry_choices_use_the_active_firmware_metadata(
+        self, choice_model: ComponentDataModelValidation, monkeypatch: pytest.MonkeyPatch, mode: str
+    ) -> None:
+        """PWM back-channel choices come from the active firmware's metadata."""
+        choice_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduCopter")
+        requested_firmware_types: list[str] = []
+
+        def connection_options(firmware_type: str) -> dict:
+            requested_firmware_types.append(firmware_type)
+            return {
+                "control": {
+                    "type": validation_module.PWM_OUT_PORTS,
+                    "protocol": "Normal",
+                    "ESC_to_FC": {("same_as_FC_to_ESC",): "BDShotOnly"},
+                }
+            }
+
+        monkeypatch.setattr(validation_module, "get_esc_connection_sub_dict", connection_options)
+        choices = (
+            choice_model._compute_esc_telemetry_choices_union_pwm("Main Out")
+            if mode == "union"
+            else choice_model._compute_esc_telemetry_choices_pwm("Main Out", "Normal")
+        )
+
+        assert requested_firmware_types == ["ArduCopter"]
+        assert choices[1] == ("None", "BDShotOnly")
+
+    def test_serial_telemetry_choices_use_the_active_firmware_metadata(
+        self, choice_model: ComponentDataModelValidation, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Serial back-channel choices use the current control protocol's firmware mapping."""
+        choice_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduCopter")
+        choice_model.set_component_value(("ESC", "FC->ESC Connection", "Type"), "Main Out")
+        choice_model.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), "Normal")
+        requested_firmware_types: list[str] = []
+
+        def connection_options(firmware_type: str) -> dict:
+            requested_firmware_types.append(firmware_type)
+            return {
+                "control": {
+                    "type": ("Main Out",),
+                    "protocol": "Normal",
+                    "ESC_to_FC": {("SERIAL1",): "Scripting"},
+                }
+            }
+
+        monkeypatch.setattr(validation_module, "get_esc_connection_sub_dict", connection_options)
+
+        choice_model._update_esc_telemetry_type_protocol_choices(
+            "SERIAL1", ("ESC", "ESC->FC Telemetry", "Protocol")
+        )
+
+        assert choice_model.get_combobox_values_for_path(("ESC", "ESC->FC Telemetry", "Protocol")) == (
+            "Scripting",
+        )
+        assert requested_firmware_types == ["ArduCopter"]
+
+    def test_current_esc_protocol_without_a_backchannel_has_no_telemetry_mapping(
+        self, choice_model: ComponentDataModelValidation, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A supported control protocol without back-channel metadata returns an empty mapping."""
+        choice_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduCopter")
+        choice_model.set_component_value(("ESC", "FC->ESC Connection", "Type"), "Main Out")
+        choice_model.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), "NoTelemetry")
+        monkeypatch.setattr(
+            validation_module,
+            "get_esc_connection_sub_dict",
+            lambda _firmware_type: {"control": {"type": ("Main Out",), "protocol": "NoTelemetry"}},
+        )
+
+        assert choice_model._get_current_esc_to_fc_dict() == {}
+
+    def test_offline_esc_lookup_uses_an_empty_firmware_name_and_safe_telemetry_fallback(
+        self, choice_model: ComponentDataModelValidation, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Missing firmware metadata is passed through as empty and leaves telemetry disabled."""
+        choice_model.set_component_value(("Flight Controller", "Firmware", "Type"), "")
+        choice_model.set_component_value(("ESC", "FC->ESC Connection", "Type"), "Main Out")
+        choice_model.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), "Unknown")
+        requested_firmware_types: list[str] = []
+
+        def connection_options(firmware_type: str) -> dict:
+            requested_firmware_types.append(firmware_type)
+            return {}
+
+        monkeypatch.setattr(validation_module, "get_esc_connection_sub_dict", connection_options)
+
+        assert choice_model._get_current_esc_to_fc_dict() == {}
+        assert choice_model.get_valid_esc_telemetry_types() == ("None",)
+        assert requested_firmware_types == ["", ""]
+
+    def test_serial_telemetry_uses_an_empty_fallback_for_unmapped_control_protocol(
+        self, choice_model: ComponentDataModelValidation
+    ) -> None:
+        """A control protocol without an ESC back-channel cannot invent serial telemetry protocols."""
+        choice_model.set_component_value(("ESC", "FC->ESC Connection", "Type"), "Main Out")
+        choice_model.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), "NoTelemetry")
+
+        assert choice_model._compute_telem_serial_protocols("SERIAL1", {"control": {"protocol": "NoTelemetry"}}) == ()
+
+    def test_serial_telemetry_never_exposes_the_internal_mirror_marker(
+        self, choice_model: ComponentDataModelValidation
+    ) -> None:
+        """The internal same-port marker is filtered from user-selectable protocol choices."""
+        choice_model.set_component_value(("ESC", "FC->ESC Connection", "Type"), "Main Out")
+        choice_model.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), "Normal")
+        esc_options = {
+            "control": {
+                "protocol": "Normal",
+                "ESC_to_FC": {("SERIAL1",): "same_as_FC_to_ESC"},
+            }
+        }
+
+        assert choice_model._compute_telem_serial_protocols("SERIAL1", esc_options) == ()
 
     @pytest.mark.parametrize("motor_metadata", [None, {}, {"values": {}}])
     def test_user_keeps_offline_pwm_protocols_when_motor_metadata_is_missing_or_empty(

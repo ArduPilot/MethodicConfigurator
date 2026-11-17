@@ -72,6 +72,119 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         basic_model.set_component_value(("Flight Controller", "Notes"), None)
         assert basic_model._data["Components"]["Flight Controller"]["Notes"] == ""
 
+    def test_empty_initial_data_starts_with_blank_battery_chemistry(self) -> None:
+        """A new model has no selected battery chemistry until project data supplies one."""
+        schema = Mock(spec=VehicleComponentsJsonSchema)
+
+        model = ComponentDataModelBase({}, {}, schema)
+
+        assert model._battery_chemistry == ""
+
+    def test_none_for_numeric_component_remains_blank(self, basic_model) -> None:
+        """Clearing a typed numeric field stores the blank value rather than numeric zero."""
+        path = ("Battery", "Specifications", "Capacity mAh")
+
+        basic_model.set_component_value(path, None)
+
+        assert basic_model.get_component_value(path) == ""
+
+    def test_missing_component_datatype_path_returns_none(self, basic_model) -> None:
+        """Incomplete datatype metadata is treated as an unknown component type."""
+        basic_model._component_datatypes = {"Battery": {}}
+
+        assert basic_model._get_component_datatype(("Battery", "Missing", "Capacity")) is None
+        assert basic_model._get_component_datatype(("Missing", "Specifications", "Capacity")) is None
+
+    def test_failed_custom_cast_logs_the_fallback_type_name(self, basic_model, caplog: pytest.LogCaptureFixture) -> None:
+        """A failed custom conversion falls back to text and identifies its converter in the warning."""
+
+        class RejectMeta(type):
+            """Hide the usual class name so the warning uses its representation fallback."""
+
+            @property
+            def __name__(cls) -> str:
+                msg = "class name unavailable"
+                raise AttributeError(msg)
+
+            def __call__(cls, _value: object) -> None:
+                msg = "unsupported input"
+                raise ValueError(msg)
+
+        class RejectValue(metaclass=RejectMeta):  # pylint: disable=too-few-public-methods
+            """Converter used to exercise failures from schema-provided types."""
+
+        converter = RejectValue
+        result = basic_model._safe_cast_value("keep this text", converter, ("Battery", "Specifications", "Capacity"))
+
+        assert result == "keep this text"
+        assert any(repr(converter) in record.getMessage() for record in caplog.records)
+
+    def test_missing_components_key_returns_empty_mapping(self, basic_model) -> None:
+        """Models without a Components section expose an empty component mapping."""
+        basic_model._data.pop("Components")
+
+        assert basic_model.get_all_components() == {}
+
+    def test_model_with_one_component_reports_components_present(self, basic_model) -> None:
+        """A single component is enough for the model to report component data."""
+        basic_model._data["Components"] = {"Battery": {}}
+
+        assert basic_model.has_components()
+
+    @pytest.mark.parametrize(
+        "data",
+        [
+            {},
+            {"Components": {}},
+            {"Components": {"Battery": {}}},
+        ],
+        ids=["no-components", "no-battery", "no-specifications"],
+    )
+    def test_battery_chemistry_initialization_handles_incomplete_project_data(
+        self, basic_model, caplog: pytest.LogCaptureFixture, data: dict
+    ) -> None:
+        """An older or partial project safely falls back to the default battery chemistry."""
+        basic_model._data = data
+
+        basic_model.init_battery_chemistry()
+
+        assert basic_model._battery_chemistry == "Lipo"
+        record = next(record for record in caplog.records if record.levelname == "ERROR")
+        assert record.args == ("",)
+
+    def test_invalid_battery_chemistry_log_names_the_rejected_value(
+        self, basic_model, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """The chemistry warning identifies the value that was replaced by the default."""
+        basic_model._data["Components"]["Battery"]["Specifications"]["Chemistry"] = "UnavailableCell"
+
+        basic_model.init_battery_chemistry()
+
+        record = next(record for record in caplog.records if record.levelname == "ERROR")
+        assert record.msg == "Invalid battery chemistry %s, defaulting to Lipo"
+        assert record.args == ("UnavailableCell",)
+        assert basic_model._battery_chemistry == "Lipo"
+
+    def test_setting_a_configuration_template_marks_the_project_as_new(self, basic_model) -> None:
+        """Selecting a configuration template marks the project as newly configured."""
+        basic_model.set_configuration_template("Copter/Quad")
+
+        assert basic_model.get_component_data()["Configuration template"] == "Copter/Quad"
+        assert basic_model.is_new_project() is True
+
+    def test_save_passes_component_data_and_vehicle_directory(self, basic_model) -> None:
+        """Saving forwards the current component mapping and its project directory."""
+        filesystem = MagicMock()
+        filesystem.vehicle_dir = "/vehicle/project"
+        filesystem.save_vehicle_components_json_data.return_value = (True, "saved")
+
+        result = basic_model.save_to_filesystem(filesystem)
+
+        assert result == (True, "saved")
+        filesystem.save_vehicle_components_json_data.assert_called_once_with(
+            basic_model.get_component_data(), "/vehicle/project"
+        )
+
     def test_system_retrieves_component_values_from_nested_paths(self, basic_model) -> None:
         """
         System correctly retrieves component values from nested paths.
