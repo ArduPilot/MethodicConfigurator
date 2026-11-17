@@ -443,6 +443,8 @@ class SkybrushLogAnalysisWindow(BaseWindow):  # pylint: disable=too-many-instanc
             font=("TkDefaultFont", 12),
             padx=10,
             pady=8,
+            # Selecting a find match must not take the selection away from the find field's query.
+            exportselection=False,
         )
         scrollbar = ttk.Scrollbar(results_row, orient=tk.VERTICAL, command=self.results_text.yview)
         self.results_text.configure(yscrollcommand=scrollbar.set)

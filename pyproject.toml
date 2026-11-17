@@ -255,6 +255,7 @@ only_mutate = [
     "ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py",
     "ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py",
     "ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py",
+    "ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py",
 ]
 # Keep mutation scope aligned with [report].omit in .coveragerc: these files are
 # generated, synchronized, or maintained in another repository.
@@ -341,6 +342,7 @@ pytest_add_cli_args_test_selection = [
     "tests/integration_frontend_tkinter_parameter_editor_table.py",
     "tests/acceptance_bitmask_parameter_editor_usage_popup.py",
     "tests/test_backend_filesystem_json_with_schema.py",
+    "tests/test_frontend_tkinter_skybrush_log_analysis.py",
 ]
 pytest_add_cli_args = [
     "-q", "-x", "-p", "tests.plugins.conftest",
