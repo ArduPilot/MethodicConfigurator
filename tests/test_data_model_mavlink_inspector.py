@@ -245,6 +245,8 @@ def test_empty_inspector_can_be_read_and_sorted_before_telemetry_arrives(column:
     model = MavlinkInspectorDataModel()
 
     assert not model.rows
+    assert model.sort_column is None
+    assert model.sort_descending is False
     assert model.fields("1:1:HEARTBEAT") == ""
     if column is not None:
         model.sort_by(column)

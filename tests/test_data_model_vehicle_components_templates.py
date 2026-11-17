@@ -650,6 +650,34 @@ class TestComponentDataModelTemplates(BasicTestMixin, RealisticDataTestMixin):
         assert result["Specifications"]["Chemistry"] == "LiPo"  # string
         assert result["Specifications"]["Discharge"] == 25  # int
 
+    def test_extract_uses_schema_boolean_type_for_false_text(self) -> None:
+        """Use the configured bool datatype instead of preserving the text value."""
+        component_datatypes = {"Sensor": {"Settings": {"Enabled": bool}}}
+        model = ComponentDataModelTemplates(
+            {}, component_datatypes, ComponentDataModelFixtures.create_schema()
+        )
+
+        result = model.extract_component_data_from_entries(
+            "Sensor", {("Sensor", "Settings", "Enabled"): "false"}
+        )
+
+        assert result == {"Settings": {"Enabled": False}}
+
+    def test_schema_cast_failure_reports_the_component_entry_path(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Keep the entry path in diagnostics when a schema-directed conversion fails."""
+        component_datatypes = {"Sensor": {"Settings": {"Gain": float}}}
+        model = ComponentDataModelTemplates(
+            {}, component_datatypes, ComponentDataModelFixtures.create_schema()
+        )
+
+        with caplog.at_level("WARNING"):
+            result = model.extract_component_data_from_entries(
+                "Sensor", {("Sensor", "Settings", "Gain"): "invalid"}
+            )
+
+        assert result == {"Settings": {"Gain": "invalid"}}
+        assert "path ('Sensor', 'Settings', 'Gain')" in caplog.text
+
     def test_system_trims_whitespace_from_values(self, empty_model) -> None:
         """
         System extraction handles whitespace correctly.

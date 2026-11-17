@@ -23,6 +23,8 @@ from ardupilot_methodic_configurator.data_model_file_upload import (
     FileUploadWorkflow,
 )
 
+# pylint: disable=protected-access
+
 
 def _create_workflow(
     *,
@@ -299,16 +301,19 @@ def test_confirmation_exception_releases_batch_for_a_later_request() -> None:
     THEN: The exception propagates and the later batch completes normally
     """
     workflow, _size, _check, upload, confirm, progress_factory = _create_workflow()
+    assert workflow._upload_active is False
     confirm.side_effect = ValueError("dialog failed")
 
     with pytest.raises(ValueError, match="dialog failed"):
         workflow.upload_files([("a.lua", "/APM/Scripts/a.lua")], set(), confirm, progress_factory)
+    assert workflow._upload_active is False
     upload.assert_not_called()
 
     confirm.side_effect = None
     outcomes = workflow.upload_files([("a.lua", "/APM/Scripts/a.lua")], set(), confirm, progress_factory)
 
     assert outcomes[0].disposition is FileUploadDisposition.UPLOADED
+    assert workflow._upload_active is False
 
 
 def test_executor_receives_file_size_and_runs_the_upload_with_progress() -> None:

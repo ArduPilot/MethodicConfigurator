@@ -33,10 +33,12 @@ def test_accelerometer_monitor_restarts_telemetry_after_leaving_and_returning(co
     controller.request_scaled_imu_messages.return_value = (True, "")
     controller.poll_scaled_imu.side_effect = [None, (0.0, 0.0, -1000.0), (0.0, -1000.0, 0.0)]
     model = AccelerometerCalibrationDataModel(controller)
+    assert model._got_imu_stream is False
     # When: Poll, leave the plugin and return.
     assert model.poll_imu_raw() is None
     assert model.poll_imu_raw() == (0.0, 0.0, -1000.0)
     model.stop_imu_monitoring()
+    assert model._got_imu_stream is False
     sample = model.poll_imu_raw()
     # Then: The new reading has physical units and orientation appropriate to calibration.
     assert sample is not None

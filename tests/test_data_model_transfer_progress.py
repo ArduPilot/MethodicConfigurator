@@ -86,6 +86,15 @@ def test_user_keeps_transferred_bytes_when_a_file_fails_after_the_listing_size_c
     assert second.finish() == TransferProgress(350, 350)
 
 
+def test_user_never_gets_a_negative_transferred_byte_count() -> None:
+    """Given a negative prior counter, clamp the next snapshot to zero bytes."""
+    batch = TransferBatchAccounting.from_sizes([100])
+    file = batch.start_file(100)
+    file.transferred = -1
+
+    assert file.update(-2, 100) == TransferProgress(0, 100)
+
+
 def test_user_gets_a_known_total_after_unknown_empty_and_skipped_files_are_finished() -> None:
     """Given unknown sizes, resolve the total from completed work without invented bytes."""
     batch = TransferBatchAccounting.from_sizes([0, 0, 100])
