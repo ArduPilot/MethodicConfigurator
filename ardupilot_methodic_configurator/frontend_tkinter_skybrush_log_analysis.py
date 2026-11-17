@@ -120,6 +120,18 @@ class FeedbackDialog:  # pylint: disable=too-few-public-methods,too-many-instanc
     #: Categories accepted by the Skybrush suggestion endpoint, most relevant for analysis results first.
     CATEGORIES: "tuple[SuggestionCategory, ...]" = ("bug", "test_case", "improvement", "feature", "other")
 
+    @staticmethod
+    def category_label(category: "SuggestionCategory") -> str:
+        """Return the translated, user-facing label of a Skybrush suggestion category."""
+        labels: dict[str, str] = {
+            "bug": _("Wrong test result (suspected bug)"),
+            "test_case": _("Missing or inadequate test"),
+            "improvement": _("Unclear or incomplete results"),
+            "feature": _("New capability needed"),
+            "other": _("Other feedback"),
+        }
+        return labels.get(category, category)
+
     def __init__(
         self,
         parent: tk.Tk | Toplevel,
@@ -135,10 +147,10 @@ class FeedbackDialog:  # pylint: disable=too-few-public-methods,too-many-instanc
             "Technical, self-contained feedback helps the Skybrush team the most.\n"
             "Describe what you did, what you expected, and what actually happened.\n"
             "Reference affected test names, measured values and log messages where relevant.\n"
-            "If you miss a check, describe the new test that should examine the log (category 'test_case').\n"
+            "If you miss a check, describe the new test that should examine the log (category '{test_case}').\n"
             "Never include secrets such as passwords, tokens or API keys.\n"
             "The flight log name and its hash, plus version info, are appended automatically."
-        )
+        ).format(test_case=self.category_label("test_case"))
         body = ttk.Frame(self._root, padding=(16, 12, 16, 12))
         body.pack(fill=tk.BOTH, expand=True)
 
@@ -148,7 +160,9 @@ class FeedbackDialog:  # pylint: disable=too-few-public-methods,too-many-instanc
         ttk.Label(header, text=instructions, foreground="gray50").pack(anchor=tk.W, pady=(4, 10))
 
         ttk.Label(body, text=_("Category")).pack(anchor=tk.W)
-        self._category_box = ttk.Combobox(body, values=self.CATEGORIES, state="readonly", width=20)
+        self._category_box = ttk.Combobox(
+            body, values=[self.category_label(category) for category in self.CATEGORIES], state="readonly", width=35
+        )
         self._category_box.current(0)
         self._category_box.pack(anchor=tk.W, fill=tk.X, pady=(0, 8))
 
@@ -208,6 +222,9 @@ class FeedbackDialog:  # pylint: disable=too-few-public-methods,too-many-instanc
         self._progress_label.configure(text="")
         if error is not None:
             messagebox.showerror(_("Send feedback"), _skybrush_error_message(error), parent=self._root)
+            if isinstance(error, (Unauthenticated, InvalidAPIKey)):
+                # The session is over: close the dialog so that the user can reach the login form behind it.
+                self._root.destroy()
             return
         suggestion_id = result.get("id") if isinstance(result, dict) else None
         detail = _("Thank you for your feedback! The Skybrush team will review your suggestion.")
@@ -792,7 +809,11 @@ class SkybrushLogAnalysisWindow(BaseWindow):  # pylint: disable=too-many-instanc
             else:
                 self._end_session_if_rejected(error)
 
-        if self._feedback_runner.active or client is None:
+        if client is None:
+            # The session was rejected while the dialog was open: report it instead of silently ignoring Submit.
+            on_done(None, Unauthenticated())
+            return False
+        if self._feedback_runner.active:
             return False
         self._feedback_button.configure(state="disabled")
         return self._feedback_runner.start(

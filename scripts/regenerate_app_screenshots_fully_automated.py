@@ -1427,7 +1427,7 @@ def _fill_skybrush_feedback_dialog(dialog: tk.Toplevel) -> None:
     ):
         msg = "Could not find the feedback dialog category, title and description fields"
         raise RuntimeError(msg)
-    category_box.set("other")
+    category_box.current(FeedbackDialog.CATEGORIES.index("other"))
     title_entry.insert(0, "Great log analysis")
     description_text.insert("1.0", "The Skybrush Log Analyzer works great, thank you! 👍")
 
