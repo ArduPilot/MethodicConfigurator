@@ -79,7 +79,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_progress_window import (
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText, get_widget_font_family_and_size
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import get_monitor_bounds, show_tooltip
-from ardupilot_methodic_configurator.frontend_tkinter_skybrush_log_analysis import SkybrushLogAnalysisWindow
+from ardupilot_methodic_configurator.frontend_tkinter_skybrush_log_analysis import open_skybrush_log_analysis
 from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import UsagePopupWindow
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import (
@@ -1091,7 +1091,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         )
         if not filepath:
             return
-        SkybrushLogAnalysisWindow(self.root, filepath)
+        open_skybrush_log_analysis(self.root, filepath)
 
     def _navigate_to_config_step(self, step: str) -> None:
         if self.navigation_lock.locked:

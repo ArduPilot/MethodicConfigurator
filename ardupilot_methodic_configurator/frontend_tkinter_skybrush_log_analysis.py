@@ -114,7 +114,7 @@ def _format_test_message(message: dict[str, Any]) -> tuple[str, str]:
 # ---------------- feedback dialog ----------------
 
 
-class FeedbackDialog:  # pylint: disable=too-few-public-methods,too-many-instance-attributes
+class FeedbackDialog:  # pylint: disable=too-many-instance-attributes
     """Modal dialog that collects user feedback and submits it to the Skybrush team."""
 
     #: Categories accepted by the Skybrush suggestion endpoint, most relevant for analysis results first.
@@ -312,6 +312,8 @@ class SkybrushLogAnalysisWindow(BaseWindow):  # pylint: disable=too-many-instanc
     """Main window of the Skybrush log analysis integration."""
 
     def __init__(self, root_tk: tk.Tk | tk.Toplevel, logfile: str) -> None:
+        # Load the config before creating the window, so that a config error leaves no empty window behind.
+        self._config = Config.load()
         super().__init__(root_tk)
         self.logfile = logfile
         self._analysis_runner = BackgroundTaskRunner(self._schedule_while_open)
@@ -319,7 +321,6 @@ class SkybrushLogAnalysisWindow(BaseWindow):  # pylint: disable=too-many-instanc
         self._auth_runner = BackgroundTaskRunner(self._schedule_while_open)
         self._feedback_runner = BackgroundTaskRunner(self._schedule_while_open)
         self._login_runner = BackgroundTaskRunner(self._schedule_while_open)
-        self._config = Config.load()
         #: Client of the log-in session; None while logged out.
         self._client: APIClient | None = APIClient(self._config) if self._config.api_key else None
         #: API version of the log-in session; empty until fetched successfully.
@@ -899,3 +900,14 @@ class SkybrushLogAnalysisWindow(BaseWindow):  # pylint: disable=too-many-instanc
                 self._append_results_text(bold, f"{severity_tag} bold")
             self._append_results_text("\n", severity_tag)
         self._append_results_text("\n")
+
+
+def open_skybrush_log_analysis(parent: tk.Tk | tk.Toplevel, logfile: str) -> SkybrushLogAnalysisWindow | None:
+    """Open a Skybrush Log Analysis window for the log; return None, after telling the user why, if config is unreadable."""
+    try:
+        return SkybrushLogAnalysisWindow(parent, logfile)
+    except (OSError, ConfigError) as error:
+        config_error = error if isinstance(error, ConfigError) else ConfigError(str(error))
+        logging_error(_("%s Could not read the Skybrush configuration: %s"), _LOG_TAG, error)
+        messagebox.showerror(_("Skybrush Log Analysis"), _skybrush_error_message(config_error), parent=parent)
+        return None

@@ -45,6 +45,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_skybrush_log_analysis impo
     _format_api_version,
     _format_test_message,
     _skybrush_error_message,
+    open_skybrush_log_analysis,
 )
 
 # pylint: disable=protected-access,redefined-outer-name,too-many-lines
@@ -195,6 +196,8 @@ def open_window(
     ):
         api_client_class.return_value = skybrush.client
         skybrush.api_client_class = api_client_class
+        skybrush.config_load = config_load
+        skybrush.windows = windows
 
         def opener(logged_in: bool = True, path: Path | None = None) -> SkybrushLogAnalysisWindow:
             config_load.return_value = skybrush.logged_in if logged_in else skybrush.logged_out
@@ -2160,3 +2163,93 @@ class TestWindowControls:
         find_button(logged_in_window.root, "Close").invoke()
 
         assert not logged_in_window.root.winfo_exists()
+
+
+# ---------------- opening the window from the parameter editor ----------------
+
+
+class TestOpeningTheAnalysisWindow:
+    """The parameter editor opens an analysis window for each selected log."""
+
+    @pytest.mark.parametrize(
+        "error",
+        [PermissionError("Permission denied: 'config.toml'"), ConfigError("Permission denied: 'config.toml'")],
+    )
+    @pytest.mark.usefixtures("open_window")
+    def test_user_is_told_when_the_configuration_cannot_be_read(
+        self,
+        root: tk.Tk,
+        skybrush: SimpleNamespace,
+        messagebox_mock: MagicMock,
+        logfile: Path,
+        error: Exception,
+    ) -> None:
+        """
+        An unreadable configuration is reported instead of crashing.
+
+        GIVEN: The Skybrush configuration file cannot be read
+        WHEN: The user selects a log to analyze
+        THEN: A localized error explains the problem and no window opens
+        """
+        skybrush.config_load.side_effect = error
+        toplevels_before = len(root.winfo_children())
+
+        with patch(f"{MODULE}.logging_error") as log_error:
+            window = open_skybrush_log_analysis(root, str(logfile))
+
+        assert window is None
+        assert messagebox_mock.showerror.call_args.args[1] == (
+            "Could not read or write the 'skybrush-log-analyzer' configuration: Permission denied: 'config.toml'"
+        )
+        assert messagebox_mock.showerror.call_args.kwargs["parent"] is root
+        assert len(root.winfo_children()) == toplevels_before
+        assert log_error.call_args.args[1:] == (_LOG_TAG, error)
+
+    @pytest.mark.usefixtures("open_window")
+    def test_user_opens_the_analysis_window_for_the_selected_log(
+        self,
+        root: tk.Tk,
+        skybrush: SimpleNamespace,
+        logfile: Path,
+    ) -> None:
+        """
+        The first selected log opens the analysis window.
+
+        GIVEN: No analysis window is open
+        WHEN: The user selects a log to analyze
+        THEN: A window opens for that log and becomes the open analysis window
+        """
+        skybrush.config_load.return_value = skybrush.logged_in
+
+        window = open_skybrush_log_analysis(root, str(logfile))
+        assert window is not None
+        skybrush.windows.append(window)
+
+        assert window.logfile == str(logfile)
+        finish(window._auth_runner)
+
+    @pytest.mark.usefixtures("open_window")
+    def test_user_can_analyze_several_logs_side_by_side(
+        self, root: tk.Tk, skybrush: SimpleNamespace, logfile: Path, tmp_path: Path
+    ) -> None:
+        """
+        Every selected log opens its own window.
+
+        GIVEN: An analysis window is already open for one log
+        WHEN: The user selects another log to analyze
+        THEN: A second window opens for it, and the first one keeps its log
+        """
+        skybrush.config_load.return_value = skybrush.logged_in
+        other_log = tmp_path / "flight_00043.bin"
+
+        first = open_skybrush_log_analysis(root, str(logfile))
+        second = open_skybrush_log_analysis(root, str(other_log))
+        assert first is not None
+        assert second is not None
+        skybrush.windows.extend([first, second])
+
+        assert second is not first
+        assert first.root.winfo_exists()
+        assert (first.logfile, second.logfile) == (str(logfile), str(other_log))
+        finish(first._auth_runner)
+        finish(second._auth_runner)

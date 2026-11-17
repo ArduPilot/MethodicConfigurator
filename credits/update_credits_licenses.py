@@ -93,6 +93,19 @@ indirect_dependencies = [
         "license_url": "https://raw.githubusercontent.com/python/typing_extensions/main/LICENSE",
     },
     {"name": "colorama", "license_url": "https://raw.githubusercontent.com/tartley/colorama/master/LICENSE.txt"},
+    {"name": "pydantic", "license_url": "https://raw.githubusercontent.com/pydantic/pydantic/main/LICENSE"},
+    {
+        "name": "pydantic-core",
+        "license_url": "https://raw.githubusercontent.com/pydantic/pydantic/main/pydantic-core/LICENSE",
+    },
+    {
+        "name": "annotated-types",
+        "license_url": "https://raw.githubusercontent.com/annotated-types/annotated-types/main/LICENSE",
+    },
+    {
+        "name": "typing-inspection",
+        "license_url": "https://raw.githubusercontent.com/pydantic/typing-inspection/main/LICENSE",
+    },
     {"name": "Inno_Setup", "license_url": "https://jrsoftware.org/files/is/license.txt"},
 ]
 

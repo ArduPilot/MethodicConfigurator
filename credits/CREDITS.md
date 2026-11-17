@@ -69,6 +69,10 @@ It indirectly uses:
 | [shellingham](https://github.com/sarugaku/shellingham) | [ISC License](https://github.com/sarugaku/shellingham/blob/master/LICENSE) |
 | [typing_extensions](https://github.com/python/typing_extensions) | [Python Software Foundation License](https://github.com/python/typing_extensions/blob/main/LICENSE) |
 | [colorama](https://github.com/tartley/colorama) | [BSD 3-Clause License](https://github.com/tartley/colorama/blob/master/LICENSE.txt) |
+| [pydantic](https://github.com/pydantic/pydantic) | [MIT License](https://github.com/pydantic/pydantic/blob/main/LICENSE) |
+| [pydantic-core](https://github.com/pydantic/pydantic/tree/main/pydantic-core) | [MIT License](https://github.com/pydantic/pydantic/blob/main/pydantic-core/LICENSE) |
+| [annotated-types](https://github.com/annotated-types/annotated-types) | [MIT License](https://github.com/annotated-types/annotated-types/blob/main/LICENSE) |
+| [typing-inspection](https://github.com/pydantic/typing-inspection) | [MIT License](https://github.com/pydantic/typing-inspection/blob/main/LICENSE) |
 | [Inno Setup](https://jrsoftware.org/) | [Inno Setup License](https://jrsoftware.org/files/is/license.txt) |
 
 Their licenses are linked above and are available in [this directory](https://github.com/ArduPilot/MethodicConfigurator/tree/master/credits).

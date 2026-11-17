@@ -242,6 +242,26 @@ SPDX-FileCopyrightText = "Copyright (c) 2010 Jonathan Hartley"
 SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]
+path = "credits/pydantic-LICENSE"
+SPDX-FileCopyrightText = "Copyright (c) 2017 to present Pydantic Services Inc. and individual contributors."
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "credits/pydantic-core-LICENSE"
+SPDX-FileCopyrightText = "Copyright (c) 2022 Samuel Colvin"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "credits/annotated-types-LICENSE"
+SPDX-FileCopyrightText = "Copyright (c) 2022 the contributors"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "credits/typing-inspection-LICENSE"
+SPDX-FileCopyrightText = "Copyright (c) Pydantic Services Inc. 2025 to present"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
 path = "credits/httpx2-LICENSE.md"
 SPDX-FileCopyrightText = ["Copyright © 2026 to present Pydantic Services Inc. and individual contributors.", "Copyright © 2019, Encode OSS Ltd"]
 SPDX-License-Identifier = "BSD-3-Clause"
