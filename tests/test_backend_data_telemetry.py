@@ -823,6 +823,7 @@ def test_radio_error_rate_is_unavailable_when_reports_are_three_seconds_apart() 
 def test_telemetry_model_initialization_and_clear_reset_live_state() -> None:
     """Start with an empty state and clear both the snapshot and cached readings."""
     model = DataTelemetryDataModel(MagicMock())
+    assert model._previous is None
     assert model._state == TelemetryState()
 
     connection = object()
@@ -856,6 +857,20 @@ def test_radio_counter_rewind_discards_the_previous_rate_baseline() -> None:
     reset = model.update(TelemetrySample(connection, 1, radio=replace(radio, time=1, rxerrors=11)))
 
     assert reset.radio_error_rate is None
+
+
+def test_radio_counter_rewind_rebaselines_before_next_measured_interval() -> None:
+    """Use the rewound counter sample as the next radio-rate baseline."""
+    model = DataTelemetryDataModel(MagicMock())
+    connection = object()
+    radio = RadioSample((51, 68), 0, 30, 40, 0, 0, 100, 10, 2)
+    model.update(TelemetrySample(connection, 0, radio=radio))
+    model.update(TelemetrySample(connection, 0.5, radio=replace(radio, time=0.5, rxerrors=12)))
+    model.update(TelemetrySample(connection, 0.75, radio=replace(radio, time=0.75, rxerrors=11)))
+
+    recovered = model.update(TelemetrySample(connection, 1.25, radio=replace(radio, time=1.25, rxerrors=13)))
+
+    assert recovered.radio_error_rate == 4
 
 
 def test_rate_calculation_uses_strictly_paired_counter_samples(monkeypatch: pytest.MonkeyPatch) -> None:
