@@ -192,6 +192,56 @@ SPDX-FileCopyrightText = "Copyright (c) 2013 Daniel Fairhead"
 SPDX-License-Identifier = "MIT"
 
 [[annotations]]
+path = "credits/skybrush-log-analyzer-LICENSE"
+SPDX-FileCopyrightText = "Copyright (c) 2026 Collmot Robotics Ltd."
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "credits/typer-LICENSE"
+SPDX-FileCopyrightText = "Copyright (c) 2019 Sebastián Ramírez"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "credits/annotated-doc-LICENSE"
+SPDX-FileCopyrightText = "Copyright (c) 2025 Sebastián Ramírez"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "credits/rich-LICENSE"
+SPDX-FileCopyrightText = "Copyright (c) 2020 Will McGugan"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "credits/markdown-it-py-LICENSE"
+SPDX-FileCopyrightText = "Copyright (c) 2020 ExecutableBookProject"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "credits/mdurl-LICENSE"
+SPDX-FileCopyrightText = ["Copyright (c) 2015 Vitaly Puzrin, Alex Kocharin.", "Copyright (c) 2021 Taneli Hukkinen"]
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "credits/pygments-LICENSE"
+SPDX-FileCopyrightText = "Copyright (c) 2006-2022 by the respective authors (see AUTHORS file)."
+SPDX-License-Identifier = "BSD-2-Clause"
+
+[[annotations]]
+path = "credits/shellingham-LICENSE"
+SPDX-FileCopyrightText = "Copyright (c) 2018, Tzu-ping Chung <uranusjr@gmail.com>"
+SPDX-License-Identifier = "ISC"
+
+[[annotations]]
+path = "credits/typing_extensions-LICENSE"
+SPDX-FileCopyrightText = "Copyright (c) 2001-2023 Python Software Foundation; All Rights Reserved"
+SPDX-License-Identifier = "PSF-2.0"
+
+[[annotations]]
+path = "credits/colorama-LICENSE.txt"
+SPDX-FileCopyrightText = "Copyright (c) 2010 Jonathan Hartley"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
 path = "credits/httpx2-LICENSE.md"
 SPDX-FileCopyrightText = ["Copyright © 2026 to present Pydantic Services Inc. and individual contributors.", "Copyright © 2019, Encode OSS Ltd"]
 SPDX-License-Identifier = "BSD-3-Clause"

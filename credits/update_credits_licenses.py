@@ -59,6 +59,10 @@ direct_dependencies = [
     {"name": "screeninfo", "license_url": "https://raw.githubusercontent.com/rr-/screeninfo/master/LICENSE.md"},
     {"name": "selenium", "license_url": "https://raw.githubusercontent.com/SeleniumHQ/selenium/trunk/LICENSE"},
     {"name": "simpleeval", "license_url": "https://raw.githubusercontent.com/danthedeckie/simpleeval/main/LICENCE"},
+    {
+        "name": "skybrush-log-analyzer",
+        "license_url": "https://raw.githubusercontent.com/skybrush-io/skybrush-log-analyzer-cli/main/LICENSE",
+    },
 ]
 
 
@@ -74,6 +78,21 @@ indirect_dependencies = [
     {"name": "urllib3", "license_url": "https://raw.githubusercontent.com/urllib3/urllib3/main/LICENSE.txt"},
     {"name": "lxml", "license_url": "https://raw.githubusercontent.com/lxml/lxml/master/LICENSE.txt"},
     {"name": "idna", "license_url": "https://raw.githubusercontent.com/kjd/idna/master/LICENSE.md"},
+    {"name": "typer", "license_url": "https://raw.githubusercontent.com/fastapi/typer/master/LICENSE"},
+    {"name": "annotated-doc", "license_url": "https://raw.githubusercontent.com/fastapi/annotated-doc/main/LICENSE"},
+    {"name": "rich", "license_url": "https://raw.githubusercontent.com/Textualize/rich/master/LICENSE"},
+    {
+        "name": "markdown-it-py",
+        "license_url": "https://raw.githubusercontent.com/executablebooks/markdown-it-py/master/LICENSE",
+    },
+    {"name": "mdurl", "license_url": "https://raw.githubusercontent.com/executablebooks/mdurl/master/LICENSE"},
+    {"name": "pygments", "license_url": "https://raw.githubusercontent.com/pygments/pygments/master/LICENSE"},
+    {"name": "shellingham", "license_url": "https://raw.githubusercontent.com/sarugaku/shellingham/master/LICENSE"},
+    {
+        "name": "typing_extensions",
+        "license_url": "https://raw.githubusercontent.com/python/typing_extensions/main/LICENSE",
+    },
+    {"name": "colorama", "license_url": "https://raw.githubusercontent.com/tartley/colorama/master/LICENSE.txt"},
     {"name": "Inno_Setup", "license_url": "https://jrsoftware.org/files/is/license.txt"},
 ]
 

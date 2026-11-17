@@ -42,6 +42,7 @@ It directly uses:
 | [jsonschema](https://python-jsonschema.readthedocs.io/en/stable/) | [MIT License](https://github.com/python-jsonschema/jsonschema/blob/main/COPYING) |
 | [screeninfo](https://github.com/rr-/screeninfo) | [MIT License](https://github.com/rr-/screeninfo/blob/master/LICENSE.md) |
 | [simpleeval](https://github.com/danthedeckie/simpleeval) | [MIT License](https://github.com/danthedeckie/simpleeval/blob/main/LICENCE) |
+| [skybrush-log-analyzer](https://github.com/skybrush-io/skybrush-log-analyzer-cli) | [MIT License](https://github.com/skybrush-io/skybrush-log-analyzer-cli/blob/main/LICENSE) |
 | [selenium](https://github.com/SeleniumHQ/selenium) | [Apache 2.0 License](https://github.com/SeleniumHQ/selenium/blob/trunk/LICENSE) (also in [LICENSES/Apache-2.0.txt](../LICENSES/Apache-2.0.txt)) |
 | [mutmut](https://github.com/boxed/mutmut) by Anders Hovmöller (optional development tool) | [BSD 3-Clause License](https://github.com/boxed/mutmut/blob/3.8.0/LICENSE) |
 
@@ -59,6 +60,15 @@ It indirectly uses:
 | [urllib3](https://github.com/urllib3/urllib3) | [MIT License](https://github.com/urllib3/urllib3/blob/main/LICENSE.txt) |
 | [lxml](https://github.com/lxml/lxml) | [BSD License](https://github.com/lxml/lxml/blob/master/LICENSE.txt) |
 | [idna](https://github.com/kjd/idna) | [BSD License](https://github.com/kjd/idna/blob/master/LICENSE.md) |
+| [typer](https://github.com/fastapi/typer) | [MIT License](https://github.com/fastapi/typer/blob/master/LICENSE) |
+| [annotated-doc](https://github.com/fastapi/annotated-doc) | [MIT License](https://github.com/fastapi/annotated-doc/blob/main/LICENSE) |
+| [rich](https://github.com/Textualize/rich) | [MIT License](https://github.com/Textualize/rich/blob/master/LICENSE) |
+| [markdown-it-py](https://github.com/executablebooks/markdown-it-py) | [MIT License](https://github.com/executablebooks/markdown-it-py/blob/master/LICENSE) |
+| [mdurl](https://github.com/executablebooks/mdurl) | [MIT License](https://github.com/executablebooks/mdurl/blob/master/LICENSE) |
+| [pygments](https://github.com/pygments/pygments) | [BSD 2-Clause License](https://github.com/pygments/pygments/blob/master/LICENSE) |
+| [shellingham](https://github.com/sarugaku/shellingham) | [ISC License](https://github.com/sarugaku/shellingham/blob/master/LICENSE) |
+| [typing_extensions](https://github.com/python/typing_extensions) | [Python Software Foundation License](https://github.com/python/typing_extensions/blob/main/LICENSE) |
+| [colorama](https://github.com/tartley/colorama) | [BSD 3-Clause License](https://github.com/tartley/colorama/blob/master/LICENSE.txt) |
 | [Inno Setup](https://jrsoftware.org/) | [Inno Setup License](https://jrsoftware.org/files/is/license.txt) |
 
 Their licenses are linked above and are available in [this directory](https://github.com/ArduPilot/MethodicConfigurator/tree/master/credits).
