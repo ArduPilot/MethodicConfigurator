@@ -393,8 +393,12 @@ def test_receiver_analysis_sorts_findings_and_reports_available_guidance() -> No
     result = GPSLogAnalysis(log, _context()).analyse()
 
     assert result.available is True
-    assert result.name.endswith(" Analysis")
-    assert result.reason.startswith("GNSS assessment complete.")
+    assert result.name == "GPS Analysis"
+    assert result.reason == (
+        "GNSS assessment complete. Receiver indications and consistency discrepancies require review; "
+        "sensor faults can cause similar symptoms, and undetected spoofing remains possible."
+    )
+    assert result.related_step == ""
     group_order = {"Receiver indications": 0, "GNSS consistency": 1, "Correlated evidence": 2, "Coverage": 3}
     actual_groups = [group_order.get(item.group or "", 4) for item in result.outcomes]
     assert actual_groups == sorted(actual_groups)
