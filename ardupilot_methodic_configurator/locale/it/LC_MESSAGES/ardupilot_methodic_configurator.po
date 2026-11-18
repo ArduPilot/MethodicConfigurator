@@ -10493,11 +10493,11 @@ msgstr "Nessun controllore di volo collegato o MAVFTP non supportato"
 msgid ""
 "Analyse log\n"
 "with Skybrush"
-msgstr ""
+msgstr "Analizza il log\ncon Skybrush"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:949
 msgid "Select a .bin flight log to open the Skybrush Log Analysis window"
-msgstr ""
+msgstr "Seleziona un log di volo .bin per aprire la finestra di analisi dei log di Skybrush"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:951
 msgid "Skip >"
@@ -12098,66 +12098,66 @@ msgstr "Nessuna Connessione al Controller di Volo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:66
 msgid "Not logged in. Use the Log in button to configure the API key."
-msgstr ""
+msgstr "Accesso non effettuato. Usa il pulsante Accedi per configurare la chiave API."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:68
 msgid ""
 "The Skybrush API key is invalid or has been revoked. Create a new one at "
 "{account_url}."
-msgstr ""
+msgstr "La chiave API di Skybrush non è valida o è stata revocata. Creane una nuova su {account_url}."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:69
 msgid "Could not reach the Skybrush Account server at {account_url}."
-msgstr ""
+msgstr "Impossibile raggiungere il server dell'account Skybrush all'indirizzo {account_url}."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:70
 msgid "Could not reach the Skybrush API: {message}"
-msgstr ""
+msgstr "Impossibile raggiungere l'API di Skybrush: {message}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:71
 msgid ""
 "Could not read or write the 'skybrush-log-analyzer' configuration: {message}"
-msgstr ""
+msgstr "Impossibile leggere o scrivere la configurazione di 'skybrush-log-analyzer': {message}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:72
 msgid "The Skybrush API rejected the request: {message}"
-msgstr ""
+msgstr "L'API di Skybrush ha rifiutato la richiesta: {message}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:73
 msgid "The Skybrush API is currently unavailable."
-msgstr ""
+msgstr "L'API di Skybrush non è attualmente disponibile."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:74
 msgid "The Skybrush API returned an unexpected response."
-msgstr ""
+msgstr "L'API di Skybrush ha restituito una risposta inattesa."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:85
 msgid "Skybrush API request failed: {error}"
-msgstr ""
+msgstr "Richiesta all'API di Skybrush non riuscita: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:93
 msgid "Skybrush API version: {version}"
-msgstr ""
+msgstr "Versione dell'API di Skybrush: {version}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:127
 msgid "Wrong test result (suspected bug)"
-msgstr ""
+msgstr "Risultato del test errato (possibile bug)"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:128
 msgid "Missing or inadequate test"
-msgstr ""
+msgstr "Test mancante o inadeguato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:129
 msgid "Unclear or incomplete results"
-msgstr ""
+msgstr "Risultati poco chiari o incompleti"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:130
 msgid "New capability needed"
-msgstr ""
+msgstr "È necessaria una nuova funzionalità"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:131
 msgid "Other feedback"
-msgstr ""
+msgstr "Altro feedback"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:143
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:159
@@ -12167,7 +12167,7 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:233
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:407
 msgid "Send feedback"
-msgstr ""
+msgstr "Invia feedback"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:146
 msgid ""
@@ -12180,73 +12180,73 @@ msgid ""
 "Never include secrets such as passwords, tokens or API keys.\n"
 "The flight log name and its hash, plus version info, are appended "
 "automatically."
-msgstr ""
+msgstr "Un feedback tecnico e completo è il più utile per il team di Skybrush.\nDescrivi cosa hai fatto, cosa ti aspettavi e cosa è successo realmente.\nIndica, se pertinenti, i nomi dei test interessati, i valori misurati e i messaggi di log.\nSe manca una verifica, descrivi il nuovo test che dovrebbe esaminare il log (categoria '{test_case}').\nNon includere mai informazioni riservate come password, token o chiavi API.\nIl nome del log di volo e il relativo hash, insieme alle informazioni sulla versione, vengono aggiunti automaticamente."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:162
 msgid "Category"
-msgstr ""
+msgstr "Categoria"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:169
 msgid "Title"
-msgstr ""
+msgstr "Titolo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:173
 msgid "Description"
-msgstr ""
+msgstr "Descrizione"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:187
 msgid "Submit"
-msgstr ""
+msgstr "Invia"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:204
 msgid "Please provide a title between 1 and 100 characters."
-msgstr ""
+msgstr "Inserisci un titolo di lunghezza compresa tra 1 e 100 caratteri."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:209
 msgid "Please describe the issue in the description field."
-msgstr ""
+msgstr "Descrivi il problema nel campo della descrizione."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:216
 msgid "Sending feedback to the Skybrush team..."
-msgstr ""
+msgstr "Invio del feedback al team Skybrush..."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:230
 msgid ""
 "Thank you for your feedback! The Skybrush team will review your suggestion."
-msgstr ""
+msgstr "Grazie per il feedback! Il team Skybrush esaminerà il tuo suggerimento."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:253
 msgid ""
 "A Skybrush API key is required to analyze flight logs.\n"
 "Generate it in the Skybrush Account developer area, then paste it here."
-msgstr ""
+msgstr "Per analizzare i log di volo è necessaria una chiave API Skybrush.\nGenerala nell'area sviluppatori di Skybrush Account, quindi incollala qui."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:260
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:282
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:293
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:306
 msgid "Log in"
-msgstr ""
+msgstr "Accedi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:267
 msgid "Open Skybrush Account"
-msgstr ""
+msgstr "Apri Skybrush Account"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:270
 msgid "Create or manage your API keys there"
-msgstr ""
+msgstr "Crea o gestisci le tue chiavi API"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:274
 msgid "API key"
-msgstr ""
+msgstr "Chiave API"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:293
 msgid "Please paste your API key."
-msgstr ""
+msgstr "Incolla la tua chiave API."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:298
 msgid "Validating the API key and logging in..."
-msgstr ""
+msgstr "Verifica della chiave API e accesso in corso..."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:333
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:359
@@ -12257,151 +12257,151 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:850
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:912
 msgid "Skybrush Log Analysis"
-msgstr ""
+msgstr "Analisi dei log Skybrush"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:362
 msgid "Selected log: {filename}"
-msgstr ""
+msgstr "Log selezionato: {filename}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:367
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:775
 msgid "Skybrush API version unknown"
-msgstr ""
+msgstr "Versione dell'API Skybrush sconosciuta"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:372
 msgid "Checking log-in status..."
-msgstr ""
+msgstr "Verifica dello stato di accesso..."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:387
 msgid "Log out from Skybrush Account"
-msgstr ""
+msgstr "Esci da Skybrush Account"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:389
 msgid "Log out of the Skybrush analysis service and remove the stored API key"
-msgstr ""
+msgstr "Esci dal servizio di analisi Skybrush e rimuovi la chiave API salvata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:391
 msgid "Analyze"
-msgstr ""
+msgstr "Analizza"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:395
 msgid "Upload the selected log to the Skybrush API and display the results"
-msgstr ""
+msgstr "Carica il log selezionato sull'API Skybrush e visualizza i risultati"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:399
 msgid "Open in Skybrush Log Analyzer"
-msgstr ""
+msgstr "Apri in Skybrush Log Analyzer"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:404
 msgid ""
 "Open the analysis of the selected log in the Skybrush Log Analyzer web "
 "application"
-msgstr ""
+msgstr "Apri l'analisi del log selezionato nell'applicazione web Skybrush Log Analyzer"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:411
 msgid ""
 "Report a suspicious analysis result or suggest an improvement directly to "
 "the Skybrush team"
-msgstr ""
+msgstr "Segnala un risultato di analisi sospetto o suggerisci un miglioramento direttamente al team Skybrush"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:432
 msgid "Open the Skybrush Log Analysis user manual in a web browser"
-msgstr ""
+msgstr "Apri il manuale utente di Skybrush Log Analysis in un browser web"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:472
 msgid ""
 "No analysis results yet - click 'Analyze' to analyze the selected log.\n"
-msgstr ""
+msgstr "Nessun risultato di analisi disponibile: fai clic su 'Analizza' per analizzare il log selezionato.\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:478
 msgid "Find:"
-msgstr ""
+msgstr "Trova:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:561
 msgid "No matches"
-msgstr ""
+msgstr "Nessuna corrispondenza"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:605
 msgid "Log file not found: {path}"
-msgstr ""
+msgstr "File di log non trovato: {path}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:611
 msgid ""
 "Uploading log and running analysis through the Skybrush API - this can take "
 "a while"
-msgstr ""
+msgstr "Caricamento del log e analisi tramite l'API di Skybrush in corso - l'operazione può richiedere del tempo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:623
 msgid "%s Skybrush API analysis failed: %s"
-msgstr ""
+msgstr "%s Analisi tramite l'API di Skybrush non riuscita: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:628
 msgid "Analysis completed"
-msgstr ""
+msgstr "Analisi completata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:668
 msgid "Logged in to the Skybrush Account"
-msgstr ""
+msgstr "Accesso all'account Skybrush effettuato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:684
 msgid "Logged out"
-msgstr ""
+msgstr "Disconnessione effettuata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:697
 msgid "Skybrush API version: requires logging in"
-msgstr ""
+msgstr "Versione dell'API di Skybrush: richiede l'accesso"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:709
 msgid "Requesting a log-in link for the Skybrush Log Analyzer web application"
-msgstr ""
+msgstr "Richiesta di un collegamento di accesso per l'applicazione web Skybrush Log Analyzer"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:730
 msgid "%s Could not acquire a Skybrush web log-in link: %s"
-msgstr ""
+msgstr "%s Impossibile ottenere un collegamento di accesso al sito web di Skybrush: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:738
 msgid "Skybrush Log Analyzer opened in the default browser"
-msgstr ""
+msgstr "Skybrush Log Analyzer aperto nel browser predefinito"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:742
 msgid "Could not open the default web browser."
-msgstr ""
+msgstr "Impossibile aprire il browser web predefinito."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:752
 msgid "Fetching Skybrush API version..."
-msgstr ""
+msgstr "Recupero della versione dell'API di Skybrush..."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:774
 msgid "%s Skybrush log-in or API version check failed: %s"
-msgstr ""
+msgstr "%s Accesso a Skybrush o verifica della versione dell'API non riusciti: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:781
 msgid "Authenticated at {account_url}"
-msgstr ""
+msgstr "Autenticazione effettuata su {account_url}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:833
 msgid "ArduPilot Methodic Configurator {version}"
-msgstr ""
+msgstr "ArduPilot Methodic Configurator {version}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:836
 msgid "Flight log: {filename}"
-msgstr ""
+msgstr "Log di volo: {filename}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:838
 msgid "Log file SHA-256: {hash}"
-msgstr ""
+msgstr "SHA-256 del file di log: {hash}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:869
 msgid "No test results were returned by the analysis.\n"
-msgstr ""
+msgstr "L'analisi non ha restituito risultati dei test.\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:877
 msgid "Test cases: "
-msgstr ""
+msgstr "Casi di test:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py:911
 msgid "%s Could not read the Skybrush configuration: %s"
-msgstr ""
+msgstr "%s Impossibile leggere la configurazione di Skybrush: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_software_update.py:32
 msgid ""
