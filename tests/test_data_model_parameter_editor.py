@@ -1496,6 +1496,29 @@ class TestFlightControllerDownloadWorkflows:
         assert param2._fc_value == 0.18
         # YAW_P not in current_step_parameters, so not updated anywhere
 
+    def test_download_clears_fc_value_for_parameter_missing_from_successful_snapshot(
+        self, parameter_editor: ParameterEditor, mock_flight_controller: MagicMock
+    ) -> None:
+        """
+        A successful snapshot clears stale FC values for missing current-step parameters.
+
+        GIVEN: Two current-step parameters have known FC values
+        WHEN: A successful download contains only one of those parameters
+        THEN: The included parameter is updated and the missing parameter's FC value becomes None
+        """
+        present_parameter = ArduPilotParameter("ROLL_P", Par(0.1), fc_value=0.1)
+        missing_parameter = ArduPilotParameter("PITCH_P", Par(0.15), fc_value=0.15)
+        parameter_editor.current_step_parameters = {
+            "ROLL_P": present_parameter,
+            "PITCH_P": missing_parameter,
+        }
+        mock_flight_controller.download_params.return_value = ({"ROLL_P": 0.12}, None)
+
+        parameter_editor.download_flight_controller_parameters()
+
+        assert present_parameter._fc_value == 0.12
+        assert missing_parameter._fc_value is None
+
     def test_download_skips_updating_parameters_not_in_current_step(self, parameter_editor) -> None:
         """
         Downloaded parameters not in current step don't cause errors.
@@ -4684,10 +4707,9 @@ class TestParameterUploadNavigation:
             parameter_editor,
             upload_parameters_that_require_reset_workflow=MagicMock(return_value=(False, set(), True)),
             _upload_parameters_to_fc=MagicMock(return_value=1),
-            download_flight_controller_parameters=MagicMock(),
+            download_flight_controller_parameters=MagicMock(return_value=({"P1": 1.0}, {})),
             _write_current_file=mock_write,
             _export_fc_params_missing_or_different=MagicMock(),
-            _validate_uploaded_parameters=MagicMock(return_value=[]),
         ):
             # Act
             result = parameter_editor.upload_selected_params_workflow(
@@ -4716,9 +4738,8 @@ class TestParameterUploadNavigation:
                 parameter_editor,
                 upload_parameters_that_require_reset_workflow=MagicMock(return_value=(False, set(), True)),
                 _upload_parameters_to_fc=MagicMock(return_value=1),
-                download_flight_controller_parameters=MagicMock(),
+                download_flight_controller_parameters=MagicMock(return_value=({"P1": 1.0}, {})),
                 _write_current_file=MagicMock(),
-                _validate_uploaded_parameters=MagicMock(return_value=[]),
             ),
         ):
             result = parameter_editor.upload_selected_params_workflow(
@@ -4753,10 +4774,9 @@ class TestParameterUploadNavigation:
             parameter_editor,
             upload_parameters_that_require_reset_workflow=MagicMock(return_value=(False, set(), True)),
             _upload_parameters_to_fc=MagicMock(return_value=1),
-            download_flight_controller_parameters=MagicMock(),
+            download_flight_controller_parameters=MagicMock(return_value=({"P1": 2.0}, {})),
             _write_current_file=mock_write,
             _export_fc_params_missing_or_different=MagicMock(),
-            _validate_uploaded_parameters=MagicMock(return_value=["P1"]),
         ):
             # Act
             result = parameter_editor.upload_selected_params_workflow(
@@ -4787,9 +4807,8 @@ class TestParameterUploadNavigation:
             parameter_editor,
             upload_parameters_that_require_reset_workflow=MagicMock(return_value=(False, set(), True)),
             _upload_parameters_to_fc=MagicMock(return_value=0),
-            download_flight_controller_parameters=MagicMock(),
+            download_flight_controller_parameters=MagicMock(return_value=({"P1": 2.0}, {})),
             _write_current_file=mock_write,
-            _validate_uploaded_parameters=MagicMock(return_value=["P1"]),
         ):
             result = parameter_editor.upload_selected_params_workflow(
                 {"P1": Par(1.0)},
@@ -4801,6 +4820,45 @@ class TestParameterUploadNavigation:
         assert result is False
         mock_retry.assert_called_once()
         mock_write.assert_not_called()
+
+    @pytest.mark.parametrize(
+        ("snapshot", "message_fragment"),
+        [
+            ({}, "The upload could not be verified."),
+            ({"PARAM1": 2.0}, "PARAM1"),
+        ],
+    )
+    def test_user_cannot_verify_an_upload_with_cached_values(
+        self,
+        parameter_editor: ParameterEditor,
+        mock_flight_controller: MagicMock,
+        tmp_path: Path,
+        snapshot: dict[str, float],
+        message_fragment: str,
+    ) -> None:
+        """
+        Require fresh readback matching the requested value before marking the step uploaded.
+
+        GIVEN: The FC cache already contains the requested value
+        WHEN: Readback fails or reports a different value and the user cancels the retry
+        THEN: The editor reports the reason and leaves the step unmarked
+        """
+        parameter_editor._local_filesystem.vehicle_dir = tmp_path
+        mock_flight_controller.fc_parameters = {"PARAM1": 1.0}
+        mock_flight_controller.download_params.return_value = (snapshot, ParDict())
+        ask_retry_cancel = MagicMock(return_value=False)
+
+        result = parameter_editor.upload_selected_params_workflow(
+            {"PARAM1": Par(1.0)},
+            ask_confirmation=MagicMock(return_value=True),
+            ask_retry_cancel=ask_retry_cancel,
+            show_error=MagicMock(),
+        )
+
+        assert result is False
+        ask_retry_cancel.assert_called_once()
+        assert message_fragment in ask_retry_cancel.call_args.args[1]
+        parameter_editor._local_filesystem.write_last_uploaded_filename.assert_not_called()
 
     @pytest.mark.parametrize(
         ("fc_val", "upload_val", "expect_mismatch"),
@@ -4822,10 +4880,10 @@ class TestParameterUploadNavigation:
         AND: It is not flagged when the FC confirms the expected value
         """
         # Arrange: Set (or omit) the FC value
-        parameter_editor._flight_controller.fc_parameters = {"P1": fc_val} if fc_val is not None else {}
+        fc_parameters = {"P1": fc_val} if fc_val is not None else {}
 
         # Act
-        mismatched = parameter_editor._validate_uploaded_parameters({"P1": Par(upload_val)})
+        mismatched = parameter_editor._validate_uploaded_parameters({"P1": Par(upload_val)}, fc_parameters)
 
         # Assert
         assert ("P1" in mismatched) is expect_mismatch
@@ -7179,9 +7237,7 @@ class TestFlightControllerUploadReporting:
         WHEN: The uploaded parameters are validated
         THEN: The mismatching parameter is reported
         """
-        parameter_editor._flight_controller.fc_parameters = {"PARAM1": 9.0}
-
-        errors = parameter_editor._validate_uploaded_parameters({"PARAM1": Par(1.0)})
+        errors = parameter_editor._validate_uploaded_parameters({"PARAM1": Par(1.0)}, {"PARAM1": 9.0})
 
         assert "PARAM1" in errors
 
@@ -7193,9 +7249,7 @@ class TestFlightControllerUploadReporting:
         WHEN: The uploaded parameters are validated
         THEN: No error is reported
         """
-        parameter_editor._flight_controller.fc_parameters = {"PARAM1": 1.0}
-
-        assert parameter_editor._validate_uploaded_parameters({"PARAM1": Par(1.0)}) == []
+        assert parameter_editor._validate_uploaded_parameters({"PARAM1": Par(1.0)}, {"PARAM1": 1.0}) == []
 
     def test_a_parameter_missing_from_the_readback_is_reported_as_an_error(self, parameter_editor: ParameterEditor) -> None:
         """
@@ -7205,9 +7259,7 @@ class TestFlightControllerUploadReporting:
         WHEN: The uploaded parameters are validated
         THEN: The missing parameter is reported
         """
-        parameter_editor._flight_controller.fc_parameters = {}
-
-        assert parameter_editor._validate_uploaded_parameters({"PARAM1": Par(1.0)}) == ["PARAM1"]
+        assert parameter_editor._validate_uploaded_parameters({"PARAM1": Par(1.0)}, {}) == ["PARAM1"]
 
 
 class TestParameterFileChangeWorkflow:

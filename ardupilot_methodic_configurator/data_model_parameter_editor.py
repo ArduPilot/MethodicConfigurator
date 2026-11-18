@@ -883,15 +883,14 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         # via params_manager.download_params()
 
         if fc_parameters:
-            # Update FC values in all current step ArduPilotParameter objects
+            # Synchronize every current-step value with the complete FC snapshot.
             # Thread-safety: This assumes single-threaded execution during parameter upload.
             # The parameter editor UI is not designed for concurrent uploads, and the upload
             # workflow blocks the UI thread. If multi-threading is added in the future,
             # this loop would need synchronization (e.g., threading.Lock) to prevent
             # race conditions when modifying current_step_parameters during iteration.
             for param_name, param_obj in self.current_step_parameters.items():
-                if param_name in fc_parameters:
-                    param_obj.set_fc_value(fc_parameters[param_name])
+                param_obj.set_fc_value(fc_parameters.get(param_name))
 
         # Write default values to file if available
         if persist_project_state and param_default_values:
@@ -1359,18 +1358,20 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             if selected_params:
                 # Re-download all parameters to validate
                 # Note: Passing the callback directly, not the factory, since we already got it
-                self.download_flight_controller_parameters(
+                fc_parameters, _param_default_values = self.download_flight_controller_parameters(
                     _create_progress_callback_factory(progress_callback_for_download),
                     persist_project_state=persist_project_state,
                 )
-                param_upload_error = self._validate_uploaded_parameters(selected_params)
-
-                if param_upload_error:
-                    should_retry = ask_retry_cancel(
-                        _("Parameter upload error"),
-                        _("Failed to upload the following parameters to the flight controller:\n")
-                        + f"{(', ').join(param_upload_error)}",
+                upload_error = ""
+                if not fc_parameters:
+                    upload_error = _("Could not download parameters after upload. The upload could not be verified.")
+                elif failed_params := self._validate_uploaded_parameters(selected_params, fc_parameters):
+                    upload_error = _("Failed to upload the following parameters to the flight controller:\n") + ", ".join(
+                        failed_params
                     )
+
+                if upload_error:
+                    should_retry = ask_retry_cancel(_("Parameter upload error"), upload_error)
                     if should_retry:
                         continue
                     self._at_least_one_changed = False
@@ -1414,31 +1415,32 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             persist_project_state=False,
         )
 
-    def _validate_uploaded_parameters(self, selected_params: dict) -> list[str]:
+    @staticmethod
+    def _validate_uploaded_parameters(selected_params: dict, fc_parameters: dict[str, float]) -> list[str]:
         logging_info(_("Re-downloaded all parameters from the flight controller"))
 
         # Validate that the read parameters are the same as the ones in the current_file
         param_upload_error = []
         for param_name, param in selected_params.items():
-            if (
-                param_name in self._flight_controller.fc_parameters
-                and param is not None
-                and not is_within_tolerance(self._flight_controller.fc_parameters[param_name], float(param.value))
-            ):
-                logging_error(
-                    _("Parameter %s upload to the flight controller failed. Expected: %f, Actual: %f"),
-                    param_name,
-                    param.value,
-                    self._flight_controller.fc_parameters[param_name],
-                )
-                param_upload_error.append(param_name)
-            if param_name not in self._flight_controller.fc_parameters and param is not None:
+            if param is None:
+                continue
+            fc_value = fc_parameters.get(param_name)
+            if fc_value is None:
                 logging_error(
                     _("Parameter %s upload to the flight controller failed. Expected: %f, Actual: N/A"),
                     param_name,
                     param.value,
                 )
-                param_upload_error.append(param_name)
+            elif not is_within_tolerance(fc_value, float(param.value)):
+                logging_error(
+                    _("Parameter %s upload to the flight controller failed. Expected: %f, Actual: %f"),
+                    param_name,
+                    param.value,
+                    fc_value,
+                )
+            else:
+                continue
+            param_upload_error.append(param_name)
         return param_upload_error
 
     def _get_non_default_non_read_only_fc_params(self) -> ParDict:
