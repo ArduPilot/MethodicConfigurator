@@ -207,12 +207,12 @@ def test_arduplane_configuration_steps_use_plane_parameter_names() -> None:
 
     steps = config["steps"]
     rc_step = steps["05_remote_controller_receiver.param"]
-    attitude_step = steps["13_initial_atc.param"]
-    throttle_step = steps["14_esc.param"]
+    attitude_step = steps["14_initial_atc.param"]
+    throttle_step = steps["15_esc.param"]
 
     assert "THR_FS_VALUE" in rc_step["autoimport_nondefault_regexp"]
     assert "FS_THR_VALUE" not in rc_step["autoimport_nondefault_regexp"]
-    assert "FRAME_CLASS" not in steps["15_board_orientation.param"]["derived_parameters"]
+    assert "FRAME_CLASS" not in steps["16_board_orientation.param"]["derived_parameters"]
     expected_acceleration_parameters = {
         "Q_A_ACCEL_P_MAX",
         "Q_A_ACCEL_R_MAX",
@@ -235,7 +235,7 @@ def test_arduplane_4_7_throttle_controller_uses_scaled_quadplane_acceleration_ga
         / "vehicle_templates"
         / "ArduPlane"
         / "empty_4.7.x"
-        / "28_throttle_controller.param"
+        / "29_throttle_controller.param"
     )
     values = {
         name: float(value)
@@ -261,14 +261,14 @@ def test_arduplane_4_7_throttle_controller_formulas_scale_hover_thrust() -> None
     }
 
     error = config_steps.compute_parameters(
-        "28_throttle_controller.param",
-        config["steps"]["28_throttle_controller.param"],
+        "29_throttle_controller.param",
+        config["steps"]["29_throttle_controller.param"],
         "derived",
         variables,
     )
 
     assert error == ""
-    derived = config_steps.derived_parameters["28_throttle_controller.param"]
+    derived = config_steps.derived_parameters["29_throttle_controller.param"]
     assert derived["Q_P_D_ACC_I"].value == pytest.approx(0.2 * PLANE_47_TEMPLATE_HOVER_THRUST)
     assert derived["Q_P_D_ACC_P"].value == pytest.approx(0.1 * PLANE_47_TEMPLATE_HOVER_THRUST)
 
@@ -287,15 +287,15 @@ def test_arduplane_4_7_throttle_controller_exports_six_decimal_gains(tmp_path: P
 
     assert (
         config_steps.compute_parameters(
-            "28_throttle_controller.param",
-            config["steps"]["28_throttle_controller.param"],
+            "29_throttle_controller.param",
+            config["steps"]["29_throttle_controller.param"],
             "derived",
             variables,
         )
         == ""
     )
-    derived = config_steps.derived_parameters["28_throttle_controller.param"]
-    output_file = tmp_path / "28_throttle_controller.param"
+    derived = config_steps.derived_parameters["29_throttle_controller.param"]
+    output_file = tmp_path / "29_throttle_controller.param"
     ParDict({name: derived[name] for name in ("Q_P_D_ACC_I", "Q_P_D_ACC_P")}).export_to_param(str(output_file))
 
     parameter_lines = [line.split("  #", maxsplit=1)[0] for line in output_file.read_text(encoding="utf-8").splitlines()]
@@ -322,7 +322,7 @@ def test_arduplane_initial_attitude_formulas_evaluate_for_both_parameter_generat
     with open(configuration_steps_file, encoding="utf-8") as file:
         config = json.load(file)
 
-    step_file = "13_initial_atc.param"
+    step_file = "14_initial_atc.param"
     config_steps = ConfigurationSteps("vehicle_dir", "ArduPlane")
     error = config_steps.compute_parameters(
         step_file,
@@ -356,7 +356,7 @@ def test_arduplane_throttle_controller_uses_quadplane_parameters(
         config = json.load(file)
 
     config_steps = ConfigurationSteps("vehicle_dir", "ArduPlane")
-    throttle_step_file = "28_throttle_controller.param"
+    throttle_step_file = "29_throttle_controller.param"
     throttle_step = config["steps"][throttle_step_file]
     variables = {
         "fc_parameters": {"Q_M_THST_HOVER": 0.2},
@@ -384,14 +384,14 @@ def test_arduplane_quadplane_only_steps_skip_missing_hover_thrust_without_warnin
     with patch("ardupilot_methodic_configurator.backend_filesystem_configuration_steps.logging_warning") as logging_warning:
         config_steps = ConfigurationSteps("vehicle_dir", "ArduPlane")
         error = config_steps.compute_parameters(
-            "28_throttle_controller.param",
-            config["steps"]["28_throttle_controller.param"],
+            "29_throttle_controller.param",
+            config["steps"]["29_throttle_controller.param"],
             "derived",
             fixed_wing_variables,
         )
         motor_notch_error = config_steps.compute_parameters(
-            "26_motor_notch_logging.param",
-            config["steps"]["26_motor_notch_logging.param"],
+            "27_motor_notch_logging.param",
+            config["steps"]["27_motor_notch_logging.param"],
             "forced",
             fixed_wing_variables,
         )
@@ -424,7 +424,7 @@ def test_arduplane_throttle_controller_templates_use_quadplane_parameters(
         / "vehicle_templates"
         / "ArduPlane"
         / template_name
-        / "28_throttle_controller.param"
+        / "29_throttle_controller.param"
     )
     parameter_names = {line.partition(",")[0] for line in parameter_file.read_text(encoding="utf-8").splitlines() if line}
 

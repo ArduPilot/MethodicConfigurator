@@ -1,0 +1,3 @@
+AUTOTUNE_AXES,1  # Autotune roll axis
+Q_AUTOTUNE_AGGR,0.1
+Q_AUTOTUNE_AXES,1  # QAUTOTUNE roll axis

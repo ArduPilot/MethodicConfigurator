@@ -2634,8 +2634,112 @@ def test_plane_v1_quadplane_filter_tuning_moves_to_notch_results(vehicle_dir: Pa
 
     migration_module._migrate_v1_to_v2(vehicle_dir, "ArduPlane")  # pylint: disable=protected-access
 
-    assert (vehicle_dir / "29_motor_notch_filter_results.param").read_text(encoding="utf-8") == content
+    assert (vehicle_dir / "30_motor_notch_filter_results.param").read_text(encoding="utf-8") == content
     assert not source.exists()
+
+
+def _write_format_2_project(vehicle_dir: Path, vehicle_type: str) -> Path:
+    components = vehicle_dir / "vehicle_components.json"
+    components.write_text(
+        json.dumps(
+            {
+                "Format version": 2,
+                "Components": {"Flight Controller": {"Firmware": {"Type": vehicle_type, "Version": "4.7.2"}}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    return components
+
+
+def test_plane_v2_servo_adjustments_move_to_the_new_control_surface_step(vehicle_dir: Path) -> None:
+    """
+    Opening a format-2 Plane project moves its servo adjustments into the new step without changing them.
+
+    GIVEN: A format-2 Plane project whose servo output step holds functions, trims, reversals and tilt rates,
+           followed by the old 12_motor.param and 13_initial_atc.param steps
+    WHEN: The project is migrated and its legacy filenames are renamed
+    THEN: Ranges, trims, reversals and tilt rates are in 12_control_surfaces_and_tilt_servos.param with their comments,
+          the functions and tilt mechanism stay in step 11, the later steps move up one number,
+          and every effective value is unchanged
+    """
+    components = _write_format_2_project(vehicle_dir, "ArduPlane")
+    (vehicle_dir / "11_servo_outputs.param").write_text(
+        "Q_TILT_ENABLE,1\nQ_TILT_MASK,3\nQ_TILT_RATE_UP,20 # tested transitions\nSERVO2_FUNCTION,4\n"
+        "SERVO2_REVERSED,1 # aileron mounted mirrored\nSERVO2_TRIM,1478\nSERVO5_FUNCTION,76\nSERVO5_MAX,2080\n",
+        encoding="utf-8",
+    )
+    (vehicle_dir / "12_motor.param").write_text("SERVO_BLH_POLES,14\n", encoding="utf-8")
+    (vehicle_dir / "13_initial_atc.param").write_text("INS_GYRO_FILTER,46\n", encoding="utf-8")
+
+    assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
+    filesystem = LocalFilesystem(
+        str(vehicle_dir),
+        "ArduPlane",
+        "",
+        allow_editing_template_files=False,
+        save_component_to_system_templates=False,
+        load_project=False,
+    )
+    filesystem.configuration_steps = json.loads(
+        (Path(__file__).parents[1] / "ardupilot_methodic_configurator" / "configuration_steps_ArduPlane.json").read_text(
+            encoding="utf-8"
+        )
+    )["steps"]
+    filesystem.rename_parameter_files()
+    filesystem.file_parameters = filesystem.read_params_from_files()
+    effective = filesystem.compound_params()[0]
+
+    adjustments = (vehicle_dir / "12_control_surfaces_and_tilt_servos.param").read_text(encoding="utf-8")
+    assert "SERVO2_REVERSED,1 # aileron mounted mirrored" in adjustments
+    assert "Q_TILT_RATE_UP,20 # tested transitions" in adjustments
+    assert "SERVO5_MAX,2080" in adjustments
+    assert (vehicle_dir / "11_servo_outputs.param").read_text(encoding="utf-8") == (
+        "Q_TILT_ENABLE,1\nQ_TILT_MASK,3\nSERVO2_FUNCTION,4\nSERVO5_FUNCTION,76\n"
+    )
+    assert (vehicle_dir / "13_motor.param").is_file()
+    assert (vehicle_dir / "14_initial_atc.param").is_file()
+    assert not (vehicle_dir / "12_motor.param").exists()
+    expected = {"SERVO2_REVERSED": 1, "SERVO2_TRIM": 1478, "SERVO5_MAX": 2080, "Q_TILT_RATE_UP": 20, "Q_TILT_MASK": 3}
+    assert {name: effective[name].value for name in expected} == expected
+    assert json.loads(components.read_text(encoding="utf-8"))["Format version"] == VEHICLE_COMPONENTS_FORMAT_VERSION
+    assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is False
+
+
+def test_format_2_projects_of_other_vehicles_only_change_their_format_version(vehicle_dir: Path) -> None:
+    """
+    The format-3 upgrade does not restore steps a format-2 Copter project no longer has.
+
+    GIVEN: A format-2 Copter project that keeps only some of its configuration steps
+    WHEN: The project is migrated to format 3
+    THEN: Its parameter files are unchanged and no step file is added
+    """
+    components = _write_format_2_project(vehicle_dir, "ArduCopter")
+    (vehicle_dir / "11_servo_outputs.param").write_text("SERVO1_FUNCTION,33\nSERVO1_TRIM,1000\n", encoding="utf-8")
+    before = {path.name: path.read_bytes() for path in vehicle_dir.glob("*.param")}
+
+    assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
+
+    assert {path.name: path.read_bytes() for path in vehicle_dir.glob("*.param")} == before
+    assert json.loads(components.read_text(encoding="utf-8"))["Format version"] == VEHICLE_COMPONENTS_FORMAT_VERSION
+
+
+def test_interrupted_plane_v2_to_v3_move_keeps_the_values_already_moved(vehicle_dir: Path) -> None:
+    """
+    Re-running an interrupted format-3 move neither duplicates nor loses servo adjustments.
+
+    GIVEN: A Plane project whose new step was written but whose servo output step was not yet trimmed
+    WHEN: The format-3 move runs again
+    THEN: The new step holds each adjustment once and the servo output step keeps only the functions
+    """
+    (vehicle_dir / "11_servo_outputs.param").write_text("SERVO2_FUNCTION,4\nSERVO2_TRIM,1478\n", encoding="utf-8")
+    destination = vehicle_dir / "12_control_surfaces_and_tilt_servos.param"
+    destination.write_text("SERVO2_TRIM,1478\n", encoding="utf-8")
+
+    migration_module._migrate_v2_to_v3(vehicle_dir, "ArduPlane")  # pylint: disable=protected-access
+
+    assert destination.read_text(encoding="utf-8") == "SERVO2_TRIM,1478\n"
+    assert (vehicle_dir / "11_servo_outputs.param").read_text(encoding="utf-8") == "SERVO2_FUNCTION,4\n"
 
 
 class TestCurrentVehicleLayouts:
@@ -2691,7 +2795,7 @@ class TestCurrentVehicleLayouts:
             assert (vehicle_dir / filename).read_bytes() == content
         assert {path.name for path in vehicle_dir.glob("*.param")} <= set(steps)
         assert not any("_mp_setup_mandatory_hardware" in filename for filename in steps)
-        assert json.loads(components.read_bytes())["Format version"] == 2
+        assert json.loads(components.read_bytes())["Format version"] == VEHICLE_COMPONENTS_FORMAT_VERSION
         before_retry = {path.name: path.read_bytes() for path in vehicle_dir.iterdir()}
         assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is False
         assert {path.name: path.read_bytes() for path in vehicle_dir.iterdir()} == before_retry
@@ -2731,8 +2835,8 @@ def test_plane_values_survive_template_restoration_with_current_filenames(vehicl
         "Components": {"Flight Controller": {"Firmware": {"Type": "ArduPlane", "Version": "4.7.0"}}},
     }
     (vehicle_dir / "vehicle_components.json").write_text(json.dumps(components), encoding="utf-8")
-    (vehicle_dir / "15_board_orientation.param").write_text("AHRS_ORIENTATION,4 # installed sideways\n", encoding="utf-8")
-    (vehicle_dir / "18_gnss.param").write_text("GPS1_TYPE,2 # project receiver\n", encoding="utf-8")
+    (vehicle_dir / "16_board_orientation.param").write_text("AHRS_ORIENTATION,4 # installed sideways\n", encoding="utf-8")
+    (vehicle_dir / "19_gnss.param").write_text("GPS1_TYPE,2 # project receiver\n", encoding="utf-8")
     configuration = package / "configuration_steps_ArduPlane.json"
     if use_local_steps:
         copyfile(configuration, vehicle_dir / configuration.name)
@@ -2754,8 +2858,8 @@ def test_plane_values_survive_template_restoration_with_current_filenames(vehicl
 
     assert effective["AHRS_ORIENTATION"].value == 4
     assert effective["GPS1_TYPE"].value == 2
-    assert "installed sideways" in (vehicle_dir / "15_board_orientation.param").read_text(encoding="utf-8")
-    assert "project receiver" in (vehicle_dir / "18_gnss.param").read_text(encoding="utf-8")
+    assert "installed sideways" in (vehicle_dir / "16_board_orientation.param").read_text(encoding="utf-8")
+    assert "project receiver" in (vehicle_dir / "19_gnss.param").read_text(encoding="utf-8")
     assert not (vehicle_dir / "05_board_orientation.param").exists()
     assert not (vehicle_dir / "12_gnss.param").exists()
     assert {path.name for path in vehicle_dir.glob("*.param")} <= set(filesystem.configuration_steps)

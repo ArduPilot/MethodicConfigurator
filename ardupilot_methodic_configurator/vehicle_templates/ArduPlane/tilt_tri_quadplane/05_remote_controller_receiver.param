@@ -1,0 +1,4 @@
+RC_OPTIONS,32
+RC_PROTOCOLS,512  # Selected in the component editor
+RSSI_TYPE,3  # ReceiverProtocol: link quality reported by the CRSF receiver
+SERIAL2_PROTOCOL,23  # RC receiver on SERIAL2 requires RCIN

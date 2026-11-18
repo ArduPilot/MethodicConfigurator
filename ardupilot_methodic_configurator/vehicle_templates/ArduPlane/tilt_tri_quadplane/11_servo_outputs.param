@@ -1,0 +1,19 @@
+Q_TILT_ENABLE,1  # Enable tilt-rotor support. AMC reboots the FC first, which also activates Q_FRAME_CLASS=7 from step 08
+Q_TILT_MASK,3  # Motor 1 (front right) and motor 2 (front left) tilt. Rear motor 4 is fixed in the lift position
+Q_TILT_TYPE,2  # Vectored yaw: the left and right tilt servos move differentially for yaw in hover
+SERVO1_FUNCTION,33  # Motor 1: front right tilting motor ESC
+SERVO10_FUNCTION,0
+SERVO11_FUNCTION,39  # Motor 7 (tri tail yaw servo function). Nothing connected; ArduPlane assigns this by default on Tri frames
+SERVO12_FUNCTION,0
+SERVO13_FUNCTION,0
+SERVO14_FUNCTION,0
+SERVO15_FUNCTION,0
+SERVO16_FUNCTION,0
+SERVO2_FUNCTION,34  # Motor 2: front left tilting motor ESC
+SERVO3_FUNCTION,36  # Motor 4: fixed rear lift motor ESC
+SERVO4_FUNCTION,0  # Unused: on most flight controllers it shares a timer with the DShot motor outputs 1-3, so it cannot drive a PWM servo
+SERVO5_FUNCTION,76  # Front right tilt servo (TiltMotorFrontRight). Its range and direction are set in step 12
+SERVO6_FUNCTION,75  # Front left tilt servo (TiltMotorFrontLeft). Its range and direction are set in step 12
+SERVO7_FUNCTION,4  # Ailerons
+SERVO8_FUNCTION,19  # Elevator
+SERVO9_FUNCTION,21  # Rudder. Set to 0 if the airframe has no rudder; vectored yaw controls yaw in VTOL flight

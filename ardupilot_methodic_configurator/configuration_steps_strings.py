@@ -37,6 +37,7 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     _config_steps_strings = _("Configuring RC controller options ensures correct arming behavior and channel function assignments for the specific RC system in use")
     _config_steps_strings = _("Correct orientation ensures that the flight controller accurately interprets the vehicle's movements and orientation, which is fundamental for stable flight and navigation.")
     _config_steps_strings = _("Disarmed and replay logging must be disabled after windspeed estimation flights to avoid filling the storage with unnecessary logs")
+    _config_steps_strings = _("Each control surface and tilt servo must move in the correct direction, over the correct range, and be centered. A reversed aileron, elevator or tilt servo makes the aircraft uncontrollable.")
     _config_steps_strings = _("Ensures the vehicle operates within safe voltage limits and can trigger appropriate failsafe actions to protect the vehicle and its surroundings. It also helps by scaling the PIDs to provide a constant flight behavior, independent of the battery state-of-charge")
     _config_steps_strings = _("Evaluate the aircraft's PID tuning and flight characteristics with feed-forward enable to test faster dynamics")
     _config_steps_strings = _("Evaluating the aircraft's PID tuning and flight characteristics is best done with feed-forward disabled")
@@ -159,6 +160,7 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     _config_steps_strings = _("The notch filter setup step requires this, and the safety of the vehicle depends on the ESC and motor configuration")
     _config_steps_strings = _("The radio and flight controller inputs have been configured in the preceding steps.")
     _config_steps_strings = _("The sensor connections and core aircraft configuration are available before position tuning.")
+    _config_steps_strings = _("The servo output functions and the tilt-rotor configuration from the previous step are active after its reboot, and the surfaces must be correct before the motor test and the first flight.")
     _config_steps_strings = _("This is the last step in the tuning process")
     _config_steps_strings = _("You need to cool down the FC to perform this calibration. It is easier to do before the FC is mounted in the vehicle")
     _config_steps_strings = _("real-flight data is only available after the first flight")
@@ -200,6 +202,7 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     _config_steps_strings = _("Configure the PID notch filter(s) based on the data collected from the logging flight")
     _config_steps_strings = _("Configure the aircraft flight modes.")
     _config_steps_strings = _("Configure the battery monitor hardware connection type, protocol and calibration values")
+    _config_steps_strings = _("Configure the control surfaces and tilt servos")
     _config_steps_strings = _("Configure the notch filter settings, used to reduce gyroscope signal noise caused by the motors rotation")
     _config_steps_strings = _("Configure the notch filter(s) based on the data collected from the first flight")
     _config_steps_strings = _("Configure the position controller(s)")
@@ -282,6 +285,7 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     _config_steps_strings = _("Servo Output Functions")
     _config_steps_strings = _("Telemetry (landing page)")
     _config_steps_strings = _("Test AltHold")
+    _config_steps_strings = _("Tilt Rotor Planes")
     _config_steps_strings = _("Wind speed estimation")
     _config_steps_strings = _("optical flow sensor setup")
     _config_steps_strings = _("wind speed estimation")
@@ -349,6 +353,10 @@ Repeat the procedure until all post-filter noise peaks are below -50dB.""")
 Connect the RC-receiver to the FC, power on the RC-controller and bind them.
 Once the vehicle is tuned, you can remove it and operate the vehicle without it.""")
     _config_steps_strings = _("Only do this step once. It sets initial values that later steps will improve.")
+    _config_steps_strings = _("""Remove the propellers before moving any servo or motor.
+Use SERVOx_REVERSED so that the ailerons, elevator and rudder move in the commanded direction, and in FBWA they move to correct the aircraft attitude.
+Adjust SERVOx_TRIM so the surfaces are centered and SERVOx_MIN/SERVOx_MAX so they reach their full travel without binding.
+On a tilt-rotor, set SERVOx_REVERSED of each tilt servo so the rotors point forward in MANUAL and straight up in QSTABILIZE, then fine-tune SERVOx_MIN/SERVOx_MAX for the exact hover and forward-flight angles.""")
     _config_steps_strings = _("This step is optional, only perform it if your vehicle is tiny, huge, or its motor outputs oscillate")
     _config_steps_strings = _("""This step is optional, only perform it if your vehicle is tiny, huge, or its motor outputs oscillate.
 It must be repeated multiple times until outputs no longer oscillate.""")

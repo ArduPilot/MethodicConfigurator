@@ -1,0 +1,3 @@
+AUTOTUNE_AXES,4  # Autotune yaw axis
+Q_AUTOTUNE_AGGR,0.1
+Q_AUTOTUNE_AXES,4  # QAUTOTUNE yaw axis
