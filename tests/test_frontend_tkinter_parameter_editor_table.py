@@ -14,6 +14,7 @@ import sys
 import tkinter as tk
 from collections.abc import Callable, Generator
 from dataclasses import dataclass
+from pathlib import Path
 from tkinter import ttk
 from types import SimpleNamespace
 from typing import Any, Literal, cast
@@ -2735,6 +2736,110 @@ class TestHandlerEdgeCases:
         entry.testing_on_change_reason_change(focus_event)
 
         param.set_change_reason.assert_called_once_with("Updated")
+
+
+class TestChangeReasonPaste:
+    """Exercise multiline paste through the native Tk entry bindings."""
+
+    @pytest.fixture(params=["first\r\nsecond\nthird", "first\rsecond\rthird"], ids=["crlf-and-lf", "bare-cr"])
+    def paste_source(self, mock_master: tk.Tk, request: pytest.FixtureRequest) -> None:
+        """Supply clipboard and primary selection text without touching the user's clipboard."""
+        mock_master.tk.call("rename", "::tk::GetSelection", "::tk::GetSelectionOriginal")
+        mock_master.tk.call("proc", "::tk::GetSelection", "widget selection", "return ${::test_paste_text}")
+        mock_master.tk.call("set", "::test_paste_text", request.param)
+
+    @pytest.mark.usefixtures("paste_source")
+    @pytest.mark.parametrize("paste_selection", [False, True], ids=["clipboard", "primary-selection"])
+    def test_user_can_paste_a_multiline_reason_and_commit_it_immediately(
+        self, parameter_editor_table: ParameterEditorTable, mock_master: tk.Tk, paste_selection: bool
+    ) -> None:
+        """
+        Both paste actions insert a single line before an immediate commit.
+
+        GIVEN: The source contains CRLF, LF, or bare CR line breaks
+        WHEN: The user pastes it and leaves the field without waiting for idle callbacks
+        THEN: The field and the stored reason contain spaces at both line breaks
+        """
+        param = create_mock_data_model_ardupilot_parameter(comment="" if paste_selection else "A 📋 old Z")
+        entry = parameter_editor_table._create_change_reason_entry(param)
+        entry.pack()
+        mock_master.update_idletasks()
+
+        if paste_selection:
+            entry.event_generate("<<PasteSelection>>", x=5, y=5)
+            expected = "first second third"
+            expected_caret = entry.index(tk.END)
+        else:
+            end = entry.index(tk.END)
+            entry.selection_range(end - 5, end - 2)
+            entry.event_generate("<<Paste>>")
+            expected = "A 📋 first second third Z"
+            expected_caret = entry.index(tk.END) - 2
+
+        assert entry.get() == expected
+        assert entry.index(tk.INSERT) == expected_caret
+
+        entry.event_generate("<FocusOut>")
+        assert param.change_reason == expected
+
+    @pytest.mark.parametrize(
+        ("reason", "expected"),
+        [
+            ("first\r\nsecond\nthird", "first second third"),
+            ("first\rsecond", "first second"),
+            ("first\rEXTRA_PARAM,2", "first EXTRA_PARAM,2"),
+        ],
+        ids=["crlf-and-lf", "bare-cr", "parameter-like-text"],
+    )
+    def test_user_can_commit_a_reason_containing_line_breaks_without_a_paste_event(
+        self, parameter_editor_table: ParameterEditorTable, mock_master: tk.Tk, tmp_path: Path, reason: str, expected: str
+    ) -> None:
+        """
+        A reason containing line breaks is normalized at commit.
+
+        GIVEN: A field already contains multiline text
+        WHEN: The user leaves the field
+        THEN: The line breaks become spaces and the saved parameter reloads with the same reason
+        """
+        param = create_mock_data_model_ardupilot_parameter(comment="old")
+        entry = parameter_editor_table._create_change_reason_entry(param)
+        entry.pack()
+        mock_master.update_idletasks()
+        entry.delete(0, tk.END)
+        entry.insert(0, reason)
+
+        entry.event_generate("<FocusOut>")
+
+        assert entry.get() == param.change_reason == expected
+
+        parameters = ParDict({param.name: Par(float(param.value_as_string), param.change_reason_for_file)})
+        parameter_file = str(tmp_path / "test.param")
+        parameters.export_to_param(parameter_file)
+
+        assert ParDict.load_param_file_into_dict(parameter_file) == parameters
+
+    @pytest.mark.usefixtures("paste_source")
+    def test_user_can_leave_the_step_immediately_after_pasting(
+        self, parameter_editor_table: ParameterEditorTable, mock_master: tk.Tk
+    ) -> None:
+        """
+        Removing the reason field right after paste produces no Tk background error.
+
+        GIVEN: The user has an editable reason field
+        WHEN: They paste multiline text and the row is removed in the same event loop turn
+        THEN: Tk reports no errors when it processes idle callbacks
+        """
+        mock_master.tk.call("set", "::test_paste_error", "")
+        mock_master.tk.call("proc", "bgerror", "message", "set ::test_paste_error $message")
+        entry = parameter_editor_table._create_change_reason_entry(create_mock_data_model_ardupilot_parameter())
+        entry.pack()
+        mock_master.update_idletasks()
+
+        entry.event_generate("<<Paste>>")
+        entry.destroy()
+        mock_master.update_idletasks()
+
+        assert mock_master.tk.call("set", "::test_paste_error") == ""
 
 
 class TestUploadSelectionBehavior:

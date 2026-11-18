@@ -57,8 +57,30 @@ from ardupilot_methodic_configurator.macos_utilities import is_macos_sequoia_or_
 
 NEW_VALUE_WIDGET_WIDTH = 9
 NEW_VALUE_DIFFERENT_STR = "\u2260" if platform_system() == "Windows" else "!="
+_CHANGE_REASON_PASTE_TAG = "AMCChangeReasonPaste"
 
 # pylint: disable=too-many-lines
+
+
+def _normalize_change_reason(entry: ttk.Entry) -> str:
+    """Keep the reason on one line while preserving the caret position."""
+    text = entry.get()
+    normalized = text.replace("\r\n", " ").replace("\r", " ").replace("\n", " ")
+    if normalized != text:
+        # Use Tcl character offsets, which can differ from Python offsets for emoji.
+        prefix = str(entry.tk.call("string", "range", text, 0, entry.index(tk.INSERT) - 1))
+        normalized_prefix = prefix.replace("\r\n", " ").replace("\r", " ").replace("\n", " ")
+        caret = int(entry.tk.call("string", "length", normalized_prefix))
+        entry.delete(0, tk.END)
+        entry.insert(0, normalized)
+        entry.icursor(caret)
+    return normalized
+
+
+def _on_change_reason_paste(event: tk.Event) -> None:
+    """Normalize the text just inserted by the native entry binding."""
+    if isinstance(event.widget, ttk.Entry):
+        _normalize_change_reason(event.widget)
 
 
 @dataclass
@@ -1107,9 +1129,15 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         if not param.is_editable:
             change_reason_entry.config(state="disabled", background="light grey")
         else:
+            # Run in the same event, after TEntry handles clipboard or primary selection paste.
+            tags = change_reason_entry.bindtags()
+            change_reason_entry.bindtags((*tags[:2], _CHANGE_REASON_PASTE_TAG, *tags[2:]))
+            if not change_reason_entry.bind_class(_CHANGE_REASON_PASTE_TAG, "<<Paste>>"):
+                change_reason_entry.bind_class(_CHANGE_REASON_PASTE_TAG, "<<Paste>>", _on_change_reason_paste)
+                change_reason_entry.bind_class(_CHANGE_REASON_PASTE_TAG, "<<PasteSelection>>", _on_change_reason_paste)
 
             def _on_change_reason_change(event: tk.Event) -> None:
-                new_comment = change_reason_entry.get()
+                new_comment = _normalize_change_reason(change_reason_entry)
 
                 # Prevent duplicate execution when both Return and FocusOut events are triggered
                 if (
