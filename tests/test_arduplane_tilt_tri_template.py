@@ -191,3 +191,20 @@ def test_derived_quadplane_acceleration_limits_do_not_exceed_quadplane_defaults(
 
     assert error == ""
     assert config_steps.derived_parameters[step_file][parameter_name].value == quadplane_default
+
+
+def test_flight_mode_switch_has_no_manual_mode() -> None:
+    """
+    A tilt-rotor in MANUAL tilts the rotors fully forward at 90 deg/s, so it is kept off the mode switch.
+
+    GIVEN: The flight modes step of the tilt-tri template
+    WHEN: The flight mode channel and the six switch positions are read
+    THEN: Channel 8 selects the modes, no position is MANUAL and the 3-position switch positions are VTOL, FBWA and QRTL
+    """
+    modes = _step("22_flight_modes.param")
+    manual, fbwa, qstabilize, qrtl = 0, 5, 17, 21
+
+    assert modes["FLTMODE_CH"].value == 8
+    assert all(modes[f"FLTMODE{i}"].value != manual for i in range(1, 7))
+    assert [modes[f"FLTMODE{i}"].value for i in (1, 4, 6)] == [qstabilize, fbwa, qrtl]
+    assert modes["INITIAL_MODE"].value == qstabilize
