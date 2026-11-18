@@ -3946,6 +3946,41 @@ class TestParameterUploads:
         mock_repopulate.assert_called_once()
         mock_skip.assert_not_called()
 
+    @pytest.mark.parametrize("upload_button", ["on_upload_selected_click", "on_upload_selected_and_stay_click"])
+    def test_user_sees_refreshed_fc_values_on_the_same_step_after_canceling_upload_retry(
+        self, parameter_editor_window: ParameterEditorWindow, upload_button: str
+    ) -> None:
+        """
+        Redraw the current step when the upload does not complete.
+
+        GIVEN: The user uploads parameter changes with automatic skipping enabled
+        WHEN: The upload reports failure after the user cancels a retry
+        THEN: The table redraws without advancing the current step
+        """
+        window = parameter_editor_window
+        window.parameter_editor_table.options.skip_when_no_differences = True
+        window.parameter_editor.current_file = "01_setup.param"
+
+        def repopulate_table_without_skipping(_show_only_differences: bool, _gui_complexity: str) -> None:
+            assert window.parameter_editor_table.options.skip_when_no_differences is False
+
+        with (
+            patch.object(window.parameter_editor_table, "get_upload_selected_params", return_value={"ROLL_P": 0.2}),
+            patch.object(window.parameter_editor, "ensure_upload_preconditions", return_value=True),
+            patch.object(window, "write_changes_to_intermediate_parameter_file"),
+            patch.object(window, "upload_selected_params", return_value=False),
+            patch.object(
+                window.parameter_editor_table, "repopulate_table", side_effect=repopulate_table_without_skipping
+            ) as repopulate,
+            patch.object(window, "on_skip_click") as skip,
+        ):
+            getattr(window, upload_button)()
+
+        repopulate.assert_called_once()
+        skip.assert_not_called()
+        assert window.parameter_editor.current_file == "01_setup.param"
+        assert window.parameter_editor_table.options.skip_when_no_differences is True
+
     def test_user_receives_warning_when_no_fc_connection(self, parameter_editor_window: ParameterEditorWindow) -> None:
         """
         User receives feedback when attempting an upload without FC data.
