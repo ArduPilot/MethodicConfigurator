@@ -445,6 +445,41 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         frame_class = realistic_model.get_component_value(("Frame", "Specifications", "Frame class"))
         assert frame_class == "Hexa"
 
+    def test_user_can_import_quadplane_esc_protocol_from_q_m_pwm_type(self, realistic_model) -> None:
+        """
+        ArduPlane QuadPlane ESC protocol is imported from Q_M_PWM_TYPE.
+
+        GIVEN: An ArduPlane model and FC parameters with Q_M_PWM_TYPE set to 5 (DShot300) and no MOT_PWM_TYPE
+        WHEN: Processing FC parameters with the ArduPlane documentation
+        THEN: The ESC protocol is DShot300 instead of falling back to Normal
+        AND: The motor poles are taken from SERVO_BLH_POLES because the ESCs use DShot
+        """
+        realistic_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduPlane")
+        fc_parameters = {"Q_ENABLE": 1, "Q_M_PWM_TYPE": 5, "SERVO1_FUNCTION": 33, "SERVO_BLH_POLES": 12}
+        doc = {"Q_M_PWM_TYPE": {"values": {"0": "Normal", "5": "DShot300"}}}
+
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+            realistic_model.process_fc_parameters(fc_parameters, doc)
+
+        assert realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) == "DShot300"
+        assert realistic_model.get_component_value(("Motors", "Specifications", "Poles")) == 12
+
+    def test_quadplane_esc_protocol_import_ignores_copter_mot_pwm_type(self, realistic_model) -> None:
+        """
+        A stray MOT_PWM_TYPE does not override the ArduPlane Q_M_PWM_TYPE.
+
+        GIVEN: An ArduPlane model and FC parameters with Q_M_PWM_TYPE=6 (DShot600) and MOT_PWM_TYPE=0
+        WHEN: Processing FC parameters without documentation (fallback to the ArduPlane ESC dictionary)
+        THEN: The ESC protocol is DShot600
+        """
+        realistic_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduPlane")
+        fc_parameters = {"Q_M_PWM_TYPE": 6, "MOT_PWM_TYPE": 0}
+
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+            realistic_model.process_fc_parameters(fc_parameters, {})
+
+        assert realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) == "DShot600"
+
     def test_frame_class_takes_priority_over_q_frame_class_during_import(self, realistic_model) -> None:
         """
         FRAME_CLASS takes precedence over Q_FRAME_CLASS when both are present in FC parameters.
