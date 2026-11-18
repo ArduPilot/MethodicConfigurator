@@ -1,0 +1,7 @@
+BRD_SAFETY_DEFLT,0  # The H743-WLITE has no safety switch, so do not start with outputs disabled
+GPS1_GNSS_MODE,0
+GPS1_POS_X,0
+GPS1_POS_Y,0
+GPS1_POS_Z,0
+GPS1_TYPE,1  # Defined in component editor
+SERIAL3_PROTOCOL,5  # Matek M10Q-5883 GNSS on the GPS1 port (USART2)

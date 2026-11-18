@@ -1,0 +1,11 @@
+AIRSPEED_CRUISE,15  # Starting value for a 790 mm, 0.6-0.95 kg wing. Refine after the first fixed-wing flights
+AIRSPEED_MAX,22
+AIRSPEED_MIN,12  # The forward transition completes at this (synthetic) airspeed. Refine after the first fixed-wing flights
+ARSPD_TYPE,0  # No airspeed sensor fitted; ArduPilot uses a synthetic airspeed estimate
+ARSPD_USE,0
+BRD_RTC_TZ_MIN,0
+INS_POS1_X,0
+INS_POS1_Y,0
+Q_ASSIST_SPEED,7  # Without an airspeed sensor, the parameter description recommends 5 m/s below AIRSPEED_MIN
+SCHED_LOOP_RATE,300  # QuadPlane needs 300 Hz. ArduPlane only uses 300 Hz as the default when Q_ENABLE=1, so an explicit 50 here would cripple VTOL control
+SCR_ENABLE,0

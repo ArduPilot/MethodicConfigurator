@@ -1,0 +1,87 @@
+Q_TILT_ENABLE,1  # Enable tilt-rotor support. AMC reboots the FC first, which also activates Q_FRAME_CLASS=7 from step 08
+Q_TILT_MASK,3  # Motor 1 (front right) and motor 2 (front left) tilt. Rear motor 4 is fixed in the lift position
+Q_TILT_RATE_DN,15  # Slow tilt rate for the first transitions, as the tilt-rotor guide suggests. Increase gradually
+Q_TILT_RATE_UP,15  # Slow tilt rate for the first transitions, as the tilt-rotor guide suggests. Increase gradually
+Q_TILT_TYPE,2  # Vectored yaw: the left and right tilt servos move differentially for yaw in hover
+Q_TILT_YAW_ANGLE,10  # Starting value. Measure how many degrees the motors tilt back past vertical at the hover endpoint of the tilt servo
+SERVO10_FUNCTION,19  # Elevator, PWM, timer group 7-10
+SERVO10_MAX,1900
+SERVO10_MIN,1100
+SERVO10_REVERSED,0
+SERVO10_TRIM,1500
+SERVO11_FUNCTION,39  # Motor 7 (tri tail yaw servo function). Nothing connected; ArduPlane assigns this by default on Tri frames
+SERVO11_MAX,1900
+SERVO11_MIN,1100
+SERVO11_REVERSED,0
+SERVO11_TRIM,1500
+SERVO12_FUNCTION,0
+SERVO12_MAX,1900
+SERVO12_MIN,1100
+SERVO12_REVERSED,0
+SERVO12_TRIM,1500
+SERVO13_FUNCTION,0
+SERVO13_MAX,1900
+SERVO13_MIN,1100
+SERVO13_REVERSED,0
+SERVO13_TRIM,1500
+SERVO14_FUNCTION,0
+SERVO14_MAX,1900
+SERVO14_MIN,1100
+SERVO14_REVERSED,0
+SERVO14_TRIM,1500
+SERVO15_FUNCTION,0
+SERVO15_MAX,1900
+SERVO15_MIN,1100
+SERVO15_REVERSED,0
+SERVO15_TRIM,1500
+SERVO16_FUNCTION,0
+SERVO16_MAX,1900
+SERVO16_MIN,1100
+SERVO16_REVERSED,0
+SERVO16_TRIM,1500
+SERVO1_FUNCTION,0  # Unused
+SERVO1_MAX,1900
+SERVO1_MIN,1100
+SERVO1_REVERSED,0
+SERVO1_TRIM,1500
+SERVO2_FUNCTION,0  # Unused
+SERVO2_MAX,1900
+SERVO2_MIN,1100
+SERVO2_REVERSED,0
+SERVO2_TRIM,1500
+SERVO3_FUNCTION,33  # Motor 1: front right tilting motor ESC (DShot)
+SERVO3_MAX,2000
+SERVO3_MIN,1000
+SERVO3_REVERSED,0
+SERVO3_TRIM,1000
+SERVO4_FUNCTION,36  # Motor 4: fixed rear lift motor ESC (DShot)
+SERVO4_MAX,2000
+SERVO4_MIN,1000
+SERVO4_REVERSED,0
+SERVO4_TRIM,1000
+SERVO5_FUNCTION,34  # Motor 2: front left tilting motor ESC (DShot)
+SERVO5_MAX,2000
+SERVO5_MIN,1000
+SERVO5_REVERSED,0
+SERVO5_TRIM,1000
+SERVO6_FUNCTION,0  # Unused: shares a timer with output 5, which runs DShot, so it cannot drive a PWM servo
+SERVO6_MAX,1900
+SERVO6_MIN,1100
+SERVO6_REVERSED,0
+SERVO6_TRIM,1500
+SERVO7_FUNCTION,4  # Ailerons, PWM, timer group 7-10
+SERVO7_MAX,1900
+SERVO7_MIN,1100
+SERVO7_REVERSED,0
+SERVO7_TRIM,1500
+SERVO8_FUNCTION,76  # Right wing tilt servo (TiltMotorFrontRight), PWM, timer group 7-10
+SERVO8_MAX,2080
+SERVO8_MIN,820
+SERVO8_REVERSED,1  # The right tilt servo is mounted mirrored to the left one
+SERVO8_TRIM,1500
+SERVO9_FUNCTION,75  # Left wing tilt servo (TiltMotorFrontLeft), PWM, timer group 7-10
+SERVO9_MAX,2080
+SERVO9_MIN,820
+SERVO9_REVERSED,0
+SERVO9_TRIM,1500
+SERVO_AUTO_TRIM,0

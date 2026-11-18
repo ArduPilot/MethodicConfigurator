@@ -1,0 +1,12 @@
+NTF_BUZZ_TYPES,5
+NTF_LED_TYPES,647367
+Q_M_PWM_MAX,2000  # DShot: the ESC throttle range is fixed
+Q_M_PWM_MIN,1000  # DShot: the ESC throttle range is fixed
+Q_M_SPIN_ARM,0.1  # Find the lowest reliable value with the motor test in step 12
+Q_M_SPIN_MAX,0.95
+Q_M_SPIN_MIN,0.15  # Must be above Q_M_SPIN_ARM. Check with the motor test in step 12
+SERVO_BLH_AUTO,1  # Auto-enable BLHeli passthrough on the VTOL motors. The 4.7.2 tri motor mask covers only motors 1, 2 and 4, so the Motor 7 output on SERVO11 is not included
+SERVO_BLH_BDMASK,28  # Bidirectional DShot (RPM telemetry) on the ESC outputs 3, 4 and 5. Requires the MatekH743-bdshot firmware and Bluejay ESCs
+SERVO_BLH_MASK,28  # BLHeli passthrough and DShot commands on the ESC outputs 3, 4 and 5
+SERVO_DSHOT_ESC,2  # BLHeli_S/Bluejay
+SERVO_DSHOT_RATE,0
