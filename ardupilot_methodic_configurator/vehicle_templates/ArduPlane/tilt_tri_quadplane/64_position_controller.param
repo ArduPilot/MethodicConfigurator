@@ -1,0 +1,9 @@
+LOG_BITMASK,145150  # Add Navigation logging
+Q_LOIT_ACC_MAX_M,2.5  # QuadPlane default
+Q_LOIT_BRK_ACC_M,0.5  # QuadPlane default
+Q_LOIT_BRK_DELAY,1
+Q_LOIT_BRK_JRK_M,2.5  # QuadPlane default
+Q_LOIT_SPEED_MS,5  # QuadPlane default
+Q_P_NE_VEL_FF,0
+Q_WP_ACC,1  # QuadPlane default
+Q_WP_SPD,5  # QuadPlane default

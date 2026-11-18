@@ -548,7 +548,9 @@ def test_finish_steps_import_available_limits_and_respect_vehicle_eligibility(ve
     data = json.loads((root / f"configuration_steps_{vehicle}.json").read_text(encoding="utf-8"))
     jsonschema.validate(data, json.loads((root / "configuration_steps_schema.json").read_text(encoding="utf-8")))
     steps = data["steps"]
-    filename = "73_autotune_finish.param" if vehicle == "Heli" else "49_autotune_finish.param"
+    filename = {"Heli": "73_autotune_finish.param", "ArduPlane": "50_autotune_finish.param"}.get(
+        vehicle, "49_autotune_finish.param"
+    )
     step = steps[filename]
     if vehicle == "Rover":
         assert "plugin" not in step

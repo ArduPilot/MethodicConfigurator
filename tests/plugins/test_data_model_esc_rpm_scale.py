@@ -253,7 +253,7 @@ class TestConfigurationStepIntegration:
     """Verify every vehicle workflow exposes the plugin and enables scripting."""
 
     @pytest.mark.parametrize(
-        ("vehicle_type", "motor_step"), [("ArduCopter", "12"), ("ArduPlane", "12"), ("Heli", "32"), ("Rover", "23")]
+        ("vehicle_type", "motor_step"), [("ArduCopter", "12"), ("ArduPlane", "13"), ("Heli", "32"), ("Rover", "23")]
     )
     def test_telemetry_and_motor_steps_expose_their_respective_plugins(self, vehicle_type: str, motor_step: str) -> None:
         package_dir = Path(ardupilot_methodic_configurator.__file__).resolve().parent
