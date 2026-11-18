@@ -527,7 +527,7 @@ class TestComponentDataModelImportInternals:
         doc: dict = {}
         with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as mock_log:
             realistic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
-        mock_log.assert_called_once_with("Invalid non-integer value for MOT_PWM_TYPE %s", "invalid")
+        mock_log.assert_called_once_with("Invalid non-integer value for %s %s", "MOT_PWM_TYPE", "invalid")
         assert realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type")) == "Main Out"
 
     def test_missing_motor_pwm_type_uses_the_zero_default(self, realistic_model) -> None:
@@ -576,7 +576,7 @@ class TestComponentDataModelImportInternals:
             connection_options,
         )
 
-        realistic_model._set_esc_type_from_fc_parameters({"MOT_PWM_TYPE": 6}, {})
+        realistic_model._set_esc_type_from_fc_parameters({"Q_M_PWM_TYPE": 6}, {})
 
         assert realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) == "PlaneDShot"
         assert requested_firmware_types == ["ArduPlane"]
