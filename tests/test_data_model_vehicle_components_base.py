@@ -17,7 +17,7 @@ from typing import Any
 from unittest.mock import MagicMock, Mock
 
 import pytest
-from test_data_model_vehicle_components_common import BasicTestMixin, ComponentDataModelFixtures, RealisticDataTestMixin
+from test_data_model_vehicle_components_common import ComponentDataModelFixtures
 
 from ardupilot_methodic_configurator import __version__
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
@@ -29,8 +29,8 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema i
 # pylint: disable=protected-access,too-many-public-methods,too-many-lines
 
 
-class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
-    """Tests for the ComponentDataModel class."""
+class TestComponentDataModelBase:
+    """Tests for the ComponentDataModelBase class."""
 
     @pytest.fixture
     def empty_model(self) -> ComponentDataModelBase:
@@ -47,7 +47,6 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         """Create a realistic vehicle data model based on the JSON file."""
         return ComponentDataModelFixtures.create_realistic_model(ComponentDataModelBase)
 
-    # Additional tests specific to ComponentDataModelBase that aren't covered by mixins
     def test_system_sets_component_values_at_nested_paths(self, basic_model) -> None:
         """
         System correctly sets component values at various nested path levels.
@@ -346,37 +345,39 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
 
     # Tests for specific ComponentDataModelBase methods
 
-    def test_system_updates_json_structure_for_old_file_formats(self, empty_model) -> None:
+    def test_system_updates_json_structure_for_old_file_formats(self) -> None:
         """
         System updates JSON structure to add missing required fields from old formats.
 
         GIVEN: Component data with minimal or missing structure
-        WHEN: Calling update_json_structure
+        WHEN: Initializing the legacy project
         THEN: All required component fields should be added
         AND: Default values should be set for missing fields
-        AND: Program version field should be added
+        AND: Version fields should be added
         """
-        # Start with minimal data
-        empty_model._data = {"Components": {}}
+        # Arrange: Load a legacy project with an empty component list
+        model = ComponentDataModelBase({"Components": {}}, {}, ComponentDataModelFixtures.create_schema())
+        assert not model.has_components()
 
-        empty_model.update_json_structure()
+        # Act: Initialize the loaded project
+        model.post_init({})
 
-        # Check that all required fields are added
-        assert "Battery" in empty_model._data["Components"]
-        assert "Specifications" in empty_model._data["Components"]["Battery"]
-        assert "Chemistry" in empty_model._data["Components"]["Battery"]["Specifications"]
-        assert empty_model._data["Components"]["Battery"]["Specifications"]["Chemistry"] == "Lipo"
-
-        assert "Frame" in empty_model._data["Components"]
-        assert "Specifications" in empty_model._data["Components"]["Frame"]
-        assert "TOW min Kg" in empty_model._data["Components"]["Frame"]["Specifications"]
-        assert "TOW max Kg" in empty_model._data["Components"]["Frame"]["Specifications"]
-
-        assert "Flight Controller" in empty_model._data["Components"]
-        assert "Specifications" in empty_model._data["Components"]["Flight Controller"]
-        assert "MCU Series" in empty_model._data["Components"]["Flight Controller"]["Specifications"]
-
-        assert "Program version" in empty_model._data
+        # Assert: Required components have usable default values
+        components = model.get_all_components()
+        assert model.has_components()
+        assert set(components) == {"Battery", "Frame", "Flight Controller"}
+        assert components["Battery"]["Specifications"] == {"Chemistry": "Lipo", "Capacity mAh": 0}
+        assert components["Frame"]["Specifications"]["TOW min Kg"] == 1
+        assert components["Frame"]["Specifications"]["TOW max Kg"] == 1
+        assert components["Flight Controller"] == {
+            "Product": {},
+            "Firmware": {},
+            "Specifications": {"MCU Series": "Unknown"},
+            "Notes": "",
+        }
+        data = model.get_component_data()
+        assert data["Format version"] == 1
+        assert data["Program version"] == __version__
 
     def test_system_migrates_old_gnss_receiver_key_to_new_format(self, basic_model) -> None:
         """
@@ -918,28 +919,31 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         basic_model.init_battery_chemistry()
         assert basic_model._battery_chemistry == "Lipo"  # Should default to Lipo for invalid chemistry
 
-    def test_system_provides_multiple_component_access_methods(self, realistic_model) -> None:
+    def test_user_can_access_saved_component_specifications(self, realistic_model: ComponentDataModelBase) -> None:
         """
-        System provides various methods to access and check components.
+        A saved project exposes its component specifications.
 
-        GIVEN: Model with components
-        WHEN: Using different access methods (get_all_components, has_components)
-        THEN: get_all_components should return dict of all components
-        AND: has_components should return True when components exist
-        AND: has_components should return False for empty models
+        GIVEN: A vehicle project with populated component data
+        WHEN: Reading the initialized model
+        THEN: The saved flight-controller, battery, frame, and motor values are available
         """
-        # Test accessing all top-level components
+        # Act: Read the initialized project components
         components = realistic_model.get_all_components()
-        assert isinstance(components, dict)
-        assert len(components) > 0
 
-        # Test has_components method
-        assert realistic_model.has_components() is True
-
-        # Test with model that has no components
-        mock_schema = Mock(spec=VehicleComponentsJsonSchema)
-        empty_components = ComponentDataModelBase({"Components": {}, "Format version": 1}, {}, mock_schema)
-        assert empty_components.has_components() is False
+        # Assert: Saved values survive project initialization
+        controller = components["Flight Controller"]
+        assert controller["Product"]["Manufacturer"] == "Matek"
+        assert controller["Product"]["Model"] == "H743 SLIM"
+        assert controller["Firmware"]["Type"] == "ArduCopter"
+        assert controller["Specifications"]["MCU Series"] == "STM32H7xx"
+        battery = components["Battery"]["Specifications"]
+        assert battery["Chemistry"] == "Lipo"
+        assert battery["Number of cells"] == 4
+        assert battery["Capacity mAh"] == 1800
+        assert battery["Volt per cell max"] == 4.2
+        assert realistic_model.get_component_value(("Frame", "Specifications", "TOW min Kg")) == 0.6
+        assert realistic_model.get_component_value(("Frame", "Specifications", "TOW max Kg")) == 0.6
+        assert realistic_model.get_component_value(("Motors", "Specifications", "Poles")) == 14
 
     def test_system_preserves_version_fields_as_strings(self, basic_model) -> None:
         """

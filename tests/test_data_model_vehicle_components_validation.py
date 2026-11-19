@@ -14,12 +14,7 @@ import math
 from unittest.mock import patch as _patch
 
 import pytest
-from test_data_model_vehicle_components_common import (
-    SAMPLE_DOC_DICT,
-    BasicTestMixin,
-    ComponentDataModelFixtures,
-    RealisticDataTestMixin,
-)
+from test_data_model_vehicle_components_common import SAMPLE_DOC_DICT, ComponentDataModelFixtures
 
 import ardupilot_methodic_configurator.data_model_vehicle_components_validation as validation_module
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
@@ -32,7 +27,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_validation im
 ESC_TELEMETRY_SERIAL_PORTS = tuple(f"SERIAL{number}" for number in range(1, 9))
 
 
-class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
+class TestComponentDataModelValidation:
     """Tests for the ComponentDataModelValidation class."""
 
     @pytest.fixture

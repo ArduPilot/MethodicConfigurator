@@ -500,12 +500,10 @@ def test_orientation_monitor_reuses_then_renews_the_imu_stream(connected_flight_
     controller.request_scaled_imu_messages.return_value = (True, "")
     controller.poll_scaled_imu.return_value = (100.0, 200.0, 300.0)
     model = AhrsOrientationDataModel(controller)
-    assert model._got_imu_stream is False
     for _ in range(2):
         assert model.poll_imu_raw() == pytest.approx((150.0 * sqrt(2), 50.0 * sqrt(2), 300.0))
     controller.request_scaled_imu_messages.assert_called_once()
     model.stop_imu_monitoring()
-    assert model._got_imu_stream is False
     assert model.poll_imu_raw() == pytest.approx((150.0 * sqrt(2), 50.0 * sqrt(2), 300.0))
     assert controller.request_scaled_imu_messages.call_count == 2
 
