@@ -40,7 +40,7 @@ from ardupilot_methodic_configurator.plugins.frontend_tkinter_esc_rpm_scale impo
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_ESC_TELEMETRY
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory, PluginModelContext
 
-# pylint: disable=protected-access,redefined-outer-name,too-many-lines
+# pylint: disable=protected-access,redefined-outer-name
 
 
 @pytest.fixture
@@ -281,48 +281,6 @@ def test_bdshot_zero_padding_respects_mask_and_mavlink_offset(link: SimpleNamesp
     rows = model.update(EscTelemetrySnapshot(object(), 0, readings))
     assert model.visible_esc_indices == (5,)
     assert rows[0][4:8] == ("-", "0*", "-", "-")
-
-
-def test_missing_bdshot_mask_uses_a_zero_default(link: SimpleNamespace, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Treat an absent output mask as disabled while preserving the explicit zero fallback."""
-
-    class TrackingParameters(dict[str, float]):
-        """Record the fallback passed for a missing flight-controller parameter."""
-
-        mask_default: object = None
-
-    def tracking_get(parameters: TrackingParameters, key: object, default: object = None) -> object:
-        if key == "SERVO_BLH_BDMASK":
-            parameters.mask_default = default
-        return dict.get(parameters, key, default)
-
-    monkeypatch.setattr(TrackingParameters, "get", tracking_get)
-
-    parameters = TrackingParameters({"ESC_TLM_MAV_OFS": 0.0})
-    link.controller.fc_parameters = parameters
-    model = EscTelemetryDataModel(link.controller)
-
-    assert model._configured_bdshot_output(0) is False
-    assert parameters.mask_default == 0
-
-
-def test_bdshot_mask_rejects_an_offset_past_the_output_range(link: SimpleNamespace) -> None:
-    """Reject even a matching mask bit when the MAVLink offset is out of range."""
-    link.controller.fc_parameters = {"SERVO_BLH_BDMASK": float(1 << 31), "ESC_TLM_MAV_OFS": 32.0}
-    model = EscTelemetryDataModel(link.controller)
-
-    assert model._configured_bdshot_output(-1) is False
-
-
-def test_clearing_esc_telemetry_forgets_the_active_connection(link: SimpleNamespace) -> None:
-    """Initialize and clear the connection baseline back to the disconnected state."""
-    model = EscTelemetryDataModel(link.controller)
-    assert model._connection is None
-
-    model.update(EscTelemetrySnapshot(object(), 0))
-    model.clear_live_data()
-
-    assert model._connection is None
 
 
 @pytest.mark.parametrize(

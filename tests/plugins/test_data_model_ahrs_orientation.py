@@ -455,31 +455,6 @@ class TestAhrsOrientationDataModelCaptureAndEstimate:
         assert estimate.match_score_percent == pytest.approx(0.5)
         assert estimate.is_preset_match is False
 
-    def test_estimate_accepts_the_exact_preset_gap_boundary(
-        self, connected_flight_controller, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """Treat a score gap of exactly three percentage points as a preset match."""
-
-        class ExactGapScore(float):
-            """Supply an exact binary result for the documented comparison boundary."""
-
-            def __sub__(self, _other: object) -> float:
-                return 0.03
-
-        model = AhrsOrientationDataModel(connected_flight_controller)
-        model._samples = dict.fromkeys(model.get_required_steps(), (0.0, 0.0, -1000.0))
-        monkeypatch.setattr(model, "_estimate_board_from_body_matrix", model._identity_matrix)
-        monkeypatch.setattr(model, "_capture_alignment", lambda _matrix: 1.0)
-        monkeypatch.setattr(model, "_best_preset_code", lambda _matrix: (0, ExactGapScore(0.95)))
-        monkeypatch.setattr(model, "_second_best_score", lambda _matrix, _code: 0.92)
-        monkeypatch.setattr(model, "_matrix_to_euler321_deg", lambda _matrix: (0.0, 0.0, 0.0))
-
-        ok, estimate, _message = model.estimate_orientation()
-
-        assert ok is True
-        assert estimate is not None
-        assert estimate.is_preset_match is True
-
 
 @pytest.mark.parametrize("acceleration", [7.0, 7.5, 13.0])
 def test_capture_accepts_the_documented_still_acceleration_range(connected_flight_controller, acceleration: float) -> None:

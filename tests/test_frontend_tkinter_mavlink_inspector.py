@@ -142,8 +142,9 @@ def test_radio_panel_shows_three_name_value_unit_tuples(inspector: MavlinkInspec
 def test_inspector_initializes_its_window_guidance_and_fields(inspector: MavlinkInspectorWindow) -> None:
     """The inspector opens with its identifying title, usable size, and fresh-data guidance."""
     assert inspector.root.title() == _("MAVLink inspector")
-    expected_geometry = inspector.calculate_scaled_geometry(750, 650).split("+", maxsplit=1)[0]
-    assert inspector.root.geometry().split("+", maxsplit=1)[0] == expected_geometry
+    if sys.platform != "darwin":  # Window geometry requires rendering, unsafe on headless macOS CI
+        expected_geometry = inspector.calculate_scaled_geometry(750, 650).split("+", maxsplit=1)[0]
+        assert inspector.root.geometry().split("+", maxsplit=1)[0] == expected_geometry
     assert inspector._state == TelemetryState()
     assert inspector._closed is False
     assert inspector._hovered_cell is None
@@ -402,8 +403,12 @@ def test_usb_connection_guidance_is_visible_and_wraps_safely(
     """
     assert len(inspector.connection_note.pack_info()) > 0
     assert "USB connection measures USB traffic, not the telemetry radio link" in inspector.connection_note.cget("text")
-    # Deliver the resize through its binding without waiting for native window layout.
-    inspector.main_frame.event_generate("<Configure>", width=width)
+    if sys.platform == "darwin":
+        # Headless macOS CI suppresses layout, so synthetic Configure events are not delivered reliably.
+        inspector._resize_notices(SimpleNamespace(width=width))  # type: ignore[arg-type]
+    else:
+        # Deliver the resize through its binding without waiting for native window layout.
+        inspector.main_frame.event_generate("<Configure>", width=width)
     assert int(inspector.status.cget("wraplength")) == expected_wraplength
     assert int(inspector.connection_note.cget("wraplength")) == expected_wraplength
 

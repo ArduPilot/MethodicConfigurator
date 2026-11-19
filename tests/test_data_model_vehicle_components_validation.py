@@ -431,19 +431,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
             assert error_msg != ""
             assert corrected_value is None
 
-    @pytest.mark.parametrize(
-        ("value", "expected_error"),
-        [
-            ("heavy", "Invalid float value for Takeoff Weight"),
-            ("not-a-number", "Invalid float value for Takeoff Weight"),
-        ],
-    )
-    def test_validate_entry_limits_reports_the_field_and_type(self, realistic_model, value: str, expected_error: str) -> None:
+    @pytest.mark.parametrize("field", ["min", "max"])
+    @pytest.mark.parametrize("value", ["heavy", "not-a-number"])
+    def test_validate_entry_limits_reports_the_field_and_type(self, realistic_model, field: str, value: str) -> None:
         """Invalid numeric values identify the field and expected data type."""
-        field = "min" if "min" in expected_error else "max"
         path = ("Frame", "Specifications", f"TOW {field} Kg")
 
-        assert realistic_model.validate_entry_limits(value, path) == (expected_error, None)
+        assert realistic_model.validate_entry_limits(value, path) == ("Invalid float value for Takeoff Weight", None)
 
     def test_validate_entry_limits_tow_relationships(self, realistic_model) -> None:
         """

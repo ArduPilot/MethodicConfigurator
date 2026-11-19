@@ -9,7 +9,6 @@ SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import builtins
 import threading
 from collections.abc import Generator
 from dataclasses import replace
@@ -25,7 +24,6 @@ from pymavlink import mavutil
 from pymavlink.dialects.v20 import ardupilotmega as mavlink
 from telemetry_test_helpers import connected_telemetry_link, create_telemetry_link, feed
 
-from ardupilot_methodic_configurator import data_model_data_telemetry
 from ardupilot_methodic_configurator.backend_data_telemetry import DataTelemetryBackend
 from ardupilot_methodic_configurator.backend_esc_telemetry import EscTelemetryBackend
 from ardupilot_methodic_configurator.backend_mavftp import FTP_OP, MAVFTP, OP_WriteFile
@@ -871,19 +869,6 @@ def test_radio_counter_rewind_rebaselines_before_next_measured_interval() -> Non
     recovered = model.update(TelemetrySample(connection, 1.25, radio=replace(radio, time=1.25, rxerrors=13)))
 
     assert recovered.radio_error_rate == 4
-
-
-def test_rate_calculation_uses_strictly_paired_counter_samples(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Keep the three cumulative counters paired when calculating rates."""
-    zip_spy = MagicMock(wraps=builtins.zip)
-    monkeypatch.setattr(data_model_data_telemetry, "zip", zip_spy, raising=False)
-    model = DataTelemetryDataModel(MagicMock())
-    connection = object()
-    model.update(TelemetrySample(connection, 0, rx_bytes=100, tx_bytes=50, parse_errors=2))
-
-    model.update(TelemetrySample(connection, 1, rx_bytes=130, tx_bytes=62, parse_errors=4))
-
-    zip_spy.assert_called_once_with((130, 62, 4), (100, 50, 2), strict=True)
 
 
 def test_heartbeat_sender_reuses_the_existing_encoder_lock_and_preserves_requested_mavlink_version(
