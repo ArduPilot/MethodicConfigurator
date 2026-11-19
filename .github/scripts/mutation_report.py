@@ -72,6 +72,8 @@ def environment_metadata() -> dict[str, Any]:
     config_path = Path("pyproject.toml")
     config_bytes = config_path.read_bytes() if config_path.is_file() else b""
     config = tomllib.loads(config_bytes.decode()).get("tool", {}).get("mutmut", {})
+    shard_targets_path = Path(".cache/mutation/shard-targets.json")
+    shard_targets = read_json(shard_targets_path, []) if shard_targets_path.is_file() else []
     dependency_path = Path(".cache/mutation/dependencies.txt")
     return {
         "github": {
@@ -95,12 +97,14 @@ def environment_metadata() -> dict[str, Any]:
         "cpu_model": platform.processor(),
         "physical_memory_bytes": os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES") if hasattr(os, "sysconf") else None,
         "mutmut_config": config,
+        "active_mutation_targets": shard_targets,
         "pyproject_sha256": hashlib.sha256(config_bytes).hexdigest(),
         "dependencies_sha256": hashlib.sha256(dependency_path.read_bytes()).hexdigest() if dependency_path.is_file() else None,
         "restored_cache_key": os.environ.get("MUTATION_CACHE_KEY"),
         "previous_artifact_id": os.environ.get("MUTATION_PREVIOUS_ARTIFACT_ID"),
         "baseline_outcome": os.environ.get("MUTATION_BASELINE_OUTCOME"),
         "mutation_outcome": os.environ.get("MUTATION_RUN_OUTCOME"),
+        "mutation_shard": os.environ.get("MUTATION_SHARD"),
     }
 
 
@@ -189,6 +193,7 @@ def build_report(state_dir: Path, output_dir: Path) -> dict[str, Any]:  # pylint
     metadata = environment_metadata()
     attempts = worker_timings(output_dir)
     modules, test_seconds = module_measurements(state_dir, output_dir, attempts, warnings, metadata["mutmut_config"])
+    empty_shard = bool(metadata["mutation_shard"]) and not metadata["active_mutation_targets"]
     run = read_json(output_dir / "run-timing.json", warnings)
     baseline = read_json(output_dir / "baseline-timing.json", warnings)
     started_at = os.environ.get("MUTATION_JOB_STARTED_AT")
@@ -199,11 +204,11 @@ def build_report(state_dir: Path, output_dir: Path) -> dict[str, Any]:  # pylint
     unassociated = pending - sum(module["pending_mutants_with_test_associations"] for module in modules)
     if unassociated:
         warnings.append(f"{unassociated} pending mutants have no recorded test association; their test cost is unknown.")
-    if not attempts:
+    if not attempts and not empty_shard:
         warnings.append("No measured worker completions were logged; mutation durations are unavailable, not zero.")
     if (output_dir / "forkserver.log.3").is_file():
         warnings.append("Log rotation reached its last backup; older worker measurements may have been discarded.")
-    if not modules:
+    if not modules and not empty_shard:
         warnings.append("No mutation inventory is available; this run does not establish suite completion.")
     discarded = read_json(output_dir / "discarded-state.json", warnings) or []
     report = {
@@ -217,10 +222,13 @@ def build_report(state_dir: Path, output_dir: Path) -> dict[str, Any]:  # pylint
             "mutants": sum(module["total_mutants"] for module in modules),
             "statuses": dict(totals),
             "pending_mutants": pending,
-            "inventory_fully_checked": bool(modules)
-            and pending == 0
-            and not discarded
-            and not any(warning.startswith("Cannot read") for warning in warnings),
+            "inventory_fully_checked": empty_shard
+            or (
+                bool(modules)
+                and pending == 0
+                and not discarded
+                and not any(warning.startswith("Cannot read") for warning in warnings)
+            ),
             "observed_attempts": len(attempts),
             "observed_unique_mutants": len({attempt["mutant"] for attempt in attempts}),
             "observed_worker_seconds": sum(attempt["worker_seconds"] for attempt in attempts),
@@ -267,6 +275,8 @@ def build_report(state_dir: Path, output_dir: Path) -> dict[str, Any]:  # pylint
 def render_summary(report: dict[str, Any]) -> str:
     """Show completeness and slow modules without conflating cached results with work."""
     totals = report["totals"]
+    shard = report["environment"].get("mutation_shard")
+    artifact_name = f"mutation-py311-{shard}" if shard else "mutation-py311"
     lines = [
         "### Mutation testing",
         "",
@@ -281,6 +291,8 @@ def render_summary(report: dict[str, Any]) -> str:
         ),
         "",
     ]
+    if shard and not report["environment"].get("active_mutation_targets"):
+        lines.extend([f"Shard `{shard}` has no configured mutation targets; no Mutmut run was needed.", ""])
     for label, timing in (("Baseline", report["baseline"]), ("Mutation command", report["run"])):
         if timing:
             lines.extend([f"{label}: {timing['wall_seconds'] / 60:.1f} minutes; exit code {timing['exit_code']}.", ""])
@@ -317,7 +329,7 @@ def render_summary(report: dict[str, Any]) -> str:
             "*Test-only estimates exclude worker startup and timeouts; they are not wall-time forecasts.",
             "",
             (
-                "Download `mutation-py311` for diagnostics.json, modules.csv, tests.csv, worker-timings.jsonl, "
+                f"Download `{artifact_name}` for diagnostics.json, modules.csv, tests.csv, worker-timings.jsonl, "
                 "test associations, baseline JUnit results, dependencies, resource usage, and execution/crash logs."
             ),
             "",
