@@ -141,6 +141,17 @@ reverse the order.
 - **Size** uses the actual byte count, not the displayed abbreviated value.
 - **Modified** uses the underlying modification timestamp.
 
+### Transfer by drag and drop
+
+Drag one or more selected entries between the FC and PC tables to transfer
+them. Dropping FC entries on the PC table downloads them into the currently
+displayed PC directory. Dropping PC entries on the FC table uploads them into
+the currently displayed FC directory. Directories transfer recursively.
+
+The usual overwrite confirmation, CRC verification setting, progress window,
+retry, and transfer summary apply. Dropping outside the opposite table does not
+start a transfer.
+
 ## Create, rename, and delete entries
 
 ### Create a directory

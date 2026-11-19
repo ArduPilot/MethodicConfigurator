@@ -133,6 +133,16 @@ class _PanelState:
     pending_entry: str | None = None
 
 
+@dataclass(frozen=True)
+class _PanelDragState:
+    """Selected entries and origin captured at the start of a cross-panel drag."""
+
+    source_remote: bool
+    entries: tuple[FlightControllerLogFile | LocalFileEntry, ...]
+    start_x_root: int
+    start_y_root: int
+
+
 class FileBrowserUiServices(Protocol):  # pylint: disable=too-few-public-methods
     """UI callbacks required by the two-panel file browser."""
 
@@ -179,6 +189,9 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         self.remote_entries: list[FlightControllerLogFile] = []
         self.local_entries: list[LocalFileEntry] = []
         self._panel_states = {"remote": _PanelState(), "local": _PanelState()}
+        self._panel_drag_state: _PanelDragState | None = None
+        self._panel_drag_started = False
+        self._drag_hover_tree: ttk.Treeview | None = None
         self.last_selected_panel = "remote"
         self._task_runner: TaskRunner = task_runner if task_runner is not None else BackgroundTaskRunner(self.root.after)
         self._local_task_runner: TaskRunner = (
@@ -394,6 +407,9 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         tree.bind("<F5>", self._on_refresh_key)
         tree.bind("<Left>", self._on_left_arrow)
         tree.bind("<Right>", self._on_right_arrow)
+        tree.bind("<ButtonPress-1>", partial(self._begin_panel_drag, remote=remote), add="+")
+        tree.bind("<B1-Motion>", self._on_panel_drag_motion, add="+")
+        tree.bind("<ButtonRelease-1>", self._finish_panel_drag, add="+")
 
         def show_context_menu(event: tk.Event, is_remote: bool = remote) -> str:
             return self._show_context_menu(event, is_remote)
@@ -412,7 +428,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
             self._remember_panel_from_selection(panel)
 
         tree.bind("<FocusIn>", remember_focus)
-        tree.bind("<ButtonRelease-1>", remember_click)
+        tree.bind("<ButtonRelease-1>", remember_click, add="+")
         tree.bind("<<TreeviewSelect>>", remember_selection)
         scrollbar = ttk.Scrollbar(parent, orient=tk.VERTICAL, command=tree.yview)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -747,6 +763,80 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         """Remember which panel was most recently focused or selected."""
         if panel in {"remote", "local"}:
             self.last_selected_panel = panel
+
+    def _begin_panel_drag(self, event: tk.Event, remote: bool) -> None:
+        """Capture the clicked entry or current multi-selection as a drag payload."""
+        tree = self.remote_tree if remote else self.local_tree
+        entries = self.remote_entries if remote else self.local_entries
+        selected_item_ids = tree.selection()
+        item_id = tree.identify_row(event.y)
+        drag_item_ids = selected_item_ids if item_id in selected_item_ids else ((item_id,) if item_id else ())
+        selected_entries = tuple(
+            entry
+            for selected_item_id in drag_item_ids
+            if (entry := self._entry_from_tree(entries, selected_item_id)) is not None and entry.name != ".."
+        )
+        self._panel_drag_state = (
+            _PanelDragState(remote, selected_entries, event.x_root, event.y_root) if selected_entries else None
+        )
+        self._panel_drag_started = False
+        self._set_drag_hover_tree(None)
+
+    def _on_panel_drag_motion(self, event: tk.Event) -> None:
+        """Track when a pressed selection is dragged over the other panel."""
+        drag_state = self._panel_drag_state
+        if drag_state is None or self._controls_locked() or self._local_task_runner.active:
+            return
+        moved_x = abs(event.x_root - drag_state.start_x_root)
+        moved_y = abs(event.y_root - drag_state.start_y_root)
+        if moved_x < 5 and moved_y < 5:
+            return
+        destination_remote = self._panel_under_pointer(event.x_root, event.y_root)
+        if destination_remote is None or destination_remote == drag_state.source_remote:
+            self._set_drag_hover_tree(None)
+            return
+        self._panel_drag_started = True
+        self._set_drag_hover_tree(self.remote_tree if destination_remote else self.local_tree)
+
+    def _finish_panel_drag(self, event: tk.Event) -> None:
+        """Dispatch a completed cross-panel drag to the standard transfer flow."""
+        drag_state = self._panel_drag_state
+        drag_started = self._panel_drag_started
+        destination_remote = self._panel_under_pointer(event.x_root, event.y_root)
+        self._panel_drag_state = None
+        self._panel_drag_started = False
+        self._set_drag_hover_tree(None)
+        if drag_state is None or not drag_started or destination_remote is None:
+            return
+        if destination_remote == drag_state.source_remote:
+            return
+        if drag_state.source_remote:
+            remote_entries = tuple(entry for entry in drag_state.entries if isinstance(entry, FlightControllerLogFile))
+            self.download_selected_remote_entries(remote_entries)
+        else:
+            local_entries = tuple(entry for entry in drag_state.entries if isinstance(entry, LocalFileEntry))
+            self.upload_selected_local_entries(local_entries)
+
+    def _panel_under_pointer(self, x_root: int, y_root: int) -> bool | None:
+        """Return the remote/local panel under a pointer position, if any."""
+        widget: tk.Misc | None = self.root.winfo_containing(x_root, y_root)
+        while widget is not None:
+            if widget is self.remote_tree:
+                return True
+            if widget is self.local_tree:
+                return False
+            widget = widget.master
+        return None
+
+    def _set_drag_hover_tree(self, tree: ttk.Treeview | None) -> None:
+        """Show a copy cursor over a valid transfer target."""
+        if self._drag_hover_tree is tree:
+            return
+        if self._drag_hover_tree is not None:
+            self._drag_hover_tree.configure(cursor="")
+        self._drag_hover_tree = tree
+        if tree is not None:
+            tree.configure(cursor="hand2")
 
     def _controls_locked(self) -> bool:
         """Return whether a task owns the browser controls."""
@@ -1631,11 +1721,18 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
             direction=request.ui.direction,
         )
 
-    def download_selected_remote_entries(self) -> None:
+    def download_selected_remote_entries(
+        self,
+        entries: Sequence[FlightControllerLogFile] | None = None,
+    ) -> None:
         """Recursively download selected remote entries into the local panel directory."""
         if self._controls_locked():
             return
-        selected = [entry for entry in self._selected_remote_entries() if entry.name != ".."]
+        selected = (
+            [entry for entry in self._selected_remote_entries() if entry.name != ".."]
+            if entries is None
+            else [entry for entry in entries if entry.name != ".."]
+        )
         if not selected:
             return
         local_directory = Path(self.local_directory_var.get()).expanduser()
@@ -1710,11 +1807,15 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         directory = self._last_listed_remote_directory or self.remote_directory_var.get()
         return normalize_remote_path(directory, directory=True)
 
-    def upload_selected_local_entries(self) -> None:
+    def upload_selected_local_entries(self, entries: Sequence[LocalFileEntry] | None = None) -> None:
         """Recursively upload selected local entries to the remote panel directory."""
         if self._controls_locked():
             return
-        selected = [entry for entry in self._selected_local_entries() if entry.name != ".."]
+        selected = (
+            [entry for entry in self._selected_local_entries() if entry.name != ".."]
+            if entries is None
+            else [entry for entry in entries if entry.name != ".."]
+        )
         if not selected:
             return
         try:

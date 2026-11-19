@@ -27,7 +27,12 @@ import pytest
 from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerLogFile, LastLogDownloadResult
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.data_model_transfer_progress import TransferDirection, TransferPhase, TransferProgress
-from ardupilot_methodic_configurator.frontend_tkinter_file_browser import FileBrowserWindow, _dropfiles_payload, _PanelState
+from ardupilot_methodic_configurator.frontend_tkinter_file_browser import (
+    FileBrowserWindow,
+    _dropfiles_payload,
+    _PanelDragState,
+    _PanelState,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_file_browser_operations import (
     LocalFileEntry,
     RemoteDownloadPlan,
@@ -572,12 +577,21 @@ class TestFileBrowserWindow:
             "<F5>",
             "<Left>",
             "<Right>",
+            "<ButtonPress-1>",
+            "<B1-Motion>",
+            "<ButtonRelease-1>",
             "<Button-3>",
         ]
         if sys.platform == "darwin":
             expected_events.append("<Control-Button-1>")
-        expected_events.extend(("<FocusIn>", "<ButtonRelease-1>", "<<TreeviewSelect>>"))
+        expected_events.extend(("<FocusIn>", "<<TreeviewSelect>>"))
         assert list(bindings) == expected_events
+        release_bindings = [binding for binding in tree.bind.call_args_list if binding.args[0] == "<ButtonRelease-1>"]
+        assert len(release_bindings) == 2
+        assert all(binding.kwargs.get("add") == "+" for binding in release_bindings)
+        drag_finish = release_bindings[0].args[1]
+        assert drag_finish.__self__ is window
+        assert drag_finish.__func__ is FileBrowserWindow._finish_panel_drag
         expected_double_click = (
             FileBrowserWindow._on_remote_double_click if remote else FileBrowserWindow._on_local_double_click
         )
@@ -3532,6 +3546,60 @@ def test_panel_events_remember_the_current_row_without_erasing_it_on_blank_event
     assert window.last_selected_panel == panel
     assert window._panel_states[panel].selected_item == (row or "previous")
     assert window._panel_states[other_panel].selected_item == "untouched"
+
+
+def test_releasing_the_mouse_clears_a_pending_panel_drag_and_still_remembers_the_panel(
+    real_widget_browser: tuple[FileBrowserWindow, MagicMock],
+) -> None:
+    """
+    Keep the drag-release handler and the click memory handler both active on a real tree.
+
+    GIVEN a pending drag payload and another panel as the active panel,
+    WHEN the mouse button is released over the remote tree,
+    THEN the drag payload is cleared and the remote panel becomes the active panel.
+    """
+    window, _add_tooltip = real_widget_browser
+    window.last_selected_panel = "local"
+    window._panel_drag_state = _PanelDragState(source_remote=True, entries=(), start_x_root=0, start_y_root=0)
+    window._panel_drag_started = True
+
+    window.remote_tree.event_generate("<ButtonRelease-1>", x=1, y=1)
+
+    assert window._panel_drag_state is None
+    assert window._panel_drag_started is False
+    assert window.last_selected_panel == "remote"
+
+
+@pytest.mark.parametrize("source_remote", [True, False], ids=["fc-to-pc", "pc-to-fc"])
+def test_dropping_selected_entries_on_the_other_panel_starts_the_matching_transfer(
+    real_widget_browser: tuple[FileBrowserWindow, MagicMock], source_remote: bool
+) -> None:
+    """
+    Dispatch a cross-panel drop to the transfer matching its source panel.
+
+    GIVEN a drag that started on one panel and a pointer released over the other panel,
+    WHEN the drop is finished,
+    THEN only the dragged entries are transferred in the matching direction.
+    """
+    window, _add_tooltip = real_widget_browser
+    remote_entry = FlightControllerLogFile("00000001.BIN", "/logs/00000001.BIN", 10)
+    local_entry = LocalFileEntry("log.BIN", Path("log.BIN"), 10)
+    dragged = (remote_entry,) if source_remote else (local_entry,)
+    window._panel_drag_state = _PanelDragState(source_remote, dragged, 0, 0)
+    window._panel_drag_started = True
+    window._panel_under_pointer = MagicMock(return_value=not source_remote)
+    window.download_selected_remote_entries = MagicMock()
+    window.upload_selected_local_entries = MagicMock()
+
+    window._finish_panel_drag(SimpleNamespace(x_root=5, y_root=5))
+
+    if source_remote:
+        window.download_selected_remote_entries.assert_called_once_with((remote_entry,))
+        window.upload_selected_local_entries.assert_not_called()
+    else:
+        window.upload_selected_local_entries.assert_called_once_with((local_entry,))
+        window.download_selected_remote_entries.assert_not_called()
+    assert window._panel_drag_state is None
 
 
 @pytest.mark.parametrize("panel", ["local", "remote", "outside"])
