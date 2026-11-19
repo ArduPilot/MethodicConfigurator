@@ -154,11 +154,11 @@ On macOS, run `mutmut run --max-children 2` with the virtual environment activat
 and a working desktop display, without `xvfb-run`.
 
 The `[tool.mutmut]` section in `pyproject.toml` selects both the modules to mutate
-and the tests to run. Update those lists together when expanding the suite.
-Plugin `backend_*.py` and `data_model_*.py` targets use globs, and the entire
-`tests/plugins/` directory is selected, so newly added plugin implementations and
-their tests are included automatically. Shared implementations outside the plugin
-directory and their tests must still be added explicitly.
+and the tests to run. Its source glob covers every Python file under
+`ardupilot_methodic_configurator/`; `do_not_mutate` mirrors `[report].omit` in
+`.coveragerc`. The shard runner checks that those exclusions match and every
+remaining source file is assigned exactly once. Test selection remains explicit:
+update it when adding tests so Mutmut can run the relevant behavior checks.
 The command module's source-lint regression is deselected only for mutation runs:
 it checks the hand-written source, while Mutmut generates thousands of function
 variants that make that subprocess exceed the normal test timeout. Normal pytest
@@ -187,7 +187,8 @@ changes are also checked by Mutmut.
 The [mutation workflow](.github/workflows/mutation.yml) runs manually or weekly on
 Ubuntu with Python 3.11. A nine-entry matrix splits the configured source scope
 into the main package, log-analysis package, and plugins, grouped by backend,
-data model, or frontend filenames. `battery_cell_voltages.py` joins the main data
+data model, or frontend filename prefixes. Unclassified helpers and package files
+go to their area's backend shard. `battery_cell_voltages.py` joins the main data
 model shard, and `plugins/imu_helpers.py` joins the plugin data model shard. Each
 shard retains the complete configured test selection so Mutmut can associate
 cross-module tests with every target. The log-analysis frontend shard currently

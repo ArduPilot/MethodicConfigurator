@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Select one isolated Mutmut shard while preserving the configured test suite.
 
@@ -8,10 +10,9 @@ SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-# ruff: noqa: INP001
-
 from __future__ import annotations
 
+import configparser
 import fnmatch
 import json
 import os
@@ -19,16 +20,19 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from mutmut.__main__ import cli
-from mutmut.configuration import config
-from mutmut.utils import logging_utils
+# pylint: disable=import-error
+from mutmut.__main__ import cli  # ty: ignore[unresolved-import]
+from mutmut.configuration import config  # ty: ignore[unresolved-import]
+from mutmut.utils import logging_utils  # ty: ignore[unresolved-import]
+
+# pylint: enable=import-error
 
 # Mutmut's default 10 MiB/three-backup rotation can discard early completion
 # records. Its handler treats maxBytes=0 as unbounded logging.
 _RotatingFileHandler = logging_utils.RotatingFileHandler
 
 
-class _UnrotatedFileHandler(_RotatingFileHandler):
+class _UnrotatedFileHandler(_RotatingFileHandler):  # pylint: disable=too-few-public-methods
     """Retain every worker completion in the shard's log."""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: ANN401
@@ -37,21 +41,28 @@ class _UnrotatedFileHandler(_RotatingFileHandler):
         super().__init__(*args, **kwargs)
 
 
-SHARDS = {
-    "backend": ("ardupilot_methodic_configurator", "backend_*.py"),
-    "data-model": ("ardupilot_methodic_configurator", "data_model_*.py"),
-    "frontend": ("ardupilot_methodic_configurator", "frontend_tkinter_*.py"),
-    "log-analysis-backend": ("ardupilot_methodic_configurator/log_analysis", "backend_*.py"),
-    "log-analysis-data-model": ("ardupilot_methodic_configurator/log_analysis", "data_model_*.py"),
-    "log-analysis-frontend": ("ardupilot_methodic_configurator/log_analysis", "frontend_tkinter_*.py"),
-    "plugins-backend": ("ardupilot_methodic_configurator/plugins", "backend_*.py"),
-    "plugins-data-model": ("ardupilot_methodic_configurator/plugins", "data_model_*.py"),
-    "plugins-frontend": ("ardupilot_methodic_configurator/plugins", "frontend_tkinter_*.py"),
+SHARDS = (
+    "backend",
+    "data-model",
+    "frontend",
+    "log-analysis-backend",
+    "log-analysis-data-model",
+    "log-analysis-frontend",
+    "plugins-backend",
+    "plugins-data-model",
+    "plugins-frontend",
+)
+PACKAGE_ROOT = "ardupilot_methodic_configurator"
+FAMILY_DIRECTORIES = {
+    "": ("backend", "data-model", "frontend"),
+    "log_analysis": ("log-analysis-backend", "log-analysis-data-model", "log-analysis-frontend"),
+    "plugins": ("plugins-backend", "plugins-data-model", "plugins-frontend"),
 }
 EXCEPTIONS = {
     "data-model": ("ardupilot_methodic_configurator/battery_cell_voltages.py",),
     "plugins-data-model": ("ardupilot_methodic_configurator/plugins/imu_helpers.py",),
 }
+EXCEPTION_SHARDS = {target: shard for shard, targets in EXCEPTIONS.items() for target in targets}
 
 
 def configured_targets() -> set[str]:
@@ -66,16 +77,59 @@ def configured_targets() -> set[str]:
     }
 
 
+def all_python_files() -> set[str]:
+    """Return every Python file under the application package."""
+    return {path.as_posix() for path in Path(PACKAGE_ROOT).rglob("*.py") if path.is_file()}
+
+
+def coverage_omit_patterns() -> set[str]:
+    """Read the report exclusions Mutmut must mirror."""
+    coverage = configparser.ConfigParser()
+    coverage.read(".coveragerc", encoding="utf-8")
+    return {pattern.strip() for pattern in coverage.get("report", "omit").split(",") if pattern.strip()}
+
+
+def shard_for_target(target: str) -> str:
+    """Map categorized modules to their family and uncategorized modules to its backend shard."""
+    path = Path(target)
+    relative = path.relative_to(PACKAGE_ROOT)
+    directory = relative.parts[0] if len(relative.parts) > 1 and relative.parts[0] in FAMILY_DIRECTORIES else ""
+    backend, data_model, frontend = FAMILY_DIRECTORIES[directory]
+    filename = path.name
+    if filename.startswith("data_model_"):
+        return data_model
+    if filename.startswith("frontend_tkinter_"):
+        return frontend
+    # Backend-prefixed files and modules without a family prefix (package
+    # initializers, helpers, entry points, utilities) share the family backend shard.
+    return backend
+
+
 def targets_for_shard(shard: str) -> list[str]:
-    """Return existing mutation targets assigned to a named shard."""
-    directory, filename_pattern = SHARDS[shard]
-    candidates = {path.as_posix() for path in Path(directory).glob(filename_pattern) if path.is_file()}
-    candidates.update(EXCEPTIONS.get(shard, ()))
-    return sorted(candidates & configured_targets())
+    """Return every configured source target assigned to a named shard."""
+    return sorted(target for target in configured_targets() if EXCEPTION_SHARDS.get(target, shard_for_target(target)) == shard)
 
 
 def validate_shard_coverage() -> None:
-    """Fail if the configured mutation scope contains unassigned or duplicate files."""
+    """Fail unless non-omitted package Python files are configured and assigned once."""
+    discovered = all_python_files()
+    coverage_omits = coverage_omit_patterns()
+    settings = config()
+    if set(settings.do_not_mutate) != coverage_omits:
+        missing_from_mutmut = sorted(coverage_omits - set(settings.do_not_mutate))
+        extra_in_mutmut = sorted(set(settings.do_not_mutate) - coverage_omits)
+        message = f"Mutmut exclusions must match .coveragerc: missing={missing_from_mutmut}, extra={extra_in_mutmut}"
+        raise ValueError(message)
+    expected = {target for target in discovered if not any(fnmatch.fnmatch(target, pattern) for pattern in coverage_omits)}
+    configured = configured_targets()
+    if configured != expected:
+        missing_from_config = sorted(expected - configured)
+        outside_package = sorted(configured - expected)
+        message = (
+            "Mutmut scope must match coverage-included package Python files: "
+            f"unconfigured={missing_from_config}, unexpected={outside_package}"
+        )
+        raise ValueError(message)
     assigned: list[str] = [target for shard in SHARDS for target in targets_for_shard(shard)]
     duplicates = sorted({target for target in assigned if assigned.count(target) > 1})
     missing = sorted(configured_targets() - set(assigned))

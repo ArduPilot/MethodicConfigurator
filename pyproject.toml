@@ -191,72 +191,9 @@ skip = "*.pdef.xml,*.pdf,*.po"
 
 [tool.mutmut]
 source_paths = ["ardupilot_methodic_configurator/"]
-# Cover parameter handling, parsing, calculations, and every plugin backend/data model.
-only_mutate = [
-    # Globs keep new plugin backends and data models in scope automatically.
-    "ardupilot_methodic_configurator/plugins/backend_*.py",
-    "ardupilot_methodic_configurator/plugins/data_model_*.py",
-    # External parameter selection, file-upload policy, atomic writes, and diagnostics.
-    "ardupilot_methodic_configurator/data_model_parameter_compare_and_upload.py",
-    "ardupilot_methodic_configurator/data_model_file_upload.py",
-    "ardupilot_methodic_configurator/backend_safe_file_io.py",
-    "ardupilot_methodic_configurator/data_model_fc_diagnostics.py",
-    # Shared implementations used by telemetry and calibration plugins.
-    "ardupilot_methodic_configurator/backend_data_telemetry.py",
-    "ardupilot_methodic_configurator/backend_esc_telemetry.py",
-    "ardupilot_methodic_configurator/backend_mavlink_telemetry.py",
-    "ardupilot_methodic_configurator/backend_radio_status.py",
-    "ardupilot_methodic_configurator/backend_flightcontroller_commands.py",
-    "ardupilot_methodic_configurator/data_model_data_telemetry.py",
-    "ardupilot_methodic_configurator/data_model_esc_telemetry.py",
-    "ardupilot_methodic_configurator/data_model_mavlink_inspector.py",
-    "ardupilot_methodic_configurator/data_model_configuration_step.py",
-    "ardupilot_methodic_configurator/data_model_parameter_upgrade.py",
-    "ardupilot_methodic_configurator/backend_flightcontroller_business_logic.py",
-    "ardupilot_methodic_configurator/data_model_transfer_progress.py",
-    "ardupilot_methodic_configurator/data_model_safe_evaluator.py",
-    "ardupilot_methodic_configurator/frontend_tkinter_about_popup_window.py",
-    "ardupilot_methodic_configurator/battery_cell_voltages.py",
-    "ardupilot_methodic_configurator/data_model_ardupilot_parameter.py",
-    "ardupilot_methodic_configurator/data_model_par_dict.py",
-    "ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py",
-    "ardupilot_methodic_configurator/data_model_vehicle_components_display.py",
-    "ardupilot_methodic_configurator/data_model_vehicle_components_validation.py",
-    "ardupilot_methodic_configurator/data_model_vehicle_components_base.py",
-    "ardupilot_methodic_configurator/data_model_vehicle_components_templates.py",
-    "ardupilot_methodic_configurator/data_model_vehicle_components_import.py",
-    "ardupilot_methodic_configurator/data_model_vehicle_components_json_schema.py",
-    "ardupilot_methodic_configurator/backend_firmware_upload.py",
-    "ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py",
-    "ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py",
-    "ardupilot_methodic_configurator/backend_flightcontroller_connection.py",
-    "ardupilot_methodic_configurator/backend_flightcontroller.py",
-    "ardupilot_methodic_configurator/backend_filesystem_program_settings.py",
-    "ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py",
-    "ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py",
-    "ardupilot_methodic_configurator/log_analysis/data_model_plane_landing.py",
-    "ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py",
-    "ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py",
-    "ardupilot_methodic_configurator/log_analysis/data_model_availability_pm.py",
-    "ardupilot_methodic_configurator/log_analysis/data_model_log_availability_check.py",
-    "ardupilot_methodic_configurator/log_analysis/data_model_availability_gnss.py",
-    "ardupilot_methodic_configurator/log_analysis/data_model_gnss_samples.py",
-    "ardupilot_methodic_configurator/log_analysis/data_model_gnss_interference.py",
-    "ardupilot_methodic_configurator/log_analysis/data_model_gnss_consistency.py",
-    "ardupilot_methodic_configurator/log_analysis/data_model_availability_attitude_saturation.py",
-    "ardupilot_methodic_configurator/log_analysis/data_model_firmware_version.py",
-    "ardupilot_methodic_configurator/log_analysis/data_model_parameter_history.py",
-    "ardupilot_methodic_configurator/plugins/imu_helpers.py",
-    "ardupilot_methodic_configurator/data_model_firmware_upload.py",
-    "ardupilot_methodic_configurator/log_analysis/backend_log_analysis.py",
-    "ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py",
-    "ardupilot_methodic_configurator/frontend_tkinter_file_browser.py",
-    "ardupilot_methodic_configurator/frontend_tkinter_file_browser_tasks.py",
-    "ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py",
-    "ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py",
-    "ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py",
-    "ardupilot_methodic_configurator/frontend_tkinter_skybrush_log_analysis.py",
-]
+# Mutate every Python source file. The shard runner validates that the complete
+# package tree is assigned exactly once before starting Mutmut.
+only_mutate = ["ardupilot_methodic_configurator/*.py"]
 # Keep mutation scope aligned with [report].omit in .coveragerc: these files are
 # generated, synchronized, or maintained in another repository.
 do_not_mutate = [
