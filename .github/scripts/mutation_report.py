@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Export mutation measurements for CI diagnostics and future shard planning.
 
@@ -7,9 +9,6 @@ SPDX-FileCopyrightText: 2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
-
-# This standalone CI entry point is deliberately outside an importable package.
-# ruff: noqa: INP001
 
 from __future__ import annotations
 
@@ -268,7 +267,8 @@ def build_report(state_dir: Path, output_dir: Path) -> dict[str, Any]:  # pylint
     with (output_dir / "tests.csv").open("w", encoding="utf-8", newline="") as stream:
         writer = csv.writer(stream)
         writer.writerow(["test", "seconds"])
-        writer.writerows(sorted(test_seconds.items(), key=lambda item: item[1], reverse=True))
+        sorted_test_seconds = sorted(test_seconds.items(), key=lambda item: item[1], reverse=True)
+        writer.writerows(sorted_test_seconds)
     return report
 
 
