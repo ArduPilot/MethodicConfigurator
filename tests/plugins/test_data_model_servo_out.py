@@ -11,25 +11,24 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from collections.abc import Callable
+from pathlib import Path
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, cast
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.data_model_parameter_editor import (
     InvalidParameterNameError,
     OperationNotPossibleError,
+    ParameterEditor,
     ParameterValueUpdateStatus,
 )
 from ardupilot_methodic_configurator.data_model_vehicle_components_validation import PWM_OUT_PORTS
 from ardupilot_methodic_configurator.plugins.data_model_servo_out import PWM_OUT_PORTS as SERVO_OUT_PWM_PORTS
 from ardupilot_methodic_configurator.plugins.data_model_servo_out import ServoOutDataModel, ServoOutRecommendationStatus
-
-if TYPE_CHECKING:
-    from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
-    from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 
 # pytest injects fixtures by matching the test function parameter name.
 # pylint: disable=redefined-outer-name,protected-access,too-many-lines
@@ -59,7 +58,7 @@ class TestServoOutputRecommendations:  # pylint: disable=too-many-public-methods
 
     def test_output_connection_types_use_the_canonical_pwm_output_choices(self) -> None:
         """The servo model uses the same output labels as vehicle-component validation."""
-        assert SERVO_OUT_PWM_PORTS is PWM_OUT_PORTS
+        assert SERVO_OUT_PWM_PORTS == PWM_OUT_PORTS
 
     def test_main_out_quad_starts_motor_functions_at_first_servo_output(self, servo_model_factory, caplog) -> None:
         """
@@ -598,7 +597,7 @@ class TestServoOutputRecommendations:  # pylint: disable=too-many-public-methods
 class TestServoOutputApplication:
     """Test applying recommendations to the current configuration file."""
 
-    def test_user_can_add_and_apply_missing_motor_functions(self) -> None:
+    def test_user_can_add_and_apply_missing_motor_functions(self, tmp_path: Path) -> None:
         """
         Missing parameters are added and receive their recommended motor functions.
 
@@ -607,23 +606,36 @@ class TestServoOutputApplication:
         THEN: The four parameters are added and updated with Motor1 through Motor4
         """
         # Arrange (Given)
-        editor = MagicMock()
-        editor.fc_parameters = {"FRAME_CLASS": 1}
-        editor.current_step_parameters = {}
-        editor.add_parameter_to_current_file.return_value = True
-        editor.update_parameter_value.return_value = SimpleNamespace(status=ParameterValueUpdateStatus.UPDATED)
-        filesystem = SimpleNamespace(
-            vehicle_components_fs=SimpleNamespace(data={"Components": {"ESC": {"FC->ESC Connection": {"Type": "Main Out"}}}})
+        expected_functions = {
+            "SERVO1_FUNCTION": 33,
+            "SERVO2_FUNCTION": 34,
+            "SERVO3_FUNCTION": 35,
+            "SERVO4_FUNCTION": 36,
+        }
+        controller = MagicMock()
+        controller.fc_parameters = {"FRAME_CLASS": 1.0, **dict.fromkeys(expected_functions, 0.0)}
+        filesystem = LocalFilesystem(
+            str(tmp_path),
+            "ArduCopter",
+            "4.6.3",
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
+            load_project=False,
         )
+        filesystem.vehicle_components_fs.data = {"Components": {"ESC": {"FC->ESC Connection": {"Type": "Main Out"}}}}
+        current_file = "07_servo_outputs.param"
+        filesystem.file_parameters[current_file] = ParDict()
+        editor = ParameterEditor(current_file, controller, filesystem)
         model = ServoOutDataModel(filesystem, editor)
 
         # Act (When)
-        applied, _message, _status = model.apply_recommendations()
+        applied, message, status = model.apply_recommendations()
 
         # Assert (Then)
-        assert applied == ["SERVO1_FUNCTION", "SERVO2_FUNCTION", "SERVO3_FUNCTION", "SERVO4_FUNCTION"]
-        assert editor.add_parameter_to_current_file.call_count == 4
-        assert editor.update_parameter_value.call_args_list[0].args == ("SERVO1_FUNCTION", "33")
+        assert applied == list(expected_functions)
+        assert status is ServoOutRecommendationStatus.APPLIED
+        assert message == "Applied 4 motor output assignment(s)."
+        assert {name: par.value for name, par in editor.get_parameters_as_par_dict().items()} == expected_functions
 
     def test_partial_application_names_assignments_that_could_not_be_applied(self) -> None:
         """

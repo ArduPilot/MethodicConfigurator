@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import pytest
-from test_data_model_vehicle_components_common import BasicTestMixin, ComponentDataModelFixtures, RealisticDataTestMixin
+from test_data_model_vehicle_components_common import ComponentDataModelFixtures
 
 from ardupilot_methodic_configurator.data_model_vehicle_components_base import ComponentDataModelBase
 from ardupilot_methodic_configurator.data_model_vehicle_components_templates import ComponentDataModelTemplates
@@ -19,7 +19,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_templates imp
 # pylint: disable=too-many-public-methods,too-many-lines
 
 
-class TestComponentDataModelTemplates(BasicTestMixin, RealisticDataTestMixin):
+class TestComponentDataModelTemplates:
     """Tests for the ComponentDataModelTemplates class."""
 
     @pytest.fixture

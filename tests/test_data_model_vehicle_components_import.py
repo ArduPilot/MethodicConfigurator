@@ -15,11 +15,7 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
-from test_data_model_vehicle_components_common import (
-    BasicTestMixin,
-    ComponentDataModelFixtures,
-    RealisticDataTestMixin,
-)
+from test_data_model_vehicle_components_common import ComponentDataModelFixtures
 
 import ardupilot_methodic_configurator.data_model_vehicle_components_import as _import_module
 from ardupilot_methodic_configurator.battery_cell_voltages import BatteryCell
@@ -32,7 +28,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_import import
 # pylint: disable=protected-access,too-many-public-methods,too-many-lines
 
 
-class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
+class TestComponentDataModelImport:
     """Tests for the ComponentDataModelImport class."""
 
     @pytest.fixture
