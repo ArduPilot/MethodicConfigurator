@@ -152,7 +152,6 @@ def test_inspector_initializes_its_window_guidance_and_fields(inspector: Mavlink
     assert inspector.root.protocol("WM_DELETE_WINDOW")
     assert inspector.root.bind("<Destroy>")
     assert inspector.status.cget("text") == _("No current MAVLink messages. Check the telemetry connection.")
-    assert int(inspector.status.cget("wraplength")) == max(1, inspector.main_frame.winfo_width() - 16)
     assert int(inspector.status.cget("width")) == 1
     assert inspector.status.master is inspector.main_frame
     assert inspector.status.pack_info()["fill"] == "x"
@@ -162,7 +161,6 @@ def test_inspector_initializes_its_window_guidance_and_fields(inspector: Mavlink
         "A USB connection measures USB traffic, not the telemetry radio link. "
         "Connect through the telemetry link you want to test."
     )
-    assert int(inspector.connection_note.cget("wraplength")) == max(1, inspector.main_frame.winfo_width() - 16)
     assert int(inspector.connection_note.cget("width")) == 1
     assert inspector.message_contents.title == _("MAVLink message contents")
     assert int(inspector.fields.cget("height")) == 8
@@ -391,20 +389,23 @@ def test_table_help_stays_stable_until_the_pointer_moves_or_scrolls(inspector: M
         assert tooltip.timers["show"] != timer
 
 
-def test_usb_connection_guidance_is_visible_and_wraps_safely(inspector: MavlinkInspectorWindow) -> None:
+@pytest.mark.parametrize(("width", "expected_wraplength"), [(0, 1), (400, 384), (750, 734)])
+def test_usb_connection_guidance_is_visible_and_wraps_safely(
+    inspector: MavlinkInspectorWindow, width: int, expected_wraplength: int
+) -> None:
     """
     Explain the measurement path before a beginner interprets the traffic readings.
 
     GIVEN an inspector for any active transport,
     WHEN its guidance is read or the window becomes narrow,
-    THEN it explains USB traffic versus the radio link and keeps positive wrapping widths.
+    THEN it explains USB traffic versus the radio link and both notices fit the available width.
     """
     assert len(inspector.connection_note.pack_info()) > 0
     assert "USB connection measures USB traffic, not the telemetry radio link" in inspector.connection_note.cget("text")
-    inspector._resize_notices(SimpleNamespace(width=0))
-    assert int(inspector.connection_note.cget("wraplength")) == 1
-    inspector._resize_notices(SimpleNamespace(width=400))
-    assert int(inspector.connection_note.cget("wraplength")) == 384
+    # Deliver the resize through its binding without waiting for native window layout.
+    inspector.main_frame.event_generate("<Configure>", width=width)
+    assert int(inspector.status.cget("wraplength")) == expected_wraplength
+    assert int(inspector.connection_note.cget("wraplength")) == expected_wraplength
 
 
 @pytest.mark.skipif(sys.platform == "darwin", reason="Window geometry requires rendering, unsafe on headless macOS CI")
