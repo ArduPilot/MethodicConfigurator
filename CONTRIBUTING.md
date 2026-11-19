@@ -185,24 +185,29 @@ change, including edits to existing tests. Dependency and Mutmut configuration
 changes are also checked by Mutmut.
 
 The [mutation workflow](.github/workflows/mutation.yml) runs manually or weekly on
-Ubuntu with Python 3.11. It uploads results without enforcing a mutation score;
-clean-test and framework failures still fail the job. Per-mutant timeouts and
-crashes are reported for review. Scheduled runs are disabled in forks.
-Saved state is shared across source revisions on the same branch, with separate
-names for the operating system, Python version, and Mutmut version. CI also hashes
-the resolved dependency list so transitive upgrades invalidate saved results.
-The artifact fallback accepts the earlier fingerprinted v2 state artifacts for
-Mutmut 3.8.1; introducing test-input tracking can require an initial full rerun.
-The job summary groups all mutation outcomes by module; the
-artifact retains individual results and execution logs. The existing coverage
-gate remains independent.
+Ubuntu with Python 3.11. A nine-entry matrix splits the configured source scope
+into the main package, log-analysis package, and plugins, grouped by backend,
+data model, or frontend filenames. `battery_cell_voltages.py` joins the main data
+model shard, and `plugins/imu_helpers.py` joins the plugin data model shard. Each
+shard retains the complete configured test selection so Mutmut can associate
+cross-module tests with every target. The log-analysis frontend shard currently
+has no configured targets and exits without running Mutmut.
 
-The `mutation-py311` report artifact is retained for 90 days. It includes
+Each shard has its own mutation state cache and state artifact. Cache keys include
+the OS, Python and Mutmut versions, and shard name; resolved dependencies still
+invalidate stale results. The first sharded run imports matching module state and
+test associations from the prior unsharded artifact. Clean-test and framework
+failures fail the job, while per-mutant timeouts and crashes are reported for
+review. Scheduled runs are disabled in forks, and the existing coverage gate
+remains independent.
+
+Each `mutation-py311-<shard>` report artifact is retained for 90 days. It includes
 `diagnostics.json` (runner, versions, configuration, cache provenance, baseline and
 mutation elapsed time, throughput, and pending work), `modules.csv`, `tests.csv`,
 `worker-timings.jsonl`, and the test-association snapshot in `mutmut-stats.json`.
 Baseline JUnit results, slow-test output, process resource usage, and forkserver
-logs are also included. Use these measurements to balance future mutation shards.
+logs are also included. Worker completion logs do not rotate, so a shard report
+retains all timing records. Use these measurements to balance future mutation shards.
 Worker timings describe completions observed in the current run, including retries;
 outcome counts also include cached results. Parallel worker durations overlap in
 wall time. Test-only estimates exclude startup and timeout costs and can come from
