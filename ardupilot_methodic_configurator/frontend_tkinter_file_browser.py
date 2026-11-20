@@ -11,8 +11,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
 
+import importlib
 import os
 import posixpath
+import struct
 import subprocess
 import sys
 import tkinter as tk
@@ -144,7 +146,7 @@ class FileBrowserUiServices(Protocol):  # pylint: disable=too-few-public-methods
     create_progress_window: Callable[[tk.Misc, str, str, bool], ProgressWindow]
 
 
-class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-many-instance-attributes, too-many-public-methods
+class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-many-instance-attributes
     BaseWindow
 ):
     """Browse remote and local files and transfer or manage selected entries."""
@@ -1070,35 +1072,21 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
                 tree.selection_set(item_id)
             tree.focus(item_id)
             self._panel_states[panel].selected_item = item_id
+        else:
+            # Blank space is not a row, so the menu must not act on a previous selection.
+            tree.selection_remove(tree.selection())
+            self._panel_states[panel].selected_item = None
         self._remember_panel(panel)
         self._update_transfer_buttons()
 
-        menu = tk.Menu(tree, tearoff=False)
-        selected_entries = self._selected_local_entries() if not remote else []
-        can_open = len(selected_entries) == 1 and not selected_entries[0].is_directory
-        menu.add_command(
-            label=_("New directory"),
-            command=self.create_new_remote_directory if remote else self.create_new_local_directory,
-        )
-        if not remote:
-            menu.add_command(
-                label=_("Open"),
-                command=self.open_selected_local_file,
-                state="normal" if can_open else "disabled",
-            )
-            if can_open and selected_entries[0].path.suffix.lower() == ".bin":
-                menu.add_separator()
-                for url, tool in WEB_LOG_TOOLS.items():
-                    menu.add_command(label=tool.label, command=partial(self.open_selected_log_in_web_tool, url))
-                menu.add_separator()
-                if self._analyse_log_callback is not None:
-                    menu.add_command(label=_("AMC log analyser"), command=self.analyse_selected_local_log)
-                menu.add_command(label=_("Skybrush log analyser"), command=self.open_selected_skybrush_log_analysis)
+        menu = self._build_context_menu(tree, remote)
         menu_closed = False
+        idle_id: str | None = None
 
         def close_menu(_event: tk.Event | None = None) -> None:
             """Release and destroy the menu after Tk has unmapped it."""
-            nonlocal menu_closed
+            nonlocal menu_closed, idle_id
+            idle_id = None
             if menu_closed:
                 return
             menu_closed = True
@@ -1108,9 +1096,20 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
                 menu.destroy()
 
         def defer_close(_event: tk.Event | None = None) -> None:
-            menu.after_idle(close_menu)
+            nonlocal idle_id
+            if idle_id is None:
+                idle_id = menu.after_idle(close_menu)
+
+        def cancel_close(event: tk.Event) -> None:
+            nonlocal idle_id, menu_closed
+            if event.widget is menu:
+                menu_closed = True
+                if idle_id is not None:
+                    menu.after_cancel(idle_id)
+                    idle_id = None
 
         menu.bind("<Unmap>", defer_close, add="+")
+        menu.bind("<Destroy>", cancel_close, add="+")
         try:
             menu.tk_popup(event.x_root, event.y_root)
         except tk.TclError:
@@ -1120,6 +1119,49 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
             if not menu_closed:
                 menu.grab_release()
         return "break"
+
+    def _build_context_menu(self, tree: ttk.Treeview, remote: bool) -> tk.Menu:
+        """Build the panel menu from the current selection and available actions."""
+        menu = tk.Menu(tree, tearoff=False)
+        selected_local_entries = (
+            [entry for entry in self._selected_local_entries() if entry.name != ".."] if not remote else []
+        )
+        selected_remote_entries = [entry for entry in self._selected_remote_entries() if entry.name != ".."] if remote else []
+        selected_entries = selected_remote_entries if remote else selected_local_entries
+        menu.add_command(
+            label=_("New directory"),
+            command=self.create_new_remote_directory if remote else self.create_new_local_directory,
+        )
+        if len(selected_local_entries) == 1 and not selected_local_entries[0].is_directory:
+            menu.add_separator()
+            menu.add_command(label=_("Open"), command=self.open_selected_local_file)
+        if selected_entries:
+            menu.add_separator()
+            if not remote:
+                menu.add_command(label=_("Copy"), command=self._copy_selected_local_files)
+            menu.add_command(label=_("Copy path"), command=partial(self._copy_selected_paths, remote=remote))
+            if len(selected_entries) == 1:
+                menu.add_command(
+                    label=_("Rename"),
+                    command=self.rename_selected_remote_entry if remote else self.rename_selected_local_entry,
+                )
+            menu.add_command(
+                label=_("Delete"),
+                command=self.delete_selected_remote_entries if remote else self.delete_selected_local_entries,
+            )
+        if (
+            len(selected_local_entries) == 1
+            and not selected_local_entries[0].is_directory
+            and selected_local_entries[0].path.suffix.lower() == ".bin"
+        ):
+            menu.add_separator()
+            for url, tool in WEB_LOG_TOOLS.items():
+                menu.add_command(label=tool.label, command=partial(self.open_selected_log_in_web_tool, url))
+            menu.add_separator()
+            if self._analyse_log_callback is not None:
+                menu.add_command(label=_("AMC log analyser"), command=self._analyse_selected_local_log)
+            menu.add_command(label=_("Skybrush log analyser"), command=self._open_selected_skybrush_log_analysis)
+        return menu
 
     def open_selected_log_in_web_tool(self, url: str) -> None:
         """Load a single selected local .bin log into a managed browser tab."""
@@ -1150,7 +1192,110 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
             return
         self._open_local_file(selected_entries[0])
 
-    def analyse_selected_local_log(self) -> None:
+    def _copy_selected_paths(self, *, remote: bool) -> None:
+        """Copy the selected local or remote paths as newline-separated text."""
+        if remote:
+            paths = [entry.remote_path for entry in self._selected_remote_entries() if entry.name != ".."]
+        else:
+            paths = [str(entry.path.absolute()) for entry in self._selected_local_entries() if entry.name != ".."]
+        if not paths:
+            return
+        try:
+            self.root.clipboard_clear()
+            self.root.clipboard_append("\n".join(paths))
+        except tk.TclError as error:
+            self.ui.show_error(_("Copy path error"), str(error))
+
+    def _copy_selected_local_files(self) -> None:
+        """Copy selected local files and directories to the system clipboard."""
+        if self._controls_locked():
+            return
+        selected = [entry for entry in self._selected_local_entries() if entry.name != ".."]
+        if not selected:
+            return
+        if sys.platform == "darwin":
+            refresh_request = self._local_refresh_request
+
+            def complete(_result: object | None, error: Exception | None) -> None:
+                if error is not None:
+                    if isinstance(error, subprocess.TimeoutExpired):
+                        detail = _("Copying files to the clipboard timed out.")
+                    elif isinstance(error, subprocess.CalledProcessError):
+                        detail = (
+                            error.stderr.strip()
+                            if error.stderr and error.stderr.strip()
+                            else _("Could not copy files to the clipboard.")
+                        )
+                    else:
+                        detail = str(error)
+                    self.ui.show_error(_("Copy error"), detail)
+                if self._local_refresh_request is not refresh_request:
+                    self.refresh_local_panel()
+
+            def copy_files(_progress: Callable[..., None]) -> None:
+                paths = [entry.path.resolve(strict=True) for entry in selected]
+                self._copy_file_paths_to_macos_clipboard(paths)
+
+            if not self._local_task_runner.start(copy_files, None, complete):
+                self.ui.show_error(_("Copy error"), _("Another file operation is already in progress."))
+            return
+        try:
+            paths = [entry.path.resolve(strict=True) for entry in selected]
+            self._copy_file_paths_to_system_clipboard(paths)
+        except (OSError, subprocess.SubprocessError, tk.TclError) as error:
+            self.ui.show_error(_("Copy error"), str(error))
+
+    def _copy_file_paths_to_system_clipboard(self, paths: Sequence[Path]) -> None:
+        """Publish paths in the native clipboard format expected by file managers."""
+        if sys.platform == "win32":
+            self._copy_file_paths_to_windows_clipboard(paths)
+        elif sys.platform == "darwin":
+            self._copy_file_paths_to_macos_clipboard(paths)
+        else:
+            uri_list = "\r\n".join(path.as_uri() for path in paths)
+            self.root.clipboard_clear()
+            self.root.clipboard_append(uri_list, type="text/uri-list")
+
+    @staticmethod
+    def _copy_file_paths_to_windows_clipboard(paths: Sequence[Path]) -> None:
+        """Publish a Unicode CF_HDROP file list on the Windows clipboard."""
+        try:
+            win32clipboard = importlib.import_module("win32clipboard")
+            pywintypes = importlib.import_module("pywintypes")
+        except ImportError as error:
+            raise OSError(str(error)) from error
+        try:
+            win32clipboard.OpenClipboard()
+            try:
+                win32clipboard.EmptyClipboard()
+                win32clipboard.SetClipboardData(win32clipboard.CF_HDROP, _dropfiles_payload(paths))
+            finally:
+                win32clipboard.CloseClipboard()
+        except pywintypes.error as error:
+            raise OSError(str(error)) from error
+
+    @staticmethod
+    def _copy_file_paths_to_macos_clipboard(paths: Sequence[Path]) -> None:
+        """Publish file references to the macOS pasteboard through Finder."""
+        script = (
+            "on run filePaths\n"
+            " set fileReferences to {}\n"
+            " repeat with filePath in filePaths\n"
+            "  set end of fileReferences to (POSIX file (contents of filePath) as alias)\n"
+            " end repeat\n"
+            ' tell application "Finder" to set the clipboard to fileReferences\n'
+            "end run"
+        )
+        # Fixed executable; selected paths are passed as arguments without shell interpretation.
+        subprocess.run(  # noqa: S603
+            ["/usr/bin/osascript", "-e", script, *(str(path) for path in paths)],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+
+    def _analyse_selected_local_log(self) -> None:
         """Run AMC log analysis on one selected local .bin log."""
         selected_entries = self._selected_local_entries()
         if self._controls_locked() or self._local_task_runner.active or len(selected_entries) != 1:
@@ -1163,7 +1308,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
             self._on_close()
             self._analyse_log_callback(filepath)
 
-    def open_selected_skybrush_log_analysis(self) -> None:
+    def _open_selected_skybrush_log_analysis(self) -> None:
         """Open Skybrush log analysis for one selected local .bin log."""
         selected_entries = self._selected_local_entries()
         if self._controls_locked() or self._local_task_runner.active or len(selected_entries) != 1:
@@ -1656,7 +1801,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
 
     def delete_selected_local_entries(self) -> None:
         """Delete selected local files and empty directories after confirmation."""
-        if self._controls_locked():
+        if self._controls_locked() or self._local_task_runner.active:
             return
         selected = [entry for entry in self._selected_local_entries() if entry.name != ".."]
         if not selected or not self.ui.ask_yesno(
@@ -1713,7 +1858,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
 
     def create_new_local_directory(self) -> None:
         """Prompt for and create a directory in the displayed local directory."""
-        if self._controls_locked():
+        if self._controls_locked() or self._local_task_runner.active:
             return
         new_name = self.ui.askstring(_("New local directory"), _("Directory name:"), parent=self.root)
         if new_name is None:
@@ -1761,7 +1906,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
 
     def rename_selected_local_entry(self) -> None:
         """Rename one selected local entry."""
-        if self._controls_locked():
+        if self._controls_locked() or self._local_task_runner.active:
             return
         selected = [entry for entry in self._selected_local_entries() if entry.name != ".."]
         if len(selected) != 1:
@@ -1864,6 +2009,13 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
             completion,
             direction=TransferDirection.DOWNLOAD,
         )
+
+
+def _dropfiles_payload(paths: Sequence[Path]) -> bytes:
+    """Build the CF_HDROP DROPFILES structure: a 20-byte header followed by a UTF-16 path list."""
+    header = struct.pack("<IiiII", 20, 0, 0, 0, 1)  # pFiles offset, drop point x/y, fNC=False, fWide=True
+    file_list = "".join(f"{path}\0" for path in paths) + "\0"
+    return header + file_list.encode("utf-16-le")
 
 
 def create_argument_parser() -> ArgumentParser:  # pragma: no cover

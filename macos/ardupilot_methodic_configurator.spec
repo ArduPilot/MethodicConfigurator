@@ -121,5 +121,6 @@ app = BUNDLE(
         "CFBundleShortVersionString": version,
         "CFBundleVersion": version,
         "NSHighResolutionCapable": True,
+        "NSAppleEventsUsageDescription": "Finder access is needed to copy files to the clipboard.",
     },
 )

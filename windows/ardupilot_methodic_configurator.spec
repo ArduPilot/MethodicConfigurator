@@ -73,7 +73,7 @@ if os.path.isfile(git_hash_path):
 unused_mavlink_dialects = [name for name in collect_submodules("pymavlink.dialects") if spec_helpers.is_unused_mavlink_dialect(name)]
 
 hiddenimports = (
-    ["packaging", "packaging.version", "packaging.specifiers"]
+    ["packaging", "packaging.version", "packaging.specifiers", "pywintypes", "win32clipboard"]
     + collect_submodules("ardupilot_methodic_configurator.plugins")
     + collect_submodules("pymavlink", filter=lambda name: not spec_helpers.is_unused_mavlink_dialect(name))
     + [entry.split(":", 1)[0] for entry in project_scripts.values()]
