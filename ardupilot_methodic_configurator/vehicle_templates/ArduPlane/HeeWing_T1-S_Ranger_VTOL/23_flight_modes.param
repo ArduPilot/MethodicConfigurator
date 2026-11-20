@@ -1,0 +1,8 @@
+FLTMODE1,17  # QSTABILIZE: manual VTOL hover, used for the first hovers and tuning
+FLTMODE2,18  # QHOVER: VTOL hover with altitude hold
+FLTMODE3,19  # QLOITER: VTOL hover with position hold (needs GNSS)
+FLTMODE4,5  # FBWA: stabilized fixed-wing flight. Switching here from a Q mode starts a forward transition
+FLTMODE5,7  # CRUISE: fixed-wing flight with heading and altitude hold
+FLTMODE6,21  # QRTL: VTOL return to launch and land
+FLTMODE_CH,8  # Flight mode channel. A 3-position switch selects modes 1, 4 and 6 (QSTABILIZE, FBWA, QRTL); a 6-position switch selects all six
+INITIAL_MODE,17  # Boot in QSTABILIZE rather than MANUAL

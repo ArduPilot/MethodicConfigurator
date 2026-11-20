@@ -1,0 +1,7 @@
+BRD_SAFETY_DEFLT,0  # Start with outputs enabled. Set to 1 if your flight controller has a safety switch you want to use
+GPS1_GNSS_MODE,0
+GPS1_POS_X,0
+GPS1_POS_Y,0
+GPS1_POS_Z,0
+GPS1_TYPE,1  # Defined in component editor
+SERIAL3_PROTOCOL,5  # GNSS on SERIAL3 defined in component editor

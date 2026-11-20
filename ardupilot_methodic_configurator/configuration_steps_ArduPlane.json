@@ -173,15 +173,15 @@
             "autoimport_nondefault_regexp": ["THR_FS_VALUE", "RC_.*"],
             "derived_parameters": {
                 "RC_PROTOCOLS": { "New Value": "vehicle_components['RC Receiver']['FC Connection']['Protocol']", "Change Reason": "Selected in the component editor" },
-                "SERIAL1_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL1'", "New Value": "23", "Change Reason": "RC receiver on SERIAL1 requires RCIN" },
-                "SERIAL2_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL2'", "New Value": "23", "Change Reason": "RC receiver on SERIAL2 requires RCIN" },
-                "SERIAL3_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL3'", "New Value": "23", "Change Reason": "RC receiver on SERIAL3 requires RCIN" },
-                "SERIAL4_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL4'", "New Value": "23", "Change Reason": "RC receiver on SERIAL4 requires RCIN" },
-                "SERIAL5_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL5'", "New Value": "23", "Change Reason": "RC receiver on SERIAL5 requires RCIN" },
-                "SERIAL6_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL6'", "New Value": "23", "Change Reason": "RC receiver on SERIAL6 requires RCIN" },
-                "SERIAL7_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL7'", "New Value": "23", "Change Reason": "RC receiver on SERIAL7 requires RCIN" },
-                "SERIAL8_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL8'", "New Value": "23", "Change Reason": "RC receiver on SERIAL8 requires RCIN" },
-                "SERIAL9_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL9'", "New Value": "23", "Change Reason": "RC receiver on SERIAL9 requires RCIN" },
+                "SERIAL1_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL1'", "New Value": "2 if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'MAVRadio' else 23", "Change Reason": "'MAVLink RC receiver on SERIAL1 requires MAVLink2' if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'MAVRadio' else 'RC receiver on SERIAL1 requires RCIN'" },
+                "SERIAL2_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL2'", "New Value": "2 if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'MAVRadio' else 23", "Change Reason": "'MAVLink RC receiver on SERIAL2 requires MAVLink2' if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'MAVRadio' else 'RC receiver on SERIAL2 requires RCIN'" },
+                "SERIAL3_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL3'", "New Value": "2 if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'MAVRadio' else 23", "Change Reason": "'MAVLink RC receiver on SERIAL3 requires MAVLink2' if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'MAVRadio' else 'RC receiver on SERIAL3 requires RCIN'" },
+                "SERIAL4_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL4'", "New Value": "2 if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'MAVRadio' else 23", "Change Reason": "'MAVLink RC receiver on SERIAL4 requires MAVLink2' if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'MAVRadio' else 'RC receiver on SERIAL4 requires RCIN'" },
+                "SERIAL5_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL5'", "New Value": "2 if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'MAVRadio' else 23", "Change Reason": "'MAVLink RC receiver on SERIAL5 requires MAVLink2' if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'MAVRadio' else 'RC receiver on SERIAL5 requires RCIN'" },
+                "SERIAL6_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL6'", "New Value": "2 if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'MAVRadio' else 23", "Change Reason": "'MAVLink RC receiver on SERIAL6 requires MAVLink2' if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'MAVRadio' else 'RC receiver on SERIAL6 requires RCIN'" },
+                "SERIAL7_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL7'", "New Value": "2 if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'MAVRadio' else 23", "Change Reason": "'MAVLink RC receiver on SERIAL7 requires MAVLink2' if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'MAVRadio' else 'RC receiver on SERIAL7 requires RCIN'" },
+                "SERIAL8_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL8'", "New Value": "2 if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'MAVRadio' else 23", "Change Reason": "'MAVLink RC receiver on SERIAL8 requires MAVLink2' if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'MAVRadio' else 'RC receiver on SERIAL8 requires RCIN'" },
+                "SERIAL9_PROTOCOL": { "if": "vehicle_components['RC Receiver']['FC Connection']['Type'] == 'SERIAL9'", "New Value": "2 if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'MAVRadio' else 23", "Change Reason": "'MAVLink RC receiver on SERIAL9 requires MAVLink2' if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'MAVRadio' else 'RC receiver on SERIAL9 requires RCIN'" },
                 "FLTMODE_CH": { "if": "vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'ExpressLRS'", "New Value": "6", "Change Reason": "ExpressLRS requires FLTMODE_CH != 5" }
             },
             "rename_connection": "vehicle_components['RC Receiver']['FC Connection']['Type']",
@@ -358,9 +358,9 @@
             "why": "Servo output functions define how the flight controller drives the aircraft control surfaces and accessories.",
             "why_now": "Servo outputs are configured after the connected hardware and aircraft type are known.",
             "blog_text": "Configure aircraft servo output functions.",
-            "blog_url": "https://ardupilot.org/plane/docs/guide-servo-function.html",
+            "blog_url": "https://ardupilot.org/plane/docs/servo-functions.html",
             "wiki_text": "Servo Output Functions",
-            "wiki_url": "https://ardupilot.org/plane/docs/guide-servo-function.html",
+            "wiki_url": "https://ardupilot.org/plane/docs/servo-functions.html",
             "external_tool_text": "",
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
@@ -369,10 +369,28 @@
                 "name": "servo_out",
                 "placement": "left"
             },
-            "autoimport_nondefault_regexp": ["SERVO[0-9]+_FUNCTION"],
+            "autoimport_nondefault_regexp": ["SERVO[0-9]+_FUNCTION", "Q_TILT_ENABLE", "Q_TILT_MASK", "Q_TILT_TYPE"],
             "old_filenames": []
         },
-        "12_motor.param": {
+        "12_control_surfaces_and_tilt_servos.param": {
+            "why": "Each control surface and tilt servo must move in the correct direction, over the correct range, and be centered. A reversed aileron, elevator or tilt servo makes the aircraft uncontrollable.",
+            "why_now": "The servo output functions and the tilt-rotor configuration from the previous step are active after its reboot, and the surfaces must be correct before the motor test and the first flight.",
+            "blog_text": "Configure the control surfaces and tilt servos",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduPlane#611-configure-the-control-surfaces-and-tilt-servos",
+            "wiki_text": "Tilt Rotor Planes",
+            "wiki_url": "https://ardupilot.org/plane/docs/guide-tilt-rotor.html",
+            "external_tool_text": "",
+            "external_tool_url": "",
+            "mandatory_text": "100% mandatory (0% optional)",
+            "component": "Frame",
+            "instructions_popup": {
+                "type": "warning",
+                "msg": "Remove the propellers before moving any servo or motor.\nUse SERVOx_REVERSED so that the ailerons, elevator and rudder move in the commanded direction, and in FBWA they move to correct the aircraft attitude.\nAdjust SERVOx_TRIM so the surfaces are centered and SERVOx_MIN/SERVOx_MAX so they reach their full travel without binding.\nOn a tilt-rotor, set SERVOx_REVERSED of each tilt servo so the rotors point forward in MANUAL and straight up in QSTABILIZE, then fine-tune SERVOx_MIN/SERVOx_MAX for the exact hover and forward-flight angles."
+            },
+            "autoimport_nondefault_regexp": ["SERVO[0-9]+_(MIN|MAX|TRIM|REVERSED)", "SERVO_AUTO_TRIM", "MIXING_GAIN", "MIXING_OFFSET", "Q_TILT_RATE_UP", "Q_TILT_RATE_DN", "Q_TILT_MAX", "Q_TILT_YAW_ANGLE"],
+            "old_filenames": []
+        },
+        "13_motor.param": {
             "why": "To determine motor RPM the number of electrical poles must be known",
             "why_now": "Needs to be done after setting ESC telemetry, but before testing the motor",
             "blog_text": "Motor specifications",
@@ -394,9 +412,9 @@
                 "SERVO_BLH_POLES": { "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] in ['ESC Telemetry', 'BDShotOnly']", "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" },
                 "SERVO_FTW_POLES": { "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'FETtecOneWire'", "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" }
             },
-            "old_filenames": []
+            "old_filenames": ["12_motor.param"]
         },
-        "13_initial_atc.param": {
+        "14_initial_atc.param": {
             "why": "Propeller size has a big influence on the vehicle dynamics, this adapts the attitude controller response to it",
             "why_now": "Done before sensor calibration in Mission Planner to minimize the changes the user has to do in mission planner",
             "blog_text": "Initial attitude controller configuration depends on the vehicle's propeller size defined in the component editor window",
@@ -420,12 +438,12 @@
             },
             "derived_parameters": {
                 "Q_A_ANG_YAW_P":    { "New Value": "round(0.5*max(8000, round(-900*vehicle_components['Propellers']['Specifications']['Diameter_inches']+36000, -2))/3000, 1)", "Change Reason": "Derived from vehicle component editor propeller size" },
-                "Q_A_ACCEL_P_MAX":  { "if": "'Q_A_ACCEL_P_MAX' in fc_parameters", "New Value": "max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))", "Change Reason": "Derived from vehicle component editor propeller size" },
-                "Q_A_ACCEL_R_MAX":  { "if": "'Q_A_ACCEL_R_MAX' in fc_parameters", "New Value": "max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))", "Change Reason": "Derived from vehicle component editor propeller size" },
-                "Q_A_ACCEL_Y_MAX":  { "if": "'Q_A_ACCEL_Y_MAX' in fc_parameters", "New Value": "max(8000, round(-900*vehicle_components['Propellers']['Specifications']['Diameter_inches']+36000, -2))", "Change Reason": "Derived from vehicle component editor propeller size" },
-                "Q_A_ACC_P_MAX":    { "if": "'Q_A_ACC_P_MAX' in fc_parameters", "New Value": "max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))/100", "Change Reason": "Derived from vehicle component editor propeller size" },
-                "Q_A_ACC_R_MAX":    { "if": "'Q_A_ACC_R_MAX' in fc_parameters", "New Value": "max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))/100", "Change Reason": "Derived from vehicle component editor propeller size" },
-                "Q_A_ACC_Y_MAX":    { "if": "'Q_A_ACC_Y_MAX' in fc_parameters", "New Value": "max(8000, round(-900*vehicle_components['Propellers']['Specifications']['Diameter_inches']+36000, -2))/100", "Change Reason": "Derived from vehicle component editor propeller size" },
+                "Q_A_ACCEL_P_MAX":  { "if": "'Q_A_ACCEL_P_MAX' in fc_parameters", "New Value": "min(40000, max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2))))", "Change Reason": "Derived from vehicle component editor propeller size, capped at the ArduPlane QuadPlane default" },
+                "Q_A_ACCEL_R_MAX":  { "if": "'Q_A_ACCEL_R_MAX' in fc_parameters", "New Value": "min(40000, max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2))))", "Change Reason": "Derived from vehicle component editor propeller size, capped at the ArduPlane QuadPlane default" },
+                "Q_A_ACCEL_Y_MAX":  { "if": "'Q_A_ACCEL_Y_MAX' in fc_parameters", "New Value": "min(10000, max(8000, round(-900*vehicle_components['Propellers']['Specifications']['Diameter_inches']+36000, -2)))", "Change Reason": "Derived from vehicle component editor propeller size, capped at the ArduPlane QuadPlane default" },
+                "Q_A_ACC_P_MAX":    { "if": "'Q_A_ACC_P_MAX' in fc_parameters", "New Value": "min(400, max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))/100)", "Change Reason": "Derived from vehicle component editor propeller size, capped at the ArduPlane QuadPlane default" },
+                "Q_A_ACC_R_MAX":    { "if": "'Q_A_ACC_R_MAX' in fc_parameters", "New Value": "min(400, max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))/100)", "Change Reason": "Derived from vehicle component editor propeller size, capped at the ArduPlane QuadPlane default" },
+                "Q_A_ACC_Y_MAX":    { "if": "'Q_A_ACC_Y_MAX' in fc_parameters", "New Value": "min(100, max(8000, round(-900*vehicle_components['Propellers']['Specifications']['Diameter_inches']+36000, -2))/100)", "Change Reason": "Derived from vehicle component editor propeller size, capped at the ArduPlane QuadPlane default" },
                 "Q_A_RAT_PIT_FLTD": { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0))) / 2", "Change Reason": "INS_GYRO_FILTER / 2" },
                 "Q_A_RAT_PIT_FLTT": { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0))) / 2", "Change Reason": "INS_GYRO_FILTER / 2" },
                 "Q_A_RAT_RLL_FLTD": { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0))) / 2", "Change Reason": "INS_GYRO_FILTER / 2" },
@@ -434,9 +452,9 @@
                 "INS_GYRO_FILTER":  { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0)))", "Change Reason": "Derived from vehicle component editor propeller size" },
                 "Q_M_THST_EXPO":    { "New Value": "min(0.8, round(0.15686*log(vehicle_components['Propellers']['Specifications']['Diameter_inches'])+0.23693, 2))", "Change Reason": "Derived from vehicle component editor propeller size" }
             },
-            "old_filenames": []
+            "old_filenames": ["13_initial_atc.param"]
         },
-        "14_esc.param": {
+        "15_esc.param": {
             "why": "The motor thrust linearization is crucial for the throttle controller tuning, and throttle-based notch filter operation",
             "why_now": "The notch filter setup step requires this, and the safety of the vehicle depends on the ESC and motor configuration",
             "blog_text": "ESC, Motor and propeller configurations",
@@ -472,13 +490,13 @@
                 "SERVO_BLH_TRATE": {},
                 "SERVO_FTW_POLES": {}
             },
-            "old_filenames": [],
+            "old_filenames": ["14_esc.param"],
             "plugin": {
                 "name": "motor_test",
                 "placement": "left"
             }
         },
-        "15_board_orientation.param": {
+        "16_board_orientation.param": {
             "why": "Correct orientation ensures that the flight controller accurately interprets the vehicle's movements and orientation, which is fundamental for stable flight and navigation.",
             "why_now": "The following steps require that the orientation is correctly set",
             "blog_text": "Define the orientation of the flight controller board relative to the vehicle's body frame",
@@ -498,9 +516,9 @@
             "derived_parameters": {
                 "Q_FRAME_CLASS": { "if": "'Q_FRAME_CLASS' in fc_parameters", "New Value": "vehicle_components['Frame']['Specifications']['Frame class']", "Change Reason": "Selected in the component editor" }
             },
-            "old_filenames": []
+            "old_filenames": ["15_board_orientation.param"]
         },
-        "16_accelerometer_calibration.param": {
+        "17_accelerometer_calibration.param": {
             "why": "Accelerometer calibration values and the accelerometers to use must be configured before the vehicle can be flown.",
             "why_now": "The flight controller and sensors have been configured in the preceding steps.",
             "blog_text": "Calibrate the accelerometers and configure the accelerometer sensors.",
@@ -559,9 +577,9 @@
                 "INS4_ACC_CALTEMP": { "if": "'INS4_ACC_CALTEMP' in fc_parameters", "Change Reason": "Copied from the connected flight controller" },
                 "INS5_ACC_CALTEMP": { "if": "'INS5_ACC_CALTEMP' in fc_parameters", "Change Reason": "Copied from the connected flight controller" }
             },
-            "old_filenames": []
+            "old_filenames": ["16_accelerometer_calibration.param"]
         },
-        "17_accelerometer_level.param": {
+        "18_accelerometer_level.param": {
             "why": "Accelerometer level trim values compensate for the vehicle attitude when it is stationary.",
             "why_now": "The accelerometers must be calibrated before their level can be checked and corrected.",
             "blog_text": "Level the accelerometers.",
@@ -580,9 +598,9 @@
                 "AHRS_TRIM_X": { "Change Reason": "Copied from the connected flight controller" },
                 "AHRS_TRIM_Y": { "Change Reason": "Copied from the connected flight controller" }
             },
-            "old_filenames": []
+            "old_filenames": ["17_accelerometer_level.param"]
         },
-        "18_gnss.param": {
+        "19_gnss.param": {
             "why": "GNSS positioning is required to compensate for the IMU drift. This is required by the configuration and tuning steps. After configuration and tuning are complete the GNSS can be replaced by other positioning system",
             "why_now": "Needs to be done before compass calibration",
             "blog_text": "Configure the GNSS (Global Navigation Satellite System) connection and settings, including antenna phase center location and constellation selection for optimal update rates",
@@ -601,7 +619,7 @@
                 "GPS1_TYPE": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.6')","New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" }
             },
             "rename_connection": "vehicle_components['GNSS Receiver']['FC Connection']['Type']",
-            "old_filenames": [],
+            "old_filenames": ["18_gnss.param"],
             "related_bin_messages": {
                 "GPS": {
                     "name": "GPS",
@@ -617,7 +635,7 @@
                 }
             }
         },
-        "19_compass_calibration.param": {
+        "20_compass_calibration.param": {
             "why": "Compass calibration and ordering are required for reliable heading estimation.",
             "why_now": "The compass hardware and vehicle orientation are configured in the preceding steps.",
             "blog_text": "Calibrate and configure the compasses.",
@@ -632,9 +650,9 @@
                 "placement": "top"
             },
             "autoimport_nondefault_regexp": ["COMPASS_.+"],
-            "old_filenames": []
+            "old_filenames": ["19_compass_calibration.param"]
         },
-        "20_remote_id.param": {
+        "21_remote_id.param": {
             "why": "Some countries require a remote ID for drones to be flown legally.",
             "why_now": "Remote ID requires GNSS and air pressure to be configured before, and it must be set up before the first flight",
             "blog_text": "Set the remote ID for the vehicle, to comply with local laws if applicable",
@@ -645,9 +663,9 @@
             "external_tool_url": "https://help.dronetag.cz/dronetag-bs",
             "mandatory_text": "0% mandatory (100% optional)",
             "auto_changed_by": "",
-            "old_filenames": []
+            "old_filenames": ["20_remote_id.param"]
         },
-        "21_osd.param": {
+        "22_osd.param": {
             "why": "An OSD (On Screen Display) overlays flight data on the FPV video feed, giving the pilot situational awareness without looking away from the aircraft",
             "why_now": "OSD configuration depends on the telemetry and battery monitor being configured in the preceding steps, and it must be set up before the first flight",
             "blog_text": "Configure the On Screen Display (OSD) to show relevant flight data on the FPV video feed",
@@ -659,9 +677,9 @@
             "mandatory_text": "0% mandatory (100% optional)",
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["OSD[0-9]*_.*"],
-            "old_filenames": []
+            "old_filenames": ["21_osd.param"]
         },
-        "22_flight_modes.param": {
+        "23_flight_modes.param": {
             "why": "Flight modes determine how the aircraft responds to pilot and ground-control inputs.",
             "why_now": "The radio and flight controller inputs have been configured in the preceding steps.",
             "blog_text": "Configure the aircraft flight modes.",
@@ -672,7 +690,7 @@
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
             "autoimport_nondefault_regexp": ["FLTMODE[1-6]", "INITIAL_MODE"],
-            "old_filenames": [],
+            "old_filenames": ["22_flight_modes.param"],
             "add_parameters": {
                 "FLTMODE1": { "Change Reason": "Copied from the connected flight controller" },
                 "FLTMODE2": { "Change Reason": "Copied from the connected flight controller" },
@@ -683,7 +701,7 @@
                 "INITIAL_MODE": { "if": "'INITIAL_MODE' in fc_parameters", "Change Reason": "Copied from the connected flight controller" }
             }
         },
-        "23_general_configuration.param": {
+        "24_general_configuration.param": {
             "why": "Configure parameters that do not belong to a more specific aircraft setup step.",
             "why_now": "The flight controller, sensors, outputs, and safety settings have been configured in preceding steps.",
             "blog_text": "General configuration parameters for the aircraft.",
@@ -697,9 +715,9 @@
             "delete_parameters": {
                 "ARMING_CHECK": {}
             },
-            "old_filenames": []
+            "old_filenames": ["23_general_configuration.param"]
         },
-        "24_safety_setup.param": {
+        "25_safety_setup.param": {
             "why": "Safety parameters protect the vehicle and its surroundings by enabling arming checks, geofencing and failsafe actions. ESC slew rate limits protect the ESCs from desync events.",
             "why_now": "Before the first flight so that arming checks are enforced and the vehicle responds safely to abnormal conditions",
             "blog_text": "Configure safety parameters including arming checks, geofence, failsafe actions and ESC slew rate limits",
@@ -714,9 +732,9 @@
                 "ARMING_CHECK": { "if": "'ARMING_CHECK' in fc_parameters", "New Value": 1, "Change Reason": "Perform all arming checks. If you have a problem fix its source. Do NOT change this" },
                 "ARMING_SKIPCHK": { "if": "'ARMING_SKIPCHK' in fc_parameters", "New Value": 0, "Change Reason": "Perform all arming checks. If you have a problem fix its source. Do NOT change this" }
             },
-            "old_filenames": []
+            "old_filenames": ["24_safety_setup.param"]
         },
-        "25_motor_notch_filter_setup.param": {
+        "26_motor_notch_filter_setup.param": {
             "why": "When the gyroscope signal is less noisy the PID gains can be higher without causing motor output oscillations",
             "why_now": "Before the first flight so that it can gather data and safeguard the vehicle from some of the noise",
             "blog_text": "Configure the notch filter settings, used to reduce gyroscope signal noise caused by the motors rotation",
@@ -735,7 +753,7 @@
                 "INS_HNTCH_FREQ": { "New Value": "1.4*fc_parameters['INS_GYRO_FILTER']", "Change Reason": "Use 1.4 * INS_GYRO_FILTER as a first guess" },
                 "INS_HNTCH_MODE": { "New Value": "1 if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 3", "Change Reason": "'Use throttle-based dynamic notch filter to reduce propeller noise' if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 'Use ESC telemetry RPM to dynamically adjust the propeller notch filter'" }
             },
-            "old_filenames": [],
+            "old_filenames": ["25_motor_notch_filter_setup.param"],
             "related_bin_messages": {
                 "IMU": { "name": "IMU", "required": true },
                 "VIBE": { "name": "VIBE", "required": false },
@@ -745,7 +763,7 @@
             }
 
         },
-        "26_motor_notch_logging.param": {
+        "27_motor_notch_logging.param": {
             "why": "parameter values at later steps depend on data that is gathered by means of logging",
             "why_now": "All the previous steps did not require logging, but the following ones do",
             "blog_text": "Configure logging parameters, including what data is logged and how it's stored",
@@ -767,9 +785,9 @@
                 "INS_LOG_BAT_OPT": { "New Value": "4 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 0", "Change Reason": "Use pre and post filters acc and gyro batch logging on F4 processors or big props, pre-post gyro raw logging on others" },
                 "INS_RAW_LOG_OPT": { "New Value": "0 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 9", "Change Reason": "Use pre and post filters acc and gyro batch logging on F4 processors or big props, pre-post gyro raw logging on others" }
             },
-            "old_filenames": []
+            "old_filenames": ["26_motor_notch_logging.param"]
         },
-        "27_optional_pid_adjustment.param": {
+        "28_optional_pid_adjustment.param": {
             "instructions_popup": {
               "type": "info",
               "msg": "This step is optional, only perform it if your vehicle is tiny, huge, or its motor outputs oscillate"
@@ -784,9 +802,9 @@
             "external_tool_url": "https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/param_pid_adjustment_update.py",
             "mandatory_text": "20% mandatory (80% optional)",
             "auto_changed_by": "",
-            "old_filenames": []
+            "old_filenames": ["27_optional_pid_adjustment.param"]
         },
-        "28_throttle_controller.param": {
+        "29_throttle_controller.param": {
             "why": "The throttle controller is crucial for maintaining altitude and controlling the vehicle's vertical movement.",
             "why_now": "After the first flight because it depends on the Q_M_THST_HOVER parameter, before the second flight so that it can safely use the altitude controller",
             "blog_text": "Use Q_M_THST_HOVER value calculated during the first flight to set throttle controller PIDs",
@@ -805,9 +823,9 @@
                 "Q_P_ACCZ_P": { "if": "'Q_M_THST_HOVER' in fc_parameters and Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7')", "New Value": "1*fc_parameters['Q_M_THST_HOVER']", "Change Reason": "Use Q_M_THST_HOVER assuming Q_M_THST_HOVER has been correctly learned" },
                 "Q_P_D_ACC_P": { "if": "'Q_M_THST_HOVER' in fc_parameters and Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.7')", "New Value": "0.1*fc_parameters['Q_M_THST_HOVER']", "Change Reason": "Use 0.1 * Q_M_THST_HOVER assuming Q_M_THST_HOVER has been correctly learned" }
             },
-            "old_filenames": []
+            "old_filenames": ["28_throttle_controller.param"]
         },
-        "29_motor_notch_filter_results.param": {
+        "30_motor_notch_filter_results.param": {
             "why": "The notch filter(s) configuration depends on real-flight data.",
             "why_now": "real-flight data is only available after the first flight",
             "blog_text": "Configure the notch filter(s) based on the data collected from the first flight",
@@ -819,9 +837,9 @@
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["FFT_.*", "INS_GYRO_FILTER"],
-            "old_filenames": []
+            "old_filenames": ["29_motor_notch_filter_results.param"]
         },
-        "30_ekf_config.param": {
+        "31_ekf_config.param": {
             "why": "Sometimes the weights of the barometer vs. GNSS altitude need to be adjusted.",
             "why_now": "Before the second flight so that the EKF can be used to estimate the vehicle's position",
             "blog_text": "Configure Extended Kalman Filter (EKF) noise weights",
@@ -831,9 +849,9 @@
             "external_tool_text": "",
             "external_tool_url": "",
             "mandatory_text": "0% mandatory (100% optional)",
-            "old_filenames": []
+            "old_filenames": ["30_ekf_config.param"]
         },
-        "31_pid_notch_filter_logging.param": {
+        "32_pid_notch_filter_logging.param": {
             "why": "parameter values at later steps depend on data that is gathered by means of logging",
             "why_now": "PID notch filters require different logging parameters from motor notch filters",
             "blog_text": "Configure PID notch filters logging",
@@ -853,9 +871,9 @@
             "derived_parameters": {
                 "INS_LOG_BAT_MASK": { "New Value": "1 << int(fc_parameters['EK3_PRIMARY'])", "Change Reason": "PID notch filters require EKF primary batch logging, not raw logging" }
             },
-            "old_filenames": []
+            "old_filenames": ["31_pid_notch_filter_logging.param"]
         },
-        "32_pid_notch_filter_results.param": {
+        "33_pid_notch_filter_results.param": {
             "why": "The PID notch filter(s) configuration depends on real-flight data collected with the logging enabled in the previous step",
             "why_now": "Real-flight data with PID notch filter batch logging is only available after the dedicated logging flight",
             "blog_text": "Configure the PID notch filter(s) based on the data collected from the logging flight",
@@ -879,9 +897,9 @@
                 "Q_P_D_ACC_NEF": { "if": "'Q_P_D_ACC_NEF' in fc_parameters", "New Value": "0", "Change Reason": "" },
                 "Q_P_D_ACC_NTF": { "if": "'Q_P_D_ACC_NTF' in fc_parameters", "New Value": "0", "Change Reason": "" }
             },
-            "old_filenames": []
+            "old_filenames": ["32_pid_notch_filter_results.param"]
         },
-        "33_quick_tune_setup.param": {
+        "34_quick_tune_setup.param": {
             "why": "The VTOL-quicktune lua script can safely estimate good PID starting values for the vehicle.",
             "why_now": "Before the second flight so that the vehicle can be safely tuned.",
             "blog_text": "Set up the in-flight VTOL-quicktune lua script to tune the PIDs before the MAGFit flight",
@@ -897,7 +915,7 @@
                 "SCR_ENABLE": { "New Value": 1, "Change Reason": "Use lua scripting for VTOL-Quicktune" },
                 "QUIK_ENABLE": { "New Value": 1, "Change Reason": "Use VTOL-Quicktune lua script to estimate a good PID starting values" }
             },
-            "old_filenames": [],
+            "old_filenames": ["33_quick_tune_setup.param"],
             "download_file": [
                 { "source_url": "https://raw.githubusercontent.com/ArduPilot/ardupilot/Copter-4.5/libraries/AP_Scripting/applets/VTOL-quicktune.lua", "dest_local": "VTOL-quicktune.lua" }
             ],
@@ -905,7 +923,7 @@
                 { "source_local": "VTOL-quicktune.lua", "dest_on_fc": "/APM/Scripts/VTOL-quicktune.lua" }
             ]
         },
-        "34_quick_tune_results.param": {
+        "35_quick_tune_results.param": {
             "why": "The VTOL-quicktune lua script can safely estimate good PID starting values for the vehicle.",
             "why_now": "Before the second flight so that the vehicle can be safely tuned.",
             "blog_text": "Results of the in-flight VTOL-quicktune lua script PIDs before the MAGFit flight.",
@@ -937,9 +955,9 @@
                 "Q_A_RAT_YAW_P": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) <= Version('4.7')", "Change Reason": "Tuned by quiktune" },
                 "Q_A_RAT_YAW_SMAX": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) <= Version('4.7')", "Change Reason": "Tuned by quiktune" }
             },
-            "old_filenames": []
+            "old_filenames": ["34_quick_tune_results.param"]
         },
-        "35_inflight_magnetometer_fit_setup.param": {
+        "36_inflight_magnetometer_fit_setup.param": {
             "why": "The compass heading is crucial for the vehicle's navigation and the calibration is very accurate if done during a special flight path.",
             "why_now": "Requires a basic tune (provided by the previous step) in order to be able to safely navigate in a figure eight flight path.",
             "blog_text": "Set up parameters for the in-flight magnetometer calibration",
@@ -969,7 +987,7 @@
                 "WAYPT_ANNOUNCE_S": { }
             },
             "jump_possible": {"70_everyday_use.param": "If you are impatient and do not want a fully optimized flight controller\nYou can skip some steps now.\n\nJump to '70_everyday_use.param' file?"},
-            "old_filenames": [],
+            "old_filenames": ["35_inflight_magnetometer_fit_setup.param"],
             "download_file": [
                 { "source_url": "https://discuss.ardupilot.org/uploads/short-url/4pyrl7PcfqiMEaRItUhljuAqLSs.lua", "dest_local": "copter-magfit-helper.lua" },
                 { "source_url": "https://raw.githubusercontent.com/ArduPilot/ardupilot/Copter-4.6.0/libraries/AP_Scripting/applets/advance-wp.lua", "dest_local": "advance-wp.lua" }
@@ -979,7 +997,7 @@
                 { "source_local": "advance-wp.lua", "dest_on_fc": "/APM/Scripts/advance-wp.lua" }
             ]
         },
-        "36_inflight_magnetometer_fit_results.param": {
+        "37_inflight_magnetometer_fit_results.param": {
             "why": "The compass heading is crucial for the vehicle's navigation and the calibration is very accurate if done during a special flight path.",
             "why_now": "Requires the setup (provided by the previous step) and should be done before the second quicktune.",
             "blog_text": "Record the results of the in-flight magnetometer calibration",
@@ -1051,9 +1069,9 @@
                 "COMPASS_ORIENT3": { "if": "'COMPASS_ORIENT3' not in fc_parameters" },
                 "COMPASS_SCALE3":  { "if": "'COMPASS_ORIENT3' not in fc_parameters" }
             },
-            "old_filenames": []
+            "old_filenames": ["36_inflight_magnetometer_fit_results.param"]
         },
-        "37_evaluate_the_aircraft_tune_ff_disable.param": {
+        "38_evaluate_the_aircraft_tune_ff_disable.param": {
             "why": "Evaluating the aircraft's PID tuning and flight characteristics is best done with feed-forward disabled",
             "why_now": "Before the autotune process to estimate if autotune can safely operate the vehicle",
             "blog_text": "Evaluate the aircraft's tuning with feed-forward control disabled",
@@ -1073,9 +1091,9 @@
             "add_parameters": {
                 "Q_M_HOVER_LEARN": { "if": "vehicle_components['Frame']['Specifications']['TOW max Kg'] - vehicle_components['Frame']['Specifications']['TOW min Kg'] < 0.01*vehicle_components['Frame']['Specifications']['TOW max Kg']", "New Value": "1", "Change Reason": "The vehicle TOW weight does not change, so no need to save it" }
             },
-            "old_filenames": []
+            "old_filenames": ["37_evaluate_the_aircraft_tune_ff_disable.param"]
         },
-        "38_evaluate_the_aircraft_tune_ff_enable.param": {
+        "39_evaluate_the_aircraft_tune_ff_enable.param": {
             "why": "Evaluate the aircraft's PID tuning and flight characteristics with feed-forward enable to test faster dynamics",
             "why_now": "Before the autotune process to estimate if autotune can safely operate the vehicle",
             "blog_text": "Evaluate the aircraft's tuning with feed-forward control enabled",
@@ -1089,9 +1107,9 @@
             "forced_parameters": {
                 "Q_A_RATE_FF_ENAB": { "New Value": 1, "Change Reason": "re-enable normal operation, activate input shaping" }
             },
-            "old_filenames": []
+            "old_filenames": ["38_evaluate_the_aircraft_tune_ff_enable.param"]
         },
-        "39_autotune_roll_setup.param": {
+        "40_autotune_roll_setup.param": {
             "why": "To optimize roll step response.",
             "why_now": "Because roll is usually the axis that has the highest dynamic, and we start with the highest dynamic axis",
             "blog_text": "Set up parameters for the roll axis autotuning process",
@@ -1105,9 +1123,9 @@
             "forced_parameters": {
                 "AUTOTUNE_AXES": { "New Value": 1, "Change Reason": "Autotune roll axis" }
             },
-            "old_filenames": []
+            "old_filenames": ["39_autotune_roll_setup.param"]
         },
-        "40_autotune_roll_results.param": {
+        "41_autotune_roll_results.param": {
             "plugin": {"name": "autotune_gain_backoff", "placement": "top", "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7.0') and vehicle_components['Frame']['Specifications']['Frame class'] != 'Undefined'"},
             "why": "To record autotune results after roll step response optimization",
             "why_now": "Because roll is usually the axis that has the highest dynamic, and we start with the highest dynamic axis",
@@ -1119,9 +1137,9 @@
             "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "ArduPilot autotune",
-            "old_filenames": []
+            "old_filenames": ["40_autotune_roll_results.param"]
         },
-        "41_autotune_pitch_setup.param": {
+        "42_autotune_pitch_setup.param": {
             "why": "To optimize pitch step response.",
             "why_now": "Because pitch is usually the axis that has the second highest dynamic, and we continue with the second highest dynamic axis",
             "blog_text": "Set up parameters for the pitch axis autotuning process",
@@ -1135,9 +1153,9 @@
             "forced_parameters": {
                 "AUTOTUNE_AXES": { "New Value": 2, "Change Reason": "Autotune pitch axis" }
             },
-            "old_filenames": []
+            "old_filenames": ["41_autotune_pitch_setup.param"]
         },
-        "42_autotune_pitch_results.param": {
+        "43_autotune_pitch_results.param": {
             "plugin": {"name": "autotune_gain_backoff", "placement": "top", "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7.0') and vehicle_components['Frame']['Specifications']['Frame class'] != 'Undefined'"},
             "why": "To record autotune results after pitch step response optimization",
             "why_now": "Because pitch is usually the axis that has the second highest dynamic, and we continue with the second highest dynamic axis",
@@ -1149,9 +1167,9 @@
             "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "ArduPilot autotune",
-            "old_filenames": []
+            "old_filenames": ["42_autotune_pitch_results.param"]
         },
-        "43_autotune_yaw_setup.param": {
+        "44_autotune_yaw_setup.param": {
             "why": "To optimize yaw step response.",
             "why_now": "Because yaw is usually the axis that has the third highest dynamic, and we continue with the third highest dynamic axis",
             "blog_text": "Set up parameters for the yaw axis autotuning process",
@@ -1168,9 +1186,9 @@
             "derived_parameters": {
                 "Q_A_RAT_YAW_FLTD": { "New Value": "fc_parameters['INS_GYRO_FILTER'] / 4", "Change Reason": "Use INS_GYRO_FILTER / 4 as a first guess" }
             },
-            "old_filenames": []
+            "old_filenames": ["43_autotune_yaw_setup.param"]
         },
-        "44_autotune_yaw_results.param": {
+        "45_autotune_yaw_results.param": {
             "plugin": {"name": "autotune_gain_backoff", "placement": "top", "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7.0') and vehicle_components['Frame']['Specifications']['Frame class'] != 'Undefined'"},
             "why": "To record autotune results after yaw step response optimization",
             "why_now": "Because yaw is usually the axis that has the third highest dynamic, and we continue with the third highest dynamic axis",
@@ -1182,9 +1200,9 @@
             "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "ArduPilot autotune",
-            "old_filenames": []
+            "old_filenames": ["44_autotune_yaw_results.param"]
         },
-        "45_autotune_yawd_setup.param": {
+        "46_autotune_yawd_setup.param": {
             "why": "To optimize yaw D step response.",
             "why_now": "Because yaw D can only be done after yaw",
             "blog_text": "Set up parameters for the yaw rate autotuning process",
@@ -1198,9 +1216,9 @@
             "forced_parameters": {
                 "AUTOTUNE_AXES": { "New Value": 8, "Change Reason": "Autotune yaw D axis" }
             },
-            "old_filenames": []
+            "old_filenames": ["45_autotune_yawd_setup.param"]
         },
-        "46_autotune_yawd_results.param": {
+        "47_autotune_yawd_results.param": {
             "plugin": {"name": "autotune_gain_backoff", "placement": "top", "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7.0') and vehicle_components['Frame']['Specifications']['Frame class'] != 'Undefined'"},
             "why": "To record autotune results after yaw D step response optimization",
             "why_now": "Because yaw D can only be done after yaw",
@@ -1212,9 +1230,9 @@
             "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "ArduPilot autotune",
-            "old_filenames": []
+            "old_filenames": ["46_autotune_yawd_results.param"]
         },
-        "47_autotune_roll_pitch_retune_setup.param": {
+        "48_autotune_roll_pitch_retune_setup.param": {
             "why": "An even better result for roll and pitch will be achieved by re-autotuning an already (in all axis) autotuned vehicle",
             "why_now": "Because it needs an initial autotune of all axis",
             "blog_text": "Set up parameters for the roll and pitch axis retuning process",
@@ -1228,9 +1246,9 @@
             "forced_parameters": {
                 "AUTOTUNE_AXES": { "New Value": 3, "Change Reason": "Autotune roll and pitch axis" }
             },
-            "old_filenames": []
+            "old_filenames": ["47_autotune_roll_pitch_retune_setup.param"]
         },
-        "48_autotune_roll_pitch_retune_results.param": {
+        "49_autotune_roll_pitch_retune_results.param": {
             "plugin": {"name": "autotune_gain_backoff", "placement": "top", "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7.0') and vehicle_components['Frame']['Specifications']['Frame class'] != 'Undefined'"},
             "why": "To record autotune roll-pitch results",
             "why_now": "Because it can only be done after the respective autotune flight",
@@ -1242,9 +1260,9 @@
             "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "ArduPilot autotune",
-            "old_filenames": []
+            "old_filenames": ["48_autotune_roll_pitch_retune_results.param"]
         },
-        "49_autotune_finish.param": {
+        "50_autotune_finish.param": {
             "why": "Q_A_THR_MIX_MAX should be increased after autotune to maximize attitude control authority at high throttle",
             "why_now": "After all autotune flights are complete and the PIDs are finalized",
             "blog_text": "Finalize autotune by setting the maximum throttle mix and compensating acceleration limits for takeoff weight",
@@ -1267,9 +1285,9 @@
             "forced_parameters": {
                 "Q_A_THR_MIX_MAX": { "New Value": 0.9, "Change Reason": "Maximize attitude control authority at high throttle" }
             },
-            "old_filenames": []
+            "old_filenames": ["49_autotune_finish.param"]
         },
-        "50_pid_d_ff.param": {
+        "51_pid_d_ff.param": {
             "why": "The D feed-forward term improves aggressive rate tracking and gives the drone a 'locked-in' feel with minimal control latency",
             "why_now": "After all autotune axes are complete and PID values are finalized, since D_FF is calculated from the final tuned PID response",
             "blog_text": "Calculate angle rate derivative feed-forward gains (Q_A_RAT_*_D_FF and Q_P_ACCZ_D_FF) to improve aggressive maneuver tracking",
@@ -1281,9 +1299,9 @@
             "mandatory_text": "0% mandatory (100% optional)",
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["Q_A_RAT_.+_D_FF", "Q_P_ACCZ_D_FF", "Q_P_D_ACC_D_FF"],
-            "old_filenames": []
+            "old_filenames": ["50_pid_d_ff.param"]
         },
-        "51_windspeed_estimation.param": {
+        "52_windspeed_estimation.param": {
             "why": "For accurate navigation and stabilization at high speeds and/or in windy conditions",
             "why_now": "Because it can only be done after PID tuning is complete",
             "blog_text": "Configure parameters for wind speed estimation",
@@ -1298,9 +1316,9 @@
                 "LOG_DISARMED": { "New Value": 1, "Change Reason": "allow post flight tuning with Replay" },
                 "LOG_REPLAY": { "New Value": 1, "Change Reason": "allow post flight tuning with Replay" }
             },
-            "old_filenames": []
+            "old_filenames": ["51_windspeed_estimation.param"]
         },
-        "52_barometer_compensation.param": {
+        "53_barometer_compensation.param": {
             "why": "For accurate altitude estimation",
             "why_now": "Because it depends on wind speed estimation",
             "blog_text": "Set up parameters for barometer compensation",
@@ -1312,9 +1330,9 @@
             "mandatory_text": "60% mandatory (40% optional)",
             "auto_changed_by": "",
             "jump_possible": {"64_position_controller.param": "If you do not want an analytical PID optimization\nyou can skip some steps now.\n\nJump to '64_position_controller.param' file?"},
-            "old_filenames": []
+            "old_filenames": ["52_barometer_compensation.param"]
         },
-        "53_windspeed_estimation_finish.param": {
+        "54_windspeed_estimation_finish.param": {
             "why": "Disarmed and replay logging must be disabled after windspeed estimation flights to avoid filling the storage with unnecessary logs",
             "why_now": "Because LOG_DISARMED and LOG_REPLAY were enabled for windspeed estimation and barometer compensation flights and are no longer needed",
             "blog_text": "Restore logging parameters to normal after windspeed estimation flights",
@@ -1329,9 +1347,9 @@
                 "LOG_DISARMED": { "New Value": 0, "Change Reason": "was only needed for wind speed estimation" },
                 "LOG_REPLAY": { "New Value": 0, "Change Reason": "was only needed for wind speed estimation" }
             },
-            "old_filenames": []
+            "old_filenames": ["53_windspeed_estimation_finish.param"]
         },
-        "54_system_id_input_roll.param": {
+        "55_system_id_input_roll.param": {
             "why": "System identification is required to create a mathematical model of the vehicle",
             "why_now": "Because the vehicle should be fully tuned (no more PID changes) before a model gets created (that depends on said PID values)",
             "blog_text": "Configure parameters for the roll axis input system identification to create a mathematical model of the vehicle",
@@ -1345,9 +1363,9 @@
             "forced_parameters": {
                 "SID_AXIS": { "New Value": 1, "Change Reason": "Inject chip on the input roll signal" }
             },
-            "old_filenames": []
+            "old_filenames": ["54_system_id_input_roll.param"]
         },
-        "55_system_id_input_pitch.param": {
+        "56_system_id_input_pitch.param": {
             "why": "System identification is required to create a mathematical model of the vehicle",
             "why_now": "Because the vehicle should be fully tuned (no more PID changes) before a model gets created (that depends on said PID values)",
             "blog_text": "Configure parameters for the pitch axis input system identification to create a mathematical model of the vehicle",
@@ -1361,9 +1379,9 @@
             "forced_parameters": {
                 "SID_AXIS": { "New Value": 2, "Change Reason": "Inject chip on the input pitch signal" }
             },
-            "old_filenames": []
+            "old_filenames": ["55_system_id_input_pitch.param"]
         },
-        "56_system_id_input_yaw.param": {
+        "57_system_id_input_yaw.param": {
             "why": "System identification is required to create a mathematical model of the vehicle",
             "why_now": "Because the vehicle should be fully tuned (no more PID changes) before a model gets created (that depends on said PID values)",
             "blog_text": "Configure parameters for the yaw axis input system identification to create a mathematical model of the vehicle",
@@ -1377,9 +1395,9 @@
             "forced_parameters": {
                 "SID_AXIS": { "New Value": 3, "Change Reason": "Inject chip on the input yaw signal" }
             },
-            "old_filenames": []
+            "old_filenames": ["56_system_id_input_yaw.param"]
         },
-        "57_system_id_mixer_roll.param": {
+        "58_system_id_mixer_roll.param": {
             "why": "System identification is required to create a mathematical model of the vehicle",
             "why_now": "Because the vehicle should be fully tuned (no more PID changes) before a model gets created (that depends on said PID values)",
             "blog_text": "Configure parameters for the roll axis system identification to create a mathematical model of the vehicle",
@@ -1393,9 +1411,9 @@
             "forced_parameters": {
                 "SID_AXIS": { "New Value": 10, "Change Reason": "Inject chip on the mixer roll signal" }
             },
-            "old_filenames": []
+            "old_filenames": ["57_system_id_mixer_roll.param"]
         },
-        "58_system_id_mixer_pitch.param": {
+        "59_system_id_mixer_pitch.param": {
             "why": "System identification is required to create a mathematical model of the vehicle",
             "why_now": "Because the vehicle should be fully tuned (no more PID changes) before a model gets created (that depends on said PID values)",
             "blog_text": "Configure parameters for the pitch axis system identification to create a mathematical model of the vehicle",
@@ -1409,9 +1427,9 @@
             "forced_parameters": {
                 "SID_AXIS": { "New Value": 11, "Change Reason": "Inject chip on the mixer pitch signal" }
             },
-            "old_filenames": []
+            "old_filenames": ["58_system_id_mixer_pitch.param"]
         },
-        "59_system_id_mixer_yaw.param": {
+        "60_system_id_mixer_yaw.param": {
             "why": "System identification is required to create a mathematical model of the vehicle",
             "why_now": "Because the vehicle should be fully tuned (no more PID changes) before a model gets created (that depends on said PID values)",
             "blog_text": "Configure parameters for the yaw axis system identification to create a mathematical model of the vehicle",
@@ -1425,9 +1443,9 @@
             "forced_parameters": {
                 "SID_AXIS": { "New Value": 12, "Change Reason": "Inject chip on the mixer yaw signal" }
             },
-            "old_filenames": []
+            "old_filenames": ["59_system_id_mixer_yaw.param"]
         },
-        "60_system_id_mixer_thrust.param": {
+        "61_system_id_mixer_thrust.param": {
             "why": "System identification is required to create a mathematical model of the vehicle",
             "why_now": "Because the vehicle should be fully tuned (no more PID changes) before a model gets created (that depends on said PID values)",
             "blog_text": "Configure parameters for the thrust axis system identification to create a mathematical model of the vehicle",
@@ -1441,9 +1459,9 @@
             "forced_parameters": {
                 "SID_AXIS": { "New Value": 13, "Change Reason": "Inject chip on the mixer thrust signal" }
             },
-            "old_filenames": []
+            "old_filenames": ["60_system_id_mixer_thrust.param"]
         },
-        "61_analytical_pid_optimization.param": {
+        "62_analytical_pid_optimization.param": {
             "why": "Because the mathematical model of the vehicle allows for analytical PID optimization",
             "why_now": "Because we first needed system identification flights to create the mathematical model",
             "blog_text": "Parameters for analytical PID optimization",
@@ -1459,9 +1477,9 @@
                 "Q_A_RATE_FF_ENAB": { "New Value": 1, "Change Reason": "Restore value now that system identification is done" },
                 "SID_AXIS": { "New Value": 0, "Change Reason": "No more system identification chip injections" }
             },
-            "old_filenames": []
+            "old_filenames": ["61_analytical_pid_optimization.param"]
         },
-        "62_range_finder.param": {
+        "63_range_finder.param": {
             "why": "Configure the rangefinder and related landing and airspeed parameters used by the aircraft.",
             "why_now": "The sensor connections and core aircraft configuration are available before position tuning.",
             "blog_text": "Configure rangefinder and related aircraft parameters.",
@@ -1473,7 +1491,7 @@
             "mandatory_text": "0% mandatory (100% optional)",
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["RNGFND\\d+_.*", "RNGFND_LANDING", "ARSPD_.*"],
-            "old_filenames": []
+            "old_filenames": ["62_range_finder.param"]
         },
         "64_position_controller.param": {
             "why": "Position controller parameters are crucial for waypoint navigation and precision flying",
@@ -1589,22 +1607,22 @@
         },
         "Minimalistic mandatory tuning": {
             "description": "Minimalistic mandatory tuning using test flight data",
-            "start": 28
+            "start": 29
         },
         "Standard tuning": {
             "description": "Improve tuning with more test flight data",
             "optional": true,
-            "start": 35
+            "start": 36
         },
         "Improve altitude control": {
             "description": "Improve altitude under windy conditions",
             "optional": true,
-            "start": 51
+            "start": 52
         },
         "Analytical PID optimization": {
             "description": "System identification and analytical PID optimization",
             "optional": true,
-            "start": 54
+            "start": 55
         },
         "Position controller tuning": {
             "description": "Position controller tuning",

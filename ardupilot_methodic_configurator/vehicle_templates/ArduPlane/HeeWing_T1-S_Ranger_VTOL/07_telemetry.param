@@ -1,0 +1,13 @@
+BRD_SER1_RTSCTS,0  # The XR4 has no CTS/RTS lines, so disable UART7 hardware flow control
+MAV2_ADSB,0  # ExpressLRS MAVLink guide: ADSB stream off on the ELRS port
+MAV2_EXT_STAT,1  # ExpressLRS MAVLink guide: 1 Hz on the ELRS port
+MAV2_EXTRA1,1  # ExpressLRS MAVLink guide: 1 Hz on the ELRS port
+MAV2_EXTRA2,1  # ExpressLRS MAVLink guide: 1 Hz on the ELRS port
+MAV2_EXTRA3,1  # ExpressLRS MAVLink guide: 1 Hz on the ELRS port
+MAV2_PARAMS,0  # ExpressLRS MAVLink guide: PARAMS stream off on the ELRS port
+MAV2_POSITION,1  # ExpressLRS MAVLink guide: 1 Hz on the ELRS port
+MAV2_RAW_CTRL,0  # ExpressLRS MAVLink guide: RAW_CTRL stream off on the ELRS port
+MAV2_RAW_SENS,1  # ExpressLRS MAVLink guide: 1 Hz on the ELRS port
+MAV2_RC_CHAN,1  # ExpressLRS MAVLink guide: 1 Hz on the ELRS port
+SERIAL1_BAUD,460  # ExpressLRS MAVLink mode runs the receiver UART at 460800 baud
+SERIAL1_PROTOCOL,2  # Telemetry on SERIAL1 protocol defined in component editor

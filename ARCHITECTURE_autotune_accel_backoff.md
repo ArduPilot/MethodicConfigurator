@@ -9,8 +9,8 @@ start with `Frame > Specifications > TOW min Kg` and `TOW max Kg` from the
 vehicle project. Editing these entries affects this calculation only; it does
 not save changes to the Frame specifications.
 
-The plugin appears at `49_autotune_finish.param` for Copter and QuadPlane,
-and the equivalent `73_autotune_finish.param` for Heli. Fixed-wing Plane
+The plugin appears at `49_autotune_finish.param` for Copter, at
+`50_autotune_finish.param` for QuadPlane, and at `73_autotune_finish.param` for Heli. Fixed-wing Plane
 and Rover do not use these attitude-controller acceleration limits. QuadPlane
 visibility requires a configured Frame class, as for the gain back-off plugin.
 Customized project configuration JSON must include the same plugin and

@@ -1,0 +1,195 @@
+{
+    "Format version": 3,
+    "Components": {
+        "Flight Controller": {
+            "Product": {
+                "Manufacturer": "Matek",
+                "Model": "H743-WLITE",
+                "Version": "",
+                "URL": "https://www.mateksys.com/?p=10289"
+            },
+            "Firmware": {
+                "Type": "ArduPlane",
+                "Version": "4.7.2"
+            },
+            "Specifications": {
+                "MCU Series": "STM32H7xx"
+            },
+            "Notes": "Flash the MatekH743-bdshot firmware target for bidirectional DShot RPM telemetry; the output layout also fits the plain MatekH743 target. ESCs on outputs 3-5 (output 6 stays unused because it shares a timer with output 5). Servos on 7-11 (timer group 7-10 plus output 11)."
+        },
+        "Frame": {
+            "Product": {
+                "Manufacturer": "HeeWing",
+                "Model": "T1-S Ranger VTOL",
+                "Version": "PNP",
+                "URL": "https://www.getfpv.com/planes/fpv-planes/heewing-t1-s-vtol-ranger-fpv-airplane-w-foam-case-pnp.html"
+            },
+            "Specifications": {
+                "TOW min Kg": 0.6,
+                "TOW max Kg": 0.95,
+                "Frame class": "Tri"
+            },
+            "Notes": "Tilt-rotor tricopter (Q_FRAME_CLASS=7) with vectored yaw (Q_TILT_TYPE=2). The front-right (motor 1, output 3) and front-left (motor 2, output 5) motors tilt (Q_TILT_MASK=3); the rear motor 4 (output 4) is fixed in the lift position. Tilt servos on outputs 8 (right) and 9 (left), ailerons on 7, elevator on 10, and output 11 set to Motor 7 (tri tail yaw servo function). 790 mm wingspan, no rudder."
+        },
+        "Battery Monitor": {
+            "Product": {
+                "Manufacturer": "Matek",
+                "Model": "H743-WLITE",
+                "Version": "",
+                "URL": "https://www.mateksys.com/?p=10289"
+            },
+            "Firmware": {
+                "Type": "ArduPlane",
+                "Version": "4.7.2"
+            },
+            "FC Connection": {
+                "Type": "Analog",
+                "Protocol": "Analog Voltage and Current"
+            },
+            "Notes": "Onboard voltage divider and high-precision current sensor. The WLITE needs BATT_VOLT_MULT=21 and BATT_AMP_PERVLT=66.7, not the H743-Wing defaults. Calibrate both against a meter."
+        },
+        "Battery": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Specifications": {
+                "Chemistry": "Lipo",
+                "Volt per cell max": 4.2,
+                "Volt per cell arm": 3.8,
+                "Volt per cell low": 3.6,
+                "Volt per cell crit": 3.3,
+                "Volt per cell min": 3.2,
+                "Number of cells": 4,
+                "Capacity mAh": 2200
+            },
+            "Notes": "Placeholder 4S pack: set chemistry and capacity to match your battery. HeeWing requires 4S for VTOL flight. For a 21700 Li-ion pack, select LiIon chemistry."
+        },
+        "ESC": {
+            "Product": {
+                "Manufacturer": "HeeWing",
+                "Model": "20A BLS",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "Bluejay",
+                "Version": ""
+            },
+            "FC->ESC Connection": {
+                "Type": "Main Out",
+                "Protocol": "DShot300"
+            },
+            "ESC->FC Telemetry": {
+                "Type": "Main Out",
+                "Protocol": "BDShotOnly"
+            },
+            "Notes": "Three ESCs: output 3 (front right), output 4 (rear) and output 5 (front left). Bidirectional DShot needs Bluejay firmware on the BLHeli_S ESCs: check with esc-configurator and flash if needed. Stock BLHeli_S does not answer bidirectional DShot and the motors will not spin."
+        },
+        "Motors": {
+            "Product": {
+                "Manufacturer": "HeeWing",
+                "Model": "1806 2000KV",
+                "Version": "",
+                "URL": ""
+            },
+            "Specifications": {
+                "Poles": 14
+            },
+            "Notes": "Three motors: two tilting wing motors and one fixed rear lift motor"
+        },
+        "Propellers": {
+            "Product": {
+                "Manufacturer": "Gemfan",
+                "Model": "5126",
+                "Version": "",
+                "URL": ""
+            },
+            "Specifications": {
+                "Diameter_inches": 5.1
+            },
+            "Notes": ""
+        },
+        "GNSS Receiver": {
+            "Product": {
+                "Manufacturer": "Matek",
+                "Model": "M10Q-5883",
+                "Version": "",
+                "URL": "https://www.getfpv.com/mateksys-m10q-5883-gnss-compass.html"
+            },
+            "Firmware": {
+                "Type": "u-blox SAM-M10Q",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL3",
+                "Protocol": "AUTO"
+            },
+            "Notes": "GNSS on the GPS1 port (SERIAL3 = USART2: TX2/RX2). The QMC5883L compass on the same module connects to the I2C pads (CL1/DA1) and is auto-detected, with orientation auto-detected (COMPASS_AUTO_ROT=2)."
+        },
+        "RC Controller": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "EdgeTx",
+                "Version": ""
+            },
+            "Notes": "Any EdgeTX handset. Set the ELRS Packet Rate and Switch Mode (Hybrid or 16ch/2) in the ELRS Lua script. MAVLink mode forces a 1:2 telemetry ratio."
+        },
+        "RC Transmitter": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "ExpressLRS",
+                "Version": "4.1"
+            },
+            "Notes": "The ELRS TX module must run Link Mode = MAVLink. On ELRS v4 the receiver's serial protocol switches to MAVLink automatically. Connect the GCS through the TX backpack (WiFi/UDP) or the module's USB."
+        },
+        "RC Receiver": {
+            "Product": {
+                "Manufacturer": "RadioMaster",
+                "Model": "XR4 Gemini Xrossband",
+                "Version": "",
+                "URL": "https://www.getfpv.com/radios/receivers/radiomaster-xr4-gemini-xrossband-elrs-2-4ghz-900mhz-dual-band-diversity-receiver.html"
+            },
+            "Firmware": {
+                "Type": "ExpressLRS",
+                "Version": "4.1"
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "MAVRadio"
+            },
+            "Notes": "MAVLink over ELRS: RC channels arrive as MAVLink RADIO_RC_CHANNELS on the same UART as telemetry (SERIAL1 = UART7: TX7/RX7, no CTS/RTS wired). Receiver TX goes to FC RX7 and receiver RX to FC TX7."
+        },
+        "Telemetry": {
+            "Product": {
+                "Manufacturer": "RadioMaster",
+                "Model": "XR4 Gemini Xrossband",
+                "Version": "",
+                "URL": "https://www.getfpv.com/radios/receivers/radiomaster-xr4-gemini-xrossband-elrs-2-4ghz-900mhz-dual-band-diversity-receiver.html"
+            },
+            "Firmware": {
+                "Type": "ExpressLRS",
+                "Version": "4.1"
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "MAVLink2"
+            },
+            "Notes": "Same physical XR4 receiver as the RC Receiver: MAVLink2 at 460800 baud, with the MAV2_* stream rates (SERIAL1 is the second MAVLink port after USB) set per the ExpressLRS MAVLink guide."
+        }
+    },
+    "Program version": "5.1.1",
+    "Configuration template": "HeeWing_T1-S_Ranger_VTOL"
+}

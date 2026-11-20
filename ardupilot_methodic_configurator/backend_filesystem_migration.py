@@ -41,7 +41,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
 # pylint: disable=too-many-lines
 
 # Opening an older project automatically applies migrations up to this version.
-VEHICLE_COMPONENTS_FORMAT_VERSION = 2
+VEHICLE_COMPONENTS_FORMAT_VERSION = 3
 _VEHICLE_COMPONENTS_JSON_FILENAME = "vehicle_components.json"
 _V1_TO_V2_PROVENANCE_FILENAME = ".migration-v1-to-v2.json"
 _PACKAGE_DIR = Path(__file__).resolve().parent
@@ -730,6 +730,40 @@ for _migration_key, _old_filenames in _MANDATORY_HARDWARE_OLD_FILENAMES.items():
         )
 
 # ---------------------------------------------------------------------------
+# Format version 2 → 3
+# ---------------------------------------------------------------------------
+
+# ArduPlane gained 12_control_surfaces_and_tilt_servos.param after 11_servo_outputs.param, and its
+# later steps were renumbered through old_filenames. The servo range, trim and reversal values and the
+# tilt-rotor rate and angle values move from step 11 into the new step. Moving them keeps the user's
+# adjustments; seeding the new step from a template would upload default values over them.
+# Each entry: (source_filename, dest_filename, list_of_param_name_patterns)
+_PARAM_MOVES_V2_TO_V3: dict[str, list[tuple[str, str, list[str]]]] = {
+    "ArduPlane": [
+        (
+            "11_servo_outputs.param",
+            "12_control_surfaces_and_tilt_servos.param",
+            [
+                r"SERVO[0-9]+_(?:MIN|MAX|TRIM|REVERSED)",
+                "SERVO_AUTO_TRIM",
+                "MIXING_GAIN",
+                "MIXING_OFFSET",
+                "Q_TILT_RATE_UP",
+                "Q_TILT_RATE_DN",
+                "Q_TILT_MAX",
+                "Q_TILT_YAW_ANGLE",
+            ],
+        ),
+    ],
+}
+
+
+def _new_filenames_v2_to_v3(vehicle_type: str) -> set[str]:
+    """Return the step files that the v2→v3 migration creates for *vehicle_type*."""
+    return {dst_name for _src_name, dst_name, _patterns in _PARAM_MOVES_V2_TO_V3.get(vehicle_type, [])}
+
+
+# ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
 
@@ -1085,7 +1119,10 @@ def _surface_unmapped_copter_parameters(
 
 
 def _surface_unmapped_vehicle_parameters(
-    vehicle_type: str, remaining_by_source: dict[Path, list[str]], accumulated: dict[str, list[str]]
+    vehicle_type: str,
+    remaining_by_source: dict[Path, list[str]],
+    accumulated: dict[str, list[str]],
+    general_destination: str | None = None,
 ) -> dict[str, set[str]]:
     """Keep unrecognized legacy hardware values visible in the vehicle's general configuration."""
     mandatory_hardware_filenames = {
@@ -1098,7 +1135,7 @@ def _surface_unmapped_vehicle_parameters(
             continue
         unmapped = [line for line in remaining if _param_name_from_line(line)]
         if unmapped:
-            destination = _GENERAL_CONFIGURATION_FILENAMES[vehicle_type]
+            destination = general_destination or _GENERAL_CONFIGURATION_FILENAMES[vehicle_type]
             accumulated.setdefault(destination, []).extend(unmapped)
             surfaced_names[src_path.name] = {name for line in unmapped if (name := _param_name_from_line(line))}
             logging.warning(
@@ -1110,19 +1147,23 @@ def _surface_unmapped_vehicle_parameters(
     return surfaced_names
 
 
-def _surface_unmapped_hardware_parameters(
+def _surface_unmapped_hardware_parameters(  # pylint: disable=too-many-arguments
     vehicle_type: str,
     remaining_by_source: dict[Path, list[str]],
     accumulated: dict[str, list[str]],
     destination: Path,
     preexisting_filenames: set[str],
+    *,
+    general_destination: str | None = None,
 ) -> set[str]:
     """Surface unknown hardware values and identify those newer than general configuration."""
     surfaced_names: dict[str, set[str]] = {}
     if vehicle_type == "ArduCopter":
         surfaced_names = _surface_unmapped_copter_parameters(remaining_by_source, accumulated)
     elif vehicle_type in {"ArduPlane", "Heli", "Rover"}:
-        surfaced_names = _surface_unmapped_vehicle_parameters(vehicle_type, remaining_by_source, accumulated)
+        surfaced_names = _surface_unmapped_vehicle_parameters(
+            vehicle_type, remaining_by_source, accumulated, general_destination
+        )
     return {
         name
         for src_name, names in surfaced_names.items()
@@ -1131,8 +1172,8 @@ def _surface_unmapped_hardware_parameters(
     }
 
 
-def _migration_destination_paths(vehicle_path: Path, vehicle_type: str) -> dict[str, Path]:
-    """Overlay migrated values onto existing aliases before the normal filename renames."""
+def _load_configuration_steps(vehicle_path: Path, vehicle_type: str) -> dict:
+    """Return the project's (or the bundled) configuration steps dictionary, or an empty dict."""
     configuration_path = vehicle_path / f"configuration_steps_{vehicle_type}.json"
     if not configuration_path.is_file():
         configuration_path = _PACKAGE_DIR / f"configuration_steps_{vehicle_type}.json"
@@ -1143,8 +1184,32 @@ def _migration_destination_paths(vehicle_path: Path, vehicle_type: str) -> dict[
         logging.warning(_("Cannot load configuration steps %s: %s"), configuration_path, exc)
         return {}
     steps = configuration_data.get("steps", {}) if isinstance(configuration_data, dict) else {}
-    if not isinstance(steps, dict):
-        return {}
+    return steps if isinstance(steps, dict) else {}
+
+
+def _current_step_filenames(vehicle_path: Path, vehicle_type: str) -> dict[str, str]:
+    """
+    Map historical step filenames to the current configuration-step filenames.
+
+    Migration tables name their destinations with the filenames of the format they produce.
+    When a later configuration renumbers those steps, the historical name appears in the
+    ``old_filenames`` of the current step. Writing to the current name keeps migrated values
+    in the same file that template restoration seeds, instead of in an orphaned legacy file.
+    """
+    steps = _load_configuration_steps(vehicle_path, vehicle_type)
+    aliases: dict[str, str] = {}
+    for filename, step_info in steps.items():
+        if not isinstance(step_info, dict) or not isinstance(step_info.get("old_filenames", []), list):
+            continue
+        for old_filename in step_info.get("old_filenames", []):
+            if isinstance(old_filename, str) and old_filename != filename and old_filename not in steps:
+                aliases[old_filename] = filename
+    return aliases
+
+
+def _migration_destination_paths(vehicle_path: Path, vehicle_type: str) -> dict[str, Path]:
+    """Overlay migrated values onto existing aliases before the normal filename renames."""
+    steps = _load_configuration_steps(vehicle_path, vehicle_type)
 
     destinations: dict[str, Path] = {}
     for filename, step_info in steps.items():
@@ -1214,10 +1279,12 @@ def _migrate_v1_to_v2(  # noqa: PLR0915  # pylint: disable=too-many-locals, too-
     forced_parameters: dict[str, set[str]] = {}
     remaining_by_source: dict[Path, list[str]] = {}
     destination_paths = _migration_destination_paths(vehicle_path, vehicle_type)
+    current_names = _current_step_filenames(vehicle_path, vehicle_type)
 
     param_move_keys = ["all"] + ([vehicle_type] if vehicle_type in _PARAM_MOVES_V1_TO_V2 else [])
     for key in param_move_keys:
-        for src_name, dst_name, patterns, force in sorted(_PARAM_MOVES_V1_TO_V2[key], key=lambda move: move[0]):
+        for src_name, v2_dst_name, patterns, force in sorted(_PARAM_MOVES_V1_TO_V2[key], key=lambda move: move[0]):
+            dst_name = current_names.get(v2_dst_name, v2_dst_name)
             src_path = vehicle_path / src_name
             if not src_path.exists():
                 logging.warning(_("Migration source file not found, skipping extraction: %s"), src_name)
@@ -1244,7 +1311,9 @@ def _migrate_v1_to_v2(  # noqa: PLR0915  # pylint: disable=too-many-locals, too-
 
     param_copy_keys = ["all"] + ([vehicle_type] if vehicle_type in _PARAM_COPIES_V1_TO_V2 else [])
     for key in param_copy_keys:
-        for src_name, source_dst_name, dst_name, patterns in _PARAM_COPIES_V1_TO_V2[key]:
+        for src_name, v2_source_dst_name, v2_dst_name, patterns in _PARAM_COPIES_V1_TO_V2[key]:
+            source_dst_name = current_names.get(v2_source_dst_name, v2_source_dst_name)
+            dst_name = current_names.get(v2_dst_name, v2_dst_name)
             copied = [
                 line
                 for line in accumulated.get(source_dst_name, [])
@@ -1259,6 +1328,7 @@ def _migrate_v1_to_v2(  # noqa: PLR0915  # pylint: disable=too-many-locals, too-
                     )
 
     general_destination = _GENERAL_CONFIGURATION_FILENAMES.get(vehicle_type, "23_general_configuration.param")
+    general_destination = current_names.get(general_destination, general_destination)
     forced_parameters.setdefault(general_destination, set()).update(
         _surface_unmapped_hardware_parameters(
             vehicle_type,
@@ -1266,6 +1336,7 @@ def _migrate_v1_to_v2(  # noqa: PLR0915  # pylint: disable=too-many-locals, too-
             accumulated,
             destination_paths.get(general_destination, vehicle_path / general_destination),
             preexisting_filenames,
+            general_destination=general_destination,
         )
     )
 
@@ -1301,6 +1372,32 @@ def _migrate_v1_to_v2(  # noqa: PLR0915  # pylint: disable=too-many-locals, too-
                 logging.info(_("Deleted empty parameter file: %s"), src_name)
 
     return deleted_filenames
+
+
+def _migrate_v2_to_v3(vehicle_path: Path, vehicle_type: str) -> None:
+    """
+    Create the steps added in format 3, filling them with the values moved out of their old steps.
+
+    The destination is written before the source is trimmed. If interrupted in between, the next
+    run extracts the same lines again and the merge keeps the values already in the destination.
+    A destination is created even when nothing moves, so the new step is part of the project, but only
+    when the active configuration steps define it: a project-local configuration with the older layout keeps it.
+    """
+    active_steps = _load_configuration_steps(vehicle_path, vehicle_type)
+    for src_name, dst_name, patterns in _PARAM_MOVES_V2_TO_V3.get(vehicle_type, []):
+        if dst_name not in active_steps:
+            logging.info(_("The configuration steps do not define %s, keeping %s unchanged"), dst_name, src_name)
+            continue
+        src_path = vehicle_path / src_name
+        dst_path = vehicle_path / dst_name
+        extracted, remaining = _extract_params(src_path, patterns)
+        existing = _read_param_file_lines(dst_path) if dst_path.exists() else []
+        if dst_path.exists() and not extracted:
+            continue
+        _write_param_file_lines(dst_path, _merge_migrated_parameter_lines(existing, extracted, set()))
+        logging.info(_("Moved %d parameter line(s) from %s to %s"), len(extracted), src_name, dst_name)
+        if extracted:
+            _write_param_file_lines(src_path, remaining)
 
 
 # ---------------------------------------------------------------------------
@@ -1350,7 +1447,12 @@ def migrate_vehicle_project_if_needed(vehicle_dir: str) -> bool:  # pylint: disa
     firmware_version: str = firmware.get("Version", "")
 
     migrated = False
-    deleted_filenames_to_skip_restore: set[str] = set()
+    # Projects already in format 2 only gain the files that later formats create; restoring every
+    # missing step from the template would also bring back steps the user deliberately removed.
+    restore_all_missing_steps = format_version < 2
+    # Files created by the v2→v3 move must not be seeded from a template first: the merge keeps
+    # existing values, so template defaults would win over the user's moved values.
+    deleted_filenames_to_skip_restore: set[str] = _new_filenames_v2_to_v3(vehicle_type)
     while format_version < VEHICLE_COMPONENTS_FORMAT_VERSION:
         next_format_version = format_version + 1
         logging.info(
@@ -1382,12 +1484,15 @@ def migrate_vehicle_project_if_needed(vehicle_dir: str) -> bool:  # pylint: disa
             deleted_filenames = (
                 _migrate_v1_to_v2(vehicle_path, vehicle_type, preexisting_filenames=preexisting_filenames) or set()
             )
+        elif next_format_version == 3:
+            _migrate_v2_to_v3(vehicle_path, vehicle_type)
+            deleted_filenames = set()
         else:
             logging.error(_("No migration path is defined from format version %d"), format_version)
             break
 
         deleted_filenames_to_skip_restore.update(deleted_filenames)
-        if next_format_version == VEHICLE_COMPONENTS_FORMAT_VERSION:
+        if next_format_version == VEHICLE_COMPONENTS_FORMAT_VERSION and restore_all_missing_steps:
             _restore_missing_configuration_step_files(
                 vehicle_path, vehicle_type, firmware_version, deleted_filenames_to_skip_restore
             )

@@ -145,6 +145,28 @@ def test_esc_model_uses_apm_doc_to_detect_non_dshot_configuration() -> None:
     assert result.issues[0].message == "Set MOT_PWM_TYPE to a DShot variant for ESC telemetry support"
 
 
+def test_esc_model_recommends_q_m_pwm_type_for_quadplanes_without_esc_data() -> None:
+    """
+    Missing ESC data on a QuadPlane points at Q_M_PWM_TYPE, not the copter MOT_PWM_TYPE.
+
+    GIVEN an ArduPlane log without ESC messages whose Q_M_PWM_TYPE is not a DShot value
+    WHEN ESC availability is checked
+    THEN the recommendation names Q_M_PWM_TYPE
+    """
+    log = LogData()
+    log.vehicle_type = "ArduPlane"
+    context = _context(
+        {"Q_M_PWM_TYPE": 0.0, "SCR_ENABLE": 1.0},
+        apm_doc={"Q_M_PWM_TYPE": {"values": {"0": "Normal", "5": "DShot300"}}},
+    )
+
+    result = EscLogAvailabilityModel(log, context).check()
+
+    assert result.available is False
+    assert result.reason == "ESC telemetry not logged"
+    assert result.issues[0].message == "Set Q_M_PWM_TYPE to a DShot variant for ESC telemetry support"
+
+
 @pytest.mark.parametrize("connection_type", ["Main Out", "AIO"])
 def test_esc_availability_accepts_a_matching_connection_protocol(connection_type: str) -> None:
     """

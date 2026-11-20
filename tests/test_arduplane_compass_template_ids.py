@@ -21,7 +21,7 @@ from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 
 PACKAGE_DIR = Path(__file__).resolve().parents[1] / "ardupilot_methodic_configurator"
 PLANE_TEMPLATES = PACKAGE_DIR / "vehicle_templates" / "ArduPlane"
-STEP_NAME = "19_compass_calibration.param"
+STEP_NAME = "20_compass_calibration.param"
 COMPASS_ID = 855297
 
 

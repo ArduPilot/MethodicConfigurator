@@ -1,0 +1,4 @@
+RC_OPTIONS,32
+RC_PROTOCOLS,65536  # MAVRadio: the ELRS receiver sends RC channels as MAVLink RADIO_RC_CHANNELS messages
+RSSI_TYPE,5  # TelemetryRadioRSSI: link quality from the ELRS MAVLink RADIO_STATUS messages
+SERIAL1_PROTOCOL,2  # MAVLink RC receiver on SERIAL1 requires MAVLink2

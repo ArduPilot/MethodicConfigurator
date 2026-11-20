@@ -1,0 +1,2 @@
+RNGFND_LANDING,0  # No rangefinder fitted. Set RNGFND1_TYPE and this to 1 if you add one for VTOL landings
+RNGFND1_TYPE,0

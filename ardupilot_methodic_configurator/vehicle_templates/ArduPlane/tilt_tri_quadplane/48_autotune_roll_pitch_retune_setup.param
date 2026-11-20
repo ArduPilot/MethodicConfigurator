@@ -1,0 +1,3 @@
+AUTOTUNE_AXES,3  # Autotune roll and pitch axis
+Q_AUTOTUNE_AGGR,0.1
+Q_AUTOTUNE_AXES,3  # QAUTOTUNE roll and pitch axis
