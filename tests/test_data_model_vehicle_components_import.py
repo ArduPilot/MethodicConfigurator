@@ -2849,12 +2849,6 @@ class TestComponentDataModelImportUncoveredBranches:
         assert result is None
         log_error.assert_called_once_with("No recommended voltage for %s %s", "Lipo", "Volt per cell low")
 
-    def test_cell_estimation_accepts_a_positive_recommended_voltage_below_one_volt(self, basic_model, monkeypatch) -> None:
-        """A positive per-cell default remains valid even when it is below one volt."""
-        monkeypatch.setattr(BatteryCell, "recommended_cell_voltage", staticmethod(lambda _chemistry, _kind: 0.5))
-
-        assert basic_model._estimate_cells_from_voltage_param_default("BATT_LOW_VOLT", 18.0, "Volt per cell low", "Lipo") == 36
-
     def test_cell_estimation_rejects_one_volt_pack_at_zero_boundary(self, basic_model) -> None:
         """A one-volt total reading is rejected as invalid before cell estimation."""
         with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as log_warning:

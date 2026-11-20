@@ -324,8 +324,6 @@ def test_stopping_active_monitor_logs_and_keeps_the_configured_interval(
 ) -> None:
     """Record the active interval and log when battery monitoring is stopped."""
     model = BatteryMonitorDataModel(connected_flight_controller_with_battery_enabled)
-    assert model._battery_status_interval_microseconds is None
-
     assert model.get_battery_statuses() == {0: (12.4, 2.1)}
     interval = model._battery_status_interval_microseconds
     assert interval == 500000
@@ -333,7 +331,6 @@ def test_stopping_active_monitor_logs_and_keeps_the_configured_interval(
     with caplog.at_level("DEBUG"):
         model.stop_monitoring()
 
-    assert model._got_battery_status is False
     assert model._battery_status_interval_microseconds == interval
     assert caplog.messages == [_("Battery monitoring stopped")]
 

@@ -135,11 +135,11 @@ def test_device_rows_include_the_lowest_positive_device_id() -> None:
     assert rows == [("COMPASS1", "I2C", 0, 0, "UNKNOWN", None, "COMPASS_DEV_ID: 1")]
 
 
-def test_device_rows_skip_a_missing_decoded_device(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Skip entries when the decoder returns neither a value nor an error."""
-    monkeypatch.setattr(diagnostics, "decode_device_id", lambda _device_id: (None, None))
+def test_device_rows_skip_an_invalid_id_before_processing_a_valid_device() -> None:
+    """Skip out-of-range device IDs without discarding later valid devices."""
+    rows = diagnostics.device_rows({"COMPASS_DEV_ID": 0x01000000, "COMPASS_DEV_ID2": 1})
 
-    assert diagnostics.device_rows({"COMPASS_DEV_ID": 1}) == []
+    assert rows == [("COMPASS2", "I2C", 0, 0, "UNKNOWN", None, "COMPASS_DEV_ID2: 1")]
 
 
 def test_device_type_prefix_removal_is_case_insensitive(monkeypatch: pytest.MonkeyPatch) -> None:

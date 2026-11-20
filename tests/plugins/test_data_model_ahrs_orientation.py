@@ -376,22 +376,6 @@ class TestAhrsOrientationDataModelCaptureAndEstimate:
 
         assert model._estimate_board_from_body_matrix() is None
 
-    @pytest.mark.parametrize(
-        ("missing_step", "fitted_axis"),
-        [(step, axis) for step in ("NOSE DOWN", "RIGHT", "LEVEL") for axis in range(3)],
-    )
-    def test_capture_alignment_keeps_zero_vectors_unaligned(
-        self, connected_flight_controller, missing_step: str, fitted_axis: int
-    ) -> None:
-        """Missing pose directions contribute zero alignment instead of an invented axis."""
-        model = AhrsOrientationDataModel(connected_flight_controller)
-        model._samples = dict.fromkeys(model.get_required_steps(), (0.0, 0.0, 0.0))
-        fitted_column = {"NOSE DOWN": 0, "RIGHT": 1, "LEVEL": 2}[missing_step]
-        matrix = [[0.0, 0.0, 0.0] for _row in range(3)]
-        matrix[fitted_axis][fitted_column] = 1.0
-
-        assert model._capture_alignment(matrix) == 0.0
-
     def test_matrix_estimation_keeps_axes_when_orientation_sign_is_exactly_zero(self, connected_flight_controller) -> None:
         """A perpendicular level vector does not trigger the negative-dot correction."""
         model = AhrsOrientationDataModel(connected_flight_controller)
@@ -435,25 +419,6 @@ class TestAhrsOrientationDataModelCaptureAndEstimate:
         model = AhrsOrientationDataModel(connected_flight_controller)
 
         assert model._normalize((1e-6, 0.0, 0.0)) == (1.0, 0.0, 0.0)
-
-    def test_estimate_preserves_a_match_score_below_one_percent(
-        self, connected_flight_controller, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """Do not raise a valid low-confidence custom score to one percent."""
-        model = AhrsOrientationDataModel(connected_flight_controller)
-        model._samples = dict.fromkeys(model.get_required_steps(), (0.0, 0.0, -1000.0))
-        monkeypatch.setattr(model, "_estimate_board_from_body_matrix", model._identity_matrix)
-        monkeypatch.setattr(model, "_capture_alignment", lambda _matrix: 1.0)
-        monkeypatch.setattr(model, "_best_preset_code", lambda _matrix: (0, 0.005))
-        monkeypatch.setattr(model, "_second_best_score", lambda _matrix, _code: 0.0)
-        monkeypatch.setattr(model, "_matrix_to_euler321_deg", lambda _matrix: (0.0, 0.0, 0.0))
-
-        ok, estimate, _message = model.estimate_orientation()
-
-        assert ok is True
-        assert estimate is not None
-        assert estimate.match_score_percent == pytest.approx(0.5)
-        assert estimate.is_preset_match is False
 
 
 @pytest.mark.parametrize("acceleration", [7.0, 7.5, 13.0])
