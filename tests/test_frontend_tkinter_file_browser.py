@@ -147,6 +147,7 @@ def _bare_window() -> FileBrowserWindow:
     window._last_listed_remote_directory = None
     window.verify_transfers_var = MagicMock()
     window.verify_transfers_var.get.return_value = False
+    window._analyse_log_callback = None
     return window
 
 
@@ -2107,9 +2108,8 @@ class TestFileBrowserWindow:
         with patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser.tk.Menu", return_value=menu):
             window._show_context_menu(SimpleNamespace(y=1, x_root=2, y_root=3), remote=False)
 
-        assert [call_args.kwargs["label"] for call_args in menu.add_command.call_args_list] == [
-            "New directory",
-            "Open",
+        labels = [call_args.kwargs["label"] for call_args in menu.add_command.call_args_list]
+        tool_labels = [
             "plotbeta",
             "plot",
             "hardware report",
@@ -2119,8 +2119,10 @@ class TestFileBrowserWindow:
             "Stream stats",
             "System ID",
         ]
-        for command_call in menu.add_command.call_args_list[2:]:
-            command_call.kwargs["command"]()
+        assert labels == ["New directory", "Open", *tool_labels, "Skybrush log analyser"]
+        for command_call in menu.add_command.call_args_list:
+            if command_call.kwargs["label"] in tool_labels:
+                command_call.kwargs["command"]()
         assert dispatched == [
             "https://plotbeta.ardupilot.org/",
             "https://plot.ardupilot.org/",
@@ -2488,6 +2490,115 @@ class TestFileBrowserWindow:
             call("1", "", 1),
         ]
 
+    def test_amc_log_analyser_closes_the_browser_before_invoking_the_callback(self, tmp_path: Path) -> None:
+        """
+        AMC analysis runs only after the browser releases the navigation lock.
+
+        GIVEN an embedded browser with one selected local .bin log,
+        WHEN the AMC log analyser is requested,
+        THEN the browser closes first and the callback receives the log path.
+        """
+        window = _bare_window()
+        window.local_tree = MagicMock()
+        window.local_tree.selection.return_value = ("0",)
+        window.local_entries = [LocalFileEntry("Flight.BIN", tmp_path / "Flight.BIN", 12)]
+        events: list[str] = []
+        window._on_close = lambda: events.append("close")
+        window._analyse_log_callback = lambda filepath: events.append(f"analyse:{filepath}")
+
+        window.analyse_selected_local_log()
+
+        assert events == ["close", f"analyse:{tmp_path / 'Flight.BIN'}"]
+
+    def test_amc_log_analyser_is_not_offered_without_a_callback(self, tmp_path: Path) -> None:
+        """
+        Standalone browsers must not offer an action they cannot run.
+
+        GIVEN a browser without an AMC analysis callback,
+        WHEN a local .bin log is right-clicked,
+        THEN the AMC log analyser entry is absent but the Skybrush entry is present.
+        """
+        window = _bare_window()
+        window.remote_tree = MagicMock()
+        window.local_tree = MagicMock()
+        window.local_tree.identify_row.return_value = "0"
+        window.local_tree.selection.return_value = ("0",)
+        window.local_entries = [LocalFileEntry("Flight.BIN", tmp_path / "Flight.BIN", 12)]
+        window._update_transfer_buttons = MagicMock()
+        menu = MagicMock()
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser.tk.Menu", return_value=menu):
+            window._show_context_menu(SimpleNamespace(y=1, x_root=2, y_root=3), remote=False)
+
+        labels = [call_args.kwargs["label"] for call_args in menu.add_command.call_args_list]
+        assert "AMC log analyser" not in labels
+        assert "Skybrush log analyser" in labels
+
+    def test_standalone_skybrush_analysis_keeps_the_browser_root_alive(self, tmp_path: Path) -> None:
+        """
+        A standalone browser is the only Tk root, so Skybrush must receive it as parent.
+
+        GIVEN a standalone browser with one selected local .bin log,
+        WHEN Skybrush log analysis is requested,
+        THEN the root is passed as parent and is not destroyed first.
+        """
+        window = _bare_window()
+        window.parent = None
+        window.root = MagicMock()
+        window.local_tree = MagicMock()
+        window.local_tree.selection.return_value = ("0",)
+        window.local_entries = [LocalFileEntry("Flight.BIN", tmp_path / "Flight.BIN", 12)]
+        window._on_close = MagicMock()
+
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser.open_skybrush_log_analysis") as opener:
+            window.open_selected_skybrush_log_analysis()
+
+        window._on_close.assert_not_called()
+        opener.assert_called_once_with(window.root, str(tmp_path / "Flight.BIN"))
+
+    def test_embedded_skybrush_analysis_closes_the_browser_before_opening(self, tmp_path: Path) -> None:
+        """
+        An embedded browser closes before Skybrush opens against its parent window.
+
+        GIVEN an embedded browser with one selected local .bin log,
+        WHEN Skybrush log analysis is requested,
+        THEN the browser closes first and Skybrush receives the parent window.
+        """
+        window = _bare_window()
+        window.parent = MagicMock()
+        window.local_tree = MagicMock()
+        window.local_tree.selection.return_value = ("0",)
+        window.local_entries = [LocalFileEntry("Flight.BIN", tmp_path / "Flight.BIN", 12)]
+        events: list[str] = []
+        window._on_close = lambda: events.append("close")
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_file_browser.open_skybrush_log_analysis",
+            side_effect=lambda parent, filepath: events.append(f"open:{parent is window.parent}:{filepath}"),
+        ):
+            window.open_selected_skybrush_log_analysis()
+
+        assert events == ["close", f"open:True:{tmp_path / 'Flight.BIN'}"]
+
+    @pytest.mark.parametrize("locked", [False, True])
+    def test_parameter_editor_analysis_callback_respects_navigation_lock(self, locked: bool) -> None:
+        """
+        The browser callback must not start AMC analysis while the editor is locked.
+
+        GIVEN a parameter editor whose navigation lock may be held,
+        WHEN the file browser requests AMC log analysis,
+        THEN analysis starts only when the lock is free.
+        """
+        editor = ParameterEditorWindow.__new__(ParameterEditorWindow)
+        editor.navigation_lock = MagicMock(locked=locked)
+        editor.analyse_log_file = MagicMock()
+
+        editor._analyse_log_file_from_browser("Flight.BIN")
+
+        if locked:
+            editor.analyse_log_file.assert_not_called()
+        else:
+            editor.analyse_log_file.assert_called_once_with("Flight.BIN")
+
     def test_parameter_editor_button_opens_the_log_download_modal(self) -> None:
         """
         The renamed Parameter Editor button opens the new modal.
@@ -2506,7 +2617,12 @@ class TestFileBrowserWindow:
         with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.FileBrowserWindow") as modal:
             editor.on_download_bin_logs_click()
 
-        modal.assert_called_once_with(editor.root, editor.parameter_editor, editor.ui)
+        modal.assert_called_once_with(
+            editor.root,
+            editor.parameter_editor,
+            editor.ui,
+            analyse_log_callback=editor._analyse_log_file_from_browser,
+        )
         editor.ui.create_progress_window.assert_not_called()
         editor.parameter_editor.download_last_flight_log.assert_not_called()
 
@@ -2531,7 +2647,7 @@ class TestFileBrowserWindow:
         pause, resume = (getattr(plugin, hook) for hook in hooks)
         browser = MagicMock()
 
-        def open_browser(*_args: object) -> MagicMock:
+        def open_browser(*_args: object, **_kwargs: object) -> MagicMock:
             pause.assert_called_once_with(*((PluginPauseReason.EXCLUSIVE_OPERATION,) if paired_hooks else ()))
             resume.assert_not_called()
             assert editor.navigation_lock.locked

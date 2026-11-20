@@ -1083,7 +1083,17 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         )
         if not filepath:
             return
+        self.analyse_log_file(filepath)
+
+    def analyse_log_file(self, filepath: str) -> None:
+        """Run AMC log analysis on the supplied flight-log path."""
         self._analyse_log_file(filepath)
+
+    def _analyse_log_file_from_browser(self, filepath: str) -> None:
+        """Run AMC log analysis requested from the file browser after it has closed."""
+        if self.navigation_lock.locked:
+            return
+        self.analyse_log_file(filepath)
 
     def on_analyse_log_with_skybrush_click(self) -> None:
         """Open the Skybrush Log Analysis window for a selected log."""
@@ -2304,7 +2314,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 release_access()
 
         try:
-            download_window = FileBrowserWindow(self.root, self.parameter_editor, self.ui)
+            download_window = FileBrowserWindow(
+                self.root,
+                self.parameter_editor,
+                self.ui,
+                analyse_log_callback=self._analyse_log_file_from_browser,
+            )
             self._file_browser_window = download_window
             download_window.set_closed_callback(on_browser_closed)
         except Exception:
