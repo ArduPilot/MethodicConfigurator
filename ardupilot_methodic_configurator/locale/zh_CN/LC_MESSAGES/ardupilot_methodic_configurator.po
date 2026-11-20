@@ -5787,7 +5787,7 @@ msgstr "重置飞控后无法下载参数。上传已停止。"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1367
 msgid ""
 "Could not download parameters after upload. The upload could not be verified."
-msgstr ""
+msgstr "上传后无法下载参数，无法验证上传结果。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1369
 msgid "Failed to upload the following parameters to the flight controller:\n"

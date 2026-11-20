@@ -6484,7 +6484,7 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1367
 msgid ""
 "Could not download parameters after upload. The upload could not be verified."
-msgstr ""
+msgstr "Não foi possível transferir os parâmetros após o envio. Não foi possível verificar o envio."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1369
 msgid "Failed to upload the following parameters to the flight controller:\n"
