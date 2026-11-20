@@ -179,6 +179,9 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
             },
             "auto_open_doc_in_browser": True,
             "annotate_docs_into_param_files": False,
+            "plotjuggler": {
+                "shade_flight_modes": True,  # shade PlotJuggler plots by flight mode when the log has MODE messages
+            },
             "gui_complexity": "simple",  # simple or normal
             # Motor test settings
             "motor_test": {

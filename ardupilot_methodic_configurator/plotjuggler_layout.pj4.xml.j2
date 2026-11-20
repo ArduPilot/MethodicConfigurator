@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<root binding="source" format="PlotJuggler" pj4_version="4">
+  <tabbed_widget id="" name="main" parent="main_window">
+{% for tab in tabs %}
+    <Tab containers="1" id="{{ tab.id }}" tab_name="{{ tab.name }}">
+      <Container>
+        <DockSplitter count="{{ tab.plots | length }}" orientation="-" sizes="{{ tab.sizes }}">
+{% for plot in tab.plots %}
+          <DockArea id="{{ plot.area_id }}" name="...">
+            <plot id="{{ plot.id }}" line_width="1.0" mode="TimeSeries" style="Lines" title="{{ plot.title }}" tracker_enabled="true">
+{% for curve in plot.curves %}
+              <curve color="{{ curve.color }}" dataset_id="1" dataset_path="{{ log_path }}" dataset_source="{{ log_name }}" field="{{ curve.field }}" markers_visible="true" topic="{{ curve.topic }}" visible="{{ 'true' if curve.visible else 'false' }}"/>
+{% endfor %}
+            </plot>
+          </DockArea>
+{% endfor %}
+        </DockSplitter>
+      </Container>
+    </Tab>
+{% endfor %}
+    <currentTabIndex index="0"/>
+  </tabbed_widget>
+  <previouslyLoaded_Datafiles>
+    <fileInfo display_offset_ns="0" filename="{{ log_path }}" prefix="" timeline_order="0">
+      <dataset display_offset_ns="0" source_index="0" source_name="{{ log_name }}" timeline_order="0"/>
+      <plugin ID="ArduPilot BIN Loader" manifest_id="ardupilot-bin-loader"><![CDATA[{{ plugin_config | tojson }}]]></plugin>
+    </fileInfo>
+  </previouslyLoaded_Datafiles>
+  <right_panel_state splitter_sizes="49,49" style="0" width="1"/>
+  <left_panel_state sources_tab="file" streaming_buffer="5" streaming_source=""/>
+  <curve_list_state custom_filter="" datasets_filter="" show_topics="true" show_values="false"/>
+  <chrome_state main_splitter_sizes="0,0"/>
+  <source_timeline name_column_width="49" scroll_left_ns="0" scroll_top_px="0" snap="true" zoom="9.9999999999999995e-08"/>
+  <pinned_toolboxes/>
+</root>

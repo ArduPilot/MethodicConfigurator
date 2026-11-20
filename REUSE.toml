@@ -1,6 +1,11 @@
 version = 1
 
 [[annotations]]
+path = "ardupilot_methodic_configurator/plotjuggler_layout.pj4.xml.j2"
+SPDX-FileCopyrightText = "2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
 path = "credits/mutmut-LICENSE"
 SPDX-FileCopyrightText = "2016, Anders Hovmöller"
 SPDX-License-Identifier = "BSD-3-Clause"
@@ -145,6 +150,16 @@ SPDX-License-Identifier = "MIT"
 path = "credits/defusedxml-LICENSE"
 SPDX-FileCopyrightText = "Copyright (c) Christian Heimes"
 SPDX-License-Identifier = "PSF-2.0"
+
+[[annotations]]
+path = "credits/Jinja2-LICENSE.txt"
+SPDX-FileCopyrightText = "Copyright 2007 Pallets"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "credits/MarkupSafe-LICENSE.txt"
+SPDX-FileCopyrightText = "Copyright 2010 Pallets"
+SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]
 path = "credits/matplotlib-LICENSE"

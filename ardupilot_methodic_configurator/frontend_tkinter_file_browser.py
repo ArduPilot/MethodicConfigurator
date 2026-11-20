@@ -36,7 +36,12 @@ from ardupilot_methodic_configurator.backend_flightcontroller_files import (
     normalize_remote_path,
 )
 from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
-from ardupilot_methodic_configurator.backend_web_log_tools import WEB_LOG_TOOLS, open_log_in_web_tool
+from ardupilot_methodic_configurator.backend_plotjuggler import generate_plotjuggler_layout, open_in_plotjuggler
+from ardupilot_methodic_configurator.backend_web_log_tools import (
+    PLOT_WEB_TOOL_URL,
+    WEB_LOG_TOOLS,
+    open_log_in_web_tool,
+)
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.data_model_transfer_progress import TransferDirection, TransferProgress
 from ardupilot_methodic_configurator.formatting import format_filesize
@@ -1157,11 +1162,42 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
             menu.add_separator()
             for url, tool in WEB_LOG_TOOLS.items():
                 menu.add_command(label=tool.label, command=partial(self.open_selected_log_in_web_tool, url))
+                if url == PLOT_WEB_TOOL_URL:
+                    menu.add_command(label=_("PlotJuggler 4"), command=self._open_selected_log_in_plotjuggler)
             menu.add_separator()
             if self._analyse_log_callback is not None:
                 menu.add_command(label=_("AMC log analyser"), command=self._analyse_selected_local_log)
             menu.add_command(label=_("Skybrush log analyser"), command=self._open_selected_skybrush_log_analysis)
         return menu
+
+    def _open_selected_log_in_plotjuggler(self) -> None:
+        """Generate a PlotJuggler 4 layout in the vehicle directory, then open the selected BIN log."""
+        selected_entries = self._selected_local_entries()
+        if self._controls_locked() or len(selected_entries) != 1:
+            return
+        entry = selected_entries[0]
+        if entry.is_directory or entry.path.suffix.lower() != ".bin":
+            return
+        parameters = dict(self.parameter_editor.fc_parameters)
+        log_path = entry.path
+        output_dir = Path(self.parameter_editor.get_vehicle_directory())
+        refresh_request = self._local_refresh_request
+
+        def open_log(_progress: Callable[..., None]) -> None:
+            layout_path = generate_plotjuggler_layout(log_path, parameters, output_dir)
+            open_in_plotjuggler(log_path, layout_path)
+
+        def complete(_result: object | None, error: Exception | None) -> None:
+            if error is not None:
+                self.ui.show_error(_("Open log in PlotJuggler 4 failed"), str(error))
+            if self._local_refresh_request is not refresh_request:
+                self.refresh_local_panel()
+
+        if not self._local_task_runner.start(open_log, None, complete):
+            self.ui.show_error(
+                _("Open log in PlotJuggler 4 failed"),
+                _("Another file operation is already in progress."),
+            )
 
     def open_selected_log_in_web_tool(self, url: str) -> None:
         """Load a single selected local .bin log into a managed browser tab."""
