@@ -97,6 +97,18 @@ not involved, so download a log to the PC panel first.
 
 The same `.bin` menu also offers **AMC log analyser** and **Skybrush log
 analyser** when the file browser is open from the parameter editor.
+**PlotJuggler 4** (listed right below **plot**) generates a layout file named
+`plotjuggler_layout.pj4.xml` in the vehicle project directory. The layout has
+one tab each for the battery information, the GPS signals, one accuracy tab per
+GPS receiver, the PIDA, PIDR, PIDP and PIDY controllers, the RC input (RCIN)
+channels, and the RC output (RCOUT) channels that are present in the selected
+log, and then opens the log in PlotJuggler 4. When the log contains flight mode
+changes (`MODE` messages), every plot has its background shaded by flight mode so
+mode changes are easy to spot. This requires the ArduPilot BIN loader plugin
+version 1.2.0 or newer. To turn the shading off, set
+`"plotjuggler": {"shade_flight_modes": false}` in the program settings file.
+PlotJuggler 4 must be installed and
+the log must contain at least one of these message types.
 
 At the bottom of the window:
 

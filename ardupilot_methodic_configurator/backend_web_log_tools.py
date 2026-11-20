@@ -35,9 +35,10 @@ class WebLogTool:
 
 
 # Pin both destination and input: never send local logs to an arbitrary URL.
+PLOT_WEB_TOOL_URL = "https://plot.ardupilot.org/"
 WEB_LOG_TOOLS: dict[str, WebLogTool] = {
     "https://plotbeta.ardupilot.org/": WebLogTool(_("plotbeta"), "#choosefile"),
-    "https://plot.ardupilot.org/": WebLogTool(_("plot"), "#choosefile"),
+    PLOT_WEB_TOOL_URL: WebLogTool(_("plot"), "#choosefile"),
     "https://firmware.ardupilot.org/Tools/WebTools/HardwareReport/": WebLogTool(_("hardware report"), "#fileItem"),
     "https://firmware.ardupilot.org/Tools/WebTools/MAGFit/": WebLogTool(_("MagFit"), "#fileItem"),
     "https://firmware.ardupilot.org/Tools/WebTools/FilterReview/": WebLogTool(_("Filter Review"), "#fileItem"),

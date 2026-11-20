@@ -46,6 +46,7 @@ dependencies = [
     "argcomplete==3.7.2",
     "defusedxml==0.7.1",
     "httpx2[socks]==2.16.0",
+    "jinja2==3.1.6",
     "jsonschema==4.26.0",
     "matplotlib==3.10.3; python_version < '3.14'",
     "matplotlib==3.10.9; python_version >= '3.14' and python_version < '3.15'",
@@ -179,7 +180,7 @@ include-package-data = false
 include = ["ardupilot_methodic_configurator*"]
 
 [tool.setuptools.package-data]
-ardupilot_methodic_configurator = ["**/*.param", "**/*.png", "**/*.jpg", "**/*.json", "**/*.xml", "**/*.mo"]
+ardupilot_methodic_configurator = ["**/*.param", "**/*.png", "**/*.jpg", "**/*.json", "**/*.xml", "**/*.j2", "**/*.mo"]
 
 [tool.setuptools.dynamic]
 version = {attr = "ardupilot_methodic_configurator.__version__"}

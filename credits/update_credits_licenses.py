@@ -39,6 +39,7 @@ direct_dependencies = [
     {"name": "Scrollable_TK_frame", "license_url": "https://mozilla.org/MPL/2.0/"},
     {"name": "Python_Tkinter_ComboBox", "license_url": "https://mozilla.org/MPL/2.0/"},
     {"name": "defusedxml", "license_url": "https://raw.githubusercontent.com/tiran/defusedxml/main/LICENSE"},
+    {"name": "Jinja2", "license_url": "https://raw.githubusercontent.com/pallets/jinja/main/LICENSE.txt"},
     {"name": "httpx2", "license_url": "https://raw.githubusercontent.com/pydantic/httpx2/main/LICENSE.md"},
     {
         "name": "jsonschema",
@@ -76,6 +77,7 @@ indirect_dependencies = [
     {"name": "truststore", "license_url": "https://raw.githubusercontent.com/sethmlarson/truststore/main/LICENSE"},
     {"name": "future", "license_url": "https://raw.githubusercontent.com/PythonCharmers/python-future/master/LICENSE.txt"},
     {"name": "urllib3", "license_url": "https://raw.githubusercontent.com/urllib3/urllib3/main/LICENSE.txt"},
+    {"name": "MarkupSafe", "license_url": "https://raw.githubusercontent.com/pallets/markupsafe/main/LICENSE.txt"},
     {"name": "lxml", "license_url": "https://raw.githubusercontent.com/lxml/lxml/master/LICENSE.txt"},
     {"name": "idna", "license_url": "https://raw.githubusercontent.com/kjd/idna/master/LICENSE.md"},
     {"name": "typer", "license_url": "https://raw.githubusercontent.com/fastapi/typer/master/LICENSE"},

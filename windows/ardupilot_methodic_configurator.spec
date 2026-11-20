@@ -62,6 +62,7 @@ def _add_package_data(pattern, skip_vehicle_templates=False):
 
 # Bundle runtime data with the application; vehicle templates are installed separately.
 _add_package_data("**/*.json", skip_vehicle_templates=True)
+_add_package_data("**/*.j2")
 _add_package_data("images/**/*.png")
 _add_package_data("images/**/*.svg")
 _add_package_data("locale/**/*.mo")

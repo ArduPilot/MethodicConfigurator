@@ -66,6 +66,20 @@ The task runs on the local background runner so browser startup and uploads do
 not block Tk. It does not attach to the user's existing browser profile; the
 Selenium Manager driver/browser must be available at runtime.
 
+The same menu can launch PlotJuggler 4. `backend_plotjuggler.py` extracts the
+selected log, builds tabs for battery, GPS (signals grouped by similar amplitude),
+one GPS accuracy tab per receiver, PIDA/PIDR/PIDP/PIDY, RC input and RC output
+from the messages present in the log, and renders `plotjuggler_layout.pj4.xml.j2`
+with Jinja2 (autoescaping enabled). It writes `plotjuggler_layout.pj4.xml` into the
+vehicle project directory, then starts PlotJuggler with the log and layout.
+Instanced messages (for example `BAT`, `GPS`, `GPA`) are plotted per instance using
+the `<MSG>/<instance>` topics the PlotJuggler parser creates.
+When the log has `MODE` messages, every plot also gets a hidden curve on the
+`_markers`/`mode` topic published by the ArduPilot BIN loader. Its markers shade
+the plot background by flight mode.
+Log extraction runs through the local background task runner, so Tk remains
+responsive.
+
 The backend serializes driver access and discards closed sessions before one
 bounded retry. Cleanup forgets the session even if driver shutdown fails.
 If only the active tab closes, recovery switches to a surviving tab and opens

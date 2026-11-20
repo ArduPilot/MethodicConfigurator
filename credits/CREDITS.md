@@ -38,6 +38,7 @@ It directly uses:
 | [numpy](https://numpy.org/) | [BSD License](https://github.com/numpy/numpy/blob/main/LICENSE.txt) |
 | [pillow](https://python-pillow.github.io/) | [MIT-CMU License](https://github.com/python-pillow/Pillow/blob/main/LICENSE) |
 | [httpx2](https://github.com/pydantic/httpx2) | [BSD 3-Clause License](https://github.com/pydantic/httpx2/blob/main/LICENSE.md) |
+| [Jinja2](https://jinja.palletsprojects.com/) | [BSD 3-Clause License](https://github.com/pallets/jinja/blob/main/LICENSE.txt) |
 | [setuptools](https://setuptools.pypa.io/) | [MIT License](https://github.com/pypa/setuptools/blob/main/LICENSE) |
 | [jsonschema](https://python-jsonschema.readthedocs.io/en/stable/) | [MIT License](https://github.com/python-jsonschema/jsonschema/blob/main/COPYING) |
 | [screeninfo](https://github.com/rr-/screeninfo) | [MIT License](https://github.com/rr-/screeninfo/blob/master/LICENSE.md) |
@@ -58,6 +59,7 @@ It indirectly uses:
 | [truststore](https://github.com/sethmlarson/truststore) | [MIT License](https://github.com/sethmlarson/truststore/blob/main/LICENSE) |
 | [future](https://github.com/PythonCharmers/python-future) | [MIT License](https://github.com/PythonCharmers/python-future/blob/master/LICENSE.txt) |
 | [urllib3](https://github.com/urllib3/urllib3) | [MIT License](https://github.com/urllib3/urllib3/blob/main/LICENSE.txt) |
+| [MarkupSafe](https://markupsafe.palletsprojects.com/) | [BSD 3-Clause License](https://github.com/pallets/markupsafe/blob/main/LICENSE.txt) |
 | [lxml](https://github.com/lxml/lxml) | [BSD License](https://github.com/lxml/lxml/blob/master/LICENSE.txt) |
 | [idna](https://github.com/kjd/idna) | [BSD License](https://github.com/kjd/idna/blob/master/LICENSE.md) |
 | [typer](https://github.com/fastapi/typer) | [MIT License](https://github.com/fastapi/typer/blob/master/LICENSE) |

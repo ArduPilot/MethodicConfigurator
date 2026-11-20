@@ -499,6 +499,7 @@ class TestSettingsFileOperations:
         expected_result["annotate_docs_into_param_files"] = False  # Added by default
         expected_result["gui_complexity"] = "simple"  # Added by default
         expected_result["motor_test"] = {"duration": 2, "throttle_pct": 10}  # Added by default
+        expected_result["plotjuggler"] = {"shade_flight_modes": True}  # Added by default
         expected_result["connection_history"] = []  # Added by default
         expected_result["last_successful_connection"] = {}  # Added by default
         expected_result["recent_vehicle_history"] = []  # Added by default

@@ -2635,6 +2635,7 @@ class TestFileBrowserWindow:
         tool_labels = [
             "plotbeta",
             "plot",
+            "PlotJuggler 4",
             "hardware report",
             "MagFit",
             "Filter Review",
@@ -2645,7 +2646,7 @@ class TestFileBrowserWindow:
         start = labels.index("plotbeta")
         assert labels[start : start + len(tool_labels)] == tool_labels
         for command_call in menu.add_command.call_args_list:
-            if command_call.kwargs["label"] in tool_labels:
+            if command_call.kwargs["label"] in tool_labels and command_call.kwargs["label"] != "PlotJuggler 4":
                 command_call.kwargs["command"]()
         assert dispatched == [
             "https://plotbeta.ardupilot.org/",
@@ -2847,8 +2848,9 @@ class TestFileBrowserWindow:
 
         window.ui.show_error.assert_called_once_with("Open log in web tool failed", "Chrome unavailable")
 
-    def test_local_navigation_during_web_log_open_eventually_lists_new_directory(self, tmp_path: Path) -> None:
-        """GIVEN a pending browser launch, WHEN navigating locally, THEN populate the new directory afterwards."""
+    @pytest.mark.parametrize("tool", ["web", "plotjuggler"])
+    def test_local_navigation_during_log_open_eventually_lists_new_directory(self, tmp_path: Path, tool: str) -> None:
+        """GIVEN a pending log launch, WHEN navigating locally, THEN populate the new directory afterwards."""
         log = tmp_path / "flight.bin"
         log.write_bytes(b"bin")
         destination = tmp_path / "next"
@@ -2865,8 +2867,18 @@ class TestFileBrowserWindow:
         window._update_parent_navigation_buttons = MagicMock()
         window.ui = MagicMock()
         window._local_task_runner = DeferredTaskRunner()
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser.open_log_in_web_tool"):
-            window.open_selected_log_in_web_tool("https://plot.ardupilot.org/")
+        window.parameter_editor = MagicMock()
+        window.parameter_editor.fc_parameters = {}
+        window.parameter_editor.get_vehicle_directory.return_value = str(tmp_path)
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser.open_log_in_web_tool"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser.generate_plotjuggler_layout"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser.open_in_plotjuggler"),
+        ):
+            if tool == "plotjuggler":
+                window._open_selected_log_in_plotjuggler()
+            else:
+                window.open_selected_log_in_web_tool("https://plot.ardupilot.org/")
             window.local_directory_var.get.return_value = str(destination)
             window.refresh_local_panel()
             window._local_task_runner.finish()
@@ -2888,6 +2900,98 @@ class TestFileBrowserWindow:
         window.ui.show_error.assert_called_once_with(
             "Open log in web tool failed", "Another file operation is already in progress."
         )
+
+    @pytest.mark.parametrize("parameters", [{}, {"SERVO1_FUNCTION": 33.0}])
+    def test_plotjuggler_opens_selected_log_with_available_parameters(
+        self, local_action_browser: FileBrowserWindow, tmp_path: Path, parameters: dict[str, float]
+    ) -> None:
+        """GIVEN a selected log, WHEN opening PlotJuggler, THEN generate a layout even with no FC parameters."""
+        window = local_action_browser
+        runner = DeferredTaskRunner()
+        window._local_task_runner = runner
+        window.parameter_editor.fc_parameters = parameters
+        window.parameter_editor.get_vehicle_directory.return_value = str(tmp_path)
+        log = window.local_entries[0].path
+        layout = tmp_path / "layout.xml"
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_file_browser.generate_plotjuggler_layout",
+                return_value=layout,
+            ) as generate,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser.open_in_plotjuggler") as open_log,
+        ):
+            window._open_selected_log_in_plotjuggler()
+            generate.assert_not_called()
+            runner.finish()
+
+        generate.assert_called_once_with(log, parameters, tmp_path)
+        open_log.assert_called_once_with(log, layout)
+        window.ui.show_error.assert_not_called()
+        window.refresh_local_panel.assert_not_called()
+
+    @pytest.mark.parametrize(
+        ("names", "selection", "locked"),
+        [
+            ((), (), False),
+            (("a.bin", "b.bin"), ("0", "1"), False),
+            (("folder.bin",), ("0",), False),
+            (("flight.txt",), ("0",), False),
+            (("flight.bin",), ("0",), True),
+        ],
+    )
+    def test_plotjuggler_requires_an_unlocked_browser_with_one_selected_log(
+        self,
+        local_action_browser: FileBrowserWindow,
+        tmp_path: Path,
+        names: tuple[str, ...],
+        selection: tuple[str, ...],
+        *,
+        locked: bool,
+    ) -> None:
+        """GIVEN an invalid selection or locked browser, WHEN opening PlotJuggler, THEN skip the launch."""
+        window = local_action_browser
+        window.local_entries = [LocalFileEntry(name, tmp_path / name, 0, name == "folder.bin") for name in names]
+        window.local_tree.selection.return_value = selection
+        window._task_runner = MagicMock(active=locked)
+        runner = DeferredTaskRunner()
+        window._local_task_runner = runner
+
+        window._open_selected_log_in_plotjuggler()
+
+        assert not runner.active
+        window.ui.show_error.assert_not_called()
+
+    def test_plotjuggler_reports_a_busy_local_worker(self, local_action_browser: FileBrowserWindow, tmp_path: Path) -> None:
+        """GIVEN a busy local worker, WHEN opening PlotJuggler, THEN explain why it cannot start."""
+        window = local_action_browser
+        runner = DeferredTaskRunner()
+        runner.start(lambda _progress: None, None, lambda _result, _error: None)
+        window._local_task_runner = runner
+        window.parameter_editor.fc_parameters = {}
+        window.parameter_editor.get_vehicle_directory.return_value = str(tmp_path)
+
+        window._open_selected_log_in_plotjuggler()
+
+        window.ui.show_error.assert_called_once_with(
+            "Open log in PlotJuggler 4 failed", "Another file operation is already in progress."
+        )
+
+    def test_plotjuggler_reports_a_launch_failure(self, local_action_browser: FileBrowserWindow, tmp_path: Path) -> None:
+        """GIVEN PlotJuggler cannot start, WHEN the worker completes, THEN show the launch error."""
+        window = local_action_browser
+        window.parameter_editor.fc_parameters = {}
+        window.parameter_editor.get_vehicle_directory.return_value = str(tmp_path)
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser.generate_plotjuggler_layout"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_file_browser.open_in_plotjuggler",
+                side_effect=FileNotFoundError("PlotJuggler 4 was not found on PATH"),
+            ),
+        ):
+            window._open_selected_log_in_plotjuggler()
+
+        window.ui.show_error.assert_called_once_with("Open log in PlotJuggler 4 failed", "PlotJuggler 4 was not found on PATH")
 
     def test_context_menu_survives_popup_return_until_it_is_unmapped(self) -> None:
         """The X11 popup remains available after ``tk_popup`` returns."""
