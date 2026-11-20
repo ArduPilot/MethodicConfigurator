@@ -61,11 +61,17 @@ Both panels contain:
 
 The PC panel also includes **Browse**, which opens a folder picker.
 
-Right-click an entry in the PC panel to open its context menu. Choose **Open**
-to open a selected local file with the operating system's default application.
-You can also double-click a local file to open it directly.
-The **Open** action is available for one selected file; it is disabled for
-directories, multiple selections, and when nothing is selected.
+Right-click an entry in either panel to open its context menu. Right-clicking
+empty space clears the current selection before showing the menu. **Copy path**
+copies the selected entry paths to the clipboard, one path per line. On the PC
+panel, **Copy** puts the selected files and directories on the system clipboard
+so they can be pasted into a file manager or another application. **Rename** is
+available for one selected entry, while **Delete** supports multiple selected
+entries and asks for confirmation.
+
+On the PC panel, choose **Open** to open one selected file with the operating
+system's default application. You can also double-click a local file to open it
+directly. **Open** is only shown for one selected file.
 
 For one selected local `.bin` flight log, the same menu offers **plotbeta**,
 **plot**, **hardware report**, **MagFit**, **Filter Review**, **PID Review**,
@@ -77,6 +83,9 @@ first use. Later selections open new tabs in the same managed browser. The log
 remains on your computer unless the website itself transfers it; check each
 tool's privacy policy before sharing sensitive logs. The flight controller is
 not involved, so download a log to the PC panel first.
+
+The same `.bin` menu also offers **AMC log analyser** and **Skybrush log
+analyser** when the file browser is open from the parameter editor.
 
 At the bottom of the window:
 
@@ -154,6 +163,15 @@ Deletion is deliberately non-recursive:
   the other selected entries.
 
 ## Copy files and directories
+
+### Copy local entries to the clipboard
+
+In the PC panel, select one or more files and/or directories, right-click, and
+choose **Copy**. Then paste into a file manager or another application that
+accepts files from the clipboard.
+
+Choose **Copy path** from either panel to copy the selected full paths to the
+clipboard. Multiple paths are separated by newlines.
 
 ### Download from the flight controller
 
