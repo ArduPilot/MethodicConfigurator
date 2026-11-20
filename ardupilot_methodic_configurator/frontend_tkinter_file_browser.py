@@ -79,6 +79,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_application impo
 )
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
+from ardupilot_methodic_configurator.frontend_tkinter_skybrush_log_analysis import open_skybrush_log_analysis
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser, Namespace
@@ -143,7 +144,7 @@ class FileBrowserUiServices(Protocol):  # pylint: disable=too-few-public-methods
     create_progress_window: Callable[[tk.Misc, str, str, bool], ProgressWindow]
 
 
-class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-many-instance-attributes
+class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-many-instance-attributes, too-many-public-methods
     BaseWindow
 ):
     """Browse remote and local files and transfer or manage selected entries."""
@@ -158,7 +159,7 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
     )
     download_button: ttk.Button
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         parent: tk.Tk | tk.Toplevel | None,
         parameter_editor: ParameterEditor,
@@ -166,10 +167,12 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         *,
         task_runner: TaskRunner | None = None,
         local_task_runner: TaskRunner | None = None,
+        analyse_log_callback: Callable[[str], None] | None = None,
     ) -> None:
         super().__init__(parent)
         self.parent = parent
         self.parameter_editor = parameter_editor
+        self._analyse_log_callback = analyse_log_callback
         self.ui = ui_services
         self.remote_entries: list[FlightControllerLogFile] = []
         self.local_entries: list[LocalFileEntry] = []
@@ -1087,6 +1090,10 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
                 menu.add_separator()
                 for url, tool in WEB_LOG_TOOLS.items():
                     menu.add_command(label=tool.label, command=partial(self.open_selected_log_in_web_tool, url))
+                menu.add_separator()
+                if self._analyse_log_callback is not None:
+                    menu.add_command(label=_("AMC log analyser"), command=self.analyse_selected_local_log)
+                menu.add_command(label=_("Skybrush log analyser"), command=self.open_selected_skybrush_log_analysis)
         menu_closed = False
 
         def close_menu(_event: tk.Event | None = None) -> None:
@@ -1142,6 +1149,36 @@ class FileBrowserWindow(  # pylint: disable=attribute-defined-outside-init, too-
         if len(selected_entries) != 1:
             return
         self._open_local_file(selected_entries[0])
+
+    def analyse_selected_local_log(self) -> None:
+        """Run AMC log analysis on one selected local .bin log."""
+        selected_entries = self._selected_local_entries()
+        if self._controls_locked() or self._local_task_runner.active or len(selected_entries) != 1:
+            return
+        entry = selected_entries[0]
+        if entry.is_directory or entry.path.suffix.lower() != ".bin":
+            return
+        if self._analyse_log_callback is not None:
+            filepath = str(entry.path)
+            self._on_close()
+            self._analyse_log_callback(filepath)
+
+    def open_selected_skybrush_log_analysis(self) -> None:
+        """Open Skybrush log analysis for one selected local .bin log."""
+        selected_entries = self._selected_local_entries()
+        if self._controls_locked() or self._local_task_runner.active or len(selected_entries) != 1:
+            return
+        entry = selected_entries[0]
+        if entry.is_directory or entry.path.suffix.lower() != ".bin":
+            return
+        filepath = str(entry.path)
+        if self.parent is None:
+            # Standalone browser: its root is the only Tk root, so keep it alive as the Skybrush parent.
+            open_skybrush_log_analysis(self.root, filepath)
+            return
+        parent = self.parent
+        self._on_close()
+        open_skybrush_log_analysis(parent, filepath)
 
     def _open_local_file(self, entry: LocalFileEntry) -> None:
         """Open one local file, regardless of how the UI selected it."""
