@@ -20,16 +20,18 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 import argparse
+import ctypes
 import logging
 import os
 import platform
 import re
 import shutil
+import sys
 import tempfile
 import time
 import tkinter as tk
 import tkinter.font as tk_font
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
@@ -80,6 +82,7 @@ from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelCo
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Iterator
+    from typing import Literal
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 IMAGES_DIR = ROOT_DIR / "images"
@@ -117,6 +120,7 @@ TARGETS: tuple[CaptureTarget, ...] = (
     CaptureTarget("App_screenshot_MAVFTP_open.png", "mavftp_open"),
     CaptureTarget("App_screenshot_MAVFTP_browser.png", "mavftp_browser"),
     CaptureTarget("App_screenshot_MAVFTP_remote_panel.png", "mavftp_remote_panel"),
+    CaptureTarget("App_screenshot_MAVFTP_log_menu.png", "mavftp_log_menu"),
     CaptureTarget("App_screenshot_MAVLink_inspector.png", "mavlink_inspector", variant="radio"),
     CaptureTarget("App_screenshot_MAVLink_inspector_no_radio.png", "mavlink_inspector", variant="no_radio"),
     CaptureTarget("App_screenshot_MAVLink_inspector_collapsed.png", "mavlink_inspector", variant="collapsed"),
@@ -624,16 +628,17 @@ def _capture_connection(output_path: Path, delay: float, padding: int, *, highli
         window.root.lift()
         pyautogui.moveTo(20, 20)
         settle_tk(window.root)
-        highlight_boxes = None
-        if highlight_skip:
-            highlight_boxes = lambda: [  # noqa: E731
+
+        def highlight_boxes() -> list[tuple[int, int, int, int]]:
+            return [
                 _required_widget_box(
                     window.root,
                     lambda widget: _widget_text(widget) == translate("Skip FC connection, just edit the .param files on disk"),
                     "Could not find the skip connection button",
                 )
             ]
-        capture_widget(window.root, output_path, delay, padding, highlight_boxes=highlight_boxes)
+
+        capture_widget(window.root, output_path, delay, padding, highlight_boxes=highlight_boxes if highlight_skip else None)
     finally:
         if hasattr(window, "connection_selection_widgets"):
             window.connection_selection_widgets.stop_periodic_refresh()
@@ -737,6 +742,12 @@ class _MavftpScreenshotEditor:
 class _MavftpScreenshotWindow(FileBrowserWindow):
     """Keep displayed modification times consistent across host time zones."""
 
+    def build_example_log_menu(self) -> tk.Menu:
+        """Select the example log and build its real context menu."""
+        index = next(index for index, entry in enumerate(self.local_entries) if entry.name == "flight.BIN")
+        self.local_tree.selection_set(str(index))
+        return self._build_context_menu(self.local_tree, remote=False)
+
     @staticmethod
     def _format_modified_time(timestamp: float | None, *, unsupported_when_missing: bool = False) -> str:
         if timestamp is None:
@@ -749,7 +760,64 @@ class _MavftpScreenshotWindow(FileBrowserWindow):
             return "-"
 
 
-def _capture_mavftp(output_path: Path, delay: float, padding: int, *, remote_panel: bool) -> None:
+def _dismiss_native_menu() -> None:
+    """Exit the calling thread's native menu loop on Windows."""
+    if sys.platform == "win32" and not ctypes.windll.user32.EndMenu():
+        msg = "Could not dismiss the native Windows screenshot menu"
+        raise RuntimeError(msg)
+
+
+def _capture_posted_menu(menu: tk.Menu, position: tuple[int, int], capture: Callable[[], None]) -> None:
+    """Capture a real Tk popup and report callback failures to the generator."""
+    failure: Exception | None = None
+    completed = False
+
+    def attempt(action: Callable[[], None]) -> None:
+        nonlocal failure
+        try:
+            action()
+        except Exception as error:  # pylint: disable=broad-exception-caught
+            if failure is None:
+                failure = error
+            else:
+                failure.add_note(f"Menu cleanup also failed: {error}")
+
+    def capture_and_dismiss() -> None:
+        nonlocal completed
+        try:
+            attempt(capture)
+        finally:
+            try:
+                # Tk's Windows menu.post() returns only after the native loop exits.
+                attempt(_dismiss_native_menu)
+                attempt(menu.unpost)
+            finally:
+                completed = True
+
+    timer = menu.after(300, capture_and_dismiss)
+    try:
+        menu.post(*position)
+        deadline = time.monotonic() + 5.0
+        while not completed and time.monotonic() < deadline:
+            menu.update()
+            if not completed:
+                time.sleep(0.01)
+        if not completed:
+            msg = "The posted menu did not finish capturing before the timeout"
+            raise TimeoutError(msg)
+        if failure is not None:
+            raise failure
+    finally:
+        if not completed:
+            with suppress(tk.TclError):
+                menu.after_cancel(timer)
+            with suppress(tk.TclError):
+                menu.unpost()
+
+
+def _capture_mavftp(
+    output_path: Path, delay: float, padding: int, *, variant: Literal["browser", "remote_panel", "log_menu"]
+) -> None:
     """Capture the file browser with isolated, representative fixture files."""
     with tempfile.TemporaryDirectory() as tmpdir:
         local_directory = Path(tmpdir) / "ExampleVehicle"
@@ -759,11 +827,16 @@ def _capture_mavftp(output_path: Path, delay: float, padding: int, *, remote_pan
             "Files copied from the flight controller.\n", encoding="utf-8", newline="\n"
         )
         (local_directory / "flight-photos").mkdir()
+        if variant == "log_menu":
+            (local_directory / "flight.BIN").write_bytes(b"example log")
         for path in local_directory.iterdir():
             os.utime(path, (1_788_461_700, 1_788_461_700))
 
         window = _MavftpScreenshotWindow(
-            None, cast("ParameterEditor", _MavftpScreenshotEditor(local_directory)), _standalone_ui_services()
+            None,
+            cast("ParameterEditor", _MavftpScreenshotEditor(local_directory)),
+            _standalone_ui_services(),
+            analyse_log_callback=(lambda _path: None) if variant == "log_menu" else None,
         )
         try:
             window.root.attributes("-topmost", 1)
@@ -784,14 +857,26 @@ def _capture_mavftp(output_path: Path, delay: float, padding: int, *, remote_pan
                 text=translate("Local files in {directory}").format(directory=display_directory)
             )
             settle_tk(window.root)
-            capture_widget(window.main_frame, output_path, delay, padding, trim_windows_frame=False)
-            if remote_panel:
+            if variant == "log_menu":
+                menu = window.build_example_log_menu()
+                _capture_posted_menu(
+                    menu,
+                    (window.local_tree.winfo_rootx() + 100, window.local_tree.winfo_rooty() + 25),
+                    lambda: capture_widget(window.main_frame, output_path, delay, padding, trim_windows_frame=False),
+                )
+            else:
+                capture_widget(window.main_frame, output_path, delay, padding, trim_windows_frame=False)
+            if variant == "remote_panel":
                 right = window.local_directory_label.winfo_rootx() - window.main_frame.winfo_rootx() + padding
                 with Image.open(output_path) as captured:
                     cropped = captured.crop((0, 0, min(right, captured.width), captured.height))
                     cropped.save(output_path)
         finally:
             window.root.destroy()
+
+
+def _capture_mavftp_log_menu(output_path: Path, delay: float, padding: int) -> None:
+    _capture_mavftp(output_path, delay, padding, variant="log_menu")
 
 
 def _capture_fc_info(output_path: Path, delay: float, padding: int, vehicle_dir: Path) -> None:
@@ -1194,16 +1279,24 @@ def _capture_parameter_editor(  # pylint: disable=too-many-arguments, too-many-p
         try:
             window.root.attributes("-topmost", 1)
             window.root.lift()
-            highlight_boxes = None
-            if highlight_selector is not None:
-                highlight_boxes = lambda: [  # noqa: E731
+
+            def highlight_boxes() -> list[tuple[int, int, int, int]]:
+                return [
                     _required_widget_box(
                         window.root,
-                        highlight_selector,
+                        cast("Callable[[tk.Misc], bool]", highlight_selector),
                         "Could not find the requested Parameter Editor highlight",
                     )
                 ]
-            capture_widget(window.root, output_path, delay, padding, scale, highlight_boxes=highlight_boxes)
+
+            capture_widget(
+                window.root,
+                output_path,
+                delay,
+                padding,
+                scale,
+                highlight_boxes=highlight_boxes if highlight_selector is not None else None,
+            )
         finally:
             if window.current_plugin_view is not None:
                 _cleanup_plugin_view(window.current_plugin_view)
@@ -1676,6 +1769,7 @@ _SIMPLE_ACTIONS = {
     "about": _capture_about,
     "connection": _capture_connection,
     "instructions": _capture_instructions,
+    "mavftp_log_menu": _capture_mavftp_log_menu,
     "template_overview": _capture_template_overview,
     "fc_banner": _capture_fc_banner,
     # Plugin identifier (imported constant, not a string literal)
@@ -1731,7 +1825,9 @@ def capture_target(target: CaptureTarget, output_path: Path, args: argparse.Name
                     ),
                 )
         case "mavftp_browser" | "mavftp_remote_panel":
-            _capture_mavftp(output_path, delay, padding, remote_panel=action == "mavftp_remote_panel")
+            _capture_mavftp(
+                output_path, delay, padding, variant="remote_panel" if action == "mavftp_remote_panel" else "browser"
+            )
         case "connection_no_connection":
             _capture_connection(output_path, delay, padding, highlight_skip=True)
         case "connection_add_another" | "connection_udp_forwarding":
