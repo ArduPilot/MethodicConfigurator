@@ -708,8 +708,10 @@ Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-t
 
 For this test, you need to:
 
-1. Press "Download last .bin file" button on the bottom of the parameter editor window.
-1. Visit the [ArduPilot Hardware report](https://firmware.ardupilot.org/Tools/WebTools/HardwareReport/) on your PC and upload the `.bin` file you got in the previous step.
+1. Follow [Open the file browser](USERMANUAL_MAVFTP.md#open-the-file-browser) and [Download from the flight controller](USERMANUAL_MAVFTP.md#download-from-the-flight-controller) to retrieve the latest `.bin` log. Right-click it and choose **hardware report** from the [log file context menu](USERMANUAL_MAVFTP.md#log-file-context-menu).
+
+   ![Download a flight log and open it in hardware report](images/MAVFTP_download_hardwarereport.gif)
+
 1. Take a look at the results
 
 It should look like the following picture.
@@ -868,7 +870,7 @@ These are the very minimum tuning steps required for a stable flight:
 
 ## 8.1 [Notch filter calibration](https://ardupilot.org/copter/docs/common-imu-notch-filtering.html)
 
-Load the `.bin` log from the first flight onto the [online ArduPilot Filter Review tool](https://firmware.ardupilot.org/Tools/WebTools/FilterReview/)
+Follow [Open the file browser](USERMANUAL_MAVFTP.md#open-the-file-browser) and [Download from the flight controller](USERMANUAL_MAVFTP.md#download-from-the-flight-controller) to retrieve the `.bin` log from the first flight. Right-click it and choose **Filter Review** from the [log file context menu](USERMANUAL_MAVFTP.md#log-file-context-menu).
 Follow the [instructions from Peter Hall on his Blog Post](https://discuss.ardupilot.org/t/new-fft-filter-setup-and-review-web-tool/102572) to configure the Harmonic Notch filter(s).
 Noise levels below -50dB are considered good enough.
 Do not use notch filters to reduce noise below that level as it introduces unwanted signal lag.
@@ -887,7 +889,10 @@ Below is the configuration we used.
 1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
 1. Press `Upload selected params to FC, and advance to next file` button.
 
-Load the `.bin` log from the first flight onto the [online ArduPilot Log Viewer](https://plotbeta.ardupilot.org/) or into Mission Planner.
+Follow [Open the file browser](USERMANUAL_MAVFTP.md#open-the-file-browser) and [Download from the flight controller](USERMANUAL_MAVFTP.md#download-from-the-flight-controller) to retrieve the `.bin` log from the first flight. Right-click it and choose **plotbeta** from the [log file context menu](USERMANUAL_MAVFTP.md#log-file-context-menu) to open it in the ArduPilot Log Viewer.
+
+![Download a flight log and open it in plotbeta](images/MAVFTP_download_plotbeta.gif)
+
 Take a look at the `VIBE.VibeX`, `VIBE.VibeY`, `VIBE.VibeZ` graphs they [all should be below 15](https://ardupilot.org/copter/docs/common-measuring-vibration.html)
 
 According to common ArduPilot forum knowledge, and quoting @xfacta:
@@ -897,7 +902,9 @@ According to common ArduPilot forum knowledge, and quoting @xfacta:
 - Vibrations over 15 are in a grey area - it could go either way - check clipping, it must be zero
 - Vibrations below 10 are good
 
-Now upload the `.bin` log to the [Hardware-Report Tool](https://firmware.ardupilot.org/Tools/WebTools/HardwareReport/) once again to check CPU load and loop times, which in our case look like this:
+Right-click the downloaded `.bin` log and choose **hardware report** from the [log file context menu](USERMANUAL_MAVFTP.md#log-file-context-menu) to check CPU load and loop times, which in our case look like this:
+
+![Download a flight log and open it in hardware report](images/MAVFTP_download_hardwarereport.gif)
 
 ![Hardware-Report CPU load](images/blog/hardware_report_cpu_load.png)
 
@@ -974,8 +981,11 @@ Perform the MagFit figure-eight flight and land
 
 ### 9.1.2 Calculate inflight MagFit calibration
 
-1. Download the latest `.bin` dataflash log file from the micro SDcard's `/APM/LOGS` folder
-1. Load it into MAVExplorer using the command line: `MAVExplorer.py filename.bin` or into the [ArduPilot MAGFit in flight compass calibration](https://firmware.ardupilot.org/Tools/WebTools/MAGFit/) using an internet browser.
+1. Follow [Open the file browser](USERMANUAL_MAVFTP.md#open-the-file-browser) and [Download from the flight controller](USERMANUAL_MAVFTP.md#download-from-the-flight-controller) to retrieve the latest `.bin` dataflash log file from `/APM/LOGS`
+1. Right-click the downloaded log and choose **MagFit** from the [log file context menu](USERMANUAL_MAVFTP.md#log-file-context-menu) to open it in the ArduPilot MAGFit tool.
+
+   ![Download a flight log and open it in MagFit](images/MAVFTP_download_magfit.gif)
+
 1. Select the area where the multicopter performed the Figure eight (exclude the takeoff and landing flight sections)
 1. Perform the MagFit calculations. Save the tool-generated file as `36_inflight_magnetometer_fit_results.param` in your vehicle's intermediate parameter file directory.
 1. Connect your flight controller to the PC
@@ -1062,7 +1072,7 @@ The [Autotune](https://ardupilot.org/copter/docs/autotune.html) is an automated 
 1. Tests the [overshoot and settling-time](https://aleksandarhaber.com/transient-response-specifications-peak-time-settling-time-rise-time-and-percent-overshoot/) of the control loop using the new PID values
 1. If they are within the desired requirements, the process is over. If not, it gets repeated from the beginning
 
-If the battery gets depleted before you can complete the Autotune flight(s), download the latest `.bin` log file from the micro SDCard directory `/APM/LOGS`.
+If the battery gets depleted before you can complete the Autotune flight(s), follow [Open the file browser](USERMANUAL_MAVFTP.md#open-the-file-browser) and [Download from the flight controller](USERMANUAL_MAVFTP.md#download-from-the-flight-controller) to retrieve the latest `.bin` log file from `/APM/LOGS`. Then right-click it and choose **plotbeta** from the [log file context menu](USERMANUAL_MAVFTP.md#log-file-context-menu).
 Take a look at the `ATUN` messages.
 They show how the PID values change over time.
 You should use the latest PID values from the `ATUN` messages to set the starting point of your next PID Autotune with a fresh battery.
@@ -1226,8 +1236,11 @@ Follow these steps:
 1. Perform smooth maneuvers using the RC transmitter pitch stick.
 1. Perform smooth maneuvers using the RC transmitter yaw stick.
 1. Repeat the maneuvers with increasing aggressiveness making sure you stay inside the stable envelope of the vehicle.
-1. Land and download the latest `.bin` log file from `/APM/LOGS` to your PC
-1. Use [ArduPilot's PID Review Tool](https://firmware.ardupilot.org/Tools/WebTools/PIDReview/) to review the PID step response of each PID.
+1. Land, then follow [Open the file browser](USERMANUAL_MAVFTP.md#open-the-file-browser) and [Download from the flight controller](USERMANUAL_MAVFTP.md#download-from-the-flight-controller) to retrieve the latest `.bin` log file from `/APM/LOGS` to your PC. Right-click it and choose **PID Review** from the [log file context menu](USERMANUAL_MAVFTP.md#log-file-context-menu)
+
+   ![Download a flight log and open it in PID Review](images/MAVFTP_download_pidreview.gif)
+
+1. Review the PID step response of each PID.
 1. Use *ArduPilot Methodic Configurator* to upload the `38_evaluate_the_aircraft_tune_ff_enable.param` file to the FC.
 
 In our vehicle, we got a transient response of around 60ms in roll and pitch and around 110ms in yaw.

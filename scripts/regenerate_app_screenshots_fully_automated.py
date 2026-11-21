@@ -451,7 +451,7 @@ def _required_widget_box(
 
 
 def _press_no_on_fc_copy_prompt(root: tk.Tk) -> None:
-    """Dismiss the file-24 FC-copy prompt by choosing its No button."""
+    """Dismiss the throttle-controller FC-copy prompt by choosing its No button."""
     prompt_title = translate("Update file with values from FC?")
     for child in root.winfo_children():
         if not isinstance(child, tk.Toplevel) or not child.winfo_exists():
@@ -721,8 +721,7 @@ class _MavftpScreenshotEditor:
     def get_vehicle_directory(self) -> str:
         return str(self.local_directory)
 
-    @staticmethod
-    def get_remote_files(directory: str) -> list[FlightControllerLogFile]:
+    def get_remote_files(self, directory: str) -> list[FlightControllerLogFile]:
         listings = {
             "/APM/LOGS": [
                 FlightControllerLogFile("00000157.BIN", "/APM/LOGS/00000157.BIN", 4_820_992, modified_at=1788450300),
@@ -1242,7 +1241,12 @@ def _build_parameter_editor(
         ):
             editor = ParameterEditor(current_file, flight_controller, filesystem)
             window = ParameterEditorWindow(editor)
-            if current_file == "24_throttle_controller.param":
+            if current_file in {
+                "24_throttle_controller.param",
+                "28_throttle_controller.param",
+                "29_motor_notch_filter_results.param",
+                "36_inflight_magnetometer_fit_results.param",
+            }:
                 # This step asks whether the FC values should be copied into the
                 # file. Choose No before the startup workflow can block on it.
                 # Leave enough time for the dialog to finish its own setup
