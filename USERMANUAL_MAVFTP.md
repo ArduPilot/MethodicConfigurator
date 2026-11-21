@@ -45,6 +45,14 @@ python .\ardupilot_methodic_configurator\frontend_tkinter_file_browser.py
 
 ## Window overview
 
+The following animation example shows how to download a `.bin` log from the FC and open it
+in **plotbeta**.
+This is a very common use case.
+
+![Animation showing a log downloaded and selected for plotbeta](images/MAVFTP_download_plotbeta.gif)
+
+Here is the window overview:
+
 ![MAVFTP File Browser with remote and PC panels](images/App_screenshot_MAVFTP_browser.png)
 
 *Example browser window. The files and dates shown are illustrative.*
@@ -278,7 +286,7 @@ options appear when exactly one local `.bin` file is selected.
   its full path as text. **Rename** changes its name and **Delete** removes it
   after confirmation.
 - **plotbeta** and **plot** open the log in the corresponding ArduPilot log
-  plotting tool. **hardware report**, **MagFit**, **Filter Review**,
+  plotting tool ([plot walkthrough](images/MAVFTP_download_plot.gif)). **hardware report**, **MagFit**, **Filter Review**,
   **PID Review**, **Stream stats**, and **System ID** open the log in the
   named ArduPilot web tool. AMC opens a managed browser and supplies the file
   to the selected tool; the tool determines how it processes the log.
