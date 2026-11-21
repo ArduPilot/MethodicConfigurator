@@ -153,6 +153,14 @@ class TestSimpleModeDisplay:
         # Assert: Parent component is displayed because it contains required nested fields
         assert result is True
 
+    def test_nested_display_does_not_recheck_the_top_level_component_list(self, display_model) -> None:
+        """Given a nested component, only its schema fields determine simple-mode visibility."""
+        display_model.schema.get_component_property_description.return_value = ("Required", False)
+        display_model.get_all_components = MagicMock(return_value=["Child"])
+
+        assert display_model.should_display_in_simple_mode("Child", {"Required": "value"}, ["Parent"], "simple")
+        display_model.get_all_components.assert_not_called()
+
 
 class TestLeafComponentDisplay:
     """Test leaf component display logic."""
@@ -239,6 +247,7 @@ class TestWidgetConfigurationPreparation:
         assert config["description"] == "Flight controller description"
         assert config["is_optional"] is False
         assert config["is_toplevel"] is True
+        display_model.schema.get_component_property_description.assert_called_once_with(("Flight Controller",))
 
     def test_system_prepares_correct_leaf_widget_config(self, display_model) -> None:
         """
@@ -263,6 +272,22 @@ class TestWidgetConfigurationPreparation:
         assert config["path"] == ("Flight Controller", "Product", "Manufacturer")
         assert config["description"] == "Manufacturer description"
         assert config["is_optional"] is False
+        display_model.schema.get_component_property_description.assert_called_once_with(
+            ("Flight Controller", "Product", "Manufacturer")
+        )
+
+    def test_user_gets_an_empty_description_without_translation(self, display_model, monkeypatch) -> None:
+        """Given a blank schema description, keep the tooltip blank and skip translation."""
+        translate = MagicMock(side_effect=lambda text: f"translated:{text}")
+        monkeypatch.setattr("ardupilot_methodic_configurator.data_model_vehicle_components_display._", translate)
+        display_model.schema.get_component_property_description.return_value = ("", False)
+
+        leaf = display_model.prepare_leaf_widget_config("Manufacturer", "Holybro", ["Flight Controller", "Product"])
+        section = display_model.prepare_non_leaf_widget_config("Product", {}, ["Flight Controller"])
+
+        assert leaf["description"] == ""
+        assert section["description"] == ""
+        translate.assert_not_called()
 
     def test_system_enhances_optional_component_descriptions(self, display_model) -> None:
         """
@@ -283,7 +308,7 @@ class TestWidgetConfigurationPreparation:
 
         # Assert: Description is enhanced for optional field
         assert "MCU series description" in config["description"]
-        assert "optional" in config["description"].lower()
+        assert config["description"] == ("MCU series description\nThis is optional and can be left blank")
         assert config["is_optional"] is True
 
     def test_system_handles_empty_descriptions_gracefully(self, display_model) -> None:
@@ -446,8 +471,7 @@ class TestUserWorkflows:
         config = display_model.prepare_leaf_widget_config("Optional Field", "value", ["Component"])
 
         # Assert: User receives clear optional field guidance
-        assert "optional" in config["description"].lower()
-        assert "blank" in config["description"].lower()
+        assert config["description"] == "This is an optional field\nThis is optional and can be left blank"
         assert config["is_optional"] is True
 
     def test_system_hides_components_with_only_optional_fields_in_simple_mode(self, display_model) -> None:
@@ -487,9 +511,4 @@ class TestUserWorkflows:
         config = display_model.prepare_leaf_widget_config("optional_field", "value", ["Component"])
 
         # Assert: Description is enhanced with optional guidance
-        description = config["description"]
-        assert "Existing description" in description
-        assert "optional" in description.lower()
-        assert "blank" in description.lower()
-        # Specifically test that the enhancement was applied
-        assert "\n" in description  # The enhancement adds a newline
+        assert config["description"] == "Existing description\nThis is optional and can be left blank"

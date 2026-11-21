@@ -49,6 +49,30 @@ def status_message(present: int = _RC_BIT, enabled: int = _RC_BIT, health: int =
     return message
 
 
+def test_model_initializes_unknown_values_and_clears_live_data(receiver_context: SimpleNamespace) -> None:
+    """Initialize each reading as unavailable and clear it after live telemetry."""
+    model = receiver_context.model
+    assert model._channels == (None,) * 5
+    assert model._rssi is None
+    assert model._rc_time is None
+    assert model._status_time is None
+    assert model._receiver_present is None
+    assert model._failsafe is None
+    assert model._failsafe_detected is False
+
+    receiver_context.messages.extend([rc_message(), status_message(health=0)])
+    assert model.get_receiver_state().failsafe_detected
+    model.clear_live_data()
+
+    assert model._channels == (None,) * 5
+    assert model._rssi is None
+    assert model._rc_time is None
+    assert model._status_time is None
+    assert model._receiver_present is None
+    assert model._failsafe is None
+    assert model._failsafe_detected is True
+
+
 @pytest.fixture
 def receiver_context(rc_controller: MagicMock) -> SimpleNamespace:
     """Mock only transport and time; execute the real model and MAVLink messages."""

@@ -20,6 +20,7 @@ from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.data_model_parameter_upgrade import (
     PARAM_UPGRADE_DICT_46,
     PARAM_UPGRADE_DICT_47,
+    _process_sr_parameter,
     build_sr_to_mav_mapping,
     upgrade_file_parameters_46,
     upgrade_file_parameters_47,
@@ -199,6 +200,23 @@ def test_mavlink_ports_are_deduplicated_and_sorted_numerically_across_files() ->
 
     assert mapping == {"SR0_": "MAV1_", "SR2_": "MAV2_", "SR10_": "MAV3_"}
     assert ports == {0, 2, 10}
+
+
+@pytest.mark.parametrize(
+    ("name", "mapping", "ports", "expected_is_sr_param"),
+    [
+        ("NOT_A_STREAM_RATE", {}, set(), False),
+        ("SR3_RAW_SENS", {}, set(), True),
+    ],
+)
+def test_stream_rate_processing_returns_no_target_when_not_remapped(
+    name: str, mapping: dict[str, str], ports: set[int], expected_is_sr_param: bool
+) -> None:
+    """Given an unrelated or disabled SR parameter, report that no target parameter exists."""
+    is_sr_param, _, new_par = _process_sr_parameter(name, Par(1), mapping, ports)
+
+    assert is_sr_param is expected_is_sr_param
+    assert new_par is None
 
 
 @pytest.fixture

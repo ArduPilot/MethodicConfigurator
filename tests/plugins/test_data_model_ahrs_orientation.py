@@ -348,6 +348,78 @@ class TestAhrsOrientationDataModelCaptureAndEstimate:
             "Place the vehicle accurately and capture the sequence again."
         )
 
+    def test_estimation_reports_failure_when_pose_axes_are_degenerate(self, connected_flight_controller) -> None:
+        """Return a failed estimate when collinear captures cannot define three axes."""
+        model = AhrsOrientationDataModel(connected_flight_controller)
+        model._samples = {
+            "LEVEL": (0.0, 0.0, -1000.0),
+            "NOSE DOWN": (0.0, 0.0, -1000.0),
+            "RIGHT": (0.0, 0.0, -1000.0),
+        }
+
+        assert model.estimate_orientation() == (
+            False,
+            None,
+            "Unable to estimate orientation from samples. Capture the sequence again.",
+        )
+
+    @pytest.mark.parametrize("missing_step", ["LEVEL", "NOSE DOWN", "RIGHT"])
+    def test_matrix_estimation_rejects_each_unusable_pose(self, connected_flight_controller, missing_step: str) -> None:
+        """A zero vector in any capture makes the orientation matrix unavailable."""
+        model = AhrsOrientationDataModel(connected_flight_controller)
+        model._samples = {
+            "LEVEL": (0.0, 0.0, -1000.0),
+            "NOSE DOWN": (-1000.0, 0.0, 0.0),
+            "RIGHT": (0.0, -1000.0, 0.0),
+        }
+        model._samples[missing_step] = (0.0, 0.0, 0.0)
+
+        assert model._estimate_board_from_body_matrix() is None
+
+    def test_matrix_estimation_keeps_axes_when_orientation_sign_is_exactly_zero(self, connected_flight_controller) -> None:
+        """A perpendicular level vector does not trigger the negative-dot correction."""
+        model = AhrsOrientationDataModel(connected_flight_controller)
+        model._samples = {
+            "LEVEL": (1000.0, 0.0, 0.0),
+            "NOSE DOWN": (-1000.0, 0.0, 0.0),
+            "RIGHT": (0.0, -1000.0, 0.0),
+        }
+
+        assert model._estimate_board_from_body_matrix() == model._identity_matrix()
+
+    def test_best_preset_uses_first_code_when_every_score_ties(self, connected_flight_controller) -> None:
+        """Keep the first preset as the deterministic winner for equal scores."""
+        model = AhrsOrientationDataModel(connected_flight_controller)
+        zero_matrix = [[0.0, 0.0, 0.0] for _row in range(3)]
+
+        assert model._best_preset_code(zero_matrix) == (0, 0.0)
+
+    @pytest.mark.parametrize(("axis_value", "expected_pitch"), [(-1.2, 90.0), (1.2, -90.0)])
+    def test_euler_conversion_clamps_pitch_sine_to_unit_range(
+        self, connected_flight_controller, axis_value: float, expected_pitch: float
+    ) -> None:
+        """Clamp round-off beyond either unit boundary before applying asin."""
+        model = AhrsOrientationDataModel(connected_flight_controller)
+        matrix = model._identity_matrix()
+        matrix[2][0] = axis_value
+
+        assert model._matrix_to_euler321_deg(matrix)[1] == expected_pitch
+
+    def test_x_rotation_matrix_has_zero_first_entry_in_its_last_row(self, connected_flight_controller) -> None:
+        """An X rotation changes only the Y/Z axes."""
+        model = AhrsOrientationDataModel(connected_flight_controller)
+
+        matrix = model._rot_x(90.0)
+        assert matrix[0] == pytest.approx([1.0, 0.0, 0.0])
+        assert matrix[1] == pytest.approx([0.0, 0.0, -1.0])
+        assert matrix[2] == pytest.approx([0.0, 1.0, 0.0])
+
+    def test_vector_at_normalization_threshold_keeps_its_direction(self, connected_flight_controller) -> None:
+        """Treat the exact minimum nonzero magnitude as a valid direction."""
+        model = AhrsOrientationDataModel(connected_flight_controller)
+
+        assert model._normalize((1e-6, 0.0, 0.0)) == (1.0, 0.0, 0.0)
+
 
 @pytest.mark.parametrize("acceleration", [7.0, 7.5, 13.0])
 def test_capture_accepts_the_documented_still_acceleration_range(connected_flight_controller, acceleration: float) -> None:

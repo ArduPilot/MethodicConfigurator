@@ -10,8 +10,9 @@ SPDX-FileCopyrightText: 2026 Erwan Billard
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-# pylint: disable=redefined-outer-name,too-few-public-methods
+# pylint: disable=protected-access,redefined-outer-name,too-few-public-methods
 
+import codecs
 import json
 from math import inf, nan
 from pathlib import Path
@@ -95,6 +96,9 @@ def test_user_cannot_upload_a_script_without_an_available_vehicle_directory(
 
 class TestHobbywingDetection:
     """Verify ESC and motor product metadata detection."""
+
+    def test_missing_product_value_normalizes_to_empty_text(self) -> None:
+        assert EscRpmScaleDataModel._normalized_product_value(None) == ""
 
     def test_detects_hobbywing_6x_se_in_esc_product(self, model, filesystem) -> None:
         filesystem.vehicle_components_fs.data["Components"]["ESC"] = {
@@ -200,6 +204,22 @@ class TestEscCountDerivation:
 
 class TestScriptGeneration:
     """Verify pure Lua script generation and local persistence."""
+
+    def test_script_file_uses_explicit_utf8_encoding(self, model, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Write the generated Lua script with a stable UTF-8 encoding."""
+        original_write_text = Path.write_text
+        encodings: list[str | None] = []
+
+        def record_write_text(path: Path, data: str, encoding: str | None = None) -> int:
+            encodings.append(encoding)
+            return original_write_text(path, data, encoding=encoding)
+
+        monkeypatch.setattr(Path, "write_text", record_write_text)
+        model.write_script(0.714)
+
+        assert len(encodings) == 1
+        assert encodings[0] is not None
+        assert codecs.lookup(encodings[0]).name == "utf-8"
 
     def test_generates_scale_calls_for_requested_esc_outputs(self, model) -> None:
         assert model.generate_script(0.714, 4) == (

@@ -20,6 +20,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pymavlink.dialects.v20 import ardupilotmega as mavlink2
 
+from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_flightcontroller_business_logic import get_battery_parameter_prefix
 from ardupilot_methodic_configurator.backend_flightcontroller_commands import FlightControllerCommands
@@ -316,6 +317,22 @@ def test_failed_interval_change_is_retried_while_cached_readings_continue(
     model.get_battery_statuses()
 
     assert [call.args[0] for call in fc.request_periodic_battery_status.call_args_list] == [71428, 71428]
+
+
+def test_stopping_active_monitor_logs_and_keeps_the_configured_interval(
+    connected_flight_controller_with_battery_enabled: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Record the active interval and log when battery monitoring is stopped."""
+    model = BatteryMonitorDataModel(connected_flight_controller_with_battery_enabled)
+    assert model.get_battery_statuses() == {0: (12.4, 2.1)}
+    interval = model._battery_status_interval_microseconds
+    assert interval == 500000
+
+    with caplog.at_level("DEBUG"):
+        model.stop_monitoring()
+
+    assert model._battery_status_interval_microseconds == interval
+    assert caplog.messages == [_("Battery monitoring stopped")]
 
 
 def test_replaced_connection_requests_battery_stream_despite_default_readings(

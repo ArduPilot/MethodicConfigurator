@@ -23,7 +23,7 @@ from sys import platform as sys_platform
 from time import monotonic
 from time import sleep as time_sleep
 from time import time as time_time
-from typing import TYPE_CHECKING, Any, ClassVar, NoReturn, Optional, Union, cast, no_type_check
+from typing import TYPE_CHECKING, Any, ClassVar, Optional, Union, cast, no_type_check
 
 import serial.tools.list_ports
 import serial.tools.list_ports_common
@@ -106,33 +106,6 @@ def _serial_port_autodetect_rank(port: ListPortInfo) -> int:
 
 
 # pylint: disable=too-many-lines
-
-
-class FakeSerialForTests:
-    """
-    A mock serial class for unit testing purposes.
-
-    This class simulates the behavior of a serial connection for testing purposes,
-    allowing for the testing of serial communication without needing a physical
-    serial device. It includes methods for reading, writing, and checking the
-    number of bytes in the input buffer, as well as closing the connection.
-    """
-
-    def __init__(self, device: str) -> None:
-        self.device = device
-
-    def read(self, _len) -> str:  # noqa: ANN001
-        return ""
-
-    def write(self, _buf) -> NoReturn:  # noqa: ANN001
-        msg = "write always fails"
-        raise Exception(msg)  # pylint: disable=broad-exception-raised
-
-    def inWaiting(self) -> int:  # noqa: N802, pylint: disable=invalid-name
-        return 0
-
-    def close(self) -> None:
-        pass
 
 
 DEFAULT_BAUDRATE: int = 115200
