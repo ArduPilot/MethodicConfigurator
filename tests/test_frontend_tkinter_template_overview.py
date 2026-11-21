@@ -13,7 +13,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import tkinter as tk
 from collections.abc import Generator
 from tkinter import ttk
-from unittest.mock import ANY, MagicMock, patch
+from typing import cast
+from unittest.mock import ANY, MagicMock, call, patch
 
 import pytest
 
@@ -310,7 +311,11 @@ class TestTemplateDataDisplay:
         template_window._sort_by_column("Frame", reverse=False)
 
         # Assert: Items are reordered (Airplane, Helicopter, QuadCopter)
-        assert template_window.tree.move.call_count == 3
+        assert template_window.tree.move.call_args_list == [
+            call("item2", "", 0),
+            call("item3", "", 1),
+            call("item1", "", 2),
+        ]
         # Verify ascending sort indicator is shown
         template_window.tree.heading.assert_called_with("Frame", command=ANY)
 
@@ -860,48 +865,65 @@ class TestTreeviewConfigurationDetails:
 class TestSortingBehaviorDetails:
     """Test detailed sorting behavior."""
 
-    def test_numeric_sorting_works_with_float_values(self, template_window) -> None:
+    @pytest.mark.parametrize(
+        ("reverse", "expected_order"),
+        [(False, ("item1", "item3", "item2")), (True, ("item2", "item3", "item1"))],
+        ids=["ascending", "descending"],
+    )
+    def test_numeric_sorting_works_with_float_values(
+        self, template_window: TemplateOverviewWindow, reverse: bool, expected_order: tuple[str, ...]
+    ) -> None:
         """
         Numeric sorting should work with float values.
 
         GIVEN: A treeview with numeric data
         WHEN: User sorts by numeric column
-        THEN: Values should be sorted numerically, not alphabetically
+        THEN: Decimal values are ordered by magnitude in the requested direction
         """
         # Arrange: Mock tree with numeric data
-        template_window.tree.get_children.return_value = ["item1", "item2", "item3"]
-        template_window.tree.set.side_effect = lambda item, col: {
+        tree = cast("MagicMock", template_window.tree)
+        tree.get_children.return_value = ["item1", "item2", "item3"]
+        tree.set.side_effect = lambda item, col: {
             ("item1", "Size"): "1.5",
             ("item2", "Size"): "10.2",
             ("item3", "Size"): "2.0",
         }.get((item, col), "0")
 
         # Act: Sort by Size column
-        template_window._sort_by_column("Size", reverse=False)
+        template_window._sort_by_column("Size", reverse=reverse)
 
-        # Assert: Items were moved (sorted)
-        assert template_window.tree.move.call_count == 3
+        # Assert: Each row is moved to its numerically sorted position
+        assert tree.move.call_args_list == [call(item, "", index) for index, item in enumerate(expected_order)]
 
-    def test_string_sorting_fallback_handles_non_numeric_data(self, template_window) -> None:
+    @pytest.mark.parametrize(
+        ("reverse", "expected_order"),
+        [(False, ("item2", "item3", "item1")), (True, ("item1", "item3", "item2"))],
+        ids=["ascending", "descending"],
+    )
+    def test_sorting_text_column_orders_rows_alphabetically(
+        self, template_window: TemplateOverviewWindow, reverse: bool, expected_order: tuple[str, ...]
+    ) -> None:
         """
-        String sorting should work as fallback for non-numeric data.
+        A text column sorts alphabetically.
 
         GIVEN: A treeview with non-numeric data
         WHEN: User sorts by text column
-        THEN: Values should be sorted alphabetically
+        THEN: Values are ordered alphabetically in the requested direction
         """
         # Arrange: Mock tree with text data
-        template_window.tree.get_children.return_value = ["item1", "item2"]
-        template_window.tree.set.side_effect = lambda item, col: {
+        tree = cast("MagicMock", template_window.tree)
+        tree.get_children.return_value = ["item1", "item2", "item3"]
+        tree.set.side_effect = lambda item, col: {
             ("item1", "Name"): "Zebra",
             ("item2", "Name"): "Alpha",
+            ("item3", "Name"): "Mango",
         }.get((item, col), "")
 
         # Act: Sort by Name column
-        template_window._sort_by_column("Name", reverse=False)
+        template_window._sort_by_column("Name", reverse=reverse)
 
-        # Assert: String sorting was used (move was called)
-        assert template_window.tree.move.call_count == 2
+        # Assert: Each row is moved to its alphabetically sorted position
+        assert tree.move.call_args_list == [call(item, "", index) for index, item in enumerate(expected_order)]
 
     def test_sorting_indicators_update_properly(self, template_window) -> None:
         """

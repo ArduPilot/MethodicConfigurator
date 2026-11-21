@@ -132,6 +132,18 @@ def test_time_secondary_receiver_and_stale_data_remain_independent(sample: Telem
     assert model.update(sample)[0][1] == "N/A"
 
 
+def test_missing_target_system_uses_the_default_system_zero(sample: TelemetrySample) -> None:
+    """Use the MAVLink default system ID when a telemetry connection omits its target."""
+    message = sample.messages[(1, 1, "GPS_RAW_INT")]
+    sample = replace(
+        sample,
+        connection=SimpleNamespace(),
+        messages={(0, 1, "GPS_RAW_INT"): message},
+    )
+
+    assert GnssDataModel(MagicMock()).update(sample)[0][1] == "52.1234567"
+
+
 def test_monitor_requests_and_parses_real_gnss_packets_without_changing_stream_rates(link: SimpleNamespace) -> None:
     """
     Shared reception provides real telemetry without blocking acknowledgment waits.

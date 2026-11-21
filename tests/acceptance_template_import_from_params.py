@@ -127,6 +127,8 @@ Notes
 - Tests skip gracefully when empty templates are unavailable for certain vehicle types
 - ArduPlane uses its available empty_4.7.x template; Heli and Rover are skipped
   where an empty template is required because none is currently available
+- Template setup downloads exact-release metadata when its cache is missing or stale;
+  project metadata seeding then runs offline from the validated cache
 
 """
 
@@ -136,13 +138,16 @@ import os
 import re
 import shutil
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pytest
 
 import ardupilot_methodic_configurator.backend_filesystem as filesystem_module
+from ardupilot_methodic_configurator.annotate_params import get_xml_url
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.backend_flightcontroller import DEVICE_FC_PARAM_FROM_FILE, FlightController
+from ardupilot_methodic_configurator.backend_internet import download_file_from_url
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.data_model_vehicle_components import ComponentDataModel
 from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import (
@@ -258,6 +263,83 @@ def test_offline_metadata_seed_rejects_incompatible_firmware_metadata(tmp_path: 
         _seed_offline_parameter_metadata(template_dir, target_dir, "ArduCopter", "4.6.3")
 
 
+@pytest.mark.parametrize(("vehicle_type", "firmware_version"), [("ArduCopter", "4.6.3"), ("ArduPlane", "4.7.2")])
+@pytest.mark.parametrize("cached_release", [None, "4.6.0", "4.6.30", "4.6.3", "4.7.2"])
+def test_template_setup_prepares_exact_release_metadata(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    vehicle_type: str,
+    firmware_version: str,
+    cached_release: str | None,
+) -> None:
+    """
+    Template setup repairs missing or stale caches and works offline with matching metadata.
+
+    GIVEN: A template with missing, stale or matching cached metadata
+    WHEN: Acceptance setup prepares the template and seeds a generated project
+    THEN: Both use the exact firmware release, downloading only when necessary
+    """
+    metadata_vehicle = vehicle_type.removeprefix("Ardu")
+    (tmp_path / "vehicle_components.json").write_text(
+        json.dumps({"Components": {"Flight Controller": {"Firmware": {"Version": firmware_version}}}}), encoding="utf-8"
+    )
+    metadata_path = tmp_path / "apm.pdef.xml"
+    if cached_release:
+        metadata_path.write_text(f"<!-- Generated from git tag {metadata_vehicle}-{cached_release} -->", encoding="utf-8")
+    expected_metadata = f"<!-- Generated from git tag {metadata_vehicle}-{firmware_version} -->"
+    downloaded_urls = []
+
+    def download_metadata(url: str, path: str) -> bool:
+        assert cached_release != firmware_version, "Matching template metadata must work offline"
+        downloaded_urls.append(url)
+        Path(path).write_text(expected_metadata, encoding="utf-8")
+        return True
+
+    monkeypatch.setattr(f"{__name__}.download_file_from_url", download_metadata)
+
+    _prepare_template_parameter_metadata(tmp_path, vehicle_type)
+    target_dir = tmp_path / "new_vehicle"
+    target_dir.mkdir()
+    _seed_offline_parameter_metadata(tmp_path, target_dir, vehicle_type, firmware_version)
+
+    assert (target_dir / "apm.pdef.xml").read_text(encoding="utf-8") == expected_metadata
+    expected_url = get_xml_url(vehicle_type, firmware_version) + "apm.pdef.xml"
+    assert downloaded_urls == ([] if cached_release == firmware_version else [expected_url])
+
+
+@pytest.mark.parametrize("downloaded_release", [None, "Copter-4.6.0", "Plane-4.6.3", "Copter-4.6.30", "unknown"])
+def test_template_setup_preserves_cache_when_exact_metadata_is_unavailable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, downloaded_release: str | None
+) -> None:
+    """
+    Failed refreshes cannot replace the template cache with incompatible metadata.
+
+    GIVEN: A stale template cache and an unavailable or incompatible exact-release download
+    WHEN: Acceptance setup attempts to refresh metadata
+    THEN: Setup fails and preserves the old cache for diagnosis
+    """
+    (tmp_path / "vehicle_components.json").write_text(
+        json.dumps({"Components": {"Flight Controller": {"Firmware": {"Version": "4.6.3"}}}}), encoding="utf-8"
+    )
+    metadata_path = tmp_path / "apm.pdef.xml"
+    original_metadata = "<!-- Generated from git tag Copter-4.6.0 -->"
+    metadata_path.write_text(original_metadata, encoding="utf-8")
+
+    def download_metadata(_url: str, path: str) -> bool:
+        if downloaded_release is None:
+            return False
+        Path(path).write_text(f"<!-- Generated from git tag {downloaded_release} -->", encoding="utf-8")
+        return True
+
+    monkeypatch.setattr(f"{__name__}.download_file_from_url", download_metadata)
+
+    with pytest.raises(ValueError, match=r"Could not prepare|incompatible"):
+        _prepare_template_parameter_metadata(tmp_path, "ArduCopter")
+
+    assert metadata_path.read_text(encoding="utf-8") == original_metadata
+    assert sorted(path.name for path in tmp_path.iterdir()) == ["apm.pdef.xml", "vehicle_components.json"]
+
+
 def _seed_offline_parameter_metadata(
     metadata_source_dir: Path, new_vehicle_dir: str | Path, vehicle_type: str, firmware_version: str
 ) -> None:
@@ -279,6 +361,33 @@ def _seed_offline_parameter_metadata(
     if metadata_target.exists():
         return
     shutil.copy2(metadata_source, metadata_target)
+
+
+def _prepare_template_parameter_metadata(template_dir: Path, vehicle_type: str) -> None:
+    """Ensure template setup caches the exact release before running offline project imports."""
+    with (template_dir / "vehicle_components.json").open(encoding="utf-8") as component_file:
+        firmware_version = json.load(component_file)["Components"]["Flight Controller"]["Firmware"]["Version"]
+    metadata_vehicle = {"ArduCopter": "Copter", "ArduPlane": "Plane"}[vehicle_type]
+    release_tag = f"Generated from git tag {metadata_vehicle}-{firmware_version}"
+
+    def matches_release(metadata_path: Path) -> bool:
+        if not metadata_path.is_file():
+            return False
+        return re.search(re.escape(release_tag) + r"(?=\s|\(|$)", metadata_path.read_text(encoding="utf-8")) is not None
+
+    metadata_target = template_dir / "apm.pdef.xml"
+    if matches_release(metadata_target):
+        return
+
+    # Keep the old cache intact unless a download for the exact release succeeds.
+    metadata_url = get_xml_url(vehicle_type, firmware_version) + "apm.pdef.xml"
+    with TemporaryDirectory(dir=template_dir) as download_dir:
+        downloaded_metadata = Path(download_dir) / "apm.pdef.xml"
+        if not download_file_from_url(metadata_url, str(downloaded_metadata)):
+            raise ValueError(f"Could not prepare offline parameter metadata from {metadata_url}")
+        if not matches_release(downloaded_metadata):
+            raise ValueError(f"Downloaded parameter metadata is incompatible with {vehicle_type} {firmware_version}")
+        downloaded_metadata.replace(metadata_target)
 
 
 def create_test_filesystem(vehicle_dir: Path, vehicle_type: str):
@@ -445,6 +554,7 @@ def get_empty_template_dir(vehicle_type: str) -> Path:
     if not templates_base.exists():
         raise FileNotFoundError(f"Template directory not found: {templates_base}")
 
+    _prepare_template_parameter_metadata(templates_base, vehicle_type)
     return templates_base
 
 

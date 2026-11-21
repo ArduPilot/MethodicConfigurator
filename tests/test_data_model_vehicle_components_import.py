@@ -15,11 +15,7 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
-from test_data_model_vehicle_components_common import (
-    BasicTestMixin,
-    ComponentDataModelFixtures,
-    RealisticDataTestMixin,
-)
+from test_data_model_vehicle_components_common import ComponentDataModelFixtures
 
 import ardupilot_methodic_configurator.data_model_vehicle_components_import as _import_module
 from ardupilot_methodic_configurator.battery_cell_voltages import BatteryCell
@@ -32,7 +28,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_import import
 # pylint: disable=protected-access,too-many-public-methods,too-many-lines
 
 
-class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
+class TestComponentDataModelImport:
     """Tests for the ComponentDataModelImport class."""
 
     @pytest.fixture
@@ -378,15 +374,24 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         fc_parameters = {
             "MOT_PWM_TYPE": 6,
             "SERVO1_FUNCTION": 33,  # Motor1
+            "SERVO15_FUNCTION": 33,  # Outside the AIO output range
         }
         doc = {"MOT_PWM_TYPE": {"values": {"6": "DShot600"}}}
 
+        realistic_model.set_component_value(("ESC", "FC->ESC Connection", "Type"), "AIO")
+        realistic_model.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), "PWM")
+        realistic_model.set_component_value(("ESC", "ESC->FC Telemetry", "Type"), "None")
+        realistic_model.set_component_value(("ESC", "ESC->FC Telemetry", "Protocol"), "None")
         realistic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
 
         esc_type = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type"))
         esc_protocol = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol"))
+        telemetry_type = realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Type"))
+        telemetry_protocol = realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Protocol"))
         assert esc_type == "Main Out"
         assert esc_protocol == "DShot600"
+        assert telemetry_type == "Main Out"
+        assert telemetry_protocol == "BDShotOnly"
 
     @patch(
         "ardupilot_methodic_configurator.data_model_vehicle_components_import.get_esc_connection_sub_dict",
@@ -410,12 +415,20 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         }
         doc: dict[str, Any] = {}
 
+        realistic_model.set_component_value(("ESC", "FC->ESC Connection", "Type"), "Main Out")
+        realistic_model.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), "PWM")
+        realistic_model.set_component_value(("ESC", "ESC->FC Telemetry", "Type"), "None")
+        realistic_model.set_component_value(("ESC", "ESC->FC Telemetry", "Protocol"), "None")
         realistic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
 
         esc_type = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type"))
         esc_protocol = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol"))
+        telemetry_type = realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Type"))
+        telemetry_protocol = realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Protocol"))
         assert esc_type == "AIO"
         assert esc_protocol == "DShot600"
+        assert telemetry_type == "AIO"
+        assert telemetry_protocol == "BDShotOnly"
 
     def test_user_can_import_frame_class_from_fc(self, realistic_model) -> None:
         """Given FRAME_CLASS from FC, set Frame.Specifications.Class."""
@@ -570,6 +583,8 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         WHEN: User imports FC parameters
         THEN: Motor poles should be set from SERVO_BLH_POLES parameter
         """
+        realistic_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduCopter")
+        realistic_model.set_component_value(("Motors", "Specifications", "Poles"), 99)
         fc_parameters = {"MOT_PWM_TYPE": 6, "SERVO_BLH_POLES": 14}
         doc = {"MOT_PWM_TYPE": {"values": {"6": "DShot600"}}}
 
@@ -587,6 +602,7 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         WHEN: User imports FC parameters
         THEN: Motor poles should be set from SERVO_FTW_POLES parameter
         """
+        realistic_model.set_component_value(("Motors", "Specifications", "Poles"), 99)
         fc_parameters = {"MOT_PWM_TYPE": 0, "SERVO_FTW_MASK": 15, "SERVO_FTW_POLES": 12}
         doc: dict[str, Any] = {}
 
@@ -604,6 +620,7 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         WHEN: User imports FC parameters
         THEN: Motor poles should be set from ESC_HW_POLES parameter
         """
+        realistic_model.set_component_value(("Motors", "Specifications", "Poles"), 99)
         fc_parameters = {"ESC_HW_POLES": 28, "MOT_PWM_TYPE": 0}
         doc: dict[str, Any] = {}
 
@@ -722,8 +739,14 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         fc_parameters = {"MOT_PWM_TYPE": 999}  # Non-existent type
         doc = {"MOT_PWM_TYPE": {"values": {"6": "DShot600"}}}  # Doesn't contain 999
 
+        realistic_model.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), "DShot600")
+        realistic_model.set_component_value(("ESC", "ESC->FC Telemetry", "Type"), "AIO")
+        realistic_model.set_component_value(("ESC", "ESC->FC Telemetry", "Protocol"), "BDShotOnly")
         realistic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
-        # Should handle gracefully without setting protocol
+
+        assert realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) == "DShot600"
+        assert realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Type")) == "None"
+        assert realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Protocol")) == "None"
 
     def test_system_handles_battery_monitor_key_error(self, realistic_model) -> None:
         """
@@ -833,6 +856,7 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
             realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
         # pylint: enable=duplicate-code
 
+    # pylint: disable=duplicate-code  # These behavior checks complement the matching low-level unit tests.
     def test_user_can_import_battery_capacity_from_fc_parameters(self, realistic_model) -> None:
         """
         User can import battery capacity from flight controller parameters.
@@ -893,6 +917,8 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
 
         with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
             realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+    # pylint: enable=duplicate-code
 
     def test_system_handles_negative_battery_capacity(self, realistic_model) -> None:
         """
@@ -1204,26 +1230,49 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
             "SERVO2_FUNCTION": 34,  # Motor2 on main out
             "SERVO_BLH_POLES": 14,  # Motor poles for DShot
             "BATT_MONITOR": 4,  # Analog voltage and current
+            "FRAME_CLASS": 3,  # Octa
         }
 
         doc = {
             "SERIAL1_PROTOCOL": sample_doc_dict["SERIAL1_PROTOCOL"],
             "BATT_MONITOR": sample_doc_dict["BATT_MONITOR"],
             "GPS_TYPE": sample_doc_dict["GPS_TYPE"],
+            "GPS1_TYPE": sample_doc_dict["GPS_TYPE"],
             "MOT_PWM_TYPE": sample_doc_dict["MOT_PWM_TYPE"],
             "RC_PROTOCOLS": sample_doc_dict["RC_PROTOCOLS"],
+            "FRAME_CLASS": {"values": {"3": "Octa"}},
         }
 
-        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True) as verify_documentation:
             realistic_model.process_fc_parameters(fc_parameters, doc)
+
+        verification_calls = [call.args for call in verify_documentation.call_args_list]
+        firmware_type = str(realistic_model.get_component_value(("Flight Controller", "Firmware", "Type")))
+        expected_verifications = [
+            (doc, _import_module.SERIAL_PROTOCOLS_DICT, "SERIAL1_PROTOCOL", "values"),
+            (doc, _import_module.BATT_MONITOR_CONNECTION, "BATT_MONITOR", "values"),
+            (doc, _import_module.GNSS_RECEIVER_CONNECTION, "GPS1_TYPE", "values"),
+            (doc, _import_module.get_esc_connection_sub_dict(firmware_type), "MOT_PWM_TYPE", "values"),
+            (doc, _import_module.RC_PROTOCOLS_DICT, "RC_PROTOCOLS", "Bitmask"),
+            (
+                doc,
+                _import_module.get_frame_class_as_protocol_dict(firmware_type),
+                "FRAME_CLASS",
+                "values",
+            ),
+        ]
+        assert all(expected in verification_calls for expected in expected_verifications)
 
         # Verify all components were configured correctly
         assert realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type")) == "SERIAL2"
+        assert realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Protocol")) == "uBlox"
         assert realistic_model.get_component_value(("RC Receiver", "FC Connection", "Type")) == "SERIAL3"
         assert realistic_model.get_component_value(("RC Receiver", "FC Connection", "Protocol")) == "CRSF"
         assert realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type")) == "Main Out"
         assert realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) == "DShot600"
         assert realistic_model.get_component_value(("Motors", "Specifications", "Poles")) == 14
+        assert realistic_model.get_component_value(("Frame", "Specifications", "Frame class")) == "Octa"
+        assert realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Type")) == "Analog"
         assert (
             realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Protocol"))
             == "Analog Voltage and Current"
@@ -1738,6 +1787,20 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         assert capacity == 6500
         assert cell_count == 6
 
+    def test_user_can_import_voltage_evidence_that_corrects_template_battery_chemistry(self, realistic_model) -> None:
+        """
+        Imported pack voltage corrects an incompatible template chemistry.
+
+        GIVEN: A vehicle template marked as LiIon and a 12-cell LiIonSS critical-voltage threshold
+        WHEN: Battery settings are imported
+        THEN: Chemistry should match the clearly different voltage evidence
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "LiIon")
+
+        realistic_model._set_battery_type_from_fc_parameters({"BATT_MONITOR": 0, "BATT_CRT_VOLT": 32.4})
+
+        assert realistic_model.get_component_value(("Battery", "Specifications", "Chemistry")) == "LiIonSS"
+
     # ---- Tests for new battery arm/min voltage import (PR: Batt specifications) ----
 
     def test_user_can_import_arm_voltage_from_batt_arm_volt(self, basic_model) -> None:
@@ -2113,8 +2176,12 @@ class TestComponentDataModelImportUncoveredBranches:
         with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn:
             realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
 
-        texts = " ".join(str(c) for c in mock_warn.call_args_list)
-        assert "out of range" in texts or "BATT_I2C_BUS" in texts
+        mock_warn.assert_called_once_with(
+            "BATT_I2C_BUS value %d out of range (0-%d), defaulting to first bus",
+            99,
+            len(_import_module.BATT_MONITOR_CONNECTION["5"]["type"]) - 1,
+        )
+        assert realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Type")) == "I2C1"
 
     def test_system_warns_when_i2c_bus_value_is_not_an_integer(self, realistic_model) -> None:
         """
@@ -2129,8 +2196,7 @@ class TestComponentDataModelImportUncoveredBranches:
         with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn:
             realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
 
-        texts = " ".join(str(c) for c in mock_warn.call_args_list)
-        assert "Invalid BATT_I2C_BUS" in texts or "defaulting" in texts
+        mock_warn.assert_called_once_with("Invalid BATT_I2C_BUS value, defaulting to first bus")
 
     def test_system_warns_when_batt_monitor_parameter_is_absent(self, basic_model) -> None:
         """
@@ -2171,7 +2237,7 @@ class TestComponentDataModelImportUncoveredBranches:
         with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as mock_err:
             basic_model.import_bat_voltage(specs, "MOT_BAT_VOLT_MAX", "not_a_valid_type")
 
-        mock_err.assert_called()
+        mock_err.assert_called_once_with("Invalid voltage type %s for battery voltage import", "not_a_valid_type")
 
     # ------------------------------------------------------------------
     # _estimate_battery_cell_count - BATT_ARM_VOLT and MOT_BAT_VOLT_MIN fallbacks
@@ -2321,21 +2387,44 @@ class TestComponentDataModelImportUncoveredBranches:
     # _set_battery_type_from_fc_parameters — valid I2C bus index (line 363)
     # and non-I2C list type (Analog) (line 376)
     # ------------------------------------------------------------------
-    def test_system_selects_i2c_bus_by_index_when_batt_i2c_bus_is_valid(self, basic_model) -> None:
+    def test_system_selects_second_i2c_bus_when_batt_i2c_bus_is_one(self, basic_model) -> None:
         """
         _set_battery_type_from_fc_parameters uses BATT_I2C_BUS index to select the I2C bus.
 
-        GIVEN: BATT_MONITOR=5 (Solo, I2C type) and BATT_I2C_BUS=1 (selects I2C2 = index 1)
+        GIVEN: BATT_MONITOR=5 (Solo, I2C type) and BATT_I2C_BUS=1
         WHEN: _set_battery_type_from_fc_parameters is called
-        THEN: FC Connection Type should be set to 'I2C2' (fc_conn_type[1]) (line 363 exercised)
+        THEN: FC Connection Type should be I2C2 without an out-of-range warning
         """
         fc_parameters: dict[str, Any] = {"BATT_MONITOR": 5, "BATT_I2C_BUS": 1}
 
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning"):
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn:
             basic_model._set_battery_type_from_fc_parameters(fc_parameters)
 
         result = basic_model.get_component_value(("Battery Monitor", "FC Connection", "Type"))
         assert result == "I2C2"
+        mock_warn.assert_not_called()
+
+    def test_system_selects_first_i2c_bus_when_batt_i2c_bus_is_zero(self, basic_model) -> None:
+        """A zero BATT_I2C_BUS index selects the first I2C bus."""
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn:
+            basic_model._set_battery_type_from_fc_parameters({"BATT_MONITOR": 5, "BATT_I2C_BUS": 0})
+
+        assert basic_model.get_component_value(("Battery Monitor", "FC Connection", "Type")) == "I2C1"
+        mock_warn.assert_not_called()
+
+    def test_system_defaults_to_first_i2c_bus_when_index_equals_bus_count(self, basic_model) -> None:
+        """An index equal to the number of I2C choices is out of range."""
+        i2c_choices = _import_module.BATT_MONITOR_CONNECTION["5"]["type"]
+        bus_count = len(i2c_choices)
+
+        with (
+            patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn,
+            patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"),
+        ):
+            basic_model._set_battery_type_from_fc_parameters({"BATT_MONITOR": 5, "BATT_I2C_BUS": bus_count})
+
+        mock_warn.assert_called_once()
+        assert basic_model.get_component_value(("Battery Monitor", "FC Connection", "Type")) == "I2C1"
 
     def test_system_defaults_to_first_element_for_non_i2c_list_battery_type(self, basic_model) -> None:
         """
@@ -2395,12 +2484,11 @@ class TestComponentDataModelImportUncoveredBranches:
         fake_gnss_conn: dict[str, Any] = {"99": {"type": ["USB"], "protocol": "Unknown"}}
         monkeypatch.setattr(_import_module, "GNSS_RECEIVER_CONNECTION", fake_gnss_conn)
 
+        basic_model.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "SERIAL3")
         with patch.object(_import_module, "logging_error") as mock_err:
             basic_model._set_gnss_type_from_fc_parameters({"GPS_TYPE": 99})
 
-        # Verify error was logged about invalid connection type
-        logged_text = " ".join(str(call) for call in mock_err.call_args_list)
-        assert "Invalid GNSS connection type" in logged_text
+        mock_err.assert_called_once_with("Invalid GNSS connection type %s", ["USB"])
 
         result = basic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
         assert result == "None"
@@ -2543,3 +2631,311 @@ class TestComponentDataModelImportUncoveredBranches:
 
         result = basic_model.get_component_value(("RC Receiver", "FC Connection", "Type"))
         assert result == "SERIAL1"  # Only first RC Receiver assigned
+
+    @pytest.mark.parametrize(
+        "fc_parameters",
+        [
+            {"GPS1_TYPE": 9, "CAN_D1_PROTOCOL": 1},
+            {"GPS1_TYPE": 9, "CAN_P1_DRIVER": 1},
+            {"GPS1_TYPE": 9, "CAN_P2_DRIVER": 1},
+        ],
+    )
+    def test_gnss_can_assignment_requires_both_protocol_and_driver(self, basic_model, fc_parameters: dict[str, int]) -> None:
+        """An incomplete DroneCAN configuration must not be accepted as a connected GNSS receiver."""
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as log_error:
+            basic_model._set_gnss_type_from_fc_parameters(fc_parameters)
+
+        log_error.assert_called_once_with(
+            "Invalid CAN_Dx_PROTOCOL %s and CAN_Px_DRIVER %s for GNSS Receiver",
+            fc_parameters.get("CAN_D1_PROTOCOL"),
+            fc_parameters.get("CAN_P1_DRIVER"),
+        )
+        assert basic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type")) == "None"
+
+    def test_missing_gnss_type_uses_disabled_default_without_error(self, basic_model) -> None:
+        """When neither GPS type parameter is present, the documented zero default disables GNSS."""
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as log_error:
+            basic_model._set_gnss_type_from_fc_parameters({})
+
+        log_error.assert_not_called()
+        assert basic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type")) == "None"
+        assert basic_model.get_component_value(("GNSS Receiver", "FC Connection", "Protocol")) == "None"
+
+    def test_process_fc_parameters_checks_all_protocol_dictionaries_with_exact_metadata_keys(self, realistic_model) -> None:
+        """The top-level importer verifies each protocol map against the matching documentation key."""
+        realistic_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduPlane")
+        fc_parameters = {"Q_FRAME_CLASS": 1, "Q_ENABLE": 0}
+        doc = {"GPS_TYPE": {"values": {}}, "Q_FRAME_CLASS": {"values": {}}}
+        esc_protocols = {"esc": {"protocol": "DShot"}}
+        frame_protocols = {"frame": {"protocol": "Quad"}}
+
+        with (
+            patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True) as verify,
+            patch.object(_import_module, "get_esc_connection_sub_dict", return_value=esc_protocols) as esc_dict,
+            patch.object(_import_module, "get_frame_class_as_protocol_dict", return_value=frame_protocols) as frame_dict,
+            patch.object(_import_module, "get_frame_info", return_value=("frame", None)) as frame_info,
+        ):
+            realistic_model.process_fc_parameters(fc_parameters, doc)
+
+        assert [call.args for call in verify.call_args_list] == [
+            (doc, _import_module.SERIAL_PROTOCOLS_DICT, "SERIAL1_PROTOCOL", "values"),
+            (doc, _import_module.BATT_MONITOR_CONNECTION, "BATT_MONITOR", "values"),
+            (doc, _import_module.GNSS_RECEIVER_CONNECTION, "GPS_TYPE", "values"),
+            (doc, esc_protocols, "MOT_PWM_TYPE", "values"),
+            (doc, _import_module.RC_PROTOCOLS_DICT, "RC_PROTOCOLS", "Bitmask"),
+            (doc, frame_protocols, "Q_FRAME_CLASS", "values"),
+        ]
+        esc_dict.assert_any_call("ArduPlane")
+        frame_dict.assert_called_once_with("ArduPlane")
+        frame_info.assert_called_once_with(fc_parameters, "ArduPlane")
+
+    # pylint: disable=duplicate-code  # The same missing-firmware setup is reused for the motor-import unit test.
+    def test_process_fc_parameters_uses_empty_firmware_type_when_model_has_none(self, realistic_model) -> None:
+        """Missing firmware metadata is passed as an empty type to protocol dictionary lookups."""
+        original_get = realistic_model.get_component_value
+        firmware_path = ("Flight Controller", "Firmware", "Type")
+
+        def get_component_value(path: tuple[str, str, str]) -> object:
+            if path == firmware_path:
+                return None
+            return original_get(path)
+
+        with (
+            patch.object(realistic_model, "get_component_value", side_effect=get_component_value),
+            patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True),
+            patch.object(_import_module, "get_esc_connection_sub_dict", return_value={}) as esc_dict,
+            patch.object(_import_module, "get_frame_class_as_protocol_dict", return_value={}) as frame_dict,
+        ):
+            realistic_model.process_fc_parameters({}, {})
+
+        assert [call.args for call in esc_dict.call_args_list] == [("",), ("",)]
+        frame_dict.assert_called_once_with("")
+
+    # pylint: enable=duplicate-code
+
+    def test_arduplane_without_frame_parameters_clears_template_frame_class(self, realistic_model) -> None:
+        """An ArduPlane import without frame data clears the template's stale Quad frame class."""
+        realistic_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduPlane")
+        realistic_model.set_component_value(("Frame", "Specifications", "Frame class"), "Quad")
+
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+            realistic_model.process_fc_parameters({}, {})
+
+        assert realistic_model.get_component_value(("Frame", "Specifications", "Frame class")) == "Undefined"
+
+    @pytest.mark.parametrize(
+        ("param_name", "voltage_type", "value", "expected_cell"),
+        [
+            ("BATT_ARM_VOLT", "Volt per cell arm", 18.0, 4.5),
+            ("BATT_LOW_VOLT", "Volt per cell low", 10.0, 2.5),
+        ],
+    )
+    def test_import_battery_voltage_logs_exact_out_of_range_values(
+        self, basic_model, param_name: str, voltage_type: str, value: float, expected_cell: float
+    ) -> None:
+        """Out-of-range per-cell values report the computed value, chemistry, and limits."""
+        specs = BatteryVoltageSpecs(4, 3.0, 4.2, "Lipo", {param_name: value})
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as log_warning:
+            basic_model.import_bat_voltage(specs, param_name, voltage_type)
+
+        log_warning.assert_called_once_with(
+            "Calculated  %s voltage %.2f V is out of expected range for %s chemistry (%.2f - %.2f V)",
+            voltage_type,
+            expected_cell,
+            "Lipo",
+            3.0,
+            4.2,
+        )
+
+    @pytest.mark.parametrize(
+        ("value", "expected_message"),
+        [
+            (None, "unsupported operand type(s) for /: 'NoneType' and 'int'"),
+            ("not-a-number", "unsupported operand type(s) for /: 'str' and 'int'"),
+        ],
+    )
+    def test_import_battery_voltage_logs_parameter_and_conversion_error(
+        self, basic_model, value: object, expected_message: str
+    ) -> None:
+        """Invalid FC voltage values retain the parameter name and conversion error in logs."""
+        specs = BatteryVoltageSpecs(4, 3.0, 4.2, "Lipo", {"BATT_ARM_VOLT": value})  # type: ignore[dict-item]
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as log_error:
+            basic_model.import_bat_voltage(specs, "BATT_ARM_VOLT", "Volt per cell arm")
+
+        log_error.assert_called_once_with("Error processing %s parameter: %s", "BATT_ARM_VOLT", expected_message)
+
+    def test_battery_chemistry_detection_ignores_zero_priority_voltage_and_uses_arm_voltage(
+        self, basic_model, monkeypatch
+    ) -> None:
+        """A zero high-priority voltage is skipped while a valid lower-priority clue is scored."""
+        scored_voltages: list[float] = []
+        monkeypatch.setattr(
+            BatteryCell,
+            "chemistry_voltage_score",
+            staticmethod(lambda _chemistry, voltage, _voltage_type: scored_voltages.append(voltage) or float("nan")),
+        )
+        monkeypatch.setattr(BatteryCell, "best_chemistry_for_voltage", staticmethod(lambda _voltage, _kind: None))
+
+        assert (
+            basic_model._detect_battery_chemistry_from_voltages({"MOT_BAT_VOLT_MAX": 0, "BATT_ARM_VOLT": 15.2}, "Lipo") is None
+        )
+        assert scored_voltages == [15.2]
+
+    def test_battery_chemistry_detection_scores_one_volt_before_lower_priority_clue(self, basic_model, monkeypatch) -> None:
+        """Exactly one volt is still evaluated because only nonpositive readings are skipped."""
+        scored_voltages: list[float] = []
+        monkeypatch.setattr(
+            BatteryCell,
+            "chemistry_voltage_score",
+            staticmethod(lambda _chemistry, voltage, _voltage_type: scored_voltages.append(voltage) or float("nan")),
+        )
+        monkeypatch.setattr(BatteryCell, "best_chemistry_for_voltage", staticmethod(lambda _voltage, _kind: None))
+
+        basic_model._detect_battery_chemistry_from_voltages({"MOT_BAT_VOLT_MAX": 1.0, "BATT_ARM_VOLT": 15.2}, "Lipo")
+
+        assert scored_voltages == [1.0, 15.2]
+
+    def test_battery_chemistry_nan_score_warning_identifies_chemistry_and_voltage_type(self, basic_model, monkeypatch) -> None:
+        """A NaN compatibility score is logged with the exact chemistry and input voltage type."""
+        monkeypatch.setattr(
+            BatteryCell,
+            "chemistry_voltage_score",
+            staticmethod(lambda _chemistry, _voltage, _voltage_type: float("nan")),
+        )
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as log_warning:
+            basic_model._detect_battery_chemistry_from_voltages({"BATT_ARM_VOLT": 15.2}, "Lipo")
+
+        log_warning.assert_called_once_with(
+            "Current chemistry %s does not have valid volt per cell for %s, ignoring current chemistry",
+            "Lipo",
+            "Volt per cell arm",
+        )
+
+    @pytest.mark.parametrize("value", [0, -1])
+    def test_cell_estimation_logs_exact_invalid_voltage(self, basic_model, value: int) -> None:
+        """Zero and negative pack voltages are rejected with their parameter and value."""
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as log_warning:
+            result = basic_model._estimate_cells_from_voltage_param_default(
+                "BATT_LOW_VOLT", value, "Volt per cell low", "Lipo"
+            )
+
+        assert result is None
+        log_warning.assert_called_once_with("Voltage value for %s is zero or invalid: %s", "BATT_LOW_VOLT", value)
+
+    def test_cell_estimation_logs_exact_unreasonable_cell_count(self, basic_model) -> None:
+        """Pack estimates beyond the supported 50-cell range identify the estimate and parameter."""
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as log_warning:
+            result = basic_model._estimate_cells_from_voltage_param_default("BATT_LOW_VOLT", 220, "Volt per cell low", "Lipo")
+
+        assert result is None
+        log_warning.assert_called_once_with("Estimated cell count %d from %s seems unreasonable", 61, "BATT_LOW_VOLT")
+
+    @pytest.mark.parametrize("recommended_voltage", [float("nan"), 0.0])
+    def test_cell_estimation_rejects_missing_or_zero_recommended_voltage(
+        self, basic_model, monkeypatch, recommended_voltage: float
+    ) -> None:
+        """Unavailable and nonpositive per-cell defaults cannot produce a pack estimate."""
+        monkeypatch.setattr(
+            BatteryCell,
+            "recommended_cell_voltage",
+            staticmethod(lambda _chemistry, _kind: recommended_voltage),
+        )
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as log_error:
+            result = basic_model._estimate_cells_from_voltage_param_default("BATT_LOW_VOLT", 18.0, "Volt per cell low", "Lipo")
+
+        assert result is None
+        log_error.assert_called_once_with("No recommended voltage for %s %s", "Lipo", "Volt per cell low")
+
+    def test_cell_estimation_accepts_a_positive_recommended_voltage_below_one_volt(self, basic_model, monkeypatch) -> None:
+        """A positive per-cell default remains valid even when it is below one volt."""
+        monkeypatch.setattr(BatteryCell, "recommended_cell_voltage", staticmethod(lambda _chemistry, _kind: 0.5))
+
+        assert basic_model._estimate_cells_from_voltage_param_default("BATT_LOW_VOLT", 18.0, "Volt per cell low", "Lipo") == 36
+
+    def test_cell_estimation_rejects_one_volt_pack_at_zero_boundary(self, basic_model) -> None:
+        """A one-volt total reading is rejected as invalid before cell estimation."""
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as log_warning:
+            result = basic_model._estimate_cells_from_voltage_param_default("BATT_LOW_VOLT", 1.0, "Volt per cell low", "Lipo")
+
+        assert result is None
+        log_warning.assert_called_once_with("Estimated cell count %d from %s seems unreasonable", 0, "BATT_LOW_VOLT")
+
+    @pytest.mark.parametrize(
+        ("value", "expected_error"),
+        [
+            (None, "float() argument must be a string or a real number, not 'NoneType'"),
+            ("not-a-number", "could not convert string to float: 'not-a-number'"),
+        ],
+    )
+    def test_cell_estimation_logs_exact_parameter_conversion_error(
+        self, basic_model, value: object, expected_error: str
+    ) -> None:
+        """Unparsable pack voltages report the source parameter and original conversion exception."""
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as log_error:
+            result = basic_model._estimate_cells_from_voltage_param_default(
+                "BATT_LOW_VOLT",
+                value,
+                "Volt per cell low",
+                "Lipo",  # type: ignore[arg-type]
+            )
+
+        assert result is None
+        log_error.assert_called_once_with("Error processing %s parameter: %s", "BATT_LOW_VOLT", expected_error)
+
+    def test_import_battery_voltage_accepts_exact_minimum_cell_voltage(self, basic_model) -> None:
+        """A cell voltage exactly at the chemistry minimum is valid and stored."""
+        specs = BatteryVoltageSpecs(4, 3.0, 4.2, "Lipo", {"BATT_ARM_VOLT": 12.0})
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as log_warning:
+            basic_model.import_bat_voltage(specs, "BATT_ARM_VOLT", "Volt per cell arm")
+
+        assert basic_model.get_component_value(("Battery", "Specifications", "Volt per cell arm")) == pytest.approx(3.0)
+        log_warning.assert_not_called()
+
+    def test_import_battery_voltage_rounds_per_cell_value_to_four_places(self, basic_model) -> None:
+        """Imported per-cell voltages use the four-decimal precision stored by battery specs."""
+        specs = BatteryVoltageSpecs(4, 3.0, 4.2, "Lipo", {"BATT_ARM_VOLT": 12.4938})
+
+        with patch.object(basic_model, "set_component_value", wraps=basic_model.set_component_value) as set_value:
+            basic_model.import_bat_voltage(specs, "BATT_ARM_VOLT", "Volt per cell arm")
+
+        set_value.assert_called_once_with(("Battery", "Specifications", "Volt per cell arm"), 3.1235)
+
+    def test_chemistry_detection_continues_after_nan_score_to_lower_priority_voltage(self, basic_model, monkeypatch) -> None:
+        """A NaN score for a higher-priority voltage does not suppress a later usable clue."""
+        scored_types: list[str] = []
+        monkeypatch.setattr(
+            BatteryCell,
+            "chemistry_voltage_score",
+            staticmethod(
+                lambda _chemistry, _voltage, voltage_type: (
+                    scored_types.append(voltage_type) or (float("nan") if voltage_type == "Volt per cell max" else 0.5)
+                )
+            ),
+        )
+        monkeypatch.setattr(
+            BatteryCell,
+            "best_chemistry_for_voltage",
+            staticmethod(lambda _voltage, voltage_type: "LiIon" if voltage_type == "Volt per cell arm" else None),
+        )
+
+        result = basic_model._detect_battery_chemistry_from_voltages({"MOT_BAT_VOLT_MAX": 16.8, "BATT_ARM_VOLT": 15.2}, "Lipo")
+
+        assert result == "LiIon"
+        assert scored_types == ["Volt per cell max", "Volt per cell arm"]
+
+    def test_chemistry_detection_does_not_preserve_current_chemistry_at_exact_score_threshold(
+        self, basic_model, monkeypatch
+    ) -> None:
+        """A chemistry score equal to 0.40 is not within the keep-current threshold."""
+        monkeypatch.setattr(
+            BatteryCell,
+            "chemistry_voltage_score",
+            staticmethod(lambda _chemistry, _voltage, _kind: 0.40),
+        )
+        monkeypatch.setattr(BatteryCell, "best_chemistry_for_voltage", staticmethod(lambda _voltage, _kind: "LiIon"))
+
+        assert basic_model._detect_battery_chemistry_from_voltages({"BATT_ARM_VOLT": 15.2}, "Lipo") == "LiIon"
