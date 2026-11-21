@@ -276,6 +276,55 @@ class ImuLogAnalysis(BaseLogAnalysisModel):
 
         return outcomes
 
+    def check_harmonic_notch_filter(self) -> list[LogAnalysis]:
+        """Check that the primary harmonic notch filter is enabled and uses a valid supported mode."""
+        outcomes: list[LogAnalysis] = []
+
+        hntch_enable = self.parameters.get("INS_HNTCH_ENABLE")
+        if hntch_enable is None:
+            return outcomes
+
+        if hntch_enable != 1:
+            step_filename = self.step_for_parameter("INS_HNTCH_ENABLE")
+            outcomes.append(
+                LogAnalysis(
+                    message=_("Harmonic notch filter is not enabled (INS_HNTCH_ENABLE is {val:.0f}, expected 1).").format(
+                        val=hntch_enable
+                    ),
+                    timestamp_us=None,
+                    value=float(hntch_enable),
+                    param_name="INS_HNTCH_ENABLE",
+                    suggested_value=1.0,
+                    related_step=step_filename or None,
+                )
+            )
+            return outcomes
+
+        hntch_mode = self.parameters.get("INS_HNTCH_MODE")
+        if hntch_mode is None:
+            return outcomes
+
+        if hntch_mode not in (1, 3):
+            step_filename = self.step_for_parameter("INS_HNTCH_MODE")
+            suggested, _source = (
+                self.expected_parameter_value(step_filename, "INS_HNTCH_MODE") if step_filename else (None, "")
+            )
+            outcomes.append(
+                LogAnalysis(
+                    message=_("INS_HNTCH_MODE is {val:.0f}, expected Throttle (1) or ESC Telemetry (3).").format(
+                        val=hntch_mode
+                    ),
+                    timestamp_us=None,
+                    value=float(hntch_mode),
+                    param_name="INS_HNTCH_MODE",
+                    suggested_value=suggested,
+                    related_step=step_filename or None,
+                )
+            )
+            return outcomes
+
+        return outcomes
+
     def check_notch_filter_telemetry_dependency(self) -> list[LogAnalysis]:
         """Warn when a notch filter is configured to track ESC telemetry RPM, but no ESC telemetry was present."""
         esc_columns = self.log_data.get_message_columns("ESC")
