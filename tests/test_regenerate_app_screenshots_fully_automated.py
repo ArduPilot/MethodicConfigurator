@@ -335,6 +335,32 @@ def test_windows_capture_keeps_the_entire_client_area(tmp_path: Path) -> None:
         assert alpha.getpixel((519, 200)) == 255
 
 
+def test_highlight_boxes_are_resolved_after_layout_settles(tmp_path: Path) -> None:
+    """Highlight positions follow the final layout and multiple boxes remain supported."""
+    window = MagicMock()
+    settled = False
+
+    def settle(_widget: object) -> None:
+        nonlocal settled
+        settled = True
+
+    def boxes() -> list[tuple[int, int, int, int]]:
+        assert settled
+        return [(2, 2, 8, 8), (12, 12, 18, 18)]
+
+    output_path = tmp_path / "highlights.png"
+    with (
+        patch.object(screenshot_generator, "_set_windows_application_icon"),
+        patch.object(screenshot_generator, "settle_tk", side_effect=settle),
+        patch.object(screenshot_generator, "_compute_capture_region", return_value=(0, 0, 24, 24)),
+        patch.object(screenshot_generator.pyautogui, "screenshot", return_value=Image.new("RGB", (24, 24), "white")),
+    ):
+        screenshot_generator.capture_widget(window, output_path, 0, highlight_boxes=boxes)
+    with Image.open(output_path) as image:
+        assert image.getpixel((2, 2)) == (255, 0, 0)
+        assert image.getpixel((12, 12)) == (255, 0, 0)
+
+
 def test_mavftp_capture_cleans_up_its_temporary_files_when_capture_fails(tmp_path: Path) -> None:
     """
     Keep fixture files isolated even when screenshot capture fails.
@@ -433,7 +459,7 @@ def test_simple_parameter_editor_capture_suppresses_external_documentation(tmp_p
             delay=0.0,
             padding=0,
             vehicle_dir=screenshot_generator.DEFAULT_VEHICLE_DIR,
-            current_file="05_board_orientation.param",
+            current_file="15_board_orientation.param",
             gui_complexity="simple",
             scale=0.666,
         )

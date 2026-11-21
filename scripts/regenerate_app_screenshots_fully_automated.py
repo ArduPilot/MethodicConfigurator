@@ -10,7 +10,7 @@ Usage:
     python scripts/regenerate_app_screenshots_fully_automated.py
 
 To regenerate the MAVFTP screenshots only, add:
-    --screenshots App_screenshot_MAVFTP_browser.png App_screenshot_MAVFTP_remote_panel.png
+    --screenshots App_screenshot_MAVFTP_open.png App_screenshot_MAVFTP_browser.png App_screenshot_MAVFTP_remote_panel.png
 
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
@@ -114,6 +114,7 @@ TARGETS: tuple[CaptureTarget, ...] = (
     CaptureTarget("App_screenshot_motor_test.png", "motor_test"),
     CaptureTarget("App_screenshot_rc_calibration.png", PLUGIN_RC_CALIBRATION),
     CaptureTarget("App_screenshot_Parameter_export.png", "parameter_export"),
+    CaptureTarget("App_screenshot_MAVFTP_open.png", "mavftp_open"),
     CaptureTarget("App_screenshot_MAVFTP_browser.png", "mavftp_browser"),
     CaptureTarget("App_screenshot_MAVFTP_remote_panel.png", "mavftp_remote_panel"),
     CaptureTarget("App_screenshot_MAVLink_inspector.png", "mavlink_inspector", variant="radio"),
@@ -129,14 +130,14 @@ TARGETS: tuple[CaptureTarget, ...] = (
         "param_04_simple",
         scale=0.666,
         gui_complexity="simple",
-        current_file="05_board_orientation.param",
+        current_file="15_board_orientation.param",
     ),
     CaptureTarget(
         "App_screenshot_Parameter_file_editor_and_uploader4_4.png",
         "param_04_normal",
         scale=0.666,
         gui_complexity="normal",
-        current_file="05_board_orientation.param",
+        current_file="15_board_orientation.param",
     ),
     CaptureTarget(
         "App_screenshot_Parameter_file_editor_and_uploader4.png",
@@ -548,7 +549,7 @@ def capture_widget(  # pylint: disable=too-many-arguments, too-many-positional-a
     delay: float,
     padding: int = 0,
     scale: float = 1.0,
-    highlight_boxes: list[tuple[int, int, int, int]] | None = None,
+    highlight_boxes: Callable[[], list[tuple[int, int, int, int]]] | None = None,
     trim_windows_frame: bool = True,
 ) -> None:
     """Capture screenshot of a Tk widget region."""
@@ -559,10 +560,11 @@ def capture_widget(  # pylint: disable=too-many-arguments, too-many-positional-a
 
     x, y, width, height = _compute_capture_region(widget, padding)
 
+    boxes = highlight_boxes() if highlight_boxes is not None else []
     image = pyautogui.screenshot(region=(x, y, width, height))
-    if highlight_boxes:
+    if boxes:
         draw = ImageDraw.Draw(image)
-        for left, top, right, bottom in highlight_boxes:
+        for left, top, right, bottom in boxes:
             rel_left = max(left - x, 0)
             rel_top = max(top - y, 0)
             rel_right = min(right - x, image.width - 1)
@@ -624,7 +626,7 @@ def _capture_connection(output_path: Path, delay: float, padding: int, *, highli
         settle_tk(window.root)
         highlight_boxes = None
         if highlight_skip:
-            highlight_boxes = [
+            highlight_boxes = lambda: [  # noqa: E731
                 _required_widget_box(
                     window.root,
                     lambda widget: _widget_text(widget) == translate("Skip FC connection, just edit the .param files on disk"),
@@ -659,7 +661,7 @@ def _capture_connection_forwarding(output_path: Path, delay: float, padding: int
                 output_path,
                 delay,
                 padding,
-                highlight_boxes=[_widget_screen_box(widgets.conn_selection_combobox)],
+                highlight_boxes=lambda: [_widget_screen_box(widgets.conn_selection_combobox)],
             )
             return
 
@@ -915,8 +917,14 @@ def _capture_vehicle_opener_with_highlight(  # pylint: disable=too-many-argument
     window = VehicleProjectOpenerWindow(manager)  # type: ignore[arg-type]
     try:
         settle_tk(window.root, cycles=6, delay=0.05)
-        box = _vehicle_opener_highlight_box(window, action)
-        capture_widget(window.root, output_path, delay, padding, scale=scale, highlight_boxes=[box])
+        capture_widget(
+            window.root,
+            output_path,
+            delay,
+            padding,
+            scale=scale,
+            highlight_boxes=lambda: [_vehicle_opener_highlight_box(window, action)],
+        )
     finally:
         if window.root.winfo_exists():
             window.root.destroy()
@@ -1015,9 +1023,6 @@ def _vehicle_creator_highlight_box(window: VehicleProjectCreatorWindow, variant:
             raise RuntimeError(msg)
 
         if variant == "from_configured_options":
-            # Tick both checkboxes
-            checkbox1.invoke()
-            checkbox2.invoke()
             # Get bounding boxes for both
             box1_left, box1_top, box1_right, box1_bottom = _widget_screen_box(checkbox1, margin=2)
             box2_left, box2_top, box2_right, box2_bottom = _widget_screen_box(checkbox2, margin=2)
@@ -1028,14 +1033,8 @@ def _vehicle_creator_highlight_box(window: VehicleProjectCreatorWindow, variant:
             combined_bottom = max(box1_bottom, box2_bottom)
             result = combined_left, combined_top, combined_right, combined_bottom
         elif variant == "from_configured_name":
-            # Tick both checkboxes
-            checkbox1.invoke()
-            checkbox2.invoke()
             result = _find_name_entry(window, use_text_box=False)
         elif variant == "from_configured_create":
-            # Tick both checkboxes
-            checkbox1.invoke()
-            checkbox2.invoke()
             result = _find_create_button(window)
         else:
             msg = f"Unsupported vehicle creator highlight variant: {variant}"
@@ -1055,8 +1054,21 @@ def _capture_vehicle_creator_with_highlight(  # pylint: disable=too-many-argumen
 ) -> None:
     window = _create_vehicle_creator_window(vehicle_dir, fc_connected=fc_connected)
     try:
-        box = _vehicle_creator_highlight_box(window, variant)
-        capture_widget(window.root, output_path, delay, padding, scale=scale, highlight_boxes=[box])
+        if variant in {"from_configured_options", "from_configured_name", "from_configured_create"}:
+            for key in ("use_fc_params", "infer_comp_specs_and_conn_from_fc_params"):
+                checkbox = window.new_project_settings_widgets.get(key)
+                if checkbox is None:
+                    msg = f"Could not find {key} setting checkbox"
+                    raise RuntimeError(msg)
+                checkbox.invoke()
+        capture_widget(
+            window.root,
+            output_path,
+            delay,
+            padding,
+            scale=scale,
+            highlight_boxes=lambda: [_vehicle_creator_highlight_box(window, variant)],
+        )
     finally:
         if window.root.winfo_exists():
             window.root.destroy()
@@ -1170,6 +1182,8 @@ def _capture_parameter_editor(  # pylint: disable=too-many-arguments, too-many-p
     current_file: str,
     gui_complexity: str,
     scale: float = 1.0,
+    *,
+    highlight_selector: Callable[[tk.Misc], bool] | None = None,
 ) -> None:
     # Use a temporary copy of the vehicle dir so LocalFilesystem cannot create
     # untracked files (e.g. apm.pdef.xml) in the repository working tree.
@@ -1178,7 +1192,18 @@ def _capture_parameter_editor(  # pylint: disable=too-many-arguments, too-many-p
         shutil.copytree(vehicle_dir, tmp_vehicle_dir)
         window, flight_controller = _build_parameter_editor(current_file, tmp_vehicle_dir, gui_complexity)
         try:
-            capture_widget(window.root, output_path, delay, padding, scale)
+            window.root.attributes("-topmost", 1)
+            window.root.lift()
+            highlight_boxes = None
+            if highlight_selector is not None:
+                highlight_boxes = lambda: [  # noqa: E731
+                    _required_widget_box(
+                        window.root,
+                        highlight_selector,
+                        "Could not find the requested Parameter Editor highlight",
+                    )
+                ]
+            capture_widget(window.root, output_path, delay, padding, scale, highlight_boxes=highlight_boxes)
         finally:
             if window.current_plugin_view is not None:
                 _cleanup_plugin_view(window.current_plugin_view)
@@ -1195,7 +1220,7 @@ def _capture_parameter_export(  # pylint: disable=too-many-locals
         tmp_vehicle_dir = Path(tmpdir) / vehicle_dir.name
         shutil.copytree(vehicle_dir, tmp_vehicle_dir)
         editor_window, flight_controller = _build_parameter_editor(
-            "05_board_orientation.param",
+            "15_board_orientation.param",
             tmp_vehicle_dir,
             "normal",
         )
@@ -1692,6 +1717,19 @@ def capture_target(target: CaptureTarget, output_path: Path, args: argparse.Name
         return
 
     match action:
+        case "mavftp_open":
+            with patch.object(ParameterEditor, "is_mavftp_supported", property(lambda _self: True)):
+                _capture_parameter_editor(
+                    output_path,
+                    delay,
+                    padding,
+                    vehicle_dir,
+                    "15_board_orientation.param",
+                    "normal",
+                    highlight_selector=lambda widget: (
+                        isinstance(widget, ttk.Button) and _widget_text(widget) == translate("Download .bin\nlog file(s)")
+                    ),
+                )
         case "mavftp_browser" | "mavftp_remote_panel":
             _capture_mavftp(output_path, delay, padding, remote_panel=action == "mavftp_remote_panel")
         case "connection_no_connection":
