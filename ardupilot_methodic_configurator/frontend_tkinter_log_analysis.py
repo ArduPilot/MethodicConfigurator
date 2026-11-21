@@ -16,8 +16,7 @@ from collections.abc import Callable, Sequence
 from enum import Enum
 from functools import partial
 from logging import basicConfig as logging_basicConfig
-from pathlib import Path
-from tkinter import filedialog, messagebox, ttk
+from tkinter import filedialog, ttk
 from typing import Any
 
 from ardupilot_methodic_configurator import _
@@ -31,7 +30,6 @@ from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
-from ardupilot_methodic_configurator.frontend_tkinter_tuning_report import TuningReportWindow
 from ardupilot_methodic_configurator.log_analysis.backend_log_analysis import analyze_log_data
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import LogSummary
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis
@@ -215,28 +213,6 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
     def _build_footer(self) -> None:
         footer = ttk.Frame(self.main_frame)
         footer.pack(side=tk.BOTTOM, fill=tk.X, padx=20, pady=(0, 14))
-
-        # ai_button = ttk.Button(footer, text=_("Ask AI"), command=self._toggle_ai_panel)
-        # ai_button.configure(state="normal" if self.report is not None else "disabled")
-        # ai_button.pack(side=tk.RIGHT)
-        # show_tooltip(
-        #     ai_button,
-        #     _("Ask an AI assistant grounded in this flight's log analysis")
-        #     if self.report is not None
-        #     else _("AI Help unavailable - report data was not provided"),
-        # )
-
-        tuning_report_path = Path(self.vehicle_dir) / "tuning_report.csv"
-        tuning_button = ttk.Button(footer, text=_("Tuning Parameter Graph"), command=self._on_open_tuning_graph)
-        tuning_button.configure(state="normal" if tuning_report_path.exists() else "disabled")
-        tuning_button.pack(side=tk.RIGHT, padx=(0, 8))
-
-    def _on_open_tuning_graph(self) -> None:
-        tuning_report_path = Path(self.vehicle_dir) / "tuning_report.csv"
-        try:
-            TuningReportWindow(self.root, str(tuning_report_path))
-        except (OSError, ValueError) as exc:
-            messagebox.showerror(_("Tuning Graph Error"), str(exc), parent=self.root)
 
     def _render_subsystem(self, name: str) -> None:  # pylint: disable=too-many-locals, too-many-branches
         for widget in self.body_frame.winfo_children():

@@ -116,7 +116,9 @@ def test_a_calibration_cannot_start_while_another_operation_is_busy(navigation_c
 
 @pytest.mark.parametrize("gui_complexity", ["simple", "normal"])
 @pytest.mark.parametrize("connected", [False, True])
-def test_every_requested_editor_control_is_locked_and_restored(root, mocker, gui_complexity: str, connected: bool) -> None:
+def test_every_requested_editor_control_is_locked_and_restored(
+    root, mocker, tmp_path, gui_complexity: str, connected: bool
+) -> None:
     """
     The complete editor navigation surface is disabled during calibration.
 
@@ -128,10 +130,13 @@ def test_every_requested_editor_control_is_locked_and_restored(root, mocker, gui
     window = ParameterEditorWindow.__new__(ParameterEditorWindow)
     window._connection_recovery = None
     window.root = root
+    window._analysis_menu = None
+    window._analysis_menu_hide_job = None
     window.main_frame = ttk.Frame(root)
     window.navigation_lock = NavigationLock()
     window.gui_complexity = gui_complexity
     window.parameter_editor = MagicMock()
+    window.parameter_editor.get_vehicle_directory.return_value = str(tmp_path)
     window.parameter_editor.current_file = "14_calibration.param"
     window.parameter_editor.parameter_files.return_value = ["14_calibration.param"]
     window.parameter_editor.is_fc_connected = connected
@@ -152,6 +157,14 @@ def test_every_requested_editor_control_is_locked_and_restored(root, mocker, gui
             return [child for widget in parent.winfo_children() for child in [widget, *descendants(widget)]]
 
         buttons = [widget for widget in descendants(window.main_frame) if isinstance(widget, ttk.Button)]
+        analysis_button = next(button for button in buttons if button.cget("text") == "Analysis")
+        analysis_button.invoke()
+        assert window._analysis_menu is not None
+        assert [button.cget("text") for button in window._analysis_menu.winfo_children()] == [
+            "Analyse a .bin log",
+            "Analyse log with Skybrush",
+        ]
+        window._close_analysis_menu()
         expected_commands = {
             window.on_skip_click,
             window.on_previous_click,
@@ -163,12 +176,12 @@ def test_every_requested_editor_control_is_locked_and_restored(root, mocker, gui
             window.on_mavlink_inspector_click,
             window.on_fc_banner_click,
             window.on_zip_vehicle_for_forum_help_click,
-            window.on_analyse_log_click,
-            window.on_analyse_log_with_skybrush_click,
+            window.on_open_tuning_graph_click,
             window.on_edit_vehicle_components_click,
         }
-        assert len(buttons) == len(expected_commands)
-        assert len({button.cget("command") for button in buttons}) == len(expected_commands)
+        # The analysis menu trigger replaces the two direct analysis buttons.
+        assert len(buttons) == len(expected_commands) + 1
+        assert len({str(button.cget("command")) for button in buttons}) == len(buttons)
         widgets = [*buttons, window.file_selection_combobox]
         initial_states = [widget.state() for widget in widgets]
         window.navigation_lock.acquire(window)
