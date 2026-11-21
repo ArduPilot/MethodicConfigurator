@@ -107,7 +107,12 @@ class BackgroundTaskRunner:  # pylint: disable=too-many-instance-attributes
                 self._pending_done = outcome
 
         self._thread = Thread(target=run, name="mavftp-browser-task", daemon=True)
-        self._thread.start()
+        try:
+            self._thread.start()
+        except Exception:
+            self._thread = None
+            self._on_done = None
+            raise
         self._schedule(self.POLL_INTERVAL_MS, self.poll)
         return True
 
