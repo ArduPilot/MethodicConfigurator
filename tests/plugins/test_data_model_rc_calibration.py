@@ -1465,16 +1465,18 @@ def test_missing_receiver_samples_do_not_contaminate_recorded_calibration_extrem
     assert editor.current_step_parameters["RC1_TRIM"].get_new_value() == 1650
 
 
-def test_receiver_report_with_no_channels_does_not_invent_a_first_channel(connected_flight_controller: MagicMock) -> None:
+def test_user_can_calibrate_rc_that_arrives_as_mavlink_overrides(connected_flight_controller: MagicMock) -> None:
     """
-    Leave the channel count empty when the receiver declares no available channels.
+    Calibrate an RC link such as ExpressLRS in MAVLink mode.
 
-    GIVEN: A receiver declares zero channels while its first raw field retains an old value
+    GIVEN: ArduPilot reports chancount zero because all RC input arrives as RC_CHANNELS_OVERRIDE
     WHEN: The calibration monitor polls
-    THEN: No receiver channel is treated as available.
+    THEN: The live override values are shown and unused fields stay unavailable
     """
     controller = connected_flight_controller
-    controller.master.recv_match.side_effect = [_make_rc_channels_msg([1700], chancount=0), None]
+    controller.master.recv_match.side_effect = [_make_rc_channels_msg([1700, 1500, 0], chancount=0), None]
     telemetry = RCCalibrationDataModel(controller).get_rc_telemetry()
-    assert all(channel["value"] is None for channel in telemetry["channels"])
-    assert telemetry["roll"] == 0.0
+    values = [channel["value"] for channel in telemetry["channels"]]
+    assert values[:2] == [1700, 1500]
+    assert all(value is None for value in values[2:])
+    assert telemetry["roll"] > 0.0
