@@ -32,6 +32,8 @@ automatically tries `/APM/` and then `/`.
 
 From the Parameter Editor, select **Download .bin log file(s)**.
 
+![Parameter Editor with the Download .bin log file(s) button highlighted](images/App_screenshot_MAVFTP_open.png)
+
 For standalone use, run the following command from the project root. The
 standalone mode connects to the flight controller before opening the browser,
 so ensure that the selected or auto-detected device is available.
