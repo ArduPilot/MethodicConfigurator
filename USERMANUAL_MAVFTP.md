@@ -15,6 +15,7 @@ flight controller's MAVFTP service.
 1. [Copy files and directories](#copy-files-and-directories)
 1. [Modification dates](#modification-dates)
 1. [Keyboard shortcuts](#keyboard-shortcuts)
+1. [Log file context menu](#log-file-context-menu)
 1. [Troubleshooting](#troubleshooting)
 
 ## Before you start
@@ -262,6 +263,28 @@ right-click menu to launch it with the operating system's default application.
 Directories and multiple selections cannot be opened this way.
 
 On macOS, `Ctrl` + left-click also opens the panel context menu.
+
+## Log file context menu
+
+Download a `.bin` log to the PC panel, then right-click that file to open its
+context menu. On macOS, `Ctrl` + left-click also opens the menu. The analysis
+options appear when exactly one local `.bin` file is selected.
+
+![Context menu for a local flight log](images/App_screenshot_MAVFTP_log_menu.png)
+
+- **New directory** creates a directory in the current PC directory.
+- **Open** opens the log with the operating system's default application.
+- **Copy** copies the file for pasting in a file manager; **Copy path** copies
+  its full path as text. **Rename** changes its name and **Delete** removes it
+  after confirmation.
+- **plotbeta** and **plot** open the log in the corresponding ArduPilot log
+  plotting tool. **hardware report**, **MagFit**, **Filter Review**,
+  **PID Review**, **Stream stats**, and **System ID** open the log in the
+  named ArduPilot web tool. AMC opens a managed browser and supplies the file
+  to the selected tool; the tool determines how it processes the log.
+- **AMC log analyser** opens the log in AMC's analyser. This option is available
+  when the browser was opened from the Parameter Editor.
+- **Skybrush log analyser** opens the Skybrush analysis workflow.
 
 ## Troubleshooting
 

@@ -275,8 +275,8 @@ def test_screenshot_generator_can_select_individual_targets(tmp_path) -> None:
     assert capture.call_args.args[0].action == "parameter_export"
 
 
-@pytest.mark.parametrize("filename", ["App_screenshot_MAVFTP_browser.png", "App_screenshot_MAVFTP_remote_panel.png"])
-def test_user_can_regenerate_each_mavftp_screenshot_independently(tmp_path: Path, filename: str) -> None:
+@pytest.mark.parametrize("variant", ["browser", "remote_panel", "log_menu"])
+def test_user_can_regenerate_each_mavftp_screenshot_independently(tmp_path: Path, variant: str) -> None:
     """
     Regenerate one MAVFTP screenshot at a time.
 
@@ -284,6 +284,7 @@ def test_user_can_regenerate_each_mavftp_screenshot_independently(tmp_path: Path
     WHEN: The generator runs.
     THEN: Only that screenshot is dispatched to a new output file.
     """
+    filename = f"App_screenshot_MAVFTP_{variant}.png"
     args = argparse.Namespace(
         images_dir=tmp_path,
         vehicle_dir=tmp_path,
@@ -301,7 +302,7 @@ def test_user_can_regenerate_each_mavftp_screenshot_independently(tmp_path: Path
     ):
         assert screenshot_generator.main() == 0
 
-    capture.assert_called_once_with(tmp_path / f"{filename}.new.png", 0.0, 0, remote_panel="remote_panel" in filename)
+    capture.assert_called_once_with(tmp_path / f"{filename}.new.png", 0.0, 0, variant=variant)
 
 
 def test_windows_capture_keeps_the_entire_client_area(tmp_path: Path) -> None:
@@ -361,6 +362,39 @@ def test_highlight_boxes_are_resolved_after_layout_settles(tmp_path: Path) -> No
         assert image.getpixel((12, 12)) == (255, 0, 0)
 
 
+def test_menu_cleanup_failure_preserves_the_capture_error() -> None:
+    """A native dismissal failure does not hide the screenshot error or skip unposting."""
+    menu = MagicMock()
+    menu.post.side_effect = lambda *_position: menu.after.call_args.args[1]()
+    failure = RuntimeError("capture failed")
+
+    with (
+        patch.object(screenshot_generator, "_dismiss_native_menu", side_effect=RuntimeError("Dismissal failed")),
+        pytest.raises(RuntimeError, match="capture failed") as raised,
+    ):
+        screenshot_generator._capture_posted_menu(menu, (0, 0), MagicMock(side_effect=failure))
+
+    assert raised.value is failure
+    assert raised.value.__notes__ == ["Menu cleanup also failed: Dismissal failed"]
+    menu.unpost.assert_called_once_with()
+
+
+def test_menu_capture_times_out_when_the_callback_does_not_run() -> None:
+    """A missed capture callback cancels its timer and closes the posted menu."""
+    menu = MagicMock()
+    menu.after.return_value = "capture-timer"
+    capture = MagicMock()
+    with (
+        patch.object(screenshot_generator.time, "monotonic", side_effect=[0.0, 5.0]),
+        pytest.raises(TimeoutError, match="posted menu did not finish"),
+    ):
+        screenshot_generator._capture_posted_menu(menu, (0, 0), capture)
+
+    capture.assert_not_called()
+    menu.after_cancel.assert_called_once_with("capture-timer")
+    menu.unpost.assert_called_once_with()
+
+
 def test_mavftp_capture_cleans_up_its_temporary_files_when_capture_fails(tmp_path: Path) -> None:
     """
     Keep fixture files isolated even when screenshot capture fails.
@@ -374,7 +408,14 @@ def test_mavftp_capture_cleans_up_its_temporary_files_when_capture_fails(tmp_pat
     window.local_entries = [object()]
     fixture_directories: list[Path] = []
 
-    def create_window(_parent: object, editor: Any, _services: object) -> MagicMock:  # noqa: ANN401
+    def create_window(
+        _parent: object,
+        editor: Any,  # noqa: ANN401
+        _services: object,
+        *,
+        analyse_log_callback: None,
+    ) -> MagicMock:
+        assert analyse_log_callback is None
         directory = Path(editor.get_vehicle_directory())
         assert {path.name for path in directory.iterdir()} == {"analysis.csv", "README.txt", "flight-photos"}
         fixture_directories.append(directory)
@@ -387,7 +428,7 @@ def test_mavftp_capture_cleans_up_its_temporary_files_when_capture_fails(tmp_pat
         patch.object(screenshot_generator, "capture_widget", side_effect=RuntimeError("capture failed")),
         pytest.raises(RuntimeError, match="capture failed"),
     ):
-        screenshot_generator._capture_mavftp(tmp_path / "browser.png", 0, 0, remote_panel=False)
+        screenshot_generator._capture_mavftp(tmp_path / "browser.png", 0, 0, variant="browser")
 
     assert len(fixture_directories) == 1
     assert not fixture_directories[0].exists()
