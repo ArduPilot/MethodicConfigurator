@@ -470,21 +470,47 @@ def test_foreign_receiver_packets_do_not_hide_a_following_selected_controller_re
     assert all(call.kwargs == {"blocking": False} for call in receiver_context.controller.master.recv_match.call_args_list)
 
 
-@pytest.mark.parametrize(("count", "expected"), [(0, (None,) * 5), (1, (1, None, None, None, None))])
+@pytest.mark.parametrize(("count", "expected"), [(0, (1,) * 5), (1, (1, None, None, None, None))])
 def test_channel_count_and_smallest_valid_pwm_define_available_receiver_inputs(
     receiver_context: SimpleNamespace, count: int, expected: tuple[int | None, ...]
 ) -> None:
     """
-    Follow the reported channel count even when unused fields contain values.
+    Follow a nonzero channel count, but read every field when the count is zero.
 
-    GIVEN: A report whose unused fields are populated and first channel has PWM 1
-    WHEN: The receiver advertises zero or one available channel
-    THEN: Only advertised valid input is exposed
+    GIVEN: A report whose fields are all populated and first channel has PWM 1
+    WHEN: The receiver advertises one channel, or zero as ArduPilot does for MAVLink RC overrides
+    THEN: One advertised channel limits the inputs, while zero exposes every valid field
     """
     message = rc_message((1,) * 5)
     message.chancount = count
     receiver_context.messages.append(message)
     assert receiver_context.model.get_receiver_state().channels == expected
+
+
+def test_user_sees_stick_movement_when_rc_arrives_as_mavlink_overrides(receiver_context: SimpleNamespace) -> None:
+    """
+    Show live channels from a MAVLink RC link such as ExpressLRS in MAVLink mode.
+
+    GIVEN: ArduPilot reports chancount zero because all RC input arrives as RC_CHANNELS_OVERRIDE
+    WHEN: The user moves the sticks and the receiver monitor polls
+    THEN: The live channel values are displayed and the receiver counts as receiving channels
+    """
+    receiver_context.messages.append(rc_channels_message((1100, 1300, 1500, 1700, 1900), chancount=0))
+    state = receiver_context.model.get_receiver_state()
+    assert state.channels == (1100, 1300, 1500, 1700, 1900)
+    assert state.receiving_channels
+
+
+def test_unused_fields_stay_unavailable_when_channel_count_is_zero(receiver_context: SimpleNamespace) -> None:
+    """
+    Do not invent inputs from unused fields when no channel count is advertised.
+
+    GIVEN: A zero-count report with two live overrides and the remaining fields unused (0 or UINT16_MAX)
+    WHEN: The receiver monitor polls
+    THEN: Only the two live channels are displayed
+    """
+    receiver_context.messages.append(rc_channels_message((1500, 1600, 0), chancount=0))
+    assert receiver_context.model.get_receiver_state().channels == (1500, 1600, None, None, None)
 
 
 def test_interval_request_and_restore_failures_remain_visible_in_receiver_diagnostics(

@@ -19,8 +19,16 @@ _MAX_MESSAGES_PER_POLL = 50
 
 
 def rc_channel_values(message: Any, channel_count: int) -> list[int]:  # noqa: ANN401
-    """Decode only advertised RC channels, capped at the consumer's display limit."""
-    count = max(0, min(int(message.chancount), channel_count))
+    """
+    Decode the advertised RC channels, capped at the consumer's display limit.
+
+    ArduPilot derives chancount from its physical RC input only, so it reports zero when every
+    channel arrives as RC_CHANNELS_OVERRIDE (e.g. ExpressLRS in MAVLink mode) even though the
+    chanN_raw fields carry live values. A zero count therefore decodes every displayed field;
+    consumers already treat 0 and UINT16_MAX as unavailable.
+    """
+    advertised = int(message.chancount)
+    count = channel_count if advertised <= 0 else min(advertised, channel_count)
     return [int(getattr(message, f"chan{channel}_raw")) for channel in range(1, count + 1)]
 
 
