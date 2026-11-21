@@ -258,6 +258,37 @@ def test_offline_metadata_seed_rejects_incompatible_firmware_metadata(tmp_path: 
         _seed_offline_parameter_metadata(template_dir, target_dir, "ArduCopter", "4.6.3")
 
 
+def test_offline_metadata_seed_uses_matching_sibling_when_template_cache_is_stale(tmp_path: Path) -> None:
+    """A stale template cache can be replaced by a sibling cache for the exact firmware release."""
+    template_dir = tmp_path / "empty_template"
+    sibling_dir = tmp_path / "compatible_template"
+    target_dir = tmp_path / "new_vehicle"
+    template_dir.mkdir()
+    sibling_dir.mkdir()
+    target_dir.mkdir()
+    (template_dir / "apm.pdef.xml").write_text("<!-- Generated from git tag Copter-4.6.0 -->\n<paramfile />", encoding="utf-8")
+    expected = "<!-- Generated from git tag Copter-4.6.3 -->\n<paramfile />"
+    (sibling_dir / "apm.pdef.xml").write_text(expected, encoding="utf-8")
+
+    _seed_offline_parameter_metadata(template_dir, target_dir, "ArduCopter", "4.6.3")
+
+    assert (target_dir / "apm.pdef.xml").read_text(encoding="utf-8") == expected
+
+
+def test_offline_metadata_seed_rejects_sibling_with_longer_patch_version(tmp_path: Path) -> None:
+    """A cached 4.6.30 definition must not be mistaken for 4.6.3."""
+    template_dir = tmp_path / "empty_template"
+    sibling_dir = tmp_path / "other_template"
+    target_dir = tmp_path / "new_vehicle"
+    template_dir.mkdir()
+    sibling_dir.mkdir()
+    target_dir.mkdir()
+    (template_dir / "apm.pdef.xml").write_text("<!-- Generated from git tag Copter-4.6.0 -->", encoding="utf-8")
+    (sibling_dir / "apm.pdef.xml").write_text("<!-- Generated from git tag Copter-4.6.30 -->", encoding="utf-8")
+    with pytest.raises(ValueError, match="incompatible"):
+        _seed_offline_parameter_metadata(template_dir, target_dir, "ArduCopter", "4.6.3")
+
+
 def _seed_offline_parameter_metadata(
     metadata_source_dir: Path, new_vehicle_dir: str | Path, vehicle_type: str, firmware_version: str
 ) -> None:
@@ -273,9 +304,18 @@ def _seed_offline_parameter_metadata(
         metadata_match = re.search(rf"Generated from git tag {metadata_vehicle}-(\d+\.\d+\.\d+)", metadata_text)
         expected_release = firmware_version.split(" ", maxsplit=1)[0]
         if metadata_match and metadata_match.group(1) != expected_release:
-            raise ValueError(
-                f"Offline parameter metadata {metadata_to_validate} is incompatible with {vehicle_type} {firmware_version}"
+            # Cached metadata in the selected template can be older than its component JSON.
+            # A sibling template's cache is suitable only when it names the exact requested release.
+            expected_tag = re.compile(rf"Generated from git tag {metadata_vehicle}-{re.escape(expected_release)}(?=\s|-->)")
+            candidates = sorted(metadata_source_dir.parent.glob("*/apm.pdef.xml")) if not metadata_target.exists() else []
+            compatible = next(
+                (candidate for candidate in candidates if expected_tag.search(candidate.read_text(encoding="utf-8"))), None
             )
+            if compatible is None:
+                raise ValueError(
+                    f"Offline parameter metadata {metadata_to_validate} is incompatible with {vehicle_type} {firmware_version}"
+                )
+            metadata_source = compatible
     if metadata_target.exists():
         return
     shutil.copy2(metadata_source, metadata_target)
