@@ -8681,27 +8681,27 @@ msgstr "Abrir"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1141
 msgid "Copy"
-msgstr ""
+msgstr "Copiar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1142
 msgid "Copy path"
-msgstr ""
+msgstr "Copiar caminho"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1145
 msgid "Rename"
-msgstr ""
+msgstr "Mudar o nome"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1149
 msgid "Delete"
-msgstr ""
+msgstr "Eliminar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1162
 msgid "AMC log analyser"
-msgstr ""
+msgstr "Analisador de registos AMC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1163
 msgid "Skybrush log analyser"
-msgstr ""
+msgstr "Analisador de registos Skybrush"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1178
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1184
@@ -8710,21 +8710,21 @@ msgstr "Falha ao abrir o registo na ferramenta web"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1207
 msgid "Copy path error"
-msgstr ""
+msgstr "Erro ao copiar o caminho"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1222
 msgid "Copying files to the clipboard timed out."
-msgstr ""
+msgstr "O tempo limite para copiar os ficheiros para a área de transferência foi excedido."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1227
 msgid "Could not copy files to the clipboard."
-msgstr ""
+msgstr "Não foi possível copiar os ficheiros para a área de transferência."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1231
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1240
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1246
 msgid "Copy error"
-msgstr ""
+msgstr "Erro ao copiar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1340
 msgid "Open file error"
