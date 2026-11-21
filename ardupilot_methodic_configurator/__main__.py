@@ -4,12 +4,13 @@
 """
 The main application file.
 
-Calls five sub-applications in sequence:
+Calls six sub-applications:
   1. Check for software updates
   2. Connect to the flight controller and read the parameters
   3. Select the vehicle directory
   4. Component and connection editor for newly created projects
   5. Parameter editor and uploader, with on-demand component editing
+  6. Firmware upload, opened on demand from the vehicle directory selection
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 

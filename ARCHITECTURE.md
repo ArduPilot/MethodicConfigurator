@@ -1,57 +1,9 @@
 # Development guide
 
-The goal *ArduPilot methodic Configurator* software is to automate some of the tasks involved in configuring and tuning  ArduPilot-based vehicles.
-To develop the software the [standard V-Model software development method](https://en.wikipedia.org/wiki/V-model_(software_development)) was first used.
-It was augmented with [DevOps](https://en.wikipedia.org/wiki/DevOps) and [CI/CD automation](https://en.wikipedia.org/wiki/CI/CD) practices at a later stage.
+The goal *ArduPilot methodic Configurator* software is guide the users (think checklist) and, if possible automate,
+the tasks involved in configuring and tuning ArduPilot-based vehicles.
 
-## V-model
-
-Development started by using the classic V-model development methodology.
-
-```mermaid
-flowchart TB
-    subgraph requirements["Requirements & Design"]
-        direction LR
-        Z([User Requirements]) --> A
-        A([System Requirements]) --> B([Software Architecture])
-        B --> C([Module Design])
-    end
-
-    subgraph testing["Testing"]
-        direction LR
-        F --> G([Acceptance Testing])
-        E --> F([System Testing])
-        D([Module Testing]) --> E([Integration Testing])
-    end
-
-    %% V-shape connections (crossing levels)
-    Z --> G
-    A --> F
-    B --> E
-    C --> D
-
-    %% Clickable links
-    click A "SYSTEM_REQUIREMENTS.md"
-    click B "#the-software-architecture"
-    click C "#module-design"
-    click D "#module-testing"
-    click E "#integration-testing"
-    click F "#system-testing"
-    click G "#acceptance-testing"
-
-    %% Styling
-    classDef requirement fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef design fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    classDef testing fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
-
-    class A,Z requirement
-    class B,C design
-    class D,E,F,G testing
-```
-
-If the diagram above does not display correctly, [see here](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ARCHITECTURE.md#v-model)
-
-### The Software architecture
+## The Software architecture
 
 We decided to use python as programming language, and the following libraries and frameworks:
 
@@ -59,19 +11,25 @@ We decided to use python as programming language, and the following libraries an
 - [tkinter](https://docs.python.org/3/library/tkinter.html) for the graphical user interface
 - GNU gettext `po` files to translate the software to other languages
 
-The (main) application itself does the command line parsing and starts the sub-applications defined below in sequence
+The main application parses command-line arguments and orchestrates the main workflow.
+In the typical workflow it checks for updates, connects to the flight controller, opens or creates
+a vehicle project, optionally opens the component editor for a new project, and then opens the parameter editor.
+Firmware upload is available on demand from the project opener;
+it is not another step in the startup sequence.
 
 - [`__main__.py`](ardupilot_methodic_configurator/__main__.py)
 
 To satisfy the [system design requirements](https://ardupilot.github.io/MethodicConfigurator/SYSTEM_REQUIREMENTS) the following user interface sub-applications were developed:
 
-#### Sub-Application Architecture Documentation
+### Sub-Application Architecture Documentation
 
-Each sub-application has detailed architecture documentation covering requirements, implementation status, data flow, components, testing, and recommendations:
+The linked architecture documents describe the implementation and workflow of each sub-application;
+their level of detail and sections vary.
 
 1. **[Software Update Check](ARCHITECTURE_1_software_update.md)** - Checks for and downloads software updates
    - [`frontend_tkinter_software_update.py`](ardupilot_methodic_configurator/frontend_tkinter_software_update.py)
    - [`data_model_software_updates.py`](ardupilot_methodic_configurator/data_model_software_updates.py)
+   - Standalone test/development entry point (runs the update check directly): [`data_model_software_updates.py`](ardupilot_methodic_configurator/data_model_software_updates.py)
 
 2. **[Flight Controller Communication](ARCHITECTURE_2_flight_controller_communication.md)** - Establishes FC connection, downloads parameters and metadata
    - [`frontend_tkinter_connection_selection.py`](ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py)
@@ -84,15 +42,21 @@ Each sub-application has detailed architecture documentation covering requiremen
        - [`data_model_flightcontroller_info.py`](ardupilot_methodic_configurator/data_model_flightcontroller_info.py) - FC information
        - [`backend_flightcontroller_protocols.py`](ardupilot_methodic_configurator/backend_flightcontroller_protocols.py) - Protocol definitions
      - [`backend_mavftp.py`](ardupilot_methodic_configurator/backend_mavftp.py)
+   - Standalone entry point: [`frontend_tkinter_connection_selection.py`](ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py)
 
 3. **[Directory and Project Selection](ARCHITECTURE_3_directory_selection.md)** - Creates new projects or opens existing ones
    - [`frontend_tkinter_directory_selection.py`](ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py)
+     - [`frontend_tkinter_template_overview.py`](ardupilot_methodic_configurator/frontend_tkinter_template_overview.py)
+   - Standalone entry points (`frontend_tkinter_directory_selection.py` only contains reusable widgets):
+     - [`frontend_tkinter_project_opener.py`](ardupilot_methodic_configurator/frontend_tkinter_project_opener.py)
+     - [`frontend_tkinter_project_creator.py`](ardupilot_methodic_configurator/frontend_tkinter_project_creator.py)
      - [`frontend_tkinter_template_overview.py`](ardupilot_methodic_configurator/frontend_tkinter_template_overview.py)
 
 4. **[Vehicle Component Editor](ARCHITECTURE_4_component_editor.md)** - Defines vehicle components and their FC connections
    - [`frontend_tkinter_component_editor.py`](ardupilot_methodic_configurator/frontend_tkinter_component_editor.py)
      - [`frontend_tkinter_component_editor_base.py`](ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py)
      - [`frontend_tkinter_component_template_manager.py`](ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py)
+   - Standalone entry point: [`frontend_tkinter_component_editor.py`](ardupilot_methodic_configurator/frontend_tkinter_component_editor.py)
 
 5. **[Parameter Editor and Uploader](ARCHITECTURE_5_parameter_editor.md)** - Views documentation, edits parameters, uploads to FC
    - sequentially for each configuration step:
@@ -101,20 +65,121 @@ Each sub-application has detailed architecture documentation covering requiremen
      - upload them to the flight controller,
      - save them to file
    - [`frontend_tkinter_parameter_editor.py`](ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py)
-     - [MAVFTP file-browser architecture](ARCHITECTURE_file_browser.md)
-     - [Data telemetry and MAVLink inspector architecture](ARCHITECTURE_data_telemetry.md)
-     - [Standalone and embedded MAVLink inspector](ARCHITECTURE_mavlink_inspector.md)
-     - [External parameter file upload architecture](ARCHITECTURE_parameter_upload.md)
-       - [Flight-controller parameter export architecture](ARCHITECTURE_fc_param_export.md)
      - [`frontend_tkinter_parameter_editor_documentation_frame.py`](ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py)
      - [`frontend_tkinter_parameter_editor_table.py`](ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py)
      - [`frontend_tkinter_stage_progress.py`](ardupilot_methodic_configurator/frontend_tkinter_stage_progress.py)
+   - Standalone entry point: [`frontend_tkinter_parameter_editor.py`](ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py)
 
-6. **[Motor Test](ARCHITECTURE_motor_test.md)** - Provides motor testing functionality with visual diagram display
-   - [`frontend_tkinter_motor_test.py`](ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py)
-   - [`data_model_motor_test.py`](ardupilot_methodic_configurator/plugins/data_model_motor_test.py)
+6. **[Firmware Upload](ARCHITECTURE_firmware_upload.md)** - Flashes an ArduPilot APJ firmware image through the bootloader
+   and reconnects to the flight controller. It is opened on demand from the project opener (sub-application 3)
+   - [`frontend_tkinter_firmware_upload.py`](ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py)
+     - [`backend_firmware_upload.py`](ardupilot_methodic_configurator/backend_firmware_upload.py)
+     - [`backend_flightcontroller_bootloader.py`](ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py)
+     - [`data_model_firmware_upload.py`](ardupilot_methodic_configurator/data_model_firmware_upload.py)
+   - Standalone entry point: [`frontend_tkinter_firmware_upload.py`](ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py)
 
-Each sub-application can be run in isolation, so it is easier to test and develop them.
+Where a standalone entry point is provided, it can be used to test or develop that part in isolation.
+Some entry points are test/development runners rather than complete standalone versions of the integrated workflow.
+Run an entry point from the repository root with its Python environment activated, for example
+`python -m ardupilot_methodic_configurator.frontend_tkinter_firmware_upload`.
+
+### Parameter editor sub-applications
+
+The parameter editor also opens the following tools alongside the configuration-step workflow.
+`ParameterEditorWindow` coordinates their windows and passes the current project or flight-controller
+state through the `ParameterEditor` model. FC operations share the existing `FlightController` facade;
+the navigation lock and plugin suspension coordinate tools that need exclusive access to the connection.
+
+1. **Compare and upload parameters**: An external `.param` or `.parm` file is loaded into
+   `ParameterFileUploadWindow`, which reuses the parameter table to compare its values with the FC,
+   select changes and optionally upload them. The external file is separate from the managed
+   configuration-step files. See [parameter upload architecture](ARCHITECTURE_parameter_upload.md).
+   Standalone entry point: [`frontend_tkinter_parameter_compare_and_upload.py`](ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py)
+
+2. **Export parameters**: `ParameterExportWindow` filters a snapshot of current FC values and writes
+   the selection to a user-chosen `.param` file, optionally with documentation. The model handles
+   classification and serialization. See [export architecture](ARCHITECTURE_fc_param_export.md) and
+   [user manual](USERMANUAL_fc_parameter_export.md).
+   Standalone entry point: [`frontend_tkinter_parameter_export.py`](ardupilot_methodic_configurator/frontend_tkinter_parameter_export.py)
+
+3. **FC information**: `FlightControllerBannerWindow` displays captured startup text,
+   recent `STATUSTEXT` messages and devices decoded from FC parameter values. The editor pauses the
+   active plugin receiver while the diagnostics window is open. See the [FC banner user manual](USERMANUAL_fc_banner.md).
+   Standalone entry point: none, it is only opened from the parameter editor.
+
+4. **MAVLink inspector**: The embedded inspector observes the existing connection and presents
+   messages, rates and decoded fields. Its telemetry backend and data models collect and calculate
+   observations independently of the Tk window. It does not open a second connection. See the
+   [inspector architecture](ARCHITECTURE_mavlink_inspector.md),
+   [telemetry architecture](ARCHITECTURE_data_telemetry.md) and
+   [user manual](USERMANUAL_MAVLink_inspector.md).
+   Standalone entry point: [`frontend_tkinter_mavlink_inspector.py`](ardupilot_methodic_configurator/frontend_tkinter_mavlink_inspector.py)
+
+5. **Internal .bin log analyser**: The editor selects a local log and supplies project context to
+   the log-analysis pipeline. The extraction backend parses the log; availability and analysis models
+   produce structured results for the report windows, including configuration-step and hardware
+   information. A local log can also be selected from the file browser. See
+   [log analysis architecture](ARCHITECTURE_log_analysis.md).
+   Standalone entry point: [`frontend_tkinter_log_analysis.py`](ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py)
+
+6. **Skybrush .bin log analyser**: `SkybrushLogAnalysisWindow` uses the Skybrush client to
+   authenticate and upload a selected log to the remote service, then presents its results. This
+   requires an internet connection and a Skybrush account; analysis runs on Skybrush servers. See the
+   [Skybrush user manual](USERMANUAL_skybrush_log_analyzer.md).
+   Standalone entry point: none, it is only opened from the parameter editor.
+
+7. **Tuning parameter graph**: `TuningReportWindow` reads the vehicle directory's `tuning_report.csv`
+   through `data_model_tuning_report.py` and plots selected parameter values across configuration
+   steps. Missing values are carried forward by the model. On this branch the graph is opened from
+   the internal analysis report when the CSV exists. See the
+   [tuning report architecture](ARCHITECTURE_log_analysis.md#tuning-report).
+   Standalone entry point: none, it is only opened from the internal analysis report.
+
+8. **File browser (MAVFTP)**: `FileBrowserWindow` presents local and FC files and runs remote
+   operations in background tasks. The model delegates through `FlightController` and
+   `FlightControllerFiles` to MAVFTP; `FlightControllerFiles` serializes remote operations. See the
+   [file browser architecture](ARCHITECTURE_file_browser.md) and [user manual](USERMANUAL_MAVFTP.md).
+   Standalone entry point: [`frontend_tkinter_file_browser.py`](ardupilot_methodic_configurator/frontend_tkinter_file_browser.py)
+
+### Plugins
+
+Plugins encapsulate configuration-step functionality that the parameter editor can embed when a step calls for it.
+We chose this architecture to keep the main application less ArduPilot-specific and to compartmentalize configuration
+steps so their functionality can be reused across ArduPilot vehicle types.
+Some plugin frontends can also be run standalone for testing and development;
+the entry point list below distinguishes those from plugins that are only hosted by the parameter editor.
+
+The plugins live in [`ardupilot_methodic_configurator/plugins`](ardupilot_methodic_configurator/plugins/).
+The application registers them at startup through [`register_plugins`](ardupilot_methodic_configurator/__main__.py)
+and the [plugin factory](ardupilot_methodic_configurator/plugins/plugin_factory.py); vehicle configuration steps select
+the plugins to display.
+The [parameter editor architecture](ARCHITECTURE_5_parameter_editor.md#plugin-lifecycle-during-step-changes)
+describes their lifecycle during step changes.
+
+The available plugins, their architecture documentation and standalone entry points are listed below.
+Run an entry point from the repository root with its Python environment activated, for example
+`python -m ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test`.
+Plugins marked "none" currently have no standalone entry point and are exercised through the parameter editor and their unit tests.
+
+- [Accelerometer calibration](ARCHITECTURE_accelerometer_calibration.md) -
+  [`frontend_tkinter_accelerometer_calibration.py`](ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py)
+- [AHRS orientation](ARCHITECTURE_ahrs_orientation.md) - none
+- [AutoTune acceleration back-off](ARCHITECTURE_autotune_accel_backoff.md) - none
+- [AutoTune gain back-off](ARCHITECTURE_autotune_gain_backoff.md) - none
+- [Battery monitor](ARCHITECTURE_battery_monitor.md) -
+  [`frontend_tkinter_battery_monitor.py`](ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py)
+- [Compass calibration](ARCHITECTURE_compass_calibration.md) -
+  [`frontend_tkinter_compass_calibration.py`](ardupilot_methodic_configurator/plugins/frontend_tkinter_compass_calibration.py)
+- [Data telemetry](ARCHITECTURE_data_telemetry.md) - none
+- [ESC telemetry and ESC RPM scaling](ARCHITECTURE_esc_telemetry.md) - none
+- [GNSS](ARCHITECTURE_gnss.md) - none
+- [Level calibration](ARCHITECTURE_level_calibration.md) - none
+- [Motor test](ARCHITECTURE_motor_test.md) - motor testing with a visual diagram -
+  [`frontend_tkinter_motor_test.py`](ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py)
+- [RC calibration](ARCHITECTURE_rc_calibration.md) -
+  [`frontend_tkinter_rc_calibration.py`](ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py)
+- [RC receiver](ARCHITECTURE_rc_receiver.md) - none
+- [Servo output functions](ARCHITECTURE_servo_out.md) - none
 
 #### Data Models and Architecture
 
@@ -301,7 +366,7 @@ Several files in the project are automatically generated and should not be manua
 
 2. [`download_motor_diagrams.py`](scripts/download_motor_diagrams.py) <- autogenerated by `.github/skills/update-motor-diagrams/SKILL.md`
    - Downloads motor diagram SVG files from ArduPilot documentation
-   - Updates motor diagrams used in the motor test sub-application
+   - Updates motor diagrams used in the motor test plugin
    - Periodically updated via GitHub Actions workflow
 
 **Note**: When calculating code metrics or performing codebase analysis, these generated files should be counted separately
@@ -327,7 +392,7 @@ We tested using **automated static tests** in both pre-commit hooks and on githu
 - ty
 
 We tested using **automated dynamic tests** on github CI including automated test coverage reports.
-We use [unittest](https://docs.python.org/3/library/unittest.html) to write unit tests for the code.
+We use [pytest](https://docs.pytest.org/en/stable/) to run the test suite, including unit and GUI tests.
 The tests are easy to run on the command line or in VS code.
 When you write new code you must also write tests in the `tests/` directory, there is CI test that only passes if test coverage increases monotonically.
 
@@ -339,20 +404,22 @@ pytest
 
 ### Integration testing
 
-The different sub-applications are first tested independently.
+The different sub-applications are tested independently before integration.
 Each has detailed testing strategies documented in their respective architecture files:
 
 - **[Software Update](ARCHITECTURE_1_software_update.md#testing-analysis)** - `python .\ardupilot_methodic_configurator\data_model_software_updates.py`
 - **[Flight Controller Communication](ARCHITECTURE_2_flight_controller_communication.md#testing-analysis)** - `python .\ardupilot_methodic_configurator\frontend_tkinter_connection_selection.py`
 - **[Directory Selection](ARCHITECTURE_3_directory_selection.md#testing-strategy)**
-  - `python .\ardupilot_methodic_configurator\frontend_tkinter_directory_selection.py`
+  - `python .\ardupilot_methodic_configurator\frontend_tkinter_project_opener.py`
+  - `python .\ardupilot_methodic_configurator\frontend_tkinter_project_creator.py`
   - `python .\ardupilot_methodic_configurator\frontend_tkinter_template_overview.py`
 - **[Component Editor](ARCHITECTURE_4_component_editor.md#testing-strategy)** - `python .\ardupilot_methodic_configurator\frontend_tkinter_component_editor.py`
 - **[Parameter Editor](ARCHITECTURE_5_parameter_editor.md#testing-strategy)** - `python .\ardupilot_methodic_configurator\frontend_tkinter_parameter_editor.py`
-- **[Motor Test](ARCHITECTURE_motor_test.md#testing-strategy)** - `python .\ardupilot_methodic_configurator\frontend_tkinter_motor_test.py`
+- **[Firmware Upload](ARCHITECTURE_firmware_upload.md)** - `python .\ardupilot_methodic_configurator\frontend_tkinter_firmware_upload.py`
 
-Only after each one performs 100% as expected, they are integrated and tested together.
-This speeds up the development process.
+Plugins are also tested independently; see the architecture documents linked in the [Plugins](#plugins) section.
+
+Testing sub-applications independently helps isolate issues before they are integrated and tested together.
 
 ### System testing
 
