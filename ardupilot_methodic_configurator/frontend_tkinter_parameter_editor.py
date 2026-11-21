@@ -26,6 +26,7 @@ from logging import basicConfig as logging_basicConfig
 from logging import error as logging_error
 from logging import exception as logging_exception
 from logging import warning as logging_warning
+from pathlib import Path
 from sys import exit as sys_exit
 from sys import platform as sys_platform
 from tkinter import filedialog, simpledialog, ttk
@@ -81,6 +82,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import Scroll
 from ardupilot_methodic_configurator.frontend_tkinter_show import get_monitor_bounds, show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_skybrush_log_analysis import open_skybrush_log_analysis
 from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
+from ardupilot_methodic_configurator.frontend_tkinter_tuning_report import TuningReportWindow
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import UsagePopupWindow
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import (
     display_parameter_editor_usage_popup,
@@ -416,6 +418,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._inline_component_name: str | None = None
         self._updating_inline_editor: bool = False
         self._requested_action = ParameterEditorAction.FINISHED
+        self._analysis_menu: ttk.Frame | None = None
+        self._analysis_menu_hide_job: str | None = None
 
         self._configure_root_window()
 
@@ -631,12 +635,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Create a new frame inside the config_subframe for the intermediate parameter file selection label and combobox
         file_selection_frame = ttk.Frame(config_subframe)
         if self.gui_complexity != "simple":
-            file_selection_frame.pack(side=tk.LEFT, fill="x", expand=False, padx=(6, 6))
+            file_selection_frame.pack(side=tk.LEFT, fill="x", expand=True, padx=(6, 6))
 
         # Create a label for the Combobox
         file_selection_label = ttk.Label(file_selection_frame, text=_("Current intermediate parameter file:"))
         if self.gui_complexity != "simple":
-            file_selection_label.pack(side=tk.TOP, anchor=tk.NW)  # Add the label to the top of the file_selection_frame
+            file_selection_label.pack(side=tk.TOP, anchor=tk.NW)
 
         # Create Combobox for intermediate parameter file selection
         self.file_selection_combobox = AutoResizeCombobox(
@@ -661,7 +665,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.legend_frame(config_subframe)
 
         parameter_actions_frame = ttk.Frame(config_subframe)
-        parameter_actions_frame.pack(side=tk.LEFT, anchor=tk.NW)
+        parameter_actions_frame.pack(side=tk.RIGHT, anchor=tk.NE)
         font_family, font_size = get_widget_font_family_and_size(parameter_actions_frame)
         smaller_button_font = (font_family, font_size - 1 if font_size > 0 else font_size + 1)
         smaller_button_style = "SmallParameterAction.TButton"
@@ -713,15 +717,16 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             _("Display the latest flight-controller banner"),
         )
 
-        analyse_log_button = ttk.Button(
+        inspector_button = ttk.Button(
             parameter_actions_frame,
-            text=_("Analyse a .bin log"),
-            command=self.on_analyse_log_click,
+            text=_("MAVLink inspector"),
+            command=self.on_mavlink_inspector_click,
             style=smaller_button_style,
         )
-        analyse_log_button.grid(row=3, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
-        self.navigation_lock.register(analyse_log_button)
-        show_tooltip(analyse_log_button, _("Open a .bin flight log and analyse its availability"))
+        inspector_button.configure(state="normal" if self.parameter_editor.is_fc_link_connected else "disabled")
+        self.navigation_lock.register(inspector_button)
+        inspector_button.grid(row=3, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
+        show_tooltip(inspector_button, _("Inspect received MAVLink messages, datarates and decoded fields."))
 
         edit_vehicle_components_button = ttk.Button(
             parameter_actions_frame,
@@ -737,6 +742,94 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         )
 
         self._create_logo_and_forum_help_widgets(config_frame, version, smaller_button_style)
+
+    def _show_analysis_menu(self, trigger: ttk.Button, button_style: str, *, focus: bool = False) -> None:
+        self._cancel_hide_analysis_menu()
+        if str(trigger.cget("state")) == "disabled":
+            return
+        if self._analysis_menu is not None and self._analysis_menu.winfo_exists():
+            return
+
+        menu = ttk.Frame(self.root, relief=tk.SOLID, borderwidth=1, padding=6)
+        menu.place(
+            x=trigger.winfo_rootx() - self.root.winfo_rootx() + trigger.winfo_width(),
+            y=trigger.winfo_rooty() - self.root.winfo_rooty() + trigger.winfo_height(),
+            anchor=tk.NE,
+        )
+        menu.lift()
+
+        items = [
+            (
+                _("Analyse a .bin log"),
+                self.on_analyse_log_click,
+                _("Open a .bin flight log and analyse its availability"),
+            ),
+            (
+                _("Analyse log with Skybrush"),
+                self.on_analyse_log_with_skybrush_click,
+                _("Select a .bin flight log to open the Skybrush Log Analysis window"),
+            ),
+        ]
+        first_btn: ttk.Button | None = None
+        for text, command, tooltip in items:
+            btn = ttk.Button(
+                menu,
+                text=text,
+                style=button_style,
+                command=lambda cmd=command: (self._close_analysis_menu(), cmd()),
+            )
+            btn.pack(fill=tk.X, pady=2)
+            show_tooltip(btn, tooltip)
+            if first_btn is None:
+                first_btn = btn
+
+        if focus and first_btn is not None:
+            first_btn.focus_set()
+
+        menu.bind("<Enter>", lambda _e: self._cancel_hide_analysis_menu())
+        menu.bind("<Leave>", lambda _e: self._schedule_hide_analysis_menu(trigger))
+        self._analysis_menu = menu
+
+    def _cancel_hide_analysis_menu(self) -> None:
+        if self._analysis_menu_hide_job is not None:
+            with contextlib.suppress(tk.TclError):
+                self.root.after_cancel(self._analysis_menu_hide_job)
+            self._analysis_menu_hide_job = None
+
+    def _schedule_hide_analysis_menu(self, trigger: ttk.Button) -> None:
+        self._cancel_hide_analysis_menu()
+        self._analysis_menu_hide_job = self.root.after(150, lambda: self._hide_analysis_menu_if_outside(trigger))
+
+    def _hide_analysis_menu_if_outside(self, trigger: ttk.Button) -> None:
+        self._analysis_menu_hide_job = None
+        if self._analysis_menu is None or not self._analysis_menu.winfo_exists():
+            return
+        if self.root.focus_get() in self._analysis_menu.winfo_children():
+            return
+        px, py = self.root.winfo_pointerxy()
+        for widget in (self._analysis_menu, trigger):
+            if (
+                widget.winfo_rootx() <= px <= widget.winfo_rootx() + widget.winfo_width()
+                and widget.winfo_rooty() <= py <= widget.winfo_rooty() + widget.winfo_height()
+            ):
+                return
+        self._close_analysis_menu()
+
+    def _close_analysis_menu(self) -> None:
+        self._cancel_hide_analysis_menu()
+        if self._analysis_menu is not None and self._analysis_menu.winfo_exists():
+            self._analysis_menu.destroy()
+        self._analysis_menu = None
+
+    def on_open_tuning_graph_click(self) -> None:
+        """Open the tuning parameter graph window if tuning_report.csv exists."""
+        if self.navigation_lock.locked:
+            return
+        tuning_report_path = Path(self.parameter_editor.get_vehicle_directory()) / "tuning_report.csv"
+        try:
+            TuningReportWindow(self.root, str(tuning_report_path))
+        except (OSError, ValueError) as exc:
+            self.ui.show_error(_("Tuning Graph Error"), str(exc))
 
     def _create_logo_and_forum_help_widgets(self, parent: ttk.Frame, version: str, button_style: str) -> None:
         """Create the ArduPilot logo and forum-help zip button in the configuration header."""
@@ -763,16 +856,34 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             else _("No intermediate parameter files available"),
         )
 
-        inspector_button = ttk.Button(
+        analysis_button = ttk.Button(
             logo_and_forum_frame,
-            text=_("MAVLink inspector"),
-            command=self.on_mavlink_inspector_click,
+            text=_("Analysis"),
+            command=lambda: self._show_analysis_menu(analysis_button, button_style, focus=True),
             style=button_style,
         )
-        inspector_button.configure(state="normal" if self.parameter_editor.is_fc_link_connected else "disabled")
-        self.navigation_lock.register(inspector_button)
-        inspector_button.pack(side=tk.TOP, fill="x", pady=(3, 0))
-        show_tooltip(inspector_button, _("Inspect received MAVLink messages, datarates and decoded fields."))
+        self.navigation_lock.register(analysis_button)
+        analysis_button.pack(side=tk.TOP, fill="x", pady=(3, 0))
+        analysis_button.bind("<Button-1>", lambda _e: "break")
+        analysis_button.bind("<Enter>", lambda _e: self._show_analysis_menu(analysis_button, button_style))
+        analysis_button.bind("<Leave>", lambda _e: self._schedule_hide_analysis_menu(analysis_button))
+
+        tuning_report_exists = (Path(self.parameter_editor.get_vehicle_directory()) / "tuning_report.csv").exists()
+        tuning_graph_button = ttk.Button(
+            logo_and_forum_frame,
+            text=_("Tuning Parameter Graph"),
+            command=self.on_open_tuning_graph_click,
+            style=button_style,
+        )
+        tuning_graph_button.configure(state="normal" if tuning_report_exists else "disabled")
+        self.navigation_lock.register(tuning_graph_button)
+        tuning_graph_button.pack(side=tk.TOP, fill="x", pady=(3, 0))
+        show_tooltip(
+            tuning_graph_button,
+            _("Open the tuning parameter graph")
+            if tuning_report_exists
+            else _("tuning_report.csv not found in the vehicle directory"),
+        )
 
     def legend_frame(self, config_subframe: ttk.Frame) -> None:  # pylint: disable=too-many-locals
         font_family, font_size = get_widget_font_family_and_size(config_subframe)
@@ -942,15 +1053,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             if (self.parameter_editor.is_fc_connected and self.parameter_editor.is_mavftp_supported)
             else _("No flight controller connected or MAVFTP not supported"),
         )
-        # Create Skybrush log analysis button
-        skybrush_log_button = ttk.Button(
-            buttons_frame,
-            text=_("Analyse log\nwith Skybrush"),
-            command=self.on_analyse_log_with_skybrush_click,
-        )
-        skybrush_log_button.pack(side=tk.LEFT, padx=(8, 8))
-        self.navigation_lock.register(skybrush_log_button)
-        show_tooltip(skybrush_log_button, _("Select a .bin flight log to open the Skybrush Log Analysis window"))
+
         # Create skip buttons
         self.skip_button = ttk.Button(buttons_frame, text=_("Skip >"), command=self.on_skip_click)
         self.skip_button.configure(

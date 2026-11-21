@@ -625,66 +625,6 @@ class TestOutcomeGrouping:
         assert group_heading.call_args_list == [call("Summary"), call("Flare"), call("Summary")]
 
 
-class TestTuningGraphButton:
-    """Cover the footer's Tuning Parameter Graph button state and click handler."""
-
-    def test_button_enabled_when_tuning_report_exists(self, patched_widgets: dict[str, MagicMock], tmp_path: Path) -> None:
-        """
-        The tuning graph button is enabled when tuning_report.csv exists in the vehicle directory.
-
-        GIVEN: tuning_report.csv exists at the vehicle directory
-        WHEN: The footer is built
-        THEN: The button is configured with state="normal"
-        """
-        (tmp_path / "tuning_report.csv").write_text("param,00_default.param\n", encoding="utf-8")
-        window = LogAnalysisReportWindow.__new__(LogAnalysisReportWindow)
-        window.main_frame = MagicMock()
-        window.vehicle_dir = str(tmp_path)
-        window.report = None
-
-        window._build_footer()
-
-        button_mock = patched_widgets["button"].return_value
-        button_mock.configure.assert_any_call(state="normal")
-
-    def test_button_disabled_when_tuning_report_missing(self, patched_widgets: dict[str, MagicMock], tmp_path: Path) -> None:
-        """
-        The tuning graph button is disabled when tuning_report.csv is absent.
-
-        GIVEN: No tuning_report.csv exists at the vehicle directory
-        WHEN: The footer is built
-        THEN: The button is configured with state="disabled"
-        """
-        window = LogAnalysisReportWindow.__new__(LogAnalysisReportWindow)
-        window.main_frame = MagicMock()
-        window.vehicle_dir = str(tmp_path)
-        window.report = None
-
-        window._build_footer()
-
-        button_mock = patched_widgets["button"].return_value
-        button_mock.configure.assert_any_call(state="disabled")
-
-    def test_open_tuning_graph_shows_error_on_bad_csv(self, bare_window: LogAnalysisReportWindow, tmp_path: Path) -> None:
-        """
-        A malformed tuning_report.csv surfaces a user-facing error dialog, not a crash.
-
-        GIVEN: TuningReportWindow raises ValueError when opening the report
-        WHEN: The user clicks the tuning graph button
-        THEN: An error messagebox is shown and no exception propagates
-        """
-        bare_window.vehicle_dir = str(tmp_path)
-        (tmp_path / "tuning_report.csv").write_text("bad data", encoding="utf-8")
-
-        with (
-            patch(f"{MODULE}.TuningReportWindow", side_effect=ValueError("bad csv")),
-            patch(f"{MODULE}.messagebox.showerror") as mock_error,
-        ):
-            bare_window._on_open_tuning_graph()
-
-        mock_error.assert_called_once()
-
-
 class TestRenderSubsystem:
     """Cover _render_subsystem's section building for a selected subsystem."""
 

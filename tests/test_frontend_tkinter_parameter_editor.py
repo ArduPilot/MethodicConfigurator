@@ -72,6 +72,7 @@ from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginPauseR
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Iterator
+    from pathlib import Path
 
     from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
     from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginView
@@ -79,6 +80,68 @@ if TYPE_CHECKING:
 # pylint: disable=too-many-lines, redefined-outer-name, protected-access
 
 # ============================== SHARED FIXTURES ==============================
+
+
+@pytest.mark.parametrize("report_exists", [False, True])
+def test_tuning_graph_button_reflects_tuning_report_availability(
+    root: tk.Tk, parameter_editor: MagicMock, tmp_path: Path, report_exists: bool
+) -> None:
+    """The tuning graph button is enabled only when tuning_report.csv exists."""
+    editor = _create_editor(parameter_editor)
+    editor.root = root
+    parameter_editor.get_vehicle_directory.return_value = str(tmp_path)
+    parameter_editor.parameter_files.return_value = ["01_initial.param"]
+    if report_exists:
+        (tmp_path / "tuning_report.csv").write_text("param,00_default.param\n", encoding="utf-8")
+    parent = ttk.Frame(root)
+    try:
+        with (
+            patch.object(editor, "put_image_in_label", return_value=ttk.Label(parent)),
+            patch.object(parameter_editor_module, "show_tooltip"),
+            patch.object(editor, "on_open_tuning_graph_click") as open_graph,
+        ):
+            editor._create_logo_and_forum_help_widgets(parent, "test", "TButton")
+            buttons = [w for child in parent.winfo_children() for w in child.winfo_children() if isinstance(w, ttk.Button)]
+            graph = next(btn for btn in buttons if btn.cget("text") == "Tuning Parameter Graph")
+            assert graph.instate(("!disabled",)) == report_exists
+            graph.invoke()
+            assert open_graph.call_count == int(report_exists)
+    finally:
+        parent.destroy()
+
+
+def test_tuning_graph_error_is_shown(parameter_editor: MagicMock, tmp_path: Path) -> None:
+    """A malformed tuning report produces a user-facing error."""
+    editor = _create_editor(parameter_editor)
+    parameter_editor.get_vehicle_directory.return_value = str(tmp_path)
+    with patch.object(parameter_editor_module, "TuningReportWindow", side_effect=ValueError("bad csv")):
+        editor.on_open_tuning_graph_click()
+    editor.ui.show_error.assert_called_once_with("Tuning Graph Error", "bad csv")
+
+
+def test_analysis_menu_keyboard_activation_focuses_first_action(parameter_editor: MagicMock, tmp_path: Path) -> None:
+    """Activating the menu moves focus into it and pointer departure cannot close it while focused."""
+    editor = _create_editor(parameter_editor)
+    editor._analysis_menu = None
+    editor._analysis_menu_hide_job = None
+    parameter_editor.get_vehicle_directory.return_value = str(tmp_path)
+    trigger = MagicMock()
+    trigger.cget.return_value = "normal"
+    trigger.winfo_rootx.return_value = trigger.winfo_rooty.return_value = trigger.winfo_height.return_value = 0
+    editor.root.winfo_rootx.return_value = editor.root.winfo_rooty.return_value = 0
+    menu = MagicMock()
+    buttons = [MagicMock() for _ in range(3)]
+    menu.winfo_children.return_value = buttons
+    editor.root.focus_get.return_value = buttons[0]
+    with (
+        patch.object(parameter_editor_module.ttk, "Frame", return_value=menu),
+        patch.object(parameter_editor_module.ttk, "Button", side_effect=buttons),
+        patch.object(parameter_editor_module, "show_tooltip"),
+    ):
+        editor._show_analysis_menu(trigger, "TButton", focus=True)
+        buttons[0].focus_set.assert_called_once()
+        editor._hide_analysis_menu_if_outside(trigger)
+        menu.destroy.assert_not_called()
 
 
 def _wait_for_layout(window: tk.Toplevel, ready: Callable[[], bool]) -> None:
