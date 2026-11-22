@@ -797,12 +797,20 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         menu.bind("<Enter>", lambda _e: self._cancel_hide_analysis_menu())
         menu.bind("<Leave>", lambda _e: self._schedule_hide_analysis_menu(trigger))
         self._analysis_menu = menu
-        self._analysis_menu_escape_bind_id = self.root.bind("<Escape>", lambda _e=None: self._close_analysis_menu(), add="+")
+        self._analysis_menu_escape_bind_id = self.root.bind(
+            "<Escape>", partial(self._on_analysis_menu_escape, trigger), add="+"
+        )
         self._analysis_menu_click_bind_id = self.root.bind(
             "<Button-1>",
             lambda event: self._on_click_outside_analysis_menu(event, trigger),
             add="+",
         )
+
+    def _on_analysis_menu_escape(self, trigger: ttk.Button, _event: tk.Event | None = None) -> str:
+        self._close_analysis_menu()
+        with contextlib.suppress(tk.TclError):
+            trigger.focus_set()
+        return ""
 
     def _run_analysis_menu_command(self, command: Callable[[], None]) -> None:
         self._close_analysis_menu()

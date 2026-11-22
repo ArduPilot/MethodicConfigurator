@@ -208,7 +208,9 @@ def test_analysis_menu_toggles_and_closes_on_outside_click(root: tk.Tk, paramete
             editor._toggle_analysis_menu(trigger, "TButton")
             assert editor._analysis_menu is not None
             assert editor._analysis_menu_escape_bind_id is not None
-            root.tk.call(editor._analysis_menu_escape_bind_id)
+            with patch.object(trigger, "focus_set") as restore_focus:
+                root.tk.call(editor._analysis_menu_escape_bind_id)
+                restore_focus.assert_called_once_with()
             assert editor._analysis_menu is None
 
             editor._toggle_analysis_menu(trigger, "TButton")
