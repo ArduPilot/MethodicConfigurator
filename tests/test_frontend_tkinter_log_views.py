@@ -440,7 +440,6 @@ def test_continue_to_analysis_warns_about_subsystems_without_results() -> None:
     mock_analysis.assert_called_once_with(
         window.root,
         window.summary,
-        "/vehicle",
         is_fc_connected=True,
         upload_callback=window.upload_callback,
         report={"flight": "test"},
