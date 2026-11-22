@@ -376,7 +376,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     operate on drone parameters.
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-statements
         self,
         parameter_editor: ParameterEditor,
         ui_services: ParameterEditorUiServices | None = None,
@@ -420,6 +420,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._requested_action = ParameterEditorAction.FINISHED
         self._analysis_menu: ttk.Frame | None = None
         self._analysis_menu_hide_job: str | None = None
+        self._analysis_menu_click_bind_id: str | None = None
 
         self._configure_root_window()
 
@@ -741,6 +742,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         button.grid(row=3, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
         show_tooltip(button, _("Inspect received MAVLink messages, datarates and decoded fields."))
 
+    def _toggle_analysis_menu(self, trigger: ttk.Button, button_style: str) -> None:
+        if self._analysis_menu is not None and self._analysis_menu.winfo_exists():
+            self._close_analysis_menu()
+            return
+        self._show_analysis_menu(trigger, button_style, focus=True)
+
     def _show_analysis_menu(self, trigger: ttk.Button, button_style: str, *, focus: bool = False) -> None:
         self._cancel_hide_analysis_menu()
         if str(trigger.cget("state")) == "disabled":
@@ -787,6 +794,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         menu.bind("<Enter>", lambda _e: self._cancel_hide_analysis_menu())
         menu.bind("<Leave>", lambda _e: self._schedule_hide_analysis_menu(trigger))
         self._analysis_menu = menu
+        self._analysis_menu_click_bind_id = self.root.bind(
+            "<Button-1>",
+            lambda event: self._on_click_outside_analysis_menu(event, trigger),
+            add="+",
+        )
 
     def _run_analysis_menu_command(self, command: Callable[[], None]) -> None:
         self._close_analysis_menu()
@@ -817,8 +829,20 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 return
         self._close_analysis_menu()
 
+    def _on_click_outside_analysis_menu(self, event: tk.Event, trigger: ttk.Button) -> None:
+        if self._analysis_menu is None or not self._analysis_menu.winfo_exists():
+            return
+        if event.widget in (trigger, self._analysis_menu, *self._analysis_menu.winfo_children()):
+            return
+        self._close_analysis_menu()
+
     def _close_analysis_menu(self) -> None:
         self._cancel_hide_analysis_menu()
+        bind_id = getattr(self, "_analysis_menu_click_bind_id", None)
+        if bind_id is not None:
+            with contextlib.suppress(tk.TclError):
+                self.root.unbind("<Button-1>", bind_id)
+            self._analysis_menu_click_bind_id = None
         if self._analysis_menu is not None and self._analysis_menu.winfo_exists():
             self._analysis_menu.destroy()
         self._analysis_menu = None
@@ -861,14 +885,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         analysis_button = ttk.Button(
             logo_and_forum_frame,
             text=_("Analyse a .bin log"),
-            command=lambda: self._show_analysis_menu(analysis_button, button_style, focus=True),
+            command=lambda: self._toggle_analysis_menu(analysis_button, button_style),
             style=button_style,
         )
         self.navigation_lock.register(analysis_button)
         analysis_button.pack(side=tk.TOP, fill="x", pady=(3, 0))
-        analysis_button.bind("<Button-1>", lambda _e: "break")
-        analysis_button.bind("<Enter>", lambda _e: self._show_analysis_menu(analysis_button, button_style))
-        analysis_button.bind("<Leave>", lambda _e: self._schedule_hide_analysis_menu(analysis_button))
+        show_tooltip(analysis_button, _(".bin analysis tools"))
 
         tuning_report_exists = (Path(self.parameter_editor.get_vehicle_directory()) / "tuning_report.csv").exists()
         tuning_graph_button = ttk.Button(
