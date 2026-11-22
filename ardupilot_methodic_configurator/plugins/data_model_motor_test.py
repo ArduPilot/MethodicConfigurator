@@ -439,11 +439,14 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                     }
                 )
 
-            requires_reset = False
+            # The motor layout is only applied at boot. ArduPlane's Q_FRAME_CLASS/Q_FRAME_TYPE
+            # lack RebootRequired metadata, but QuadPlane::setup() only reads them at boot,
+            # so always reboot or the FC would spin motors in the old layout.
+            requires_reset = param_name in {self.param_name("FRAME_CLASS"), self.param_name("FRAME_TYPE")}
             if param_name in self.filesystem.doc_dict:
                 min_value = self.filesystem.doc_dict[param_name].get("min", -float("inf"))
                 max_value = self.filesystem.doc_dict[param_name].get("max", float("inf"))
-                requires_reset = self.filesystem.doc_dict[param_name].get("RebootRequired", False)
+                requires_reset = requires_reset or bool(self.filesystem.doc_dict[param_name].get("RebootRequired", False))
                 if value < min_value:
                     raise ValidationError(
                         _("%(param)s value %(value).3f is smaller than %(min)f")
