@@ -157,12 +157,12 @@ def test_every_requested_editor_control_is_locked_and_restored(
             return [child for widget in parent.winfo_children() for child in [widget, *descendants(widget)]]
 
         buttons = [widget for widget in descendants(window.main_frame) if isinstance(widget, ttk.Button)]
-        analysis_button = next(button for button in buttons if button.cget("text") == "Analysis")
+        analysis_button = next(button for button in buttons if button.cget("text") == "Analyse a .bin log")
         analysis_button.invoke()
         assert window._analysis_menu is not None
         assert [button.cget("text") for button in window._analysis_menu.winfo_children()] == [
-            "Analyse a .bin log",
-            "Analyse log with Skybrush",
+            "Internal log analyzer",
+            "Skybrush log analyser",
         ]
         window._close_analysis_menu()
         expected_commands = {
