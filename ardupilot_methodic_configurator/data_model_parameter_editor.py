@@ -2419,7 +2419,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         if is_preserved_rename_source:
             self._declined_connection_renames.discard(param_name)
             self._suppressed_connection_renames.add(param_name)
-        elif param_name in self._local_filesystem.file_parameters.get(self.current_file, ParDict()):
+        elif self._serial_port_for_row(param_name) is not None or param_name in self._local_filesystem.file_parameters.get(
+            self.current_file, ParDict()
+        ):
             self._suppressed_connection_renames.add(param_name)
         is_derived = param_name in self._inline_derived_parameters or (
             param_name in self.current_step_parameters and self.current_step_parameters[param_name].is_derived
@@ -2738,8 +2740,12 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self._deleted_parameters.clear()
         self._retired_inline_derived_parameters.clear()
         # The exported names are now the saved-file sources for the next port change.
+        self._last_connection_source_rows = {
+            self._connection_renames.get(source, source)
+            for source in self._last_connection_source_rows
+            if self._connection_renames.get(source, source) in export_params
+        }
         self._connection_renames.clear()
-        self._last_connection_source_rows.clear()
         self._suppressed_connection_renames.clear()
         self._suppressed_connection_renames.update(self._declined_connection_renames & set(export_params))
         # copy parameters new values to their _values_on_file
@@ -3027,6 +3033,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         if not serial_rows or not all(name.endswith("_PROTOCOL") and par.value == -1 for name, par in serial_rows):
             return
         target = f"{port}_PROTOCOL"
+        if target in self._deleted_parameters or target in self._suppressed_connection_renames:
+            return
         if target not in self.current_step_parameters:
             self.current_step_parameters[target] = self._config_step_processor.create_ardupilot_parameter(
                 target, Par(5.0), self.current_file, self.fc_parameters
@@ -3185,7 +3193,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         if is_gnss:
             self._apply_gnss_protocol_value(target)
         self._added_parameters.add(target)
-        self._connection_renames[f"{self._last_connection_port}_PROTOCOL"] = target
+        self._connection_renames[source] = target
         self._suppressed_connection_renames.discard(source)
 
     def _refresh_current_step_connection_renames(  # noqa: C901, PLR0912, PLR0915  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
@@ -3544,6 +3552,10 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 if self._connection_renames.get(source, source) in self.current_step_parameters
             }
             old_names = {name: name for name in live_sources}
+            if self._last_selected_serial_port and self._last_connection_protocol is not None:
+                protocol = f"{self._last_selected_serial_port}_PROTOCOL"
+                if protocol in self.current_step_parameters and new != self._last_selected_serial_port:
+                    old_names[protocol] = protocol
         else:
             if re.fullmatch(r"SERIAL\d+", old) is None:
                 old = self._serial_rename_source(old, new_connection=new) or old

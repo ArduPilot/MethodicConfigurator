@@ -1914,8 +1914,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     return
                 if not old_port and self.parameter_editor.connection_change_will_rename(editor_data["Components"]) is True:
                     self.ui.show_warning(
-                        _("Unknown previous connection"),
-                        _("Cannot identify the previous connection for a safe parameter rename."),
+                        _("Connection change unavailable"),
+                        _("The previous connection is not configured. Set it before changing the connection."),
                     )
                     self._schedule_inline_component_rebuild()
                     return

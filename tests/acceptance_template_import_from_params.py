@@ -338,6 +338,8 @@ def test_template_setup_preserves_cache_when_exact_metadata_is_unavailable(
 
     assert metadata_path.read_text(encoding="utf-8") == original_metadata
     assert sorted(path.name for path in tmp_path.iterdir()) == ["apm.pdef.xml", "vehicle_components.json"]
+
+
 def test_offline_metadata_seed_uses_matching_sibling_when_template_cache_is_stale(tmp_path: Path) -> None:
     """A stale template cache can be replaced by a sibling cache for the exact firmware release."""
     template_dir = tmp_path / "empty_template"

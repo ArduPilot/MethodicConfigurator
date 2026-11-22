@@ -5964,6 +5964,20 @@ class TestConnectionRenameSaveLifecycle:  # pylint: disable=too-many-public-meth
         )
         return components, step_file
 
+    @staticmethod
+    def _assert_native_baud_destination_conflict(parameter_editor: ParameterEditor, step_file: str) -> None:
+        """An independently configured destination baud is reported after deselection."""
+        filesystem = parameter_editor._local_filesystem
+        filesystem.file_parameters[step_file]["SERIAL5_BAUD"] = Par(115.0, "independent destination")
+        parameter_editor.current_step_parameters["SERIAL5_BAUD"] = (
+            parameter_editor._config_step_processor.create_ardupilot_parameter(
+                "SERIAL5_BAUD", filesystem.file_parameters[step_file]["SERIAL5_BAUD"], step_file, {}
+            )
+        )
+        assert ("SERIAL2_BAUD", "SERIAL5_BAUD") in parameter_editor.connection_change_conflicts("None", "SERIAL5")
+        filesystem.file_parameters[step_file].pop("SERIAL5_BAUD")
+        parameter_editor.current_step_parameters.pop("SERIAL5_BAUD")
+
     @pytest.mark.parametrize(
         "case",
         [
@@ -5976,13 +5990,15 @@ class TestConnectionRenameSaveLifecycle:  # pylint: disable=too-many-public-meth
             for detour in (None, "None", "CAN1", "RCin")
         ],
     )
+    @pytest.mark.parametrize("save_during_detour", [False, True])
     def test_native_baud_follows_step_load_rename_and_inline_move(
         self,
         parameter_editor: ParameterEditor,
         case: tuple[str, str, str, str, str, float, str | None],
+        save_during_detour: bool,
     ) -> None:
         """A native saved baud travels with load-renamed flow control on the next move."""
-        _, template, selected, destination, _, baud, detour = case
+        selected, destination, baud, detour = case[2], case[3], case[5], case[6]
         components, step_file = self._prepare_native_baud_template(parameter_editor, case)
         filesystem = parameter_editor._local_filesystem
         if detour is not None:
@@ -5992,16 +6008,10 @@ class TestConnectionRenameSaveLifecycle:  # pylint: disable=too-many-public-meth
             parameter_editor.update_vehicle_components(intermediate)
             parameter_editor.refresh_current_step_computed_parameters(selected)
             assert parameter_editor.preserve_or_disable_serial_protocol(selected, previous, disable=True)
-            if template == "Tarot_X4" and detour == "None":
-                filesystem.file_parameters[step_file]["SERIAL5_BAUD"] = Par(115.0, "independent destination")
-                parameter_editor.current_step_parameters["SERIAL5_BAUD"] = (
-                    parameter_editor._config_step_processor.create_ardupilot_parameter(
-                        "SERIAL5_BAUD", filesystem.file_parameters[step_file]["SERIAL5_BAUD"], step_file, {}
-                    )
-                )
-                assert ("SERIAL2_BAUD", "SERIAL5_BAUD") in parameter_editor.connection_change_conflicts(detour, destination)
-                filesystem.file_parameters[step_file].pop("SERIAL5_BAUD")
-                parameter_editor.current_step_parameters.pop("SERIAL5_BAUD")
+            if save_during_detour:
+                parameter_editor._export_current_file(annotate_doc=False)
+            if case[1] == "Tarot_X4" and detour == "None":
+                self._assert_native_baud_destination_conflict(parameter_editor, step_file)
         proposed = json.loads(json.dumps(components))
         proposed["Telemetry"]["FC Connection"]["Type"] = destination
         assert parameter_editor.serial_transition_issue(proposed) is None
@@ -6012,6 +6022,15 @@ class TestConnectionRenameSaveLifecycle:  # pylint: disable=too-many-public-meth
         assert f"{destination.replace('SERIAL', 'BRD_SER')}_RTSCTS" in parameter_editor.current_step_parameters
         assert f"{selected}_BAUD" not in parameter_editor.current_step_parameters
         assert parameter_editor.current_step_parameters["SERIAL8_OPTIONS"].get_new_value() == 4
+        if detour is not None:
+            proposed["Telemetry"]["FC Connection"]["Type"] = "SERIAL6"
+            parameter_editor.update_vehicle_components(proposed)
+            parameter_editor.refresh_current_step_computed_parameters(destination)
+            assert parameter_editor.current_step_parameters["SERIAL6_PROTOCOL"].get_new_value() == 2
+            assert parameter_editor.current_step_parameters["SERIAL6_BAUD"].get_new_value() == baud
+            proposed["Telemetry"]["FC Connection"]["Type"] = destination
+            parameter_editor.update_vehicle_components(proposed)
+            parameter_editor.refresh_current_step_computed_parameters("SERIAL6")
         parameter_editor._export_current_file(annotate_doc=False)
         saved = filesystem.file_parameters[step_file]
         assert saved[f"{destination}_BAUD"].value == baud
@@ -6019,6 +6038,12 @@ class TestConnectionRenameSaveLifecycle:  # pylint: disable=too-many-public-meth
         assert f"{destination.replace('SERIAL', 'BRD_SER')}_RTSCTS" in saved
         assert f"{selected}_BAUD" not in saved
         assert saved["SERIAL8_OPTIONS"].value == 4
+        if detour is not None:
+            proposed["Telemetry"]["FC Connection"]["Type"] = "SERIAL6"
+            parameter_editor.update_vehicle_components(proposed)
+            parameter_editor.refresh_current_step_computed_parameters(destination)
+            assert parameter_editor.current_step_parameters["SERIAL6_PROTOCOL"].get_new_value() == 2
+            assert parameter_editor.current_step_parameters["SERIAL6_BAUD"].get_new_value() == baud
 
     def test_deleted_unrelated_row_allows_planner_to_move_live_owner(self, parameter_editor: ParameterEditor) -> None:
         """Removing an unrelated conflicting row makes both preflight and rename use SERIAL1."""
@@ -6542,6 +6567,19 @@ class TestConnectionRenameSaveLifecycle:  # pylint: disable=too-many-public-meth
         assert parameter_editor.preserve_or_disable_serial_protocol("SERIAL1", previous, disable=True)
         assert ("SERIAL1_BAUD", "SERIAL2_BAUD") in parameter_editor.connection_change_conflicts("None", "SERIAL2")
 
+    @pytest.mark.parametrize("detour", ["None", "CAN1"])
+    def test_detour_reports_occupied_protocol_but_allows_return(self, parameter_editor: ParameterEditor, detour: str) -> None:
+        """A kept protocol warns about another occupied port without blocking a return."""
+        step_file, components = self.prepare(parameter_editor)
+        previous = parameter_editor.serial_protocol_snapshot("SERIAL1")
+        self.change_port_with_previous(parameter_editor, components, detour)
+        assert parameter_editor.preserve_or_disable_serial_protocol("SERIAL1", previous, disable=False)
+        parameter_editor.current_step_parameters["SERIAL2_PROTOCOL"] = (
+            parameter_editor._config_step_processor.create_ardupilot_parameter("SERIAL2_PROTOCOL", Par(3.0), step_file, {})
+        )
+        assert ("SERIAL1_PROTOCOL", "SERIAL2_PROTOCOL") in parameter_editor.connection_change_conflicts(detour, "SERIAL2")
+        assert not parameter_editor.connection_change_conflicts(detour, "SERIAL1")
+
     def test_saved_none_step_reload_moves_unique_serial_owner(self, parameter_editor: ParameterEditor) -> None:
         """A saved serial group remains identifiable after leaving and re-entering a deselected step."""
         step_file, components = self.prepare(parameter_editor)
@@ -6693,6 +6731,16 @@ class TestConnectionRenameSaveLifecycle:  # pylint: disable=too-many-public-meth
         assert saved["SERIAL2_PROTOCOL"].value == 2.0
         assert saved["SERIAL2_BAUD"].value == 57.0
         assert saved["SERIAL1_PROTOCOL"].value == 2.0
+
+    def test_gnss_fallback_respects_explicitly_deleted_target(self, parameter_editor: ParameterEditor) -> None:
+        """A deleted GNSS protocol is not recreated from disabled saved rows."""
+        step_file, _components = self.prepare(parameter_editor)
+        parameter_editor.current_step_parameters["SERIAL2_PROTOCOL"] = (
+            parameter_editor._config_step_processor.create_ardupilot_parameter("SERIAL2_PROTOCOL", Par(5.0), step_file, {})
+        )
+        parameter_editor.delete_parameter_from_current_file("SERIAL2_PROTOCOL")
+        parameter_editor._ensure_gnss_protocol_without_source("SERIAL2", ParDict({"SERIAL1_PROTOCOL": Par(-1.0)}))
+        assert "SERIAL2_PROTOCOL" not in parameter_editor.current_step_parameters
 
     def test_gnss_protocol_copy_after_can_uses_mavlink_value(self, parameter_editor: ParameterEditor) -> None:
         """A GNSS CAN detour applies the existing MAVLink protocol rule to a copied UART row."""
