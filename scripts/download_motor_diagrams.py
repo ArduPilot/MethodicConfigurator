@@ -107,7 +107,7 @@ def download_motor_diagrams() -> None:
             downloaded += 1
 
         except OSError:
-            logger.exception("Failed to download %s: ", filename)
+            logger.exception("Failed to download %s:", filename)
             failed += 1
 
     logger.info("Download complete: %d succeeded, %d failed", downloaded, failed)
