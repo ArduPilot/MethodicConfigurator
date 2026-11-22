@@ -187,6 +187,7 @@ def test_analysis_menu_toggles_and_closes_on_outside_click(root: tk.Tk, paramete
     editor._analysis_menu = None
     editor._analysis_menu_hide_job = None
     editor._analysis_menu_click_bind_id = None
+    editor._analysis_menu_escape_bind_id = None
     trigger = ttk.Button(root, text="Analyse a .bin log")
     outside = ttk.Label(root, text="Outside")
     try:
@@ -206,10 +207,8 @@ def test_analysis_menu_toggles_and_closes_on_outside_click(root: tk.Tk, paramete
 
             editor._toggle_analysis_menu(trigger, "TButton")
             assert editor._analysis_menu is not None
-            root.update()
-            editor._analysis_menu.winfo_children()[0].focus_force()
-            root.update()
-            editor._analysis_menu.winfo_children()[0].event_generate("<Escape>")
+            assert editor._analysis_menu_escape_bind_id is not None
+            root.tk.call(editor._analysis_menu_escape_bind_id)
             assert editor._analysis_menu is None
 
             editor._toggle_analysis_menu(trigger, "TButton")

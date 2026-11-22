@@ -130,10 +130,10 @@ the navigation lock and plugin suspension coordinate tools that need exclusive a
 
 7. **Tuning parameter graph**: `TuningReportWindow` reads the vehicle directory's `tuning_report.csv`
    through `data_model_tuning_report.py` and plots selected parameter values across configuration
-   steps. Missing values are carried forward by the model. On this branch the graph is opened from
-   the internal analysis report when the CSV exists. See the
+   steps. Missing values are carried forward by the model. The graph is opened from the parameter
+   editor header when the CSV exists. See the
    [tuning report architecture](ARCHITECTURE_log_analysis.md#tuning-report).
-   Standalone entry point: none, it is only opened from the internal analysis report.
+   Standalone entry point: none, it is only opened from the parameter editor.
 
 8. **File browser (MAVFTP)**: `FileBrowserWindow` presents local and FC files and runs remote
    operations in background tasks. The model delegates through `FlightController` and

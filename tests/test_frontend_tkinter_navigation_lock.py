@@ -161,7 +161,7 @@ def test_every_requested_editor_control_is_locked_and_restored(
         analysis_button.invoke()
         assert window._analysis_menu is not None
         assert [button.cget("text") for button in window._analysis_menu.winfo_children()] == [
-            "Internal log analyzer",
+            "Internal log analyser",
             "Skybrush log analyser",
         ]
         window._close_analysis_menu()
