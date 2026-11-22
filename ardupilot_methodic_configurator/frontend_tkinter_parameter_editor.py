@@ -717,16 +717,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             _("Display the latest flight-controller banner"),
         )
 
-        inspector_button = ttk.Button(
-            parameter_actions_frame,
-            text=_("MAVLink inspector"),
-            command=self.on_mavlink_inspector_click,
-            style=smaller_button_style,
-        )
-        inspector_button.configure(state="normal" if self.parameter_editor.is_fc_link_connected else "disabled")
-        self.navigation_lock.register(inspector_button)
-        inspector_button.grid(row=3, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
-        show_tooltip(inspector_button, _("Inspect received MAVLink messages, datarates and decoded fields."))
+        self._create_inspector_button(parameter_actions_frame, smaller_button_style)
 
         edit_vehicle_components_button = ttk.Button(
             parameter_actions_frame,
@@ -742,6 +733,13 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         )
 
         self._create_logo_and_forum_help_widgets(config_frame, version, smaller_button_style)
+
+    def _create_inspector_button(self, parent: ttk.Frame, button_style: str) -> None:
+        button = ttk.Button(parent, text=_("MAVLink inspector"), command=self.on_mavlink_inspector_click, style=button_style)
+        button.configure(state="normal" if self.parameter_editor.is_fc_link_connected else "disabled")
+        self.navigation_lock.register(button)
+        button.grid(row=3, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
+        show_tooltip(button, _("Inspect received MAVLink messages, datarates and decoded fields."))
 
     def _show_analysis_menu(self, trigger: ttk.Button, button_style: str, *, focus: bool = False) -> None:
         self._cancel_hide_analysis_menu()
@@ -776,7 +774,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 menu,
                 text=text,
                 style=button_style,
-                command=lambda cmd=command: (self._close_analysis_menu(), cmd()),
+                command=partial(self._run_analysis_menu_command, command),
             )
             btn.pack(fill=tk.X, pady=2)
             show_tooltip(btn, tooltip)
@@ -789,6 +787,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         menu.bind("<Enter>", lambda _e: self._cancel_hide_analysis_menu())
         menu.bind("<Leave>", lambda _e: self._schedule_hide_analysis_menu(trigger))
         self._analysis_menu = menu
+
+    def _run_analysis_menu_command(self, command: Callable[[], None]) -> None:
+        self._close_analysis_menu()
+        command()
 
     def _cancel_hide_analysis_menu(self) -> None:
         if self._analysis_menu_hide_job is not None:
@@ -834,7 +836,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def _create_logo_and_forum_help_widgets(self, parent: ttk.Frame, version: str, button_style: str) -> None:
         """Create the ArduPilot logo and forum-help zip button in the configuration header."""
         logo_and_forum_frame = ttk.Frame(parent)
-        logo_and_forum_frame.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
+        logo_and_forum_frame.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4))
         image_label = self.put_image_in_label(logo_and_forum_frame, LocalFilesystem.application_logo_filepath())
         image_label.pack(side=tk.TOP, anchor=tk.NE)
         image_label.bind("<Button-1>", lambda event: AboutWindow(self.root, version))  # noqa: ARG005
@@ -848,7 +850,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         )
         zip_vehicle_for_forum_button.configure(state=("normal" if self.parameter_editor.parameter_files() else "disabled"))
         self.navigation_lock.register(zip_vehicle_for_forum_button)
-        zip_vehicle_for_forum_button.pack(side=tk.TOP, fill="x", pady=(3, 0))
+        zip_vehicle_for_forum_button.pack(side=tk.TOP, fill="x")
         show_tooltip(
             zip_vehicle_for_forum_button,
             _("Creates a .zip file of the configuration files\nso that they can be easily shared for forum help")
