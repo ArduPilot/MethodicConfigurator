@@ -119,6 +119,42 @@ def test_tuning_graph_error_is_shown(parameter_editor: MagicMock, tmp_path: Path
     editor.ui.show_error.assert_called_once_with("Tuning Graph Error", "bad csv")
 
 
+def test_tuning_graph_button_becomes_available_after_upload_creates_report(
+    root: tk.Tk, parameter_editor: MagicMock, tmp_path: Path
+) -> None:
+    """
+    The tuning graph becomes available during the current session after an upload creates its report.
+
+    GIVEN: the parameter editor starts before tuning_report.csv exists
+    WHEN: a successful upload creates the report
+    THEN: the tuning graph button is enabled without reopening the editor
+    """
+    editor = _create_editor(parameter_editor)
+    editor.root = root
+    parameter_editor.get_vehicle_directory.return_value = str(tmp_path)
+    parameter_editor.parameter_files.return_value = ["01_initial.param"]
+    parent = ttk.Frame(root)
+
+    def create_report(*_args, **_kwargs) -> bool:
+        (tmp_path / "tuning_report.csv").write_text("param,00_default.param\n", encoding="utf-8")
+        return True
+
+    try:
+        with (
+            patch.object(editor, "put_image_in_label", return_value=ttk.Label(parent)),
+            patch.object(parameter_editor_module, "show_tooltip"),
+            patch.object(editor.ui, "upload_params_with_progress", side_effect=create_report),
+        ):
+            editor._create_logo_and_forum_help_widgets(parent, "test", "TButton")
+            assert editor.tuning_graph_button is not None
+            assert editor.tuning_graph_button.instate(("disabled",))
+
+            assert editor.upload_selected_params({})
+            assert editor.tuning_graph_button.instate(("!disabled",))
+    finally:
+        parent.destroy()
+
+
 def test_analysis_menu_keyboard_activation_focuses_first_action(parameter_editor: MagicMock, tmp_path: Path) -> None:
     """Activating the menu moves focus into it and pointer departure cannot close it while focused."""
     editor = _create_editor(parameter_editor)

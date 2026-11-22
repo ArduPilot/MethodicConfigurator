@@ -79,7 +79,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_progress_window import (
 )
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText, get_widget_font_family_and_size
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
-from ardupilot_methodic_configurator.frontend_tkinter_show import get_monitor_bounds, show_tooltip
+from ardupilot_methodic_configurator.frontend_tkinter_show import Tooltip, get_monitor_bounds, show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_skybrush_log_analysis import open_skybrush_log_analysis
 from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
 from ardupilot_methodic_configurator.frontend_tkinter_tuning_report import TuningReportWindow
@@ -376,7 +376,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     operate on drone parameters.
     """
 
-    def __init__(  # pylint: disable=too-many-statements
+    def __init__(  # noqa: PLR0915  # pylint: disable=too-many-statements
         self,
         parameter_editor: ParameterEditor,
         ui_services: ParameterEditorUiServices | None = None,
@@ -421,6 +421,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._analysis_menu: ttk.Frame | None = None
         self._analysis_menu_hide_job: str | None = None
         self._analysis_menu_click_bind_id: str | None = None
+        self.tuning_graph_button: ttk.Button | None = None
+        self.tuning_graph_tooltip: Tooltip | None = None
 
         self._configure_root_window()
 
@@ -857,6 +859,24 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         except (OSError, ValueError) as exc:
             self.ui.show_error(_("Tuning Graph Error"), str(exc))
 
+    def _update_tuning_graph_button_state(self) -> None:
+        """Reflect the current tuning report availability in the graph button."""
+        button = getattr(self, "tuning_graph_button", None)
+        try:
+            if button is None or not button.winfo_exists():
+                return
+        except tk.TclError:
+            return
+        report_exists = (Path(self.parameter_editor.get_vehicle_directory()) / "tuning_report.csv").is_file()
+        button.configure(state="normal" if report_exists else "disabled")
+        tooltip = getattr(self, "tuning_graph_tooltip", None)
+        if tooltip is not None:
+            tooltip.text = (
+                _("Open the tuning parameter graph")
+                if report_exists
+                else _("tuning_report.csv not found in the vehicle directory")
+            )
+
     def _create_logo_and_forum_help_widgets(self, parent: ttk.Frame, version: str, button_style: str) -> None:
         """Create the ArduPilot logo and forum-help zip button in the configuration header."""
         logo_and_forum_frame = ttk.Frame(parent)
@@ -892,22 +912,19 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         analysis_button.pack(side=tk.TOP, fill="x", pady=(3, 0))
         show_tooltip(analysis_button, _(".bin analysis tools"))
 
-        tuning_report_exists = (Path(self.parameter_editor.get_vehicle_directory()) / "tuning_report.csv").exists()
-        tuning_graph_button = ttk.Button(
+        self.tuning_graph_button = ttk.Button(
             logo_and_forum_frame,
             text=_("Tuning Parameter Graph"),
             command=self.on_open_tuning_graph_click,
             style=button_style,
         )
-        tuning_graph_button.configure(state="normal" if tuning_report_exists else "disabled")
-        self.navigation_lock.register(tuning_graph_button)
-        tuning_graph_button.pack(side=tk.TOP, fill="x", pady=(3, 0))
-        show_tooltip(
-            tuning_graph_button,
-            _("Open the tuning parameter graph")
-            if tuning_report_exists
-            else _("tuning_report.csv not found in the vehicle directory"),
+        self.tuning_graph_button.pack(side=tk.TOP, fill="x", pady=(3, 0))
+        self.tuning_graph_tooltip = show_tooltip(
+            self.tuning_graph_button,
+            "",
         )
+        self._update_tuning_graph_button_state()
+        self.navigation_lock.register(self.tuning_graph_button)
 
     def legend_frame(self, config_subframe: ttk.Frame) -> None:  # pylint: disable=too-many-locals
         font_family, font_size = get_widget_font_family_and_size(config_subframe)
@@ -2410,6 +2427,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         finally:
             self.navigation_lock.release(upload_owner)
             resume_plugin()
+            self._update_tuning_graph_button_state()
 
     @_with_fc_operation
     def on_download_bin_logs_click(self) -> None:
