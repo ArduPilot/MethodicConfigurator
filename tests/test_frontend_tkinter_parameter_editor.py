@@ -144,6 +144,40 @@ def test_analysis_menu_keyboard_activation_focuses_first_action(parameter_editor
         menu.destroy.assert_not_called()
 
 
+def test_analysis_menu_toggles_and_closes_on_outside_click(root: tk.Tk, parameter_editor: MagicMock) -> None:
+    """Clicking the trigger toggles the menu, and clicking outside dismisses it."""
+    editor = _create_editor(parameter_editor)
+    editor.root = root
+    editor._analysis_menu = None
+    editor._analysis_menu_hide_job = None
+    editor._analysis_menu_click_bind_id = None
+    trigger = ttk.Button(root, text="Analyse a .bin log")
+    outside = ttk.Label(root, text="Outside")
+    try:
+        with patch.object(parameter_editor_module, "show_tooltip"):
+            editor._toggle_analysis_menu(trigger, "TButton")
+            assert editor._analysis_menu is not None
+
+            inside_event = tk.Event()
+            inside_event.widget = editor._analysis_menu
+            editor._on_click_outside_analysis_menu(inside_event, trigger)
+            assert editor._analysis_menu is not None
+
+            outside_event = tk.Event()
+            outside_event.widget = outside
+            editor._on_click_outside_analysis_menu(outside_event, trigger)
+            assert editor._analysis_menu is None
+
+            editor._toggle_analysis_menu(trigger, "TButton")
+            assert editor._analysis_menu is not None
+            editor._toggle_analysis_menu(trigger, "TButton")
+            assert editor._analysis_menu is None
+    finally:
+        editor._close_analysis_menu()
+        trigger.destroy()
+        outside.destroy()
+
+
 def _wait_for_layout(window: tk.Toplevel, ready: Callable[[], bool]) -> None:
     """Let Windows deliver geometry events, with a deadline so broken layouts still fail."""
     completed = tk.BooleanVar(master=window, value=False)
