@@ -18,6 +18,8 @@ from pymavlink.dialects.v20.ardupilotmega import MAVLink_statustext_message
 
 from ardupilot_methodic_configurator import data_model_fc_diagnostics as diagnostics
 
+# pylint: disable=protected-access
+
 
 def test_long_status_text_preserves_utf8_and_spaces_across_chunks() -> None:
     """GIVEN split UTF-8 text, WHEN all chunks arrive, THEN one intact diagnostic is returned."""
@@ -105,6 +107,51 @@ def test_device_rows_show_only_present_devices_with_formatted_names_and_types() 
         ("COMPASS2", "I2C", 2, 30, "HMC5883", 1, f"COMPASS_DEV_ID2: {compass_id}"),
         ("INS_ACC2", "SPI", 3, 1, "ICM42688", None, f"INS_ACC2_ID: {imu_id}"),
     ]
+
+
+def test_device_category_requires_accelerometer_or_gyroscope_for_imu() -> None:
+    """Ignore unrelated INS parameters and retain normalized sensor categories."""
+    assert diagnostics._device_category("BARO1_DEVID") == "baro"
+    assert diagnostics._device_category("ARBITRARY_ACC") is None
+    assert diagnostics._device_category("ARSPD_DEVID") == "airspeed"
+
+
+def test_compass_priority_accepts_device_id_range_boundaries() -> None:
+    """Compass IDs at both valid 24-bit boundaries keep their configured priorities."""
+    assert diagnostics._compass_priorities(
+        {
+            "COMPASS_PRIO1_ID": 0,
+            "COMPASS_PRIO2_ID": 1,
+            "COMPASS_PRIO3_ID": 0x00FFFFFF,
+            "COMPASS_PRIO4_ID": 0x01000000,
+        }
+    ) == {1: 2, 0x00FFFFFF: 3}
+
+
+def test_device_rows_include_the_lowest_positive_device_id() -> None:
+    """Device ID one is valid and must not be excluded by a stricter lower bound."""
+    rows = diagnostics.device_rows({"COMPASS_DEV_ID": 1})
+
+    assert rows == [("COMPASS1", "I2C", 0, 0, "UNKNOWN", None, "COMPASS_DEV_ID: 1")]
+
+
+def test_device_rows_skip_an_invalid_id_before_processing_a_valid_device() -> None:
+    """Skip out-of-range device IDs without discarding later valid devices."""
+    rows = diagnostics.device_rows({"COMPASS_DEV_ID": 0x01000000, "COMPASS_DEV_ID2": 1})
+
+    assert rows == [("COMPASS2", "I2C", 0, 0, "UNKNOWN", None, "COMPASS_DEV_ID2: 1")]
+
+
+def test_equal_device_names_keep_parameter_order() -> None:
+    """Stable name sorting preserves input order for two rows with the same display name."""
+    compass_two_id = (7 << 16) | (30 << 8) | (2 << 3) | 1
+    compass_one_id = (6 << 16) | (118 << 8) | (1 << 3) | 1
+    parameters = {"COMPASS_DEV_ID": compass_two_id, "COMPASS_DEV_ID1": compass_one_id}
+
+    rows = diagnostics.device_rows(parameters)
+
+    assert [row[0] for row in rows] == ["COMPASS1", "COMPASS1"]
+    assert [row[3] for row in rows] == [30, 118]
 
 
 @pytest.mark.parametrize("parameter_name", ["INS4_ACC_ID", "INS4_GYR_ID", "INS5_ACC_ID", "INS5_GYR_ID"])
@@ -343,6 +390,32 @@ def test_standalone_text_transports_decode_utf8_and_discard_null_padding(text: s
     THEN: UTF-8 is preserved, null padding is discarded, and whitespace is trimmed
     """
     assert diagnostics.StatusTextAssembler().assemble(SimpleNamespace(text=text)) == "café"
+
+
+def test_missing_text_attribute_defaults_to_an_empty_payload() -> None:
+    """A message without either wire bytes or a text field has no diagnostic text."""
+    assert diagnostics.status_text_bytes(object()) == b""
+
+
+@pytest.mark.parametrize("other_source", [(1, 0), (0, 1)])
+def test_missing_source_chunks_do_not_mix_with_a_real_zero_component(
+    other_source: tuple[int, int],
+) -> None:
+    """Anonymous STATUSTEXT chunks remain separate from a real vehicle/component source."""
+    assembler = diagnostics.StatusTextAssembler()
+    anonymous_start = SimpleNamespace(id=42, chunk_seq=0, _text_raw=b"A" * 50)
+    sourced_start = SimpleNamespace(
+        id=42,
+        chunk_seq=0,
+        _text_raw=b"B" * 50,
+        get_srcSystem=lambda: other_source[0],
+        get_srcComponent=lambda: other_source[1],
+    )
+    anonymous_end = SimpleNamespace(id=42, chunk_seq=1, _text_raw=b"A tail")
+
+    assert assembler.assemble(anonymous_start) is None
+    assert assembler.assemble(sourced_start) is None
+    assert assembler.assemble(anonymous_end) == "A" * 50 + "A tail"
 
 
 @pytest.mark.parametrize(("system", "component"), [(None, None), (1, None), (None, 1), ("1", 1), (1, "1")])

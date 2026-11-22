@@ -321,6 +321,7 @@ pytest_add_cli_args_test_selection = [
     "tests/test_data_model_firmware_upload.py",
     "tests/test_frontend_tkinter_usage_popup_windows.py",
     "tests/test_frontend_tkinter_log_analysis.py",
+    "tests/test_frontend_tkinter_log_analysis_rendering.py",
     "tests/test_backend_flightcontroller_connection.py",
     "tests/test_backend_flightcontroller.py",
     "tests/test_backend_filesystem_program_settings.py",

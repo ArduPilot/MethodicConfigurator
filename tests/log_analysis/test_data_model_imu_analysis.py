@@ -20,6 +20,7 @@ import pytest
 from ardupilot_methodic_configurator.log_analysis.data_model_availability_imu import ImuLogAnalysis, ImuLogAvailabilityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
 from ardupilot_methodic_configurator.log_analysis.data_model_log_availability import LogAvailabilityState
+from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
 
 # pylint: disable=redefined-outer-name
 
@@ -194,25 +195,32 @@ class TestImuLogAvailabilityModelAbsenceDiagnosis:  # pylint: disable=too-few-pu
 class TestImuLogAnalysisTemperatureCalibrationState:
     """Test temperature calibration enable/disable/in-progress state detection."""
 
-    def test_user_is_recommended_to_calibrate_when_temp_cal_is_not_enabled(self) -> None:
+    def test_user_is_recommended_to_calibrate_when_temp_cal_is_not_enabled(self, imu_apm_doc, monkeypatch) -> None:
         """
         User is nudged to run temperature calibration when it has never been enabled.
 
         GIVEN: INS_TCAL1_ENABLE is 0 (disabled)
         WHEN: Temperature calibration analysis runs
-        THEN: It suggests running calibration, without proposing a one-click fix
+        THEN: It suggests running calibration and provides the template enable value
         """
         # Arrange: single-IMU board, calibration disabled
-        log_data = FakeLogData({})
+        log_data = LogData()
         model = ImuLogAnalysis(log_data, _context({"INS_TCAL1_ENABLE": 0.0, "INS_ACC_ID": 1.0}, apm_doc=imu_apm_doc))
+        monkeypatch.setattr(model, "step_for_parameter", lambda _param_name: "05-ins-calibration")
+        monkeypatch.setattr(model, "expected_parameter_value", lambda _step, _param_name: (1.0, "template"))
 
         # Act: run temperature calibration analysis
         outcomes = model.check_temperature_calibration()
 
-        # Assert: one suggestion, no unsafe suggested_value
+        # Assert: one suggestion with the template enable value
         assert len(outcomes) == 1
         assert outcomes[0].param_name == "INS_TCAL1_ENABLE"
+        assert outcomes[0].value == 0.0
+        assert outcomes[0].suggested_value == 1.0
+        assert outcomes[0].related_step == "05-ins-calibration"
+        assert outcomes[0].message.startswith("IMU 1 temperature calibration is not enabled.")
         assert "not enabled" in outcomes[0].message
+        assert "Consider running it" in outcomes[0].message
 
     def test_user_sees_calibration_in_progress_status(self) -> None:
         """
@@ -230,6 +238,10 @@ class TestImuLogAnalysisTemperatureCalibrationState:
         outcomes = model.check_temperature_calibration()
 
         # Assert: in-progress status reported
+        assert len(outcomes) == 1
+        assert outcomes[0].param_name == "INS_TCAL1_ENABLE"
+        assert outcomes[0].value == 2.0
+        assert outcomes[0].message.startswith("IMU 1 temperature calibration is in progress")
         assert "in progress" in outcomes[0].message
 
     def test_user_sees_only_present_imu_instances_analyzed(self) -> None:
@@ -247,6 +259,73 @@ class TestImuLogAnalysisTemperatureCalibrationState:
         outcomes = model.check_temperature_calibration()
 
         assert len(outcomes) == 1
+
+    def test_user_sees_second_imu_when_first_imu_has_no_calibration_parameter(self, imu_apm_doc) -> None:
+        """A missing TCAL enable parameter for IMU 1 does not skip a present IMU 2."""
+        model = ImuLogAnalysis(
+            LogData(),
+            _context(
+                {"INS_ACC_ID": 1.0, "INS_ACC2_ID": 2.0, "INS_TCAL2_ENABLE": 2.0},
+                apm_doc=imu_apm_doc,
+            ),
+        )
+
+        outcomes = model.check_temperature_calibration()
+
+        assert len(outcomes) == 1
+        assert outcomes[0].param_name == "INS_TCAL2_ENABLE"
+        assert outcomes[0].value == 2.0
+        assert "in progress" in outcomes[0].message
+
+    def test_user_sees_third_imu_when_earlier_imu_instances_are_absent(self, imu_apm_doc) -> None:
+        """Analysis continues through absent IMU instances to report a present IMU 3."""
+        model = ImuLogAnalysis(
+            LogData(),
+            _context({"INS_ACC3_ID": 3.0, "INS_TCAL3_ENABLE": 0.0}, apm_doc=imu_apm_doc),
+        )
+
+        outcomes = model.check_temperature_calibration()
+
+        assert len(outcomes) == 1
+        assert outcomes[0].param_name == "INS_TCAL3_ENABLE"
+        assert "not enabled" in outcomes[0].message
+
+    def test_user_sees_unexpected_temperature_calibration_enable_value(self, imu_apm_doc) -> None:
+        """Enable values outside disabled, learning, and documented states are reported."""
+        model = ImuLogAnalysis(
+            LogData(),
+            _context({"INS_TCAL1_ENABLE": 7.0, "INS_ACC_ID": 1.0}, apm_doc=imu_apm_doc),
+        )
+
+        outcomes = model.check_temperature_calibration()
+
+        assert len(outcomes) == 1
+        assert outcomes[0].param_name == "INS_TCAL1_ENABLE"
+        assert outcomes[0].value == 7.0
+        assert "unexpected INS_TCAL1_ENABLE value of 7.0" in outcomes[0].message
+
+    def test_user_is_warned_when_temperature_calibration_bounds_are_missing(self, imu_apm_doc) -> None:
+        """An enabled calibration without either temperature bound is reported as inconsistent."""
+        model = ImuLogAnalysis(
+            LogData(),
+            _context(
+                {
+                    "INS_TCAL1_ENABLE": 1.0,
+                    "INS_ACC_ID": 1.0,
+                    "INS_ACC1_CALTEMP": 25.0,
+                    "INS_GYR1_CALTEMP": 25.0,
+                    "INS_TCAL1_TMIN": -10.0,
+                },
+                apm_doc=imu_apm_doc,
+            ),
+        )
+
+        outcomes = model.check_temperature_calibration()
+
+        assert len(outcomes) == 1
+        assert outcomes[0].param_name == "INS_TCAL1_ENABLE"
+        assert outcomes[0].value is None
+        assert "TMIN/TMAX data is missing" in outcomes[0].message
 
 
 class TestImuLogAnalysisTemperatureSpread:
@@ -351,8 +430,37 @@ class TestImuLogAnalysisTemperatureSpread:
         assert "above freezing" in outcomes[0].message
         assert "below the recommended" in outcomes[1].message
 
+    def test_user_sees_exact_minimum_and_recommended_spread_boundaries(self, imu_apm_doc) -> None:
+        """The 10C minimum and 25C recommendation use the documented inclusive boundaries."""
+        cases = [
+            (-10.0, 0.0, "meets the minimum but below the recommended"),
+            (-10.0, 15.0, "good coverage"),
+            (-10.0, 20.0, "good coverage"),
+        ]
+        for tmin, tmax, expected_message in cases:
+            model = ImuLogAnalysis(
+                LogData(),
+                _context(
+                    {
+                        "INS_TCAL1_ENABLE": 1.0,
+                        "INS_ACC_ID": 1.0,
+                        "INS_ACC1_CALTEMP": 25.0,
+                        "INS_GYR1_CALTEMP": 25.0,
+                        "INS_TCAL1_TMIN": tmin,
+                        "INS_TCAL1_TMAX": tmax,
+                    },
+                    apm_doc=imu_apm_doc,
+                ),
+            )
 
-class TestImuLogAnalysisInvalidCalTemp:  # pylint: disable=too-few-public-methods
+            outcomes = model.check_temperature_calibration()
+
+            assert len(outcomes) == 1
+            assert expected_message in outcomes[0].message
+            assert outcomes[0].value == pytest.approx(tmax - tmin)
+
+
+class TestImuLogAnalysisInvalidCalTemp:
     """Test detection of an invalid CALTEMP baseline on a calibrated IMU."""
 
     def test_user_is_warned_when_caltemp_baseline_was_never_set(self, imu_apm_doc) -> None:
@@ -385,4 +493,31 @@ class TestImuLogAnalysisInvalidCalTemp:  # pylint: disable=too-few-public-method
 
         # Assert: single "never performed" finding, spread not evaluated
         assert len(outcomes) == 1
+        assert outcomes[0].param_name == "INS_TCAL1_ENABLE"
+        assert outcomes[0].value is None
         assert "never performed" in outcomes[0].message
+
+    def test_user_is_warned_when_either_caltemp_baseline_is_missing(self, imu_apm_doc) -> None:
+        """A missing baseline for either sensor invalidates that IMU's temperature calibration."""
+        for accel_caltemp, gyro_caltemp in ((-300.0, 25.0), (25.0, -300.0)):
+            model = ImuLogAnalysis(
+                LogData(),
+                _context(
+                    {
+                        "INS_TCAL1_ENABLE": 1.0,
+                        "INS_ACC_ID": 1.0,
+                        "INS_ACC1_CALTEMP": accel_caltemp,
+                        "INS_GYR1_CALTEMP": gyro_caltemp,
+                        "INS_TCAL1_TMIN": -15.0,
+                        "INS_TCAL1_TMAX": 15.0,
+                    },
+                    apm_doc=imu_apm_doc,
+                ),
+            )
+
+            outcomes = model.check_temperature_calibration()
+
+            assert len(outcomes) == 1
+            assert outcomes[0].param_name == "INS_TCAL1_ENABLE"
+            assert outcomes[0].value is None
+            assert "accelerometer/gyroscope calibration (CALTEMP) was never performed" in outcomes[0].message

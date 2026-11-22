@@ -18,7 +18,7 @@ from pathlib import Path
 from tkinter import ttk
 from types import SimpleNamespace
 from typing import Any, Literal, cast
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 from conftest import PARAMETER_EDITOR_TABLE_HEADERS_ADVANCED, PARAMETER_EDITOR_TABLE_HEADERS_SIMPLE
@@ -3637,10 +3637,100 @@ def test_single_parameter_addition_refreshes_only_after_the_model_accepts_it(
     table._pending_scroll_to_bottom = False
 
     assert table._confirm_parameter_addition("TEST_PARAM") is added
-
     assert table._pending_scroll_to_bottom is added
     assert table.parameter_editor_window.repopulate_parameter_table.call_count == int(added)
     table._dialogs.show_error.assert_not_called()
+
+
+def test_parameter_add_dialog_widgets_explain_filtering_and_selection() -> None:
+    """
+    The add-parameter dialog shows a searchable multi-select list with clear instructions.
+
+    GIVEN: A parameter table opening its add-parameter dialog
+    WHEN: The dialog widgets are created
+    THEN: The filter, selection guidance, list scrollbar, and disabled add button are configured
+    """
+    table = ParameterEditorTable.__new__(ParameterEditorTable)
+    window = SimpleNamespace(main_frame=MagicMock())
+    search_var = MagicMock()
+    search_entry = MagicMock()
+    dialog_frame = MagicMock()
+    listbox = MagicMock()
+    scrollbar = MagicMock()
+    add_button = MagicMock()
+
+    with (
+        patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.tk.StringVar", return_value=search_var),
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.ttk.Label",
+            return_value=MagicMock(pack=MagicMock()),
+        ) as label,
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.ttk.Entry",
+            return_value=search_entry,
+        ) as entry,
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.ttk.Frame",
+            return_value=dialog_frame,
+        ),
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.tk.Listbox",
+            return_value=listbox,
+        ) as make_listbox,
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.ttk.Scrollbar",
+            return_value=scrollbar,
+        ) as make_scrollbar,
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.ttk.Button",
+            return_value=add_button,
+        ) as button,
+        patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as show_tooltip,
+    ):
+        result = table._create_parameter_add_dialog_widgets(window)
+
+    assert result == (search_var, search_entry, listbox, add_button)
+    assert label.call_args_list == [
+        call(window.main_frame, text=_("Name filter:")),
+        call(
+            window.main_frame,
+            text=_("(Use Ctrl/Shift for multiple selection)"),
+            font=("TkDefaultFont", 8),
+        ),
+    ]
+    entry.assert_called_once_with(window.main_frame, textvariable=search_var)
+    search_entry.pack.assert_called_once_with(fill="x", padx=10)
+    dialog_frame.pack.assert_called_once_with(fill="both", expand=True, padx=10, pady=5)
+    make_listbox.assert_called_once_with(dialog_frame, selectmode=tk.EXTENDED)
+    listbox.pack.assert_called_once_with(side="left", fill="both", expand=True)
+    make_scrollbar.assert_called_once_with(dialog_frame, orient="vertical", command=listbox.yview)
+    scrollbar.pack.assert_called_once_with(side="right", fill="y")
+    listbox.configure.assert_called_once_with(yscrollcommand=scrollbar.set)
+    button.assert_called_once_with(window.main_frame, text=_("No parameter selected"), state="disabled")
+    add_button.pack.assert_called_once_with(pady=10)
+    # pylint: disable=duplicate-code  # The complete user-facing tooltip text is asserted verbatim.
+    assert show_tooltip.call_args_list == [
+        call(
+            search_entry,
+            _(
+                "Type part of a parameter name to filter the list.\n"
+                "Press Enter to add all filtered parameters,\n"
+                "or only the selected ones if any are selected."
+            ),
+        ),
+        call(
+            listbox,
+            _(
+                "Double-click to add single parameter\n"
+                "Ctrl+click to select multiple one-by-one\n"
+                "Shift+click to select multiple by range\n"
+                "Ctrl+A: Select all\n"
+                "Ctrl+D: Deselect all\n"
+                "Return: Add selected"
+            ),
+        ),
+    ]
+    # pylint: enable=duplicate-code
 
 
 def test_parameter_dialog_parent_resolution_reports_when_no_toplevel_exists(

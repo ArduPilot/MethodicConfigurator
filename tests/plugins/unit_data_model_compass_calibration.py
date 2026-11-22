@@ -216,6 +216,26 @@ class TestCompassCalibrationWithConnectedFlightController:
 
         assert connected_compass_calibration_model.get_active_compass_ids() == [0, 1, 3]
 
+    def test_duplicate_compass_flags_return_each_compass_id_once(
+        self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock
+    ) -> None:
+        """
+        Aliased flags for one compass do not duplicate its calibration target.
+
+        GIVEN: Multiple enabled parameter names resolve to the same compass id
+        WHEN: The enabled compass list is requested
+        THEN: Each active id appears once in ascending order
+        """
+        connected_flight_controller.fc_parameters = {
+            "COMPASS_ENABLE": 1,
+            "COMPASS_USE": 1,
+            "COMPASS_USE1": 1,
+            "COMPASS_USE3": 1,
+            "COMPASS_USE2": 1,
+        }
+
+        assert connected_compass_calibration_model.get_active_compass_ids() == [0, 1, 2]
+
     def test_user_sees_no_active_compasses_when_compass_calibration_is_disabled(
         self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock
     ) -> None:
