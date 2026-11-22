@@ -977,24 +977,23 @@ def test_inspector_opens_for_plugins_without_paired_lifecycle_hooks(hooks: list[
 
 
 @pytest.mark.parametrize("connected", [False, True])
-def test_header_button_is_below_forum_zip_button(inspector: MavlinkInspectorWindow, connected: bool) -> None:
+def test_header_inspector_button_reflects_connection(inspector: MavlinkInspectorWindow, connected: bool) -> None:
     """
     Expose the inspector on every configuration step.
 
-    GIVEN real editor header widgets and the current connection state,
-    WHEN the header is built,
-    THEN the inspector follows the forum zip button and is available only with a live link.
+    GIVEN the current connection state,
+    WHEN the parameter actions button is built,
+    THEN the inspector is available only with a live link.
     """
     editor = MagicMock(spec=ParameterEditorWindow)
     editor._connection_recovery = None
     editor.navigation_lock = NavigationLock()
     editor.parameter_editor = MagicMock(is_fc_link_connected=connected)
     parent = tk.Frame(inspector.root)
-    editor.put_image_in_label.side_effect = lambda frame, _path: tk.Label(frame)
-    ParameterEditorWindow._create_logo_and_forum_help_widgets(editor, parent, "test", "TButton")
-    frame = parent.winfo_children()[0]
-    buttons = [child for child in frame.pack_slaves() if isinstance(child, frontend.ttk.Button)]
-    assert [str(button.cget("text")) for button in buttons] == [_("Zip vehicle for Forum help"), _("MAVLink inspector")]
-    buttons[1].invoke()
+    ParameterEditorWindow._create_inspector_button(editor, parent, "TButton")
+    buttons = [child for child in parent.winfo_children() if isinstance(child, frontend.ttk.Button)]
+    assert [str(button.cget("text")) for button in buttons] == [_("MAVLink inspector")]
+    assert int(buttons[0].grid_info()["row"]) == 3
+    buttons[0].invoke()
     assert editor.on_mavlink_inspector_click.called is connected
     parent.destroy()
