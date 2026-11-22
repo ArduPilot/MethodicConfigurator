@@ -211,5 +211,5 @@ Update and improve each translation string.
 Save the result and either send the `.po` file to the team,
 or create a gitlab Pull request with the changes to the `.po` file.
 The github [robot will automatically convert that `.po` file into a `.mo` file](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/update_mo_files.yml)
-and create an [*ArduPilot methodic configurator* installer](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/windows_build.yml)
+and create an [*ArduPilot methodic configurator* installer](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/build_windows_macos.yml)
 that you can use to test the translations.
