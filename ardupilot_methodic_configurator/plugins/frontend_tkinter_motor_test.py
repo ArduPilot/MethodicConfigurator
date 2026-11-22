@@ -608,14 +608,15 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             showerror(_("Duration value error"), _("Duration validation failed: %(error)s") % {"error": str(e)})
 
     def _set_motor_spin_arm(self) -> None:
-        """Open a dialog to set MOT_SPIN_ARM."""
+        """Open a dialog to set MOT_SPIN_ARM (Q_M_SPIN_ARM on ArduPlane)."""
         if self._restart_active:
             return
         # Simple dialog for now, should be a custom Toplevel
-        current_val = self.model.get_parameter("MOT_SPIN_ARM")
+        spin_arm_name = self.model.param_name("MOT_SPIN_ARM")
+        current_val = self.model.get_parameter(spin_arm_name)
         new_val = askfloat(
             _("Set Motor Spin Arm"),
-            _("Enter new value for MOT_SPIN_ARM with 0.02 margin:"),
+            _("Enter new value for %(param)s with 0.02 margin:") % {"param": spin_arm_name},
             initialvalue=current_val,
         )
         if new_val is not None:
@@ -673,11 +674,13 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
                 self._timer_id = self.after(1000, self._on_update_timer)
 
     def _set_motor_spin_min(self) -> None:
-        """Open a dialog to set MOT_SPIN_MIN."""
-        current_val = self.model.get_parameter("MOT_SPIN_MIN")
+        """Open a dialog to set MOT_SPIN_MIN (Q_M_SPIN_MIN on ArduPlane)."""
+        spin_min_name = self.model.param_name("MOT_SPIN_MIN")
+        current_val = self.model.get_parameter(spin_min_name)
         new_val = askfloat(
             _("Set Motor Spin Min"),
-            _("Enter new value for MOT_SPIN_MIN, must be at least 0.02 higher than MOT_SPIN_ARM:"),
+            _("Enter new value for %(min_param)s, must be at least 0.02 higher than %(arm_param)s:")
+            % {"min_param": spin_min_name, "arm_param": self.model.param_name("MOT_SPIN_ARM")},
             initialvalue=current_val,
             minvalue=0.0,
             maxvalue=1.0,

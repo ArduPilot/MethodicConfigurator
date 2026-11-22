@@ -791,6 +791,25 @@ class TestFlightControllerCommandsWrapperMethods:
         assert min_volt == 9.6
         assert max_volt == 12.6
 
+    def test_quadplane_voltage_thresholds_use_q_m_bat_volt_max(self) -> None:
+        """
+        A connected QuadPlane reports its maximum motor test voltage from Q_M_BAT_VOLT_MAX.
+
+        GIVEN: An ArduPlane connection with BATT_ARM_VOLT and Q_M_BAT_VOLT_MAX set
+        WHEN: User requests voltage thresholds
+        THEN: The maximum voltage comes from Q_M_BAT_VOLT_MAX instead of defaulting to 0.0
+        """
+        mock_params_mgr = Mock()
+        mock_params_mgr.fc_parameters = {"BATT_ARM_VOLT": 14.8, "Q_M_BAT_VOLT_MAX": 16.8}
+
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = MagicMock()
+        mock_conn_mgr.info.vehicle_type = "ArduPlane"
+
+        commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
+
+        assert commands_mgr.get_voltage_thresholds() == (14.8, 16.8)
+
     def test_user_can_check_battery_monitoring_enabled(self) -> None:
         """
         User can check if battery monitoring is enabled.
