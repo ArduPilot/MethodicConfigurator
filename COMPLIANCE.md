@@ -47,7 +47,7 @@ ArduPilot Methodic Configurator adheres to multiple compliance standards and bes
 - Follows [git-flow branching model](https://www.gitkraken.com/learn/git/git-flow)
 - Implements [git pre-commit hooks](https://pre-commit.com/) to ensure code quality and compliance on every commit
 - Uses containerized CI/CD environments for consistency
-- Uses [automated](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/windows_build.yml) [changelog generation](https://github.com/ArduPilot/MethodicConfigurator/releases)
+- Uses [automated](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/build_windows_macos.yml) [changelog generation](https://github.com/ArduPilot/MethodicConfigurator/releases)
 - Implements reproducible builds with [pinned software dependencies](https://www.kusari.dev/blog/pinning-dependencies)
 - Implements automated dependency updates and security patches using [renovate](https://www.mend.io/renovate/) and [dependabot](https://github.com/dependabot)
 
