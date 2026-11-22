@@ -10236,11 +10236,11 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:712
 msgid "FC information"
-msgstr ""
+msgstr "Informações do controlador de voo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:721
 msgid "Flight controller banner, messages and hardware information"
-msgstr ""
+msgstr "Banner, mensagens e informações de hardware do controlador de voo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:728
 msgid "Edit vehicle components"
@@ -10258,15 +10258,15 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:771
 msgid "Internal log analyser"
-msgstr ""
+msgstr "Analisador interno de registos"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:773
 msgid "Open a .bin log file in AMC's internal log analyser"
-msgstr ""
+msgstr "Abrir um ficheiro de registo .bin no analisador interno de registos do AMC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:778
 msgid "Open a .bin log file in the skybrush log analyser"
-msgstr ""
+msgstr "Abrir um ficheiro de registo .bin no analisador de registos Skybrush"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:881
 msgid "Tuning Graph Error"
@@ -10274,11 +10274,11 @@ msgstr "Erro no Gráfico de Afinação"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:896
 msgid "Open the tuning parameter graph"
-msgstr ""
+msgstr "Abrir o gráfico de parâmetros de afinação"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:898
 msgid "tuning_report.csv not found in the vehicle directory"
-msgstr ""
+msgstr "tuning_report.csv não encontrado no diretório do veículo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:908
 msgid "User Manual, Support Forum, Report a Bug, Licenses, Source Code"
@@ -10307,7 +10307,7 @@ msgstr "Analisar um registo .bin"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:934
 msgid ".bin analysis tools"
-msgstr ""
+msgstr "Ferramentas de análise de ficheiros .bin"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:938
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_tuning_report.py:36

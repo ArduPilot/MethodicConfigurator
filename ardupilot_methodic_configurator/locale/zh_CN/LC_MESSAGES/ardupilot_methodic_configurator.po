@@ -9326,11 +9326,11 @@ msgstr "未连接飞控，无法导出参数"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:712
 msgid "FC information"
-msgstr ""
+msgstr "飞控信息"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:721
 msgid "Flight controller banner, messages and hardware information"
-msgstr ""
+msgstr "飞控启动横幅、消息和硬件信息"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:728
 msgid "Edit vehicle components"
@@ -9346,15 +9346,15 @@ msgstr "检查已接收的 MAVLink 消息、数据速率和解码字段。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:771
 msgid "Internal log analyser"
-msgstr ""
+msgstr "内置日志分析器"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:773
 msgid "Open a .bin log file in AMC's internal log analyser"
-msgstr ""
+msgstr "在 AMC 的内置日志分析器中打开 .bin 日志文件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:778
 msgid "Open a .bin log file in the skybrush log analyser"
-msgstr ""
+msgstr "在 skybrush 日志分析器中打开 .bin 日志文件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:881
 msgid "Tuning Graph Error"
@@ -9362,11 +9362,11 @@ msgstr "调参图错误"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:896
 msgid "Open the tuning parameter graph"
-msgstr ""
+msgstr "打开调参参数图表"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:898
 msgid "tuning_report.csv not found in the vehicle directory"
-msgstr ""
+msgstr "在载具目录中未找到 tuning_report.csv"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:908
 msgid "User Manual, Support Forum, Report a Bug, Licenses, Source Code"
@@ -9394,7 +9394,7 @@ msgstr "分析 .bin 日志"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:934
 msgid ".bin analysis tools"
-msgstr ""
+msgstr ".bin 分析工具"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:938
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_tuning_report.py:36
