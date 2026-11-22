@@ -5769,6 +5769,46 @@ class TestQuadPlaneMotorTest:
 
         assert "BATT_ARM_VOLT and Q_M_BAT_VOLT_MAX" in message
 
+    def test_user_selecting_quadplane_frame_type_reboots_the_flight_controller(self, quadplane_motor_test_model) -> None:
+        """
+        A new QuadPlane frame type is applied by rebooting the flight controller.
+
+        GIVEN: A tilt-tri QuadPlane whose Q_FRAME_TYPE has no RebootRequired metadata
+        WHEN: The user selects the pitch-reversed frame type
+        THEN: Q_FRAME_TYPE is written and the flight controller is rebooted so the new motor layout is used
+        """
+        fc = quadplane_motor_test_model.flight_controller
+        progress_callback = MagicMock()
+
+        quadplane_motor_test_model.update_frame_type_by_key("6", progress_callback, 2)
+
+        fc.set_param.assert_called_once_with("Q_FRAME_TYPE", 6)
+        fc.reset_and_reconnect.assert_called_once_with(progress_callback, 2)
+
+    def test_quadplane_frame_class_change_reboots_the_flight_controller(self, quadplane_motor_test_model) -> None:
+        """
+        A new QuadPlane frame class is applied by rebooting the flight controller.
+
+        GIVEN: A QuadPlane whose Q_FRAME_CLASS has no RebootRequired metadata
+        WHEN: Q_FRAME_CLASS is changed
+        THEN: The flight controller is rebooted
+        """
+        quadplane_motor_test_model.set_parameter("Q_FRAME_CLASS", 1.0)
+
+        quadplane_motor_test_model.flight_controller.reset_and_reconnect.assert_called_once_with(None, 0)
+
+    def test_quadplane_spin_value_change_does_not_reboot(self, quadplane_motor_test_model) -> None:
+        """
+        Motor spin values take effect without a reboot.
+
+        GIVEN: A QuadPlane
+        WHEN: Q_M_SPIN_MIN is changed
+        THEN: The flight controller is not rebooted
+        """
+        quadplane_motor_test_model.set_motor_spin_min_value(0.14)
+
+        quadplane_motor_test_model.flight_controller.reset_and_reconnect.assert_not_called()
+
 
 @pytest.fixture
 def fixed_wing_motor_test_model(mock_flight_controller, mock_filesystem, mock_motor_data_json) -> MotorTestDataModel:
