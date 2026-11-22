@@ -341,19 +341,22 @@ class TestStateMachine:
 
     @pytest.mark.parametrize("stage", [fw.UploadStage.ERASING, fw.UploadStage.PROGRAMMING, fw.UploadStage.VERIFYING])
     def test_user_cannot_cancel_once_the_flash_is_being_written(self, stage: fw.UploadStage) -> None:
-        with pytest.raises(ValueError, match="cannot cancel"):
+        with pytest.raises(ValueError, match=f"cannot cancel during {stage.value}") as error:
             fw.next_stage(stage, fw.UploadStage.CANCELLED)
+        assert str(error.value) == f"cannot cancel during {stage.value}"
 
     def test_any_stage_can_fail(self) -> None:
         assert fw.next_stage(fw.UploadStage.PROGRAMMING, fw.UploadStage.FAILED) is fw.UploadStage.FAILED
 
     def test_skipping_a_stage_is_rejected(self) -> None:
-        with pytest.raises(ValueError, match="illegal transition"):
+        with pytest.raises(ValueError, match="illegal transition inspecting -> erasing") as error:
             fw.next_stage(fw.UploadStage.INSPECTING, fw.UploadStage.ERASING)
+        assert str(error.value) == "illegal transition inspecting -> erasing"
 
     def test_terminal_stages_do_not_move(self) -> None:
-        with pytest.raises(ValueError, match="terminal"):
+        with pytest.raises(ValueError, match="completed is terminal") as error:
             fw.next_stage(fw.UploadStage.COMPLETED, fw.UploadStage.IDLE)
+        assert str(error.value) == "completed is terminal"
 
 
 class FakeBootloader:

@@ -95,6 +95,29 @@ class TestDisplayUncoveredBranches:
 
         assert result is True
 
+    def test_top_level_recursion_uses_the_nested_component_path(self, display_model) -> None:
+        """Given nested schema fields, resolve required status using their complete path."""
+        display_model.schema.get_component_property_description.return_value = ("Required", False)
+        display_model.get_all_components = MagicMock(return_value=["Flight Controller"])
+
+        assert display_model.should_display_in_simple_mode(
+            "Flight Controller", {"Product": {"Manufacturer": "Holybro"}}, [], "simple"
+        )
+        display_model.schema.get_component_property_description.assert_called_once_with(
+            ("Flight Controller", "Product", "Manufacturer")
+        )
+
+    def test_nested_recursion_uses_the_full_non_top_level_path(self, display_model) -> None:
+        """Given a required nested leaf, retain every parent in the schema lookup path."""
+        display_model.schema.get_component_property_description.return_value = ("Required", False)
+
+        assert display_model.should_display_in_simple_mode(
+            "Specifications", {"Nested": {"Required": "value"}}, ["Flight Controller"], "simple"
+        )
+        display_model.schema.get_component_property_description.assert_called_once_with(
+            ("Flight Controller", "Specifications", "Nested", "Required")
+        )
+
     # ------------------------------------------------------------------
     # prepare_non_leaf_widget_config - optional field with description (line 122)
     # ------------------------------------------------------------------
@@ -110,10 +133,7 @@ class TestDisplayUncoveredBranches:
 
         config = display_model.prepare_non_leaf_widget_config("Product", {"Manufacturer": "Test"}, ["Flight Controller"])
 
-        assert "Section info" in config["description"]
-        assert "optional" in config["description"].lower()
-        assert "\n" in config["description"]
-        assert "blank" in config["description"].lower()
+        assert config["description"] == "Section info\nThis is optional and can be left blank"
 
     # ------------------------------------------------------------------
     # should_display_in_simple_mode - branch 57->54: top-level loop continues

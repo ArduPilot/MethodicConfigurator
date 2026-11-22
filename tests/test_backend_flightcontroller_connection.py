@@ -26,7 +26,6 @@ from pymavlink import mavutil
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import (
     DEFAULT_BAUDRATE,
     SUPPORTED_BAUDRATES,
-    FakeSerialForTests,
     FlightControllerConnection,
 )
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavlink import (
@@ -1115,68 +1114,6 @@ class TestConnectionErrorHandling:
         # Then: Connection created successfully
         assert conn is not None
         assert conn.progress_callback is None
-
-
-class TestFakeSerialForTests:
-    """Test the FakeSerialForTests helper class used in unit tests."""
-
-    def test_read_returns_empty_string(self) -> None:
-        """
-        FakeSerialForTests.read always returns an empty string.
-
-        GIVEN: A FakeSerialForTests instance
-        WHEN: read(n) is called for any length
-        THEN: An empty string should be returned
-        """
-        fake = FakeSerialForTests("/dev/ttyUSB0")
-        assert fake.read(0) == ""
-        assert fake.read(1) == ""
-        assert fake.read(1024) == ""
-
-    def test_write_always_raises_exception(self) -> None:
-        """
-        FakeSerialForTests.write always raises an Exception to simulate write failure.
-
-        GIVEN: A FakeSerialForTests instance
-        WHEN: write() is called with any buffer
-        THEN: An Exception should be raised
-        """
-        fake = FakeSerialForTests("/dev/ttyUSB0")
-        with pytest.raises(Exception, match="write always fails"):
-            fake.write(b"data")
-
-    def test_in_waiting_returns_zero(self) -> None:
-        """
-        FakeSerialForTests.inWaiting always returns zero bytes available.
-
-        GIVEN: A FakeSerialForTests instance
-        WHEN: inWaiting() is called
-        THEN: Zero should be returned (no bytes in buffer)
-        """
-        fake = FakeSerialForTests("/dev/ttyUSB0")
-        assert fake.inWaiting() == 0
-
-    def test_close_does_not_raise(self) -> None:
-        """
-        FakeSerialForTests.close completes without raising.
-
-        GIVEN: A FakeSerialForTests instance
-        WHEN: close() is called
-        THEN: No exception should be raised
-        """
-        fake = FakeSerialForTests("/dev/ttyUSB0")
-        fake.close()  # Must not raise
-
-    def test_device_attribute_is_stored(self) -> None:
-        """
-        FakeSerialForTests stores the device string passed at construction.
-
-        GIVEN: A device string passed to the constructor
-        WHEN: The device attribute is accessed
-        THEN: The same string should be returned
-        """
-        fake = FakeSerialForTests("COM3")
-        assert fake.device == "COM3"
 
 
 class TestFlightControllerConnectionLinuxSoftlink:

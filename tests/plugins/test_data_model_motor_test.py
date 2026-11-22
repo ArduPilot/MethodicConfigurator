@@ -13,7 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from logging import LogRecord
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 
@@ -347,6 +347,24 @@ def motor_test_model_with_corrupted_json_data(mock_flight_controller, mock_files
 class TestMotorTestDataModelInitialization:
     """Test motor test data model initialization and configuration."""
 
+    def test_unconfigured_model_starts_with_empty_configuration_state(self, mock_flight_controller, mock_filesystem) -> None:
+        """Constructor defaults remain empty until loading, configuration, and settings run."""
+        with (
+            patch.object(MotorTestDataModel, "_load_motor_data"),
+            patch.object(MotorTestDataModel, "_update_frame_configuration"),
+            patch.object(MotorTestDataModel, "_get_test_settings_from_disk"),
+        ):
+            model = MotorTestDataModel(mock_flight_controller, mock_filesystem)
+
+        assert model._motor_data == {}
+        assert (model._frame_class, model._frame_type, model._motor_count) == (0, 0, 0)
+        assert not model._motor_labels
+        assert not model._motor_numbers
+        assert not model._test_order
+        assert not model._motor_directions
+        assert model._frame_layout == {}
+        assert model._cached_frame_options is None
+
     def test_user_can_initialize_model_with_connected_flight_controller(self, mock_flight_controller, mock_filesystem) -> None:
         """
         User can successfully initialize motor test model with connected flight controller.
@@ -470,7 +488,11 @@ class TestMotorTestDataModelFrameConfiguration:
         THEN: Parameters should be uploaded and internal state updated
         """
         # Arrange: Configure successful parameter setting
-        with patch.object(motor_test_model, "set_parameter", return_value=(True, "")):
+        motor_test_model._frame_type = 0
+        with (
+            patch.object(motor_test_model, "set_parameter", return_value=(True, "")) as set_parameter,
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_info") as info_log,
+        ):
             # Act: Update frame configuration
             motor_test_model.update_frame_configuration(2, 1)  # Hexa X
 
@@ -478,6 +500,14 @@ class TestMotorTestDataModelFrameConfiguration:
             assert motor_test_model.frame_class == 2
             assert motor_test_model.frame_type == 1
             assert motor_test_model.motor_count == 6  # HEXA X has 6 motors
+            assert motor_test_model._frame_layout["Class"] == 2
+            assert motor_test_model._frame_layout["Type"] == 1
+
+        assert set_parameter.call_args_list == [call("FRAME_CLASS", 2.0), call("FRAME_TYPE", 1.0)]
+        info_log.assert_called_once_with(
+            _("Frame configuration updated: Class=%(class)d, Type=%(type)d, Motors=%(motors)d"),
+            {"class": 2, "type": 1, "motors": 6},
+        )
 
     def test_user_can_update_frame_configuration_and_motor_count(self, motor_test_model) -> None:
         """
@@ -1850,10 +1880,9 @@ class TestMotorTestDataModelSettingsManagement:
             with pytest.raises(Exception, match="Settings save failed"):
                 motor_test_model.set_test_duration_s(2.0)
 
-            # Assert: Error was logged
-            mock_log.assert_called_once()
-            error_call = mock_log.call_args[0]
-            assert "Failed to save duration setting" in error_call[0]
+            mock_log.assert_called_once_with(
+                _("Failed to save duration setting: %(error)s"), {"error": "Settings save failed"}
+            )
 
     def test_set_test_throttle_handles_exception_gracefully(self, motor_test_model) -> None:
         """
@@ -1872,10 +1901,9 @@ class TestMotorTestDataModelSettingsManagement:
             with pytest.raises(Exception, match="Settings save failed"):
                 motor_test_model.set_test_throttle_pct(10)
 
-            # Assert: Error was logged
-            mock_log.assert_called_once()
-            error_call = mock_log.call_args[0]
-            assert "Failed to save throttle percentage setting" in error_call[0]
+            mock_log.assert_called_once_with(
+                _("Failed to save throttle percentage setting: %(error)s"), {"error": "Settings save failed"}
+            )
 
 
 class TestMotorTestDataModelSafetyChecksAdvanced:
@@ -2087,12 +2115,17 @@ class TestMotorTestDataModelConnectionRefresh:
         THEN: The refresh should return False without propagating the exception
         """
         # Arrange: Mock _update_frame_configuration to raise RuntimeError
-        with patch.object(motor_test_model, "_update_frame_configuration", side_effect=RuntimeError("Update failed")):
+        with (
+            patch.object(motor_test_model, "_update_frame_configuration", side_effect=RuntimeError("Update failed")),
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_warning") as warning_log,
+        ):
             # Act: Try to refresh connection status
             result = motor_test_model.refresh_connection_status()
 
             # Assert: Exception handled gracefully
             assert result is False
+
+        warning_log.assert_called_once_with(_("Failed to refresh frame configuration: %(error)s"), {"error": "Update failed"})
 
     def test_refresh_connection_status_succeeds_with_successful_update(self, motor_test_model) -> None:
         """
@@ -2199,6 +2232,20 @@ class TestMotorTestDataModelSettingsEdgeCases:
             loader_cls.return_value = loader
             return MotorTestDataModel(mock_flight_controller, mock_filesystem)
 
+    @pytest.mark.parametrize(("duration", "throttle"), [(1, 1), (60, 100)])
+    def test_persisted_settings_accept_exact_supported_boundaries(
+        self, motor_test_model, monkeypatch, duration, throttle
+    ) -> None:
+        """Persisted settings accept the minimum and maximum allowed values."""
+        settings = {"motor_test/duration": duration, "motor_test/throttle_pct": throttle}
+        monkeypatch.setattr(
+            "ardupilot_methodic_configurator.plugins.data_model_motor_test.ProgramSettings.get_setting",
+            settings.get,
+        )
+
+        assert motor_test_model._get_test_duration_s() == duration
+        assert motor_test_model._get_test_throttle_pct() == throttle
+
     def test_user_is_warned_when_duration_setting_missing(
         self,
         mock_flight_controller,
@@ -2222,11 +2269,13 @@ class TestMotorTestDataModelSettingsEdgeCases:
 
         with (
             patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_error") as mock_log,
-            pytest.raises(ReferenceError, match="duration setting not found"),
+            pytest.raises(ReferenceError, match=r"^Motor test duration setting not found$"),
         ):
             self._build_model(mock_flight_controller, mock_filesystem, mock_motor_data_json)
 
-        assert mock_log.call_count == 1
+        mock_log.assert_called_once_with(
+            _("Invalid motor test duration setting: %(error)s"), {"error": "Motor test duration setting not found"}
+        )
 
     def test_user_is_warned_when_duration_setting_out_of_range(
         self,
@@ -2249,8 +2298,16 @@ class TestMotorTestDataModelSettingsEdgeCases:
             fake_get,
         )
 
-        with pytest.raises(ValueError, match="at least"):
+        with (
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_error") as mock_log,
+            pytest.raises(ValueError, match=r"^Motor test duration must be at least 1 second$"),
+        ):
             self._build_model(mock_flight_controller, mock_filesystem, mock_motor_data_json)
+
+        mock_log.assert_called_once_with(
+            _("Invalid motor test duration setting: %(error)s"),
+            {"error": "Motor test duration must be at least 1 second"},
+        )
 
     def test_user_is_warned_when_throttle_setting_missing(
         self,
@@ -2275,11 +2332,14 @@ class TestMotorTestDataModelSettingsEdgeCases:
 
         with (
             patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_error") as mock_log,
-            pytest.raises(ReferenceError, match="throttle percentage setting not found"),
+            pytest.raises(ReferenceError, match=r"^Motor test throttle percentage setting not found$"),
         ):
             self._build_model(mock_flight_controller, mock_filesystem, mock_motor_data_json)
 
-        assert mock_log.call_count == 1
+        mock_log.assert_called_once_with(
+            _("Invalid motor test throttle percentage setting: %(error)s"),
+            {"error": "Motor test throttle percentage setting not found"},
+        )
 
     def test_user_is_warned_when_throttle_setting_out_of_range(
         self,
@@ -2302,8 +2362,16 @@ class TestMotorTestDataModelSettingsEdgeCases:
             fake_get,
         )
 
-        with pytest.raises(ValueError, match="must not exceed"):
+        with (
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_error") as mock_log,
+            pytest.raises(ValueError, match=r"^Motor test throttle percentage must not exceed 100%$"),
+        ):
             self._build_model(mock_flight_controller, mock_filesystem, mock_motor_data_json)
+
+        mock_log.assert_called_once_with(
+            _("Invalid motor test throttle percentage setting: %(error)s"),
+            {"error": "Motor test throttle percentage must not exceed 100%"},
+        )
 
     def test_user_is_warned_when_duration_setting_above_maximum(
         self,
@@ -2326,8 +2394,16 @@ class TestMotorTestDataModelSettingsEdgeCases:
             fake_get,
         )
 
-        with pytest.raises(ValueError, match="must not exceed"):
+        with (
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_error") as mock_log,
+            pytest.raises(ValueError, match=r"^Motor test duration must not exceed 60 seconds$"),
+        ):
             self._build_model(mock_flight_controller, mock_filesystem, mock_motor_data_json)
+
+        mock_log.assert_called_once_with(
+            _("Invalid motor test duration setting: %(error)s"),
+            {"error": "Motor test duration must not exceed 60 seconds"},
+        )
 
     def test_user_is_warned_when_throttle_setting_below_minimum(
         self,
@@ -2350,8 +2426,16 @@ class TestMotorTestDataModelSettingsEdgeCases:
             fake_get,
         )
 
-        with pytest.raises(ValueError, match="at least"):
+        with (
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_error") as mock_log,
+            pytest.raises(ValueError, match=r"^Motor test throttle percentage must be at least 1%$"),
+        ):
             self._build_model(mock_flight_controller, mock_filesystem, mock_motor_data_json)
+
+        mock_log.assert_called_once_with(
+            _("Invalid motor test throttle percentage setting: %(error)s"),
+            {"error": "Motor test throttle percentage must be at least 1%"},
+        )
 
     def test_set_test_throttle_pct_succeeds_with_valid_value(self, motor_test_model) -> None:
         """
@@ -3654,7 +3738,10 @@ class TestMotorTestSettingsBoundariesAndMessages:
         ):
             motor_test_model.set_test_duration_s(0.5)
 
-        mock_log.assert_called_once()
+        mock_log.assert_called_once_with(
+            _("Invalid motor test duration setting: %(error)s"),
+            {"error": "Motor test duration must be at least 1 second"},
+        )
         assert motor_test_model.get_test_duration_s() == 5
         assert ProgramSettings.get_setting("motor_test/duration") == 5
 
@@ -3704,7 +3791,10 @@ class TestMotorTestSettingsBoundariesAndMessages:
         ):
             motor_test_model.set_test_throttle_pct(0)
 
-        mock_log.assert_called_once()
+        mock_log.assert_called_once_with(
+            _("Invalid motor test throttle percentage setting: %(error)s"),
+            {"error": "Motor test throttle percentage must be at least 1%"},
+        )
         assert motor_test_model.get_test_throttle_pct() == 50
 
     def test_throttle_above_maximum_shows_exact_message_and_keeps_previous_value(self, motor_test_model) -> None:
@@ -4101,6 +4191,8 @@ class TestMotorTestFrameOptionsDetails:
             [
                 {"Type": 0, "ClassName": "QUAD", "TypeName": "Plus"},
                 {"Type": 1, "ClassName": "QUAD"},
+                {"ClassName": "QUAD", "TypeName": "Y"},
+                {"Type": 2, "TypeName": "Z"},
                 {"Type": 1, "ClassName": "QUAD", "TypeName": "X"},
             ],
         )
@@ -4109,7 +4201,7 @@ class TestMotorTestFrameOptionsDetails:
             options = motor_test_model.get_frame_options()
 
         assert options == {"QUAD": {0: "Plus", 1: "X"}}
-        mock_warning.assert_called_once_with("Skipping motor layout with missing required fields")
+        assert mock_warning.call_args_list == [call("Skipping motor layout with missing required fields")] * 3
 
     def test_frame_options_are_grouped_by_class_name(self, motor_test_model) -> None:
         """
@@ -4123,6 +4215,19 @@ class TestMotorTestFrameOptionsDetails:
 
         assert motor_test_model.get_frame_options() == {"QUAD": {0: "Plus", 1: "X"}}
 
+    def test_frame_option_loading_logs_exact_layout_and_result_counts(self, motor_test_model) -> None:
+        """Frame-option debug logs preserve their messages and interpolation values."""
+        _use_layouts(motor_test_model, _quad_layouts())
+
+        with patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_debug") as debug_log:
+            assert motor_test_model.get_frame_options() == {"QUAD": {0: "Plus", 1: "X"}}
+
+        assert debug_log.call_args_list == [
+            call(_("Loading frame options from motor data loader (%(count)d layouts available)"), {"count": 2}),
+            call(_("Successfully loaded %(count)d frame classes from motor data loader"), {"count": 1}),
+            call(_("Frame options loaded: %(count)d classes with %(types)d total types"), {"count": 1, "types": 2}),
+        ]
+
     def test_doc_dict_fallback_parses_names_and_skips_entries_without_colon(self, motor_test_model) -> None:
         """
         Without motor layouts, frame options come from FRAME_TYPE parameter metadata.
@@ -4133,10 +4238,28 @@ class TestMotorTestFrameOptionsDetails:
         """
         _use_layouts(motor_test_model, [])
         motor_test_model.filesystem.doc_dict = {
-            "FRAME_TYPE": {"values": {0: "Quad: Plus", "1": " quad :  X ", 2: "no colon here"}}
+            "FRAME_TYPE": {
+                "values": {
+                    0: "Quad: Plus",
+                    "1": " quad :  X ",
+                    2: "no colon here",
+                    3: "Quad: Type: With colon",
+                }
+            }
         }
 
-        assert motor_test_model.get_frame_options() == {"QUAD": {0: "Plus", 1: "X"}}
+        with patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_debug") as debug_log:
+            assert motor_test_model.get_frame_options() == {"QUAD": {0: "Plus", 1: "X", 3: "Type: With colon"}}
+
+        assert debug_log.call_args_list == [
+            call(_("Loading frame options from motor data loader (%(count)d layouts available)"), {"count": 0}),
+            call(_("Motor data unavailable, using doc_dict as fallback for frame options")),
+            call(
+                _("Successfully loaded %(count)d frame classes from parameter metadata fallback"),
+                {"count": 1},
+            ),
+            call(_("Frame options loaded: %(count)d classes with %(types)d total types"), {"count": 1, "types": 3}),
+        ]
 
     def test_empty_sources_log_exact_warning_and_return_nothing(self, motor_test_model) -> None:
         """
@@ -4154,6 +4277,13 @@ class TestMotorTestFrameOptionsDetails:
 
         mock_warning.assert_called_once_with("No frame options could be loaded from motor data or parameter metadata")
 
+    def test_doc_dict_without_frame_type_values_returns_no_options(self, motor_test_model) -> None:
+        """Missing FRAME_TYPE values are treated as an empty metadata mapping."""
+        _use_layouts(motor_test_model, [])
+        motor_test_model.filesystem.doc_dict = {"FRAME_TYPE": {}}
+
+        assert motor_test_model.get_frame_options() == {}
+
     def test_frame_options_are_cached_after_first_load(self, motor_test_model) -> None:
         """
         Later changes to the layouts do not change already-loaded frame options.
@@ -4168,6 +4298,16 @@ class TestMotorTestFrameOptionsDetails:
         motor_test_model._motor_data_loader.data = {"layouts": []}
 
         assert motor_test_model.get_frame_options() is first
+
+    def test_cached_frame_options_log_the_cached_class_count(self, motor_test_model) -> None:
+        """Cached frame options log the unchanged message and number of classes."""
+        options = {"QUAD": {0: "Plus"}}
+        motor_test_model._cached_frame_options = options
+
+        with patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_debug") as debug_log:
+            assert motor_test_model.get_frame_options() is options
+
+        debug_log.assert_called_once_with(_("Returning cached frame options with %(count)d classes"), {"count": 1})
 
 
 class TestMotorTestCurrentFrameClassTypes:
@@ -4186,6 +4326,57 @@ class TestMotorTestCurrentFrameClassTypes:
         motor_test_model.flight_controller.fc_parameters["FRAME_CLASS"] = 1
 
         assert motor_test_model.get_current_frame_class_types() == {0: "Plus", 1: "X"}
+
+    def test_current_frame_class_debug_log_has_exact_count_and_identity(self, motor_test_model) -> None:
+        """The found-types log identifies the selected class and number of types."""
+        motor_test_model._motor_data_loader.data = {
+            "layouts": [{"Class": 1, "ClassName": "QUAD", "Type": 0, "TypeName": "Plus"}]
+        }
+        with (
+            patch.object(motor_test_model, "get_frame_options", return_value={"QUAD": {0: "Plus"}}),
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_debug") as debug_log,
+        ):
+            assert motor_test_model.get_current_frame_class_types() == {0: "Plus"}
+
+        debug_log.assert_called_once_with(
+            _("Found %(count)d frame types for current frame class %(class)d (%(name)s)"),
+            {"count": 1, "class": 1, "name": "QUAD"},
+        )
+
+    def test_defined_frame_class_without_matching_types_returns_empty_mapping(self, motor_test_model) -> None:
+        """A defined class with no frame-type options returns an empty mapping."""
+        motor_test_model._motor_data_loader.data = {"layouts": [{"Class": 1, "ClassName": "QUAD"}]}
+        with patch.object(motor_test_model, "get_frame_options", return_value={}):
+            assert motor_test_model.get_current_frame_class_types() == {}
+
+    def test_current_frame_class_requires_both_class_metadata_fields(self, motor_test_model) -> None:
+        """A class number without a class name cannot identify available frame types."""
+        motor_test_model._motor_data_loader.data = {"layouts": [{"Class": 1, "Type": 0, "TypeName": "Plus"}]}
+        with (
+            patch.object(motor_test_model, "get_frame_options", return_value={}),
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_warning") as warning_log,
+        ):
+            assert motor_test_model.get_current_frame_class_types() == {}
+
+        warning_log.assert_called_once_with(
+            _("Current frame class %(class)d is not defined in motor configuration (max defined: %(max)d)"),
+            {"class": 1, "max": 0},
+        )
+
+    def test_current_frame_class_with_non_layout_data_warns_with_zero_maximum(self, motor_test_model) -> None:
+        """Nonempty loader data without layouts has no defined maximum frame class."""
+        motor_test_model._motor_data_loader.data = {"metadata": []}
+        motor_test_model.flight_controller.fc_parameters["FRAME_CLASS"] = 7
+        with (
+            patch.object(motor_test_model, "get_frame_options", return_value={}),
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_warning") as warning_log,
+        ):
+            assert motor_test_model.get_current_frame_class_types() == {}
+
+        warning_log.assert_called_once_with(
+            _("Current frame class %(class)d is not defined in motor configuration (max defined: %(max)d)"),
+            {"class": 7, "max": 0},
+        )
 
     def test_missing_frame_class_parameter_logs_exact_warning(self, motor_test_model) -> None:
         """
@@ -4273,6 +4464,88 @@ class TestMotorTestFrameTypeSelection:
 
         motor_test_model.flight_controller.set_param.assert_called_once_with("FRAME_TYPE", 0)
         assert motor_test_model.motor_count == 2
+
+    def test_frame_type_parsing_requires_a_connection_with_exact_message(self, motor_test_model) -> None:
+        """Frame-type parsing reports the exact connection requirement."""
+        motor_test_model.flight_controller.master = None
+
+        with pytest.raises(ValidationError) as exc_info:
+            motor_test_model.parse_frame_type_selection("Plus")
+
+        assert str(exc_info.value) == "Flight controller connection required for frame type parsing"
+
+    def test_frame_type_parsing_requires_frame_class_with_exact_message(self, motor_test_model) -> None:
+        """Frame-type parsing reports the exact missing FRAME_CLASS error."""
+        motor_test_model.flight_controller.fc_parameters.pop("FRAME_CLASS", None)
+
+        with pytest.raises(ValidationError) as exc_info:
+            motor_test_model.parse_frame_type_selection("Plus")
+
+        assert str(exc_info.value) == "FRAME_CLASS parameter not found in flight controller"
+
+    def test_frame_type_parsing_reports_invalid_frame_class_conversion(self, motor_test_model) -> None:
+        """Non-numeric FRAME_CLASS values preserve their exact parsing error."""
+        motor_test_model.flight_controller.fc_parameters["FRAME_CLASS"] = "not-a-number"
+
+        with pytest.raises(ValidationError) as exc_info:
+            motor_test_model.parse_frame_type_selection("Plus")
+
+        assert str(exc_info.value) == "Error parsing frame type: invalid literal for int() with base 10: 'not-a-number'"
+
+    def test_frame_selection_preserves_callbacks_and_logs_exact_configuration(self, motor_test_model) -> None:
+        """Changing both frame codes forwards progress options and records the selected state."""
+        _use_layouts(motor_test_model, _quad_layouts())
+        motor_test_model.flight_controller.fc_parameters["FRAME_CLASS"] = 1
+        motor_test_model._frame_class = 0
+        motor_test_model._frame_type = 0
+        progress_callback = MagicMock()
+
+        with (
+            patch.object(motor_test_model, "set_parameter", return_value=(True, "")) as set_parameter,
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_info") as info_log,
+        ):
+            assert motor_test_model.update_frame_type_from_selection("X", progress_callback, 7) is True
+
+        assert set_parameter.call_args_list == [
+            call("FRAME_CLASS", 1, progress_callback, 7),
+            call("FRAME_TYPE", 1, progress_callback, 7),
+        ]
+        info_log.assert_called_once_with(
+            _("Updated frame configuration: FRAME_CLASS=%(class)d, FRAME_TYPE=%(type)d"),
+            {"class": 1, "type": 1},
+        )
+        assert motor_test_model.frame_class == 1
+        assert motor_test_model.frame_type == 1
+        assert motor_test_model.motor_count == 4
+        assert motor_test_model._frame_layout["Type"] == 1
+
+    def test_frame_selection_without_layouts_keeps_motor_count_at_zero(self, motor_test_model) -> None:
+        """A valid frame selection with an empty layout list has no configured motors."""
+        motor_test_model._motor_data_loader.data = {"layouts": []}
+        motor_test_model._frame_class = 0
+        motor_test_model._frame_type = 0
+
+        with (
+            patch.object(motor_test_model, "parse_frame_type_selection", return_value=(1, 1)),
+            patch.object(motor_test_model, "set_parameter", return_value=(True, "")),
+        ):
+            assert motor_test_model.update_frame_type_from_selection("X") is True
+
+        assert motor_test_model._motor_count == 0
+
+    def test_frame_selection_with_loader_data_without_layouts_is_safe(self, motor_test_model) -> None:
+        """Unrelated nonempty loader data does not require a layouts key."""
+        motor_test_model._motor_data_loader.data = {"metadata": []}
+        motor_test_model._frame_class = 0
+        motor_test_model._frame_type = 0
+
+        with (
+            patch.object(motor_test_model, "parse_frame_type_selection", return_value=(1, 1)),
+            patch.object(motor_test_model, "set_parameter", return_value=(True, "")),
+        ):
+            assert motor_test_model.update_frame_type_from_selection("X") is True
+
+        assert motor_test_model._motor_count == 0
 
     def test_selection_matching_is_case_insensitive_and_ignores_surrounding_spaces(self, motor_test_model) -> None:
         """
@@ -4376,6 +4649,13 @@ class TestMotorTestBatteryDisplayAndSafetyText:
 
         assert motor_test_model.get_battery_display_text() == ("Voltage: Disabled", "Current: Disabled")
 
+    def test_missing_battery_monitor_parameter_defaults_to_disabled(self, motor_test_model) -> None:
+        """A missing BATT_MONITOR parameter retains the disabled display fallback."""
+        motor_test_model.flight_controller.fc_parameters.pop("BATT_MONITOR", None)
+
+        assert motor_test_model.get_battery_display_text() == ("Voltage: Disabled", "Current: Disabled")
+        motor_test_model.flight_controller.get_battery_statuses.assert_not_called()
+
     def test_battery_readings_are_shown_with_two_decimals_and_units(self, motor_test_model) -> None:
         """
         Voltage and current are shown with two decimals and their units.
@@ -4399,6 +4679,12 @@ class TestMotorTestBatteryDisplayAndSafetyText:
         motor_test_model.flight_controller.get_battery_statuses.return_value = ({0: (float("nan"), 2.1)}, "")
 
         assert motor_test_model.get_battery_display_text() == ("Voltage: N/A", "Current: 2.10A")
+
+    def test_nan_current_is_shown_as_not_available_independently(self, motor_test_model) -> None:
+        """A NaN current value displays N/A while a valid voltage remains visible."""
+        motor_test_model.flight_controller.get_battery_statuses.return_value = ({0: (12.4, float("nan"))}, "")
+
+        assert motor_test_model.get_battery_display_text() == ("Voltage: 12.40V", "Current: N/A")
 
     def test_missing_battery_status_is_shown_as_not_available(self, motor_test_model) -> None:
         """
@@ -4899,6 +5185,25 @@ class TestMotorTestFrameLayoutConfiguration:
         assert motor_test_model.motor_numbers == [0, 5]
         assert motor_test_model.motor_directions == ["", "CW"]
 
+    def test_invalid_test_orders_leave_zero_based_slots_unassigned(self, motor_test_model) -> None:
+        """Zero and out-of-range test orders leave the initialized slots empty."""
+        layout = {
+            "Class": 1,
+            "ClassName": "QUAD",
+            "Type": 5,
+            "TypeName": "Custom",
+            "motors": [
+                {"Number": 5, "TestOrder": 0, "Rotation": "CW"},
+                {"Number": 6, "TestOrder": 3, "Rotation": "CCW"},
+            ],
+        }
+
+        _configure_layout(motor_test_model, [layout], 1, 5)
+
+        assert motor_test_model.motor_numbers == [0, 0]
+        assert motor_test_model._test_order == [0, 0]
+        assert motor_test_model.motor_directions == ["", ""]
+
 
 class TestMotorTestTestOrderLookup:
     """Test order lookup accepts exactly the configured motor numbers."""
@@ -5046,6 +5351,13 @@ class TestMotorTestConnectionRequirementsForFrameUpdates:
 
         assert str(exc_info.value) == "No flight controller connection available"
         motor_test_model.flight_controller.set_param.assert_not_called()
+
+    def test_get_parameter_returns_none_when_disconnected_even_with_cached_parameters(self, motor_test_model) -> None:
+        """Cached parameter values are unavailable after the controller disconnects."""
+        motor_test_model.flight_controller.fc_parameters["MOT_SPIN_ARM"] = 0.15
+        motor_test_model.flight_controller.master = None
+
+        assert motor_test_model.get_parameter("MOT_SPIN_ARM") is None
 
 
 class TestMotorTestParameterRangeAndVerification:

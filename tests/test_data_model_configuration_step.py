@@ -341,6 +341,13 @@ def test_connection_rename_feedback_identifies_each_changed_parameter_without_ch
     assert duplicates == set()
     assert renames == [("SERIAL1_PROTOCOL", "SERIAL3_PROTOCOL"), ("SERIAL1_BAUD", "SERIAL3_BAUD")]
     assert len(infos) == 2
+    assert infos[1] == (
+        "Parameter Renamed",
+        (
+            "The parameter 'SERIAL1_BAUD' was renamed to 'SERIAL3_BAUD'.\n"
+            "to obey the flight controller connection defined in the component editor window."
+        ),
+    )
     logged_messages = [record.getMessage() for record in caplog.records if record.levelno == INFO]
     for (title, message), (old_name, new_name) in zip(infos, renames, strict=True):
         assert title == "Parameter Renamed"
@@ -372,6 +379,9 @@ def test_failed_connection_expression_reports_the_missing_input_and_leaves_opera
     assert renames == []
     assert "missing_connection_choice" in caplog.text
     assert "NameNotDefined" in caplog.text
+    assert any(
+        record.getMessage().startswith("Skipping connection renaming because evaluation failed:") for record in caplog.records
+    )
 
 
 @pytest.fixture
@@ -1251,6 +1261,19 @@ class TestConfigurationStepProcessorConnectionRenamingLogic:
         # Assert
         assert renames == {"CAN1_DRIVER": "CAN2_DRIVER"}
 
+    def test_generate_connection_renames_short_can_names_and_replaces_only_prefix(self) -> None:
+        """CAN port names with no suffix still rename, while later prefix text stays unchanged."""
+        parameters = ["CAN_P1", "CAN_D1", "CAN_P1_CAN_P1"]
+
+        renames = ConfigurationStepProcessor._generate_connection_renames(parameters, "CAN3")
+
+        assert renames == {
+            "CAN_P1": "CAN_P3",
+            "CAN_D1": "CAN_D3",
+            "CAN_P1_CAN_P1": "CAN_P3_CAN_P1",
+        }
+        assert ConfigurationStepProcessor._generate_connection_renames(["BRD_SER1"], "SERIAL3") == {"BRD_SER1": "BRD_SER3"}
+
     def test_generate_connection_renames_invalid_prefix_returns_empty(self) -> None:
         """
         A prefix with no trailing digits returns an empty rename dict.
@@ -1423,6 +1446,11 @@ class TestConfigurationStepProcessorErrorHandling:
         assert ui_infos[0][0] == "ExpressLRS Configuration Warning"
         assert "FLTMODE_CH must be set to a channel other than 5" in ui_infos[0][1]
         assert "RC5 arming channel" in ui_infos[0][1]
+        assert ui_infos[0][1] == (
+            "FLTMODE_CH must be set to a channel other than 5 (currently set to 5).\n"
+            "Please change FLTMODE_CH to a different channel (e.g., 6, 7, 8, etc.)\n"
+            "to avoid conflicts with the required RC5 arming channel."
+        )
         assert ui_errors == []
 
     def test_user_does_not_receive_expresslrs_warning_when_fltmode_ch_is_not_5_and_expresslrs_detected(
@@ -1749,6 +1777,8 @@ class TestDeleteParametersPriority:
         if passed_delete_set is None and len(call_kwargs.args) > 4:
             passed_delete_set = call_kwargs.args[4]
         assert passed_delete_set == {"BATT_OPTIONS"}
+        assert call_kwargs.args[0] == selected_file
+        assert processor.local_filesystem.compute_deletions.call_args.args[0] == selected_file
 
     def test_apply_auto_imports_skips_parameters_in_delete_set(self, processor) -> None:
         """

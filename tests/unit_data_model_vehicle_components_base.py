@@ -485,6 +485,12 @@ class TestComponentDataModelBaseUncoveredBranches:
         """Create a realistic ComponentDataModelBase fixture for testing."""
         return ComponentDataModelFixtures.create_realistic_model(ComponentDataModelBase)
 
+    def test_system_initializes_model_state_and_schema(self, basic_model) -> None:
+        """A new model starts with empty PWM types and a false new-project flag."""
+        assert basic_model._mot_pwm_types == ()
+        assert basic_model._is_new_project is False
+        assert isinstance(basic_model.schema, VehicleComponentsJsonSchema)
+
     def test_system_converts_list_value_to_string_in_get_component_value(self, basic_model) -> None:
         """
         System converts non-primitive component values to strings.

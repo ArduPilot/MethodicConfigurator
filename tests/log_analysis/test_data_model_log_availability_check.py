@@ -118,6 +118,106 @@ def test_pm_non_finite_values_are_reported_as_invalid() -> None:
     assert len(validation.issues) == 7
     assert all("non-finite telemetry values" in issue for issue in validation.issues)
     assert status is not None
+    assert status.average_cpu_load == 0.0
+    assert status.peak_cpu_load == 0.0
+    assert status.scheduler_long_loops == 0
+    assert status.max_loop_time_us == 0
+    assert status.free_memory_bytes == 0
+    assert status.healthy is None
+
+
+@pytest.mark.parametrize("columns", [None, np.empty(0, dtype=[("Load", "f8")])])
+def test_pm_status_is_unavailable_when_message_is_missing_or_empty(columns: np.ndarray | None) -> None:  # type: ignore[misc]
+    """PM health is unavailable when no performance-monitor samples were logged."""
+    log_data = LogData()
+    if columns is not None:
+        log_data.add_message_columns("PM", columns)
+
+    assert get_pm_status(log_data) is None
+
+
+@pytest.mark.parametrize(
+    ("load", "memory", "healthy"),
+    [
+        ((70.0, 80.0), (10_001, 12_000), True),
+        ((80.0, 80.0), (12_000, 12_000), False),
+        ((60.0, 95.0), (12_000, 12_000), False),
+        ((60.0, 90.0), (10_000, 12_000), False),
+    ],
+)
+def test_pm_status_checks_all_health_limits_and_summarizes_samples(
+    load: tuple[float, float], memory: tuple[int, int], healthy: bool
+) -> None:
+    """PM summary uses averages, peaks, sums and strict CPU/memory health limits."""
+    log_data = LogData()
+    log_data.add_message_columns(
+        "PM",
+        np.array(
+            list(zip(load, (2, 3), (500, 900), memory, strict=True)),
+            dtype=[("Load", "f8"), ("NLon", "i4"), ("MaxT", "i4"), ("Mem", "i4")],
+        ),
+    )
+
+    status = get_pm_status(log_data)
+
+    assert status is not None
+    assert status.average_cpu_load == pytest.approx(sum(load) / 2)
+    assert status.peak_cpu_load == max(load)
+    assert status.scheduler_long_loops == 5
+    assert status.max_loop_time_us == 900
+    assert status.free_memory_bytes == min(memory)
+    assert status.healthy is healthy
+
+
+def test_pm_status_defaults_missing_optional_fields_and_leaves_health_unknown() -> None:
+    """A partial PM schema summarizes available counters without claiming health."""
+    log_data = LogData()
+    log_data.add_message_columns(
+        "PM",
+        np.array([(4, 500), (6, 700)], dtype=[("NLon", "i4"), ("MaxT", "i4")]),
+    )
+
+    status = get_pm_status(log_data)
+
+    assert status is not None
+    assert status.average_cpu_load == 0.0
+    assert status.peak_cpu_load == 0.0
+    assert status.scheduler_long_loops == 10
+    assert status.max_loop_time_us == 700
+    assert status.free_memory_bytes == 0
+    assert status.healthy is None
+
+
+def test_pm_status_defaults_missing_loop_fields_without_reading_them() -> None:
+    """PM schemas without NLon or MaxT keep their summary defaults."""
+    log_data = LogData()
+    log_data.add_message_columns(
+        "PM",
+        np.array([(70.0, 12_000)], dtype=[("Load", "f8"), ("Mem", "i4")]),
+    )
+
+    status = get_pm_status(log_data)
+
+    assert status is not None
+    assert status.average_cpu_load == pytest.approx(70.0)
+    assert status.peak_cpu_load == pytest.approx(70.0)
+    assert status.scheduler_long_loops == 0
+    assert status.max_loop_time_us == 0
+    assert status.free_memory_bytes == 12_000
+    assert status.healthy is True
+
+
+def test_pm_status_health_is_unknown_when_load_or_memory_is_missing() -> None:
+    """Health requires both CPU load and free memory, even when one metric is available."""
+    log_data = LogData()
+    log_data.add_message_columns("PM", np.array([(70.0,)], dtype=[("Load", "f8")]))
+
+    status = get_pm_status(log_data)
+
+    assert status is not None
+    assert status.average_cpu_load == pytest.approx(70.0)
+    assert status.peak_cpu_load == pytest.approx(70.0)
+    assert status.free_memory_bytes == 0
     assert status.healthy is None
 
 

@@ -118,7 +118,6 @@ This architecture provides:
 - **Purpose**: Manages flight controller connection lifecycle
 - **Key Classes**:
   - `FlightControllerConnection`: Connection establishment and management
-  - `FakeSerialForTests`: Mock serial class for unit testing
 - **Key Methods**:
   - `connect()`: Establishes connection with retry logic
   - `disconnect()`: Closes connection gracefully
