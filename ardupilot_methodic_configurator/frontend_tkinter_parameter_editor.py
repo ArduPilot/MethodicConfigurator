@@ -705,7 +705,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         fc_banner_button = ttk.Button(
             parameter_actions_frame,
-            text=_("FC banner"),
+            text=_("FC information"),
             command=self.on_fc_banner_click,
             style=smaller_button_style,
         )
@@ -714,7 +714,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         fc_banner_button.grid(row=2, column=0, padx=(8, 8), pady=(3, 0), sticky=tk.EW)
         show_tooltip(
             fc_banner_button,
-            _("Display the latest flight-controller banner"),
+            _("Flight controller banner, messages and hardware information"),
         )
 
         self._create_inspector_button(parameter_actions_frame, smaller_button_style)
@@ -758,14 +758,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         items = [
             (
-                _("Analyse a .bin log"),
+                _("Internal log analyzer"),
                 self.on_analyse_log_click,
-                _("Open a .bin flight log and analyse its availability"),
+                _("Open a .bin log file in AMC's internal log analyser"),
             ),
             (
-                _("Analyse log with Skybrush"),
+                _("Skybrush log analyser"),
                 self.on_analyse_log_with_skybrush_click,
-                _("Select a .bin flight log to open the Skybrush Log Analysis window"),
+                _("Open a .bin log file in the skybrush log analyser"),
             ),
         ]
         first_btn: ttk.Button | None = None
@@ -850,7 +850,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         )
         zip_vehicle_for_forum_button.configure(state=("normal" if self.parameter_editor.parameter_files() else "disabled"))
         self.navigation_lock.register(zip_vehicle_for_forum_button)
-        zip_vehicle_for_forum_button.pack(side=tk.TOP, fill="x")
+        zip_vehicle_for_forum_button.pack(side=tk.TOP, fill="x", pady=(2, 0))
         show_tooltip(
             zip_vehicle_for_forum_button,
             _("Creates a .zip file of the configuration files\nso that they can be easily shared for forum help")
@@ -860,7 +860,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         analysis_button = ttk.Button(
             logo_and_forum_frame,
-            text=_("Analysis"),
+            text=_("Analyse a .bin log"),
             command=lambda: self._show_analysis_menu(analysis_button, button_style, focus=True),
             style=button_style,
         )
