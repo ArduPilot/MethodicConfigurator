@@ -20,6 +20,7 @@ from unittest.mock import MagicMock, call, patch
 import pytest
 
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
 from ardupilot_methodic_configurator.backend_flightcontroller_protocols import FileUploadCheckStatus, FileUploadResult
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ArduPilotParameter,
@@ -205,6 +206,199 @@ def test_level_trim_does_not_warn_about_float32_rounding(parameter_editor, mock_
     assert stale_files == []
     assert mock_local_filesystem.file_parameters["16_accelerometer_calibration.param"] is original
     mock_local_filesystem.export_to_param.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("firmware_version", "expected"),
+    [
+        ("4.6.3", False),
+        ("4.6.99", False),
+        ("4.7.0", True),
+        ("4.7.2", True),
+        ("4.10.0", True),
+        ("5.0.0", True),
+        ("", False),
+        ("unknown", False),
+    ],
+)
+def test_presence_checks_require_connected_firmware_at_least_4_7(
+    parameter_editor: ParameterEditor, mock_flight_controller: MagicMock, firmware_version: str, expected: bool
+) -> None:
+    """GIVEN connected firmware, WHEN deciding to probe N/A rows, THEN require version 4.7 or newer."""
+    mock_flight_controller.info = SimpleNamespace(flight_sw_version=firmware_version)
+
+    assert parameter_editor.supports_fc_parameter_presence_check is expected
+
+
+@pytest.mark.parametrize("link_connected", [False, True])
+def test_presence_checks_are_skipped_without_a_connected_parameter_snapshot(
+    parameter_editor: ParameterEditor, mock_flight_controller: MagicMock, link_connected: bool
+) -> None:
+    """GIVEN no link or downloaded values, WHEN deciding to probe, THEN skip even with cached version 4.7."""
+    mock_flight_controller.info = SimpleNamespace(flight_sw_version="4.7.0")
+    if link_connected:
+        mock_flight_controller.fc_parameters = {}
+    else:
+        mock_flight_controller.master = None
+
+    assert parameter_editor.supports_fc_parameter_presence_check is False
+
+
+def test_rebuild_current_step_after_fc_parameter_update_reuses_step_processing(parameter_editor: ParameterEditor) -> None:
+    """Direct FC reads must refresh conditional and derived step data before rendering."""
+    expected = ([("Configuration error", "bad expression")], [("Configuration info", "value refreshed")])
+    with patch.object(parameter_editor, "_repopulate_configuration_step_parameters", return_value=expected) as rebuild:
+        assert parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update() == expected
+
+    rebuild.assert_called_once_with()
+
+
+def test_hidden_file_parameter_is_probed_even_when_a_step_rule_deleted_its_row(
+    parameter_editor: ParameterEditor, mock_local_filesystem: MagicMock, mock_flight_controller: MagicMock
+) -> None:
+    """
+    Hidden parameters survive rules based on the incomplete bulk download.
+
+    GIVEN: A step deletes a saved parameter when it is missing from the FC cache.
+    WHEN: A direct read discovers that parameter and the step is rebuilt.
+    THEN: It is a probe candidate and its row returns with its live FC value.
+    """
+    filename = "test_file.param"
+    mock_local_filesystem.configuration_steps = {
+        filename: {"delete_parameters": {"HIDDEN": {"if": "'HIDDEN' not in fc_parameters"}}}
+    }
+    mock_local_filesystem.file_parameters[filename] = ParDict({"HIDDEN": Par(2.0)})
+    mock_local_filesystem.compute_forced_and_derived_parameters.return_value = ("", "")
+    rules = ConfigurationSteps.__new__(ConfigurationSteps)
+    mock_local_filesystem.compute_deletions.side_effect = rules.compute_deletions
+    mock_flight_controller.fc_parameters = {"OTHER": 1.0}
+    parameter_editor._config_step_processor.variables = {}
+    parameter_editor.current_file = filename
+    parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update()
+    assert "HIDDEN" not in parameter_editor.current_step_parameters
+
+    assert "HIDDEN" in parameter_editor.get_fc_parameter_presence_candidates()
+    mock_flight_controller.fc_parameters["HIDDEN"] = 7.0
+    parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update()
+
+    assert parameter_editor.current_step_parameters["HIDDEN"].fc_value_as_string == "7"
+    assert "HIDDEN" not in parameter_editor.get_fc_parameter_presence_candidates()
+
+
+def test_conditionally_declared_parameters_can_be_discovered_before_their_rows_exist(
+    parameter_editor: ParameterEditor, mock_local_filesystem: MagicMock
+) -> None:
+    """
+    Probe declarations as well as rendered rows.
+
+    GIVEN: FC-dependent add and derived rules have not produced rows yet.
+    WHEN: The editor selects parameter names for direct reads.
+    THEN: Both declarations are checked, and cached FC values are omitted.
+    """
+    parameter_editor.current_file = "test_file.param"
+    parameter_editor.current_step_parameters = {}
+    mock_local_filesystem.configuration_steps = {
+        parameter_editor.current_file: {
+            "add_parameters": {"NEW_GAIN": {"if": "'NEW_GAIN' in fc_parameters"}},
+            "derived_parameters": {"NEW_LIMIT": {"if": "'NEW_LIMIT' in fc_parameters", "New Value": 2}},
+        }
+    }
+
+    assert parameter_editor.get_fc_parameter_presence_candidates() == {"NEW_GAIN", "NEW_LIMIT"}
+
+
+def test_copied_fc_values_remain_dirty_after_presence_results_rebuild_the_step(
+    parameter_editor: ParameterEditor, mock_local_filesystem: MagicMock, mock_flight_controller: MagicMock
+) -> None:
+    """GIVEN YES to copying FC values, WHEN a probe rebuilds the step, THEN retain the copied value for save and upload."""
+    filename = "test_file.param"
+    mock_local_filesystem.configuration_steps = {}
+    mock_local_filesystem.file_parameters[filename] = ParDict({"PARAM1": Par(1.0), "ABSENT": Par(2.0)})
+    mock_local_filesystem.auto_changed_by.return_value = "Autotune"
+    mock_flight_controller.fc_parameters = {"PARAM1": 9.0}
+    parameter_editor.current_file = filename
+    parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update()
+
+    assert parameter_editor.handle_copy_fc_values_workflow(filename, MagicMock(return_value=True), MagicMock()) is True
+    parameter_editor.current_step_parameters["PARAM1"].set_change_reason("Keep completed autotune")
+    parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update()
+
+    copied = parameter_editor.current_step_parameters["PARAM1"]
+    assert copied.get_new_value() == 9.0
+    assert copied.change_reason == "Keep completed autotune"
+    assert copied.is_dirty
+    assert parameter_editor.get_parameters_as_par_dict()["PARAM1"].value == 9.0
+    assert mock_local_filesystem.file_parameters[filename]["PARAM1"].value == 1.0
+
+
+@pytest.mark.parametrize("computed_kind", ["forced_parameters", "derived_parameters"])
+def test_presence_rebuild_preserves_manual_edits_and_refreshes_the_underlying_computed_value(
+    parameter_editor: ParameterEditor,
+    mock_local_filesystem: MagicMock,
+    computed_kind: str,
+) -> None:
+    """GIVEN an unsaved manual override, WHEN FC-dependent values change, THEN retain edits and refresh the revert target."""
+    filename = "test_file.param"
+    parameter_editor.current_file = filename
+    mock_local_filesystem.configuration_steps = {}
+    computed = {filename: ParDict({"PARAM1": Par(3.0)})}
+    setattr(mock_local_filesystem, computed_kind, computed)
+    parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update()
+    original = parameter_editor.current_step_parameters["PARAM1"]
+    original.set_manual_override(enabled=True)
+    original.set_new_value("9")
+    original.set_change_reason("Measured on this vehicle")
+    computed[filename]["PARAM1"] = Par(5.0)
+
+    parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update()
+
+    refreshed = parameter_editor.current_step_parameters["PARAM1"]
+    assert refreshed.is_manual_override
+    assert refreshed.get_new_value() == 9.0
+    assert refreshed.change_reason == "Measured on this vehicle"
+    assert refreshed.change_reason_for_file.count("@manual_override") == 1
+    assert refreshed.is_dirty
+    refreshed.set_manual_override(enabled=False)
+    assert refreshed.get_new_value() == 5.0
+
+
+@pytest.mark.parametrize("warn_initially", [False, True])
+def test_presence_rebuild_shows_only_new_step_warnings(
+    parameter_editor: ParameterEditor,
+    mock_local_filesystem: MagicMock,
+    mock_flight_controller: MagicMock,
+    warn_initially: bool,
+) -> None:
+    """GIVEN step messages already shown, WHEN probes rebuild repeatedly, THEN show each new warning only once."""
+    filename = "test_file.param"
+    mock_local_filesystem.configuration_steps = {}
+    mock_local_filesystem.file_parameters[filename] = ParDict({"RC_OPTIONS": Par(512.0), "ABSENT": Par(1.0)})
+    mock_flight_controller.fc_parameters = {"RC_OPTIONS": 512.0 if warn_initially else 0.0}
+    show_info = MagicMock()
+    with (
+        patch.object(parameter_editor, "_handle_file_jump_workflow", return_value=filename),
+        patch.object(parameter_editor, "_download_files_for_step"),
+    ):
+        parameter_editor.handle_param_file_change_workflow(
+            filename,
+            forced=True,
+            gui_complexity="normal",
+            auto_open_documentation=False,
+            handle_imu_temp_cal=MagicMock(),
+            handle_copy_fc_values=MagicMock(return_value=False),
+            handle_upload_file=MagicMock(return_value=True),
+            ask_confirmation=MagicMock(),
+            show_error=MagicMock(),
+            show_info=show_info,
+        )
+    assert show_info.call_count == int(warn_initially)
+    mock_flight_controller.fc_parameters["RC_OPTIONS"] = 512.0
+
+    errors, infos = parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update()
+
+    assert errors == []
+    assert len(infos) == int(not warn_initially)
+    assert parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update() == ([], [])
 
 
 class TestExternalParameterFiles:
