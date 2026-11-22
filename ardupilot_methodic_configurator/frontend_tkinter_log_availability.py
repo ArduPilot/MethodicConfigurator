@@ -162,7 +162,6 @@ class LogAvailabilityReportWindow(BaseWindow):  # pylint: disable=too-many-insta
         self._analysis_window = LogAnalysisReportWindow(
             self.root,
             self.summary,
-            self.vehicle_dir,
             is_fc_connected=self.is_fc_connected,
             upload_callback=self.upload_callback,
             report=self.report,

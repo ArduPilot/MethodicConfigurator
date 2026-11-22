@@ -421,6 +421,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._analysis_menu: ttk.Frame | None = None
         self._analysis_menu_hide_job: str | None = None
         self._analysis_menu_click_bind_id: str | None = None
+        self._analysis_menu_escape_bind_id: str | None = None
         self.tuning_graph_button: ttk.Button | None = None
         self.tuning_graph_tooltip: Tooltip | None = None
 
@@ -767,7 +768,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         items = [
             (
-                _("Internal log analyzer"),
+                _("Internal log analyser"),
                 self.on_analyse_log_click,
                 _("Open a .bin log file in AMC's internal log analyser"),
             ),
@@ -796,6 +797,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         menu.bind("<Enter>", lambda _e: self._cancel_hide_analysis_menu())
         menu.bind("<Leave>", lambda _e: self._schedule_hide_analysis_menu(trigger))
         self._analysis_menu = menu
+        self._analysis_menu_escape_bind_id = self.root.bind("<Escape>", lambda _e: self._close_analysis_menu(), add="+")
         self._analysis_menu_click_bind_id = self.root.bind(
             "<Button-1>",
             lambda event: self._on_click_outside_analysis_menu(event, trigger),
@@ -840,6 +842,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def _close_analysis_menu(self) -> None:
         self._cancel_hide_analysis_menu()
+        escape_bind_id = getattr(self, "_analysis_menu_escape_bind_id", None)
+        if escape_bind_id is not None:
+            with contextlib.suppress(tk.TclError):
+                self.root.unbind("<Escape>", escape_bind_id)
+            self._analysis_menu_escape_bind_id = None
         bind_id = getattr(self, "_analysis_menu_click_bind_id", None)
         if bind_id is not None:
             with contextlib.suppress(tk.TclError):

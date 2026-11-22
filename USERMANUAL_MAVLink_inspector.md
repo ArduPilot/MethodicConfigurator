@@ -40,7 +40,7 @@ close the inspector, change AMC's connection, and open the inspector again.
 ## Open the inspector
 
 In AMC's Parameter Editor, click **MAVLink inspector**, directly below
-**Zip vehicle for Forum help**. A live flight-controller connection is required.
+**FC information**. A live flight-controller connection is required.
 
 You can also run the installed inspector independently of the main application:
 

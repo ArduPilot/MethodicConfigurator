@@ -123,18 +123,16 @@ def _format_component(component: dict[str, Any]) -> list[str]:  # pylint: disabl
 class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes
     """Log analysis window."""
 
-    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def __init__(
         self,
         root_tk: tk.Tk | tk.Toplevel | None,
         summary: LogSummary,
-        vehicle_dir: str,
         report: dict[str, Any] | None = None,
         is_fc_connected: bool = False,
         upload_callback: Callable[[dict[str, Par]], bool | None] | None = None,
     ) -> None:
         super().__init__(root_tk)
         self.summary = summary
-        self.vehicle_dir = vehicle_dir
         self.report = report
         self.is_fc_connected = is_fc_connected
         self.upload_callback = upload_callback
@@ -158,7 +156,6 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
         self.root.resizable(width=True, height=True)
 
         self._build_header()
-        self._build_footer()
 
         self.scroll_container = ScrollFrame(self.main_frame)
         self.scroll_container.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=20, pady=(6, 14))
@@ -209,10 +206,6 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
             label.pack(side=tk.LEFT)
             show_tooltip(label, _SEVERITY_TOOLTIP[severity])
             show_tooltip(marker, _SEVERITY_TOOLTIP[severity])
-
-    def _build_footer(self) -> None:
-        footer = ttk.Frame(self.main_frame)
-        footer.pack(side=tk.BOTTOM, fill=tk.X, padx=20, pady=(0, 14))
 
     def _render_subsystem(self, name: str) -> None:  # pylint: disable=too-many-locals, too-many-branches
         for widget in self.body_frame.winfo_children():
@@ -464,7 +457,7 @@ def main() -> None:  # pragma: no cover
         apm_doc=filesystem.doc_dict or None,
         validate_project=False,
     )
-    LogAnalysisReportWindow(None, summary, filesystem.vehicle_dir).run()
+    LogAnalysisReportWindow(None, summary).run()
 
 
 if __name__ == "__main__":  # pragma: no cover

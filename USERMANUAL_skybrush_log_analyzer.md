@@ -12,7 +12,7 @@ Skybrush service.
 
 ## Open the window
 
-In the Parameter Editor, click **Analyse log with Skybrush** and select a `.bin`
+In the Parameter Editor, click **Analyse a .bin log**, select **Skybrush log analyser**, and select a `.bin`
 flight log. The Skybrush Log Analysis window opens for that log. The selected
 log name is shown at the top of the window.
 
