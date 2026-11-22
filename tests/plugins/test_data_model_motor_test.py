@@ -4391,7 +4391,7 @@ class TestMotorTestCurrentFrameClassTypes:
         with patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_warning") as mock_warning:
             assert motor_test_model.get_current_frame_class_types() == {}
 
-        mock_warning.assert_called_once_with("FRAME_CLASS parameter not found in flight controller")
+        mock_warning.assert_called_once_with("%(param)s parameter not found in flight controller", {"param": "FRAME_CLASS"})
 
     def test_undefined_frame_class_warns_with_maximum_defined_class(self, motor_test_model) -> None:
         """
@@ -5644,3 +5644,191 @@ class TestMotorTestSpinMarginBoundaries:
             motor_test_model.set_motor_spin_min_value(0.2)
 
         assert str(exc_info.value) == "MOT_SPIN_ARM must be available before updating MOT_SPIN_MIN."
+
+
+@pytest.fixture
+def quadplane_motor_test_model(mock_flight_controller, mock_filesystem, mock_motor_data_json) -> MotorTestDataModel:
+    """Fixture providing a motor test model connected to a tilt-tri QuadPlane."""
+    mock_flight_controller.info = MagicMock(vehicle_type="ArduPlane")
+    mock_flight_controller.fc_parameters = {
+        "Q_FRAME_CLASS": 7,
+        "Q_FRAME_TYPE": 1,
+        "BATT_MONITOR": 4,
+        "BATT_ARM_VOLT": 14.8,
+        "Q_M_BAT_VOLT_MAX": 16.8,
+        "Q_M_SPIN_ARM": 0.10,
+        "Q_M_SPIN_MIN": 0.15,
+    }
+    mock_flight_controller.get_frame_info.return_value = (7, 1)
+    tri_layouts = [
+        {
+            "Class": 7,
+            "ClassName": "TRI",
+            "Type": frame_type,
+            "TypeName": "pitch-reversed" if frame_type == 6 else "default",
+            "motors": [
+                {"Number": 1, "TestOrder": 1, "Rotation": "CCW"},
+                {"Number": 2, "TestOrder": 3, "Rotation": "CW"},
+                {"Number": 4, "TestOrder": 2, "Rotation": "?"},
+            ],
+        }
+        for frame_type in (0, 1, 6)
+    ]
+    motor_data = {**mock_motor_data_json, "layouts": [*mock_motor_data_json["layouts"], *tri_layouts]}
+    with patch(
+        "ardupilot_methodic_configurator.plugins.data_model_motor_test.FilesystemJSONWithSchema"
+    ) as mock_json_loader_class:
+        mock_loader_instance = MagicMock()
+        mock_loader_instance.load_json_data.return_value = motor_data
+        mock_loader_instance.data = motor_data
+        mock_json_loader_class.return_value = mock_loader_instance
+        return MotorTestDataModel(flight_controller=mock_flight_controller, filesystem=mock_filesystem)
+
+
+class TestQuadPlaneMotorTest:
+    """A QuadPlane is motor tested with its Q_ frame and motor parameters."""
+
+    def test_user_sees_quadplane_frame_types_from_q_frame_class(self, quadplane_motor_test_model) -> None:
+        """
+        The frame type selector uses Q_FRAME_CLASS on a QuadPlane.
+
+        GIVEN: An ArduPlane with Q_FRAME_CLASS=7 (TRI) and no FRAME_CLASS parameter
+        WHEN: The frame types for the current frame class are requested
+        THEN: The TRI frame types are returned instead of a missing FRAME_CLASS warning
+        """
+        with patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_warning") as mock_warning:
+            types = quadplane_motor_test_model.get_current_frame_class_types()
+
+        assert types == {0: "default", 1: "default", 6: "pitch-reversed"}
+        mock_warning.assert_not_called()
+
+    def test_user_selecting_quadplane_frame_type_writes_q_frame_type(self, quadplane_motor_test_model) -> None:
+        """
+        Changing the frame type on a QuadPlane updates Q_FRAME_TYPE.
+
+        GIVEN: A tilt-tri QuadPlane with Q_FRAME_TYPE=1
+        WHEN: The user selects the pitch-reversed frame type
+        THEN: Q_FRAME_TYPE is written and FRAME_TYPE is left alone
+        """
+        with patch.object(quadplane_motor_test_model, "set_parameter") as mock_set:
+            quadplane_motor_test_model.update_frame_type_by_key("6")
+
+        mock_set.assert_called_once_with("Q_FRAME_TYPE", 6, None, None)
+
+    def test_user_sees_tricopter_diagram_for_default_tri_frame_type(self, quadplane_motor_test_model) -> None:
+        """
+        TRI frame types that use the default layout show the type 0 tricopter diagram.
+
+        GIVEN: A TRI frame with Q_FRAME_TYPE=1, which ArduPilot treats as the default layout
+        WHEN: The motor diagram is looked up
+        THEN: The type 0 tricopter diagram is found
+        """
+        path, error = quadplane_motor_test_model.get_motor_diagram_path()
+
+        assert error == ""
+        assert path.endswith("m_07_00_tricopter.png")
+        assert quadplane_motor_test_model.motor_diagram_exists()
+
+    def test_user_sets_quadplane_spin_values_with_q_m_parameters(self, quadplane_motor_test_model) -> None:
+        """
+        Motor spin values on a QuadPlane are written to Q_M_SPIN_ARM and Q_M_SPIN_MIN.
+
+        GIVEN: A QuadPlane with Q_M_SPIN_ARM=0.10 and Q_M_SPIN_MIN=0.15
+        WHEN: The user sets new spin arm and spin min values
+        THEN: The Q_M_ parameters are validated and written
+        """
+        with patch.object(quadplane_motor_test_model, "set_parameter") as mock_set:
+            quadplane_motor_test_model.set_motor_spin_arm_value(0.11)
+            quadplane_motor_test_model.set_motor_spin_min_value(0.14)
+
+        assert mock_set.call_args_list[0].args[:2] == ("Q_M_SPIN_ARM", 0.11)
+        assert mock_set.call_args_list[1].args[:2] == ("Q_M_SPIN_MIN", 0.14)
+
+    def test_user_gets_quadplane_spin_margin_error_with_q_m_names(self, quadplane_motor_test_model) -> None:
+        """
+        Spin margin errors name the QuadPlane parameters.
+
+        GIVEN: A QuadPlane with Q_M_SPIN_MIN=0.15
+        WHEN: The user sets a spin arm value too close to spin min
+        THEN: The validation error names Q_M_SPIN_ARM and Q_M_SPIN_MIN
+        """
+        with pytest.raises(ValidationError) as exc_info:
+            quadplane_motor_test_model.set_motor_spin_arm_value(0.14)
+
+        assert str(exc_info.value) == "Q_M_SPIN_ARM must stay at least 0.02 below Q_M_SPIN_MIN (current 0.15)."
+
+    def test_quadplane_battery_safety_message_names_q_m_bat_volt_max(self, quadplane_motor_test_model) -> None:
+        """
+        Battery guidance on a QuadPlane points to Q_M_BAT_VOLT_MAX.
+
+        GIVEN: A QuadPlane
+        WHEN: The battery safety message is built
+        THEN: It asks the user to check BATT_ARM_VOLT and Q_M_BAT_VOLT_MAX
+        """
+        message = quadplane_motor_test_model.get_battery_safety_message("low")
+
+        assert "BATT_ARM_VOLT and Q_M_BAT_VOLT_MAX" in message
+
+
+@pytest.fixture
+def fixed_wing_motor_test_model(mock_flight_controller, mock_filesystem, mock_motor_data_json) -> MotorTestDataModel:
+    """Fixture providing a motor test model connected to a normal (non-QuadPlane) fixed-wing plane."""
+    mock_flight_controller.info = MagicMock(vehicle_type="ArduPlane")
+    mock_flight_controller.fc_parameters = {"BATT_MONITOR": 4, "BATT_ARM_VOLT": 11.1, "THR_MAX": 100}
+    mock_flight_controller.get_frame_info.return_value = (1, 1)  # ArduPlane fallback when no frame parameters exist
+    with patch(
+        "ardupilot_methodic_configurator.plugins.data_model_motor_test.FilesystemJSONWithSchema"
+    ) as mock_json_loader_class:
+        mock_loader_instance = MagicMock()
+        mock_loader_instance.load_json_data.return_value = mock_motor_data_json
+        mock_loader_instance.data = mock_motor_data_json
+        mock_json_loader_class.return_value = mock_loader_instance
+        return MotorTestDataModel(flight_controller=mock_flight_controller, filesystem=mock_filesystem)
+
+
+class TestExistingVehiclesKeepWorking:
+    """QuadPlane support does not change normal planes or multicopters."""
+
+    def test_normal_plane_opens_motor_test_without_writing_parameters(self, fixed_wing_motor_test_model) -> None:
+        """
+        A fixed-wing plane without QuadPlane parameters still opens the motor test.
+
+        GIVEN: An ArduPlane with no Q_ frame or motor parameters
+        WHEN: The motor test model is created and the frame types are requested
+        THEN: No exception is raised, no frame types are offered and nothing is written
+        """
+        assert fixed_wing_motor_test_model.get_current_frame_class_types() == {}
+        assert fixed_wing_motor_test_model.get_parameter(fixed_wing_motor_test_model.param_name("MOT_SPIN_ARM")) is None
+        fixed_wing_motor_test_model.flight_controller.set_param.assert_not_called()
+
+    def test_normal_plane_spin_min_requires_spin_arm_as_before(self, fixed_wing_motor_test_model) -> None:
+        """
+        A fixed-wing plane cannot set spin min because there is no spin arm parameter.
+
+        GIVEN: An ArduPlane with no motor spin parameters
+        WHEN: The user tries to set spin min
+        THEN: A ParameterError is raised and nothing is written
+        """
+        with pytest.raises(ParameterError):
+            fixed_wing_motor_test_model.set_motor_spin_min_value(0.2)
+
+        fixed_wing_motor_test_model.flight_controller.set_param.assert_not_called()
+
+    def test_copter_keeps_using_mot_and_frame_parameters(self, motor_test_model) -> None:
+        """
+        An ArduCopter keeps reading and writing the MOT_ and FRAME_ parameters.
+
+        GIVEN: A connected ArduCopter quad X
+        WHEN: Spin values and the frame type are changed
+        THEN: MOT_SPIN_ARM, MOT_SPIN_MIN and FRAME_TYPE are written
+        """
+        motor_test_model.flight_controller.info = MagicMock(vehicle_type="ArduCopter")
+
+        with patch.object(motor_test_model, "set_parameter") as mock_set:
+            motor_test_model.set_motor_spin_arm_value(0.11)
+            motor_test_model.set_motor_spin_min_value(0.14)
+            motor_test_model.update_frame_configuration(1, 0)
+
+        written = [call.args[0] for call in mock_set.call_args_list]
+        assert written == ["MOT_SPIN_ARM", "MOT_SPIN_MIN", "FRAME_TYPE"]
+        assert "BATT_ARM_VOLT and MOT_BAT_VOLT_MAX" in motor_test_model.get_battery_safety_message("low")

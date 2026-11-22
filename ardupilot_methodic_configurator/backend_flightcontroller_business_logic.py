@@ -14,7 +14,41 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from math import nan
 
 
-def calculate_voltage_thresholds(fc_parameters: dict[str, float]) -> tuple[float, float]:
+def vehicle_parameter_name(param_name: str, vehicle_type: str = "") -> str:
+    """
+    Translate an ArduCopter multicopter parameter name into the vehicle-specific name.
+
+    ArduPlane QuadPlanes store their multicopter frame and motor parameters in the Q_ group,
+    so FRAME_CLASS becomes Q_FRAME_CLASS and MOT_* becomes Q_M_*.
+
+    Args:
+        param_name: ArduCopter parameter name (e.g. "FRAME_CLASS", "MOT_SPIN_ARM")
+        vehicle_type: ArduPilot vehicle type (e.g. "ArduCopter", "ArduPlane")
+
+    Returns:
+        str: The parameter name used by that vehicle type
+
+    Examples:
+        >>> vehicle_parameter_name("MOT_SPIN_ARM", "ArduPlane")
+        'Q_M_SPIN_ARM'
+
+        >>> vehicle_parameter_name("FRAME_CLASS", "ArduPlane")
+        'Q_FRAME_CLASS'
+
+        >>> vehicle_parameter_name("MOT_SPIN_ARM", "ArduCopter")
+        'MOT_SPIN_ARM'
+
+    """
+    if vehicle_type != "ArduPlane":
+        return param_name
+    if param_name in {"FRAME_CLASS", "FRAME_TYPE"}:
+        return f"Q_{param_name}"
+    if param_name.startswith("MOT_"):
+        return f"Q_M_{param_name.removeprefix('MOT_')}"
+    return param_name
+
+
+def calculate_voltage_thresholds(fc_parameters: dict[str, float], vehicle_type: str = "") -> tuple[float, float]:
     """
     Calculate battery voltage thresholds for motor testing safety.
 
@@ -23,6 +57,7 @@ def calculate_voltage_thresholds(fc_parameters: dict[str, float]) -> tuple[float
 
     Args:
         fc_parameters: Dictionary of flight controller parameters
+        vehicle_type: ArduPilot vehicle type. ArduPlane uses Q_M_BAT_VOLT_MAX instead of MOT_BAT_VOLT_MAX.
 
     Returns:
         tuple[float, float]: (min_voltage, max_voltage) for safe motor testing
@@ -37,7 +72,7 @@ def calculate_voltage_thresholds(fc_parameters: dict[str, float]) -> tuple[float
 
     """
     min_voltage = fc_parameters.get("BATT_ARM_VOLT", 0.0)
-    max_voltage = fc_parameters.get("MOT_BAT_VOLT_MAX", 0.0)
+    max_voltage = fc_parameters.get(vehicle_parameter_name("MOT_BAT_VOLT_MAX", vehicle_type), 0.0)
     return (min_voltage, max_voltage)
 
 

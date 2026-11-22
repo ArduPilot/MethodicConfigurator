@@ -26,6 +26,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_business_logic imp
     validate_battery_voltage,
     validate_motor_test_duration,
     validate_throttle_percentage,
+    vehicle_parameter_name,
 )
 
 
@@ -69,6 +70,89 @@ class TestVoltageThresholds:
         min_v, max_v = calculate_voltage_thresholds(params)
         assert min_v == 11.1
         assert max_v == 0.0
+
+    def test_quadplane_uses_q_m_bat_volt_max(self) -> None:
+        """
+        A QuadPlane's maximum motor test voltage comes from Q_M_BAT_VOLT_MAX.
+
+        GIVEN: An ArduPlane with Q_M_BAT_VOLT_MAX set and no MOT_BAT_VOLT_MAX parameter
+        WHEN: Calculating voltage thresholds for ArduPlane
+        THEN: The maximum voltage is Q_M_BAT_VOLT_MAX
+        """
+        params = {"BATT_ARM_VOLT": 14.8, "Q_M_BAT_VOLT_MAX": 16.8}
+        assert calculate_voltage_thresholds(params, "ArduPlane") == (14.8, 16.8)
+
+    def test_copter_ignores_q_m_bat_volt_max(self) -> None:
+        """
+        An ArduCopter keeps using MOT_BAT_VOLT_MAX.
+
+        GIVEN: Parameters containing both MOT_BAT_VOLT_MAX and Q_M_BAT_VOLT_MAX
+        WHEN: Calculating voltage thresholds for ArduCopter
+        THEN: The maximum voltage is MOT_BAT_VOLT_MAX
+        """
+        params = {"BATT_ARM_VOLT": 10.5, "MOT_BAT_VOLT_MAX": 25.2, "Q_M_BAT_VOLT_MAX": 16.8}
+        assert calculate_voltage_thresholds(params, "ArduCopter") == (10.5, 25.2)
+
+    def test_normal_plane_thresholds_are_unchanged(self) -> None:
+        """
+        A fixed-wing plane without QuadPlane parameters keeps the previous thresholds.
+
+        GIVEN: An ArduPlane without Q_M_BAT_VOLT_MAX or MOT_BAT_VOLT_MAX parameters
+        WHEN: Calculating voltage thresholds for ArduPlane
+        THEN: The maximum voltage defaults to 0.0 exactly as before QuadPlane support
+        """
+        params = {"BATT_ARM_VOLT": 11.1}
+        assert calculate_voltage_thresholds(params, "ArduPlane") == calculate_voltage_thresholds(params) == (11.1, 0.0)
+
+    @pytest.mark.parametrize("vehicle_type", ["ArduCopter", "Heli", "Rover", ""])
+    def test_non_plane_vehicles_keep_mot_bat_volt_max(self, vehicle_type: str) -> None:
+        """
+        Copter, Heli, Rover and unknown vehicles keep reading MOT_BAT_VOLT_MAX.
+
+        GIVEN: Parameters with BATT_ARM_VOLT and MOT_BAT_VOLT_MAX
+        WHEN: Calculating voltage thresholds for a non-plane vehicle
+        THEN: The thresholds are BATT_ARM_VOLT and MOT_BAT_VOLT_MAX
+        """
+        params = {"BATT_ARM_VOLT": 10.5, "MOT_BAT_VOLT_MAX": 25.2}
+        assert calculate_voltage_thresholds(params, vehicle_type) == (10.5, 25.2)
+
+
+class TestVehicleParameterName:
+    """Multicopter parameter names map to the QuadPlane Q_ parameter group."""
+
+    @pytest.mark.parametrize(
+        ("copter_name", "plane_name"),
+        [
+            ("FRAME_CLASS", "Q_FRAME_CLASS"),
+            ("FRAME_TYPE", "Q_FRAME_TYPE"),
+            ("MOT_SPIN_ARM", "Q_M_SPIN_ARM"),
+            ("MOT_SPIN_MIN", "Q_M_SPIN_MIN"),
+            ("MOT_BAT_VOLT_MAX", "Q_M_BAT_VOLT_MAX"),
+            ("BATT_ARM_VOLT", "BATT_ARM_VOLT"),
+            ("SERVO1_FUNCTION", "SERVO1_FUNCTION"),
+        ],
+    )
+    def test_arduplane_uses_quadplane_parameter_names(self, copter_name: str, plane_name: str) -> None:
+        """
+        ArduPlane frame and motor parameters live in the Q_ group.
+
+        GIVEN: An ArduCopter frame, motor or shared parameter name
+        WHEN: It is translated for ArduPlane
+        THEN: Frame and motor names gain the Q_ prefix and shared names are unchanged
+        """
+        assert vehicle_parameter_name(copter_name, "ArduPlane") == plane_name
+
+    @pytest.mark.parametrize("vehicle_type", ["ArduCopter", "Heli", ""])
+    def test_other_vehicles_keep_copter_parameter_names(self, vehicle_type: str) -> None:
+        """
+        Non-plane vehicles keep the ArduCopter parameter names.
+
+        GIVEN: A non-ArduPlane or unknown vehicle type
+        WHEN: A motor parameter name is translated
+        THEN: The name is unchanged
+        """
+        assert vehicle_parameter_name("MOT_SPIN_ARM", vehicle_type) == "MOT_SPIN_ARM"
+        assert vehicle_parameter_name("FRAME_CLASS", vehicle_type) == "FRAME_CLASS"
 
 
 class TestBatteryMonitoring:

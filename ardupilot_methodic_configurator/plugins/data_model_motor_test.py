@@ -24,6 +24,7 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_json_with_schema import FilesystemJSONWithSchema
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.backend_flightcontroller_business_logic import vehicle_parameter_name
 from ardupilot_methodic_configurator.plugins.data_model_battery_monitor import BatteryMonitorDataModel
 
 # pylint: disable=too-many-lines
@@ -305,6 +306,23 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         """Get expected motor rotation directions based on frame configuration."""
         return self._motor_directions
 
+    def param_name(self, copter_param_name: str) -> str:
+        """
+        Get the connected vehicle's name for a multicopter frame or motor parameter.
+
+        ArduPlane QuadPlanes use Q_FRAME_CLASS, Q_FRAME_TYPE and Q_M_* instead of
+        ArduCopter's FRAME_CLASS, FRAME_TYPE and MOT_*.
+
+        Args:
+            copter_param_name: ArduCopter parameter name (e.g. "MOT_SPIN_ARM")
+
+        Returns:
+            str: The parameter name used by the connected vehicle
+
+        """
+        vehicle_type = getattr(getattr(self.flight_controller, "info", None), "vehicle_type", "")
+        return vehicle_parameter_name(copter_param_name, vehicle_type if isinstance(vehicle_type, str) else "")
+
     def is_battery_monitoring_enabled(self) -> bool:
         """
         Check if battery monitoring is enabled in the flight controller parameters.
@@ -412,7 +430,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
 
         try:
             # Validate parameter bounds if possible
-            if param_name in ["MOT_SPIN_ARM", "MOT_SPIN_MIN"] and not 0.0 <= value <= 1.0:
+            if param_name in {self.param_name("MOT_SPIN_ARM"), self.param_name("MOT_SPIN_MIN")} and not 0.0 <= value <= 1.0:
                 raise ValidationError(
                     _("%(param)s value %(value).3f is outside valid range (0.0 - 1.0)")
                     % {
@@ -542,26 +560,35 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         value: float,
         progress_callback: Callable[[int, int], None] | None = None,
     ) -> None:
-        """Set MOT_SPIN_ARM ensuring a 0.02 margin relative to MOT_SPIN_MIN."""
-        spin_min = self.get_parameter("MOT_SPIN_MIN")
+        """Set MOT_SPIN_ARM (Q_M_SPIN_ARM on ArduPlane) ensuring a 0.02 margin relative to MOT_SPIN_MIN."""
+        spin_arm_name = self.param_name("MOT_SPIN_ARM")
+        spin_min_name = self.param_name("MOT_SPIN_MIN")
+        spin_min = self.get_parameter(spin_min_name)
         if spin_min is not None and value > spin_min - 0.02:
             raise ValidationError(
-                _("MOT_SPIN_ARM must stay at least 0.02 below MOT_SPIN_MIN (current %(min).2f).") % {"min": spin_min}
+                _("%(arm_param)s must stay at least 0.02 below %(min_param)s (current %(min).2f).")
+                % {"arm_param": spin_arm_name, "min_param": spin_min_name, "min": spin_min}
             )
 
-        self.set_parameter("MOT_SPIN_ARM", value, progress_callback)
+        self.set_parameter(spin_arm_name, value, progress_callback)
 
     def set_motor_spin_min_value(self, value: float) -> None:
-        """Set MOT_SPIN_MIN ensuring it keeps 0.02 margin above MOT_SPIN_ARM."""
-        spin_arm = self.get_parameter("MOT_SPIN_ARM")
+        """Set MOT_SPIN_MIN (Q_M_SPIN_MIN on ArduPlane) ensuring it keeps 0.02 margin above MOT_SPIN_ARM."""
+        spin_arm_name = self.param_name("MOT_SPIN_ARM")
+        spin_min_name = self.param_name("MOT_SPIN_MIN")
+        spin_arm = self.get_parameter(spin_arm_name)
         if spin_arm is None:
-            raise ParameterError(_("MOT_SPIN_ARM must be available before updating MOT_SPIN_MIN."))
+            raise ParameterError(
+                _("%(arm_param)s must be available before updating %(min_param)s.")
+                % {"arm_param": spin_arm_name, "min_param": spin_min_name}
+            )
         if value < spin_arm + 0.02:
             raise ValidationError(
-                _("MOT_SPIN_MIN must be at least 0.02 higher than MOT_SPIN_ARM (current %(arm).2f).") % {"arm": spin_arm}
+                _("%(min_param)s must be at least 0.02 higher than %(arm_param)s (current %(arm).2f).")
+                % {"min_param": spin_min_name, "arm_param": spin_arm_name, "arm": spin_arm}
             )
 
-        self.set_parameter("MOT_SPIN_MIN", value)
+        self.set_parameter(spin_min_name, value)
 
     def test_motor(self, test_sequence_nr: int, motor_output_nr: int, throttle_percent: int, timeout_seconds: int) -> None:
         """
@@ -754,7 +781,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                              or empty string if not available
 
         """
-        return ProgramSettings.motor_diagram_filepath(self._frame_class, self._frame_type)
+        return ProgramSettings.motor_diagram_filepath(self._frame_class, self._diagram_frame_type())
 
     def motor_diagram_exists(self) -> bool:
         """
@@ -764,7 +791,22 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             bool: True if diagram exists, False otherwise
 
         """
-        return ProgramSettings.motor_diagram_exists(self._frame_class, self._frame_type)
+        return ProgramSettings.motor_diagram_exists(self._frame_class, self._diagram_frame_type())
+
+    def _diagram_frame_type(self) -> int:
+        """
+        Get the frame type whose motor diagram matches the current frame layout.
+
+        TRI and Y6 frames ignore most frame types and fall back to the "default" layout,
+        which ArduPilot documents with the type 0 diagram.
+
+        Returns:
+            int: Frame type to use for the motor diagram lookup
+
+        """
+        if self._frame_layout.get("TypeName") == "default":
+            return 0
+        return self._frame_type
 
     def _get_test_duration_s(self) -> float:
         """
@@ -894,11 +936,11 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         try:
             # Only set FRAME_CLASS parameter if it has changed
             if self._frame_class != frame_class:
-                self.set_parameter("FRAME_CLASS", float(frame_class))
+                self.set_parameter(self.param_name("FRAME_CLASS"), float(frame_class))
 
             # Only set FRAME_TYPE parameter if it has changed
             if self._frame_type != frame_type:
-                self.set_parameter("FRAME_TYPE", float(frame_type))
+                self.set_parameter(self.param_name("FRAME_TYPE"), float(frame_type))
 
             # Update internal state
             self._frame_class = frame_class
@@ -943,9 +985,10 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             return {}
 
         # Get current frame class from flight controller
-        current_frame_class = self.flight_controller.fc_parameters.get("FRAME_CLASS")
+        frame_class_param = self.param_name("FRAME_CLASS")
+        current_frame_class = self.flight_controller.fc_parameters.get(frame_class_param)
         if current_frame_class is None:
-            logging_warning(_("FRAME_CLASS parameter not found in flight controller"))
+            logging_warning(_("%(param)s parameter not found in flight controller"), {"param": frame_class_param})
             return {}
 
         frame_class_int = int(current_frame_class)
@@ -1039,8 +1082,9 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             logging_debug(_("Motor data unavailable, using doc_dict as fallback for frame options"))
 
             # Get FRAME_TYPE options (these contain both class and type info)
-            if "FRAME_TYPE" in self.filesystem.doc_dict:
-                frame_type_values = self.filesystem.doc_dict["FRAME_TYPE"].get("values", {})
+            frame_type_param = self.param_name("FRAME_TYPE")
+            if frame_type_param in self.filesystem.doc_dict:
+                frame_type_values = self.filesystem.doc_dict[frame_type_param].get("values", {})
 
                 # Group frame types by their corresponding frame class
                 for code, name in frame_type_values.items():
@@ -1120,9 +1164,10 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             raise ValidationError(_("Flight controller connection required for frame type parsing"))
 
         # Get current frame class from flight controller
-        current_frame_class = self.flight_controller.fc_parameters.get("FRAME_CLASS")
+        frame_class_param = self.param_name("FRAME_CLASS")
+        current_frame_class = self.flight_controller.fc_parameters.get(frame_class_param)
         if current_frame_class is None:
-            raise ValidationError(_("FRAME_CLASS parameter not found in flight controller"))
+            raise ValidationError(_("%(param)s parameter not found in flight controller") % {"param": frame_class_param})
 
         try:
             frame_class_code = int(current_frame_class)
@@ -1176,9 +1221,9 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
 
             # Immediately upload parameters to flight controller
             if self.frame_class != frame_class_code:
-                self.set_parameter("FRAME_CLASS", frame_class_code, progress_callback, extra_sleep_time)
+                self.set_parameter(self.param_name("FRAME_CLASS"), frame_class_code, progress_callback, extra_sleep_time)
             if self.frame_type != frame_type_code:
-                self.set_parameter("FRAME_TYPE", frame_type_code, progress_callback, extra_sleep_time)
+                self.set_parameter(self.param_name("FRAME_TYPE"), frame_type_code, progress_callback, extra_sleep_time)
 
             logging_info(
                 _("Updated frame configuration: FRAME_CLASS=%(class)d, FRAME_TYPE=%(type)d"),
@@ -1309,9 +1354,9 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             "Please:\n"
             "• Connect a properly charged battery\n"
             "• Ensure battery voltage is within the safe operating range\n"
-            "• Check BATT_ARM_VOLT and MOT_BAT_VOLT_MAX parameters\n\n"
+            "• Check BATT_ARM_VOLT and %(max_param)s parameters\n\n"
             "Reason: %(reason)s"
-        ) % {"reason": reason}
+        ) % {"reason": reason, "max_param": self.param_name("MOT_BAT_VOLT_MAX")}
         # pylint: enable=duplicate-code
 
     def is_battery_related_safety_issue(self, error: MotorTestSafetyError) -> bool:

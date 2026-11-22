@@ -1192,7 +1192,10 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             tuple[float, float]: (min_voltage, max_voltage) for safe motor testing
 
         """
-        return calculate_voltage_thresholds(self._params_manager.fc_parameters)
+        vehicle_type = getattr(self._connection_manager.info, "vehicle_type", "")
+        return calculate_voltage_thresholds(
+            self._params_manager.fc_parameters, vehicle_type if isinstance(vehicle_type, str) else ""
+        )
 
     def is_battery_monitoring_enabled(self) -> bool:
         """

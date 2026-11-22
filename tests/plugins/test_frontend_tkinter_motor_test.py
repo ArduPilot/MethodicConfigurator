@@ -105,6 +105,13 @@ class FakeMotorTestModel:  # pylint: disable=too-many-instance-attributes, too-m
         self.emergency_runs = 0
         self.stop_calls = 0
         self.battery_issue = True
+        self.param_prefixes: dict[str, str] = {}
+
+    def param_name(self, copter_param_name: str) -> str:
+        for copter_prefix, vehicle_prefix in self.param_prefixes.items():
+            if copter_param_name.startswith(copter_prefix):
+                return vehicle_prefix + copter_param_name.removeprefix(copter_prefix)
+        return copter_param_name
 
     def refresh_from_flight_controller(self) -> bool:
         return self.refresh_returns
@@ -2244,6 +2251,36 @@ class TestMotorSpinDialogs:
 
         dialog_spies.showerror.assert_called_once_with("Error", "out of range")
         assert not motor_view.base_window.navigation_lock.locked
+
+    def test_quadplane_spin_dialogs_name_and_prefill_q_m_parameters(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, mocker
+    ) -> None:
+        """
+        On a QuadPlane the spin dialogs ask for the Q_M_ parameters.
+
+        GIVEN: A QuadPlane model whose motor parameters use the Q_M_ prefix
+        WHEN: The operator opens the spin-arm and spin-min dialogs
+        THEN: Both dialogs name Q_M_SPIN_ARM/Q_M_SPIN_MIN and are prefilled from those parameters
+        """
+        fake_model.param_prefixes = {"MOT_": "Q_M_"}
+        values = {"Q_M_SPIN_ARM": 0.11, "Q_M_SPIN_MIN": 0.16}
+        mocker.patch.object(fake_model, "get_parameter", side_effect=values.get)
+        dialog_spies.askfloat.return_value = None
+
+        motor_view._set_motor_spin_arm()
+        motor_view._set_motor_spin_min()
+
+        assert dialog_spies.askfloat.call_args_list[0] == (
+            ("Set Motor Spin Arm", "Enter new value for Q_M_SPIN_ARM with 0.02 margin:"),
+            {"initialvalue": 0.11},
+        )
+        assert dialog_spies.askfloat.call_args_list[1] == (
+            (
+                "Set Motor Spin Min",
+                "Enter new value for Q_M_SPIN_MIN, must be at least 0.02 higher than Q_M_SPIN_ARM:",
+            ),
+            {"initialvalue": 0.16, "minvalue": 0.0, "maxvalue": 1.0},
+        )
 
     def test_spin_min_dialog_is_bounded_between_zero_and_one_and_prefilled(
         self, motor_view: MotorTestView, dialog_spies: SimpleNamespace
