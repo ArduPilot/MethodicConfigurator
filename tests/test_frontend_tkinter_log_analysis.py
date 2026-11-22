@@ -427,7 +427,7 @@ def bare_window() -> LogAnalysisReportWindow:
 class TestWindowConstruction:
     """Cover LogAnalysisReportWindow's full __init__ flow with widgets mocked."""
 
-    def _build_window(  # pylint: disable=too-many-arguments
+    def _build_window(
         self,
         mocker: MockerFixture,
         patched_widgets: dict[str, MagicMock],
@@ -435,7 +435,6 @@ class TestWindowConstruction:
         analysis_results: list[MagicMock],
         *,
         report: dict | None = None,
-        vehicle_dir: str = "/vehicle",
     ) -> LogAnalysisReportWindow:
         _ = patched_widgets  # Keep the widget patches active while constructing the window.
         mocker.patch.object(LogAnalysisReportWindow, "calculate_scaled_geometry", return_value="1050x800")
@@ -449,7 +448,7 @@ class TestWindowConstruction:
             self.main_frame = MagicMock()
 
         mocker.patch(f"{MODULE}.BaseWindow.__init__", _fake_base_init)
-        return LogAnalysisReportWindow(root, summary, vehicle_dir, report=report)
+        return LogAnalysisReportWindow(root, summary, report=report)
 
     def test_selector_defaults_to_first_subsystem(self, mocker: MockerFixture, patched_widgets: dict[str, MagicMock]) -> None:
         """
@@ -899,6 +898,6 @@ class TestStandaloneLogAnalysis:
             apm_doc=None,
             validate_project=False,
         )
-        report_window_class.assert_called_once_with(None, summary, args.vehicle_dir)
+        report_window_class.assert_called_once_with(None, summary)
         report_window.run.assert_called_once()
         selector_root.destroy.assert_called_once()

@@ -10,7 +10,7 @@ parameters or creating a vehicle project.
 - `frontend_tkinter_mavlink_inspector.py` contains `MavlinkInspectorWindow`,
   `open_mavlink_inspector_window()`, `create_argument_parser()` and `main()`.
 - The Parameter Editor places `MAVLink inspector` directly below
-  `Zip vehicle for Forum help`. It is enabled when a live FC transport exists,
+  `FC information`. It is enabled when a live FC transport exists,
   independently of parameter availability and the selected configuration step.
 - `pyproject.toml` publishes `amc_mavlink_inspector` as both a console script and
   an `argcomplete.completers` entry. The module includes the global argcomplete

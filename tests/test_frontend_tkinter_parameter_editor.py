@@ -206,6 +206,14 @@ def test_analysis_menu_toggles_and_closes_on_outside_click(root: tk.Tk, paramete
 
             editor._toggle_analysis_menu(trigger, "TButton")
             assert editor._analysis_menu is not None
+            root.update()
+            editor._analysis_menu.winfo_children()[0].focus_force()
+            root.update()
+            editor._analysis_menu.winfo_children()[0].event_generate("<Escape>")
+            assert editor._analysis_menu is None
+
+            editor._toggle_analysis_menu(trigger, "TButton")
+            assert editor._analysis_menu is not None
             editor._toggle_analysis_menu(trigger, "TButton")
             assert editor._analysis_menu is None
     finally:

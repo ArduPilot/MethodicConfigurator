@@ -136,7 +136,7 @@ No new runtime dependencies or package data are required.
    it cannot establish the wireless link's throughput or range.
 3. Observe RX/TX B/s, RSSI/noise and radio errors while safely changing antenna
    orientation and separation. TX includes the periodic GCS heartbeat.
-4. Press `MAVLink inspector` below `Zip vehicle for Forum help`, select messages
+4. Press `MAVLink inspector` below `FC information`, select messages
    and check their rates and fields. Click headings to sort and verify the stripes
    follow the new row order as traffic updates. Close it to resume the panel.
 5. Briefly interrupt the telemetry path. Radio values should become unavailable

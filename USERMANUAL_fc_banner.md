@@ -8,7 +8,7 @@ check which sensors the controller reports.
 
 ## Open the FC banner
 
-In the Parameter Editor, click the **FC banner** button. The window is available
+In the Parameter Editor, click the **FC information** button. The window is available
 while AMC is connected to a flight controller.
 
 ![Flight Controller Banner window showing startup messages, recent STATUSTEXT messages, and detected devices](images/App_screenshot_FC_banner.png)
