@@ -547,8 +547,8 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             self._diagrams_path = ""
             self._diagram_needs_update = True
 
-            # Update UI components
-            self._update_motor_buttons_layout()
+            # Update UI components; same-count layouts still change which motor each button spins
+            self._update_motor_buttons_layout(force=True)
 
         except (ValidationError, ParameterError, FrameConfigurationError) as e:
             showerror(_("Parameter Update Error"), str(e))

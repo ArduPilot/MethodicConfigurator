@@ -1827,6 +1827,7 @@ class TestMotorTestConnectionOwnership:
             return ""
 
         fc.reset_and_reconnect.side_effect = reboot
+        fc.download_params.return_value = ({"FRAME_TYPE": 0.0}, MagicMock())
         view.frame_type_combobox.current(0)
         assert view.frame_type_combobox.get_selected_key() == "0"
 

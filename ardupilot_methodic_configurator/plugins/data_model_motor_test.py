@@ -180,36 +180,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         if self._frame_class == frame_class and self._frame_type == frame_type:
             return
 
-        # Update frame parameters
-        self._frame_class = frame_class
-        self._frame_type = frame_type
-        self._motor_count = 0
-        self._frame_layout = {}
-
-        # Find matching layout in motor data and populate motor arrays
-        if self._motor_data_loader.data and "layouts" in self._motor_data_loader.data:
-            for layout in self._motor_data_loader.data["layouts"]:
-                if layout["Class"] == self._frame_class and layout["Type"] == self._frame_type and "motors" in layout:
-                    self._frame_layout = layout
-                    self._motor_count = len(layout["motors"])
-                    # Generate motor labels: A-Z for first 26, then AA, AB, AC... for motors 27-32
-                    self._motor_labels = []
-                    for i in range(self._motor_count):
-                        if i < 26:
-                            self._motor_labels.append(chr(ord("A") + i))
-                        else:
-                            # For motors 27-32: AA, AB, AC, AD, AE, AF
-                            self._motor_labels.append("A" + chr(ord("A") + (i - 26)))
-                    self._motor_numbers = [0] * self._motor_count
-                    self._test_order = [0] * self._motor_count
-                    self._motor_directions = [""] * self._motor_count
-                    for i, motor in enumerate(self._frame_layout.get("motors", [])):
-                        test_order = motor.get("TestOrder")
-                        if test_order and 1 <= test_order <= self._motor_count:
-                            self._motor_numbers[test_order - 1] = motor.get("Number")
-                            self._motor_directions[test_order - 1] = motor.get("Rotation")
-                            self._test_order[i] = test_order
-                    break
+        self._populate_frame_layout(frame_class, frame_type)
 
         if self._motor_count == 0:
             if self._frame_class == 0:
@@ -232,6 +203,41 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                 "motors": self._motor_count,
             },
         )
+
+    def _populate_frame_layout(self, frame_class: int, frame_type: int) -> None:
+        """Recompute every per-motor array from the motor data for the given frame class and type."""
+        self._frame_class = frame_class
+        self._frame_type = frame_type
+        self._motor_count = 0
+        self._frame_layout = {}
+        self._motor_labels = []
+        self._motor_numbers = []
+        self._test_order = []
+        self._motor_directions = []
+
+        # Find matching layout in motor data and populate motor arrays
+        if self._motor_data_loader.data and "layouts" in self._motor_data_loader.data:
+            for layout in self._motor_data_loader.data["layouts"]:
+                if layout["Class"] == self._frame_class and layout["Type"] == self._frame_type and "motors" in layout:
+                    self._frame_layout = layout
+                    self._motor_count = len(layout["motors"])
+                    # Generate motor labels: A-Z for first 26, then AA, AB, AC... for motors 27-32
+                    for i in range(self._motor_count):
+                        if i < 26:
+                            self._motor_labels.append(chr(ord("A") + i))
+                        else:
+                            # For motors 27-32: AA, AB, AC, AD, AE, AF
+                            self._motor_labels.append("A" + chr(ord("A") + (i - 26)))
+                    self._motor_numbers = [0] * self._motor_count
+                    self._test_order = [0] * self._motor_count
+                    self._motor_directions = [""] * self._motor_count
+                    for i, motor in enumerate(self._frame_layout.get("motors", [])):
+                        test_order = motor.get("TestOrder")
+                        if test_order and 1 <= test_order <= self._motor_count:
+                            self._motor_numbers[test_order - 1] = motor.get("Number")
+                            self._motor_directions[test_order - 1] = motor.get("Rotation")
+                            self._test_order[i] = test_order
+                    break
 
     def _get_test_settings_from_disk(self) -> None:
         """Load test settings from disk."""
@@ -378,6 +384,10 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         if self.flight_controller.master is None:
             raise FlightControllerConnectionError(_("Flight controller not connected."))
 
+        # Without a parameter cache, BATT_MONITOR cannot be read and the voltage check would be skipped
+        if not self.flight_controller.fc_parameters:
+            raise MotorTestSafetyError(_("Flight controller parameters are not loaded, cannot verify battery safety."))
+
         # Motor voltage thresholds and telemetry apply only to battery 1.
         if self.flight_controller.fc_parameters.get("BATT_MONITOR", 0) == 0:
             # If battery monitoring is disabled, we still warn but don't fail
@@ -469,7 +479,19 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             if actual_value is not None and abs(actual_value - value) < 0.001:  # Allow small floating-point tolerance
                 logging_info(_("Parameter %(param)s set to %(value).3f"), {"param": param_name, "value": value})
                 if requires_reset:
-                    self.flight_controller.reset_and_reconnect(progress_callback, extra_sleep_time)
+                    reconnect_error = self.flight_controller.reset_and_reconnect(progress_callback, extra_sleep_time)
+                    if reconnect_error:
+                        raise ParameterError(
+                            _("Could not reconnect to the flight controller after setting %(param)s: %(error)s")
+                            % {"param": param_name, "error": reconnect_error}
+                        )
+                    # The reboot clears the parameter cache, which the safety checks and frame detection rely on
+                    downloaded_parameters, _defaults = self.flight_controller.download_params()
+                    if not downloaded_parameters:
+                        raise ParameterError(
+                            _("Could not download the flight controller parameters after setting %(param)s")
+                            % {"param": param_name}
+                        )
                 return
             raise ParameterError(
                 _("Parameter %(param)s verification failed: expected %(expected).3f, got %(actual)s")
@@ -945,19 +967,8 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             if self._frame_type != frame_type:
                 self.set_parameter(self.param_name("FRAME_TYPE"), float(frame_type))
 
-            # Update internal state
-            self._frame_class = frame_class
-            self._frame_type = frame_type
-
-            # Recalculate motor count using motor data loader
-            self._motor_count = 0
-            if self._motor_data_loader.data and "layouts" in self._motor_data_loader.data:
-                # Find a layout that matches the current frame class and type
-                for layout in self._motor_data_loader.data["layouts"]:
-                    if layout.get("Class") == frame_class and layout.get("Type") == frame_type and "motors" in layout:
-                        self._frame_layout = layout
-                        self._motor_count = len(layout["motors"])
-                        break
+            # Update internal state and recalculate the full motor layout for the new frame
+            self._populate_frame_layout(frame_class, frame_type)
 
             logging_info(
                 _("Frame configuration updated: Class=%(class)d, Type=%(type)d, Motors=%(motors)d"),
@@ -1233,21 +1244,8 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                 {"class": frame_class_code, "type": frame_type_code},
             )
 
-            # Update internal state and recalculate motor count
-            self._frame_class = frame_class_code
-            self._frame_type = frame_type_code
-            self._motor_count = 0
-            if self._motor_data_loader.data and "layouts" in self._motor_data_loader.data:
-                # Find a layout that matches the current frame class and type
-                for layout in self._motor_data_loader.data["layouts"]:
-                    if (
-                        layout.get("Class") == frame_class_code
-                        and layout.get("Type") == frame_type_code
-                        and "motors" in layout
-                    ):
-                        self._frame_layout = layout
-                        self._motor_count = len(layout["motors"])
-                        break
+            # Update internal state and recalculate the full motor layout for the new frame
+            self._populate_frame_layout(frame_class_code, frame_type_code)
 
             return True
 
