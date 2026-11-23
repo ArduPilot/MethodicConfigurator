@@ -7728,6 +7728,67 @@ def test_user_can_read_all_tuning_results_in_csv(
 
 
 @pytest.mark.parametrize(
+    ("firmware_version", "prefix"),
+    [
+        ("4.6.3", "ATC_ACCEL"),
+        ("4.7.0rc1", "ATC_ACCEL"),
+        ("4.7.0", "ATC_ACC"),
+        ("4.7.3", "ATC_ACC"),
+        ("4.10.0", "ATC_ACC"),
+        ("", "ATC_ACCEL"),
+        ("invalid", "ATC_ACCEL"),
+    ],
+)
+def test_tuning_report_selects_acceleration_names_by_firmware_version(
+    parameter_editor: ParameterEditor,
+    mock_local_filesystem: MagicMock,
+    tmp_path: Path,
+    firmware_version: str,
+    prefix: str,
+) -> None:
+    """
+    The tuning report uses the acceleration parameters for the project firmware.
+
+    GIVEN: Both old and new acceleration names are present in the parameter files.
+    WHEN: A report is generated for a specific firmware version.
+    THEN: The report uses the corresponding names and reads only those values.
+    """
+    mock_local_filesystem.fw_version = firmware_version
+    mock_local_filesystem.vehicle_type = "ArduCopter"
+    mock_local_filesystem.vehicle_dir = str(tmp_path)
+    mock_local_filesystem.param_default_dict = ParDict(
+        {
+            "ATC_ACCEL_P_MAX": Par(110000.0),
+            "ATC_ACC_P_MAX": Par(1100.0),
+        }
+    )
+    mock_local_filesystem.file_parameters = {
+        "13_initial_atc.param": ParDict(
+            {
+                "ATC_ACCEL_P_MAX": Par(116700.0),
+                "ATC_ACC_P_MAX": Par(1167.0),
+                "ATC_ACCEL_R_MAX": Par(0.0),
+            }
+        )
+    }
+
+    parameter_editor._update_tuning_report()
+
+    with (tmp_path / "tuning_report.csv").open(encoding="utf-8", newline="") as report:
+        rows = list(csv.reader(report))
+    data = {row[0]: row for row in rows[1:]}
+    other_prefix = "ATC_ACCEL" if prefix == "ATC_ACC" else "ATC_ACC"
+    for axis in ("P", "R", "Y"):
+        assert f"{prefix}_{axis}_MAX" in data
+        assert f"{other_prefix}_{axis}_MAX" not in data
+    pitch = data[f"{prefix}_P_MAX"]
+    assert float(pitch[1]) == (1100.0 if prefix == "ATC_ACC" else 110000.0)
+    assert float(pitch[2]) == (1167.0 if prefix == "ATC_ACC" else 116700.0)
+    roll = data[f"{prefix}_R_MAX"]
+    assert roll[2] == ("" if prefix == "ATC_ACC" else "0.0")
+
+
+@pytest.mark.parametrize(
     ("filename", "gain_names"),
     [
         ("43_autotune_roll_pitch_ff_results.param", ("ATC_RAT_PIT_FF", "ATC_RAT_RLL_FF")),
