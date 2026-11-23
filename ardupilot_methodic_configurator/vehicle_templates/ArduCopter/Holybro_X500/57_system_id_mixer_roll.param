@@ -1,12 +1,12 @@
-ANGLE_MAX,3000  # limit the angle to limit the speed at SID-chirp low-frequencies
-ARMING_CHECK,30174  # disable Parameter check because we need to set ATC_RAT_RLL_I out-of-range (was 1)
-ATC_ANG_PIT_P,4.5  # reset to default to not interfere with sysID
-ATC_ANG_RLL_P,4.5  # reset to default to not interfere with sysID
-ATC_ANG_YAW_P,4.5  # reset to default to not interfere with sysID
-ATC_RAT_PIT_I,0.180513
-ATC_RAT_RLL_I,0  # prevent the rate controllers from compensating too much of the frequency-sweep signal
-ATC_RAT_YAW_I,0.099616
-ATC_RATE_FF_ENAB,0  # prevent the rate controllers from compensating too much of the frequency-sweep signal
+ARMING_SKIPCHK,32  # disable Parameter check because we need to set ATC_RAT_RLL_I out-of-range
+ATC_ANG_PIT_P,4.5  # reset to default to not interfere with sysID, was 11.58
+ATC_ANG_RLL_P,4.5  # reset to default to not interfere with sysID, was 13.1096
+ATC_ANG_YAW_P,4.5  # reset to default to not interfere with sysID, was 6.5463
+ATC_ANGLE_MAX,15
+ATC_RAT_PIT_I,0.180513  # prevent the rate controllers from compensating too much of the frequency-sweep signal, was 1.9696
+ATC_RAT_RLL_I,0  # prevent the rate controllers from compensating too much of the frequency-sweep signal, was 1.2828
+ATC_RAT_YAW_I,0.099616  # prevent the rate controllers from compensating too much of the frequency-sweep signal, was 0.65
+ATC_RATE_FF_ENAB,0  # prevent the rate controllers from compensating too much of the frequency-sweep signal, was 1
 FLTMODE6,25  # Activate sysid instead of loiter
 LOG_BITMASK,704510  # attitude sample rate at loop rate
 LOG_DISARMED,0  # was only needed for wind speed estimation

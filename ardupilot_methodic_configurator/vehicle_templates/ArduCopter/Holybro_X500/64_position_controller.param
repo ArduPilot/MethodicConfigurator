@@ -1,13 +1,13 @@
-ANGLE_MAX,4500
+ATC_ANGLE_MAX,45
 LOG_BITMASK,145150  # Add Navigation logging
-LOIT_ACC_MAX,500
-LOIT_BRK_ACCEL,250
+LOIT_ACC_MAX_M,5
+LOIT_BRK_ACC_M,2.5
 LOIT_BRK_DELAY,1
-LOIT_BRK_JERK,500
-PSC_VELXY_FF,0  # PSCN.AE/PSCN.VE if you have flown North-South or PSCE.AE/PSCE.VE if you have flown East-West
-WPNAV_ACCEL,100  # high speed missions in auto
-WPNAV_ACCEL_C,0  # 2 * WPNAV_ACCEL so that the cornering behaviour is mostly controlled by WPNAV_RADIUS https://github.com/ArduPilot/ardupilot/pull/25928
-WPNAV_ACCEL_Z,100  # high speed missions in auto
-WPNAV_JERK,1  # high speed missions in auto
-WPNAV_SPEED,80  # high speed missions in auto
-WPNAV_SPEED_DN,100  # high speed missions in auto
+LOIT_BRK_JRK_M,5
+PSC_NE_VEL_FF,0  # PSCN.AE/PSCN.VE if you have flown North-South or PSCE.AE/PSCE.VE if you have flown East-West
+WP_ACC,1  # high speed missions in auto
+WP_ACC_CNR,0  # 2 * WP_ACC so that the cornering behaviour is mostly controlled by WP_RADIUS_M https://github.com/ArduPilot/ardupilot/pull/25928
+WP_ACC_Z,1  # high speed missions in auto
+WP_JERK,1  # high speed missions in auto
+WP_SPD,0.8  # high speed missions in auto
+WP_SPD_DN,1  # high speed missions in auto
