@@ -19,6 +19,59 @@ from serial.tools.list_ports_common import ListPortInfo
 from ardupilot_methodic_configurator import backend_flightcontroller_bootloader as bl
 
 
+def _px4_fmuv5_port(
+    *, device: str = "COM9", location: str = "1-3:x.0", serial_number: str | None = "PX4-serial"
+) -> ListPortInfo:
+    """Model the legacy FMUv5 USB port observed during controller reboot."""
+    port = ListPortInfo(device)
+    port.location = location
+    port.serial_number = serial_number
+    port.vid, port.pid = bl.PX4_FMUV5_BOOTLOADER_USB_ID
+    return port
+
+
+@pytest.mark.parametrize("bootloader_serial", ["PX4-serial", None], ids=["changed-serial", "missing-serial"])
+def test_fmuv5_upload_finds_legacy_bootloader_at_same_usb_location(
+    bootloader_serial: str | None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """
+    An FMUv5 legacy bootloader can change its USB serial and COM port.
+
+    GIVEN: Board ID 50 reappears at the captured USB location with PX4 VID/PID 26ac:0032.
+    WHEN: Upload discovery resolves the new port.
+    THEN: It selects the sole bootloader port; normal reconnect matching remains strict.
+    """
+    identity = bl.SerialDeviceIdentity(location="1-3:x.0", serial_number="FC-serial")
+    bootloader = _px4_fmuv5_port(serial_number=bootloader_serial)
+    monkeypatch.setattr(bl.serial.tools.list_ports, "comports", lambda: [bootloader])
+
+    assert bl.resolve_bootloader_upload_device("COM11", identity, expected_board_id=50) == "COM9"
+    with pytest.raises(OSError, match="cannot uniquely"):
+        bl.resolve_bootloader_device("COM11", identity)
+
+
+@pytest.mark.parametrize(
+    "condition", ["different-board", "different-usb-id", "different-location", "no-location", "ambiguous"]
+)
+def test_fmuv5_upload_rejects_untrusted_or_ambiguous_fallback(condition: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    """
+    A changed USB serial is accepted only with specific, unambiguous hardware evidence.
+
+    GIVEN: The board ID, bootloader USB ID, physical location, or uniqueness check fails.
+    WHEN: Upload discovery tries to resolve the bootloader.
+    THEN: It refuses to choose a serial port.
+    """
+    identity = bl.SerialDeviceIdentity(location="" if condition == "no-location" else "1-3:x.0", serial_number="FC-serial")
+    port = _px4_fmuv5_port(location="1-4:x.0" if condition == "different-location" else "1-3:x.0")
+    if condition == "different-usb-id":
+        port.pid = 0x0031
+    ports = [port, _px4_fmuv5_port(device="COM12")] if condition == "ambiguous" else [port]
+    monkeypatch.setattr(bl.serial.tools.list_ports, "comports", lambda: ports)
+
+    with pytest.raises(OSError, match="cannot uniquely"):
+        bl.resolve_bootloader_upload_device("COM11", identity, expected_board_id=9 if condition == "different-board" else 50)
+
+
 def test_bootloader_port_refuses_a_partial_usb_identity_match(monkeypatch: pytest.MonkeyPatch) -> None:
     """
     A bootloader port must match every captured USB identity attribute.

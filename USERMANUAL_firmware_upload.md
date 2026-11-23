@@ -278,6 +278,13 @@ APJ can still be selected with **Upload custom APJ…**.
 Check that the firmware is intended for your exact board and fits its flash capacity. Choose the
 correct target or obtain a matching APJ file. There is no force-flash option to bypass these checks.
 
+### Bootloader Identification or Recovery Failed
+
+If AMC cannot confirm that the held bootloader rebooted, power-cycle the controller before
+reconnecting. This error can follow a failure to identify the bootloader before erasing begins.
+The error includes the identification failure; DEBUG logging also records the serial port and
+recovery failure. Check the USB cable and connection, and close other programs using the port.
+
 ### Upload Failed During Erase, Programming, or Verification
 
 Read the reported error. The firmware may be incomplete if erasing has started. Follow the

@@ -88,6 +88,10 @@ following implementation constraints:
 - The upload service binds the SHA-256 of the downloaded or local APJ descriptor
   to the exact file passed to the upload facade.
 - APJ parsing and validation precede the MAVLink bootloader-entry command.
+- If the serial connection drops after the bootloader reboot command is sent but before
+  its acknowledgement, the uploader checks for the captured controller's bootloader.
+  A failed command write or an explicit rejection still stops bootloader entry. Identity,
+  board compatibility, trusted digest, and final confirmation remain required before erase.
 - Never erase or program before APJ validation, board matching, capacity checks,
   trusted-digest verification, and final confirmation pass.
 - Reconnection is bound to the captured USB serial number and/or physical location.
@@ -95,6 +99,10 @@ following implementation constraints:
   application and bootloader can expose different CDC interfaces; interface suffixes
   such as Linux `1-2.3:1.2` are ignored for physical matching. Ambiguous matches fail
   closed.
+- During upload discovery only, an FMUv5 board ID 50 may use the legacy PX4 bootloader
+  USB ID `26ac:0032` at the captured physical location when its USB serial changes.
+  The location must have exactly one serial-port candidate. Bootloader board-ID checks
+  and final confirmation still apply; reconnection retains strict identity matching.
 - Cancellation is checked at safe boundaries and never interrupts a bootloader
   packet. Before erase, the held bootloader is rebooted only after an explicit
   successful reboot acknowledgement, except for protocol revision 2 which does
