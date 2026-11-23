@@ -105,7 +105,7 @@ pypi_dist = [
 ]
 
 win_dist = [
-    "pip==26.2.2",
+    "pip==26.3",
     "pywin32==312",
     "pyinstaller==6.20.0; python_full_version < '3.14.7'",
     "pyinstaller==6.22.3; python_full_version >= '3.14.7'",
@@ -115,7 +115,7 @@ win_dist = [
 ]
 
 mac_dist = [
-    "pip==26.2.2",
+    "pip==26.3",
     "pyinstaller==6.20.0; python_full_version < '3.14.7'",
     "pyinstaller==6.22.3; python_full_version >= '3.14.7'",
     "pyinstaller-hooks-contrib==2026.6; python_full_version < '3.14.7'",
@@ -124,7 +124,7 @@ mac_dist = [
 ]
 
 linux_dist = [
-    "pip==26.2.2",
+    "pip==26.3",
     "pyinstaller==6.20.0; python_full_version < '3.14.7'",
     "pyinstaller==6.22.3; python_full_version >= '3.14.7'",
     "pyinstaller-hooks-contrib==2026.6; python_full_version < '3.14.7'",
