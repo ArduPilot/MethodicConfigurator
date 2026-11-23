@@ -30,6 +30,8 @@ from pathlib import Path
 from time import perf_counter, time
 from typing import Any, Literal
 
+from packaging.version import InvalidVersion, Version
+
 from ardupilot_methodic_configurator import _, data_model_parameter_export
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import PhaseData
@@ -1185,10 +1187,15 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         return nr_changed
 
     def _update_tuning_report(self) -> None:
+        acceleration_prefix = "ATC_ACCEL"
+        with contextlib.suppress(InvalidVersion):
+            version = str(self._local_filesystem.fw_version).split(" ", maxsplit=1)[0]
+            if Version(version) >= Version("4.7.0"):
+                acceleration_prefix = "ATC_ACC"
         report_params = [
-            "ATC_ACCEL_P_MAX",
-            "ATC_ACCEL_R_MAX",
-            "ATC_ACCEL_Y_MAX",
+            f"{acceleration_prefix}_P_MAX",
+            f"{acceleration_prefix}_R_MAX",
+            f"{acceleration_prefix}_Y_MAX",
             "ATC_ANG_PIT_P",
             "ATC_ANG_RLL_P",
             "ATC_ANG_YAW_P",
