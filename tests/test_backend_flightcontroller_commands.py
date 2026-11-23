@@ -23,11 +23,13 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+import serial
 from pymavlink import mavutil
 from pymavlink.dialects.v10 import ardupilotmega as mavlink1
 from pymavlink.dialects.v20 import ardupilotmega as mavlink2
 
 from ardupilot_methodic_configurator.backend_flightcontroller_commands import FlightControllerCommands
+from ardupilot_methodic_configurator.data_model_firmware_upload import FirmwareBootloaderEntryUnconfirmedError
 
 # pylint: disable=too-many-lines
 
@@ -73,6 +75,79 @@ def test_reboot_to_bootloader_holds_bootloader_without_force_flags() -> None:
 
     sent_parameters = master.mav.command_long_send.call_args.args[4:11]
     assert sent_parameters == (3, 0, 0, 0, 0, 0, 0)
+
+
+def test_reboot_reports_serial_loss_after_command_write_as_unconfirmed() -> None:
+    """
+    A lost reboot acknowledgment is distinguished from a failed command write.
+
+    GIVEN: The reboot command is written, then the USB serial connection disappears.
+    WHEN: The application waits for its acknowledgment.
+    THEN: It reports an unconfirmed reboot for identity-bound bootloader discovery.
+    """
+    master = MagicMock()
+    master.recv_match.side_effect = serial.SerialException("ClearCommError failed")
+    commands = FlightControllerCommands(params_manager=Mock(), connection_manager=Mock(master=master))
+
+    with pytest.raises(FirmwareBootloaderEntryUnconfirmedError, match="after sending") as error:
+        commands.reboot_to_bootloader()
+
+    assert isinstance(error.value.__cause__, serial.SerialException)
+    master.mav.command_long_send.assert_called_once()
+
+
+def test_reboot_serial_write_failure_does_not_allow_bootloader_discovery() -> None:
+    """
+    A failed reboot command write remains an error.
+
+    GIVEN: The serial connection fails while writing the reboot command.
+    WHEN: Bootloader entry is requested.
+    THEN: The command fails without being treated as an unconfirmed acknowledgment.
+    """
+    master = MagicMock()
+    master.mav.command_long_send.side_effect = serial.SerialException("write failed")
+    commands = FlightControllerCommands(params_manager=Mock(), connection_manager=Mock(master=master))
+
+    success, message = commands.reboot_to_bootloader()
+
+    assert not success
+    assert "write failed" in message
+    master.recv_match.assert_not_called()
+
+
+def test_reboot_rejection_remains_a_failure() -> None:
+    """
+    A controller's explicit reboot rejection cannot be treated as a disconnect.
+
+    GIVEN: The controller acknowledges the reboot request with DENIED.
+    WHEN: Bootloader entry is requested.
+    THEN: The rejection is returned to the caller.
+    """
+    master = MagicMock()
+    master.recv_match.return_value = Mock(
+        command=mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, result=mavutil.mavlink.MAV_RESULT_DENIED
+    )
+    commands = FlightControllerCommands(params_manager=Mock(), connection_manager=Mock(master=master))
+
+    assert commands.reboot_to_bootloader() == (False, "Command denied")
+
+
+def test_other_commands_do_not_accept_a_serial_disconnect() -> None:
+    """
+    A lost serial connection remains an error for ordinary MAVLink commands.
+
+    GIVEN: A command is sent and the serial connection fails while awaiting its acknowledgment.
+    WHEN: The command result is requested.
+    THEN: The error is returned without invoking bootloader-specific recovery.
+    """
+    master = MagicMock()
+    master.recv_match.side_effect = serial.SerialException("serial connection lost")
+    commands = FlightControllerCommands(params_manager=Mock(), connection_manager=Mock(master=master))
+
+    success, message = commands.send_command_and_wait_ack(mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM)
+
+    assert not success
+    assert "serial connection lost" in message
 
 
 class TestFlightControllerCommandsInitialization:

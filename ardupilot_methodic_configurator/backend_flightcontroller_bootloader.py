@@ -17,6 +17,7 @@ import struct
 from collections.abc import Callable, Iterator
 from contextlib import suppress
 from dataclasses import dataclass
+from logging import debug as logging_debug
 from pathlib import Path
 from time import monotonic
 from time import sleep as time_sleep
@@ -83,6 +84,11 @@ BOOTLOADER_OPEN_RETRIES = int(BOOTLOADER_ENUMERATION_TIMEOUT / BOOTLOADER_RETRY_
 # Recovery is best-effort; do not let an unresponsive held bootloader delay the
 # caller for longer than a normal bootloader command timeout.
 BOOTLOADER_ABORT_TIMEOUT = 2.0
+# ArduPilot's Copter-4.6.3 manifest associates this PX4 bootloader USB ID with
+# FMUv5 (APJ board ID 50):
+# https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/Tools/scripts/generate_manifest.py#L277-L280
+PX4_FMUV5_BOOTLOADER_USB_ID = (0x26AC, 0x0032)
+FMUV5_BOARD_ID = 50
 
 
 class BootloaderTransport(Protocol):
@@ -259,6 +265,27 @@ def resolve_bootloader_device(device: str, identity: SerialDeviceIdentity | None
     return device
 
 
+def resolve_bootloader_upload_device(device: str, identity: SerialDeviceIdentity | None, *, expected_board_id: int) -> str:
+    """Resolve an upload port, allowing the known FMUv5 bootloader's changed USB serial."""
+    try:
+        return resolve_bootloader_device(device, identity)
+    except OSError:
+        if expected_board_id != FMUV5_BOARD_ID or identity is None or not identity.location or not identity.serial_number:
+            raise
+        location = _physical_usb_location(identity.location)
+        if not location:
+            raise
+        matches = [
+            port
+            for port in serial.tools.list_ports.comports()
+            if _physical_usb_location(getattr(port, "location", "")) == location
+        ]
+        if len(matches) == 1 and (matches[0].vid, matches[0].pid) == PX4_FMUV5_BOOTLOADER_USB_ID:
+            logging_debug("Identified FMUv5 bootloader at the captured USB location despite its changed serial number")
+            return str(matches[0].device)
+        raise
+
+
 def report_progress_safely(progress_callback: ProgressCallback | None, stage: UploadStage, completed: int, total: int) -> None:
     """Invoke presentation code without allowing it to interrupt a flash operation."""
     if progress_callback is None:
@@ -430,7 +457,8 @@ class BootloaderClient:
                 self._command(encode_reboot(), deadline=deadline)
             else:
                 self._write(encode_reboot())
-        except BootloaderProtocolError:
+        except BootloaderProtocolError as exc:
+            logging_debug("Bootloader recovery reboot failed: %s", exc)
             return False
         return True
 
@@ -862,6 +890,7 @@ class FlightControllerBootloaderBackend:  # pylint:disable=too-many-instance-att
                     _restore_transport_timeout(transport, self._timeout)
                     return client, info
                 except BootloaderProtocolError as exc:
+                    logging_debug("Bootloader identification attempt %d failed: %s", attempt + 1, exc)
                     last_error = exc
                     retry_would_exhaust_budget = self._clock() + self._retry_delay >= deadline
                     if attempt + 1 == self._open_retries or retry_would_exhaust_budget:
@@ -870,8 +899,9 @@ class FlightControllerBootloaderBackend:  # pylint:disable=too-many-instance-att
                             client.close()
                             msg = _(
                                 "could not confirm reboot of the held bootloader; "
-                                "power-cycle the flight controller before reconnecting"
-                            )
+                                "power-cycle the flight controller before reconnecting. "
+                                "Bootloader identification failed: {error}"
+                            ).format(error=exc)
                             raise FirmwareBootloaderRecoveryError(msg) from exc
                         exc.bootloader_rebooted = True  # type: ignore[attr-defined]
                         exc.stage = UploadStage.IDENTIFYING.value
@@ -895,6 +925,8 @@ class FlightControllerBootloaderBackend:  # pylint:disable=too-many-instance-att
     ) -> tuple[BootloaderTransport | None, OSError | serial.SerialException | None]:
         try:
             device = self._device_resolver(self._device, self._device_identity)
+            logging_debug("Opening bootloader serial port %s at %d baud", device, self._baudrate)
             return self._serial_factory(device, self._baudrate, self._timeout if timeout is None else timeout), None
         except (OSError, serial.SerialException) as exc:
+            logging_debug("Unable to open bootloader serial port for %s: %s", self._device, exc)
             return None, exc

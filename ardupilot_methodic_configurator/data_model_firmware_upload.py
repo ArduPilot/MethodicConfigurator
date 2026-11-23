@@ -81,6 +81,10 @@ class FirmwareConnectionError(FirmwareUploadError):
     stage = "entering_bootloader"
 
 
+class FirmwareBootloaderEntryUnconfirmedError(FirmwareConnectionError):
+    """The reboot request was sent but the serial connection was lost before acknowledgment."""
+
+
 class FirmwareBootloaderRecoveryError(FirmwareConnectionError):
     """The held bootloader could not be reached to reboot into the installed firmware."""
 

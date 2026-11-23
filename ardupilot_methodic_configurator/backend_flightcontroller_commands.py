@@ -18,6 +18,7 @@ from time import sleep as time_sleep
 from time import time as time_time
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypedDict, cast
 
+import serial
 from pymavlink import mavutil
 
 from ardupilot_methodic_configurator import _
@@ -34,6 +35,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_protocols import (
     MavlinkConnection,
 )
 from ardupilot_methodic_configurator.data_model_fc_diagnostics import StatusTextAssembler, decode_status_text, message_source
+from ardupilot_methodic_configurator.data_model_firmware_upload import FirmwareBootloaderEntryUnconfirmedError
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -200,6 +202,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         *,
         capture_status_text: bool = False,
         start_confirmation: tuple[str, Callable[[object], bool]] | None = None,
+        allow_reboot_serial_disconnect: bool = False,
     ) -> tuple[bool, str, int | None]:
         """Send a command and also return its MAV_RESULT for behavior-specific decisions."""
         if self.master is None:
@@ -207,6 +210,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             logging_debug(error_msg)
             return False, error_msg, None
 
+        command_sent = False
         try:
             message_types = self._prepare_command_receive(capture_status_text, start_confirmation)
             status_assembler = StatusTextAssembler()
@@ -225,6 +229,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
                 param6,
                 param7,
             )
+            command_sent = True
 
             # Wait for acknowledgment, retaining the receive window briefly after a
             # failed ACK because ArduPilot queues STATUSTEXT separately.
@@ -312,6 +317,9 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             logging_debug(error_msg)
             return False, error_msg, None
         except Exception as e:  # pylint: disable=broad-exception-caught
+            if allow_reboot_serial_disconnect and command_sent and isinstance(e, serial.SerialException):
+                msg = _("Serial connection lost after sending the bootloader reboot request: {error}").format(error=e)
+                raise FirmwareBootloaderEntryUnconfirmedError(msg) from e
             error_msg = _("Failed to send command: %(error)s") % {"error": str(e)}
             logging_debug(error_msg)
             return False, error_msg, None
@@ -369,12 +377,14 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         )
 
     def reboot_to_bootloader(self) -> tuple[bool, str]:
-        """Request reboot into the bootloader and wait for its command acknowledgment."""
-        return self.send_command_and_wait_ack(
+        """Request bootloader entry, distinguishing serial loss after the command was sent."""
+        success, error_message, _result = self._send_command_and_wait_ack_with_result(
             mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
             param1=3,
             timeout=self.COMMAND_ACK_TIMEOUT,
+            allow_reboot_serial_disconnect=True,
         )
+        return success, error_message
 
     def reset_all_parameters_to_default(self) -> tuple[bool, str]:
         """

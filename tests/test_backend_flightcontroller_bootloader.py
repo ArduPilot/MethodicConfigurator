@@ -28,6 +28,7 @@ from ardupilot_methodic_configurator import backend_flightcontroller_bootloader 
 from ardupilot_methodic_configurator import data_model_firmware_upload as fw
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.backend_flightcontroller_commands import FlightControllerCommands
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
 # pylint: disable=too-many-instance-attributes,too-few-public-methods,protected-access,too-many-lines
@@ -1877,6 +1878,126 @@ def test_facade_reports_rejected_bootloader_entry_without_releasing_serial(tmp_p
     assert connection.master is not None
 
 
+@pytest.mark.parametrize("bootloader_board_id", [9, 1234], ids=["matching-board", "wrong-board"])
+def test_facade_verifies_bootloader_after_reboot_ack_serial_disconnect(bootloader_board_id: int, tmp_path: Path) -> None:
+    """
+    An uncertain reboot acknowledgment cannot bypass bootloader and confirmation checks.
+
+    GIVEN: The reboot command is sent, but the serial connection disappears before its ACK.
+    WHEN: The facade identifies a matching or mismatched bootloader.
+    THEN: A matching board reaches confirmation, while a mismatched board is rejected;
+        neither path erases firmware when the user declines confirmation.
+    """
+    connection = _Connection()
+    master = MagicMock()
+    master.recv_match.side_effect = serial.SerialException("ClearCommError failed")
+    connection.master = master
+    params = _Params()
+    commands = FlightControllerCommands(params_manager=params, connection_manager=connection)  # type: ignore[arg-type]
+    transport = FakeBootloaderTransport(board_id=bootloader_board_id)
+    confirm = MagicMock(return_value=False)
+    controller = FlightController(
+        connection_manager=connection,  # type: ignore[arg-type]
+        params_manager=params,  # type: ignore[arg-type]
+        commands_manager=commands,
+        files_manager=object(),  # type: ignore[arg-type]
+        sleep=lambda _delay: None,
+    )
+    path = tmp_path / "firmware.apj"
+    path.write_bytes(apj(b"abcd"))
+    expected_error = fw.FirmwareUploadCancelledError if bootloader_board_id == 9 else fw.FirmwareTargetMismatchError
+
+    with pytest.raises(expected_error):
+        controller.upload_apj_firmware(
+            path,
+            expected_firmware_sha256=trusted_digest(b"abcd"),
+            serial_factory=lambda *_args: transport,
+            confirmation_requested=confirm,
+        )
+
+    master.mav.command_long_send.assert_called_once()
+    assert connection.disconnected
+    assert bl.GET_SYNC in transport.commands
+    assert bl.CHIP_ERASE not in transport.commands
+    assert bl.PROG_MULTI not in transport.commands
+    assert transport.rebooted
+    assert confirm.call_count == int(bootloader_board_id == 9)
+
+
+def test_facade_finds_pixhawk4_bootloader_with_changed_usb_serial_and_recovers_after_cancellation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """
+    A Pixhawk4 reboot can change both its COM port and USB serial before returning to MAVLink.
+
+    GIVEN: Board ID 50 loses the reboot acknowledgment and its PX4 bootloader appears on COM9.
+    WHEN: The user declines the final flash confirmation.
+    THEN: COM9 is identified by its USB location and bootloader ID, no erase occurs, and
+        strict serial matching reconnects the original controller on COM11.
+    """
+    bootloader_port = ListPortInfo("COM9")
+    bootloader_port.location = "1-3:x.0"
+    bootloader_port.serial_number = "PX4-serial"
+    bootloader_port.vid, bootloader_port.pid = bl.PX4_FMUV5_BOOTLOADER_USB_ID
+    firmware_port = ListPortInfo("COM11")
+    firmware_port.location = "1-3:x.0"
+    firmware_port.serial_number = "FC-serial"
+    ports = [bootloader_port]
+    monkeypatch.setattr(bl.serial.tools.list_ports, "comports", lambda: ports)
+    monkeypatch.setattr(
+        "ardupilot_methodic_configurator.backend_flightcontroller.capture_serial_device_identity",
+        lambda _d: bl.SerialDeviceIdentity(location="1-3:x.0", serial_number="FC-serial"),
+    )
+
+    class ReenumeratingTransport(FakeBootloaderTransport):
+        """The firmware serial identity returns after a successful safe reboot."""
+
+        def write(self, data: bytes) -> int:
+            written = super().write(data)
+            if data[:1] == bl.REBOOT:
+                ports[:] = [firmware_port]
+            return written
+
+    connection = _Connection(device="COM11")
+    connection.info.apj_board_id = "50"
+    connection.master = MagicMock()
+    connection.master.recv_match.side_effect = serial.SerialException("ClearCommError failed")
+    params = _Params()
+    commands = FlightControllerCommands(params_manager=params, connection_manager=connection)  # type: ignore[arg-type]
+    transport = ReenumeratingTransport(board_id=50)
+    opened_ports: list[str] = []
+    confirm = MagicMock(return_value=False)
+
+    def open_transport(device: str, _baudrate: int, _timeout: float) -> bl.BootloaderTransport:
+        opened_ports.append(device)
+        return transport
+
+    controller = FlightController(
+        connection_manager=connection,  # type: ignore[arg-type]
+        params_manager=params,  # type: ignore[arg-type]
+        commands_manager=commands,
+        files_manager=object(),  # type: ignore[arg-type]
+        sleep=lambda _delay: None,
+    )
+    path = tmp_path / "firmware.apj"
+    path.write_bytes(apj(b"abcd", board_id=50))
+
+    with pytest.raises(fw.FirmwareUploadCancelledError):
+        controller.upload_apj_firmware(
+            path,
+            expected_firmware_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+            serial_factory=open_transport,
+            confirmation_requested=confirm,
+        )
+
+    assert opened_ports == ["COM9"]
+    confirm.assert_called_once()
+    assert bl.CHIP_ERASE not in transport.commands
+    assert bl.PROG_MULTI not in transport.commands
+    assert transport.rebooted
+    assert connection.reconnect_device == "COM11"
+
+
 def test_facade_requires_trusted_sha_before_flashing(tmp_path: Path) -> None:
     connection = _Connection()
     controller = FlightController(
@@ -2010,7 +2131,8 @@ def test_facade_requires_stable_usb_identity_before_bootloader_entry(tmp_path: P
     assert not connection.master.held_in_bootloader
 
 
-def test_backend_retries_serial_open_after_bootloader_entry() -> None:
+def test_backend_retries_serial_open_after_bootloader_entry(caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level("DEBUG")
     image = fw.parse_apj(apj(b"abcd"))
     attempts = 0
     delays: list[float] = []
@@ -2044,6 +2166,8 @@ def test_backend_retries_serial_open_after_bootloader_entry() -> None:
     assert entered
     assert attempts == 2
     assert delays == [0.25]
+    assert "Unable to open bootloader serial port for COM7: bootloader port has not appeared yet" in caplog.text
+    assert "Opening bootloader serial port COM7 at 115200 baud" in caplog.text
 
 
 def test_backend_requires_manual_recovery_after_all_serial_open_retries_fail() -> None:
@@ -2158,7 +2282,8 @@ def test_backend_default_open_retry_budget_covers_bootloader_enumeration() -> No
     assert backend._open_retries * bl.BOOTLOADER_RETRY_DELAY >= bl.BOOTLOADER_ENUMERATION_TIMEOUT  # pylint: disable=protected-access
 
 
-def test_backend_bootloader_discovery_uses_a_wall_clock_budget() -> None:
+def test_backend_bootloader_discovery_uses_a_wall_clock_budget(caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level("DEBUG")
     now = 0.0
     attempts = 0
     timeouts: list[float] = []
@@ -2169,6 +2294,8 @@ def test_backend_bootloader_discovery_uses_a_wall_clock_budget() -> None:
         def read(self, size: int = 1) -> bytes:
             del size
             return b""
+
+    transports: list[EmptyTransport] = []
 
     def clock() -> float:
         return now
@@ -2181,7 +2308,9 @@ def test_backend_bootloader_discovery_uses_a_wall_clock_budget() -> None:
         nonlocal attempts
         attempts += 1
         timeouts.append(timeout)
-        return EmptyTransport()
+        transport = EmptyTransport()
+        transports.append(transport)
+        return transport
 
     backend = bl.FlightControllerBootloaderBackend(
         "COM7",
@@ -2194,7 +2323,7 @@ def test_backend_bootloader_discovery_uses_a_wall_clock_budget() -> None:
         sleep=sleep,
     )
 
-    with pytest.raises(fw.FirmwareBootloaderRecoveryError, match=r"could not confirm reboot.*power-cycle"):
+    with pytest.raises(fw.FirmwareBootloaderRecoveryError, match=r"could not confirm reboot.*power-cycle") as error:
         backend.upload(fw.parse_apj(apj(b"abcd")), confirmation_requested=lambda *_args: True)
 
     # The final identification attempt starts with only 1.5 seconds remaining,
@@ -2202,6 +2331,10 @@ def test_backend_bootloader_discovery_uses_a_wall_clock_budget() -> None:
     assert now == pytest.approx(bl.BOOTLOADER_ENUMERATION_TIMEOUT + bl.BOOTLOADER_ABORT_TIMEOUT)
     assert attempts == 6
     assert timeouts[-1] == pytest.approx(1.5)
+    assert "Bootloader identification failed: timeout waiting for 2 bootloader bytes; received 0" in str(error.value)
+    assert "Bootloader identification attempt 1 failed: timeout waiting for 2 bootloader bytes; received 0" in caplog.text
+    assert "Bootloader recovery reboot failed: timeout waiting for 2 bootloader bytes; received 0" in caplog.text
+    assert all(bl.CHIP_ERASE not in transport.commands and bl.PROG_MULTI not in transport.commands for transport in transports)
 
 
 def test_backend_retries_after_a_silent_port_until_the_bootloader_appears() -> None:

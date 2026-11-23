@@ -8,8 +8,13 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+# The facade coordinates the controller's connection and firmware lifecycles.
+# pylint: disable=too-many-lines
+
 from argparse import ArgumentParser
 from collections.abc import Callable, Sequence
+from functools import partial
+from logging import debug as logging_debug
 from logging import info as logging_info
 from logging import warning as logging_warning
 from os import path as os_path
@@ -35,6 +40,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_bootloader import 
     has_stable_bootloader_device_identity,
     report_progress_safely,
     resolve_bootloader_device,
+    resolve_bootloader_upload_device,
 )
 from ardupilot_methodic_configurator.backend_flightcontroller_commands import (
     CompassCalibrationUpdate,
@@ -63,6 +69,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_protocols import (
 )
 from ardupilot_methodic_configurator.data_model_firmware_upload import (
     BootloaderInfo,
+    FirmwareBootloaderEntryUnconfirmedError,
     FirmwareBootloaderRecoveryError,
     FirmwareConfirmationError,
     FirmwareConnectionError,
@@ -103,10 +110,17 @@ class _BootloaderEntryCoordinator:  # pylint: disable=too-few-public-methods
         if self._master_getter() is None:
             msg = _("flight-controller connection was lost before bootloader entry")
             raise FirmwareConnectionError(msg)
-        accepted, error_message = self._reboot()
-        if not accepted:
-            msg = _("flight controller rejected bootloader entry: {error}").format(error=error_message)
-            raise FirmwareConnectionError(msg)
+        try:
+            accepted, error_message = self._reboot()
+        except FirmwareBootloaderEntryUnconfirmedError as exc:
+            # The reboot may have removed the MAVLink port before its ACK arrived.
+            # Discovery is bound to the captured USB identity and flash still needs
+            # board validation and the user's separate confirmation.
+            logging_debug("%s; checking the controller's bootloader", exc)
+        else:
+            if not accepted:
+                msg = _("flight controller rejected bootloader entry: {error}").format(error=error_message)
+                raise FirmwareConnectionError(msg)
         self.entered = True
         self._sleep(0.3)  # Allow the MAVLink frame to leave before releasing the port.
         self._disconnect()
@@ -512,6 +526,7 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         backend_kwargs: dict[str, Any] = {
             "timeout": bootloader_timeout,
             "enter_bootloader": entry,
+            "device_resolver": partial(resolve_bootloader_upload_device, expected_board_id=connected_board_id),
             "device_identity": device_identity,
             "sleep": self._sleep,
         }
