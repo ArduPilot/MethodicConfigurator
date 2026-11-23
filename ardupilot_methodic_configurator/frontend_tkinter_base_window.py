@@ -45,7 +45,7 @@ def is_debugging() -> bool:
     """Return True if a VS Code's debugger is attached."""
     try:
         # debug adapter used by VS Code Python debugger
-        import debugpy  # noqa: PLC0415,T100 # pylint: disable=import-outside-toplevel # pyright: ignore[reportMissingImports] # ty: ignore[unresolved-import]
+        import debugpy  # noqa: PLC0415,T100 # pylint: disable=import-outside-toplevel # pyright: ignore[reportMissingImports] # ty: ignore[import-not-found]
     except ImportError:
         debugpy = None
 
