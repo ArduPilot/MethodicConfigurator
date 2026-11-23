@@ -1,3 +1,4 @@
+ARMING_SKIPCHK,32  # disable Parameter check because we need to set ATC_RAT_YAW_I out-of-range
 ATC_RAT_PIT_I,0.180513  # we are not performing system identification on the pitch axis, so restore it to the autotuned value
 ATC_RAT_YAW_I,0  # prevent the rate controllers from compensating too much of the frequency-sweep signal
 ATC_RATE_FF_ENAB,0  # prevent the rate controllers from compensating too much of the frequency-sweep signal

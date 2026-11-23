@@ -2,8 +2,8 @@ ATC_THR_MIX_MAN,0.5  # Because ALTHOLD flight mode was used for more than 30 sec
 MOT_BAT_VOLT_MAX,16  # Measured with a healthy fully charged battery right after takeoof
 MOT_BAT_VOLT_MIN,13.2
 MOT_SPOOL_TIME,0.5
-MOT_THST_HOVER,0.337736
-PSC_ACCZ_I,0.675472  # Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned
-PSC_ACCZ_P,0.337736  # Use MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned
-PSC_ACCZ_SMAX,1000
+MOT_THST_HOVER,0.33465  # ALTHOLD flight mode was used for more than 30 seconds to correctly learn this MOT_THST_HOVER value
+PSC_D_ACC_I,0.06693  # Use 0.2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned
+PSC_D_ACC_P,0.033465  # Use 0.1 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned
+PSC_D_ACC_SMAX,1000
 TKOFF_SLEW_TIME,2

@@ -1,11 +1,10 @@
-ANGLE_MAX,3000  # limit the angle to limit the speed at SID-chirp low-frequencies
-ARMING_CHECK,30174  # disable Parameter check because we need to set ATC_RAT_RLL_I out-of-range (was 1)
-ATC_ANG_PIT_P,24.629694
-ATC_ANG_RLL_P,18.379057
-ATC_ANG_YAW_P,7.636879
-ATC_RAT_PIT_I,0.180513
-ATC_RAT_RLL_I,0.155054
-ATC_RAT_YAW_I,0.099616
+ATC_ANG_PIT_P,11.58
+ATC_ANG_RLL_P,13.1096
+ATC_ANG_YAW_P,6.5463
+ATC_ANGLE_MAX,15  # limit the angle to limit the speed at SID-chirp low-frequencies
+ATC_RAT_PIT_I,1.9696
+ATC_RAT_RLL_I,1.2828
+ATC_RAT_YAW_I,0.65
 ATC_RATE_FF_ENAB,1  # normal operation
 FLTMODE6,25  # Activate sysid instead of loiter
 LOG_BITMASK,145119  # attitude sample rate at 400Hz rate

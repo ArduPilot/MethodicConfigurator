@@ -1,1 +1,4 @@
+ATC_ACC_P_MAX,2164.758789  # AutoTune acceleration limit before takeoff weight compensation
+ATC_ACC_R_MAX,1897.209229  # AutoTune acceleration limit before takeoff weight compensation
+ATC_ACC_Y_MAX,271.619446  # AutoTune acceleration limit before takeoff weight compensation
 ATC_THR_MIX_MAX,0.9  # Maximize attitude control authority at high throttle
