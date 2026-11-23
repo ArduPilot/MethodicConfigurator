@@ -196,6 +196,71 @@ def test_download_with_stale_ssl_cert_file_logs_the_variable(download, tmp_path:
     assert any("SSL_CERT_FILE" in r.getMessage() and stale_cert_file in r.getMessage() for r in caplog.records)
 
 
+@pytest.mark.parametrize("catalog", [True, False], ids=["manifest", "apj"])
+@pytest.mark.parametrize("proxy_error", ["403 Forbidden", "407 Proxy Authentication Required", "Proxy unavailable"])
+def test_proxy_failure_explains_required_firmware_server_access(
+    catalog: bool, proxy_error: str, tmp_path: Path, caplog
+) -> None:
+    """
+    A proxy failure explains how to restore firmware server access.
+
+    GIVEN: The configured proxy fails while opening an HTTPS tunnel.
+    WHEN: The catalog or a firmware image is requested.
+    THEN: The error and log identify the URL, proxy failure and required HTTPS access.
+    """
+    destination = tmp_path / "image.apj"
+    destination.write_bytes(b"existing firmware")
+    original_error = firmware_upload.httpx2.ProxyError(proxy_error)
+    response = MagicMock()
+    response.__enter__.side_effect = original_error
+    download = fetch_firmware_manifest if catalog else lambda: download_firmware(_release(), destination)
+
+    with (
+        patch.object(firmware_upload.httpx2, "stream", return_value=response),
+        pytest.raises(firmware_upload.httpx2.ProxyError) as caught,
+    ):
+        download()
+
+    message = str(caught.value)
+    assert "configured network proxy" in message
+    assert "browser may use a different proxy or automatic proxy configuration" in message
+    assert (firmware_upload.MANIFEST_URL if catalog else _release().url) in message
+    assert "network administrator" in message
+    assert "firmware.ardupilot.org on port 443" in message
+    assert proxy_error in message
+    assert caught.value.__cause__ is original_error
+    assert any(message in record.getMessage() for record in caplog.records)
+    assert destination.read_bytes() == b"existing firmware"
+    assert list(tmp_path.iterdir()) == [destination]
+    response.iter_bytes.assert_not_called()
+
+
+@pytest.mark.parametrize("catalog", [True, False], ids=["manifest", "apj"])
+def test_server_forbidden_response_is_not_reported_as_a_proxy_failure(catalog: bool, tmp_path: Path) -> None:
+    """
+    A server HTTP 403 remains distinct from a failed proxy tunnel.
+
+    GIVEN: An established connection returns an HTTP 403 response.
+    WHEN: The catalog or firmware is downloaded.
+    THEN: The HTTP status error propagates without attributing it to the proxy.
+    """
+    url = firmware_upload.MANIFEST_URL if catalog else _release().url
+    response = firmware_upload.httpx2.Response(403, request=firmware_upload.httpx2.Request("GET", url))
+    stream = MagicMock()
+    stream.__enter__.return_value = response
+    download = fetch_firmware_manifest if catalog else lambda: download_firmware(_release(), tmp_path / "image.apj")
+
+    with (
+        patch.object(firmware_upload.httpx2, "stream", return_value=stream),
+        pytest.raises(firmware_upload.httpx2.HTTPStatusError) as caught,
+    ):
+        download()
+
+    assert caught.value.response.status_code == 403
+    assert "configured network proxy" not in str(caught.value)
+    assert not list(tmp_path.iterdir())
+
+
 def test_apj_download_stops_when_cancelled_before_request(tmp_path: Path) -> None:
     """
     A download is not started after the user cancels.

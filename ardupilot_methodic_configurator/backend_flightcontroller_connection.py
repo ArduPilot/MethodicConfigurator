@@ -890,9 +890,12 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
         # Update firmware type if found and different from AUTOPILOT_VERSION
         if firmware_type and firmware_type != self.info.firmware_type:
-            logging_debug(
-                _("FC firmware type mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"), firmware_type, self.info.firmware_type
-            )
+            if firmware_type not in self.info.firmware_type:
+                logging_debug(
+                    _("FC firmware type mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"),
+                    firmware_type,
+                    self.info.firmware_type,
+                )
             self.info.firmware_type = firmware_type  # force the one from the banner because it is more reliable
 
         return ""
