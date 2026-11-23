@@ -82,6 +82,10 @@ def mock_flight_controller() -> MagicMock:
 
     fc.fetch_param.side_effect = fetch_param_side_effect
 
+    # A successful reboot reconnects without error and downloads the parameters again
+    fc.reset_and_reconnect.return_value = ""
+    fc.download_params.return_value = ({"FRAME_CLASS": 1.0}, MagicMock())
+
     return fc
 
 
@@ -755,6 +759,19 @@ class TestMotorTestDataModelSafetyValidation:
         with pytest.raises(FlightControllerConnectionError, match="Flight controller not connected"):
             motor_test_model.is_motor_test_safe()
 
+    def test_motor_testing_unsafe_when_parameters_not_loaded(self, motor_test_model) -> None:
+        """
+        Motor testing is refused when the parameter cache is empty.
+
+        GIVEN: A connected flight controller whose parameter cache was cleared by a reboot
+        WHEN: User checks if motor testing is safe
+        THEN: Should refuse, instead of silently skipping the battery voltage check
+        """
+        motor_test_model.flight_controller.fc_parameters.clear()
+
+        with pytest.raises(MotorTestSafetyError, match="parameters are not loaded"):
+            motor_test_model.is_motor_test_safe()
+
     def test_motor_testing_safe_with_battery_monitoring_disabled(self, motor_test_model) -> None:
         """
         Motor testing is safe when battery monitoring is disabled.
@@ -873,7 +890,7 @@ class TestMotorTestDataModelParameterManagement:
     def test_parameter_setting_triggers_reset_when_required(self, motor_test_model) -> None:
         """Parameters flagged as reboot-required trigger a reconnect once applied."""
         progress_callback = MagicMock(name="progress_cb")
-        motor_test_model.flight_controller.reset_and_reconnect = MagicMock()
+        motor_test_model.flight_controller.reset_and_reconnect = MagicMock(return_value="")
 
         motor_test_model.set_parameter(
             "MOT_SPIN_ARM",
@@ -886,6 +903,46 @@ class TestMotorTestDataModelParameterManagement:
             progress_callback,
             7,
         )
+
+    def test_parameter_setting_refreshes_parameter_cache_after_reboot(self, motor_test_model) -> None:
+        """
+        A reboot clears the parameter cache, so it is downloaded again before the test continues.
+
+        GIVEN: A reboot-required parameter change
+        WHEN: The parameter is set and the flight controller reboots
+        THEN: The parameters are downloaded again so safety checks and frame detection see fresh values
+        """
+        motor_test_model.set_parameter("MOT_SPIN_ARM", 0.2)
+
+        motor_test_model.flight_controller.download_params.assert_called_once_with()
+
+    def test_parameter_setting_reports_reconnect_failure_after_reboot(self, motor_test_model) -> None:
+        """
+        A failed reconnect is reported instead of being ignored.
+
+        GIVEN: A reboot-required parameter change
+        WHEN: The flight controller does not reconnect after the reboot
+        THEN: A ParameterError carries the reconnect error and no download is attempted
+        """
+        motor_test_model.flight_controller.reset_and_reconnect.return_value = "no heartbeat"
+
+        with pytest.raises(ParameterError, match="no heartbeat"):
+            motor_test_model.set_parameter("MOT_SPIN_ARM", 0.2)
+
+        motor_test_model.flight_controller.download_params.assert_not_called()
+
+    def test_parameter_setting_reports_download_failure_after_reboot(self, motor_test_model) -> None:
+        """
+        An empty parameter download after the reboot is reported instead of being ignored.
+
+        GIVEN: A reboot-required parameter change
+        WHEN: The parameter download after the reboot returns nothing
+        THEN: A ParameterError is raised so the user knows the parameters are not loaded
+        """
+        motor_test_model.flight_controller.download_params.return_value = ({}, MagicMock())
+
+        with pytest.raises(ParameterError, match="Could not download"):
+            motor_test_model.set_parameter("MOT_SPIN_ARM", 0.2)
 
     def test_parameter_setting_raises_error_when_verification_fails(self, motor_test_model) -> None:
         """A mismatched readback raises ParameterError with helpful context."""
@@ -2598,6 +2655,64 @@ class TestMotorTestDataModelFrameSelectionWorkflows:  # pylint: disable=too-many
 
         mock_set_param.assert_not_called()
 
+    def test_frame_type_change_recomputes_motor_order_for_same_motor_count(self, motor_test_model) -> None:
+        """
+        Changing to a layout with the same motor count still updates the test order and directions.
+
+        GIVEN: A Quad X frame, whose motors are tested in order 1, 2, 3, 4
+        WHEN: The user selects the PLUS frame type, which also has 4 motors but a different test order
+        THEN: The motor numbers and rotation directions follow the PLUS layout
+        """
+        motor_test_model._frame_class = 1  # pylint: disable=protected-access  # Quad
+        assert motor_test_model.update_frame_type_from_selection("X") is True
+        assert motor_test_model.motor_numbers == [1, 2, 3, 4]
+        assert motor_test_model.motor_directions == ["CCW", "CW", "CW", "CCW"]
+
+        assert motor_test_model.update_frame_type_from_selection("PLUS") is True
+
+        assert motor_test_model.motor_count == 4
+        assert motor_test_model.motor_numbers == [3, 1, 4, 2]
+        assert motor_test_model.motor_directions == ["CW", "CCW", "CW", "CCW"]
+
+    def test_frame_configuration_update_recomputes_motor_order_for_same_motor_count(self, motor_test_model) -> None:
+        """
+        Updating the frame configuration also refreshes the per-motor arrays.
+
+        GIVEN: A Quad X frame, whose motors are tested in order 1, 2, 3, 4
+        WHEN: The frame configuration is updated to Quad PLUS, which also has 4 motors
+        THEN: The motor numbers and rotation directions follow the PLUS layout
+        """
+        motor_test_model._frame_class = 1  # pylint: disable=protected-access  # Quad
+        assert motor_test_model.update_frame_type_from_selection("X") is True
+
+        with patch.object(motor_test_model, "set_parameter", return_value=None):
+            motor_test_model.update_frame_configuration(1, 0)
+
+        assert motor_test_model.motor_numbers == [3, 1, 4, 2]
+        assert motor_test_model.motor_directions == ["CW", "CCW", "CW", "CCW"]
+
+    def test_frame_type_selection_without_layout_clears_stale_motor_arrays(self, motor_test_model) -> None:
+        """
+        A frame without layout data must not keep the previous frame's motor arrays.
+
+        GIVEN: A Quad X frame with populated motor arrays
+        WHEN: The layout data no longer contains the selected frame type
+        THEN: The motor count and every per-motor array are empty
+        """
+        motor_test_model._frame_class = 1  # pylint: disable=protected-access  # Quad
+        assert motor_test_model.update_frame_type_from_selection("X") is True
+        motor_test_model._motor_data_loader.data = {  # pylint: disable=protected-access
+            "layouts": [{"Class": 1, "ClassName": "QUAD", "Type": 0, "TypeName": "PLUS"}]
+        }
+
+        with patch.object(motor_test_model, "set_parameter", return_value=None):
+            assert motor_test_model.update_frame_type_from_selection("PLUS") is True
+
+        assert motor_test_model.motor_count == 0
+        assert motor_test_model.motor_labels == []
+        assert motor_test_model.motor_numbers == []
+        assert motor_test_model.motor_directions == []
+
     def test_frame_type_selection_handles_missing_layout_data(self, motor_test_model) -> None:
         """When layout metadata is absent the selection still succeeds with zero motors."""
         # Provide minimal layout with PLUS type but no motors
@@ -3044,7 +3159,7 @@ class TestMotorTestDataModelParameterGuards:
         WHEN: The user sets a new value within the allowed range
         THEN: The model calls reset_and_reconnect so the FC applies the change
         """
-        motor_test_model.flight_controller.reset_and_reconnect = MagicMock()
+        motor_test_model.flight_controller.reset_and_reconnect = MagicMock(return_value="")
 
         motor_test_model.set_parameter("MOT_SPIN_ARM", 0.08)
 
