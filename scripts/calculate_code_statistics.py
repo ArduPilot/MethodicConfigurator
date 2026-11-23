@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from pycloc import CLOC  # ty: ignore[unresolved-import]
+    from pycloc import CLOC  # ty: ignore[import-not-found]
 except ImportError as e:
     print(f"Error: {e}")
     print("Please install required dependencies:")
