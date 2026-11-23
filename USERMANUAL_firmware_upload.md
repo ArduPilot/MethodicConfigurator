@@ -145,6 +145,30 @@ The list contains compatible APJ entries from the official catalog, rather than 
 ArduPilot build. Older releases that lack the firmware identity needed for verification are
 excluded.
 
+### Proxy Access Errors
+
+If loading the catalog fails with a proxy error such as **403 Forbidden**, the configured proxy
+may be denying the HTTPS connection before it reaches ArduPilot. Firmware catalog and image
+downloads require HTTPS access to `firmware.ardupilot.org` on port **443**.
+
+If the same URL downloads successfully in a browser, check whether AMC uses a different proxy.
+AMC's HTTP client reads `HTTPS_PROXY`, `HTTP_PROXY`, and `ALL_PROXY` environment variables,
+with platform proxy settings as a fallback. It does not evaluate automatic proxy discovery or
+PAC scripts. Edge may use an automatically discovered proxy while AMC uses an older proxy
+specified by an environment variable.
+
+Ask your network administrator for the correct proxy URL and authentication settings. Set
+`HTTPS_PROXY` to that URL in the terminal used to start AMC, restart AMC, then click
+**Refresh versions**. For example, in PowerShell, replacing the example with your network's proxy:
+
+```powershell
+$env:HTTPS_PROXY = 'http://proxy.example:8080'
+python -m ardupilot_methodic_configurator.frontend_tkinter_firmware_upload
+```
+
+You can also use **Upload custom .apj file** with a suitable firmware file already available
+on your computer; this option does not require the online catalog.
+
 ## Installing an Official Release
 
 1. Check the connected board, firmware type, target, and version.

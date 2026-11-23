@@ -13,9 +13,11 @@ import hashlib
 import json
 import re
 import tempfile
-from collections.abc import Callable
+from collections.abc import Callable, Generator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from logging import debug as logging_debug
+from logging import error as logging_error
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -73,10 +75,29 @@ def _ensure_official_https_url(url: str, description: str) -> None:
         raise ValueError(msg)
 
 
+@contextmanager
+def _firmware_download_errors(url: str) -> Generator[None]:
+    """Explain proxy failures while retaining the missing-CA-bundle diagnostic."""
+    try:
+        with log_stale_ssl_cert_file_on_error():
+            yield
+    except httpx2.ProxyError as exc:
+        msg = _(
+            "The configured network proxy could not connect to {url}.\n\n"
+            "Check your proxy settings and authentication. If this URL works in a browser, "
+            "the browser may use a different proxy or automatic proxy configuration. "
+            "Ask your network administrator for the correct HTTPS proxy settings and access "
+            "to firmware.ardupilot.org on port 443.\n\n"
+            "Proxy error: {error}"
+        ).format(url=url, error=exc)
+        logging_error("%s", msg)
+        raise httpx2.ProxyError(msg) from exc
+
+
 def fetch_firmware_manifest() -> dict:
     """Download and decode the official firmware manifest."""
     with (
-        log_stale_ssl_cert_file_on_error(),
+        _firmware_download_errors(MANIFEST_URL),
         httpx2.stream("GET", MANIFEST_URL, timeout=httpx2.Timeout(90, connect=10), follow_redirects=True) as response,
     ):
         response.raise_for_status()
@@ -106,7 +127,7 @@ def download_firmware(
         msg = _("Firmware download cancelled")
         raise FirmwareUploadCancelledError(msg)
     with (
-        log_stale_ssl_cert_file_on_error(),
+        _firmware_download_errors(release.url),
         httpx2.stream("GET", release.url, timeout=httpx2.Timeout(90, connect=10), follow_redirects=True) as response,
     ):
         response.raise_for_status()
