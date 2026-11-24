@@ -100,7 +100,7 @@ scripts = [
 
 pypi_dist = [
     "build==1.6.1",
-    "packaging==26.3",
+    "packaging==26.4",
     "setuptools==84.2.1",
 ]
 
@@ -111,7 +111,7 @@ win_dist = [
     "pyinstaller==6.22.3; python_full_version >= '3.14.7'",
     "pyinstaller-hooks-contrib==2026.6; python_full_version < '3.14.7'",
     "pyinstaller-hooks-contrib==2026.9; python_full_version >= '3.14.7'",
-    "packaging==26.3",
+    "packaging==26.4",
 ]
 
 mac_dist = [
@@ -120,7 +120,7 @@ mac_dist = [
     "pyinstaller==6.22.3; python_full_version >= '3.14.7'",
     "pyinstaller-hooks-contrib==2026.6; python_full_version < '3.14.7'",
     "pyinstaller-hooks-contrib==2026.9; python_full_version >= '3.14.7'",
-    "packaging==26.3",
+    "packaging==26.4",
 ]
 
 linux_dist = [
@@ -129,7 +129,7 @@ linux_dist = [
     "pyinstaller==6.22.3; python_full_version >= '3.14.7'",
     "pyinstaller-hooks-contrib==2026.6; python_full_version < '3.14.7'",
     "pyinstaller-hooks-contrib==2026.9; python_full_version >= '3.14.7'",
-    "packaging==26.3",
+    "packaging==26.4",
 ]
 
 [project.scripts]
