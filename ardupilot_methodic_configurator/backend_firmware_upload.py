@@ -20,6 +20,7 @@ from logging import debug as logging_debug
 from logging import error as logging_error
 from pathlib import Path
 from urllib.parse import urlparse
+from urllib.request import getproxies
 
 import httpx2
 
@@ -92,6 +93,21 @@ def _firmware_download_errors(url: str) -> Generator[None]:
         ).format(url=url, error=exc)
         logging_error("%s", msg)
         raise httpx2.ProxyError(msg) from exc
+    except httpx2.ConnectError as exc:
+        # ConnectError is also used for direct connections. Let HTTPX decide
+        # whether to bypass the proxy and make the troubleshooting advice conditional.
+        request_url = exc.request.url
+        proxies = getproxies()
+        if not (proxies.get(request_url.scheme) or proxies.get("all")):
+            raise
+        msg = _(
+            "Could not connect to {url}: {error}\n\n"
+            "If this request uses a proxy, check HTTPS_PROXY, ALL_PROXY, "
+            "and your system proxy settings. If this URL works in a browser, the browser may "
+            "use a different proxy or automatic proxy configuration."
+        ).format(url=url, error=exc)
+        logging_error("%s", msg)
+        raise httpx2.ConnectError(msg, request=exc.request) from exc
 
 
 def fetch_firmware_manifest() -> dict:

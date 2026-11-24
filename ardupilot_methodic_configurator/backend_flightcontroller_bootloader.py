@@ -14,14 +14,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 import struct
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Sequence
 from contextlib import suppress
 from dataclasses import dataclass
 from logging import debug as logging_debug
 from pathlib import Path
 from time import monotonic
 from time import sleep as time_sleep
-from typing import Protocol, cast
+from typing import TYPE_CHECKING, Protocol, cast
 
 import serial
 import serial.tools.list_ports
@@ -45,6 +45,9 @@ from ardupilot_methodic_configurator.data_model_firmware_upload import (
     check_compatibility,
     parse_apj,
 )
+
+if TYPE_CHECKING:
+    from serial.tools.list_ports_common import ListPortInfo
 
 # ArduPilot/PX4 bootloader protocol bytes, from Tools/scripts/uploader.py.
 INSYNC = b"\x12"
@@ -220,66 +223,68 @@ def resolve_bootloader_device(device: str, identity: SerialDeviceIdentity | None
     # During re-enumeration a generic path such as /dev/ttyACM0 may already
     # belong to another controller, whereas the location or serial number
     # identifies the controller that was connected before the reboot.
-    if identity is not None:
-        if identity.location or identity.serial_number:
-            matches = [
-                port
-                for port in serial.tools.list_ports.comports()
-                if all(
-                    not expected
-                    or (
-                        _physical_usb_location(getattr(port, attribute, "")) == _physical_usb_location(expected)
-                        if attribute == "location"
-                        else getattr(port, attribute, "") == expected
-                    )
-                    for attribute, expected in (
-                        ("location", identity.location),
-                        ("serial_number", identity.serial_number),
-                    )
-                )
-            ]
-            # Prefer the captured, interface-qualified location when application
-            # firmware exposes several CDC ports.  The bootloader commonly exposes
-            # only one port with a different suffix, so retain physical matches when
-            # there is no exact match.
-            if len(matches) > 1 and identity.location:
-                exact = [port for port in matches if str(getattr(port, "location", "") or "") == identity.location]
-                if len(exact) == 1:
-                    matches = exact
-            # An application-port interface identifier need not be reproduced by the
-            # bootloader.  It can only disambiguate ports from one identified device;
-            # it must never eliminate a sole candidate or select between devices.
-            # Linux and Windows typically leave this field unset for ArduPilot CDC ports.
-            if len(matches) > 1 and identity.interface:
-                locations = {_physical_usb_location(getattr(port, "location", "")) for port in matches}
-                if len(locations) == 1 and locations != {""}:
-                    narrowed = [port for port in matches if str(getattr(port, "interface", "") or "") == identity.interface]
-                    if len(narrowed) == 1:
-                        matches = narrowed
-            if len(matches) == 1:
-                return str(matches[0].device)
-            msg = _("cannot uniquely locate the bootloader USB device")
-            raise OSError(msg)
+    if identity is None:
+        return device
+    if not (identity.location or identity.serial_number):
         msg = _("cannot uniquely locate the bootloader USB device")
         raise OSError(msg)
-    return device
+    return _match_bootloader_device(identity, serial.tools.list_ports.comports())
+
+
+def _match_bootloader_device(identity: SerialDeviceIdentity, ports: Sequence[ListPortInfo]) -> str:
+    """Resolve the captured USB identity within one enumeration of the available ports."""
+    matches = [
+        port
+        for port in ports
+        if all(
+            not expected
+            or (
+                _physical_usb_location(getattr(port, attribute, "")) == _physical_usb_location(expected)
+                if attribute == "location"
+                else getattr(port, attribute, "") == expected
+            )
+            for attribute, expected in (
+                ("location", identity.location),
+                ("serial_number", identity.serial_number),
+            )
+        )
+    ]
+    # Prefer the captured, interface-qualified location when application
+    # firmware exposes several CDC ports.  The bootloader commonly exposes
+    # only one port with a different suffix, so retain physical matches when
+    # there is no exact match.
+    if len(matches) > 1 and identity.location:
+        exact = [port for port in matches if str(getattr(port, "location", "") or "") == identity.location]
+        if len(exact) == 1:
+            matches = exact
+    # An application-port interface identifier need not be reproduced by the
+    # bootloader.  It can only disambiguate ports from one identified device;
+    # it must never eliminate a sole candidate or select between devices.
+    # Linux and Windows typically leave this field unset for ArduPilot CDC ports.
+    if len(matches) > 1 and identity.interface:
+        locations = {_physical_usb_location(getattr(port, "location", "")) for port in matches}
+        if len(locations) == 1 and locations != {""}:
+            narrowed = [port for port in matches if str(getattr(port, "interface", "") or "") == identity.interface]
+            if len(narrowed) == 1:
+                matches = narrowed
+    if len(matches) == 1:
+        return str(matches[0].device)
+    msg = _("cannot uniquely locate the bootloader USB device")
+    raise OSError(msg)
 
 
 def resolve_bootloader_upload_device(device: str, identity: SerialDeviceIdentity | None, *, expected_board_id: int) -> str:
     """Resolve an upload port, allowing the known FMUv5 bootloader's changed USB serial."""
-    try:
+    if expected_board_id != FMUV5_BOARD_ID or identity is None or not identity.location or not identity.serial_number:
         return resolve_bootloader_device(device, identity)
+    ports = serial.tools.list_ports.comports()
+    try:
+        return _match_bootloader_device(identity, ports)
     except OSError:
-        if expected_board_id != FMUV5_BOARD_ID or identity is None or not identity.location or not identity.serial_number:
-            raise
         location = _physical_usb_location(identity.location)
         if not location:
             raise
-        matches = [
-            port
-            for port in serial.tools.list_ports.comports()
-            if _physical_usb_location(getattr(port, "location", "")) == location
-        ]
+        matches = [port for port in ports if _physical_usb_location(getattr(port, "location", "")) == location]
         if len(matches) == 1 and (matches[0].vid, matches[0].pid) == PX4_FMUV5_BOOTLOADER_USB_ID:
             logging_debug("Identified FMUv5 bootloader at the captured USB location despite its changed serial number")
             return str(matches[0].device)

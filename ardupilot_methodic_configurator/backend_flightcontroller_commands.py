@@ -205,7 +205,8 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         allow_reboot_serial_disconnect: bool = False,
     ) -> tuple[bool, str, int | None]:
         """Send a command and also return its MAV_RESULT for behavior-specific decisions."""
-        if self.master is None:
+        master = self.master
+        if master is None:
             error_msg = _("No flight controller connection available for command")
             logging_debug(error_msg)
             return False, error_msg, None
@@ -215,19 +216,11 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             message_types = self._prepare_command_receive(capture_status_text, start_confirmation)
             status_assembler = StatusTextAssembler()
             start_confirmed = False
-            # Send the command
-            self.master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
-                self.master.target_system,  # pyright: ignore[reportAttributeAccessIssue]
-                self.master.target_component,  # pyright: ignore[reportAttributeAccessIssue]
+            self._write_command_long(
+                master,
                 command,
-                0,  # confirmation
-                param1,
-                param2,
-                param3,
-                param4,
-                param5,
-                param6,
-                param7,
+                (param1, param2, param3, param4, param5, param6, param7),
+                verify_serial_write=allow_reboot_serial_disconnect,
             )
             command_sent = True
 
@@ -244,7 +237,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
                     return False, error_msg, failure.result
                 if failure is None and now - start_time >= timeout:
                     break
-                msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                msg = master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
                     type=message_types,
                     blocking=False,
                 )
@@ -323,6 +316,38 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             error_msg = _("Failed to send command: %(error)s") % {"error": str(e)}
             logging_debug(error_msg)
             return False, error_msg, None
+
+    @staticmethod
+    def _write_command_long(
+        master: MavlinkConnection,
+        command: int,
+        params: tuple[float, float, float, float, float, float, float],
+        *,
+        verify_serial_write: bool,
+    ) -> None:
+        """Send COMMAND_LONG and optionally surface a write failure swallowed by pymavlink."""
+        serial_master = master if verify_serial_write and isinstance(master, mavutil.mavserial) else None
+        autoreconnect = False
+        if serial_master is not None:
+            # An automatic reopen would clear portdead even though the command write failed.
+            autoreconnect = serial_master.autoreconnect
+            serial_master.autoreconnect = False
+            # A successful write does not clear a failure recorded by an earlier write.
+            serial_master.portdead = False
+        try:
+            master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
+                master.target_system,  # pyright: ignore[reportAttributeAccessIssue]
+                master.target_component,  # pyright: ignore[reportAttributeAccessIssue]
+                command,
+                0,  # confirmation
+                *params,
+            )
+            if serial_master is not None and serial_master.portdead:
+                msg = _("Serial port write failed")
+                raise serial.SerialException(msg)
+        finally:
+            if serial_master is not None:
+                serial_master.autoreconnect = autoreconnect
 
     @staticmethod
     def _command_error_with_status(error_msg: str, status_texts: list[str]) -> str:

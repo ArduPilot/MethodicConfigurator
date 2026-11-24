@@ -12,6 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import sys
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 from serial.tools.list_ports_common import ListPortInfo
@@ -39,13 +40,15 @@ def test_fmuv5_upload_finds_legacy_bootloader_at_same_usb_location(
 
     GIVEN: Board ID 50 reappears at the captured USB location with PX4 VID/PID 26ac:0032.
     WHEN: Upload discovery resolves the new port.
-    THEN: It selects the sole bootloader port; normal reconnect matching remains strict.
+    THEN: Both matching rules use the same port enumeration and reconnect matching stays strict.
     """
     identity = bl.SerialDeviceIdentity(location="1-3:x.0", serial_number="FC-serial")
     bootloader = _px4_fmuv5_port(serial_number=bootloader_serial)
-    monkeypatch.setattr(bl.serial.tools.list_ports, "comports", lambda: [bootloader])
+    enumerate_ports = Mock(return_value=[bootloader])
+    monkeypatch.setattr(bl.serial.tools.list_ports, "comports", enumerate_ports)
 
     assert bl.resolve_bootloader_upload_device("COM11", identity, expected_board_id=50) == "COM9"
+    enumerate_ports.assert_called_once_with()
     with pytest.raises(OSError, match="cannot uniquely"):
         bl.resolve_bootloader_device("COM11", identity)
 
