@@ -24,7 +24,9 @@ from pathlib import Path
 import pytest
 
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
+from ardupilot_methodic_configurator.data_model_parameter_upgrade import PARAM_UPGRADE_DICT_47
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -162,6 +164,33 @@ def test_copter_general_template_still_sets_its_own_accel_filter() -> None:
     general = ParDict.from_file(str(TEMPLATES_ROOT / "ArduCopter" / "empty_4.7.x" / "23_general_configuration.param"))
 
     assert general["INS_ACCEL_FILTER"].value == 20
+
+
+def test_x500_template_uses_copter_47_parameter_names() -> None:
+    """Given the 4.7 X500 template, every step can be read without legacy parameter renames."""
+    template_dir = TEMPLATES_ROOT / "ArduCopter" / "Holybro_X500"
+    legacy_names = set(PARAM_UPGRADE_DICT_47) | {"ARMING_CHECK"}
+
+    for _prefix, path in _numbered_param_files(template_dir):
+        obsolete = legacy_names.intersection(ParDict.from_file(str(path)))
+        assert not obsolete, f"{path.name}: {sorted(obsolete)}"
+
+
+@pytest.mark.parametrize(("parameter", "enabled_checks"), [("ARMING_CHECK", 1), ("ARMING_SKIPCHK", 0)])
+def test_copter_analytical_pid_step_restores_supported_arming_checks(parameter: str, enabled_checks: int) -> None:
+    """Given either arming-check interface, finishing system identification restores all checks."""
+    step_name = "61_analytical_pid_optimization.param"
+    configuration_file = TEMPLATES_ROOT.parent / "configuration_steps_ArduCopter.json"
+    step = json.loads(configuration_file.read_text(encoding="utf-8"))["steps"][step_name]
+    evaluator = ConfigurationSteps("", "ArduCopter")
+
+    errors = evaluator.compute_forced_and_derived_parameters(step_name, step, {"fc_parameters": {parameter: 32}})
+
+    assert errors == ("", "")
+    arming_parameters = {
+        name: param.value for name, param in evaluator.forced_parameters[step_name].items() if name.startswith("ARMING_")
+    }
+    assert arming_parameters == {parameter: enabled_checks}
 
 
 @pytest.mark.parametrize("template_dir", _LEAF_DIRS, ids=_LEAF_IDS)
