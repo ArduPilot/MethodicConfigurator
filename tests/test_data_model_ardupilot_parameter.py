@@ -347,6 +347,31 @@ def test_regular_enum_parameter_uses_multiple_choice() -> None:
     assert parameter.is_multiple_choice
 
 
+@pytest.mark.parametrize(
+    ("parameter_name", "presets", "file_value"),
+    [
+        ("Q_M_SPIN_ARM", {"0.0": "Low", "0.1": "Default", "0.2": "High"}, 0.1),
+        ("Q_M_SPIN_MIN", {"0.0": "Low", "0.15": "Default", "0.25": "High"}, 0.15),
+        ("Q_M_SPIN_MAX", {"0.9": "Low", "0.95": "Default", "1.0": "High"}, 0.95),
+    ],
+)
+def test_quadplane_spin_parameters_are_edited_as_numbers(
+    parameter_name: str, presets: dict[str, str], file_value: float
+) -> None:
+    """
+    QuadPlane spin parameters show their numeric value instead of a Low/Default/High list.
+
+    GIVEN: ArduPlane metadata that lists Low/Default/High presets for a Q_M_SPIN_ parameter
+    WHEN: The parameter holds the value of one of those presets
+    THEN: It is not shown as a multiple-choice list and can be edited as a number
+    """
+    parameter = ArduPilotParameter(parameter_name, Par(file_value, ""), {"values": presets})
+
+    assert parameter.is_in_values_dict
+    assert not parameter.is_multiple_choice
+    assert parameter.is_editable
+
+
 def test_set_new_value(param_fixture) -> None:
     """
     User can update parameter values with validation.

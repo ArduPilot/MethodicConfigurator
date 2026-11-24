@@ -2315,6 +2315,54 @@ class TestMotorSpinDialogs:
             {"initialvalue": 0.16, "minvalue": 0.0, "maxvalue": 1.0},
         )
 
+    @pytest.mark.parametrize("sequoia", [False, True], ids=["synchronous", "background-restart"])
+    def test_quadplane_spin_values_are_copied_into_the_parameter_table(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, mocker, sequoia: bool
+    ) -> None:
+        """
+        Spin values saved in the motor test also update the step's parameter table.
+
+        GIVEN: A QuadPlane whose spin parameters use the Q_M_ prefix
+        WHEN: The operator saves new spin-arm and spin-min values in the motor test
+        THEN: Each saved parameter is copied from the flight controller into the parameter table without a re-download
+        """
+        mocker.patch.object(motor_test_module, "is_macos_sequoia_or_older", return_value=sequoia)
+        fake_model.param_prefixes = {"MOT_": "Q_M_"}
+        mocker.patch.object(fake_model, "set_motor_spin_arm_value")
+        mocker.patch.object(fake_model, "set_motor_spin_min_value")
+        copy_to_table = mocker.patch.object(motor_test_module, "refresh_parameter_editor_after_calibration")
+
+        dialog_spies.askfloat.return_value = 0.07
+        motor_view._set_motor_spin_arm()
+        dialog_spies.askfloat.return_value = 0.12
+        motor_view._set_motor_spin_min()
+
+        assert copy_to_table.call_args_list == [
+            mocker.call(motor_view.base_window, {"Q_M_SPIN_ARM"}, redownload=False),
+            mocker.call(motor_view.base_window, {"Q_M_SPIN_MIN"}, redownload=False),
+        ]
+
+    def test_rejected_spin_values_leave_the_parameter_table_unchanged(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, mocker
+    ) -> None:
+        """
+        A spin value the flight controller did not accept is not copied into the parameter table.
+
+        GIVEN: The model rejects both the spin-arm and the spin-min value
+        WHEN: The operator submits them
+        THEN: The errors are shown and the parameter table is not touched
+        """
+        mocker.patch.object(fake_model, "set_motor_spin_arm_value", side_effect=ParameterError("out of range"))
+        mocker.patch.object(fake_model, "set_motor_spin_min_value", side_effect=ValidationError("too close"))
+        copy_to_table = mocker.patch.object(motor_test_module, "refresh_parameter_editor_after_calibration")
+        dialog_spies.askfloat.return_value = 0.9
+
+        motor_view._set_motor_spin_arm()
+        motor_view._set_motor_spin_min()
+
+        assert dialog_spies.showerror.call_count == 2
+        copy_to_table.assert_not_called()
+
     def test_spin_min_dialog_is_bounded_between_zero_and_one_and_prefilled(
         self, motor_view: MotorTestView, dialog_spies: SimpleNamespace
     ) -> None:
