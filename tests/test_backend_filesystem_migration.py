@@ -1797,7 +1797,7 @@ class TestVehicleSpecificV1ToV2Migration:
     @pytest.mark.parametrize(
         ("vehicle_type", "template_name", "layout_template"),
         [
-            ("ArduCopter", "Holybro_X500", ""),
+            ("ArduCopter", "empty_4.6.x", ""),
             ("ArduPlane", "normal_plane", ""),
             ("Heli", "OMP_M4", ""),
             ("Rover", "AION_R1", ""),
@@ -1822,8 +1822,7 @@ class TestVehicleSpecificV1ToV2Migration:
             if _param_name_from_line(line)
         }
         if vehicle_type == "ArduCopter":
-            # Firmware 4.7 renames and optional IMU subgroups are not present in
-            # the X500's three-IMU 4.6 default export.
+            # Include 4.7 names and optional IMU subgroups alongside the 4.6 defaults.
             defaults.update(
                 _param_name_from_line(line)
                 for line in (templates / "empty_4.7.x" / "00_default.param").read_text(encoding="utf-8-sig").splitlines()

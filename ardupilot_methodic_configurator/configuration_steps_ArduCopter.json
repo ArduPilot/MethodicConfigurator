@@ -1525,7 +1525,8 @@
             "mandatory_text": "20% mandatory (80% optional)",
             "auto_changed_by": "",
             "forced_parameters": {
-                "ARMING_CHECK": { "New Value": 1, "Change Reason": "Normal state for everyday use" },
+                "ARMING_CHECK": { "if": "'ARMING_CHECK' in fc_parameters", "New Value": 1, "Change Reason": "Normal state for everyday use" },
+                "ARMING_SKIPCHK": { "if": "'ARMING_SKIPCHK' in fc_parameters", "New Value": 0, "Change Reason": "Normal state for everyday use" },
                 "ATC_RATE_FF_ENAB": { "New Value": 1, "Change Reason": "Restore value now that system identification is done" },
                 "SID_AXIS": { "New Value": 0, "Change Reason": "No more system identification chip injections" }
             },
