@@ -19,6 +19,7 @@ import sys
 import time
 from math import isnan
 from pathlib import Path
+from threading import Event, RLock, Thread
 from types import SimpleNamespace
 from unittest.mock import MagicMock, Mock, patch
 
@@ -130,6 +131,50 @@ def test_reboot_retry_distinguishes_failed_and_successful_serial_writes(monkeypa
     port.read.assert_called_once()
     open_serial.assert_called_once()
     assert master.autoreconnect
+
+
+def test_reboot_write_ignores_a_concurrent_heartbeat_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A heartbeat failure after a successful reboot write cannot invalidate that write."""
+    port = Mock(spec=serial.Serial)
+    port.fileno.side_effect = OSError
+    port.write.side_effect = len
+    monkeypatch.setattr(mavutil, "mavfile_global", mavutil.mavfile_global)
+    with patch.object(serial, "Serial", return_value=port):
+        master = mavutil.mavserial("test-reboot-port", autoreconnect=True)
+        lock = RLock()
+        master.mav.amc_send_lock = lock
+        original_send = master.mav.send
+        sent = Event()
+        heartbeat_done = Event()
+
+        def send(*args: object, **kwargs: object) -> None:
+            with lock:
+                original_send(*args, **kwargs)
+            sent.set()
+            heartbeat_done.wait(0.1)
+
+        def heartbeat_failure() -> None:
+            if sent.wait(2):
+                with lock:
+                    master.portdead = True
+                heartbeat_done.set()
+
+        master.mav.send = send
+        master.recv_match = Mock(
+            return_value=Mock(
+                command=mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, result=mavutil.mavlink.MAV_RESULT_ACCEPTED
+            )
+        )
+        commands = FlightControllerCommands(params_manager=Mock(), connection_manager=Mock(master=master))
+        heartbeat = Thread(target=heartbeat_failure)
+        heartbeat.start()
+        try:
+            assert commands.reboot_to_bootloader() == (True, "")
+        finally:
+            heartbeat.join(timeout=2)
+        assert heartbeat_done.is_set()
+        assert master.portdead
+        assert master.autoreconnect
 
 
 def test_reboot_rejection_remains_a_failure() -> None:
