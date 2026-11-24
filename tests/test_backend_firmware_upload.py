@@ -14,6 +14,7 @@ import base64
 import gzip
 import hashlib
 import json
+import socket
 import zlib
 from pathlib import Path
 from types import SimpleNamespace
@@ -197,7 +198,7 @@ def test_download_with_stale_ssl_cert_file_logs_the_variable(download, tmp_path:
 
 
 @pytest.mark.parametrize("catalog", [True, False], ids=["manifest", "apj"])
-@pytest.mark.parametrize("proxy_error", ["403 Forbidden", "407 Proxy Authentication Required", "Proxy unavailable"])
+@pytest.mark.parametrize("proxy_error", ["403 Forbidden", "407 Proxy Authentication Required"])
 def test_proxy_failure_explains_required_firmware_server_access(
     catalog: bool, proxy_error: str, tmp_path: Path, caplog
 ) -> None:
@@ -233,6 +234,65 @@ def test_proxy_failure_explains_required_firmware_server_access(
     assert destination.read_bytes() == b"existing firmware"
     assert list(tmp_path.iterdir()) == [destination]
     response.iter_bytes.assert_not_called()
+
+
+@pytest.mark.parametrize("catalog", [True, False], ids=["manifest", "apj"])
+@pytest.mark.parametrize(
+    ("no_proxy", "uses_proxy"),
+    [
+        pytest.param("localhost", True, id="stale-https-proxy"),
+        pytest.param(".firmware.ardupilot.org", True, id="subdomain-only-bypass"),
+        pytest.param("firmware.ardupilot.org", False, id="host-bypass"),
+        pytest.param(None, False, id="no-proxy-configured"),
+    ],
+)
+def test_connection_refusal_explains_proxy_settings_when_applicable(
+    catalog: bool,
+    no_proxy: str | None,
+    uses_proxy: bool,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    A refused connection to a stale proxy includes troubleshooting guidance.
+
+    GIVEN: HTTPS_PROXY may point to an unreachable proxy, with different NO_PROXY rules.
+    WHEN: The catalog or firmware image is downloaded through httpx2.
+    THEN: The connection error offers conditional guidance if a proxy is configured.
+    """
+    release = _release()
+    url = firmware_upload.MANIFEST_URL if catalog else release.url
+    destination = tmp_path / "image.apj"
+    for name in ("HTTPS_PROXY", "https_proxy", "ALL_PROXY", "all_proxy"):
+        monkeypatch.delenv(name, raising=False)
+    proxy_configured = no_proxy is not None
+    if proxy_configured:
+        monkeypatch.setenv("https_proxy", "http://stale-proxy.example:8080")
+    monkeypatch.setenv("no_proxy", no_proxy or "localhost")
+    monkeypatch.delenv("SSL_CERT_FILE", raising=False)
+    monkeypatch.delenv("SSL_CERT_DIR", raising=False)
+    download = fetch_firmware_manifest if catalog else lambda: download_firmware(release, destination)
+
+    with (
+        patch.object(socket, "create_connection", side_effect=ConnectionRefusedError("Connection refused")) as connect,
+        pytest.raises(firmware_upload.httpx2.ConnectError) as caught,
+    ):
+        download()
+
+    connect.assert_called_once()
+    assert connect.call_args.args[0] == (("stale-proxy.example", 8080) if uses_proxy else ("firmware.ardupilot.org", 443))
+    assert str(caught.value.request.url) == url
+    message = str(caught.value)
+    assert "Connection refused" in message
+    if not proxy_configured:
+        assert message == "Connection refused"
+    else:
+        assert url in message
+        assert "If this request uses a proxy" in message
+        assert "HTTPS_PROXY" in message
+        assert "browser" in message
+        assert isinstance(caught.value.__cause__, firmware_upload.httpx2.ConnectError)
+    assert not destination.exists()
 
 
 @pytest.mark.parametrize("catalog", [True, False], ids=["manifest", "apj"])

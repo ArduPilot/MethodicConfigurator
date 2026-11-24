@@ -96,23 +96,40 @@ def test_reboot_reports_serial_loss_after_command_write_as_unconfirmed() -> None
     master.mav.command_long_send.assert_called_once()
 
 
-def test_reboot_serial_write_failure_does_not_allow_bootloader_discovery() -> None:
+def test_reboot_retry_distinguishes_failed_and_successful_serial_writes(monkeypatch: pytest.MonkeyPatch) -> None:
     """
-    A failed reboot command write remains an error.
+    A reboot retry uses the outcome of its own write.
 
-    GIVEN: The serial connection fails while writing the reboot command.
-    WHEN: Bootloader entry is requested.
-    THEN: The command fails without being treated as an unconfirmed acknowledgment.
+    GIVEN: The pymavlink serial transport fails its first write and then recovers.
+    WHEN: Bootloader entry is requested and retried.
+    THEN: The first write fails immediately and the second waits for an acknowledgment.
     """
-    master = MagicMock()
-    master.mav.command_long_send.side_effect = serial.SerialException("write failed")
-    commands = FlightControllerCommands(params_manager=Mock(), connection_manager=Mock(master=master))
+    port = Mock(spec=serial.Serial)
+    port.fileno.side_effect = OSError
+    port.write.side_effect = serial.SerialException("write failed")
+    port.read.side_effect = serial.SerialException("read failed")
+    port.inWaiting.return_value = 1
+    monkeypatch.setattr(mavutil, "mavfile_global", mavutil.mavfile_global)
+    with patch.object(serial, "Serial", return_value=port) as open_serial:
+        master = mavutil.mavserial("test-reboot-port", autoreconnect=True)
+        commands = FlightControllerCommands(params_manager=Mock(), connection_manager=Mock(master=master))
 
-    success, message = commands.reboot_to_bootloader()
+        success, message = commands.reboot_to_bootloader()
 
-    assert not success
-    assert "write failed" in message
-    master.recv_match.assert_not_called()
+        assert (success, message) == (False, "Failed to send command: Serial port write failed")
+        port.write.assert_called_once()
+        port.read.assert_not_called()
+        assert master.portdead
+        assert master.autoreconnect
+
+        port.write.side_effect = len
+        with pytest.raises(FirmwareBootloaderEntryUnconfirmedError, match="after sending"):
+            commands.reboot_to_bootloader()
+
+    assert port.write.call_count == 2
+    port.read.assert_called_once()
+    open_serial.assert_called_once()
+    assert master.autoreconnect
 
 
 def test_reboot_rejection_remains_a_failure() -> None:
