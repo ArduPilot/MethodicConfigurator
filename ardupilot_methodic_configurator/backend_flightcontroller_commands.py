@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import re
 from collections.abc import Callable
+from contextlib import nullcontext
 from dataclasses import dataclass, field
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -327,27 +328,29 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
     ) -> None:
         """Send COMMAND_LONG and optionally surface a write failure swallowed by pymavlink."""
         serial_master = master if verify_serial_write and isinstance(master, mavutil.mavserial) else None
-        autoreconnect = False
-        if serial_master is not None:
-            # An automatic reopen would clear portdead even though the command write failed.
-            autoreconnect = serial_master.autoreconnect
-            serial_master.autoreconnect = False
-            # A successful write does not clear a failure recorded by an earlier write.
-            serial_master.portdead = False
-        try:
-            master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
-                master.target_system,  # pyright: ignore[reportAttributeAccessIssue]
-                master.target_component,  # pyright: ignore[reportAttributeAccessIssue]
-                command,
-                0,  # confirmation
-                *params,
-            )
-            if serial_master is not None and serial_master.portdead:
-                msg = _("Serial port write failed")
-                raise serial.SerialException(msg)
-        finally:
+        send_lock = getattr(master.mav, "amc_send_lock", None) if serial_master is not None else None
+        with send_lock if send_lock is not None else nullcontext():
+            autoreconnect = False
             if serial_master is not None:
-                serial_master.autoreconnect = autoreconnect
+                # An automatic reopen would clear portdead even though the command write failed.
+                autoreconnect = serial_master.autoreconnect
+                serial_master.autoreconnect = False
+                # A successful write does not clear a failure recorded by an earlier write.
+                serial_master.portdead = False
+            try:
+                master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
+                    master.target_system,  # pyright: ignore[reportAttributeAccessIssue]
+                    master.target_component,  # pyright: ignore[reportAttributeAccessIssue]
+                    command,
+                    0,  # confirmation
+                    *params,
+                )
+                if serial_master is not None and serial_master.portdead:
+                    msg = _("Serial port write failed")
+                    raise serial.SerialException(msg)
+            finally:
+                if serial_master is not None:
+                    serial_master.autoreconnect = autoreconnect
 
     @staticmethod
     def _command_error_with_status(error_msg: str, status_texts: list[str]) -> str:
