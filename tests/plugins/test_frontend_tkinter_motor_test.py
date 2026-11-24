@@ -1850,6 +1850,38 @@ class TestMotorTestConnectionOwnership:
             assert recovery.state is RecoveryState.MONITORING
             worker.assert_not_called()
 
+    def test_frame_type_change_rebuilds_buttons_for_same_motor_count(
+        self, motor_view_with_controller: MotorTestView, mocker: MockerFixture
+    ) -> None:
+        """
+        Rebuild the buttons when the new frame has the same motor count but another motor order.
+
+        GIVEN: A Quad X view whose buttons spin motors 1, 4, 2, 3
+        WHEN: The user selects Quad Plus, which also has four motors
+        THEN: Every button is recreated and spins the motor the Plus layout assigns to it
+        """
+        view = motor_view_with_controller
+        fc = cast("MagicMock", view.model.flight_controller)
+        view.model.filesystem.doc_dict = {"FRAME_TYPE": {"RebootRequired": True}}
+        fc.set_param.return_value = (True, "")
+        fc.fetch_param.return_value = 0.0
+        fc.reset_and_reconnect.return_value = ""
+        fc.download_params.return_value = ({"BATT_MONITOR": 4.0}, MagicMock())
+        mocker.patch.object(motor_test_module, "ProgressWindow", return_value=MagicMock())
+        original_buttons = list(view.motor_buttons)
+        view.frame_type_combobox.current(0)
+        assert view.frame_type_combobox.get_selected_key() == "0"
+
+        view._on_frame_type_change(None)
+
+        assert view.model.motor_numbers == [3, 1, 4, 2]
+        assert len(view.motor_buttons) == len(original_buttons)
+        assert all(new is not old for new, old in zip(view.motor_buttons, original_buttons, strict=True))
+        test_motor = mocker.patch.object(view, "_test_motor")
+        for index, (button, motor_number) in enumerate(zip(view.motor_buttons, [3, 1, 4, 2], strict=True)):
+            button.invoke()
+            test_motor.assert_called_with(index, motor_number)
+
     def test_activation_keeps_one_polling_loop_and_suspend_stops_pending_updates(
         self,
         motor_view_with_controller: MotorTestView,

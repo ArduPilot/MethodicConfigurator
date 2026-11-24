@@ -17,6 +17,7 @@ from logging import warning as logging_warning
 from math import isnan, nan
 from os import path as os_path
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any
 
 from ardupilot_methodic_configurator import _
@@ -384,8 +385,9 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         if self.flight_controller.master is None:
             raise FlightControllerConnectionError(_("Flight controller not connected."))
 
-        # Without a parameter cache, BATT_MONITOR cannot be read and the voltage check would be skipped
-        if not self.flight_controller.fc_parameters:
+        # A complete download always contains BATT_MONITOR. Without it the cache is empty or partial,
+        # and the voltage check would be skipped.
+        if "BATT_MONITOR" not in self.flight_controller.fc_parameters:
             raise MotorTestSafetyError(_("Flight controller parameters are not loaded, cannot verify battery safety."))
 
         # Motor voltage thresholds and telemetry apply only to battery 1.
@@ -410,6 +412,38 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                     "max": max_voltage,
                 },
                 battery_related=True,
+            )
+
+    def _reboot_and_refresh_parameters(
+        self,
+        param_name: str,
+        progress_callback: Callable[[int, int], None] | None,
+        extra_sleep_time: int | None,
+    ) -> None:
+        """
+        Reboot the flight controller and download its parameters again.
+
+        The reboot clears the parameter cache, which the safety checks and frame detection rely on.
+
+        Raises:
+            ParameterError: If the flight controller does not reconnect or the download returns no parameters
+
+        """
+        reconnect_error = self.flight_controller.reset_and_reconnect(progress_callback, extra_sleep_time)
+        if reconnect_error:
+            raise ParameterError(
+                _("Could not reconnect to the flight controller after setting %(param)s: %(error)s")
+                % {"param": param_name, "error": reconnect_error}
+            )
+        # MAVFTP writes files, keep them out of the working directory and the user's vehicle project
+        with TemporaryDirectory() as directory:
+            downloaded_parameters, _defaults = self.flight_controller.download_params(
+                parameter_values_filename=Path(directory) / "complete.param",
+                parameter_defaults_filename=Path(directory) / "00_default.param",
+            )
+        if not downloaded_parameters:
+            raise ParameterError(
+                _("Could not download the flight controller parameters after setting %(param)s") % {"param": param_name}
             )
 
     def set_parameter(
@@ -479,19 +513,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             if actual_value is not None and abs(actual_value - value) < 0.001:  # Allow small floating-point tolerance
                 logging_info(_("Parameter %(param)s set to %(value).3f"), {"param": param_name, "value": value})
                 if requires_reset:
-                    reconnect_error = self.flight_controller.reset_and_reconnect(progress_callback, extra_sleep_time)
-                    if reconnect_error:
-                        raise ParameterError(
-                            _("Could not reconnect to the flight controller after setting %(param)s: %(error)s")
-                            % {"param": param_name, "error": reconnect_error}
-                        )
-                    # The reboot clears the parameter cache, which the safety checks and frame detection rely on
-                    downloaded_parameters, _defaults = self.flight_controller.download_params()
-                    if not downloaded_parameters:
-                        raise ParameterError(
-                            _("Could not download the flight controller parameters after setting %(param)s")
-                            % {"param": param_name}
-                        )
+                    self._reboot_and_refresh_parameters(param_name, progress_callback, extra_sleep_time)
                 return
             raise ParameterError(
                 _("Parameter %(param)s verification failed: expected %(expected).3f, got %(actual)s")

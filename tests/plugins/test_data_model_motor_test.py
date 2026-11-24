@@ -914,7 +914,10 @@ class TestMotorTestDataModelParameterManagement:
         """
         motor_test_model.set_parameter("MOT_SPIN_ARM", 0.2)
 
-        motor_test_model.flight_controller.download_params.assert_called_once_with()
+        motor_test_model.flight_controller.download_params.assert_called_once()
+        kwargs = motor_test_model.flight_controller.download_params.call_args.kwargs
+        scratch_files = (kwargs["parameter_values_filename"], kwargs["parameter_defaults_filename"])
+        assert all(not path.is_relative_to(Path.cwd()) for path in scratch_files)
 
     def test_parameter_setting_reports_reconnect_failure_after_reboot(self, motor_test_model) -> None:
         """
@@ -3326,23 +3329,26 @@ class TestMotorCommandBoundaries:
         motor_test_model.flight_controller.test_all_motors.assert_not_called()
         motor_test_model.flight_controller.test_motors_in_sequence.assert_not_called()
 
-    def test_missing_primary_monitor_setting_allows_motor_testing_with_a_voltage_warning(
-        self, motor_test_model: MotorTestDataModel, caplog: pytest.LogCaptureFixture
+    @pytest.mark.parametrize("workflow", ["test_motor", "test_all_motors", "test_motors_in_sequence"])
+    def test_missing_primary_monitor_setting_blocks_motor_testing(
+        self, motor_test_model: MotorTestDataModel, workflow: str
     ) -> None:
         """
-        An absent primary monitor setting follows the disabled-monitor behavior.
+        A cache without BATT_MONITOR is treated as incomplete, not as a disabled monitor.
 
-        GIVEN: A connected controller without BATT_MONITOR or battery telemetry
-        WHEN: The user starts a motor test
-        THEN: The command proceeds with a warning that voltage cannot be verified
+        GIVEN: A connected controller whose cache lacks BATT_MONITOR, e.g. after a failed download
+        WHEN: The user attempts any motor test workflow
+        THEN: The test is refused and no motor command is sent
         """
         motor_test_model.flight_controller.fc_parameters.pop("BATT_MONITOR")
-        motor_test_model.flight_controller.get_battery_statuses.return_value = (None, "")
+        arguments = (0, 1, 10, 2) if workflow == "test_motor" else (10, 2)
 
-        motor_test_model.test_motor(0, 1, 10, 2)
+        with pytest.raises(MotorTestSafetyError, match="parameters are not loaded"):
+            getattr(motor_test_model, workflow)(*arguments)
 
-        motor_test_model.flight_controller.test_motor.assert_called_once_with(0, "A", 1, 10, 2)
-        assert "Battery monitoring disabled, cannot verify voltage." in caplog.messages
+        motor_test_model.flight_controller.test_motor.assert_not_called()
+        motor_test_model.flight_controller.test_all_motors.assert_not_called()
+        motor_test_model.flight_controller.test_motors_in_sequence.assert_not_called()
 
     @pytest.mark.parametrize("workflow", ["test_motor", "test_all_motors", "test_motors_in_sequence"])
     def test_disconnected_controller_blocks_motor_commands_even_without_battery_monitoring(
