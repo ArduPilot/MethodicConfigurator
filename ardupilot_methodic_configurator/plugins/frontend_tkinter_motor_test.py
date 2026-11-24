@@ -67,6 +67,7 @@ from ardupilot_methodic_configurator.plugins.data_model_motor_test import (
     ParameterError,
     ValidationError,
 )
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_helpers import refresh_parameter_editor_after_calibration
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_MOTOR_TEST
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
 from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginPauseReason
@@ -637,6 +638,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
                 self._run_restart_task(
                     progress_window, lambda report: self.model.set_motor_spin_arm_value(new_val, report), update_progress
                 )
+                self._copy_parameter_to_editor(spin_arm_name)
             except (ParameterError, ValidationError) as e:
                 showerror(_("Error"), str(e))
             finally:
@@ -688,8 +690,17 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         if new_val is not None:
             try:
                 self.model.set_motor_spin_min_value(new_val)
+                self._copy_parameter_to_editor(spin_min_name)
             except (ParameterError, ValidationError) as e:
                 showerror(_("Error"), str(e))
+
+    def _copy_parameter_to_editor(self, param_name: str) -> None:
+        """
+        Copy a value the plugin wrote to the flight controller into the parameter table.
+
+        Without this the table keeps the old value, and uploading the step would undo the change.
+        """
+        refresh_parameter_editor_after_calibration(self.base_window, {param_name}, redownload=False)
 
     def _test_motor(self, test_sequence_nr: int, motor_output_nr: int) -> None:
         """Execute a test for a single motor."""
