@@ -93,8 +93,8 @@ def _firmware_download_errors(url: str) -> Generator[None]:
         ).format(url=url, error=exc)
         logging_error("%s", msg)
         raise httpx2.ProxyError(msg) from exc
-    except httpx2.ConnectError as exc:
-        # ConnectError is also used for direct connections. Let HTTPX decide
+    except (httpx2.ConnectError, httpx2.ConnectTimeout) as exc:
+        # Connection failures can also occur for direct connections. Let HTTPX decide
         # whether to bypass the proxy and make the troubleshooting advice conditional.
         request_url = exc.request.url
         proxies = getproxies()
@@ -107,7 +107,7 @@ def _firmware_download_errors(url: str) -> Generator[None]:
             "use a different proxy or automatic proxy configuration."
         ).format(url=url, error=exc)
         logging_error("%s", msg)
-        raise httpx2.ConnectError(msg, request=exc.request) from exc
+        raise type(exc)(msg, request=exc.request) from exc
 
 
 def fetch_firmware_manifest() -> dict:
