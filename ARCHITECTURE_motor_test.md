@@ -6,6 +6,8 @@
 - 🟡 **Yellow Check**: Implemented but not yet tested with BDD pytest
 - ❌ **Red Cross**: Not implemented
 
+> **User-facing documentation:** [USERMANUAL_motor_test.md](USERMANUAL_motor_test.md)
+
 ## Overview
 
 ![motor test screenshot](images/App_screenshot_motor_test.png)
@@ -386,36 +388,8 @@ def motor_diagram_exists(frame_class: int, frame_type: int) -> bool
 
 #### User Workflow Sequence
 
-1. **Safety Setup**
-   - User reads safety warnings and ensures propellers are removed
-   - User secures vehicle to prevent movement during tests
-
-2. **Frame Configuration**
-   - User selects appropriate FRAME_TYPE from dropdown (populated from parameter documentation)
-   - Parameters are immediately applied to flight controller on selection
-
-3. **Motor Testing and Order Detection**
-   - User monitors real-time battery voltage and current display (if BATT_MONITOR != 0)
-   - User sets throttle % (default: 1%)
-   - User sets test duration (default: 2 seconds)
-   - User tests individual motors using labeled buttons (Test Motor A, B, C, etc.)
-   - User observes actual motor spinning and records in "Detected" comboboxes
-   - User can test all motors simultaneously or in sequence
-   - Real-time status feedback shows "Ready", "Command sent", or error messages for each motor
-
-4. **Motor Parameter Configuration**
-   - User clicks "Set Motor Spin Arm" to configure MOT_SPIN_ARM parameter
-   - User clicks "Set Motor Spin Min" to configure MOT_SPIN_MIN parameter
-   - Each button opens parameter dialog and saves/uploads value immediately
-   - System provides color-coded voltage feedback (green=safe, red=outside safe range)
-   - Safety popup appears when attempting motor test with voltage outside BATT_ARM_VOLT to MOT_BAT_VOLT_MAX range
-   - User can run "Test in Sequence" to automatically test all motors
-   - Emergency stop button available at all times during testing
-
-5. **Order Validation**
-   - System compares expected vs detected motor order
-   - User corrects any wiring issues based on feedback
-   - System provides guidance on proper motor/ESC connections
+The step-by-step usage instructions, keyboard shortcuts and safety behavior seen by the user are described in the
+[user manual](USERMANUAL_motor_test.md).
 
 #### Motor Testing Workflow
 
@@ -435,14 +409,22 @@ def motor_diagram_exists(frame_class: int, frame_type: int) -> bool
 1. **Motor Test Request**: User clicks any motor test button
 2. **Battery Monitor Check**: Data model checks if BATT_MONITOR != 0
 3. **Voltage Range Check**: If battery monitoring enabled, validate voltage is within BATT_ARM_VOLT to MOT_BAT_VOLT_MAX range
-4. **Safety Popup**: If voltage outside safe range, display popup:
-   "Battery voltage outside safe range. Please connect battery and/or ensure battery is in charged state."
-5. **User Action**: User can choose to:
-   - Cancel motor test and address battery issue
-   - Override and proceed (with additional warning)
-6. **Test Execution**: Motor test proceeds only if voltage is safe or user explicitly overrides
+4. **Refusal**: If voltage is outside the safe range, the data model raises `MotorTestSafetyError`, no motor command is sent
+   and the GUI shows `get_battery_safety_message()` in a warning popup
+5. **Test Execution**: Motor test proceeds only if the voltage is safe
 
 #### Parameter Configuration Workflow
+
+> **Exception to the explicit-upload rule:** FRAME_TYPE, MOT_SPIN_MIN and MOT_SPIN_ARM (and their ArduPlane
+> `Q_M_*` equivalents) and the confirmed Detected-motor swap (`swap_motor_functions`, which exchanges two
+> `SERVOx_FUNCTION` values) are written to the flight controller as soon as the user confirms the change,
+> without pressing either of the two parameter-editor upload buttons.
+> Parameter-table edits elsewhere in the application are staged and require an explicit upload.
+> The user-facing explanation is in the [user manual](USERMANUAL_motor_test.md#changes-that-do-not-need-an-upload-button).
+> After a MOT_SPIN_MIN, MOT_SPIN_ARM or motor swap change (`swap_motor_functions` returns the written
+> parameter names) the plugin copies the value read back from the flight controller
+> into the parameter table (both the staged value and the FC value, so the row is not flagged as different from the
+> flight controller) via `refresh_parameter_editor_after_calibration(..., redownload=False)`.
 
 1. **Frame Selection**: User selects FRAME_TYPE from dropdowns
 2. **Immediate Application**: Parameters uploaded to flight controller immediately

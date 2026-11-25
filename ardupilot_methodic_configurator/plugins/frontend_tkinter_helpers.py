@@ -63,6 +63,7 @@ def refresh_parameter_editor_after_calibration(
     *,
     check_other_steps: bool = False,
     redownload: bool = True,
+    skip_when_no_differences: bool = True,
 ) -> list[str]:
     """
     Download calibration results and refresh the active parameter table.
@@ -70,6 +71,9 @@ def refresh_parameter_editor_after_calibration(
     Copying downloaded values into staged ``new_value`` fields is opt-in and
     limited to parameters the calibration is known to have changed. Optionally
     return names of other steps containing stale values, without changing them.
+
+    Set ``skip_when_no_differences`` to False when the plugin must stay open even if the refreshed
+    table has no rows differing from the flight controller.
     """
     download_parameters = getattr(base_window, "download_flight_controller_parameters", None)
     readback_succeeded = True
@@ -87,7 +91,11 @@ def refresh_parameter_editor_after_calibration(
             check_other_steps=check_other_steps,
         )
 
-    repopulate_table = getattr(base_window, "repopulate_parameter_table", None)
+    repopulate_table = getattr(
+        base_window,
+        "repopulate_parameter_table" if skip_when_no_differences else "repopulate_parameter_table_without_skipping",
+        None,
+    )
     if callable(repopulate_table):
         repopulate_table()
     else:
@@ -106,6 +114,10 @@ def _copy_calibration_values(
     current_step_parameters = getattr(parameter_editor, "current_step_parameters", {}) or {}
     calibration_values = {name: fc_parameters[name] for name in parameter_names_to_copy if name in fc_parameters}
     relevant_fc_params = {name: value for name, value in calibration_values.items() if name in current_step_parameters}
+
+    # Without a full download the rows still hold the pre-calibration FC value and would be flagged as different
+    for name, value in relevant_fc_params.items():
+        current_step_parameters[name].set_fc_value(value)
 
     update_parameters = getattr(parameter_editor, "update_parameters_from_fc_values", None)
     if callable(update_parameters) and relevant_fc_params:

@@ -1332,37 +1332,44 @@ class TestMotorTestViewMotorSwapping:
 
         GIVEN: A valid swap request confirmed by the user
         WHEN: The data model successfully swaps the parameters
-        THEN: A success info dialog is shown and comboboxes are cleared
+        THEN: A success info dialog is shown, the swapped parameters are copied into the parameter table
+              without a re-download, and comboboxes are cleared
         """
         dialog_spies.askyesno.return_value = True
         mock_showinfo = mocker.patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test.showinfo")
-        fake_model.swap_motor_functions = MagicMock()
+        fake_model.swap_motor_functions = MagicMock(return_value={"SERVO1_FUNCTION", "SERVO2_FUNCTION"})
+        copy_to_table = mocker.patch.object(motor_test_module, "refresh_parameter_editor_after_calibration")
         motor_view.detected_comboboxes[0].set("B")
 
         motor_view._on_motor_swapped("A", "B")
 
         fake_model.swap_motor_functions.assert_called_once_with("A", "B")
+        copy_to_table.assert_called_once_with(
+            motor_view.base_window, {"SERVO1_FUNCTION", "SERVO2_FUNCTION"}, redownload=False, skip_when_no_differences=False
+        )
         mock_showinfo.assert_called_once()
         assert motor_view.detected_comboboxes[0].get() == ""
 
     def test_on_motor_swapped_handles_exception(
-        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, mocker
     ) -> None:
         """
         Swap requests that fail at the backend show an error dialog.
 
         GIVEN: A valid swap request confirmed by the user
         WHEN: The data model raises an exception during the swap
-        THEN: An error dialog is shown and comboboxes are cleared
+        THEN: An error dialog is shown, the parameter table is not touched and comboboxes are cleared
         """
         dialog_spies.askyesno.return_value = True
         fake_model.swap_motor_functions = MagicMock(side_effect=ParameterError("Mock FC read error"))
+        copy_to_table = mocker.patch.object(motor_test_module, "refresh_parameter_editor_after_calibration")
         motor_view.detected_comboboxes[0].set("B")
 
         motor_view._on_motor_swapped("A", "B")
 
         fake_model.swap_motor_functions.assert_called_once_with("A", "B")
         dialog_spies.showerror.assert_called_once()
+        copy_to_table.assert_not_called()
 
         # Verify the actual error message was passed to the UI
         assert "Mock FC read error" in dialog_spies.showerror.call_args[0][1]
@@ -2338,8 +2345,8 @@ class TestMotorSpinDialogs:
         motor_view._set_motor_spin_min()
 
         assert copy_to_table.call_args_list == [
-            mocker.call(motor_view.base_window, {"Q_M_SPIN_ARM"}, redownload=False),
-            mocker.call(motor_view.base_window, {"Q_M_SPIN_MIN"}, redownload=False),
+            mocker.call(motor_view.base_window, {"Q_M_SPIN_ARM"}, redownload=False, skip_when_no_differences=False),
+            mocker.call(motor_view.base_window, {"Q_M_SPIN_MIN"}, redownload=False, skip_when_no_differences=False),
         ]
 
     def test_rejected_spin_values_leave_the_parameter_table_unchanged(

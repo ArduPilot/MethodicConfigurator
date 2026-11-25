@@ -14,6 +14,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
+from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
+from ardupilot_methodic_configurator.data_model_par_dict import Par
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_helpers import (
     refresh_parameter_editor_after_calibration,
     refresh_parameter_editor_table,
@@ -108,3 +110,44 @@ def test_calibration_refresh_does_not_copy_stale_cache_after_failed_readback() -
     parameter_editor.update_parameters_from_fc_values.assert_not_called()
     parameter_editor.find_other_steps_with_stale_calibration_values.assert_not_called()
     base_window.repopulate_parameter_table.assert_called_once_with()
+
+
+def test_calibration_refresh_without_download_updates_fc_value_of_changed_rows() -> None:
+    """
+    A value saved to the FC without a re-download is not shown as pending upload.
+
+    GIVEN: A parameter whose FC value is stale after the plugin wrote a new value to the FC
+    WHEN: The calibration refresh copies the readback without downloading
+    THEN: The row's FC and staged values both match the readback, so it does not differ from the FC
+    """
+    # Arrange (Given)
+    parameter = ArduPilotParameter("MOT_SPIN_ARM", Par(0.1, ""), {}, fc_value=0.1)
+    parameter_editor = SimpleNamespace(
+        fc_parameters={"MOT_SPIN_ARM": 0.15},
+        current_step_parameters={"MOT_SPIN_ARM": parameter},
+    )
+    parameter_editor.update_parameters_from_fc_values = lambda values: [
+        parameter.set_new_value(str(value), ignore_out_of_range=True) for value in values.values()
+    ]
+    base_window = SimpleNamespace(parameter_editor=parameter_editor, repopulate_parameter_table=MagicMock())
+
+    # Act (When)
+    refresh_parameter_editor_after_calibration(base_window, {"MOT_SPIN_ARM"}, redownload=False)
+
+    # Assert (Then)
+    assert parameter.get_new_value() == 0.15
+    assert parameter.fc_value_as_string == "0.15"
+    assert not parameter.is_different_from_fc
+
+
+def test_calibration_refresh_can_keep_the_current_step_open_when_nothing_differs() -> None:
+    """A plugin that is still in use asks for a refresh that never skips to the next step."""
+    base_window = SimpleNamespace(
+        repopulate_parameter_table=MagicMock(),
+        repopulate_parameter_table_without_skipping=MagicMock(),
+    )
+
+    refresh_parameter_editor_after_calibration(base_window, redownload=False, skip_when_no_differences=False)
+
+    base_window.repopulate_parameter_table_without_skipping.assert_called_once_with()
+    base_window.repopulate_parameter_table.assert_not_called()

@@ -213,14 +213,7 @@ def test_arduplane_configuration_steps_use_plane_parameter_names() -> None:
     assert "THR_FS_VALUE" in rc_step["autoimport_nondefault_regexp"]
     assert "FS_THR_VALUE" not in rc_step["autoimport_nondefault_regexp"]
     assert "FRAME_CLASS" not in steps["15_board_orientation.param"]["derived_parameters"]
-    expected_acceleration_parameters = {
-        "Q_A_ACCEL_P_MAX",
-        "Q_A_ACCEL_R_MAX",
-        "Q_A_ACCEL_Y_MAX",
-        "Q_A_ACC_P_MAX",
-        "Q_A_ACC_R_MAX",
-        "Q_A_ACC_Y_MAX",
-    }
+    expected_acceleration_parameters = {f"Q_A_{name}_{axis}_MAX" for name in ("ACCEL", "ACC") for axis in "PRY"}
     assert expected_acceleration_parameters <= set(attitude_step["derived_parameters"])
     assert "Q_A_ACC(EL)?_[PRY]_MAX$" in attitude_step["autoimport_nondefault_regexp"]
     assert "TKOFF_RPM_MIN" not in throttle_step["add_parameters"]

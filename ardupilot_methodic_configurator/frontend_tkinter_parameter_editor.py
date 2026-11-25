@@ -595,9 +595,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # A component edit during recovery may have left only a connection placeholder.
         if self.current_plugin is not None and self.current_plugin_view is None:
             self._update_plugin_layout(self.current_plugin, force_reload=True)
-        self._repopulate_parameter_table_without_skipping()
+        self.repopulate_parameter_table_without_skipping()
 
-    def _repopulate_parameter_table_without_skipping(self) -> None:
+    def repopulate_parameter_table_without_skipping(self) -> None:
         """Refresh the table while keeping the current step open."""
         options = self.parameter_editor_table.options
         skip_when_no_differences = options.skip_when_no_differences
@@ -2385,7 +2385,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self._continue_to_analyse()
             self.repopulate_parameter_table()
         else:
-            self._repopulate_parameter_table_without_skipping()
+            self.repopulate_parameter_table_without_skipping()
 
     def on_upload_selected_click(self) -> None:
         if self.navigation_lock.locked:
@@ -2404,7 +2404,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             # Delete the parameter table and create a new one with the next file if available
             self.on_skip_click()
         else:
-            self._repopulate_parameter_table_without_skipping()
+            self.repopulate_parameter_table_without_skipping()
 
     def _continue_to_analyse(self) -> None:
         if not self._log_report_return_pending:
