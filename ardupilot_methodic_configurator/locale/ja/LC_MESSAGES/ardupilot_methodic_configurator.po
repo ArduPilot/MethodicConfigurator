@@ -1140,7 +1140,7 @@ msgid ""
 "settings and access to firmware.ardupilot.org on port 443.\n"
 "\n"
 "Proxy error: {error}"
-msgstr ""
+msgstr "設定されたネットワークプロキシは {url} に接続できませんでした。\n\nプロキシ設定と認証を確認してください。この URL がブラウザーで開ける場合、ブラウザーは別のプロキシまたは自動プロキシ設定を使用している可能性があります。正しい HTTPS プロキシ設定と、ポート 443 での firmware.ardupilot.org へのアクセスについて、ネットワーク管理者にお問い合わせください。\n\nプロキシエラー: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:103
 msgid ""
@@ -1149,7 +1149,7 @@ msgid ""
 "If this request uses a proxy, check HTTPS_PROXY, ALL_PROXY, and your system "
 "proxy settings. If this URL works in a browser, the browser may use a "
 "different proxy or automatic proxy configuration."
-msgstr ""
+msgstr "{url} に接続できませんでした: {error}\n\nこのリクエストでプロキシを使用している場合は、HTTPS_PROXY、ALL_PROXY、およびシステムのプロキシ設定を確認してください。この URL がブラウザーで開ける場合、ブラウザーは別のプロキシまたは自動プロキシ設定を使用している可能性があります。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_firmware_upload.py:120
 msgid "firmware catalog"
@@ -1517,7 +1517,7 @@ msgstr ""
 msgid ""
 "could not confirm reboot of the held bootloader; power-cycle the flight "
 "controller before reconnecting. Bootloader identification failed: {error}"
-msgstr ""
+msgstr "停止状態のブートローダーの再起動を確認できませんでした。再接続する前にフライトコントローラーの電源を入れ直してください。ブートローダーの識別に失敗しました: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:922
 msgid ""
@@ -1568,7 +1568,7 @@ msgstr "%(timeout).1f秒後にコマンド確認がタイムアウトしまし�
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:315
 msgid ""
 "Serial connection lost after sending the bootloader reboot request: {error}"
-msgstr ""
+msgstr "ブートローダーの再起動要求を送信した後、シリアル接続が切断されました: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:317
 msgid "Failed to send command: %(error)s"
@@ -1576,7 +1576,7 @@ msgstr "コマンドの送信に失敗しました: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:349
 msgid "Serial port write failed"
-msgstr ""
+msgstr "シリアルポートへの書き込みに失敗しました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:436
 msgid "No flight controller connection available for parameter reset"
@@ -14481,7 +14481,7 @@ msgstr "フライトコントローラが接続されていません。"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:391
 msgid ""
 "Flight controller parameters are not loaded, cannot verify battery safety."
-msgstr ""
+msgstr "フライトコントローラーのパラメータが読み込まれていないため、バッテリーの安全性を確認できません。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:396
 msgid "Battery monitoring disabled, cannot verify voltage."
@@ -14502,12 +14502,12 @@ msgstr ""
 msgid ""
 "Could not reconnect to the flight controller after setting %(param)s: "
 "%(error)s"
-msgstr ""
+msgstr "%(param)s の設定後、フライトコントローラーに再接続できませんでした: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:446
 msgid ""
 "Could not download the flight controller parameters after setting %(param)s"
-msgstr ""
+msgstr "%(param)s の設定後、フライトコントローラーのパラメータをダウンロードできませんでした"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:479
 msgid "%(param)s value %(value).3f is outside valid range (0.0 - 1.0)"
@@ -14559,17 +14559,17 @@ msgstr "入れ替え用の無効なモーターラベルが指定されました
 msgid ""
 "%(arm_param)s must stay at least 0.02 below %(min_param)s (current "
 "%(min).2f)."
-msgstr ""
+msgstr "%(arm_param)s は %(min_param)s より少なくとも 0.02 低く保つ必要があります（現在の値: %(min).2f）。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:629
 msgid "%(arm_param)s must be available before updating %(min_param)s."
-msgstr ""
+msgstr "%(min_param)s を更新する前に %(arm_param)s が利用可能である必要があります。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:634
 msgid ""
 "%(min_param)s must be at least 0.02 higher than %(arm_param)s (current "
 "%(arm).2f)."
-msgstr ""
+msgstr "%(min_param)s は %(arm_param)s より少なくとも 0.02 高くする必要があります（現在の値: %(arm).2f）。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:663
 msgid "Invalid test sequence number %(number)d (valid range: 0-%(max)d)"
@@ -14649,7 +14649,7 @@ msgstr "現在のフレームクラスにはフライトコントローラーの
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1027
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1206
 msgid "%(param)s parameter not found in flight controller"
-msgstr ""
+msgstr "フライトコントローラーに %(param)s パラメータが見つかりません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1049
 msgid ""
@@ -14800,7 +14800,7 @@ msgid ""
 "• Check BATT_ARM_VOLT and %(max_param)s parameters\n"
 "\n"
 "Reason: %(reason)s"
-msgstr ""
+msgstr "バッテリー電圧がモーターテストの安全範囲外です。\n\n以下を確認してください:\n• 適切に充電されたバッテリーを接続する\n• バッテリー電圧が安全な動作範囲内にあることを確認する\n• BATT_ARM_VOLT および %(max_param)s パラメータを確認する\n\n理由: %(reason)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:95
 msgid "Select an RC mapping mode from 1 to 4."
@@ -16031,13 +16031,13 @@ msgstr "持続時間検証に失敗しました: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py:619
 msgid "Enter new value for %(param)s with 0.02 margin:"
-msgstr ""
+msgstr "0.02 の余裕を持たせて %(param)s の新しい値を入力してください:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py:682
 msgid ""
 "Enter new value for %(min_param)s, must be at least 0.02 higher than "
 "%(arm_param)s:"
-msgstr ""
+msgstr "%(min_param)s の新しい値を入力してください。%(arm_param)s より少なくとも 0.02 高くする必要があります:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py:697
 msgid "Testing motor %(seq)s at motor output %(num)d"
