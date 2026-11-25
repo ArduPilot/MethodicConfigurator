@@ -662,6 +662,7 @@
             "old_filenames": []
         },
         "22_flight_modes.param": {
+            "plugin": {"name": "flight_modes", "placement": "top"},
             "why": "Flight modes determine how the aircraft responds to pilot and ground-control inputs.",
             "why_now": "The radio and flight controller inputs have been configured in the preceding steps.",
             "blog_text": "Configure the aircraft flight modes.",

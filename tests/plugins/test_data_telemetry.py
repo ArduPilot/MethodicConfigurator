@@ -45,6 +45,7 @@ def telemetry_link() -> Generator[SimpleNamespace, None, None]:
 @pytest.fixture
 def telemetry_view(root: tk.Tk, telemetry_link: SimpleNamespace) -> Generator[DataTelemetryView, None, None]:
     """Use real widgets and model, suppressing physical display updates on macOS."""
+    # pylint: disable=duplicate-code
     with (
         patch("tkinter.Misc.update"),
         patch("tkinter.Misc.update_idletasks"),
@@ -52,6 +53,7 @@ def telemetry_view(root: tk.Tk, telemetry_link: SimpleNamespace) -> Generator[Da
         patch("tkinter.Misc.wait_window"),
         patch.object(tk.Toplevel, "winfo_fpixels", side_effect=tk.TclError("no display")),
     ):
+        # pylint: enable=duplicate-code
         base_window = MagicMock(spec=BaseWindow)
         base_window.root = root
         base_window.navigation_lock = NavigationLock()
