@@ -143,6 +143,7 @@ class LevelCalibrationView(Frame):
                 parameter_names_to_copy={"AHRS_TRIM_X", "AHRS_TRIM_Y"} if downloaded else set(),
                 check_other_steps=True,
                 redownload=False,
+                skip_when_no_differences=False,
             )
             if not downloaded:
                 message += "\n" + _("Could not download the new calibration values.")
@@ -158,7 +159,11 @@ class LevelCalibrationView(Frame):
                 download_result = base_window.download_flight_controller_parameters(redownload=True, response_timeout=2.0)
                 changed = sorted(name for name in trim_names if editor.fc_parameters.get(name) != old_values[name])
                 stale_files = refresh_parameter_editor_after_calibration(
-                    self.base_window, parameter_names_to_copy=changed, check_other_steps=True, redownload=False
+                    self.base_window,
+                    parameter_names_to_copy=changed,
+                    check_other_steps=True,
+                    redownload=False,
+                    skip_when_no_differences=False,
                 )
                 if changed:
                     message += "\n" + _(

@@ -240,6 +240,7 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
                 ),
                 check_other_steps=True,
                 redownload=False,
+                skip_when_no_differences=False,
             )
             if not downloaded:
                 message += "\n" + _("Could not download the new calibration values.")
@@ -265,6 +266,7 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
                     parameter_names_to_copy=changed if step_unchanged else set(),
                     check_other_steps=True,
                     redownload=False,
+                    skip_when_no_differences=False,
                 )
                 if changed:
                     message += "\n" + _(
@@ -418,6 +420,7 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
                 ),
                 check_other_steps=True,
                 redownload=False,
+                skip_when_no_differences=False,
             )
             message = _("Full accelerometer calibration successful!")
             if not downloaded:

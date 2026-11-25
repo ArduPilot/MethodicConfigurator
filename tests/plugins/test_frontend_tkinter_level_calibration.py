@@ -41,7 +41,7 @@ def test_failed_level_trim_preserves_unchanged_staged_values_without_a_display(m
         update_parameters_from_fc_values=MagicMock(),
         find_other_steps_with_stale_calibration_values=MagicMock(return_value=[]),
     )
-    view.base_window = SimpleNamespace(parameter_editor=editor, repopulate_parameter_table=MagicMock())
+    view.base_window = SimpleNamespace(parameter_editor=editor, repopulate_parameter_table_without_skipping=MagicMock())
 
     view.base_window.download_flight_controller_parameters = MagicMock()
     showerror = mocker.patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_level_calibration.showerror")
@@ -66,7 +66,7 @@ def level_calibration_view(tk_root, mocker) -> Generator[SimpleNamespace, None, 
             update_parameters_from_fc_values=MagicMock(),
             find_other_steps_with_stale_calibration_values=MagicMock(return_value=[]),
         ),
-        repopulate_parameter_table=MagicMock(),
+        repopulate_parameter_table_without_skipping=MagicMock(),
     )
     # pylint: enable=duplicate-code
     showinfo = mocker.patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_level_calibration.showinfo")
@@ -191,7 +191,7 @@ class TestLevelCalibrationView:
         level_calibration_view.base_window.parameter_editor.update_parameters_from_fc_values.assert_called_once_with(
             {"AHRS_TRIM_X": 0.01, "AHRS_TRIM_Y": 0.02}
         )
-        level_calibration_view.base_window.repopulate_parameter_table.assert_called_once_with()
+        level_calibration_view.base_window.repopulate_parameter_table_without_skipping.assert_called_once_with()
 
     def test_successful_level_trim_warns_when_readback_fails(self, level_calibration_view) -> None:
         """A successful ACK must not hide a failed parameter readback or stage cached trims."""
@@ -210,7 +210,7 @@ class TestLevelCalibrationView:
         )
         editor.update_parameters_from_fc_values.assert_not_called()
         editor.find_other_steps_with_stale_calibration_values.assert_not_called()
-        fixture.base_window.repopulate_parameter_table.assert_called_once_with()
+        fixture.base_window.repopulate_parameter_table_without_skipping.assert_called_once_with()
 
     def test_level_trim_waits_for_ack_using_after_polls(self, level_calibration_view) -> None:
         """The button handler returns promptly and schedules a non-blocking ACK poll."""
@@ -333,6 +333,7 @@ class TestLevelCalibrationView:
         fixture.view._poll_level_calibration()
 
         editor.update_parameters_from_fc_values.assert_called_once_with({"AHRS_TRIM_X": 0.04})
+        fixture.base_window.repopulate_parameter_table_without_skipping.assert_called_once_with()
         assert "AHRS_TRIM_X" in fixture.showerror.call_args.args[1]
 
 

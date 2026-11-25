@@ -101,7 +101,7 @@ def calibration_readback(mocker) -> SimpleNamespace:
     view.base_window = SimpleNamespace(
         parameter_editor=editor,
         download_flight_controller_parameters=MagicMock(),
-        repopulate_parameter_table=MagicMock(),
+        repopulate_parameter_table_without_skipping=MagicMock(),
     )
     mocker.patch.object(view, "_stop_polling")
     mocker.patch.object(view, "_hide_wizard")
@@ -195,7 +195,7 @@ def test_calibration_readback_preserves_edits_when_user_switches_steps(
     assert fixture.view.base_window.parameter_editor.current_file == selected_file
     assert {name: parameter.get_new_value() for name, parameter in next_step_parameters.items()} == next_step_values
     assert {name: parameter.get_new_value() for name, parameter in original_parameters.items()} == original_values
-    fixture.view.base_window.repopulate_parameter_table.assert_called_once_with()
+    fixture.view.base_window.repopulate_parameter_table_without_skipping.assert_called_once_with()
 
 
 def test_disconnected_simple_calibration_reports_failure_without_a_parameter_editor(mocker) -> None:
@@ -230,7 +230,7 @@ def test_failed_simple_ack_reads_back_accel_without_a_display(mocker) -> None:
         update_parameters_from_fc_values=MagicMock(),
         find_other_steps_with_stale_calibration_values=MagicMock(return_value=["other.param"]),
     )
-    view.base_window = SimpleNamespace(parameter_editor=editor, repopulate_parameter_table=MagicMock())
+    view.base_window = SimpleNamespace(parameter_editor=editor, repopulate_parameter_table_without_skipping=MagicMock())
 
     def download(*, redownload: bool, response_timeout: float) -> None:
         assert redownload
@@ -261,7 +261,7 @@ def test_rejected_simple_calibration_preserves_staged_values_without_a_display(m
     view.base_window = SimpleNamespace(
         parameter_editor=editor,
         download_flight_controller_parameters=MagicMock(),
-        repopulate_parameter_table=MagicMock(),
+        repopulate_parameter_table_without_skipping=MagicMock(),
     )
     mocker.patch(f"{_FRONTEND}.showerror")
 
@@ -284,7 +284,7 @@ def test_successful_simple_calibration_stages_only_offsets_without_a_display(moc
     view.base_window = SimpleNamespace(
         parameter_editor=editor,
         download_flight_controller_parameters=MagicMock(),
-        repopulate_parameter_table=MagicMock(),
+        repopulate_parameter_table_without_skipping=MagicMock(),
     )
     showinfo = mocker.patch(f"{_FRONTEND}.showinfo")
 
@@ -308,7 +308,7 @@ def test_unavailable_simple_calibration_readback_warns_without_a_display(mocker)
     view.base_window = SimpleNamespace(
         parameter_editor=editor,
         download_flight_controller_parameters=MagicMock(return_value=({}, {})),
-        repopulate_parameter_table=MagicMock(),
+        repopulate_parameter_table_without_skipping=MagicMock(),
     )
     showerror = mocker.patch(f"{_FRONTEND}.showerror")
 
@@ -331,7 +331,7 @@ def test_success_without_parameter_download_keeps_staged_values_without_a_displa
     view.base_window = SimpleNamespace(
         parameter_editor=editor,
         download_flight_controller_parameters=MagicMock(return_value=({}, {})),
-        repopulate_parameter_table=MagicMock(),
+        repopulate_parameter_table_without_skipping=MagicMock(),
     )
     showinfo = mocker.patch(f"{_FRONTEND}.showinfo")
 
@@ -356,7 +356,7 @@ def view_with_model(tk_root, mocker) -> Generator[SimpleNamespace, None, None]:
         root=tk_root,
         download_flight_controller_parameters=MagicMock(),
         parameter_editor=SimpleNamespace(fc_parameters={}, update_parameters_from_fc_values=MagicMock()),
-        repopulate_parameter_table=MagicMock(),
+        repopulate_parameter_table_without_skipping=MagicMock(),
     )
     view = AccelerometerCalibrationView(parent, model, base_window)
     mocker.patch.object(view, "after", return_value="after-id")
@@ -389,7 +389,7 @@ class TestSimpleCalibrationButton:
         view_with_model.showerror.assert_not_called()
         view_with_model.base_window.download_flight_controller_parameters.assert_called_once_with(redownload=True)
         view_with_model.base_window.parameter_editor.update_parameters_from_fc_values.assert_not_called()
-        view_with_model.base_window.repopulate_parameter_table.assert_called_once_with()
+        view_with_model.base_window.repopulate_parameter_table_without_skipping.assert_called_once_with()
 
     def test_simple_calibration_failure_shows_error_dialog(self, view_with_model) -> None:
         """
@@ -666,7 +666,7 @@ class TestFullCalibrationPolling:
         view_with_model.showinfo.assert_called_once()
         view_with_model.base_window.download_flight_controller_parameters.assert_called_once_with(redownload=True)
         view_with_model.base_window.parameter_editor.update_parameters_from_fc_values.assert_not_called()
-        view_with_model.base_window.repopulate_parameter_table.assert_called_once_with()
+        view_with_model.base_window.repopulate_parameter_table_without_skipping.assert_called_once_with()
 
     def test_poll_tick_ends_calibration_with_failure_on_failure_sentinel(self, view_with_model) -> None:
         """
