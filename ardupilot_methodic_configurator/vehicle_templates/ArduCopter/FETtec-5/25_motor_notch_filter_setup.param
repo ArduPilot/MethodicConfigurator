@@ -3,8 +3,9 @@ INS_GYRO_RATE,2  # H743 can do 4KHz here
 INS_HNTCH_ATT,40  # this is just a hunch, it must be improved after the first flight (by the next file)
 INS_HNTCH_BW,65  # this is just a hunch, it must be improved after the first flight (by the next file)
 INS_HNTCH_ENABLE,1  # Use the first notch filter to filter the noise created by the motors/propellers
+INS_HNTCH_FM_RAT,0.75  # Start filtering at 75% of the reference frequency (INS_HNTCH_FREQ)
 INS_HNTCH_FREQ,161  # Use 1.4 * INS_GYRO_FILTER as a first guess
-INS_HNTCH_HMNCS,7  # start with a single frequency
+INS_HNTCH_HMNCS,1  # Most vehicles only require the main harmonic
 INS_HNTCH_MODE,3  # Use ESC telemetry RPM to dynamically adjust the propeller notch filter
-INS_HNTCH_OPTS,7  # One Notch per motor, update at loop rate
+INS_HNTCH_OPTS,0  # Use a single dynamic notch filter to reduce propeller-noise
 INS_HNTCH_REF,1  # Use the FETtec RPM telemetry to dynamically track noise created by the motors/propellers
