@@ -46,6 +46,17 @@ class FlightModesState:
     switch_slot: str | None = None
 
 
+@dataclass
+class _TelemetryState:
+    """Cached telemetry and polling state for the flight-modes model."""
+
+    mode: tuple[str | None, int, float] | None = None
+    channels: tuple["MAVLink_rc_channels_message", float] | None = None
+    rc_failsafe: bool = False
+    last_poll: float | None = None
+    discard_buffered: bool = False
+
+
 class FlightModesDataModel:
     """Report live flight-mode status without editing parameters or changing modes."""
 
@@ -53,15 +64,11 @@ class FlightModesDataModel:
         self._flight_controller = flight_controller
         self._telemetry = RCTelemetryBackend(flight_controller)
         self._clock = clock
-        self._mode: tuple[str | None, int, float] | None = None
-        self._channels: tuple[MAVLink_rc_channels_message, float] | None = None
-        self._rc_failsafe = False
-        self._last_poll: float | None = None
-        self._discard_buffered = False
+        self._state = _TelemetryState()
 
     def _clear_readings(self) -> None:
-        self._mode = None
-        self._channels = None
+        self._state.mode = None
+        self._state.channels = None
 
     def stop_monitoring(self, *, restore_intervals: bool = True) -> None:
         """Discard mode and PWM samples, retaining known failsafe on the same connection."""
@@ -80,24 +87,24 @@ class FlightModesDataModel:
                     is_quadplane = "Q_ENABLE" in parameters or "Q_MAV_TYPE" in parameters
                     modes = mode_mapping_bynumber(MAV_TYPE_FIXED_WING if is_quadplane else message.type) or {}
                     number = int(message.custom_mode)
-                    self._mode = (modes.get(number), number, self._clock())
+                    self._state.mode = (modes.get(number), number, self._clock())
                 else:
-                    self._mode = None
+                    self._state.mode = None
             elif message_type == "RC_CHANNELS":
-                self._channels = (message, self._clock())
+                self._state.channels = (message, self._clock())
             elif message_type == "SYS_STATUS":
                 enabled = message.onboard_control_sensors_present & message.onboard_control_sensors_enabled & _RECEIVER_BIT
                 healthy = message.onboard_control_sensors_health & _RECEIVER_BIT
                 if enabled and not healthy:
-                    self._rc_failsafe = True
-                    self._channels = None
-                elif enabled and healthy and self._rc_failsafe:
-                    self._rc_failsafe = False
-                    self._channels = None
+                    self._state.rc_failsafe = True
+                    self._state.channels = None
+                elif enabled and healthy and self._state.rc_failsafe:
+                    self._state.rc_failsafe = False
+                    self._state.channels = None
 
     def _switch_slot(self, now: float) -> str | None:
-        samples = self._channels
-        if self._rc_failsafe or samples is None or now - samples[1] >= _TELEMETRY_TIMEOUT:
+        samples = self._state.channels
+        if self._state.rc_failsafe or samples is None or now - samples[1] >= _TELEMETRY_TIMEOUT:
             return None
         parameters = self._flight_controller.fc_parameters
         rover = "MODE_CH" in parameters
@@ -115,25 +122,25 @@ class FlightModesDataModel:
         """Read a bounded telemetry batch and independently expire stale mode and switch values."""
         if self._telemetry.sync_connection():
             self._clear_readings()
-            self._rc_failsafe = False
-            self._last_poll = None
-            self._discard_buffered = False
-        if self._last_poll is not None and self._clock() - self._last_poll >= _TELEMETRY_TIMEOUT:
+            self._state.rc_failsafe = False
+            self._state.last_poll = None
+            self._state.discard_buffered = False
+        if self._state.last_poll is not None and self._clock() - self._state.last_poll >= _TELEMETRY_TIMEOUT:
             # After a polling gap the receive queue may still hold samples from before the gap.
             self._clear_readings()
-            self._discard_buffered = True
+            self._state.discard_buffered = True
         try:
-            if self._discard_buffered:
-                self._discard_buffered = not self._telemetry.discard_pending_telemetry()
+            if self._state.discard_buffered:
+                self._state.discard_buffered = not self._telemetry.discard_pending_telemetry()
             else:
                 self._read_telemetry()
         except (OSError, AttributeError, TypeError, ValueError) as exc:
             logging_debug("Error reading flight mode telemetry: %s", exc)
             self._clear_readings()
         now = self._clock()
-        self._last_poll = now
+        self._state.last_poll = now
         slot = self._switch_slot(now)
-        if self._mode is None or now - self._mode[2] >= _TELEMETRY_TIMEOUT:
+        if self._state.mode is None or now - self._state.mode[2] >= _TELEMETRY_TIMEOUT:
             return FlightModesState(switch_slot=slot)
-        name, number, _received_at = self._mode
+        name, number, _received_at = self._state.mode
         return FlightModesState(name, number, slot)

@@ -70,6 +70,39 @@ def test_all_vehicle_popup_messages_reach_gettext_input(tmp_path: Path) -> None:
     assert expected_messages <= gettext_literals
 
 
+def test_all_auto_changed_by_values_reach_gettext_input(tmp_path: Path) -> None:
+    """
+    Include external tool names and instructions in the generated translation input.
+
+    GIVEN: Vehicle configuration files with auto_changed_by values
+    WHEN: Their translatable strings are gathered and generated as Python
+    THEN: Every nonempty auto_changed_by value is registered as a gettext literal
+    """
+    config_dir = Path(__file__).resolve().parents[1] / "ardupilot_methodic_configurator"
+    expected_values = set()
+    for config_file in config_dir.glob("configuration_steps_*.json"):
+        data = json.loads(config_file.read_text(encoding="utf-8"))
+        expected_values.update(
+            step["auto_changed_by"]
+            for step in data.get("steps", {}).values()
+            if isinstance(step.get("auto_changed_by"), str) and step["auto_changed_by"].strip()
+        )
+    assert expected_values
+
+    all_strings = gather_all_translatable_strings(str(config_dir))
+    output_file = tmp_path / "configuration_steps_strings.py"
+    generate_config_steps_output(all_strings, [], str(output_file))
+
+    generated = ast.parse(output_file.read_text(encoding="utf-8"))
+    gettext_literals = {
+        ast.literal_eval(node.args[0])
+        for node in ast.walk(generated)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "_"
+    }
+    assert set(all_strings["auto_changed_by"]) == expected_values
+    assert expected_values <= gettext_literals
+
+
 @pytest.mark.parametrize("popup", [None, "message", {}, {"msg": None}, {"msg": 42}, {"msg": ""}, {"msg": " \n "}])
 def test_invalid_popup_messages_do_not_interrupt_other_translations(tmp_path: Path, popup: object) -> None:
     """
