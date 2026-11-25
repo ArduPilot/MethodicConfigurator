@@ -57,6 +57,12 @@ class RCTelemetryBackend:
             if not success:
                 logging_debug("Could not restore RC receiver telemetry intervals: %s", error)
 
+    def discard_pending_telemetry(self) -> bool:
+        """Discard one bounded batch and report whether the receive queue was empty."""
+        self.sync_connection()
+        master = cast("Any", self.connection)
+        return master is None or any(master.recv_match(blocking=False) is None for _ in range(_MAX_MESSAGES_PER_POLL))
+
     def get_rc_telemetry(self) -> Iterator[Any]:
         """Yield packets from the selected controller in a bounded, nonblocking batch."""
         self.sync_connection()

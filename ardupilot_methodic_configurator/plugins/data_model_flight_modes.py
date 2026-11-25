@@ -56,6 +56,8 @@ class FlightModesDataModel:
         self._mode: tuple[str | None, int, float] | None = None
         self._channels: tuple[MAVLink_rc_channels_message, float] | None = None
         self._rc_failsafe = False
+        self._last_poll: float | None = None
+        self._discard_buffered = False
 
     def _clear_readings(self) -> None:
         self._mode = None
@@ -114,12 +116,22 @@ class FlightModesDataModel:
         if self._telemetry.sync_connection():
             self._clear_readings()
             self._rc_failsafe = False
+            self._last_poll = None
+            self._discard_buffered = False
+        if self._last_poll is not None and self._clock() - self._last_poll >= _TELEMETRY_TIMEOUT:
+            # After a polling gap the receive queue may still hold samples from before the gap.
+            self._clear_readings()
+            self._discard_buffered = True
         try:
-            self._read_telemetry()
+            if self._discard_buffered:
+                self._discard_buffered = not self._telemetry.discard_pending_telemetry()
+            else:
+                self._read_telemetry()
         except (OSError, AttributeError, TypeError, ValueError) as exc:
             logging_debug("Error reading flight mode telemetry: %s", exc)
             self._clear_readings()
         now = self._clock()
+        self._last_poll = now
         slot = self._switch_slot(now)
         if self._mode is None or now - self._mode[2] >= _TELEMETRY_TIMEOUT:
             return FlightModesState(switch_slot=slot)
