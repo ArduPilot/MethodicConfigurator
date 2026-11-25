@@ -1237,6 +1237,19 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 )
             ],
         ]
+        if self._local_filesystem.vehicle_type == "ArduPlane":
+            # ArduPlane inserts 12_control_surfaces_and_tilt_servos.param, so its later steps are one number higher
+            report_files = [
+                "00_default.param",
+                "14_initial_atc.param",
+                "28_optional_pid_adjustment.param",
+                "35_quick_tune_results.param",
+                "41_autotune_roll_results.param",
+                "43_autotune_pitch_results.param",
+                "45_autotune_yaw_results.param",
+                "47_autotune_yawd_results.param",
+                "49_autotune_roll_pitch_retune_results.param",
+            ]
         if self._local_filesystem.vehicle_type == "Heli":
             report_params.extend(["ATC_RAT_PIT_FF", "ATC_RAT_RLL_FF", "ATC_RAT_YAW_FF"])
             report_files = [

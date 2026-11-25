@@ -1,0 +1,11 @@
+BATT_ARM_VOLT,15.2  # Only arm above this voltage, to avoid taking off with insufficient battery capacity
+BATT_CAPACITY,5000  # Total battery capacity specified in the component editor
+BATT_CRT_MAH,0
+BATT_CRT_VOLT,13.2  # Critical failsafe voltage x nr. of cells
+BATT_FS_CRT_ACT,2  # Land: fly the nearest DO_LAND_START landing sequence in AUTO, otherwise RTL
+BATT_FS_LOW_ACT,1  # RTL: return to launch
+BATT_FS_VOLTSRC,0
+BATT_LOW_MAH,0
+BATT_LOW_VOLT,14.4  # Low failsafe voltage x nr. of cells
+Q_M_BAT_VOLT_MAX,16.8  # VTOL thrust battery-voltage compensation: 4.2 V x 4 cells, as the parameter description recommends
+Q_M_BAT_VOLT_MIN,13.2  # VTOL thrust battery-voltage compensation: 3.3 V x 4 cells, as the parameter description recommends

@@ -1,0 +1,6 @@
+Q_ENABLE,1  # Enable QuadPlane VTOL support. AMC reboots the FC first so the Q_ parameters below exist when uploaded
+Q_FRAME_CLASS,7  # Tri. Takes effect at the reboot in step 11, before the motor test in step 12
+Q_M_PWM_TYPE,5  # Defined in component editor
+SERIAL5_BAUD,57
+SERIAL5_PROTOCOL,-1
+SERVO_BLH_TRATE,10

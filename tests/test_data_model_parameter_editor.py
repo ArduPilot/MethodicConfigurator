@@ -7711,6 +7711,8 @@ def test_user_can_read_all_tuning_results_in_csv(
         )
     elif vehicle_type == "Rover":
         filenames[0] = "17_initial_atc.param"
+    elif vehicle_type == "ArduPlane":
+        filenames = [f"{int(name[:2]) + 1:02d}{name[2:]}" for name in filenames]
     mock_local_filesystem.vehicle_type = vehicle_type
     mock_local_filesystem.vehicle_dir = str(tmp_path)
     mock_local_filesystem.param_default_dict = ParDict({parameter_name: Par(0.1)})

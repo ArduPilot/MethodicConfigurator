@@ -185,6 +185,7 @@ def update_pid_adjustment_params(
     pid_adjustment_file_path = os.path.join(directory, "27_optional_pid_adjustment.param")
     if not os.path.isfile(pid_adjustment_file_path):
         for alternate_file_path in (
+            os.path.join(directory, "28_optional_pid_adjustment.param"),  # ArduPlane
             os.path.join(directory, "40_optional_pid_adjustment.param"),
             os.path.join(directory, "23_optional_pid_adjustment.param"),
         ):

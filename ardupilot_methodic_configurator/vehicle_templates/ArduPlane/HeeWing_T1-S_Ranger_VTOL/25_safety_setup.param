@@ -1,0 +1,8 @@
+ARMING_SKIPCHK,0  # Perform all arming checks (ARMING_SKIPCHK replaces ARMING_CHECK in 4.7)
+FENCE_ACTION,1
+FENCE_ALT_MAX,100
+FENCE_ENABLE,0
+FENCE_RADIUS,300
+FENCE_TYPE,4
+Q_OPTIONS,2359328  # bit 5: QRTL instead of QLAND on RC failsafe in VTOL modes; bit 18: arm only in VTOL modes; bit 21: tilt motors up when disarmed in fixed-wing modes to avoid prop strikes
+Q_RTL_MODE,1  # RTL flies home as a plane, then switches to QRTL near home to land vertically

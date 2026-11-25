@@ -319,6 +319,24 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
         assert filename == heli_path
         assert parameters["PARAM1"].value == pytest.approx(0.75)
 
+    def test_user_can_update_pid_gains_in_the_current_arduplane_step(self) -> None:
+        """
+        ArduPlane's renumbered PID adjustment step receives optimized gains.
+
+        GIVEN: An ArduPlane project with the PID adjustment file at step 28
+        WHEN: The user applies optimized gains
+        THEN: The ArduPlane file is selected and receives the requested adjustment
+        """
+        plane_path = os.path.join(self.test_dir, "28_optional_pid_adjustment.param")
+        os.rename(self.adjustment_param_file, plane_path)
+
+        parameters, filename, _header = update_pid_adjustment_params(
+            self.test_dir, os.path.basename(self.optimized_param_file), 0.5
+        )
+
+        assert filename == plane_path
+        assert parameters["PARAM1"].value == pytest.approx(0.75)
+
     def test_all_parameters_present(self) -> None:
         # Remove a parameter from the default parameter file
         with open(self.default_param_file, "w", encoding="utf-8") as f:

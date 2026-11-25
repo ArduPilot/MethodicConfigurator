@@ -29,6 +29,11 @@ _MIN_ZERO_RPM_ARMED_COVERAGE = 0.5
 _DSHOT_OUTPUT_RATE_WARN_THRESHOLD = 1000.0  # Amilcar's stated threshold, Hz
 
 
+def _pwm_type_parameter_name(vehicle_type: str | None) -> str:
+    """Return the ESC output protocol parameter used by the vehicle type (Q_M_PWM_TYPE on ArduPlane)."""
+    return "Q_M_PWM_TYPE" if vehicle_type == "ArduPlane" else "MOT_PWM_TYPE"
+
+
 class EscLogAvailabilityModel(BaseLogAvailabilityModel):
     """Checks ESC telemetry and configuration availability."""
 
@@ -51,16 +56,17 @@ class EscLogAvailabilityModel(BaseLogAvailabilityModel):
 
         issues = list(protocol_issues)
 
-        dshot_values = find_matching_param_values(self.apm_doc, "MOT_PWM_TYPE", "DShot") if self.apm_doc else set()
-        pwm_type = self.parameters.get("MOT_PWM_TYPE")
+        pwm_type_param = _pwm_type_parameter_name(self.log_data.vehicle_type)
+        dshot_values = find_matching_param_values(self.apm_doc, pwm_type_param, "DShot") if self.apm_doc else set()
+        pwm_type = self.parameters.get(pwm_type_param)
         scr_enabled = self.parameters.get("SCR_ENABLE")
 
         if pwm_type is not None and str(int(pwm_type)) not in dshot_values:
             reason = _("ESC telemetry not logged")
             issues.append(
                 AvailabilityIssue(
-                    _("Set MOT_PWM_TYPE to a DShot variant for ESC telemetry support"),
-                    self.step_for_parameter("MOT_PWM_TYPE"),
+                    _("Set {param} to a DShot variant for ESC telemetry support").format(param=pwm_type_param),
+                    self.step_for_parameter(pwm_type_param),
                 )
             )
         elif scr_enabled == 0:
@@ -112,10 +118,6 @@ class EscLogAvailabilityModel(BaseLogAvailabilityModel):
             issues.append(AvailabilityIssue(_("ESC error rate detected on at least one ESC instance"), step))
         return issues
 
-    def _pwm_type_parameter_name(self) -> str:
-        """Return the PWM parameter used by the current vehicle type."""
-        return "Q_M_PWM_TYPE" if self.log_data.vehicle_type == "ArduPlane" else "MOT_PWM_TYPE"
-
     def _pwm_type_mismatch_issue(self) -> AvailabilityIssue | None:
         """Return an issue if the actual PWM type differs from the declared ESC protocol."""
         esc_component = self.vehicle_components.get("ESC", {})
@@ -130,7 +132,7 @@ class EscLogAvailabilityModel(BaseLogAvailabilityModel):
         if not declared or self.apm_doc is None:
             return None
 
-        pwm_param = self._pwm_type_parameter_name()
+        pwm_param = _pwm_type_parameter_name(self.log_data.vehicle_type)
         actual = self.parameters.get(pwm_param)
 
         if actual is None:
@@ -374,11 +376,12 @@ class EscLogAnalysis(BaseLogAnalysisModel):
         """Check SCHED_LOOP_RATE * SERVO_DSHOT_RATE effective output rate against a minimum threshold."""
         loop_rate = self.parameters.get("SCHED_LOOP_RATE")
         dshot_rate_code = self.parameters.get("SERVO_DSHOT_RATE")
-        pwm_type = self.parameters.get("MOT_PWM_TYPE")
+        pwm_type_param = _pwm_type_parameter_name(self.log_data.vehicle_type)
+        pwm_type = self.parameters.get(pwm_type_param)
         if loop_rate is None or dshot_rate_code is None or pwm_type is None or self.apm_doc is None:
             return []
 
-        dshot_values = find_matching_param_values(self.apm_doc, "MOT_PWM_TYPE", "DShot")
+        dshot_values = find_matching_param_values(self.apm_doc, pwm_type_param, "DShot")
         if str(int(pwm_type)) not in dshot_values:
             return []
 

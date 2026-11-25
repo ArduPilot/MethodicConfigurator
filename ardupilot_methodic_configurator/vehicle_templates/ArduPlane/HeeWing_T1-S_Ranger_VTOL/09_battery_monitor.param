@@ -1,0 +1,5 @@
+BATT_AMP_PERVLT,66.7  # H743-WLITE current sensor scale (the MatekH743 firmware default of 40 is wrong for the WLITE)
+BATT_CURR_PIN,11  # H743-WLITE onboard current sensor
+BATT_MONITOR,4  # Selected in component editor window
+BATT_VOLT_MULT,21  # H743-WLITE battery voltage divider (the MatekH743 firmware default of 11 is wrong for the WLITE)
+BATT_VOLT_PIN,10  # H743-WLITE onboard battery voltage divider

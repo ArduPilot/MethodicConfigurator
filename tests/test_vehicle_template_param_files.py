@@ -102,8 +102,8 @@ _KNOWN_DUPLICATE_PREFIX_TEMPLATES: frozenset[str] = frozenset()
 def test_generic_plane_step_23_does_not_override_accel_filter(template_name: str) -> None:
     """Generic Plane templates leave the Step 13 10 Hz setting in place during Step 23."""
     template_dir = TEMPLATES_ROOT / "ArduPlane" / template_name
-    initial = ParDict.from_file(str(template_dir / "13_initial_atc.param"))
-    general = ParDict.from_file(str(template_dir / "23_general_configuration.param"))
+    initial = ParDict.from_file(str(template_dir / "14_initial_atc.param"))
+    general = ParDict.from_file(str(template_dir / "24_general_configuration.param"))
 
     assert initial["INS_ACCEL_FILTER"].value == 10
     assert "INS_ACCEL_FILTER" not in general
@@ -115,7 +115,7 @@ def test_generic_plane_step_23_does_not_override_accel_filter(template_name: str
 def test_plane_step_13_still_forces_10_hz_accel_filter() -> None:
     """The configuration-step rule that establishes the Plane accelerometer cutoff remains unchanged."""
     configuration_file = TEMPLATES_ROOT.parent / "configuration_steps_ArduPlane.json"
-    step = json.loads(configuration_file.read_text(encoding="utf-8"))["steps"]["13_initial_atc.param"]
+    step = json.loads(configuration_file.read_text(encoding="utf-8"))["steps"]["14_initial_atc.param"]
 
     assert step["forced_parameters"]["INS_ACCEL_FILTER"]["New Value"] == "10"
 
@@ -141,8 +141,8 @@ def test_generic_plane_compounded_steps_keep_10_hz_accel_filter(template_name: s
 
 def test_saved_plane_project_can_retain_its_own_accel_filter(tmp_path: Path) -> None:
     """A saved project's later filter value remains authoritative when its files are compounded."""
-    (tmp_path / "13_initial_atc.param").write_text("INS_ACCEL_FILTER,10\n", encoding="utf-8")
-    (tmp_path / "23_general_configuration.param").write_text("INS_ACCEL_FILTER,17\nSCHED_LOOP_RATE,50\n", encoding="utf-8")
+    (tmp_path / "14_initial_atc.param").write_text("INS_ACCEL_FILTER,10\n", encoding="utf-8")
+    (tmp_path / "24_general_configuration.param").write_text("INS_ACCEL_FILTER,17\nSCHED_LOOP_RATE,50\n", encoding="utf-8")
     filesystem = LocalFilesystem(
         str(tmp_path),
         "ArduPlane",
@@ -156,7 +156,7 @@ def test_saved_plane_project_can_retain_its_own_accel_filter(tmp_path: Path) -> 
     compounded, _first_step = filesystem.compound_params()
 
     assert compounded["INS_ACCEL_FILTER"].value == 17
-    assert (tmp_path / "23_general_configuration.param").read_text(encoding="utf-8").startswith("INS_ACCEL_FILTER,17\n")
+    assert (tmp_path / "24_general_configuration.param").read_text(encoding="utf-8").startswith("INS_ACCEL_FILTER,17\n")
 
 
 def test_copter_general_template_still_sets_its_own_accel_filter() -> None:
