@@ -507,7 +507,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 "* YES - Copy current FC values to {selected_file} (if you've already completed the experiment)\n"
                 "* NO - Continue without copying values (if you haven't performed the experiment yet,"
                 " but know what you are doing)"
-            ).format(auto_changed_by=auto_changed_by, selected_file=selected_file)
+            ).format(auto_changed_by=_(auto_changed_by), selected_file=selected_file)
 
             user_choice = ask_user_choice(_("Update file with values from FC?"), msg, [_("Close"), _("Yes"), _("No")])
 

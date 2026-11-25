@@ -4437,6 +4437,28 @@ class TestWorkflowEdgeCases:
         assert result is True
         mock_update.assert_called_once_with({"P": 1.0})
 
+    def test_external_change_source_is_translated_in_copy_prompt(self, parameter_editor) -> None:
+        """
+        Translate the configured external change source shown to the user.
+
+        GIVEN: A step requires changes by an external tool
+        WHEN: The copy confirmation prompt is shown
+        THEN: The tool description is passed through gettext before display
+        """
+        with (
+            patch.object(parameter_editor, "_should_copy_fc_values_to_file", return_value=(True, {"P": 1.0}, "SomeTool")),
+            patch(
+                "ardupilot_methodic_configurator.data_model_parameter_editor._",
+                side_effect=lambda value: f"translated:{value}",
+            ) as translate,
+        ):
+            mock_ask = MagicMock(return_value=False)
+            result = parameter_editor.handle_copy_fc_values_workflow("step.param", mock_ask, MagicMock())
+
+        assert result is False
+        assert "translated:SomeTool" in mock_ask.call_args.args[1]
+        translate.assert_any_call("SomeTool")
+
     def test_user_is_told_when_fc_values_are_already_up_to_date(self, parameter_editor) -> None:
         """
         User is told when the confirmed FC values already match the file.

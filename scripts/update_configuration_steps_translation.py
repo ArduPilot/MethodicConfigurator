@@ -140,7 +140,7 @@ def extract_strings_from_config_steps(config_file: str) -> dict[str, set[str]]:
 
     """
     # Fields to extract from each step
-    text_fields = ["why", "why_now", "blog_text", "wiki_text", "external_tool_text"]
+    text_fields = ["why", "why_now", "blog_text", "wiki_text", "external_tool_text", "auto_changed_by"]
 
     # Store unique strings by category
     extracted_strings: dict[str, set[str]] = {field: set() for field in text_fields}
