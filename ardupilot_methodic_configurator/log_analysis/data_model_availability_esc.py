@@ -179,6 +179,8 @@ class EscLogAnalysis(BaseLogAnalysisModel):
         outcomes += self.check_rpm_while_armed()
         outcomes += self.check_current_imbalance()
         outcomes += self.check_dshot_output_rate()
+        outcomes += self.check_bdmask_matches_motor_outputs()
+        outcomes += self.check_tkoff_rpm_min()
 
         step, _name = self.resolve_message_step("ESC", "ESC")
         return LogAnalysisResult(
@@ -433,3 +435,80 @@ class EscLogAnalysis(BaseLogAnalysisModel):
         if label == "quadruple loop rate":
             return 4.0
         return None
+
+    def check_tkoff_rpm_min(self) -> list[LogAnalysis]:
+        """Check that TKOFF_RPM_MIN is valid when ESC telemetry is present."""
+        tkoff_rpm_min = self.parameters.get("TKOFF_RPM_MIN")
+        if tkoff_rpm_min is None or tkoff_rpm_min != 0:
+            return []
+
+        step_filename = self.step_for_parameter("TKOFF_RPM_MIN")
+        suggested, _source = self.expected_parameter_value(step_filename, "TKOFF_RPM_MIN") if step_filename else (None, "")
+        return [
+            LogAnalysis(
+                message=_(
+                    "TKOFF_RPM_MIN is 0. Set a minimum takeoff RPM so the vehicle verifies motors are "
+                    "spinning via ESC telemetry before lifting off."
+                ),
+                timestamp_us=None,
+                value=float(tkoff_rpm_min),
+                param_name="TKOFF_RPM_MIN",
+                suggested_value=suggested,
+                related_step=step_filename or None,
+            )
+        ]
+
+    def _servo_motor_bitmask(self) -> int:
+        """Build a bitmask of SERVOn_FUNCTION channels assigned to Motor functions."""
+        if self.apm_doc is None:
+            return 0
+
+        servo_func_values = self.apm_doc.get("SERVO1_FUNCTION", {}).get("values", {})
+        if not isinstance(servo_func_values, dict):
+            return 0
+
+        motor_function_codes = {
+            int(code)
+            for code, name in servo_func_values.items()
+            if isinstance(name, str) and name.startswith("Motor") and name.removeprefix("Motor").isdigit()
+        }
+
+        motor_mask = 0
+        for param_name, func in self.parameters.items():
+            if param_name.startswith("SERVO") and param_name.endswith("_FUNCTION"):
+                channel = param_name.removeprefix("SERVO").removesuffix("_FUNCTION")
+                if channel.isdigit() and int(func) in motor_function_codes:
+                    motor_mask |= 1 << (int(channel) - 1)
+        return motor_mask
+
+    def check_bdmask_matches_motor_outputs(self) -> list[LogAnalysis]:
+        """Check that SERVO_BLH_BDMASK only targets configured SERVOn_FUNCTION motor output channels."""
+        bdmask = self.parameters.get("SERVO_BLH_BDMASK")
+        pwm_type = self.parameters.get("MOT_PWM_TYPE")
+        if bdmask is None or int(bdmask) == 0 or pwm_type is None or self.apm_doc is None:
+            return []
+
+        dshot_values = find_matching_param_values(self.apm_doc, "MOT_PWM_TYPE", "DShot")
+        if str(int(pwm_type)) not in dshot_values:
+            return []
+
+        motor_mask = self._servo_motor_bitmask()
+        actual_mask = int(bdmask)
+        if motor_mask == 0 or (actual_mask & ~motor_mask) == 0:
+            return []
+
+        suggested_mask = actual_mask & motor_mask
+        step_filename = self.step_for_parameter("SERVO_BLH_BDMASK")
+        return [
+            LogAnalysis(
+                message=_(
+                    "SERVO_BLH_BDMASK is {actual}, which enables bidirectional DShot on non-motor "
+                    "output channel(s) (configured motor channels mask: {motor_mask})."
+                ).format(actual=actual_mask, motor_mask=motor_mask),
+                timestamp_us=None,
+                value=float(actual_mask),
+                param_name="SERVO_BLH_BDMASK",
+                suggested_value=float(suggested_mask),
+                related_step=step_filename or None,
+            )
+        ]

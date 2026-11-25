@@ -49,12 +49,22 @@ class FakeLogData:
 
 @pytest.fixture
 def imu_apm_doc() -> dict:
-    """Fixture providing apm.pdef.xml-shaped metadata for LOG_BITMASK and INS_TCALn_ENABLE."""
+    """Fixture providing apm.pdef.xml-shaped metadata for LOG_BITMASK, INS_TCALn_ENABLE, and INS_HNTCH_MODE."""
     return {
         "LOG_BITMASK": {"fields": {"Bitmask": "7:IMU"}},
         "INS_TCAL1_ENABLE": {"values": {"0": "Disabled", "1": "Enabled", "2": "Learning"}},
         "INS_TCAL2_ENABLE": {"values": {"0": "Disabled", "1": "Enabled", "2": "Learning"}},
         "INS_TCAL3_ENABLE": {"values": {"0": "Disabled", "1": "Enabled", "2": "Learning"}},
+        "INS_HNTCH_MODE": {
+            "values": {
+                "0": "Fixed",
+                "1": "Throttle",
+                "2": "RPM Sensor",
+                "3": "ESC Telemetry",
+                "4": "Dynamic FFT",
+                "5": "Second RPM Sensor",
+            }
+        },
     }
 
 
@@ -521,3 +531,98 @@ class TestImuLogAnalysisInvalidCalTemp:
             assert outcomes[0].param_name == "INS_TCAL1_ENABLE"
             assert outcomes[0].value is None
             assert "accelerometer/gyroscope calibration (CALTEMP) was never performed" in outcomes[0].message
+
+
+class TestImuLogAnalysisHarmonicNotchFilter:
+    """Test primary harmonic notch filter enable and tracking mode checks through analyse()."""
+
+    def test_user_is_warned_when_harmonic_notch_filter_is_disabled(self, imu_apm_doc) -> None:
+        """
+        User is warned to enable the harmonic notch filter when it is turned off.
+
+        GIVEN: INS_HNTCH_ENABLE is 0 (disabled) and INS_HNTCH_MODE is 0
+        WHEN: Full IMU analysis runs
+        THEN: It reports INS_HNTCH_ENABLE with a suggested value of 1.0 and does not emit a mode warning
+        """
+        # Arrange: harmonic notch filter disabled
+        log_data = FakeLogData({})
+        model = ImuLogAnalysis(
+            log_data,
+            _context({"INS_HNTCH_ENABLE": 0.0, "INS_HNTCH_MODE": 0.0}, apm_doc=imu_apm_doc),
+        )
+
+        # Act: run full IMU analysis
+        result = model.analyse()
+
+        # Assert: single enable finding with suggested fix, no cascading mode finding
+        assert len(result.outcomes) == 1
+        assert result.outcomes[0].param_name == "INS_HNTCH_ENABLE"
+        assert result.outcomes[0].suggested_value == pytest.approx(1.0)
+        assert "not enabled" in result.outcomes[0].message
+
+    def test_user_sees_no_notch_warning_when_mode_parameter_is_missing(self, imu_apm_doc) -> None:
+        """
+        User sees no error when the harmonic notch filter is enabled but INS_HNTCH_MODE is absent.
+
+        GIVEN: INS_HNTCH_ENABLE is 1 and INS_HNTCH_MODE is not present in the log
+        WHEN: Full IMU analysis runs
+        THEN: It produces no harmonic notch findings
+        """
+        # Arrange: enabled, but mode parameter absent from log
+        log_data = FakeLogData({})
+        model = ImuLogAnalysis(
+            log_data,
+            _context({"INS_HNTCH_ENABLE": 1.0}, apm_doc=imu_apm_doc),
+        )
+
+        # Act: run full IMU analysis
+        result = model.analyse()
+
+        # Assert: no findings emitted
+        assert not result.outcomes
+
+    @pytest.mark.parametrize("mode", [0.0, 1.0, 3.0])
+    def test_user_sees_no_notch_warning_for_documented_tracking_modes(self, imu_apm_doc, mode: float) -> None:
+        """
+        User sees no mode warning for any valid tracking mode documented in apm.pdef.xml.
+
+        GIVEN: INS_HNTCH_ENABLE is 1, INS_HNTCH_MODE is a documented mode, and ESC telemetry is present
+        WHEN: Full IMU analysis runs
+        THEN: It produces no harmonic notch findings
+        """
+        # Arrange: enabled with a documented mode (include ESC data so mode 3 doesn't trigger telemetry warning)
+        log_data = FakeLogData({"ESC": {"RPM": [1000.0, 1000.0]}})
+        model = ImuLogAnalysis(
+            log_data,
+            _context({"INS_HNTCH_ENABLE": 1.0, "INS_HNTCH_MODE": mode}, apm_doc=imu_apm_doc),
+        )
+
+        # Act: run full IMU analysis
+        result = model.analyse()
+
+        # Assert: no findings emitted
+        assert not result.outcomes
+
+    def test_user_is_warned_when_harmonic_notch_mode_is_unrecognized(self, imu_apm_doc) -> None:
+        """
+        User is warned when INS_HNTCH_MODE is set to a value not documented in apm.pdef.xml.
+
+        GIVEN: INS_HNTCH_ENABLE is 1 and INS_HNTCH_MODE is 99 (unrecognized)
+        WHEN: Full IMU analysis runs
+        THEN: It reports an unrecognized INS_HNTCH_MODE finding
+        """
+        # Arrange: enabled with an undocumented mode value
+        log_data = FakeLogData({})
+        model = ImuLogAnalysis(
+            log_data,
+            _context({"INS_HNTCH_ENABLE": 1.0, "INS_HNTCH_MODE": 99.0}, apm_doc=imu_apm_doc),
+        )
+
+        # Act: run full IMU analysis
+        result = model.analyse()
+
+        # Assert: single mode finding reported
+        assert len(result.outcomes) == 1
+        assert result.outcomes[0].param_name == "INS_HNTCH_MODE"
+        assert result.outcomes[0].value == pytest.approx(99.0)
+        assert "unrecognized" in result.outcomes[0].message

@@ -155,6 +155,7 @@ class ImuLogAnalysis(BaseLogAnalysisModel):
         outcomes: list[LogAnalysis] = []
         outcomes += self.check_temperature_calibration()
         outcomes += self.check_notch_filter_telemetry_dependency()
+        outcomes += self.check_harmonic_notch_filter()
 
         step, _name = self.resolve_message_step("IMU", "IMU")
         return LogAnalysisResult(
@@ -301,19 +302,21 @@ class ImuLogAnalysis(BaseLogAnalysisModel):
             return outcomes
 
         hntch_mode = self.parameters.get("INS_HNTCH_MODE")
-        if hntch_mode is None:
+        if hntch_mode is None or self.apm_doc is None:
             return outcomes
 
-        if hntch_mode not in (1, 3):
+        valid_modes = self.apm_doc.get("INS_HNTCH_MODE", {}).get("values", {})
+        if not isinstance(valid_modes, dict) or not valid_modes:
+            return outcomes
+
+        if str(int(hntch_mode)) not in valid_modes:
             step_filename = self.step_for_parameter("INS_HNTCH_MODE")
             suggested, _source = (
                 self.expected_parameter_value(step_filename, "INS_HNTCH_MODE") if step_filename else (None, "")
             )
             outcomes.append(
                 LogAnalysis(
-                    message=_("INS_HNTCH_MODE is {val:.0f}, expected Throttle (1) or ESC Telemetry (3).").format(
-                        val=hntch_mode
-                    ),
+                    message=_("INS_HNTCH_MODE has an unrecognized value ({val:.0f}).").format(val=hntch_mode),
                     timestamp_us=None,
                     value=float(hntch_mode),
                     param_name="INS_HNTCH_MODE",
