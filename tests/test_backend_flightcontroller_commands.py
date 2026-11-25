@@ -2200,6 +2200,29 @@ class TestReceiverTelemetryRequests:
         assert error
 
 
+class TestCompassCalibrationTelemetryRequests:
+    """MAG_CAL_* messages are only sent when their stream interval is enabled."""
+
+    def test_progress_and_report_intervals_are_requested(self) -> None:
+        """
+        Request both calibration streams through actual command handling.
+
+        GIVEN a controller acknowledging message interval commands,
+        WHEN compass calibration telemetry is requested,
+        THEN MAG_CAL_PROGRESS and MAG_CAL_REPORT receive the interval.
+        """
+        master = MagicMock(target_system=1, target_component=0)
+        master.recv_match.return_value = mavlink2.MAVLink_command_ack_message(
+            mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL, mavutil.mavlink.MAV_RESULT_ACCEPTED
+        )
+        commands = FlightControllerCommands(params_manager=Mock(), connection_manager=Mock(master=master))
+        assert commands.request_compass_calibration_messages(200_000) == (True, "")
+        assert [call.args for call in master.mav.command_long_send.call_args_list] == [
+            (1, 0, mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL, 0, message_id, 200_000, 0, 0, 0, 0, 0)
+            for message_id in (mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_PROGRESS, mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_REPORT)
+        ]
+
+
 class TestMultipleBatteryTelemetry:
     """Keep each battery's readings independent through actual MAVLink message handling."""
 

@@ -1104,6 +1104,20 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
                 errors.append(error)
         return not errors, "; ".join(errors)
 
+    def request_compass_calibration_messages(self, interval_microseconds: int = 200_000) -> tuple[bool, str]:
+        """Request MAG_CAL_PROGRESS and MAG_CAL_REPORT streams; zero restores firmware defaults."""
+        errors = []
+        for message_id in (mavlink.MAVLINK_MSG_ID_MAG_CAL_PROGRESS, mavlink.MAVLINK_MSG_ID_MAG_CAL_REPORT):
+            success, error = self.send_command_and_wait_ack(
+                mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,
+                param1=float(message_id),
+                param2=float(interval_microseconds),
+                timeout=self.COMMAND_ACK_TIMEOUT_BATTERY,
+            )
+            if not success:
+                errors.append(error)
+        return not errors, "; ".join(errors)
+
     def request_periodic_battery_status(self, interval_microseconds: int = 1000000) -> tuple[bool, str]:
         """
         Request periodic BATTERY_STATUS messages from the flight controller.

@@ -30,6 +30,7 @@ def connected_flight_controller() -> MagicMock:
     fc.master = MagicMock()
     fc.fc_parameters = {"COMPASS_ENABLE": 1, "COMPASS_USE": 1, "COMPASS_USE2": 0, "COMPASS_USE3": 0}
 
+    fc.request_compass_calibration_messages.return_value = (True, "")
     fc.start_compass_calibration.return_value = (True, "")
     fc.cancel_compass_calibration.return_value = (True, "")
     fc.get_compass_calibration_progress.return_value = [{"type": "PROGRESS", "compass_id": 0, "completion_pct": 50}]
@@ -337,6 +338,46 @@ class TestCompassCalibrationWithConnectedFlightController:
         assert "No active compasses" in error_msg
         connected_flight_controller.start_compass_calibration.assert_not_called()
         assert connected_compass_calibration_model._is_calibrating is False
+
+    def test_calibration_requests_mag_cal_streams_before_starting_and_restores_them_once(
+        self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock
+    ) -> None:
+        """
+        Calibration telemetry must not depend on the user's stream-rate parameters.
+
+        GIVEN: A controller whose MAG_CAL_* streams are disabled by default
+        WHEN: Calibration starts and then finishes twice
+        THEN: The streams are requested before the start command and restored exactly once
+        """
+        calls = MagicMock()
+        calls.attach_mock(connected_flight_controller.request_compass_calibration_messages, "request")
+        calls.attach_mock(connected_flight_controller.start_compass_calibration, "start")
+        connected_flight_controller.request_compass_calibration_messages.return_value = (True, "")
+
+        connected_compass_calibration_model.start_calibration()
+        connected_compass_calibration_model.finish_calibration()
+        connected_compass_calibration_model.finish_calibration()
+
+        assert [call[0] for call in calls.mock_calls] == ["request", "start", "request"]
+        assert calls.mock_calls[0].args == ()
+        assert calls.mock_calls[2].args == (0,)
+
+    def test_calibration_still_starts_when_stream_request_is_rejected(
+        self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock
+    ) -> None:
+        """
+        Older firmware may reject the interval command while already streaming.
+
+        GIVEN: A controller rejecting message interval requests
+        WHEN: The user starts calibration
+        THEN: The start command is still sent
+        """
+        connected_flight_controller.request_compass_calibration_messages.return_value = (False, "denied")
+
+        success, _error = connected_compass_calibration_model.start_calibration()
+
+        assert success is True
+        connected_flight_controller.start_compass_calibration.assert_called_once()
 
     def test_user_can_cancel_calibration_successfully(
         self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock

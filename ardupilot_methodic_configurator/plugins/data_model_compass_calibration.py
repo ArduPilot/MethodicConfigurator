@@ -34,6 +34,7 @@ class CompassCalibrationDataModel:
         """
         self.flight_controller = flight_controller
         self._is_calibrating = False
+        self._streams_requested = False
 
     def is_connected(self) -> bool:
         """Check if the flight controller is actively connected."""
@@ -97,6 +98,12 @@ class CompassCalibrationDataModel:
             logging_warning(error_msg)
             return False, error_msg
 
+        # MAG_CAL_* are only sent when their stream is enabled, and the start confirmation needs them
+        self._streams_requested = True
+        stream_success, stream_error = self.flight_controller.request_compass_calibration_messages()
+        if not stream_success:
+            logging_warning(_("Could not request compass calibration telemetry: %(error)s"), {"error": stream_error})
+
         # Delegate to the Front Desk (backend_flightcontroller.py)
         logging_debug(
             _("Compass calibration start requested for active compasses: %(compasses)s"), {"compasses": active_compass_ids}
@@ -107,6 +114,7 @@ class CompassCalibrationDataModel:
             logging_debug(_("Compass calibration start accepted by flight controller."))
         else:
             logging_debug(_("Compass calibration start rejected: %(error)s"), {"error": error_msg})
+            self._restore_message_streams()
 
         return success, error_msg
 
@@ -127,6 +135,7 @@ class CompassCalibrationDataModel:
 
         if success:
             self._is_calibrating = False
+            self._restore_message_streams()
             logging_debug(_("Compass calibration cancel accepted by flight controller."))
         else:
             logging_debug(_("Compass calibration cancel rejected: %(error)s"), {"error": error_msg})
@@ -136,6 +145,18 @@ class CompassCalibrationDataModel:
     def finish_calibration(self) -> None:
         """Mark the calibration flow as finished."""
         self._is_calibrating = False
+        self._restore_message_streams()
+
+    def _restore_message_streams(self) -> None:
+        """Return MAG_CAL_* message rates to the firmware defaults, once per calibration."""
+        if not self._streams_requested:
+            return
+        self._streams_requested = False
+        if not self.is_connected():
+            return
+        success, error_msg = self.flight_controller.request_compass_calibration_messages(0)
+        if not success:
+            logging_debug(_("Could not restore compass calibration telemetry intervals: %(error)s"), {"error": error_msg})
 
     def get_progress(self) -> list[CompassCalibrationUpdate]:
         """

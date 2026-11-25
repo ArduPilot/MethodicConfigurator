@@ -1951,5 +1951,46 @@ def test_add_connection_to_connection_list(sitl_manager: "SITLManager") -> None:
     assert result2 is False
 
 
+@pytest.mark.integration
+@pytest.mark.sitl
+def test_user_can_start_compass_calibration_without_enabling_extra3_stream(sitl_flight_controller: FlightController) -> None:
+    """
+    Compass calibration reports progress even when the EXTRA3 stream is not enabled.
+
+    GIVEN: Real SITL whose MAG_CAL_PROGRESS messages are not streamed by default
+    WHEN: The calibration telemetry is requested and the calibration is started
+    THEN: The start must be confirmed by a MAG_CAL_PROGRESS message
+    AND: Progress updates must keep arriving while the calibration runs
+    AND: Cancelling the calibration and restoring the default rates must be acknowledged
+
+    NOTE: MAG_CAL_PROGRESS and MAG_CAL_REPORT belong to the SRn_EXTRA3/MAVn_EXTRA3 stream group.
+    Without an explicit SET_MESSAGE_INTERVAL request, the calibration appeared stuck unless
+    the user raised that stream rate manually.
+    """
+    # Given/When: request the calibration streams and start the calibration
+    success, error_msg = sitl_flight_controller.request_compass_calibration_messages()
+    assert success, f"Calibration telemetry request should be acknowledged by SITL: {error_msg}"
+
+    try:
+        success, error_msg = sitl_flight_controller.start_compass_calibration()
+        assert success, f"Compass calibration start should be confirmed by SITL: {error_msg}"
+
+        # Then: progress messages keep flowing
+        progress_updates: list = []
+        deadline = time.time() + 5.0
+        while time.time() < deadline and not progress_updates:
+            time.sleep(0.2)
+            progress_updates = [
+                update for update in sitl_flight_controller.get_compass_calibration_progress() if update["type"] == "PROGRESS"
+            ]
+        assert progress_updates, "MAG_CAL_PROGRESS messages should be received while the calibration is running"
+    finally:
+        cancel_success, cancel_error = sitl_flight_controller.cancel_compass_calibration()
+        restore_success, restore_error = sitl_flight_controller.request_compass_calibration_messages(0)
+
+    assert cancel_success, f"Compass calibration cancel should be acknowledged: {cancel_error}"
+    assert restore_success, f"Restoring the default message rates should be acknowledged: {restore_error}"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

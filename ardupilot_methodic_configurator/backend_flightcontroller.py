@@ -888,6 +888,10 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         """Request receiver telemetry intervals - delegates to commands manager."""
         return self._commands_manager.request_rc_receiver_messages(interval_microseconds)
 
+    def request_compass_calibration_messages(self, interval_microseconds: int = 200_000) -> tuple[bool, str]:
+        """Request compass calibration telemetry intervals - delegates to commands manager."""
+        return self._commands_manager.request_compass_calibration_messages(interval_microseconds)
+
     def request_periodic_battery_status(self, interval_microseconds: int = 1000000) -> tuple[bool, str]:
         """Request periodic BATTERY_STATUS messages - delegates to commands manager."""
         return self._commands_manager.request_periodic_battery_status(interval_microseconds)

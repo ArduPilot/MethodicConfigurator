@@ -22,6 +22,9 @@ cancelled.
   parameter editor.
 - Two step workflow consisting of an instructions popup
   followed by the calibration progress popup.
+- Requests `MAG_CAL_PROGRESS` and `MAG_CAL_REPORT` at 5 Hz with `MAV_CMD_SET_MESSAGE_INTERVAL` before starting,
+  because the firmware only sends them on request.
+  The default rates are restored when the calibration finishes or is cancelled.
 - Sends `MAV_CMD_DO_START_MAG_CAL`.
 - Sends `MAV_CMD_DO_CANCEL_MAG_CAL`.
 - Cancel Calibration button available throughout the
