@@ -3,9 +3,9 @@ INS_GYRO_RATE,1
 INS_HNTCH_ATT,20  # this is just a hunch, it must be improved after the first flight (by the next file)
 INS_HNTCH_BW,20  # this is just a hunch, it must be improved after the first flight (by the next file)
 INS_HNTCH_ENABLE,1  # Use the first notch filter to filter the noise created by the motors/propellers
-INS_HNTCH_FM_RAT,0.75
+INS_HNTCH_FM_RAT,0.75  # Start filtering at 75% of the reference frequency (INS_HNTCH_FREQ)
 INS_HNTCH_FREQ,58.8  # Use 1.4 * INS_GYRO_FILTER as a first guess
-INS_HNTCH_HMNCS,1
+INS_HNTCH_HMNCS,1  # Most vehicles only require the main harmonic
 INS_HNTCH_MODE,1  # Use throttle-based dynamic notch filter to reduce propeller noise
-INS_HNTCH_OPTS,0
-INS_HNTCH_REF,0.35
+INS_HNTCH_OPTS,2  # Use one dynamic notch filter per motor to improve propeller-noise filter results
+INS_HNTCH_REF,0.2  # Set the harmonic notch reference value to hover thrust for throttle-based frequency scaling

@@ -777,13 +777,21 @@
             "external_tool_url": "https://discuss.ardupilot.org/t/new-fft-filter-setup-and-review-web-tool/102572",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
+            "instructions_popup": {
+              "type": "info",
+              "msg": "These are just initial values to be later refined in step 29.\nOnly execute this step once per vehicle setup, otherwise you will overwrite already refined values."
+            },
             "autoimport_nondefault_regexp": ["FFT_.*", "INS_HNTC[H2-4]_.*"],
             "forced_parameters": {
                 "INS_HNTCH_ENABLE": { "New Value": 1, "Change Reason": "Use the first notch filter to filter the noise created by the motors/propellers" }
             },
             "derived_parameters": {
+                "INS_HNTCH_FM_RAT": { "New Value": "0.75", "Change Reason": "Start filtering at 75% of the reference frequency (INS_HNTCH_FREQ)" },
                 "INS_HNTCH_FREQ": { "New Value": "1.4*fc_parameters['INS_GYRO_FILTER']", "Change Reason": "Use 1.4 * INS_GYRO_FILTER as a first guess" },
-                "INS_HNTCH_MODE": { "New Value": "1 if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 3", "Change Reason": "'Use throttle-based dynamic notch filter to reduce propeller noise' if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 'Use ESC telemetry RPM to dynamically adjust the propeller notch filter'" }
+                "INS_HNTCH_HMNCS": { "New Value": "1", "Change Reason": "Most vehicles only require the main harmonic" },
+                "INS_HNTCH_MODE": { "New Value": "1 if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 3", "Change Reason": "'Use throttle-based dynamic notch filter to reduce propeller noise' if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 'Use ESC telemetry RPM to dynamically adjust the propeller notch filter'" },
+                "INS_HNTCH_OPTS": { "New Value": "2 if Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.6') else 0", "Change Reason": "'Use one dynamic notch filter per motor to improve propeller-noise filter results' if Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.6') else 'Use a single dynamic notch filter to reduce propeller-noise'" },
+                "INS_HNTCH_REF": { "New Value": "fc_parameters['MOT_THST_HOVER'] if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 1", "Change Reason": "'Set the harmonic notch reference value to hover thrust for throttle-based frequency scaling' if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 'Set the reference value to 1 to enable ESC telemetry tracking without scaling'" }
             },
             "old_filenames": ["17_notch_filter_setup.param", "18_notch_filter_setup.param", "21_motor_notch_filter_setup.param"],
             "related_bin_messages": {
