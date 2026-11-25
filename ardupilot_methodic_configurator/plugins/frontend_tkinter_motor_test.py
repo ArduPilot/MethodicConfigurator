@@ -349,7 +349,9 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             return
 
         try:
-            self.model.swap_motor_functions(expected_label, detected_label)
+            swapped_parameters = self.model.swap_motor_functions(expected_label, detected_label)
+            if swapped_parameters:
+                self._copy_parameters_to_editor(swapped_parameters)
 
             showinfo(
                 _("Success"),
@@ -638,7 +640,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
                 self._run_restart_task(
                     progress_window, lambda report: self.model.set_motor_spin_arm_value(new_val, report), update_progress
                 )
-                self._copy_parameter_to_editor(spin_arm_name)
+                self._copy_parameters_to_editor({spin_arm_name})
             except (ParameterError, ValidationError) as e:
                 showerror(_("Error"), str(e))
             finally:
@@ -690,17 +692,20 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         if new_val is not None:
             try:
                 self.model.set_motor_spin_min_value(new_val)
-                self._copy_parameter_to_editor(spin_min_name)
+                self._copy_parameters_to_editor({spin_min_name})
             except (ParameterError, ValidationError) as e:
                 showerror(_("Error"), str(e))
 
-    def _copy_parameter_to_editor(self, param_name: str) -> None:
+    def _copy_parameters_to_editor(self, param_names: set[str]) -> None:
         """
-        Copy a value the plugin wrote to the flight controller into the parameter table.
+        Copy values the plugin wrote to the flight controller into the parameter table.
 
         Without this the table keeps the old value, and uploading the step would undo the change.
+        The refresh must not skip to the next step, the user is still using the motor test.
         """
-        refresh_parameter_editor_after_calibration(self.base_window, {param_name}, redownload=False)
+        refresh_parameter_editor_after_calibration(
+            self.base_window, param_names, redownload=False, skip_when_no_differences=False
+        )
 
     def _test_motor(self, test_sequence_nr: int, motor_output_nr: int) -> None:
         """Execute a test for a single motor."""

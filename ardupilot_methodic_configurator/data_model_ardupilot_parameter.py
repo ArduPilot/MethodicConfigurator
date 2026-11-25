@@ -33,7 +33,7 @@ MULTIPLE_CHOICE_BLACKLIST = frozenset(
         "ATC_RATE_R_MAX",
         "ATC_RATE_Y_MAX",
         "ATC_INPUT_TC",
-        # ArduPlane QuadPlane equivalents of the parameters above
+        # ArduPlane QuadPlane equivalents of the parameters above (Q_A_ACCEL_* before 4.7, Q_A_ACC_* since)
         "Q_M_SPIN_ARM",
         "Q_M_SPIN_MAX",
         "Q_M_SPIN_MIN",
@@ -41,6 +41,9 @@ MULTIPLE_CHOICE_BLACKLIST = frozenset(
         "Q_A_ACCEL_P_MAX",
         "Q_A_ACCEL_R_MAX",
         "Q_A_ACCEL_Y_MAX",
+        "Q_A_ACC_P_MAX",
+        "Q_A_ACC_R_MAX",
+        "Q_A_ACC_Y_MAX",
         "Q_A_RATE_P_MAX",
         "Q_A_RATE_R_MAX",
         "Q_A_RATE_Y_MAX",

@@ -534,7 +534,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             logging_error(error_msg)
             raise ParameterError(error_msg) from e
 
-    def swap_motor_functions(self, expected_label: str, detected_label: str) -> None:
+    def swap_motor_functions(self, expected_label: str, detected_label: str) -> set[str]:
         """
         Swap the SERVOx_FUNCTION parameters between two motors.
 
@@ -542,13 +542,16 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             expected_label: The letter of the motor that was tested (e.g., 'A').
             detected_label: The letter of the motor that actually spun (e.g., 'C').
 
+        Returns:
+            set[str]: Names of the SERVOx_FUNCTION parameters written to the flight controller, empty if nothing was swapped.
+
         Raises:
             ValidationError: If the labels are invalid.
             ParameterError: If reading or writing the parameters fails.
 
         """
         if expected_label == detected_label:
-            return  # Nothing to swap
+            return set()  # Nothing to swap
 
         try:
             # 1. Convert the letters (A, B, C...) into their test sequence index (0, 1, 2...)
@@ -582,6 +585,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             # Set one at a time
             self.set_parameter(expected_param, detected_val)
             self.set_parameter(detected_param, expected_val)
+            return {expected_param, detected_param}
 
         except ValueError as e:
             raise ValidationError(_("Invalid motor labels provided for swapping.")) from e

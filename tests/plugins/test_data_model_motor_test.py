@@ -3673,7 +3673,7 @@ class TestMotorTestDataModelMotorSwapping:
             patch.object(motor_test_model, "set_parameter") as mock_set,
         ):
             # Act: Attempt to swap
-            motor_test_model.swap_motor_functions("A", "A")
+            assert motor_test_model.swap_motor_functions("A", "A") == set()
 
             # Assert: No backend interactions occurred
             mock_get.assert_not_called()
@@ -3701,7 +3701,10 @@ class TestMotorTestDataModelMotorSwapping:
             patch.object(motor_test_model, "set_parameter") as mock_set,
         ):
             # Act: Execute swap
-            motor_test_model.swap_motor_functions("A", "C")
+            swapped = motor_test_model.swap_motor_functions("A", "C")
+
+            # Assert: The written parameters are reported so the caller can refresh the parameter table
+            assert swapped == {"SERVO1_FUNCTION", "SERVO3_FUNCTION"}
 
             # Assert: Verify correct parameters were read
             mock_get.assert_any_call("SERVO1_FUNCTION")
