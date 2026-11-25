@@ -1092,22 +1092,20 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
 
     def request_rc_receiver_messages(self, interval_microseconds: int = 200_000) -> tuple[bool, str]:
         """Request channel and receiver status streams; zero restores firmware defaults."""
-        errors = []
-        for message_id in (mavlink.MAVLINK_MSG_ID_RC_CHANNELS, mavlink.MAVLINK_MSG_ID_SYS_STATUS):
-            success, error = self.send_command_and_wait_ack(
-                mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,
-                param1=float(message_id),
-                param2=float(interval_microseconds),
-                timeout=self.COMMAND_ACK_TIMEOUT_BATTERY,
-            )
-            if not success:
-                errors.append(error)
-        return not errors, "; ".join(errors)
+        return self._request_message_intervals(
+            (mavlink.MAVLINK_MSG_ID_RC_CHANNELS, mavlink.MAVLINK_MSG_ID_SYS_STATUS), interval_microseconds
+        )
 
     def request_compass_calibration_messages(self, interval_microseconds: int = 200_000) -> tuple[bool, str]:
         """Request MAG_CAL_PROGRESS and MAG_CAL_REPORT streams; zero restores firmware defaults."""
+        return self._request_message_intervals(
+            (mavlink.MAVLINK_MSG_ID_MAG_CAL_PROGRESS, mavlink.MAVLINK_MSG_ID_MAG_CAL_REPORT), interval_microseconds
+        )
+
+    def _request_message_intervals(self, message_ids: tuple[int, ...], interval_microseconds: int) -> tuple[bool, str]:
+        """Request each stream, collecting errors while attempting all messages."""
         errors = []
-        for message_id in (mavlink.MAVLINK_MSG_ID_MAG_CAL_PROGRESS, mavlink.MAVLINK_MSG_ID_MAG_CAL_REPORT):
+        for message_id in message_ids:
             success, error = self.send_command_and_wait_ack(
                 mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,
                 param1=float(message_id),

@@ -2222,6 +2222,24 @@ class TestCompassCalibrationTelemetryRequests:
             for message_id in (mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_PROGRESS, mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_REPORT)
         ]
 
+    def test_both_compass_stream_errors_are_reported(self) -> None:
+        """A rejected progress request must not prevent requesting the report stream."""
+        master = MagicMock(target_system=1, target_component=0)
+        master.recv_match.side_effect = [
+            mavlink2.MAVLink_command_ack_message(mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL, result)
+            for result in (mavutil.mavlink.MAV_RESULT_DENIED, mavutil.mavlink.MAV_RESULT_UNSUPPORTED)
+        ]
+        commands = FlightControllerCommands(params_manager=Mock(), connection_manager=Mock(master=master))
+
+        success, error = commands.request_compass_calibration_messages(0)
+
+        assert not success
+        assert error == "Command denied; Command unsupported"
+        assert [call.args[4:6] for call in master.mav.command_long_send.call_args_list] == [
+            (mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_PROGRESS, 0),
+            (mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_REPORT, 0),
+        ]
+
 
 class TestMultipleBatteryTelemetry:
     """Keep each battery's readings independent through actual MAVLink message handling."""
