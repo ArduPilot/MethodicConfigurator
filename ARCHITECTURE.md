@@ -172,6 +172,7 @@ Plugins marked "none" currently have no standalone entry point and are exercised
   [`frontend_tkinter_compass_calibration.py`](ardupilot_methodic_configurator/plugins/frontend_tkinter_compass_calibration.py)
 - [Data telemetry](ARCHITECTURE_data_telemetry.md) - none
 - [ESC telemetry and ESC RPM scaling](ARCHITECTURE_esc_telemetry.md) - none
+- [Flight modes](ARCHITECTURE_flight_modes.md) - none
 - [GNSS](ARCHITECTURE_gnss.md) - none
 - [Level calibration](ARCHITECTURE_level_calibration.md) - none
 - [Motor test](ARCHITECTURE_motor_test.md) - motor testing with a visual diagram -

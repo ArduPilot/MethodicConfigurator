@@ -49,13 +49,13 @@ class RCTelemetryBackend:
         self._stream_requested = False
         return True
 
-    def stop_monitoring(self) -> None:
-        """Restore defaults once, only on the connection whose intervals we requested."""
-        if self._stream_requested and self.flight_controller.master is self.connection:
+    def stop_monitoring(self, *, restore_intervals: bool = True) -> None:
+        """Release stream ownership and optionally restore defaults on the same connection."""
+        requested, self._stream_requested = self._stream_requested, False
+        if restore_intervals and requested and self.flight_controller.master is self.connection:
             success, error = self.flight_controller.request_rc_receiver_messages(0)
             if not success:
                 logging_debug("Could not restore RC receiver telemetry intervals: %s", error)
-        self._stream_requested = False
 
     def get_rc_telemetry(self) -> Iterator[Any]:
         """Yield packets from the selected controller in a bounded, nonblocking batch."""
