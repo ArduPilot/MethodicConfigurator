@@ -126,13 +126,44 @@ def test_active_mode_and_switch_expire_independently(rc_controller: MagicMock) -
     receiver = rc_controller.master.recv_match
     receiver.side_effect = [rc_channels_message([1500] * 8), None]
     assert model.get_flight_modes().switch_slot == "FLTMODE4"
+    receiver.side_effect = [None]
+    clock.return_value = 12.0
+    assert model.get_flight_modes().switch_slot == "FLTMODE4"
     receiver.side_effect = [_heartbeat(1234, mavlink.MAV_TYPE_FIXED_WING), _heartbeat(0, source_system=2), None]
     clock.return_value = 13.0
 
     assert model.get_flight_modes() == FlightModesState(None, 1234)
     receiver.side_effect = [None]
+    clock.return_value = 15.0
+    assert model.get_flight_modes() == FlightModesState(None, 1234)
+    receiver.side_effect = [None]
     clock.return_value = 16.0
     assert model.get_flight_modes() == FlightModesState()
+
+
+def test_resuming_after_telemetry_backlog_requires_fresh_readings(rc_controller: MagicMock) -> None:
+    """
+    Keep live readings unavailable while clearing packets queued during a pause.
+
+    GIVEN: The plugin displayed an active mode and switch slot before polling paused
+    WHEN: Polling resumes after the readings expire with multiple batches of packets queued
+    THEN: The readings stay unavailable until newly arriving packets report them
+    """
+    rc_controller.fc_parameters = {"FLTMODE_CH": 5.0}
+    clock = MagicMock(return_value=10.0)
+    model = FlightModesDataModel(rc_controller, clock)
+    receiver = rc_controller.master.recv_match
+    previous_readings = [_heartbeat(6), rc_channels_message([1800] * 5)]
+    receiver.side_effect = [*previous_readings, None]
+    assert model.get_flight_modes() == FlightModesState("RTL", 6, "FLTMODE6")
+
+    clock.return_value = 13.0
+    receiver.side_effect = [*(previous_readings * 60), None, None]
+    for _ in range(4):
+        assert model.get_flight_modes() == FlightModesState()
+
+    receiver.side_effect = [_heartbeat(0), rc_channels_message([1000] * 5), None]
+    assert model.get_flight_modes() == FlightModesState("STABILIZE", 0, "FLTMODE1")
 
 
 def test_failsafe_and_disabled_channel_make_switch_slot_unavailable(rc_controller: MagicMock) -> None:

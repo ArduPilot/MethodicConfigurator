@@ -235,6 +235,7 @@ def test_plugin_validation_registers_expected_plugins_without_creating_windows()
             "data_telemetry",
             "esc_rpm_scale",
             "esc_telemetry",
+            "flight_modes",
             "gnss",
             "level_calibration",
             "motor_test",
