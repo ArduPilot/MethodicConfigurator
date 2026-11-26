@@ -17,12 +17,16 @@ import pytest
 from httpx2 import ConnectError as httpx2_ConnectError
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.backend_internet import download_and_install_on_macos, download_and_install_on_windows
 from ardupilot_methodic_configurator.data_model_software_updates import (
+    InstallerPlan,
+    PipPlan,
     UpdateManager,
     _find_asset,
     _install_from_asset,
     check_for_software_updates,
     format_version_info,
+    select_install_plan,
 )
 
 # pylint: disable=protected-access
@@ -332,95 +336,47 @@ class TestInstallFromAsset:
         assert install_fn.call_args.kwargs["progress_callback"] is cb
 
 
-class TestInstallWindows:
-    """Tests for UpdateManager._install_windows."""
+class TestSelectInstallPlan:
+    """Tests for select_install_plan, the pure decision of how to install a release."""
 
-    def test_returns_false_and_logs_when_no_assets(self, caplog) -> None:
-        um = UpdateManager(Mock())
-        assert um._install_windows({"assets": []}, None) is False
-        assert caplog.text
+    def test_windows_without_assets_has_no_plan(self) -> None:
+        assert select_install_plan("Windows", []) is None
 
-    def test_prefers_exe_over_other_assets(self) -> None:
-        um = UpdateManager(Mock())
-        latest_release = {
-            "assets": [
-                {"name": "source.tar.gz", "browser_download_url": "https://github.com/ArduPilot/r/v1/source.tar.gz"},
-                {"name": "setup.exe", "browser_download_url": "https://github.com/ArduPilot/r/v1/setup.exe"},
-            ]
-        }
-        with (
-            patch(
-                "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_on_windows",
-                return_value=True,
-            ) as mock_install,
-            patch(
-                "ardupilot_methodic_configurator.data_model_software_updates.get_expected_sha256_from_release",
-                return_value=None,
-            ),
-        ):
-            assert um._install_windows(latest_release, None) is True
-            assert mock_install.call_args.kwargs["download_url"].endswith("setup.exe")
+    def test_windows_prefers_exe_over_other_assets(self) -> None:
+        assets = [{"name": "source.tar.gz"}, {"name": "setup.exe"}]
+        assert select_install_plan("Windows", assets) == InstallerPlan({"name": "setup.exe"}, download_and_install_on_windows)
 
-    def test_falls_back_to_first_asset_when_no_exe(self) -> None:
-        um = UpdateManager(Mock())
-        latest_release = {
-            "assets": [{"name": "source.tar.gz", "browser_download_url": "https://github.com/ArduPilot/r/v1/source.tar.gz"}]
-        }
-        with (
-            patch(
-                "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_on_windows",
-                return_value=True,
-            ) as mock_install,
-            patch(
-                "ardupilot_methodic_configurator.data_model_software_updates.get_expected_sha256_from_release",
-                return_value=None,
-            ),
-        ):
-            assert um._install_windows(latest_release, None) is True
-            assert mock_install.call_args.kwargs["file_name"] == "source.tar.gz"
+    def test_windows_falls_back_to_first_asset_when_no_exe(self) -> None:
+        assets = [{"name": "source.tar.gz"}]
+        assert select_install_plan("Windows", assets) == InstallerPlan(
+            {"name": "source.tar.gz"}, download_and_install_on_windows
+        )
+
+    def test_macos_uses_dmg_when_available(self) -> None:
+        assets = [{"name": "source.tar.gz"}, {"name": "app.dmg"}]
+        assert select_install_plan("Darwin", assets) == InstallerPlan({"name": "app.dmg"}, download_and_install_on_macos)
+
+    def test_macos_without_dmg_falls_back_to_pip(self) -> None:
+        assert select_install_plan("Darwin", []) == PipPlan(macos_without_dmg=True)
+        assert select_install_plan("Darwin", [{"name": "setup.exe"}]) == PipPlan(macos_without_dmg=True)
+
+    def test_linux_uses_pip_regardless_of_assets(self) -> None:
+        assert select_install_plan("Linux", [{"name": "app.dmg"}, {"name": "setup.exe"}]) == PipPlan()
+
+    def test_unknown_platform_uses_pip(self) -> None:
+        assert select_install_plan("FreeBSD", []) == PipPlan()
 
 
-class TestInstallMacos:
-    """Tests for UpdateManager._install_macos."""
+def test_update_manager_perform_download_windows_without_assets_logs_error(update_manager, caplog) -> None:  # pylint: disable=redefined-outer-name
+    """Test that Windows with no assets fails and logs an error instead of falling back."""
+    with (
+        patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Windows"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release") as mock_pip,
+    ):
+        assert update_manager._perform_download({"assets": []}) is False
 
-    def test_uses_dmg_when_available(self) -> None:
-        um = UpdateManager(Mock())
-        latest_release = {"assets": [{"name": "app.dmg", "browser_download_url": "https://github.com/ArduPilot/r/v1/app.dmg"}]}
-        with (
-            patch(
-                "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_on_macos",
-                return_value=True,
-            ) as mock_install,
-            patch(
-                "ardupilot_methodic_configurator.data_model_software_updates.get_expected_sha256_from_release",
-                return_value=None,
-            ),
-        ):
-            assert um._install_macos(latest_release, None) is True
-            mock_install.assert_called_once()
-
-    def test_falls_back_to_pip_when_no_dmg(self) -> None:
-        um = UpdateManager(Mock())
-        with (
-            patch(
-                "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release",
-                return_value=True,
-            ) as mock_pip,
-            patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info"),
-        ):
-            assert um._install_macos({"assets": []}, None) is True
-            mock_pip.assert_called_once()
-
-    def test_returns_false_when_pip_fallback_fails(self) -> None:
-        um = UpdateManager(Mock())
-        with (
-            patch(
-                "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release",
-                return_value=False,
-            ),
-            patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info"),
-        ):
-            assert um._install_macos({}, None) is False
+    mock_pip.assert_not_called()
+    assert caplog.text
 
 
 def test_update_manager_perform_download_windows_success(update_manager) -> None:  # pylint: disable=redefined-outer-name

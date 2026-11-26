@@ -158,6 +158,8 @@ Legend:
    - Progress bar appears during download/installation process
 
 5. **Download and Installation Phase**
+   - `select_install_plan()` decides the installer from the platform and release assets without doing any I/O
+     - Windows uses the `.exe` (else the first asset), macOS uses the `.dmg` (else pip), other platforms use pip
    - **Windows**: Downloads .exe installer with SHA256 verification, validates PE header, creates batch file
    - **macOS**: Downloads `.dmg` with SHA256 verification, mounts with `hdiutil`, copies `.app` bundle to `/Applications` using `ditto`, then unmounts
    - **Linux**: Installs via pip/uv from PyPI

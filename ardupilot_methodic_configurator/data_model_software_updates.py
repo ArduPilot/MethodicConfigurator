@@ -14,6 +14,7 @@ import platform
 import re
 from argparse import ArgumentParser
 from collections.abc import Callable
+from dataclasses import dataclass
 from logging import basicConfig as logging_basicConfig
 from logging import error as logging_error
 from logging import info as logging_info
@@ -87,51 +88,62 @@ def _install_from_asset(
     )
 
 
+@dataclass(frozen=True)
+class InstallerPlan:
+    """Install the release *asset* with the platform installer *install_fn*."""
+
+    asset: dict[str, Any]
+    install_fn: Callable[..., bool]
+
+
+@dataclass(frozen=True)
+class PipPlan:
+    """Install the latest release from PyPI with pip/uv. *macos_without_dmg* is set when macOS had no DMG asset."""
+
+    macos_without_dmg: bool = False
+
+
+InstallPlan = InstallerPlan | PipPlan
+
+
+def select_install_plan(system: str, assets: list[dict[str, Any]]) -> InstallPlan | None:
+    """
+    Decide how to install a release on *system* from its *assets*. Performs no I/O.
+
+    Returns None when the platform needs an installer and the release has none.
+    """
+    if system == "Windows":
+        asset = _find_asset(assets, ".exe", allow_fallback=True)
+        return None if asset is None else InstallerPlan(asset, download_and_install_on_windows)
+    if system == "Darwin":
+        asset = _find_asset(assets, ".dmg")
+        if asset is None:
+            return PipPlan(macos_without_dmg=True)
+        return InstallerPlan(asset, download_and_install_on_macos)
+    return PipPlan()
+
+
 class UpdateManager:
     """Manages the software update process including user interaction and installation."""
 
     def __init__(self, presenter: UpdatePresenter) -> None:
         self.presenter = presenter
 
-    def _install_windows(
-        self,
-        latest_release: dict[str, Any],
-        progress_callback: Callable[[float, str], None] | None,
-    ) -> bool:
-        """Select the best Windows asset (.exe preferred) and install it."""
-        asset = _find_asset(latest_release.get("assets", []), ".exe", allow_fallback=True)
-        if asset is None:
-            logging_error(_("No suitable assets found for Windows installation"))
-            return False
-        return _install_from_asset(asset, latest_release, download_and_install_on_windows, progress_callback)
-
-    def _install_macos(
-        self,
-        latest_release: dict[str, Any],
-        progress_callback: Callable[[float, str], None] | None,
-    ) -> bool:
-        """Select the best macOS asset (.dmg preferred) and install it, falling back to pip."""
-        asset = _find_asset(latest_release.get("assets", []), ".dmg")
-        if asset is None:
-            logging_info(_("No DMG asset found for macOS, falling back to pip installation"))
-            return download_and_install_pip_release(progress_callback=progress_callback)
-        return _install_from_asset(asset, latest_release, download_and_install_on_macos, progress_callback)
-
     def _perform_download(
         self,
         latest_release: dict[str, Any],
         progress_callback: Callable[[float, str], None] | None = None,
     ) -> bool:
-        handlers: dict[str, Callable[[], bool]] = {
-            "Windows": lambda: self._install_windows(latest_release, progress_callback),
-            "Darwin": lambda: self._install_macos(latest_release, progress_callback),
-        }
-        handler = handlers.get(
-            platform.system(),
-            lambda: download_and_install_pip_release(progress_callback=progress_callback),
-        )
         try:
-            return handler()
+            plan = select_install_plan(platform.system(), latest_release.get("assets", []))
+            if plan is None:
+                logging_error(_("No suitable assets found for Windows installation"))
+                return False
+            if isinstance(plan, PipPlan):
+                if plan.macos_without_dmg:
+                    logging_info(_("No DMG asset found for macOS, falling back to pip installation"))
+                return download_and_install_pip_release(progress_callback=progress_callback)
+            return _install_from_asset(plan.asset, latest_release, plan.install_fn, progress_callback)
         except (KeyError, IndexError) as e:
             logging_error(_("Error accessing release assets: %s"), e)
         except Exception as e:  # pylint: disable=broad-exception-caught
