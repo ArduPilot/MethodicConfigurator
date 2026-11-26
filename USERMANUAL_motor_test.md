@@ -25,7 +25,7 @@ For the implementation details see the [motor test architecture](ARCHITECTURE_mo
 ## Testing the motors
 
 - If the battery monitor is enabled (`BATT_MONITOR` is not 0), the window shows the battery voltage and current.
-  Otherwise it shows **N/A**.
+  Otherwise it shows **Disabled**. If monitoring is enabled but a reading is unavailable, it shows **N/A**.
 - Set the **Throttle** percentage (default 1 %) and the test **Duration** (default 2 seconds).
   Both values are remembered between sessions. Invalid entries are reset to the previous value.
 - Use the **Test Motor A, B, C…** buttons to spin one motor, **Test All** to spin all motors simultaneously,

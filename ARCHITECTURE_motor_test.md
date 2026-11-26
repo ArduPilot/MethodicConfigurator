@@ -48,7 +48,7 @@ It allows users to test motor functionality, verify motor order and direction, a
 
 4. **Battery Status Display**
    - ✅ Current BATT1 voltage and current readings (only when BATT_MONITOR != 0)
-   - ✅ When BATT_MONITOR == 0: Display "N/A"
+   - ✅ When BATT_MONITOR == 0: Display "Disabled"; display "N/A" when monitoring is enabled but a reading is unavailable
    - ✅ Color-coded voltage display based on BATT_ARM_VOLT and MOT_BAT_VOLT_MAX thresholds:
      - Green: Voltage within BATT_ARM_VOLT to MOT_BAT_VOLT_MAX range (safe for motor testing)
      - Red: Voltage outside the safe range (unsafe for motor testing)
