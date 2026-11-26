@@ -144,3 +144,8 @@ class UpdateDialog(BaseWindow):  # pylint: disable=too-many-instance-attributes
         """
         self.root.mainloop()
         return bool(self.result)
+
+
+def present_update_dialog(version_info: str, download: Callable[[Callable[[float, str], None]], bool]) -> bool:
+    """Show the update dialog and run *download* when the user accepts the update."""
+    return UpdateDialog(version_info, download_callback=download).show()

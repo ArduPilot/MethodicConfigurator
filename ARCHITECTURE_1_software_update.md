@@ -86,9 +86,10 @@ Legend:
 - **File**: `data_model_software_updates.py`
 - **Purpose**: Contains the business logic for version checking, downloading, and installation orchestration
 - **Key Classes**:
-  - `UpdateManager`: Handles user interaction and installation coordination
+  - `UpdateManager`: Handles version decisions and installation coordination. Receives an injected `UpdatePresenter` callable instead of importing the GUI
+  - `UpdatePresenter`: Type alias for `presenter(version_info, download) -> bool`, where `download(progress_callback) -> bool` runs the download and installation
   - `format_version_info()`: Cleans and formats release notes for display
-  - `check_for_software_updates()`: Main entry point function
+  - `check_for_software_updates(presenter)`: Main entry point function, called with the presenter by `__main__.py`
 - **Actual Dependencies**:
   - `packaging.version` for semantic version comparison ✅
   - `httpx2` for HTTP operations (via backend_internet) ✅
@@ -100,8 +101,9 @@ Legend:
 
 - **File**: `frontend_tkinter_software_update.py`
 - **Purpose**: Provides the GUI dialog for user interaction during update process
-- **Key Classes**:
+- **Key Classes and Functions**:
   - `UpdateDialog`: Main dialog window with version info and progress display
+  - `present_update_dialog()`: Tkinter presenter that shows `UpdateDialog` and returns the user's decision. `__main__.py` injects it into the core module
 - **Actual Dependencies**:
   - `tkinter` and `tkinter.ttk` for GUI components ✅
   - `ScrollFrame` for scrollable release notes display ✅
@@ -146,9 +148,10 @@ Legend:
 3. **Update Available Decision**
    - If `current >= latest`, logs "Already running latest version" and returns False
    - If update available, formats version info and opens GitHub releases page in browser
-   - Creates UpdateDialog with version information and download callback
+   - Calls the injected presenter with version information and a download action. The core module does not import tkinter
 
 4. **User Interaction Phase**
+   - `present_update_dialog()` creates `UpdateDialog` with the version information and download action
    - UpdateDialog shows scrollable version information with release notes
    - User can choose to download/install or cancel via dialog buttons
    - Progress bar appears during download/installation process
@@ -221,7 +224,7 @@ data_model_software_updates.py          # Core update logic and orchestration �
 frontend_tkinter_software_update.py     # GUI dialog interface ✅
 backend_internet.py                     # Download and installation backend ✅
 tests/acceptance_software_update.py     # Acceptance tests for the application requirements defined on top of this file ✅
-tests/bdd_software_updates.py           # BDD tests ✅
+tests/bdd_software_update.py             # BDD tests ✅
 tests/integration_software_update_github_api.py  # Integration tests with actual GitHub API calls ✅
 tests/unit_backend_internet.py          # Backend download and retry tests ✅
 tests/test_backend_internet_checksum_parsing.py  # SHA256 checksum parsing tests ✅

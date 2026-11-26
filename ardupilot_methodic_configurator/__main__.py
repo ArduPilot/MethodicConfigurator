@@ -71,6 +71,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_show import (
     show_error_message,
     show_warning_message,
 )
+from ardupilot_methodic_configurator.frontend_tkinter_software_update import present_update_dialog
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import PopupWindow
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import display_workflow_explanation
 from ardupilot_methodic_configurator.plugins import plugin_constants
@@ -230,7 +231,7 @@ def check_updates(state: ApplicationState) -> bool:
         True if the application should exit due to updates, False otherwise
 
     """
-    if not state.args.skip_check_for_updates and check_for_software_updates():
+    if not state.args.skip_check_for_updates and check_for_software_updates(present_update_dialog):
         logging_info(_("Will now exit the old software version."))
         return True
     return False

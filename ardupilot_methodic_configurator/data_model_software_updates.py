@@ -35,7 +35,10 @@ from ardupilot_methodic_configurator.backend_internet import (
     get_release_info,
     webbrowser_open_url,
 )
-from ardupilot_methodic_configurator.frontend_tkinter_software_update import UpdateDialog
+
+# Shows the update prompt and, when the user accepts, runs the download callback.
+# Returns True when the update succeeded. The GUI adapter lives in frontend_tkinter_software_update.
+UpdatePresenter = Callable[[str, Callable[[Callable[[float, str], None]], bool]], bool]
 
 
 def format_version_info(_current_version: str, _latest_release: str, changes: str) -> str:
@@ -87,8 +90,8 @@ def _install_from_asset(
 class UpdateManager:
     """Manages the software update process including user interaction and installation."""
 
-    def __init__(self) -> None:
-        self.dialog: UpdateDialog | None = None
+    def __init__(self, presenter: UpdatePresenter) -> None:
+        self.presenter = presenter
 
     def _install_windows(
         self,
@@ -151,10 +154,7 @@ class UpdateManager:
             url = "https://github.com/ArduPilot/MethodicConfigurator/releases"
             webbrowser_open_url(url=url, new=0, autoraise=True)
 
-            self.dialog = UpdateDialog(
-                version_info, download_callback=lambda report: self._perform_download(latest_release, report)
-            )
-            return self.dialog.show()
+            return self.presenter(version_info, lambda report: self._perform_download(latest_release, report))
 
         except KeyError as ke:
             logging_error(_("Key error during update process: %s"), ke)
@@ -176,7 +176,7 @@ class UpdateManager:
         return parser
 
 
-def check_for_software_updates() -> bool:
+def check_for_software_updates(presenter: UpdatePresenter) -> bool:
     """Main update orchestration function."""
     git_hash = LocalFilesystem.get_git_commit_hash()
 
@@ -185,7 +185,7 @@ def check_for_software_updates() -> bool:
 
     try:
         latest_release = get_release_info("/latest", should_be_pre_release=False)
-        update_manager = UpdateManager()
+        update_manager = UpdateManager(presenter)
         return update_manager.check_and_update(latest_release, current_version)
     except (httpx2_HTTPError, httpx2_InvalidURL, OSError, ValueError) as e:
         msg = _("Update check failed: {}")
@@ -201,4 +201,7 @@ if __name__ == "__main__":  # pragma: no cover
             " called from another script"
         )
     )
-    check_for_software_updates()
+    # Local import keeps the UI dependency out of the data model's module-level imports
+    from ardupilot_methodic_configurator.frontend_tkinter_software_update import present_update_dialog
+
+    check_for_software_updates(present_update_dialog)

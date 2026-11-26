@@ -91,23 +91,18 @@ class TestAcceptanceVersionCheckAndDetection:
         # Arrange
         mock_get_release.return_value = mock_release_v2_stable
 
-        with (
-            patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open_url") as mock_browser,
-            patch("ardupilot_methodic_configurator.data_model_software_updates.UpdateDialog") as mock_dialog,
-        ):
-            mock_dialog_instance = MagicMock()
-            mock_dialog.return_value = mock_dialog_instance
-
+        presenter = MagicMock(return_value=True)
+        with patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open_url") as mock_browser:
             # Act
-            result = check_for_software_updates()
+            result = check_for_software_updates(presenter)
 
             # Assert - Version check occurred
             mock_get_release.assert_called_once_with("/latest", should_be_pre_release=False)
 
-            # Assert - User informed via browser and dialog
-            assert mock_browser.called or mock_dialog.called
-            # Result could be bool, None, or a mock object depending on mocking
-            assert result is not None  # Some result was returned
+            # Assert - User informed via browser and update prompt
+            assert mock_browser.called
+            presenter.assert_called_once()
+            assert result is True
 
     @patch("ardupilot_methodic_configurator.data_model_software_updates.get_release_info")
     @patch("ardupilot_methodic_configurator.data_model_software_updates.current_version", "2.0.0")
@@ -126,7 +121,7 @@ class TestAcceptanceVersionCheckAndDetection:
         mock_get_release.return_value = mock_release_v2_stable
 
         # Act
-        result = check_for_software_updates()
+        result = check_for_software_updates(MagicMock())
 
         # Assert - No update dialog shown
         assert result is False
@@ -148,7 +143,7 @@ class TestAcceptanceVersionCheckAndDetection:
         mock_get_release.return_value = mock_release_v2_stable
 
         # Act
-        result = check_for_software_updates()
+        result = check_for_software_updates(MagicMock())
 
         # Assert - No update offered
         assert result is False
@@ -190,7 +185,7 @@ class TestAcceptanceVersionCheckAndDetection:
         mock_get_release.side_effect = error
 
         # Act - Should handle gracefully
-        result = check_for_software_updates()
+        result = check_for_software_updates(MagicMock())
 
         # Assert - Returns False when rate limited (error handled internally)
         assert result is False
@@ -392,19 +387,16 @@ class TestAcceptanceUserInterface:
         # Arrange
         mock_get_release.return_value = mock_release_v2_stable
 
-        with patch("ardupilot_methodic_configurator.data_model_software_updates.UpdateDialog") as mock_dialog_class:
-            mock_dialog = MagicMock()
-            mock_dialog_class.return_value = mock_dialog
+        presenter = MagicMock(return_value=True)
+        with patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open_url"):
+            # Act
+            check_for_software_updates(presenter)
 
-            with patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open_url"):
-                # Act
-                check_for_software_updates()
-
-                # Assert - Dialog created with proper information
-                if mock_dialog_class.called:
-                    call_kwargs = mock_dialog_class.call_args[1]
-                    # Dialog should have download_callback
-                    assert "download_callback" in call_kwargs
+            # Assert - Prompt receives the release information and a download action
+            presenter.assert_called_once()
+            version_info, download = presenter.call_args[0]
+            assert "What's New" in version_info
+            assert callable(download)
 
 
 class TestAcceptanceSecurityRequirements:
@@ -473,11 +465,8 @@ class TestAcceptancePerformanceRequirements:
 
         # Act
         start_time = time.time()
-        with (
-            patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open_url"),
-            patch("ardupilot_methodic_configurator.data_model_software_updates.UpdateDialog"),
-        ):
-            check_for_software_updates()
+        with patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open_url"):
+            check_for_software_updates(MagicMock(return_value=True))
         elapsed = time.time() - start_time
 
         # Assert - Completes quickly (mocked, but validates no blocking operations)
@@ -577,16 +566,13 @@ class TestAcceptanceCompleteEndToEndWorkflows:
         mock_get_release.return_value = mock_release_v2_stable
         mock_platform.return_value = "Windows"
 
+        presenter = MagicMock(return_value=True)
         with (
             patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open_url"),
-            patch("ardupilot_methodic_configurator.data_model_software_updates.UpdateDialog") as mock_dialog_class,
             patch.object(UpdateManager, "_perform_download", return_value=True),
         ):
-            mock_dialog = MagicMock()
-            mock_dialog_class.return_value = mock_dialog
-
             # Act - Complete workflow
-            check_for_software_updates()
+            check_for_software_updates(presenter)
 
             # Assert - Workflow executed
             mock_get_release.assert_called()
@@ -613,15 +599,10 @@ class TestAcceptanceCompleteEndToEndWorkflows:
         mock_get_release.return_value = mock_release_v2_stable
         mock_platform.return_value = "Linux"
 
-        with (
-            patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open_url"),
-            patch("ardupilot_methodic_configurator.data_model_software_updates.UpdateDialog") as mock_dialog_class,
-        ):
-            mock_dialog = MagicMock()
-            mock_dialog_class.return_value = mock_dialog
-
+        presenter = MagicMock(return_value=True)
+        with patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open_url"):
             # Act - Complete workflow
-            check_for_software_updates()
+            check_for_software_updates(presenter)
 
             # Assert - Workflow executed
             assert mock_get_release.called
