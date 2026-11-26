@@ -12,15 +12,10 @@ SERVO_DSHOT_ESC,0  # BLHeli32
 SERVO_DSHOT_RATE,0  # Sends DShot control signals to the ESC twice per control loop
 SERVO1_MAX,1900  # Use the full available 1000-2000 DShot range
 SERVO1_MIN,1100  # Use the full available 1000-2000 DShot range
-SERVO1_TRIM,1500  # Use the full available 1000-2000 DShot range
-SERVO13_FUNCTION,0  # For matek H743Slim v3 board
 SERVO2_MAX,1900  # Use the full available 1000-2000 DShot range
 SERVO2_MIN,1100  # Use the full available 1000-2000 DShot range
-SERVO2_TRIM,1500  # Use the full available 1000-2000 DShot range
 SERVO3_MAX,1900  # Use the full available 1000-2000 DShot range
 SERVO3_MIN,1100  # Use the full available 1000-2000 DShot range
-SERVO3_TRIM,1500  # Use the full available 1000-2000 DShot range
 SERVO4_MAX,1900  # Use the full available 1000-2000 DShot range
 SERVO4_MIN,1100  # Use the full available 1000-2000 DShot range
-SERVO4_TRIM,1500  # Use the full available 1000-2000 DShot range
 TKOFF_RPM_MIN,0  # Our motors should idle at around 1400 RPM, see https://ardupilot.org/copter/docs/tkoff-rpm-min.html
