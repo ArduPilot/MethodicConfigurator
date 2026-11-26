@@ -10,9 +10,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from collections.abc import Callable
+from logging import basicConfig as logging_basicConfig
+from logging import warning as logging_warning
 from tkinter import ttk
 
 from ardupilot_methodic_configurator import _, __version__
+from ardupilot_methodic_configurator.data_model_software_updates import check_for_software_updates
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_file_browser_tasks import BackgroundTaskRunner
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
@@ -149,3 +152,14 @@ class UpdateDialog(BaseWindow):  # pylint: disable=too-many-instance-attributes
 def present_update_dialog(version_info: str, download: Callable[[Callable[[float, str], None]], bool]) -> bool:
     """Show the update dialog and run *download* when the user accepts the update."""
     return UpdateDialog(version_info, download_callback=download).show()
+
+
+if __name__ == "__main__":  # pragma: no cover
+    logging_basicConfig(level="DEBUG", format="%(asctime)s - %(levelname)s - %(message)s")
+    logging_warning(
+        _(
+            "This main is for testing and development only, usually the check_for_software_updates is"
+            " called from another script"
+        )
+    )
+    check_for_software_updates(present_update_dialog)

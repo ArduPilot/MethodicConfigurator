@@ -15,10 +15,8 @@ import re
 from argparse import ArgumentParser
 from collections.abc import Callable
 from dataclasses import dataclass
-from logging import basicConfig as logging_basicConfig
 from logging import error as logging_error
 from logging import info as logging_info
-from logging import warning as logging_warning
 from typing import Any
 
 from httpx2 import HTTPError as httpx2_HTTPError
@@ -201,17 +199,3 @@ def check_for_software_updates(presenter: UpdatePresenter) -> bool:
         msg = _("Update check failed: {}")
         logging_error(msg.format(e))
         return False
-
-
-if __name__ == "__main__":  # pragma: no cover
-    logging_basicConfig(level="DEBUG", format="%(asctime)s - %(levelname)s - %(message)s")
-    logging_warning(
-        _(
-            "This main is for testing and development only, usually the check_for_software_updates is"
-            " called from another script"
-        )
-    )
-    # Local import keeps the UI dependency out of the data model's module-level imports
-    from ardupilot_methodic_configurator.frontend_tkinter_software_update import present_update_dialog
-
-    check_for_software_updates(present_update_dialog)

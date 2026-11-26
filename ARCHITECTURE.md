@@ -29,7 +29,7 @@ their level of detail and sections vary.
 1. **[Software Update Check](ARCHITECTURE_1_software_update.md)** - Checks for and downloads software updates
    - [`frontend_tkinter_software_update.py`](ardupilot_methodic_configurator/frontend_tkinter_software_update.py)
    - [`data_model_software_updates.py`](ardupilot_methodic_configurator/data_model_software_updates.py)
-   - Standalone test/development entry point (runs the update check directly): [`data_model_software_updates.py`](ardupilot_methodic_configurator/data_model_software_updates.py)
+   - Standalone test/development entry point (runs the update check directly): [`frontend_tkinter_software_update.py`](ardupilot_methodic_configurator/frontend_tkinter_software_update.py)
 
 2. **[Flight Controller Communication](ARCHITECTURE_2_flight_controller_communication.md)** - Establishes FC connection, downloads parameters and metadata
    - [`frontend_tkinter_connection_selection.py`](ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py)
@@ -408,7 +408,7 @@ pytest
 The different sub-applications are tested independently before integration.
 Each has detailed testing strategies documented in their respective architecture files:
 
-- **[Software Update](ARCHITECTURE_1_software_update.md#testing-analysis)** - `python .\ardupilot_methodic_configurator\data_model_software_updates.py`
+- **[Software Update](ARCHITECTURE_1_software_update.md#testing-analysis)** - `python .\ardupilot_methodic_configurator\frontend_tkinter_software_update.py`
 - **[Flight Controller Communication](ARCHITECTURE_2_flight_controller_communication.md#testing-analysis)** - `python .\ardupilot_methodic_configurator\frontend_tkinter_connection_selection.py`
 - **[Directory Selection](ARCHITECTURE_3_directory_selection.md#testing-strategy)**
   - `python .\ardupilot_methodic_configurator\frontend_tkinter_project_opener.py`
