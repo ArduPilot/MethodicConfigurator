@@ -49,6 +49,7 @@ _DOUBLE_NOTCH = 1
 _MULTI_SOURCE = 2
 _ALL_IMUS = 8
 _TRIPLE_NOTCH = 16
+_QUINTUPLE_NOTCH = 64
 _FILTER_COUNT_WARNING_THRESHOLD = 24  # Default limit for F4 boards in ArduPilot 4.6.
 _MAX_MOTOR_NOTCHES = 12
 # Fitting rules, named as in WebTools' auto_fit_rules
@@ -220,7 +221,7 @@ class DynamicNotchFit:  # pylint: disable=too-many-instance-attributes
         return (_("low"), _("medium"), _("high"))[level], reason
 
     def parameter_values(self, existing_options: int) -> dict[str, int | float]:
-        options = existing_options & ~(_DOUBLE_NOTCH | _TRIPLE_NOTCH | 64 | _MULTI_SOURCE)
+        options = existing_options & ~(_DOUBLE_NOTCH | _TRIPLE_NOTCH | _QUINTUPLE_NOTCH | _MULTI_SOURCE)
         if self.multi_source:
             options |= _MULTI_SOURCE
         values = (
@@ -388,7 +389,12 @@ def _fit_esc(windows: Sequence[GyroFftWindow], source: TrackingSource, settings:
         motor_spectra = [spectrum for spectrum in spectra if len(spectrum.tracked) > 0]
     fit_margin = _esc_fit_margin(motor_spectra or [mean_spectrum])
     # A harmonic is used if it stands out for the mean or for any one motor
-    prominences = np.max([_harmonic_prominences(spectrum, 1.0) for spectrum in (mean_spectrum, *motor_spectra)], axis=0)
+    prominences = tuple(
+        float(prominence)
+        for prominence in np.max(
+            [_harmonic_prominences(spectrum, 1.0) for spectrum in (mean_spectrum, *motor_spectra)], axis=0
+        )
+    )
     selection = _select_harmonics(prominences)
     if selection is None:
         raise ValueError(_("No noise peaks follow the ESC frequency"))
@@ -731,7 +737,12 @@ def _estimated_filter_count(log_data: LogData, parameters: Mapping[str, float], 
         sources = 1
         if options & _MULTI_SOURCE:
             sources = 3 if values.get(prefix + "MODE") == _MODE_FFT else motors
-        composite = 2 if options & _DOUBLE_NOTCH else 3 if options & _TRIPLE_NOTCH else 1
+        if options & _DOUBLE_NOTCH:
+            composite = 2
+        elif options & _TRIPLE_NOTCH:
+            composite = 3
+        else:
+            composite = 5 if options & _QUINTUPLE_NOTCH else 1
         count += int(harmonics).bit_count() * sources * composite * (max(1, imus) if options & _ALL_IMUS else 1)
     return count
 
