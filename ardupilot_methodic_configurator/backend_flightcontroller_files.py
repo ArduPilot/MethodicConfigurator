@@ -871,7 +871,8 @@ class FlightControllerFiles:
         logging_info(_("Trying to find log number using binary search"))
         try:
             low = 1
-            high = 9999
+            # ArduPilot log IDs are uint16; keep the fallback scan aligned with that range.
+            high = 65535
             last_found = None
             deadline = monotonic() + self.MAVFTP_LOG_SCAN_BUDGET_SECONDS
 
