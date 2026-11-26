@@ -148,7 +148,7 @@ TARGETS: tuple[CaptureTarget, ...] = (
         "param_20_normal",
         scale=0.666,
         gui_complexity="normal",
-        current_file="24_throttle_controller.param",
+        current_file="28_throttle_controller.param",
     ),
     CaptureTarget("App_screenshot_Vehicle_directory.png", "vehicle_opener"),
     CaptureTarget("App_screenshot_Vehicle_directory10.png", "vehicle_opener"),
@@ -196,7 +196,7 @@ TARGETS: tuple[CaptureTarget, ...] = (
         "param_20_normal",
         scale=0.666,
         gui_complexity="normal",
-        current_file="24_throttle_controller.param",
+        current_file="28_throttle_controller.param",
     ),
 )
 
@@ -1242,7 +1242,6 @@ def _build_parameter_editor(
             editor = ParameterEditor(current_file, flight_controller, filesystem)
             window = ParameterEditorWindow(editor)
             if current_file in {
-                "24_throttle_controller.param",
                 "28_throttle_controller.param",
                 "29_motor_notch_filter_results.param",
                 "36_inflight_magnetometer_fit_results.param",
