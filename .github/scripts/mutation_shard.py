@@ -42,6 +42,7 @@ class _UnrotatedFileHandler(_RotatingFileHandler):  # pylint: disable=too-few-pu
 
 
 SHARDS = (
+    "software-update-flight-controller-communication",
     "backend",
     "data-model",
     "frontend",
@@ -52,6 +53,67 @@ SHARDS = (
     "plugins-data-model",
     "plugins-frontend",
 )
+APPLICATION_TARGETS = {
+    "ardupilot_methodic_configurator/data_model_software_updates.py",
+    "ardupilot_methodic_configurator/frontend_tkinter_software_update.py",
+    "ardupilot_methodic_configurator/backend_internet.py",
+    "ardupilot_methodic_configurator/backend_firmware_upload.py",
+    "ardupilot_methodic_configurator/backend_flightcontroller.py",
+    "ardupilot_methodic_configurator/backend_flightcontroller_connection.py",
+    "ardupilot_methodic_configurator/backend_flightcontroller_params.py",
+    "ardupilot_methodic_configurator/backend_flightcontroller_commands.py",
+    "ardupilot_methodic_configurator/backend_flightcontroller_files.py",
+    "ardupilot_methodic_configurator/backend_flightcontroller_protocols.py",
+    "ardupilot_methodic_configurator/backend_flightcontroller_reconnect.py",
+    "ardupilot_methodic_configurator/backend_flightcontroller_factory_serial.py",
+    "ardupilot_methodic_configurator/backend_flightcontroller_factory_mavlink.py",
+    "ardupilot_methodic_configurator/backend_flightcontroller_factory_mavftp.py",
+    "ardupilot_methodic_configurator/backend_flightcontroller_business_logic.py",
+    "ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py",
+    "ardupilot_methodic_configurator/data_model_flightcontroller_info.py",
+    "ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py",
+    "ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py",
+    "ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_connection_progress.py",
+    "ardupilot_methodic_configurator/frontend_tkinter_file_browser.py",
+    "ardupilot_methodic_configurator/frontend_tkinter_file_browser_operations.py",
+    "ardupilot_methodic_configurator/frontend_tkinter_file_browser_tasks.py",
+    "ardupilot_methodic_configurator/frontend_tkinter_firmware_upload.py",
+}
+APPLICATION_TESTS = [
+    "tests/unit_data_model_software_updates.py",
+    "tests/unit_frontend_tkinter_software_update.py",
+    "tests/bdd_software_update.py",
+    "tests/acceptance_software_update.py",
+    "tests/unit_backend_internet.py",
+    "tests/unit_backend_internet_checksum_parsing.py",
+    "tests/unit_backend_internet_download_resume.py",
+    "tests/test_backend_firmware_upload.py",
+    "tests/test_data_model_firmware_catalog.py",
+    "tests/test_frontend_tkinter_firmware_upload.py",
+    "tests/test_backend_flightcontroller.py",
+    "tests/test_backend_flightcontroller_connection.py",
+    "tests/test_backend_flightcontroller_params.py",
+    "tests/unit_backend_flightcontroller_params.py",
+    "tests/test_backend_flightcontroller_commands.py",
+    "tests/unit_backend_flightcontroller_commands.py",
+    "tests/test_backend_flightcontroller_files.py",
+    "tests/test_backend_flightcontroller_file_browser.py",
+    "tests/test_backend_flightcontroller_factory_serial.py",
+    "tests/test_backend_flightcontroller_factory_mavlink.py",
+    "tests/test_backend_flightcontroller_factory_mavftp.py",
+    "tests/test_backend_flightcontroller_business_logic.py",
+    "tests/test_backend_flightcontroller_bootloader.py",
+    "tests/test_bootloader_identity.py",
+    "tests/test_backend_flightcontroller_reconnect.py",
+    "tests/test_data_model_flightcontroller_info.py",
+    "tests/test_frontend_tkinter_connection_selection.py",
+    "tests/test_frontend_tkinter_flightcontroller_info.py",
+    "tests/test_frontend_tkinter_flightcontroller_connection_progress.py",
+    "tests/bdd_frontend_tkinter_file_browser.py",
+    "tests/test_frontend_tkinter_file_browser.py",
+    "tests/test_frontend_tkinter_file_browser_operations.py",
+    "tests/test_frontend_tkinter_file_browser_tasks.py",
+]
 PACKAGE_ROOT = "ardupilot_methodic_configurator"
 FAMILY_DIRECTORIES = {
     "": ("backend", "data-model", "frontend"),
@@ -91,6 +153,8 @@ def coverage_omit_patterns() -> set[str]:
 
 def shard_for_target(target: str) -> str:
     """Map categorized modules to their family and uncategorized modules to its backend shard."""
+    if target in APPLICATION_TARGETS:
+        return "software-update-flight-controller-communication"
     path = Path(target)
     relative = path.relative_to(PACKAGE_ROOT)
     directory = relative.parts[0] if len(relative.parts) > 1 and relative.parts[0] in FAMILY_DIRECTORIES else ""
@@ -155,6 +219,8 @@ def main() -> None:
         sys.stderr.write(f"Shard {shard!r} has no configured source files; no mutation run is needed.\n")
         return
     settings.only_mutate = targets
+    if shard == "software-update-flight-controller-communication":
+        settings.pytest_add_cli_args_test_selection = APPLICATION_TESTS
     settings.cache_invalidation_exclude.extend(
         (".github/workflows/mutation.yml", ".github/scripts/mutation_*.py", "CONTRIBUTING.md")
     )
@@ -167,7 +233,8 @@ def main() -> None:
     settings.log_file_path = str(Path(".cache/mutation/forkserver.log").resolve())
     logging_utils.RotatingFileHandler = _UnrotatedFileHandler
     # The full selected test list remains unchanged for cross-module associations.
-    cli(["run", "--max-children", "2"])
+    max_children = os.environ.get("MUTATION_MAX_CHILDREN", "14")
+    cli(["run", "--max-children", max_children])
 
 
 if __name__ == "__main__":

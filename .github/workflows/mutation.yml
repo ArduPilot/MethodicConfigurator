@@ -24,6 +24,7 @@ jobs:
       max-parallel: 3
       matrix:
         shard:
+          - software-update-flight-controller-communication
           - backend
           - data-model
           - frontend
@@ -257,7 +258,7 @@ jobs:
               "log_exit_code": log_exit_code,
               "cutoff_reached": exit_code == 124,
               "terminated_by_sigkill": exit_code == 137,
-              "max_children": 2,
+              "max_children": 14,
           }))
           PY
           if (( statuses[0] == 124 )); then

@@ -209,7 +209,17 @@ pytest_add_cli_args_test_selection = [
     # Include model, backend, unit, behavior, and real-widget plugin regressions.
     "tests/plugins/",
     "tests/test_data_model_parameter_compare_and_upload.py",
+    "tests/test_data_model_parameter_editor.py",
     "tests/test_data_model_file_upload.py",
+    "tests/bdd_data_model_recent_items_history_list.py",
+    "tests/unit_data_model_recent_items_history_list.py",
+    "tests/test_data_model_firmware_catalog.py",
+    "tests/test_data_model_parameter_export_workflows.py",
+    "tests/test_data_model_template_overview.py",
+    "tests/test_data_model_vehicle_components_common.py",
+    "tests/test_data_model_vehicle_project_creator.py",
+    "tests/test_data_model_vehicle_project_opener.py",
+    "tests/test_data_model_vehicle_project.py",
     "tests/unit_backend_safe_file_io.py",
     "tests/bdd_backend_safe_file_io.py",
     "tests/test_backend_safe_file_io_write_capture.py",
@@ -291,7 +301,7 @@ pytest_add_cli_args = [
 ]
 # Plugin tests also verify helicopter guidance and all three frozen-build specifications.
 also_copy = [
-    "pytest.ini", "TUNING_GUIDE_Heli.md", "tests",
+    "pytest.ini", "TUNING_GUIDE_Heli.md", "USERMANUAL.md", "USERMANUAL_fc_parameter_export.md", "tests",
     "ardupilot_methodic_configurator_command_line_completion.psm1",
     "windows", "linux", "macos",
 ]
