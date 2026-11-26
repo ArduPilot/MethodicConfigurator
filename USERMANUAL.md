@@ -519,6 +519,23 @@ It will create bigger and harder-to-compare parameter files but is more suitable
     - if some parameters fail to upload correctly it asks the user if he wants to retry
 - **The software will then advance to the next parameter file.**
 
+#### 7b. Export the FC parameters that differ from the configuration files (optional, keyboard shortcut)
+
+Press **Ctrl-E** in the parameter editor window to export the flight controller parameters that are missing
+or have a different value in the intermediate parameter files, from the first configuration step up to the current one.
+Default values and read-only parameters are ignored.
+The result is written into the vehicle directory as
+`fc_params_missing_or_different_in_the_amc_param_files_<first step>_to_<current step>.param`
+and the file name is shown in a message box.
+
+- This keyboard-only action helps you find changes made on the flight controller outside of AMC.
+- Writable text fields keep their normal keyboard shortcuts. Move focus away from those fields to export with Ctrl-E.
+- It only works if the flight controller parameters are available, so AMC must be connected to a flight controller.
+  Otherwise a warning is displayed and nothing is exported.
+- If there are pending edits in the current step, you are asked to save them before the comparison.
+- The same export for the current step and for the whole project can be done automatically on every upload with the
+  `--export-fc-params-missing-or-different` command line option.
+
 #### 8. Skipping to the Next Parameter File (optional)
 
 - If you want to skip the current parameter file without uploading any changes, click the `Skip parameter file` button.

@@ -6910,6 +6910,45 @@ class TestFlightControllerParameterDiffExport:
         assert [call[0][1] for call in mock_export.call_args_list] == ["01_first.param", "24_last.param"]
 
 
+class TestExportUpToCurrentStep:
+    """Test the single-range FC difference export used by the Ctrl-E shortcut."""
+
+    def test_export_up_to_current_step_names_the_file_after_the_current_step(self, parameter_editor: ParameterEditor) -> None:
+        """
+        The output range ends at the current step.
+
+        GIVEN: FC parameters that differ from the AMC files and a current step
+        WHEN: The export up to the current step runs
+        THEN: Only one file ending at the current step is written and its name is returned
+        """
+        parameter_editor.current_file = "02_second.param"
+        parameter_editor._flight_controller.fc_parameters = {"TEST": 2.0}
+        parameter_editor._local_filesystem.file_parameters = {"01_first.param": ParDict(), "02_second.param": ParDict()}
+        parameter_editor._local_filesystem.compound_params.return_value = (ParDict(), "01_first.param")
+        fc_params = ParDict({"TEST": Par(2.0, "")})
+
+        with patch.object(parameter_editor, "_get_non_default_non_read_only_fc_params", return_value=fc_params):
+            filename = parameter_editor.export_fc_params_missing_or_different_up_to_current_step()
+
+        expected = "fc_params_missing_or_different_in_the_amc_param_files_01_first_to_02_second.param"
+        assert filename == expected
+        parameter_editor._local_filesystem.export_to_param.assert_called_once()
+        assert parameter_editor._local_filesystem.export_to_param.call_args.args[1] == expected
+
+    def test_has_fc_parameters_reflects_the_flight_controller_state(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Availability follows the downloaded FC parameters.
+
+        GIVEN: A flight controller with and without parameters
+        WHEN: The availability is queried
+        THEN: It is True only when parameters exist
+        """
+        parameter_editor._flight_controller.fc_parameters = {}
+        assert parameter_editor.has_fc_parameters is False
+        parameter_editor._flight_controller.fc_parameters = {"TEST": 1.0}
+        assert parameter_editor.has_fc_parameters is True
+
+
 class TestOptionalStepDetection:
     """Test how optional configuration steps are detected from their mandatory percentage."""
 

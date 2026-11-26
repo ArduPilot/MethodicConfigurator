@@ -446,6 +446,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # So we need to dynamically accommodate for that after placing the widgets
         self._fit_window_to_screen_height(initialize=True)
         self._bind_parameter_layout_events()
+        self._bind_keyboard_shortcuts()
 
         # Set up startup notification for the main application window
         FreeDesktop.setup_startup_notification(self.root)  # type: ignore[arg-type]
@@ -2189,6 +2190,50 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         for widget in self.main_frame.winfo_children():
             if widget is not self.parameter_area_container:
                 widget.bind("<Configure>", self._on_main_frame_resize, add="+")
+
+    def _bind_keyboard_shortcuts(self) -> None:
+        """Bind the keyboard-only shortcuts, documented in the user manual."""
+        for sequence in ("<Control-e>", "<Control-E>"):
+            self.root.bind(sequence, self.on_export_fc_params_missing_or_different_shortcut, add="+")
+
+    @_with_fc_operation
+    def on_export_fc_params_missing_or_different_shortcut(self, event: Union[tk.Event, None] = None) -> None:  # noqa: UP007
+        """Export the FC parameters that are missing or different in the AMC files up to the current step."""
+        # Preserve Ctrl-E for moving to the end of the line in writable text fields.
+        if event is not None:
+            widget = event.widget
+            if isinstance(widget, ttk.Entry):
+                if widget.instate(("!readonly", "!disabled")):
+                    return
+            elif isinstance(widget, (tk.Entry, tk.Text)) and str(widget.cget("state")) == tk.NORMAL:
+                return
+        if self.navigation_lock.locked:
+            return
+        if not self.parameter_editor.has_fc_parameters:
+            self.ui.show_warning(
+                _("No flight controller parameters"),
+                _(
+                    "This export only works if the flight controller parameters are available.\n"
+                    "Connect to a flight controller and download its parameters first."
+                ),
+            )
+            return
+        self.write_changes_to_intermediate_parameter_file()
+        filename = self.parameter_editor.export_fc_params_missing_or_different_up_to_current_step()
+        if filename:
+            self.ui.show_info(
+                _("FC parameters exported"),
+                _(
+                    "The flight controller parameters that are missing or different in the configuration steps\n"
+                    "up to this one were exported to:\n%s"
+                )
+                % filename,
+            )
+        else:
+            self.ui.show_info(
+                _("Nothing to export"),
+                _("No flight controller parameters are missing or different in the configuration steps up to this one."),
+            )
 
     def _on_main_frame_destroy(self, event: tk.Event) -> None:
         """Cancel an idle fit when its owning editor frame is destroyed."""
