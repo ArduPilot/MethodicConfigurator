@@ -341,7 +341,7 @@ parameter suggestions.
 Attempt sources in this order and retain the reasons why earlier attempts failed:
 
 1. **ESC RPM, mode 3.** Convert motor RPM to Hz using the same semantics as the upstream tracking method. Interpolate the mean frequency of motors selected by
-   `INS_HNTCH_ESC_MASK`; use the firmware-defined meaning of a zero mask. Ignore windows with tracked frequency below 10 Hz. Build an order spectrum of the mean
+   `INS_HNTCH_ESCMSK`; use the firmware-defined meaning of a zero mask. Ignore windows with tracked frequency below 10 Hz. Build an order spectrum of the mean
    frequency from 0.25 to 8.75 with a step of 0.005, and evaluate harmonics 1 through 8 at integer orders. With more than one motor, also build an order spectrum
    for each motor on its own, because motors at different speeds spread the harmonics of the mean. A harmonic qualifies when it stands out in the mean spectrum or
    in any one motor spectrum.
@@ -420,7 +420,7 @@ For a successful fit, produce a complete, validated set of suggestions:
 | `INS_HNTCH_OPTS` | Existing options adjusted for a single notch per harmonic and the selected source |
 
 Preserve unrelated option bits. Following the WebTools script, clear masks `1`, `16`, and `64`, then set or clear mask `2` according to multiple-source tracking.
-Validate those meanings against the target firmware before suggesting the options value. Preserve `INS_HNTCH_ESC_MASK` and all additional notch groups; this design
+Validate those meanings against the target firmware before suggesting the options value. Preserve `INS_HNTCH_ESCMSK` and all additional notch groups; this design
 fits only the first group. If a fitted value or required option is unsupported, reject that candidate with a reason rather than silently emitting an incomplete fit.
 
 Estimate the boot allocation from harmonic counts, tracking sources, composite filters and IMU use. Include the second notch when its settings are logged.

@@ -632,12 +632,12 @@ def _esc_source(log_data: LogData, parameters: Mapping[str, float]) -> TrackingS
         or (instances != np.floor(instances)).any()
     ):
         raise ValueError(_("ESC instances are invalid"))
-    mask = parameters.get("INS_HNTCH_ESC_MASK", 0)
+    mask = parameters.get("INS_HNTCH_ESCMSK", 0)
     if not isfinite(mask) or mask < 0 or mask != int(mask):
-        raise ValueError(_("INS_HNTCH_ESC_MASK is invalid"))
+        raise ValueError(_("INS_HNTCH_ESCMSK is invalid"))
     selected = [int(instance) for instance in instances if mask == 0 or int(mask) & (1 << int(instance))]
     if mask and sum(1 << instance for instance in selected) != int(mask):
-        raise ValueError(_("ESC telemetry is missing for motors selected by INS_HNTCH_ESC_MASK"))
+        raise ValueError(_("ESC telemetry is missing for motors selected by INS_HNTCH_ESCMSK"))
     tracks = []
     for instance in selected:
         keep = columns[instance_field] == instance
@@ -701,7 +701,7 @@ def _validate_proposal(values: Mapping[str, int | float], documentation: Mapping
 
 
 def _estimated_motor_count(log_data: LogData, parameters: Mapping[str, float]) -> int:
-    # Boot allocation uses the motor mask, even when INS_HNTCH_ESC_MASK selects fewer tracking sources.
+    # Boot allocation uses the motor mask, even when INS_HNTCH_ESCMSK selects fewer tracking sources.
     try:
         esc_count = len(np.unique(log_data.get_field("ESC", _instance_field(log_data, "ESC"), scaled=False)))
     except ValueError:
