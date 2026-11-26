@@ -661,11 +661,11 @@ def test_esc_mask_selects_motor_instances_and_preserves_other_notch_groups(fligh
     extra["RPM"] = extra["RPM"] * 1.5
     records = np.concatenate([original, extra])
     log.add_message_columns("ESC", records[np.argsort(records["TimeUS"], kind="stable")])
-    context.parameters.update({"INS_HNTCH_ESC_MASK": mask, "INS_HNTC2_ENABLE": 1, "INS_HNTC2_FREQ": 250})
+    context.parameters.update({"INS_HNTCH_ESCMSK": mask, "INS_HNTC2_ENABLE": 1, "INS_HNTC2_FREQ": 250})
     result = AutoDynamicNotchLogAnalysis(log, context).analyse()
     assert result.available, result.reason
     values = _suggestions(result)
     assert values["INS_HNTCH_MODE"] == (3 if mask == 1 else 1)
-    assert "INS_HNTCH_ESC_MASK" not in values
+    assert "INS_HNTCH_ESCMSK" not in values
     assert not any(name.startswith("INS_HNTC2_") for name in values)
-    assert context.parameters["INS_HNTCH_ESC_MASK"] == mask
+    assert context.parameters["INS_HNTCH_ESCMSK"] == mask
