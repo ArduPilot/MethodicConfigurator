@@ -41,3 +41,4 @@ class LogAnalysisResult:
     reason: str
     related_step: str | None = None
     subsystem_key: str | None = None
+    apply_together: bool = False  # Review and upload all parameter suggestions as one proposal.

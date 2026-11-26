@@ -44,6 +44,13 @@ _INTERPRETATION_PREFIXES = ("INS_LOG_BAT_", "INS_GYR", "INS_HNTCH_", "FRAME_", "
 
 _MODE_THROTTLE = 1
 _MODE_ESC = 3
+_MODE_FFT = 4
+_DOUBLE_NOTCH = 1
+_MULTI_SOURCE = 2
+_ALL_IMUS = 8
+_TRIPLE_NOTCH = 16
+_FILTER_COUNT_WARNING_THRESHOLD = 24  # Default limit for F4 boards in ArduPilot 4.6.
+_MAX_MOTOR_NOTCHES = 12
 # Fitting rules, named as in WebTools' auto_fit_rules
 _MIN_PEAK_DB = 6.0
 _MIN_ATTENUATION_DB = 10
@@ -213,9 +220,9 @@ class DynamicNotchFit:  # pylint: disable=too-many-instance-attributes
         return (_("low"), _("medium"), _("high"))[level], reason
 
     def parameter_values(self, existing_options: int) -> dict[str, int | float]:
-        options = existing_options & ~(1 | 16 | 64 | 2)
+        options = existing_options & ~(_DOUBLE_NOTCH | _TRIPLE_NOTCH | 64 | _MULTI_SOURCE)
         if self.multi_source:
-            options |= 2
+            options |= _MULTI_SOURCE
         values = (
             1,
             self.mode,
@@ -664,7 +671,8 @@ def _validate_proposal(values: Mapping[str, int | float], documentation: Mapping
     for name, value in values.items():
         metadata = documentation[name]
         minimum, maximum = metadata.get("min"), metadata.get("max")
-        bounds = str(metadata.get("fields", {}).get("Range", "")).split()
+        fields = metadata.get("fields", {})
+        bounds = str(fields.get("Range", "")).split()
         if len(bounds) == 2 and minimum is None and maximum is None:
             minimum, maximum = float(bounds[0]), float(bounds[1])
         if (
@@ -677,10 +685,55 @@ def _validate_proposal(values: Mapping[str, int | float], documentation: Mapping
         if enums and value not in {float(code) for code in enums}:
             raise ValueError(_("Fitted value for {name} is unsupported by this firmware").format(name=name))
         bits = metadata.get("Bitmask", metadata.get("bitmask", {}))
-        if bits and int(value) & ~sum(1 << int(bit) for bit in bits):
+        raw_bits = fields.get("Bitmask")
+        if not bits and raw_bits:
+            bits = [item.partition(":")[0].strip() for item in raw_bits.split(",") if ":" in item]
+        if bits and (int(value) != value or int(value) & ~sum(1 << bit for bit in {int(key) for key in bits})):
             raise ValueError(_("Fitted option bits for {name} are unsupported by this firmware").format(name=name))
     if values[_PREFIX + "FREQ"] <= 0 or values[_PREFIX + "BW"] <= 0 or values[_PREFIX + "REF"] <= 0:
         raise ValueError(_("Fitted frequency, bandwidth, and reference must be positive"))
+
+
+def _estimated_motor_count(log_data: LogData, parameters: Mapping[str, float]) -> int:
+    # Boot allocation uses the motor mask, even when INS_HNTCH_ESC_MASK selects fewer tracking sources.
+    try:
+        esc_count = len(np.unique(log_data.get_field("ESC", _instance_field(log_data, "ESC"), scaled=False)))
+    except ValueError:
+        esc_count = 0
+    # SERVOx_FUNCTION codes for Motor1-8, Motor9-12 and Motor13-32.
+    motor_functions = {
+        value
+        for name, value in parameters.items()
+        if name.startswith("SERVO")
+        and name.endswith("_FUNCTION")
+        and (33 <= value <= 40 or 82 <= value <= 85 or 160 <= value <= 179)
+    }
+    return max(1, min(_MAX_MOTOR_NOTCHES, max(esc_count, len(motor_functions))))
+
+
+def _estimated_filter_count(log_data: LogData, parameters: Mapping[str, float], proposal: Mapping[str, int | float]) -> int:
+    """Estimate boot allocation for the fitted notch and any other logged notch."""
+    motors = _estimated_motor_count(log_data, parameters)
+    gyro_count = _gyro_count(log_data, parameters) or 3
+    imus = sum(
+        parameters.get("INS_USE" if index == 1 else f"INS_USE{index}", index <= gyro_count) > 0
+        for index in range(1, max(3, gyro_count) + 1)
+    )
+    count = 0
+    for prefix, values in ((_PREFIX, proposal), ("INS_HNTC2_", parameters)):
+        if values.get(prefix + "ENABLE", 0) <= 0 and parameters.get("FFT_ENABLE", 0) <= 0:
+            continue
+        harmonics = values.get(prefix + "HMNCS", 0)
+        options = values.get(prefix + "OPTS", 0)
+        if not (isfinite(harmonics) and harmonics > 0 and isfinite(options) and options >= 0):
+            continue
+        options = int(options)
+        sources = 1
+        if options & _MULTI_SOURCE:
+            sources = 3 if values.get(prefix + "MODE") == _MODE_FFT else motors
+        composite = 2 if options & _DOUBLE_NOTCH else 3 if options & _TRIPLE_NOTCH else 1
+        count += int(harmonics).bit_count() * sources * composite * (max(1, imus) if options & _ALL_IMUS else 1)
+    return count
 
 
 @dataclass
@@ -794,14 +847,16 @@ class AutoDynamicNotchLogAnalysis(BaseLogAnalysisModel):
                     fit = fit_tracking_source(windows, source, self.inputs.settings)
                     values = fit.parameter_values(int(parameters[_PREFIX + "OPTS"]))
                     _validate_proposal(values, self.apm_doc or {})
-                    return self._result(fit, values, errors)
+                    return self._result(fit, values, _estimated_filter_count(self.log_data, parameters, values), errors)
                 except ValueError as error:
                     errors.append(_("{source}: {reason}").format(source=source.name, reason=str(error)))
         except ValueError as error:
             errors.append(str(error))
         return LogAnalysisResult(available=False, outcomes=[], name=_("Automatic dynamic notch"), reason="; ".join(errors))
 
-    def _result(self, fit: DynamicNotchFit, values: Mapping[str, int | float], errors: list[str]) -> LogAnalysisResult:
+    def _result(
+        self, fit: DynamicNotchFit, values: Mapping[str, int | float], filter_count: int, errors: list[str]
+    ) -> LogAnalysisResult:
         group = _("First harmonic notch")
         outcomes = [
             LogAnalysis(
@@ -852,10 +907,23 @@ class AutoDynamicNotchLogAnalysis(BaseLogAnalysisModel):
                 )
         outcomes.extend(LogAnalysis(error, group=group) for error in errors)
         outcomes.extend(LogAnalysis(message, group=group) for message in dict.fromkeys(self.inputs.diagnostics))
+        if filter_count > _FILTER_COUNT_WARNING_THRESHOLD:
+            outcomes.append(
+                LogAnalysis(
+                    _(
+                        "The proposed configuration is estimated to allocate {count} notch filters. "
+                        "Some flight controllers support only {limit}. Check your board and firmware limit "
+                        "before uploading. Exceeding it can prevent the flight controller from starting."
+                    ).format(count=filter_count, limit=_FILTER_COUNT_WARNING_THRESHOLD),
+                    group=group,
+                    severity="warning",
+                )
+            )
         return LogAnalysisResult(
             available=True,
             outcomes=outcomes,
             name=_("Automatic dynamic notch"),
             reason=_("First harmonic notch fitted successfully"),
             related_step=self.step_for_parameter(_PREFIX + "FREQ"),
+            apply_together=True,
         )

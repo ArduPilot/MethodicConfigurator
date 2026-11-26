@@ -258,7 +258,7 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
         else:
             self._section_body(analysis_result.reason)
             if analysis_result.outcomes:
-                self._render_outcomes(analysis_result.outcomes)
+                self._render_outcomes(analysis_result.outcomes, apply_together=analysis_result.apply_together)
             else:
                 self._section_body(_("No findings."))
 
@@ -272,14 +272,25 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
         """Wrap report text to the width allocated to its label."""
         label.configure(wraplength=max(10, event.width - 15))
 
-    def _render_outcomes(self, outcomes: Sequence[LogAnalysis]) -> None:
+    def _render_outcomes(self, outcomes: Sequence[LogAnalysis], *, apply_together: bool = False) -> None:
         """Render outcomes in list order with optional consecutive group headings."""
+        if apply_together:
+            button = ttk.Button(self.body_frame, text=_("Review Proposal"), command=partial(self._review_proposal, outcomes))
+            button.pack(anchor=tk.W, padx=(10, 0), pady=5)
+            show_tooltip(button, _("Review all fitted parameters before uploading them together"))
+        render_outcome = partial(self._outcome_line, offer_fix=False) if apply_together else self._outcome_line
         previous_group: str | None = None
         for outcome in outcomes:
             if outcome.group is not None and outcome.group != previous_group:
                 self._group_heading(outcome.group)
-            self._outcome_line(outcome)
+            render_outcome(outcome)
             previous_group = outcome.group
+
+    def _review_proposal(self, outcomes: Sequence[LogAnalysis]) -> None:
+        fixes = [fix for outcome in outcomes for fix in self._fix_for_outcome(outcome, include_all=True)]
+        if fixes:
+            warnings = [outcome.message for outcome in outcomes if outcome.severity == "warning"]
+            self._open_review_dialog(fixes, proposal_warnings=warnings)
 
     def _group_heading(self, text: str) -> None:
         ttk.Label(self.body_frame, text=text, font=("TkDefaultFont", 13, "bold")).pack(anchor=tk.W, padx=(10, 0), pady=(12, 3))
@@ -301,7 +312,7 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
         label.pack(side=tk.LEFT, fill=tk.X, expand=True)
         label.bind("<Configure>", partial(self._set_wraplength, label))
 
-    def _outcome_line(self, outcome: LogAnalysis) -> None:
+    def _outcome_line(self, outcome: LogAnalysis, *, offer_fix: bool = True) -> None:
         timestamp_text = f"{format_elapsed_time(outcome.timestamp_us / 1e6)}  " if outcome.timestamp_us is not None else ""
         if isinstance(outcome.end_timestamp_us, (int, float)) and outcome.end_timestamp_us != outcome.timestamp_us:
             timestamp_text = f"{timestamp_text.strip()} - {format_elapsed_time(outcome.end_timestamp_us / 1e6)}  "
@@ -336,37 +347,52 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
                 ),
             )
 
-        fixes = self._fix_for_outcome(outcome)
-        if fixes:
+        if offer_fix and (fixes := self._fix_for_outcome(outcome)):
             fix_button = ttk.Button(row, text=_("Fix"), command=partial(self._open_review_dialog, fixes))
             fix_button.pack(side=tk.RIGHT, padx=(8, 0))
 
-    def _fix_for_outcome(self, outcome: LogAnalysis) -> list[tuple[str, float, float, list[str]]]:
+    def _fix_for_outcome(
+        self, outcome: LogAnalysis, *, include_all: bool = False
+    ) -> list[tuple[str, float | None, float, list[str]]]:
         if not isinstance(outcome.param_name, str) or not isinstance(outcome.suggested_value, (int, float)):
             return []
         current = self.summary.related_parameter_values.get(outcome.param_name)
-        if current is None or float(outcome.suggested_value) == current:
+        if not include_all and (current is None or float(outcome.suggested_value) == current):
             return []
         return [(outcome.param_name, current, float(outcome.suggested_value), [outcome.message])]
 
-    def _open_review_dialog(self, fixes: list[tuple[str, float, float, list[str]]]) -> None:
+    def _open_review_dialog(
+        self, fixes: Sequence[tuple[str, float | None, float, list[str]]], *, proposal_warnings: Sequence[str] | None = None
+    ) -> None:
         dialog = tk.Toplevel(self.root)
         dialog.title(_("Review Parameter Changes"))
-        dialog.geometry(self.calculate_scaled_geometry(520, 140 + 60 * len(fixes)))
+        dialog.geometry(self.calculate_scaled_geometry(520, 172 + 28 * len(fixes) + 80 * bool(proposal_warnings)))
         self.center_window(dialog, self.root)
         dialog.transient(self.root)
         dialog.grab_set()
 
-        ttk.Label(dialog, text=_("The following parameter change(s) are proposed:"), font=("TkDefaultFont", 11, "bold")).pack(
-            anchor=tk.W, padx=14, pady=(14, 6)
-        )
+        ttk.Label(
+            dialog,
+            text=_("The following parameter change(s) are proposed:")
+            if proposal_warnings is None
+            else _("Review all fitted values for this proposal."),
+            font=("TkDefaultFont", 11, "bold"),
+        ).pack(anchor=tk.W, padx=14, pady=(14, 6))
+        for warning in proposal_warnings or ():
+            label = ttk.Label(dialog, text=warning, justify=tk.LEFT)
+            label.pack(fill=tk.X, padx=14, pady=(0, 6))
+            label.bind("<Configure>", partial(self._set_wraplength, label))
         rows_frame = ttk.Frame(dialog)
         rows_frame.pack(fill=tk.BOTH, expand=True, padx=14, pady=(0, 6))
+        if proposal_warnings is not None:
+            ttk.Label(rows_frame, text=_("Report value → Fitted value")).pack(anchor=tk.W)
         for param_name, current, proposed, reasons in fixes:
             row = ttk.Frame(rows_frame)
             row.pack(fill=tk.X, pady=4)
             ttk.Label(row, text=param_name, width=18, font=("TkDefaultFont", 11, "bold")).pack(side=tk.LEFT)
-            ttk.Label(row, text=str(current), foreground="gray").pack(side=tk.LEFT, padx=(0, 6))
+            ttk.Label(row, text=str(current) if current is not None else _("Unknown"), foreground="gray").pack(
+                side=tk.LEFT, padx=(0, 6)
+            )
             ttk.Label(row, text="->").pack(side=tk.LEFT, padx=(0, 6))
             value_lbl = ttk.Label(row, text=str(proposed), foreground="darkgreen", font=("TkDefaultFont", 11, "bold"))
             value_lbl.pack(side=tk.LEFT)
@@ -385,7 +411,7 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
         if not self.is_fc_connected:
             show_tooltip(upload_button, _("No flight controller connected, upload not available"))
 
-    def _apply_param_fixes(self, fixes: list[tuple[str, float, float, list[str]]], dialog: tk.Toplevel) -> None:
+    def _apply_param_fixes(self, fixes: Sequence[tuple[str, float | None, float, list[str]]], dialog: tk.Toplevel) -> None:
         changes = {param_name: Par(proposed, "") for param_name, _current, proposed, _reasons in fixes}
         if self.upload_callback is not None:
             upload_result = self.upload_callback(changes)
