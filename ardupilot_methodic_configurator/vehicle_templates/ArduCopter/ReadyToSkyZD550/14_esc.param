@@ -14,17 +14,13 @@ SERVO_DSHOT_RATE,2  # Sends DShot control signals to the ESC twice per control l
 SERVO10_FUNCTION,34
 SERVO10_MAX,2000  # Use the full available 1000-2000 DShot range
 SERVO10_MIN,1000  # Use the full available 1000-2000 DShot range
-SERVO10_TRIM,1000  # Use the full available 1000-2000 DShot range
 SERVO11_FUNCTION,35
 SERVO11_MAX,2000  # Use the full available 1000-2000 DShot range
 SERVO11_MIN,1000  # Use the full available 1000-2000 DShot range
-SERVO11_TRIM,1000  # Use the full available 1000-2000 DShot range
 SERVO12_FUNCTION,36
 SERVO12_MAX,2000  # Use the full available 1000-2000 DShot range
 SERVO12_MIN,1000  # Use the full available 1000-2000 DShot range
-SERVO12_TRIM,1000  # Use the full available 1000-2000 DShot range
 SERVO9_FUNCTION,33
 SERVO9_MAX,2000  # Use the full available 1000-2000 DShot range
 SERVO9_MIN,1000  # Use the full available 1000-2000 DShot range
-SERVO9_TRIM,1000  # Use the full available 1000-2000 DShot range
 TKOFF_RPM_MIN,600  # idle RPM https://ardupilot.org/copter/docs/tkoff-rpm-min.html
