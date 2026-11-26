@@ -25,7 +25,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from enum import IntEnum, StrEnum
-from logging import debug as logging_debug
 from logging import warning as logging_warning
 from math import isnan
 from typing import TYPE_CHECKING, Any
@@ -49,7 +48,6 @@ SERVO_PWM_MAX = 2200
 DEFAULT_SERVO_MIN_PWM = 1100
 DEFAULT_SERVO_MAX_PWM = 1900
 MAX_SERVO_OUTPUTS = 32
-GCS_SYSTEM_ID = 255  # pymavlink default source system used by AMC
 
 
 class PlaneMode(IntEnum):
@@ -89,7 +87,7 @@ PLANE_MODE_NAMES: dict[int, str] = {
 
 
 class StickAxis(StrEnum):
-    """Primary flight-control stick axes and their RCMAP parameter."""
+    """Primary flight-control RC input axes and their RCMAP parameter."""
 
     ROLL = "RCMAP_ROLL"
     PITCH = "RCMAP_PITCH"
@@ -229,8 +227,6 @@ class ControlSurfaceSetupDataModel:  # pylint: disable=too-many-instance-attribu
         self._initial_mode: int | None = None
         self._mode_changed_by_plugin = False
         self._live_values: dict[str, float] = {}
-        self._stick_fraction: dict[StickAxis, float] = dict.fromkeys(StickAxis, 0.0)
-        self._override_active = False
 
     # ------------------------------------------------------------------ parameters
 
@@ -408,19 +404,6 @@ class ControlSurfaceSetupDataModel:  # pylint: disable=too-many-instance-attribu
             return _("KFF_RDDRMIX is 0, so the rudder will not respond when the plane is rolled in FBWA.")
         return ""
 
-    def rc_override_warning(self) -> str:
-        """Warn when the FC will ignore AMC's RC overrides because it trusts a different GCS id."""
-        for name in ("MAV_GCS_SYSID", "SYSID_MYGCS"):
-            if name in self.fc_parameters:
-                gcs_id = int(self.fc_parameters[name])
-                if gcs_id != GCS_SYSTEM_ID:
-                    return _(
-                        "%(param)s is %(value)d. The flight controller only accepts simulated stick inputs "
-                        "from system id %(expected)d."
-                    ) % {"param": name, "value": gcs_id, "expected": GCS_SYSTEM_ID}
-                return ""
-        return ""
-
     # ------------------------------------------------------------------ flight mode and telemetry
 
     @property
@@ -581,65 +564,6 @@ class ControlSurfaceSetupDataModel:  # pylint: disable=too-many-instance-attribu
         kinds = tuple(kinds)
         return [channel.param(kind.value) for channel in channels for kind in kinds]
 
-    # ------------------------------------------------------------------ simulated stick input
-
-    def stick_fraction(self, axis: StickAxis) -> float:
-        """Simulated stick deflection of ``axis`` in [-1, 1]."""
-        return self._stick_fraction[axis]
-
-    def set_stick_fraction(self, axis: StickAxis, fraction: float) -> None:
-        """Set the simulated stick deflection; sent by :meth:`send_stick_override`."""
-        self._stick_fraction[axis] = max(-1.0, min(1.0, float(fraction)))
-
-    def center_sticks(self) -> None:
-        """Return every simulated stick to neutral and send it immediately."""
-        self._stick_fraction = dict.fromkeys(StickAxis, 0.0)
-        if self._override_active:
-            self.send_stick_override()
-
-    def stick_pwm(self, axis: StickAxis) -> int:
-        """RC PWM equivalent to the simulated stick deflection, using RCx_MIN/TRIM/MAX."""
-        channel = self.rc_channel(axis)
-        rc_min = self._int_value(f"RC{channel}_MIN", 1100)
-        rc_trim = self._int_value(f"RC{channel}_TRIM", 1500)
-        rc_max = self._int_value(f"RC{channel}_MAX", 1900)
-        fraction = self._stick_fraction[axis]
-        if fraction >= 0:
-            return round(rc_trim + fraction * (rc_max - rc_trim))
-        return round(rc_trim + fraction * (rc_trim - rc_min))
-
-    def send_stick_override(self) -> None:
-        """
-        Send the simulated stick positions as RC overrides.
-
-        The FC drops overrides after RC_OVERRIDE_TIME, so callers repeat this while active.
-        """
-        channels = {self.rc_channel(axis): self.stick_pwm(axis) for axis in StickAxis}
-        success, error = self.flight_controller.send_rc_channels_override(channels)
-        if not success:
-            raise ControlSurfaceSetupError(error)
-        self._override_active = True
-
-    def release_stick_override(self) -> None:
-        """Hand control of the stick channels back to the RC receiver."""
-        self._stick_fraction = dict.fromkeys(StickAxis, 0.0)
-        if not self._override_active:
-            return
-        self._override_active = False
-        if self.flight_controller.master is None:
-            return
-        success, error = self.flight_controller.send_rc_channels_override(dict.fromkeys(self._override_channels(), 0))
-        if not success:
-            logging_debug("Could not release RC override: %s", error)
-
-    def _override_channels(self) -> list[int]:
-        return list(dict.fromkeys(self.rc_channel(axis) for axis in StickAxis))
-
-    @property
-    def override_active(self) -> bool:
-        """Whether simulated stick input is being sent."""
-        return self._override_active
-
     # ------------------------------------------------------------------ tilt rotor
 
     def tilt_endpoints(self, channel: ServoChannel) -> tuple[EndpointKind, EndpointKind]:
@@ -697,7 +621,6 @@ class ControlSurfaceSetupDataModel:  # pylint: disable=too-many-instance-attribu
     # ------------------------------------------------------------------ lifecycle
 
     def shutdown(self) -> None:
-        """Release overrides, restore the initial flight mode and stop telemetry streams."""
-        self.release_stick_override()
+        """Restore the initial flight mode and stop telemetry streams."""
         self.restore_initial_mode()
         self.stop_telemetry()

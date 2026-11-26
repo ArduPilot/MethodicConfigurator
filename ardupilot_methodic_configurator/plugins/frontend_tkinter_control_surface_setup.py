@@ -4,8 +4,8 @@ GUI for the plane and tilt-rotor control surface setup plugin.
 The view is a notebook with one tab per setup stage:
 
 1. Servo direction  - FBWA, move the airframe, fix SERVOx_REVERSED
-2. Stick direction  - move the RC sticks, fix RCx_REVERSED
-3. Trim and travel  - MANUAL, live SERVOx_TRIM/MIN/MAX with simulated stick sliders
+2. Stick direction  - FBWA or MANUAL, move the RC sticks, fix RCx_REVERSED
+3. Trim and travel  - MANUAL, live SERVOx_TRIM/MIN/MAX
 4. Tilt rotors      - only when Q_TILT_ENABLE=1: tilt settings, forward (MANUAL) and hover (QSTABILIZE) end points
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
@@ -17,7 +17,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from collections.abc import Callable
-from contextlib import suppress
 from logging import warning as logging_warning
 from tkinter import ttk
 from tkinter.messagebox import showerror, showinfo, showwarning
@@ -49,7 +48,6 @@ from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginPauseR
 # pylint: disable=too-many-instance-attributes,too-many-ancestors
 
 TELEMETRY_PERIOD_MS = 100
-OVERRIDE_PERIOD_MS = 300  # well below the default RC_OVERRIDE_TIME of 3 s
 BATTERY_PERIOD_MS = 1000
 LIVE_WRITE_DELAY_MS = 150
 SPINBOX_INCREMENT_PWM = 5
@@ -105,7 +103,6 @@ class ControlSurfaceSetupView(ttk.Frame):
         self.model = model
         self.base_window = base_window
         self._telemetry_timer: str | None = None
-        self._override_timer: str | None = None
         self._battery_timer: str | None = None
         self._active = False
         self._pwm_labels: list[tuple[ServoChannel, ttk.Label]] = []
@@ -113,7 +110,6 @@ class ControlSurfaceSetupView(ttk.Frame):
         self._endpoint_spinboxes: dict[str, _LiveSpinbox] = {}
         self._servo_reversed_vars: dict[int, tk.BooleanVar] = {}
         self._rc_reversed_vars: dict[StickAxis, tk.BooleanVar] = {}
-        self._stick_scales: dict[StickAxis, tk.Scale] = {}
         self._battery_var = tk.StringVar(value=_("Checking battery voltage..."))
         self._mode_var = tk.StringVar(value="")
         self._battery_ok = False
@@ -229,12 +225,16 @@ class ControlSurfaceSetupView(ttk.Frame):
 
     def _create_stick_direction_tab(self) -> None:
         tab = self._new_tab(_("2. Stick direction"))
-        self._mode_button(tab, PlaneMode.FBWA).pack(anchor="w", pady=4)
+        modes = ttk.Frame(tab)
+        modes.pack(anchor="w", pady=4)
+        self._mode_button(modes, PlaneMode.FBWA).pack(side="left")
+        self._mode_button(modes, PlaneMode.MANUAL).pack(side="left", padx=(4, 0))
         self._instructions(
             tab,
             _(
-                "Keep the plane level and move the transmitter sticks. If a surface moves the wrong way, "
-                "tick Reversed on that stick's input channel. Do NOT reverse channels on the transmitter."
+                "Choose FBWA or MANUAL, keep the plane level and move the transmitter sticks. "
+                "If a surface moves the wrong way, tick Reversed on that stick's input channel. "
+                "Do NOT reverse channels on the transmitter."
             ),
         )
         self._check_table(tab, STICK_MOVEMENT_CHECKS, _("Move the sticks"))
@@ -268,7 +268,7 @@ class ControlSurfaceSetupView(ttk.Frame):
             tab,
             _(
                 "In MANUAL with the sticks centred, adjust each SERVOx_TRIM until the surface is neutral. "
-                "Then use the sliders to drive the surfaces to their limits and adjust SERVOx_MIN and SERVOx_MAX "
+                "Then move the transmitter sticks to their limits and adjust SERVOx_MIN and SERVOx_MAX "
                 "so they move fully without binding, or keep the defaults. Values apply immediately."
             ),
         )
@@ -290,8 +290,6 @@ class ControlSurfaceSetupView(ttk.Frame):
             self._trim_warnings[channel.number] = warning
             self._update_trim_warning(channel)
 
-        self._create_stick_sliders(tab)
-
         self._save_button(
             tab,
             lambda: self.model.endpoint_parameters(
@@ -299,41 +297,6 @@ class ControlSurfaceSetupView(ttk.Frame):
             ),
             _("Servo trim and travel adjusted in MANUAL"),
         )
-
-    def _create_stick_sliders(self, tab: ttk.Frame) -> None:
-        sticks = ttk.LabelFrame(tab, text=_("Simulated stick input"))
-        sticks.pack(fill="x", pady=4)
-        override_warning = self.model.rc_override_warning()
-        if override_warning:
-            ttk.Label(sticks, text=override_warning, foreground="orange", wraplength=WRAP_LENGTH).grid(
-                row=0, column=0, columnspan=3, sticky="w"
-            )
-        axis_names = {StickAxis.ROLL: _("Roll"), StickAxis.PITCH: _("Pitch"), StickAxis.YAW: _("Yaw")}
-        for row, axis in enumerate(StickAxis, start=1):
-            ttk.Label(sticks, text=axis_names[axis]).grid(row=row, column=0, sticky="w", padx=4)
-            scale = tk.Scale(
-                sticks,
-                from_=-100,
-                to=100,
-                orient="horizontal",
-                length=260,
-                resolution=1,
-                command=lambda value, a=axis: self._on_stick(a, float(value)),  # type: ignore[misc]
-            )
-            scale.grid(row=row, column=1, sticky="ew")
-            show_tooltip(scale, _("Stick deflection in percent; it stays where you leave it. Press Esc to center all."))
-            scale.bind("<Escape>", lambda _event: self._center_all_sticks())
-            self._stick_scales[axis] = scale
-            center = ttk.Button(sticks, text=_("Center"), command=lambda a=axis: self._center_stick(a))  # type: ignore[misc]
-            center.grid(row=row, column=2, padx=4)
-        buttons = ttk.Frame(sticks)
-        buttons.grid(row=4, column=0, columnspan=3, sticky="w", pady=4)
-        center_all = ttk.Button(buttons, text=_("Center all"), command=self._center_all_sticks)
-        center_all.pack(side="left", padx=4)
-        show_tooltip(center_all, _("Return every simulated stick to neutral immediately."))
-        release = ttk.Button(buttons, text=_("Release to transmitter"), command=self._release_sticks)
-        release.pack(side="left", padx=4)
-        show_tooltip(release, _("Stop simulating sticks and give control back to the RC transmitter."))
 
     def _create_tilt_rotor_tab(self) -> None:
         tab = self._new_tab(_("4. Tilt rotors"))
@@ -473,8 +436,6 @@ class ControlSurfaceSetupView(ttk.Frame):
         if not ok:
             showerror(_("Servo power"), message + "\n" + _("The servos need battery power for this check."))
             return
-        if mode != PlaneMode.MANUAL:
-            self._release_sticks()
         if self._live(lambda: self.model.set_flight_mode(mode)):
             self._update_mode()
 
@@ -510,41 +471,6 @@ class ControlSurfaceSetupView(ttk.Frame):
             label.configure(text=_("Trim is more than 50 µs from 1500; adjust the linkage mechanically."))
         else:
             label.configure(text="")
-
-    def _on_stick(self, axis: StickAxis, percent: float) -> None:
-        self.model.set_stick_fraction(axis, percent / 100.0)
-        if percent != 0 or self.model.override_active:
-            self._send_override()
-
-    def _center_stick(self, axis: StickAxis) -> None:
-        self._stick_scales[axis].set(0)
-        self.model.set_stick_fraction(axis, 0.0)
-        if self.model.override_active:
-            self._send_override()
-
-    def _center_all_sticks(self) -> None:
-        for scale in self._stick_scales.values():
-            scale.set(0)
-        with suppress(ControlSurfaceSetupError):
-            self.model.center_sticks()
-
-    def _release_sticks(self) -> None:
-        cancel_plugin_timer(self, self._override_timer)
-        self._override_timer = None
-        for scale in self._stick_scales.values():
-            scale.set(0)
-        self.model.release_stick_override()
-
-    def _send_override(self) -> None:
-        cancel_plugin_timer(self, self._override_timer)
-        self._override_timer = None
-        try:
-            self.model.send_stick_override()
-        except ControlSurfaceSetupError as error:
-            logging_warning(_("Could not send simulated stick input: %(error)s"), {"error": error})
-            return
-        if self._active:
-            self._override_timer = self.after(OVERRIDE_PERIOD_MS, self._send_override)
 
     def _save(self, names: list[str], reason: str) -> None:
         result: SaveResult = self.model.save_parameters(names, reason)
@@ -608,7 +534,7 @@ class ControlSurfaceSetupView(ttk.Frame):
         self._battery_timer = self.after(BATTERY_PERIOD_MS, self._on_battery_timer)
 
     def _stop_timers(self) -> None:
-        for name in ("_telemetry_timer", "_override_timer", "_battery_timer"):
+        for name in ("_telemetry_timer", "_battery_timer"):
             cancel_plugin_timer(self, getattr(self, name))
             setattr(self, name, None)
 
@@ -624,31 +550,26 @@ class ControlSurfaceSetupView(ttk.Frame):
         self._on_battery_timer()
 
     def on_deactivate(self) -> None:
-        """Stop polling, release simulated sticks and restore the original flight mode."""
+        """Stop polling and restore the original flight mode."""
         self._active = False
         self._stop_timers()
-        for scale in self._stick_scales.values():
-            scale.set(0)
         try:
             self.model.shutdown()
         except Exception as error:  # pylint: disable=broad-exception-caught
             logging_warning(_("Control surface setup cleanup failed: %(error)s"), {"error": error})
 
     def on_suspend(self, reason: PluginPauseReason = PluginPauseReason.EXCLUSIVE_OPERATION) -> None:
-        """Yield the link; release simulated sticks for tools, send nothing during recovery."""
+        """Yield the link by stopping telemetry polling; no commands are sent while suspended."""
+        del reason  # Both pause reasons only need polling to stop.
         self._active = False
         self._stop_timers()
-        if reason is PluginPauseReason.EXCLUSIVE_OPERATION:
-            for scale in self._stick_scales.values():
-                scale.set(0)
-            self.model.release_stick_override()
 
     def on_resume(self) -> None:
-        """Resume telemetry polling without re-sending stick input."""
+        """Resume telemetry polling."""
         self.on_activate()
 
     def destroy(self) -> None:
-        """Clean up timers, overrides and flight-mode changes before destruction."""
+        """Clean up timers and flight-mode changes before destruction."""
         if self._active:
             self.on_deactivate()
         self._stop_timers()

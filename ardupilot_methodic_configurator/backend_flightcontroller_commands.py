@@ -639,12 +639,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
 
         return success, error_msg
 
-    # Flight mode, RC override and servo output telemetry - used by the control surface setup plugin
-
-    RC_OVERRIDE_CHANNEL_COUNT: ClassVar[int] = 18
-    RC_OVERRIDE_IGNORE: ClassVar[int] = 65535  # UINT16_MAX: leave this channel unchanged
-    RC_OVERRIDE_RELEASE_LOW: ClassVar[int] = 0  # channels 1-8: release the override back to the RC receiver
-    RC_OVERRIDE_RELEASE_HIGH: ClassVar[int] = 65534  # channels 9-18: release the override back to the RC receiver
+    # Flight mode and servo output telemetry - used by the control surface setup plugin
 
     def set_flight_mode(self, custom_mode: int) -> tuple[bool, str]:
         """
@@ -674,33 +669,6 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             error_msg = _("Flight mode change failed: %(error)s") % {"error": error_msg}
             logging_error(error_msg)
         return success, error_msg
-
-    def send_rc_channels_override(self, channel_pwm: dict[int, int]) -> tuple[bool, str]:
-        """
-        Send one RC_CHANNELS_OVERRIDE message.
-
-        ArduPilot drops overrides after RC_OVERRIDE_TIME seconds, so callers resend periodically.
-        Channels not in ``channel_pwm`` are left unchanged; a PWM of 0 releases that channel.
-
-        Args:
-            channel_pwm: Mapping of one-based RC channel numbers (1-18) to PWM values in microseconds
-
-        Returns:
-            tuple[bool, str]: (success, error_message)
-
-        """
-        if self.master is None:
-            return False, _("No flight controller connection available for RC override")
-        values = [self.RC_OVERRIDE_IGNORE] * self.RC_OVERRIDE_CHANNEL_COUNT
-        for channel, pwm in channel_pwm.items():
-            if not 1 <= channel <= self.RC_OVERRIDE_CHANNEL_COUNT:
-                return False, _("RC channel %(channel)d is outside the supported range 1-18") % {"channel": channel}
-            if pwm == 0:
-                values[channel - 1] = self.RC_OVERRIDE_RELEASE_LOW if channel <= 8 else self.RC_OVERRIDE_RELEASE_HIGH
-            else:
-                values[channel - 1] = int(pwm)
-        self.master.mav.rc_channels_override_send(self.master.target_system, self.master.target_component, *values)
-        return True, ""
 
     def request_servo_output_messages(self, interval_microseconds: int = 200_000) -> tuple[bool, str]:
         """Request the SERVO_OUTPUT_RAW stream; zero restores the firmware default interval."""

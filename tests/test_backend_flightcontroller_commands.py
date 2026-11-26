@@ -3511,31 +3511,6 @@ class TestControlSurfaceSetupCommands:
         assert not success
         assert error
 
-    def test_rc_override_sets_only_requested_channels(self) -> None:
-        """
-        Override only the simulated stick channels.
-
-        GIVEN stick channels 1, 2 and 4 and a released channel 10,
-        WHEN an override is sent,
-        THEN other channels are ignored and channel 10 uses the high-channel release value.
-        """
-        master = MagicMock(target_system=1, target_component=0)
-        assert self._commands(master).send_rc_channels_override({1: 1900, 2: 1500, 4: 0, 10: 0}) == (True, "")
-        values = master.mav.rc_channels_override_send.call_args.args[2:]
-        assert len(values) == 18
-        assert values[0] == 1900
-        assert values[1] == 1500
-        assert values[2] == 65535
-        assert values[3] == 0
-        assert values[9] == 65534
-
-    def test_rc_override_rejects_invalid_channel(self) -> None:
-        """GIVEN channel 19 WHEN sending an override THEN nothing is sent."""
-        master = MagicMock(target_system=1, target_component=0)
-        success, _error = self._commands(master).send_rc_channels_override({19: 1500})
-        assert not success
-        master.mav.rc_channels_override_send.assert_not_called()
-
     def test_servo_output_stream_is_requested(self) -> None:
         """GIVEN an acknowledging controller WHEN requesting servo telemetry THEN SERVO_OUTPUT_RAW is requested."""
         master = MagicMock(target_system=1, target_component=0)

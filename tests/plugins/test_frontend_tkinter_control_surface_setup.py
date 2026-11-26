@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2026 Allister779
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import tkinter as tk
 from collections.abc import Generator
 from tkinter import ttk
 from types import SimpleNamespace
@@ -57,11 +58,9 @@ def _model(*, tilt_rotor: bool = False) -> MagicMock:
     model.servo_endpoint.return_value = 1500
     model.trim_needs_mechanical_adjustment.side_effect = lambda trim: abs(trim - 1500) > 50
     model.rudder_mix_warning.return_value = ""
-    model.rc_override_warning.return_value = ""
     model.battery_voltage_status.return_value = (True, "Battery voltage 12.40V")
     model.current_mode_name.return_value = "FBWA"
     model.servo_pwm.return_value = 1510
-    model.override_active = False
     model.pending_reboot_parameters.return_value = []
     model.save_parameters.return_value = SaveResult(staged=["SERVO1_REVERSED"])
     return model
@@ -104,6 +103,34 @@ class TestLayout:
             view.destroy()
             parent.destroy()
 
+    def test_stick_tab_offers_fbwa_and_manual(self, view_env: SimpleNamespace) -> None:
+        """GIVEN the stick direction tab WHEN shown THEN FBWA and MANUAL buttons sit side by side."""
+        tab = view_env.view.nametowidget(view_env.view.notebook.tabs()[1])
+        labels = []
+
+        def collect(widget: object) -> None:
+            for child in widget.winfo_children():  # type: ignore[attr-defined]
+                if isinstance(child, ttk.Button):
+                    labels.append(child.cget("text"))
+                collect(child)
+
+        collect(tab)
+        assert labels[:2] == ["Switch to FBWA", "Switch to MANUAL"]
+
+    def test_trim_tab_has_no_simulated_sticks(self, view_env: SimpleNamespace) -> None:
+        """GIVEN the trim and travel tab WHEN shown THEN it has no slider widgets."""
+        tab = view_env.view.nametowidget(view_env.view.notebook.tabs()[2])
+        scales = []
+
+        def collect(widget: object) -> None:
+            for child in widget.winfo_children():  # type: ignore[attr-defined]
+                if isinstance(child, tk.Scale):
+                    scales.append(child)
+                collect(child)
+
+        collect(tab)
+        assert not scales
+
     def test_live_pwm_is_displayed(self, view_env: SimpleNamespace) -> None:
         """GIVEN telemetry WHEN the timer runs THEN the PWM labels show the output."""
         view_env.view._on_telemetry_timer()
@@ -142,16 +169,6 @@ class TestActions:
         view_env.view._update_trim_warning(AILERON)
         assert "50" in view_env.view._trim_warnings[1].cget("text")
 
-    def test_slider_sends_override_and_center_all_neutralises(self, view_env: SimpleNamespace) -> None:
-        """GIVEN a moved slider WHEN centring all THEN every slider returns to zero."""
-        view_env.view._on_stick(StickAxis.ROLL, 60)
-        view_env.model.set_stick_fraction.assert_called_with(StickAxis.ROLL, 0.6)
-        view_env.model.send_stick_override.assert_called()
-        view_env.view._stick_scales[StickAxis.ROLL].set(60)
-        view_env.view._center_all_sticks()
-        assert view_env.view._stick_scales[StickAxis.ROLL].get() == 0
-        view_env.model.center_sticks.assert_called_once()
-
     def test_save_refreshes_parameter_table(self, view_env: SimpleNamespace) -> None:
         """GIVEN a successful save THEN the user is informed and the table refreshes."""
         view_env.view._save(["SERVO1_REVERSED"], "reason")
@@ -175,17 +192,17 @@ class TestLifecycle:
         assert view_env.view._telemetry_timer is None
         assert view_env.view._battery_timer is None
 
-    def test_connection_recovery_sends_no_commands(self, view_env: SimpleNamespace) -> None:
-        """GIVEN connection recovery WHEN suspended THEN no override release is sent."""
-        view_env.view.on_suspend(PluginPauseReason.CONNECTION_RECOVERY)
-        view_env.model.release_stick_override.assert_not_called()
+    @pytest.mark.parametrize("reason", list(PluginPauseReason))
+    def test_suspend_stops_polling_without_commands_and_resume_restarts(
+        self, view_env: SimpleNamespace, reason: PluginPauseReason
+    ) -> None:
+        """GIVEN an active view WHEN suspended for any reason THEN polling stops, nothing is sent, and resume restarts it."""
+        view_env.view.on_suspend(reason)
+        assert view_env.view._telemetry_timer is None
+        view_env.model.set_flight_mode.assert_not_called()
+        view_env.model.shutdown.assert_not_called()
         view_env.view.on_resume()
         assert view_env.view._telemetry_timer is not None
-
-    def test_exclusive_operation_releases_sticks(self, view_env: SimpleNamespace) -> None:
-        """GIVEN an exclusive FC tool WHEN suspended THEN simulated sticks are released."""
-        view_env.view.on_suspend(PluginPauseReason.EXCLUSIVE_OPERATION)
-        view_env.model.release_stick_override.assert_called_once()
 
 
 class TestRegistration:  # pylint: disable=too-few-public-methods

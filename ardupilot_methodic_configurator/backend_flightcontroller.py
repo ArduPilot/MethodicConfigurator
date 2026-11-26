@@ -850,10 +850,6 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         """Request a vehicle-specific flight mode - delegates to commands manager."""
         return self._commands_manager.set_flight_mode(custom_mode)
 
-    def send_rc_channels_override(self, channel_pwm: dict[int, int]) -> tuple[bool, str]:
-        """Send one RC_CHANNELS_OVERRIDE message - delegates to commands manager."""
-        return self._commands_manager.send_rc_channels_override(channel_pwm)
-
     def request_servo_output_messages(self, interval_microseconds: int = 200_000) -> tuple[bool, str]:
         """Request SERVO_OUTPUT_RAW telemetry - delegates to commands manager."""
         return self._commands_manager.request_servo_output_messages(interval_microseconds)

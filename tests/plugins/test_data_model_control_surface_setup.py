@@ -47,15 +47,11 @@ def _fc_parameters() -> dict[str, float]:
         "RCMAP_ROLL": 1,
         "RCMAP_PITCH": 2,
         "RCMAP_YAW": 4,
-        "RC1_MIN": 1000,
-        "RC1_TRIM": 1500,
-        "RC1_MAX": 2000,
         "BATT_ARM_VOLT": 11.0,
         "Q_TILT_ENABLE": 1,
         "Q_TILT_MASK": 3,
         "Q_TILT_TYPE": 0,
         "KFF_RDDRMIX": 0.5,
-        "SYSID_MYGCS": 255,
     }
 
 
@@ -67,7 +63,6 @@ def flight_controller() -> MagicMock:
     fc.fc_parameters = _fc_parameters()
     fc.set_param.return_value = (True, "")
     fc.set_flight_mode.return_value = (True, "")
-    fc.send_rc_channels_override.return_value = (True, "")
     fc.request_servo_output_messages.return_value = (True, "")
     fc.is_battery_monitoring_enabled.return_value = True
     fc.request_periodic_battery_status.return_value = (True, "")
@@ -207,35 +202,6 @@ class TestLiveAdjustments:
         flight_controller.master = None
         with pytest.raises(ControlSurfaceSetupError):
             model.write_parameter("SERVO1_TRIM", 1500)
-
-
-class TestSimulatedSticks:
-    """Sliders send RC overrides scaled to the RC calibration."""
-
-    def test_full_right_roll_uses_rc_max(self, model: ControlSurfaceSetupDataModel, flight_controller: MagicMock) -> None:
-        """GIVEN RC1 1000..2000 WHEN roll slider at +100 % THEN RC1 override is 2000 and others centred."""
-        model.set_stick_fraction(StickAxis.ROLL, 1.0)
-        model.send_stick_override()
-        channels = flight_controller.send_rc_channels_override.call_args.args[0]
-        assert channels == {1: 2000, 2: 1500, 4: 1500}
-        assert model.override_active
-
-    def test_half_left_roll_scales_below_trim(self, model: ControlSurfaceSetupDataModel) -> None:
-        """GIVEN RC1 1000..2000 WHEN roll at -50 % THEN PWM is 1250."""
-        model.set_stick_fraction(StickAxis.ROLL, -0.5)
-        assert model.stick_pwm(StickAxis.ROLL) == 1250
-
-    def test_release_hands_channels_back(self, model: ControlSurfaceSetupDataModel, flight_controller: MagicMock) -> None:
-        """GIVEN an active override WHEN released THEN zero is sent for each stick channel."""
-        model.send_stick_override()
-        model.release_stick_override()
-        assert flight_controller.send_rc_channels_override.call_args.args[0] == {1: 0, 2: 0, 4: 0}
-        assert not model.override_active
-
-    def test_other_gcs_id_is_flagged(self, model: ControlSurfaceSetupDataModel) -> None:
-        """GIVEN SYSID_MYGCS=254 WHEN checking THEN the user is warned overrides will be ignored."""
-        model.flight_controller.fc_parameters["SYSID_MYGCS"] = 254
-        assert "SYSID_MYGCS" in model.rc_override_warning()
 
 
 class TestTiltRotor:
