@@ -22,10 +22,25 @@ cancelled.
   parameter editor.
 - Two step workflow consisting of an instructions popup
   followed by the calibration progress popup.
+- Requests `MAG_CAL_PROGRESS` and `MAG_CAL_REPORT` at 5 Hz with `MAV_CMD_SET_MESSAGE_INTERVAL` before starting.
+  The plugin queries each current interval with `MAV_CMD_REQUEST_MESSAGE` and falls back to
+  [`MAV_CMD_GET_MESSAGE_INTERVAL`][copter-legacy-interval] for older firmware.
+  Both messages belong to ArduPilot's `EXTRA3` stream. The default stream rate is 0 Hz on
+  [Copter][copter-extra3], 1 Hz on [Plane][plane-extra3] and [Rover][rover-extra3], and 3 Hz on [Sub][sub-extra3].
+  Requesting the messages independently keeps the popup updated even when that stream is disabled.
+  On completion, successful cancellation, startup failure, or teardown, the plugin restores each captured interval.
+  If both queries fail, it still requests 5 Hz and uses the firmware default when restoring that message.
+  A set-command timeout triggers restoration because the controller may have applied the interval before its acknowledgment was lost.
 - Sends `MAV_CMD_DO_START_MAG_CAL`.
 - Sends `MAV_CMD_DO_CANCEL_MAG_CAL`.
 - Cancel Calibration button available throughout the
   calibration process.
+
+[copter-extra3]: https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/ArduCopter/GCS_Mavlink.cpp#L465
+[copter-legacy-interval]: https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/libraries/GCS_MAVLink/GCS_Common.cpp#L5626
+[plane-extra3]: https://github.com/ArduPilot/ardupilot/blob/Plane-4.6.3/ArduPlane/GCS_Mavlink.cpp#L590
+[rover-extra3]: https://github.com/ArduPilot/ardupilot/blob/Rover-4.6.3/Rover/GCS_Mavlink.cpp#L574
+[sub-extra3]: https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/ArduSub/GCS_Mavlink.cpp#L339
 
 ### Real Time Progress Monitoring
 

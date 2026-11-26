@@ -476,6 +476,7 @@ class CompassCalibrationView(ttk.Frame):
         try:
             if self._calibration_active:
                 self.model.cancel_calibration()
+            self.model.finish_calibration()
             if self._calibration_popup is not None:
                 with suppress(tk.TclError):
                     self._calibration_popup.destroy()

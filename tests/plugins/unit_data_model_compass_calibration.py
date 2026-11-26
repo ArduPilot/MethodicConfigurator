@@ -16,6 +16,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from unittest.mock import MagicMock
 
 import pytest
+from pymavlink import mavutil
 
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.plugins.data_model_compass_calibration import CompassCalibrationDataModel
@@ -30,6 +31,8 @@ def connected_flight_controller() -> MagicMock:
     fc.master = MagicMock()
     fc.fc_parameters = {"COMPASS_ENABLE": 1, "COMPASS_USE": 1, "COMPASS_USE2": 0, "COMPASS_USE3": 0}
 
+    fc.get_message_interval.return_value = 500_000
+    fc.set_message_interval.return_value = (True, "", False)
     fc.start_compass_calibration.return_value = (True, "")
     fc.cancel_compass_calibration.return_value = (True, "")
     fc.get_compass_calibration_progress.return_value = [{"type": "PROGRESS", "compass_id": 0, "completion_pct": 50}]
@@ -337,6 +340,112 @@ class TestCompassCalibrationWithConnectedFlightController:
         assert "No active compasses" in error_msg
         connected_flight_controller.start_compass_calibration.assert_not_called()
         assert connected_compass_calibration_model._is_calibrating is False
+
+    def test_calibration_restores_each_prior_interval_and_retries_only_failures(
+        self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock
+    ) -> None:
+        """Different previous rates survive calibration, including a failed first restore."""
+        progress = mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_PROGRESS
+        report = mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_REPORT
+        connected_flight_controller.get_message_interval.side_effect = [500_000, -1]
+        connected_flight_controller.set_message_interval.side_effect = [
+            (True, "", False),
+            (True, "", False),
+            (False, "timeout", False),
+            (True, "", False),
+            (True, "", False),
+        ]
+        connected_compass_calibration_model.start_calibration()
+        connected_compass_calibration_model.cancel_calibration()
+        connected_compass_calibration_model.finish_calibration()
+        assert connected_flight_controller.set_message_interval.call_args_list == [
+            ((progress, 200_000), {}),
+            ((report, 200_000), {}),
+            ((progress, 500_000), {}),
+            ((report, -1), {}),
+            ((progress, 500_000), {}),
+        ]
+
+    def test_start_is_refused_when_progress_telemetry_cannot_be_requested(
+        self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock
+    ) -> None:
+        """Without MAG_CAL_PROGRESS the popup would never update, so calibration must not start."""
+        progress = mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_PROGRESS
+        connected_flight_controller.set_message_interval.return_value = (False, "denied", True)
+
+        success, _error = connected_compass_calibration_model.start_calibration()
+
+        assert not success
+        connected_flight_controller.start_compass_calibration.assert_not_called()
+        connected_flight_controller.set_message_interval.assert_called_once_with(progress, 200_000)
+
+    def test_startup_restores_both_rates_when_the_report_interval_ack_is_lost(
+        self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock
+    ) -> None:
+        """The controller may have applied the report rate before its ACK timed out."""
+        progress = mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_PROGRESS
+        report = mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_REPORT
+        connected_flight_controller.get_message_interval.side_effect = [500_000, -1]
+        connected_flight_controller.set_message_interval.side_effect = [
+            (True, "", False),
+            (False, "timeout", False),
+            (True, "", False),
+            (True, "", False),
+        ]
+
+        success, _error = connected_compass_calibration_model.start_calibration()
+
+        assert not success
+        connected_flight_controller.start_compass_calibration.assert_not_called()
+        assert connected_flight_controller.set_message_interval.call_args_list == [
+            ((progress, 200_000), {}),
+            ((report, 200_000), {}),
+            ((progress, 500_000), {}),
+            ((report, -1), {}),
+        ]
+
+    def test_unknown_interval_uses_firmware_default_on_restore(
+        self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock
+    ) -> None:
+        """Calibration requests both streams and restores a known rate alongside an unknown rate."""
+        progress = mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_PROGRESS
+        report = mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_REPORT
+        connected_flight_controller.get_message_interval.side_effect = [None, 500_000]
+
+        assert connected_compass_calibration_model.start_calibration()[0]
+        connected_compass_calibration_model.finish_calibration()
+
+        assert connected_flight_controller.set_message_interval.call_args_list == [
+            ((progress, 200_000), {}),
+            ((report, 200_000), {}),
+            ((progress, 0), {}),
+            ((report, 500_000), {}),
+        ]
+
+    def test_pending_restore_does_not_block_calibration_on_a_new_connection(
+        self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock
+    ) -> None:
+        """A restore that failed on a previous link is discarded, so calibration can start on the new link."""
+        progress = mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_PROGRESS
+        report = mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_REPORT
+        connected_flight_controller.set_message_interval.side_effect = [
+            (True, "", False),
+            (True, "", False),
+            (False, "timeout", False),
+            (True, "", False),
+            (True, "", False),
+            (True, "", False),
+        ]
+        connected_compass_calibration_model.start_calibration()
+        connected_compass_calibration_model.finish_calibration()
+        connected_flight_controller.master = MagicMock()
+        calls_before_reconnect = connected_flight_controller.set_message_interval.call_count
+
+        assert connected_compass_calibration_model.start_calibration() == (True, "")
+        assert connected_flight_controller.set_message_interval.call_args_list[calls_before_reconnect:] == [
+            ((progress, 200_000), {}),
+            ((report, 200_000), {}),
+        ]
 
     def test_user_can_cancel_calibration_successfully(
         self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock

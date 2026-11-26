@@ -16,7 +16,7 @@ import tkinter as tk
 from collections.abc import Generator
 from types import MethodType, SimpleNamespace
 from typing import cast
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 from pytest_mock import MockerFixture
@@ -392,24 +392,31 @@ def test_compass_calibration_keeps_navigation_locked_until_the_popup_itself_clos
     assert not context.view._calibration_active
 
 
-def test_leaving_compass_calibration_cancels_the_session_and_closes_owned_windows(compass_session: SimpleNamespace) -> None:
+@pytest.mark.parametrize("cancel_result", [(True, "Cancelled"), (False, "Command denied")], ids=["accepted", "refused"])
+def test_leaving_compass_calibration_cleans_up_even_if_cancellation_fails(
+    compass_session: SimpleNamespace, cancel_result: tuple[bool, str]
+) -> None:
     """
     Clean up active compass calibration when the plugin is removed.
 
     GIVEN: A calibration progress window and an instructions window belong to the view
     WHEN: The view is destroyed
-    THEN: Cancellation is requested, both windows close and navigation is released
+    THEN: The model cleans up after the cancel attempt, both windows close and navigation is released
     """
     # Given: A real active view with two owned windows.
     context = compass_session
+    context.model.cancel_calibration.return_value = cancel_result
     context.view._begin_calibration()
     instructions = tk.Toplevel(context.popup.root.master)
     instructions.withdraw()
     context.view._instructions_popup = SimpleNamespace(root=instructions)
+    calls = MagicMock()
+    calls.attach_mock(context.model.cancel_calibration, "cancel")
+    calls.attach_mock(context.model.finish_calibration, "finish")
     # When: Leave the configuration step.
     context.view.destroy()
     # Then: All owned windows and the session lock are released.
-    context.model.cancel_calibration.assert_called_once_with()
+    assert calls.mock_calls == [call.cancel(), call.finish()]
     assert not instructions.winfo_exists()
     assert not context.popup.root.winfo_exists()
     assert not context.host.navigation_lock.locked
