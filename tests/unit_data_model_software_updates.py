@@ -404,7 +404,7 @@ class TestInstallMacos:
         with (
             patch(
                 "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release",
-                return_value=0,
+                return_value=True,
             ) as mock_pip,
             patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info"),
         ):
@@ -416,7 +416,7 @@ class TestInstallMacos:
         with (
             patch(
                 "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release",
-                return_value=1,
+                return_value=False,
             ),
             patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info"),
         ):
@@ -454,7 +454,9 @@ def test_update_manager_perform_download_linux(update_manager) -> None:  # pylin
 
     with (
         patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Linux"),
-        patch("ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release", return_value=0),
+        patch(
+            "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release", return_value=True
+        ),
     ):
         assert update_manager._perform_download(latest_release) is True
 
@@ -531,8 +533,8 @@ def test_update_manager_perform_download_linux_failure(update_manager) -> None: 
     with (
         patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Linux"),
         patch(
-            "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release", return_value=1
-        ),  # Non-zero exit code
+            "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release", return_value=False
+        ),  # Failed install
     ):
         assert update_manager._perform_download(latest_release) is False
 
@@ -543,7 +545,9 @@ def test_update_manager_perform_download_mac(update_manager) -> None:  # pylint:
 
     with (
         patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Darwin"),
-        patch("ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release", return_value=0),
+        patch(
+            "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release", return_value=True
+        ),
         patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info"),
     ):
         assert update_manager._perform_download(latest_release) is True

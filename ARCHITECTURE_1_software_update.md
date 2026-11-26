@@ -119,9 +119,10 @@ Legend:
   - `download_file_from_url()`: File download with retry, resume, and progress tracking
   - `_validate_github_url()`: Shared URL whitelist validation (GitHub HTTPS only)
   - `_validate_download_file()`: Shared file size, optional magic bytes, and permission validation
-  - `download_and_install_on_windows()`: Windows `.exe` installer with PE header and integrity validation
-  - `download_and_install_on_macos()`: macOS `.dmg` installer — mount, copy `.app`, unmount
-  - `download_and_install_pip_release()`: Linux pip/uv installation from PyPI
+  - `_download_and_verify_installer()`: Shared download, SHA256 check, and file validation for the Windows and macOS installers. Progress is 0.0-100.0
+  - `download_and_install_on_windows()`: Windows `.exe` installer: runs the shared stage with PE header check, then launches it via a batch file
+  - `download_and_install_on_macos()`: macOS `.dmg` installer: runs the shared stage, then mounts, copies `.app`, and unmounts
+  - `download_and_install_pip_release()`: Linux pip/uv installation from PyPI, returns `bool`
 
 - **Actual Dependencies**:
   - `httpx2` with SSL verification and proxy support ✅
@@ -161,6 +162,7 @@ Legend:
    - **macOS**: Downloads `.dmg` with SHA256 verification, mounts with `hdiutil`, copies `.app` bundle to `/Applications` using `ditto`, then unmounts
    - **Linux**: Installs via pip/uv from PyPI
    - ✅ Progress callback provides real-time feedback during download
+   - ✅ Post-download steps (checksum, file validation, install) keep progress at 100% with a status message, so the progress bar never drops back
    - ✅ SHA256 integrity validation of downloaded files (when checksums available)
    - ✅ File format validation (PE headers for .exe, ZIP headers for .whl)
    - ✅ Automatic cleanup of invalid downloads

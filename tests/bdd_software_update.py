@@ -208,7 +208,7 @@ class TestLinuxMacUserInstallsUpdate:  # pylint: disable=too-few-public-methods
         """
         # Arrange
         mock_platform.return_value = "Linux"
-        mock_pip.return_value = 0  # Success
+        mock_pip.return_value = True  # Success
 
         # Act
         result = update_manager._perform_download(mock_release_info)

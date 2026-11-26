@@ -355,7 +355,7 @@ class TestAcceptanceInstallationProcess:
         result = download_and_install_pip_release()
 
         # Assert
-        assert result == 0
+        assert result is True
         mock_check_call.assert_called_once()
         call_args = mock_check_call.call_args[0][0]
         assert "pip" in call_args

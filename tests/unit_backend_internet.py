@@ -13,7 +13,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from typing import Any
 from unittest.mock import Mock, patch
 
@@ -24,6 +24,7 @@ from httpx2 import HTTPStatusError as httpx2_HTTPStatusError
 from httpx2 import ReadTimeout as httpx2_ReadTimeout
 
 from ardupilot_methodic_configurator.backend_internet import (
+    _download_and_verify_installer,
     _install_app_from_mount,
     _mount_dmg,
     _unmount_dmg,
@@ -183,7 +184,7 @@ def test_download_and_install_windows_download_failure(mock_download) -> None:
 @patch("subprocess.check_call")
 def test_download_and_install_pip_release(mock_check_call, mock_which) -> None:
     mock_check_call.return_value = 0
-    assert download_and_install_pip_release() == 0
+    assert download_and_install_pip_release() is True
     mock_which.assert_called_once_with("uv")
 
     # Verify pip was called
@@ -196,7 +197,7 @@ def test_download_and_install_pip_release(mock_check_call, mock_which) -> None:
 @patch("subprocess.check_call")
 def test_download_and_install_pip_release_with_uv(mock_check_call, mock_which) -> None:
     mock_check_call.return_value = 0
-    assert download_and_install_pip_release() == 0
+    assert download_and_install_pip_release() is True
     mock_which.assert_called_once_with("uv")
 
     # Verify uv was called
@@ -410,8 +411,8 @@ class TestInstallAppFromMount:
         assert progress.call_count == 2
         first_call_progress = progress.call_args_list[0][0][0]
         last_call_progress = progress.call_args_list[-1][0][0]
-        assert first_call_progress == 60.0  # "Installing..." message at 60% of second phase
-        assert last_call_progress == 80.0  # "App installed" message at 80% of second phase
+        assert first_call_progress == 100.0  # "Installing..." status is held at 100% after the download
+        assert last_call_progress == 100.0  # "App installed" status is held at 100% after the download
 
     @patch("ardupilot_methodic_configurator.backend_internet.subprocess.check_call")
     @patch("ardupilot_methodic_configurator.backend_internet.os.listdir")
@@ -521,6 +522,93 @@ class TestDownloadAndInstallOnMacos:
         macos_happy_path["sha256"].assert_called_once()
         # Second positional arg is expected_sha256
         assert sha in macos_happy_path["sha256"].call_args[0]
+
+
+class TestDownloadAndVerifyInstaller:
+    """Tests for the shared download, checksum and file validation stage."""
+
+    def test_rejects_non_github_url_without_downloading(self) -> None:
+        with patch("ardupilot_methodic_configurator.backend_internet.download_file_from_url") as mock_dl:
+            assert not _download_and_verify_installer("https://evil.com/app.exe", "dest.exe", None, None)
+        mock_dl.assert_not_called()
+
+    def test_returns_false_when_download_fails(self) -> None:
+        with (
+            patch("ardupilot_methodic_configurator.backend_internet.download_file_from_url", return_value=False),
+            patch("ardupilot_methodic_configurator.backend_internet._verify_installer_integrity") as mock_sha,
+            patch("ardupilot_methodic_configurator.backend_internet._validate_download_file") as mock_validate,
+        ):
+            assert not _download_and_verify_installer(GITHUB_DOWNLOAD_URL, "dest.exe", None, None)
+        mock_sha.assert_not_called()
+        mock_validate.assert_not_called()
+
+    def test_returns_false_when_sha256_mismatch(self) -> None:
+        with (
+            patch("ardupilot_methodic_configurator.backend_internet.download_file_from_url", return_value=True),
+            patch("ardupilot_methodic_configurator.backend_internet._verify_installer_integrity", return_value=False),
+            patch("ardupilot_methodic_configurator.backend_internet._validate_download_file") as mock_validate,
+        ):
+            assert not _download_and_verify_installer(GITHUB_DOWNLOAD_URL, "dest.exe", None, "deadbeef")
+        mock_validate.assert_not_called()
+
+    def test_returns_false_when_file_validation_fails(self) -> None:
+        with (
+            patch("ardupilot_methodic_configurator.backend_internet.download_file_from_url", return_value=True),
+            patch("ardupilot_methodic_configurator.backend_internet._verify_installer_integrity", return_value=True),
+            patch("ardupilot_methodic_configurator.backend_internet._validate_download_file", return_value=False),
+        ):
+            assert not _download_and_verify_installer(GITHUB_DOWNLOAD_URL, "dest.exe", None, None)
+
+    def test_passes_magic_bytes_to_file_validation(self) -> None:
+        with (
+            patch("ardupilot_methodic_configurator.backend_internet.download_file_from_url", return_value=True),
+            patch("ardupilot_methodic_configurator.backend_internet._verify_installer_integrity", return_value=True),
+            patch(
+                "ardupilot_methodic_configurator.backend_internet._validate_download_file", return_value=True
+            ) as mock_validate,
+        ):
+            assert _download_and_verify_installer(
+                GITHUB_DOWNLOAD_URL, "dest.exe", None, None, magic_bytes=b"MZ", magic_error_msg="not an exe"
+            )
+        mock_validate.assert_called_once_with("dest.exe", magic_bytes=b"MZ", magic_error_msg="not an exe")
+
+    def test_reports_100_percent_after_download_completes(self) -> None:
+        progress = Mock()
+        with (
+            patch("ardupilot_methodic_configurator.backend_internet.download_file_from_url", return_value=True) as mock_dl,
+            patch("ardupilot_methodic_configurator.backend_internet._verify_installer_integrity", return_value=True),
+            patch("ardupilot_methodic_configurator.backend_internet._validate_download_file", return_value=True),
+        ):
+            assert _download_and_verify_installer(GITHUB_DOWNLOAD_URL, "dest.exe", progress, None)
+        assert mock_dl.call_args.kwargs["progress_callback"] is progress
+        assert progress.call_count == 2
+        assert all(call.args[0] == 100.0 for call in progress.call_args_list)
+
+
+def test_windows_install_progress_does_not_drop_after_download() -> None:
+    """Given a download that reports 0-100%, the post-download steps keep the progress at 100%."""
+
+    def fake_download(_url: str, _dest: str, *, progress_callback: Callable[[float, str], None], **_kwargs: object) -> bool:
+        progress_callback(0.0, "Downloading...")
+        progress_callback(50.0, "Downloading...")
+        progress_callback(100.0, "Download complete")
+        return True
+
+    progress = Mock()
+    with (
+        patch("ardupilot_methodic_configurator.backend_internet.download_file_from_url", side_effect=fake_download),
+        patch("ardupilot_methodic_configurator.backend_internet._verify_installer_integrity", return_value=True),
+        patch("ardupilot_methodic_configurator.backend_internet._validate_download_file", return_value=True),
+        patch(
+            "ardupilot_methodic_configurator.backend_internet._create_installer_batch_file", return_value="run_installer.bat"
+        ),
+        patch("ardupilot_methodic_configurator.backend_internet._launch_installer_and_exit") as mock_launch,
+    ):
+        download_and_install_on_windows(GITHUB_DOWNLOAD_URL, "installer.exe", progress_callback=progress)
+
+    reported = [call.args[0] for call in progress.call_args_list]
+    assert reported == [0.0, 50.0, 100.0, 100.0, 100.0, 100.0]
+    mock_launch.assert_called_once()
 
 
 class TestDownloadFile:

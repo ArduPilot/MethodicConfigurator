@@ -114,7 +114,7 @@ class UpdateManager:
         asset = _find_asset(latest_release.get("assets", []), ".dmg")
         if asset is None:
             logging_info(_("No DMG asset found for macOS, falling back to pip installation"))
-            return download_and_install_pip_release(progress_callback=progress_callback) == 0
+            return download_and_install_pip_release(progress_callback=progress_callback)
         return _install_from_asset(asset, latest_release, download_and_install_on_macos, progress_callback)
 
     def _perform_download(
@@ -128,7 +128,7 @@ class UpdateManager:
         }
         handler = handlers.get(
             platform.system(),
-            lambda: download_and_install_pip_release(progress_callback=progress_callback) == 0,
+            lambda: download_and_install_pip_release(progress_callback=progress_callback),
         )
         try:
             return handler()

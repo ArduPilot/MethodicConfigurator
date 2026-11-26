@@ -387,6 +387,42 @@ def _validate_download_file(path: str, magic_bytes: bytes | None = None, magic_e
         return False
 
 
+def _download_and_verify_installer(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    download_url: str,
+    dest_path: str,
+    progress_callback: Callable[[float, str], None] | None,
+    expected_sha256: str | None,
+    magic_bytes: bytes | None = None,
+    magic_error_msg: str = "",
+) -> bool:
+    """
+    Gate the URL, download the installer to dest_path and verify it.
+
+    Shared by the platform installers. Progress is reported in percent (0.0-100.0): the download
+    drives the progress bar from 0 to 100, and the post-download checks keep it at 100 with a status message.
+    """
+    if not _validate_github_url(download_url):
+        return False
+
+    if not download_file_from_url(
+        download_url,
+        dest_path,
+        timeout=60,  # Increased timeout for large files
+        progress_callback=progress_callback,
+    ):
+        logging_error(_("Failed to download installer from %s"), download_url)
+        return False
+
+    if progress_callback:
+        progress_callback(100.0, _("Verifying checksum..."))
+    if not _verify_installer_integrity(dest_path, expected_sha256):
+        return False
+
+    if progress_callback:
+        progress_callback(100.0, _("Validating file..."))
+    return _validate_download_file(dest_path, magic_bytes=magic_bytes, magic_error_msg=magic_error_msg)
+
+
 def _create_installer_batch_file(temp_dir: str, installer_path: str) -> str:
     """Create a batch file to run the installer after the process exits."""
     batch_file_path = os.path.join(temp_dir, "run_installer.bat")
@@ -414,7 +450,7 @@ def _launch_installer_and_exit(batch_file_path: str, progress_callback: Callable
 
     # Signal to the main application that it should exit
     if progress_callback:
-        progress_callback(1.0, _("Installation ready. Application will restart now."))
+        progress_callback(100.0, _("Installation ready. Application will restart now."))
 
     # Ensure logs are flushed before exit
     logging_shutdown()
@@ -443,7 +479,7 @@ def download_and_install_on_windows(
         download_url: The URL from which to download the installer
         file_name: The name to save the downloaded file as
         progress_callback: Optional callback function to report progress
-                          Takes two arguments: progress (0.0-1.0) and status message
+                          Takes two arguments: progress (0.0-100.0) and status message
         expected_sha256: Optional SHA256 hex digest expected for the downloaded installer. If provided,
             the downloaded file will be verified and the install will be aborted on mismatch.
 
@@ -452,40 +488,24 @@ def download_and_install_on_windows(
               the application will exit and never return from this function)
 
     """
-    # Validate URL is from trusted GitHub source
-    if not _validate_github_url(download_url):
-        return False
-
     logging_info(_("Downloading and installing new version for Windows..."))
 
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = os.path.join(temp_dir, file_name)
 
-            # Download with progress updates
-            if not download_file_from_url(
+            if not _download_and_verify_installer(
                 download_url,
                 temp_path,
-                timeout=60,  # Increased timeout for large files
-                progress_callback=progress_callback,
-            ):
-                logging_error(_("Failed to download installer from %s"), download_url)
-                return False
-
-            # Verify SHA256 checksum if provided
-            if not _verify_installer_integrity(temp_path, expected_sha256):
-                return False
-
-            # Validate file size, PE signature, and set secure permissions
-            if not _validate_download_file(
-                temp_path,
+                progress_callback,
+                expected_sha256,
                 magic_bytes=PE_MAGIC_BYTES,
                 magic_error_msg=str(_("Downloaded installer does not appear to be a Windows executable")),
             ):
                 return False
 
             if progress_callback:
-                progress_callback(0.0, _("Starting installation..."))
+                progress_callback(100.0, _("Starting installation..."))
 
             # Create batch file to run installer after exit
             batch_file_path = _create_installer_batch_file(temp_dir, temp_path)
@@ -537,13 +557,13 @@ def _install_app_from_mount(mount_point: str, progress_callback: Callable[[float
         dest = os.path.join("/Applications", app_name)
 
         if progress_callback:
-            progress_callback(60.0, _("Installing {}...").format(app_name))
+            progress_callback(100.0, _("Installing {}...").format(app_name))
 
         # Use ditto to preserve metadata, resource forks, and extended attributes
         subprocess.check_call(["ditto", app_path, dest])  # noqa: S603, S607
 
         if progress_callback:
-            progress_callback(80.0, _("App installed"))
+            progress_callback(100.0, _("App installed"))
 
         return True
     except subprocess.CalledProcessError as e:
@@ -569,7 +589,7 @@ def _mount_and_install_dmg(
 ) -> bool:
     """Mount the DMG at temp_path, install the .app to /Applications, then unmount."""
     if progress_callback:
-        progress_callback(40.0, _("Mounting DMG..."))
+        progress_callback(100.0, _("Mounting DMG..."))
 
     mount_point = _mount_dmg(temp_path)
     if not mount_point:
@@ -596,8 +616,8 @@ def download_and_install_on_macos(
     """
     Download and install a new version of the application on macOS via DMG.
 
-    This function orchestrates the complete update process: URL validation, download,
-    integrity check, DMG mount, app copy, and unmount.
+    This function orchestrates the complete update process: download and verification via the shared
+    installer stage, DMG mount, app copy, and unmount.
 
     Args:
         download_url: The URL from which to download the DMG installer
@@ -611,35 +631,13 @@ def download_and_install_on_macos(
         bool: True if installation completed successfully, False otherwise
 
     """
-    if not _validate_github_url(download_url):
-        return False
-
     logging_info(_("Downloading and installing new version for macOS..."))
 
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = os.path.join(temp_dir, file_name)
 
-            # Download with progress updates
-            if not download_file_from_url(
-                download_url,
-                temp_path,
-                timeout=60,  # Increased timeout for large files
-                progress_callback=progress_callback,
-            ):
-                logging_error(_("Failed to download DMG from %s"), download_url)
-                return False
-
-            # Verify SHA256 checksum if provided
-            if progress_callback:
-                progress_callback(0.0, _("Verifying checksum..."))
-            if not _verify_installer_integrity(temp_path, expected_sha256):
-                return False
-
-            # Validate file size and set secure permissions (no magic bytes check for DMG)
-            if progress_callback:
-                progress_callback(20.0, _("Validating file..."))
-            if not _validate_download_file(temp_path):
+            if not _download_and_verify_installer(download_url, temp_path, progress_callback, expected_sha256):
                 return False
 
             return _mount_and_install_dmg(temp_path, progress_callback)
@@ -649,8 +647,8 @@ def download_and_install_on_macos(
     return False
 
 
-def download_and_install_pip_release(progress_callback: Callable[[float, str], None] | None = None) -> int:
-    """Download and install the latest release via pip/uv from PyPI."""
+def download_and_install_pip_release(progress_callback: Callable[[float, str], None] | None = None) -> bool:
+    """Download and install the latest release via pip/uv from PyPI. Returns True on success."""
     if progress_callback:
         progress_callback(0.0, _("Starting installation..."))
 
@@ -686,21 +684,21 @@ def download_and_install_pip_release(progress_callback: Callable[[float, str], N
         ]
 
     try:
-        ret = subprocess.check_call(cmd)  # noqa: S603
+        subprocess.check_call(cmd)  # noqa: S603
     except subprocess.CalledProcessError as e:
         logging_error(_("Installation command failed: {}").format(e))
-        return e.returncode
+        return False
     except FileNotFoundError as e:
         if uv_path:
             logging_error(_("uv not found at expected path: {}").format(e))
         else:
             logging_error(_("pip module not available. Please install pip or uv: {}").format(e))
-        return 1
+        return False
 
-    if ret == 0 and progress_callback:
+    if progress_callback:
         progress_callback(100.0, _("Download complete"))
 
-    return ret
+    return True
 
 
 def _compute_sha256(path: str) -> str:
