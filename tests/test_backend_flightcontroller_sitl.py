@@ -56,6 +56,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavlink im
 from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerFiles, LastLogDownloadResult
 from ardupilot_methodic_configurator.backend_mavftp import FtpError
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
+from ardupilot_methodic_configurator.plugins.data_model_compass_calibration import CompassCalibrationDataModel
 
 if TYPE_CHECKING:
     from conftest import SITLManager
@@ -1949,6 +1950,52 @@ def test_add_connection_to_connection_list(sitl_manager: "SITLManager") -> None:
 
     # Then: Should reject duplicate
     assert result2 is False
+
+
+@pytest.mark.integration
+@pytest.mark.sitl
+def test_user_can_start_compass_calibration_without_enabling_extra3_stream(sitl_flight_controller: FlightController) -> None:
+    """
+    The compass calibration model enables progress on SITL and restores both rates on cancellation.
+
+    GIVEN: SITL with progress disabled by the default EXTRA3 rate and a custom report rate
+    WHEN: The model starts calibration and polls for updates
+    THEN: Both streams run at 5 Hz and the model receives a progress update
+    AND: Cancelling through the model restores each prior interval
+    """
+    sitl_flight_controller.download_params()
+    model = CompassCalibrationDataModel(sitl_flight_controller)
+    progress_id = mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_PROGRESS
+    report_id = mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_REPORT
+    assert sitl_flight_controller.get_message_interval(progress_id) == -1
+    original_report_interval = sitl_flight_controller.get_message_interval(report_id)
+    assert original_report_interval is not None
+
+    try:
+        success, error_msg, _rejected = sitl_flight_controller.set_message_interval(report_id, 500_000)
+        assert success, error_msg
+        try:
+            success, error_msg = model.start_calibration()
+            assert success, error_msg
+            assert sitl_flight_controller.get_message_interval(progress_id) == 200_000
+            assert sitl_flight_controller.get_message_interval(report_id) == 200_000
+
+            deadline = time.monotonic() + 5.0
+            while time.monotonic() < deadline:
+                if any(update["type"] == "PROGRESS" for update in model.get_progress()):
+                    break
+                time.sleep(0.2)
+            else:
+                pytest.fail("The calibration model received no progress updates from SITL")
+        finally:
+            cancel_success, cancel_error = model.cancel_calibration()
+
+        assert cancel_success, cancel_error
+        assert sitl_flight_controller.get_message_interval(progress_id) == -1
+        assert sitl_flight_controller.get_message_interval(report_id) == 500_000
+    finally:
+        model.finish_calibration()
+        sitl_flight_controller.set_message_interval(report_id, original_report_interval)
 
 
 if __name__ == "__main__":

@@ -5858,6 +5858,18 @@ def test_close_during_recovery_keeps_tk_responsive_until_worker_yields(monitored
     editor.parameter_editor.handle_write_changes_workflow.assert_called_once()
 
 
+def test_close_tears_down_plugin_before_quitting(monitored_editor: ParameterEditorWindow) -> None:
+    """The plugin can cancel its operation while the controller is still connected."""
+    editor = monitored_editor
+    plugin = MagicMock()
+    editor.current_plugin_view = plugin
+    order = MagicMock()
+    order.attach_mock(plugin.destroy, "destroy")
+    order.attach_mock(editor.root.quit, "quit")
+    editor.close_connection_and_quit()
+    assert [call[0] for call in order.mock_calls] == ["destroy", "quit"]
+
+
 def test_inspector_disables_plugin_controls_without_a_modal_grab(monitored_editor: ParameterEditorWindow, root: tk.Tk) -> None:
     """GIVEN macOS permits input outside the inspector, WHEN it opens, THEN plugin controls stay disabled until it closes."""
     editor = monitored_editor

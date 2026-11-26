@@ -2713,6 +2713,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.root.after(50, self._finish_pending_close)
             return
         self._commit_focused_edit_and_offer_save()
+        self._deactivate_plugin_view()
         self.root.quit()  # Then stop the Tkinter event loop
 
     def on_edit_vehicle_components_click(self) -> None:

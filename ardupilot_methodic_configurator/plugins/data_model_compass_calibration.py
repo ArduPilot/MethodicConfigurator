@@ -11,6 +11,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from logging import debug as logging_debug
 from logging import warning as logging_warning
 
+from pymavlink import mavutil
+
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_flightcontroller_commands import CompassCalibrationUpdate
@@ -34,6 +36,8 @@ class CompassCalibrationDataModel:
         """
         self.flight_controller = flight_controller
         self._is_calibrating = False
+        self._pending_intervals: dict[int, int] = {}
+        self._stream_connection = None
 
     def is_connected(self) -> bool:
         """Check if the flight controller is actively connected."""
@@ -97,6 +101,26 @@ class CompassCalibrationDataModel:
             logging_warning(error_msg)
             return False, error_msg
 
+        # Finish any outstanding restore before capturing the rates for a new calibration.
+        self._restore_message_streams()
+        if self._pending_intervals:
+            return False, _("Could not restore previous compass telemetry intervals")
+        self._stream_connection = self.flight_controller.master
+        for message_id in (mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_PROGRESS, mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_REPORT):
+            interval = self.flight_controller.get_message_interval(message_id)
+            if interval is None:
+                logging_warning("Could not capture telemetry interval for message %s, will restore the default", message_id)
+                interval = 0
+            self._pending_intervals[message_id] = interval
+            success, error, rejected = self.flight_controller.set_message_interval(message_id, 200_000)
+            if not success:
+                # The rate may have changed even if its ACK was lost.
+                if rejected:
+                    del self._pending_intervals[message_id]
+                self._restore_message_streams()
+                logging_warning("Could not request compass telemetry for message %s: %s", message_id, error)
+                return False, _("Could not enable compass calibration telemetry, calibration not started")
+
         # Delegate to the Front Desk (backend_flightcontroller.py)
         logging_debug(
             _("Compass calibration start requested for active compasses: %(compasses)s"), {"compasses": active_compass_ids}
@@ -107,6 +131,7 @@ class CompassCalibrationDataModel:
             logging_debug(_("Compass calibration start accepted by flight controller."))
         else:
             logging_debug(_("Compass calibration start rejected: %(error)s"), {"error": error_msg})
+            self._restore_message_streams()
 
         return success, error_msg
 
@@ -127,6 +152,7 @@ class CompassCalibrationDataModel:
 
         if success:
             self._is_calibrating = False
+            self._restore_message_streams()
             logging_debug(_("Compass calibration cancel accepted by flight controller."))
         else:
             logging_debug(_("Compass calibration cancel rejected: %(error)s"), {"error": error_msg})
@@ -136,6 +162,25 @@ class CompassCalibrationDataModel:
     def finish_calibration(self) -> None:
         """Mark the calibration flow as finished."""
         self._is_calibrating = False
+        self._restore_message_streams()
+
+    def _restore_message_streams(self) -> None:
+        """Retry each pending restore only on the original connection; discard them if the link changed."""
+        if not self._pending_intervals:
+            return
+        if self.flight_controller.master is not self._stream_connection:
+            logging_warning("Discarding telemetry intervals captured on a previous connection")
+            self._pending_intervals.clear()
+            self._stream_connection = None
+            return
+        for message_id, interval in list(self._pending_intervals.items()):
+            success, error_msg, _rejected = self.flight_controller.set_message_interval(message_id, interval)
+            if success:
+                del self._pending_intervals[message_id]
+            else:
+                logging_warning("Could not restore telemetry interval for message %s: %s", message_id, error_msg)
+        if not self._pending_intervals:
+            self._stream_connection = None
 
     def get_progress(self) -> list[CompassCalibrationUpdate]:
         """

@@ -2200,6 +2200,134 @@ class TestReceiverTelemetryRequests:
         assert error
 
 
+class TestCompassCalibrationTelemetryRequests:
+    """MAG_CAL_* messages are only sent when their stream interval is enabled."""
+
+    def test_interval_query_accepts_response_before_ack(self) -> None:
+        """The interval response may arrive before the command acknowledgment."""
+        message_id = mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_PROGRESS
+        master = MagicMock(target_system=1, target_component=1)
+        response = mavlink2.MAVLink_message_interval_message(message_id, 500_000)
+        response._header.srcSystem, response._header.srcComponent = 1, 1  # pylint: disable=protected-access
+        master.recv_match.side_effect = [None, response]
+        commands = FlightControllerCommands(params_manager=Mock(), connection_manager=Mock(master=master))
+        assert commands.get_message_interval(message_id) == 500_000
+        assert master.mav.command_long_send.call_args.args[2:6] == (
+            mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
+            0,
+            mavutil.mavlink.MAVLINK_MSG_ID_MESSAGE_INTERVAL,
+            message_id,
+        )
+
+    def test_interval_query_uses_legacy_command_when_request_message_fails(self) -> None:
+        """Older ArduPilot firmware answers GET_MESSAGE_INTERVAL for disabled streams."""
+        message_id = mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_PROGRESS
+        master = MagicMock(target_system=1, target_component=1)
+        rejection = mavlink2.MAVLink_command_ack_message(
+            mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE, mavutil.mavlink.MAV_RESULT_FAILED
+        )
+        response = mavlink2.MAVLink_message_interval_message(message_id, -1)
+        for message in (rejection, response):
+            message._header.srcSystem, message._header.srcComponent = 1, 1  # pylint: disable=protected-access
+        master.recv_match.side_effect = [None, rejection, None, response]
+        commands = FlightControllerCommands(params_manager=Mock(), connection_manager=Mock(master=master))
+
+        assert commands.get_message_interval(message_id) == -1
+        assert master.mav.command_long_send.call_args.args[2:6] == (
+            mavutil.mavlink.MAV_CMD_GET_MESSAGE_INTERVAL,
+            0,
+            message_id,
+            0,
+        )
+
+    @pytest.mark.parametrize("source", [(1, 42), (2, 1)])
+    def test_interval_query_ignores_other_components_and_vehicles(self, source: tuple[int, int]) -> None:
+        """Only the selected autopilot can supply an interval or reject the query."""
+        message_id = mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_PROGRESS
+        master = MagicMock(target_system=1, target_component=0)
+        foreign_ack = mavlink2.MAVLink_command_ack_message(
+            mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE, mavutil.mavlink.MAV_RESULT_UNSUPPORTED
+        )
+        foreign_interval = mavlink2.MAVLink_message_interval_message(message_id, -1)
+        selected_interval = mavlink2.MAVLink_message_interval_message(message_id, 500_000)
+        for message in (foreign_ack, foreign_interval):
+            message._header.srcSystem, message._header.srcComponent = source  # pylint: disable=protected-access
+        selected_interval._header.srcSystem, selected_interval._header.srcComponent = 1, 1  # pylint: disable=protected-access
+        master.recv_match.side_effect = [None, foreign_ack, foreign_interval, selected_interval]
+        connection = Mock(master=master, info=SimpleNamespace(system_id="1", component_id="1"))
+        commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
+
+        assert commands.get_message_interval(message_id) == 500_000
+        assert master.mav.command_long_send.call_count == 1
+
+    def test_interval_query_refuses_broadcast_when_autopilot_component_is_unknown(self) -> None:
+        """A broadcast target cannot identify which component owns an interval reply."""
+        master = MagicMock(target_system=1, target_component=0)
+        connection = Mock(master=master, info=SimpleNamespace(system_id="1", component_id=""))
+        commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
+
+        assert commands.get_message_interval(mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_PROGRESS) is None
+        master.mav.command_long_send.assert_not_called()
+
+    @pytest.mark.parametrize("rejected", [False, True])
+    def test_interval_set_distinguishes_a_lost_ack_from_a_rejection(self, rejected: bool) -> None:
+        """Only an explicit rejection confirms that the interval setting failed at the controller."""
+        message_id = mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_REPORT
+        master = MagicMock(target_system=1, target_component=1)
+        master.recv_match.return_value = (
+            mavlink2.MAVLink_command_ack_message(
+                mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL, mavutil.mavlink.MAV_RESULT_DENIED
+            )
+            if rejected
+            else None
+        )
+        if rejected:
+            master.recv_match.return_value._header.srcSystem = 1  # pylint: disable=protected-access
+            master.recv_match.return_value._header.srcComponent = 1  # pylint: disable=protected-access
+        commands = FlightControllerCommands(params_manager=Mock(), connection_manager=Mock(master=master))
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time", side_effect=[0.0, 0.0, 1.0]),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_sleep"),
+        ):
+            success, error, was_rejected = commands.set_message_interval(message_id, 200_000)
+
+        assert not success
+        assert error
+        assert was_rejected is rejected
+
+    @pytest.mark.parametrize("source", [(1, 42), (2, 1)])
+    def test_interval_set_ignores_foreign_rejection_before_autopilot_acceptance(self, source: tuple[int, int]) -> None:
+        """A different component or vehicle cannot reject the selected autopilot's interval change."""
+        master = MagicMock(target_system=1, target_component=0)
+        foreign_ack = mavlink2.MAVLink_command_ack_message(
+            mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL, mavutil.mavlink.MAV_RESULT_DENIED
+        )
+        selected_ack = mavlink2.MAVLink_command_ack_message(
+            mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL, mavutil.mavlink.MAV_RESULT_ACCEPTED
+        )
+        foreign_ack._header.srcSystem, foreign_ack._header.srcComponent = source  # pylint: disable=protected-access
+        selected_ack._header.srcSystem, selected_ack._header.srcComponent = 1, 1  # pylint: disable=protected-access
+        master.recv_match.side_effect = [foreign_ack, selected_ack]
+        connection = Mock(master=master, info=SimpleNamespace(system_id="1", component_id="1"))
+        commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
+
+        assert commands.set_message_interval(mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_PROGRESS, 200_000) == (True, "", False)
+
+    def test_interval_set_does_not_send_when_autopilot_component_is_unknown(self) -> None:
+        """An unknown component cannot be distinguished from a foreign ACK source."""
+        master = MagicMock(target_system=1, target_component=0)
+        connection = Mock(master=master, info=SimpleNamespace(system_id="1", component_id=""))
+        commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
+
+        success, error, rejected = commands.set_message_interval(mavutil.mavlink.MAVLINK_MSG_ID_MAG_CAL_PROGRESS, 200_000)
+
+        assert not success
+        assert error
+        assert not rejected
+        master.mav.command_long_send.assert_not_called()
+
+
 class TestMultipleBatteryTelemetry:
     """Keep each battery's readings independent through actual MAVLink message handling."""
 

@@ -888,6 +888,14 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         """Request receiver telemetry intervals - delegates to commands manager."""
         return self._commands_manager.request_rc_receiver_messages(interval_microseconds)
 
+    def get_message_interval(self, message_id: int) -> int | None:
+        """Query the current interval of a MAVLink message."""
+        return self._commands_manager.get_message_interval(message_id)
+
+    def set_message_interval(self, message_id: int, interval_microseconds: int) -> tuple[bool, str, bool]:
+        """Set the interval of one MAVLink message and indicate whether the controller rejected it."""
+        return self._commands_manager.set_message_interval(message_id, interval_microseconds)
+
     def request_periodic_battery_status(self, interval_microseconds: int = 1000000) -> tuple[bool, str]:
         """Request periodic BATTERY_STATUS messages - delegates to commands manager."""
         return self._commands_manager.request_periodic_battery_status(interval_microseconds)

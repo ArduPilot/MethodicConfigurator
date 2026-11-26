@@ -101,6 +101,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
     COMMAND_ACK_TIMEOUT: ClassVar[float] = 5.0
     COMMAND_ACK_STATUS_TEXT_GRACE: ClassVar[float] = 0.5
     COMMAND_ACK_TIMEOUT_BATTERY: ClassVar[float] = 0.8
+    COMMAND_ACK_TIMEOUT_MESSAGE_INTERVAL: ClassVar[float] = 0.8
     MOTOR_TEST_COMMAND_DELAY: ClassVar[float] = 0.01
     BATTERY_STATUS_TIMEOUT: ClassVar[float] = 1.5
     BATTERY_STATUS_CACHE_TIME: ClassVar[float] = 3.0
@@ -204,6 +205,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         capture_status_text: bool = False,
         start_confirmation: tuple[str, Callable[[object], bool]] | None = None,
         allow_reboot_serial_disconnect: bool = False,
+        ack_source: tuple[int, int] | None = None,
     ) -> tuple[bool, str, int | None]:
         """Send a command and also return its MAV_RESULT for behavior-specific decisions."""
         master = self.master
@@ -256,7 +258,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
                     if status_text and capture_status_text:
                         status_texts.append(status_text)
                     continue
-                if getattr(msg, "command", None) == command:
+                if getattr(msg, "command", None) == command and (ack_source is None or message_source(msg) == ack_source):
                     if failure is not None:
                         continue
                     # Map result codes to error messages
@@ -1092,8 +1094,107 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
 
     def request_rc_receiver_messages(self, interval_microseconds: int = 200_000) -> tuple[bool, str]:
         """Request channel and receiver status streams; zero restores firmware defaults."""
+        return self._request_message_intervals(
+            (mavlink.MAVLINK_MSG_ID_RC_CHANNELS, mavlink.MAVLINK_MSG_ID_SYS_STATUS), interval_microseconds
+        )
+
+    def get_message_interval(self, message_id: int) -> int | None:
+        """Query the current interval, falling back to the legacy command on older firmware."""
+        interval = self._query_message_interval(
+            message_id, mavlink.MAV_CMD_REQUEST_MESSAGE, float(mavlink.MAVLINK_MSG_ID_MESSAGE_INTERVAL), float(message_id)
+        )
+        if interval is not None:
+            return interval
+        return self._query_message_interval(message_id, mavlink.MAV_CMD_GET_MESSAGE_INTERVAL, float(message_id), 0)
+
+    def _query_message_interval(self, message_id: int, command: int, param1: float, param2: float) -> int | None:
+        """Read the interval response even if it precedes the ACK."""
+        master = self.master
+        if master is None:
+            return None
+        target = self._message_interval_target()
+        if target is None:
+            return None
+        try:
+            # Discard stale responses before the request.
+            while master.recv_match(type="MESSAGE_INTERVAL", blocking=False) is not None:
+                pass
+            self._write_command_long(
+                master,
+                command,
+                (param1, param2, 0, 0, 0, 0, 0),
+                verify_serial_write=False,
+            )
+            deadline = time_time() + self.COMMAND_ACK_TIMEOUT_MESSAGE_INTERVAL
+            while time_time() < deadline:
+                msg = master.recv_match(type=["MESSAGE_INTERVAL", "COMMAND_ACK"], blocking=False)
+                if msg is None:
+                    time_sleep(0.01)
+                    continue
+                if message_source(msg) != target:
+                    continue
+                if getattr(msg, "get_type", lambda: "")() == "MESSAGE_INTERVAL":
+                    interval = getattr(msg, "interval_us", 0)
+                    if getattr(msg, "message_id", None) == message_id:
+                        return interval if isinstance(interval, int) and (interval == -1 or interval > 0) else None
+                elif getattr(msg, "command", None) == command and getattr(msg, "result", None) not in (
+                    mavlink.MAV_RESULT_ACCEPTED,
+                    mavlink.MAV_RESULT_IN_PROGRESS,
+                ):
+                    return None
+        except Exception as error:  # pylint: disable=broad-exception-caught
+            logging_debug("Could not query message interval: %s", error)
+        return None
+
+    def _message_interval_target(self) -> tuple[int, int] | None:
+        """Resolve the selected autopilot's source for interval replies."""
+        master = self.master
+        if master is None:
+            return None
+        info = getattr(self._connection_manager, "info", None)
+        system_id = getattr(info, "system_id", None)
+        component_id = getattr(info, "component_id", None)
+        target_system = (
+            int(system_id) if isinstance(system_id, str) and system_id.isdecimal() else getattr(master, "target_system", None)
+        )
+        target_component = (
+            int(component_id)
+            if isinstance(component_id, str) and component_id.isdecimal()
+            else getattr(master, "target_component", None)
+        )
+        if (
+            not isinstance(target_system, int)
+            or target_system <= 0
+            or not isinstance(target_component, int)
+            or target_component <= 0
+        ):
+            return None
+        return target_system, target_component
+
+    def set_message_interval(self, message_id: int, interval_microseconds: int) -> tuple[bool, str, bool]:
+        """Set one message interval and return success, error text, and whether the controller rejected it."""
+        target = self._message_interval_target()
+        if target is None:
+            return False, _("Unable to identify flight controller for message interval command"), False
+        success, error, result = self._send_command_and_wait_ack_with_result(
+            mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,
+            param1=float(message_id),
+            param2=float(interval_microseconds),
+            timeout=self.COMMAND_ACK_TIMEOUT_MESSAGE_INTERVAL,
+            ack_source=target,
+        )
+        rejected = result in (
+            mavlink.MAV_RESULT_TEMPORARILY_REJECTED,
+            mavlink.MAV_RESULT_DENIED,
+            mavlink.MAV_RESULT_UNSUPPORTED,
+            mavlink.MAV_RESULT_FAILED,
+        )
+        return success, error, rejected
+
+    def _request_message_intervals(self, message_ids: tuple[int, ...], interval_microseconds: int) -> tuple[bool, str]:
+        """Request each stream, collecting errors while attempting all messages."""
         errors = []
-        for message_id in (mavlink.MAVLINK_MSG_ID_RC_CHANNELS, mavlink.MAVLINK_MSG_ID_SYS_STATUS):
+        for message_id in message_ids:
             success, error = self.send_command_and_wait_ack(
                 mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,
                 param1=float(message_id),
