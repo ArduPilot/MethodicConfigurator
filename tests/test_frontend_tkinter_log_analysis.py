@@ -101,6 +101,7 @@ def _make_analysis_result(
     result.outcomes = outcomes if outcomes is not None else []
     result.reason = reason
     result.subsystem_key = subsystem_key
+    result.apply_together = False
     return result
 
 
@@ -622,6 +623,60 @@ class TestOutcomeGrouping:
             bare_window._render_outcomes(outcomes)
 
         assert group_heading.call_args_list == [call("Summary"), call("Flare"), call("Summary")]
+
+    def test_user_reviews_and_uploads_the_complete_notch_proposal(
+        self, bare_window: LogAnalysisReportWindow, patched_widgets: dict[str, MagicMock], mocker: MockerFixture
+    ) -> None:
+        """
+        Keep an enabled notch's fitted parameters together.
+
+        GIVEN an enabled notch with a different mode, frequency and reference and a filter-budget warning,
+        WHEN the user reviews the proposal and retries a failed upload,
+        THEN one action presents every fitted value and each attempt sends the complete proposal.
+        """
+        window = bare_window
+        window.body_frame = MagicMock()
+        window.is_fc_connected = True
+        upload = MagicMock(side_effect=[False, True])
+        window.upload_callback = upload
+        current = {"INS_HNTCH_ENABLE": 1.0, "INS_HNTCH_MODE": 1.0, "INS_HNTCH_FREQ": 100.0, "INS_HNTCH_REF": 0.2}
+        window.summary.related_parameter_values = current.copy()
+        proposed = {
+            "INS_HNTCH_ENABLE": 1.0,
+            "INS_HNTCH_MODE": 3.0,
+            "INS_HNTCH_FREQ": 80.0,
+            "INS_HNTCH_BW": 40.0,
+            "INS_HNTCH_ATT": 40.0,
+            "INS_HNTCH_REF": 1.0,
+            "INS_HNTCH_FM_RAT": 1.0,
+            "INS_HNTCH_HMNCS": 255.0,
+            "INS_HNTCH_OPTS": 2.0,
+        }
+        outcomes = [LogAnalysis(name, param_name=name, suggested_value=value) for name, value in proposed.items()]
+        warning = "The proposed configuration is estimated to allocate 32 notch filters."
+        outcomes.append(LogAnalysis(warning, severity="warning"))
+        dialog = mocker.patch(f"{MODULE}.tk.Toplevel").return_value
+        mocker.patch.object(window, "calculate_scaled_geometry", return_value="520x504")
+        mocker.patch.object(window, "center_window")
+
+        window._render_outcomes(outcomes, apply_together=True)
+
+        assert [item.kwargs["text"] for item in patched_widgets["button"].call_args_list] == ["Review Proposal"]
+        patched_widgets["button"].call_args.kwargs["command"]()
+        labels = {item.kwargs["text"] for item in patched_widgets["label"].call_args_list}
+        assert {*proposed, warning, "Unknown"} <= labels
+        upload_proposal = patched_widgets["button"].call_args.kwargs["command"]
+        upload_proposal()
+        assert window.summary.related_parameter_values == current
+        dialog.destroy.assert_not_called()
+        upload_proposal()
+
+        assert [{name: par.value for name, par in item.args[0].items()} for item in upload.call_args_list] == [
+            proposed,
+            proposed,
+        ]
+        assert window.summary.related_parameter_values == proposed
+        dialog.destroy.assert_called_once()
 
 
 class TestRenderSubsystem:

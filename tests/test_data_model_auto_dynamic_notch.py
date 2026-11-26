@@ -11,9 +11,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import json
-from dataclasses import asdict
+from collections.abc import Sequence
+from dataclasses import asdict, replace
 from math import inf
 from typing import Any
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -285,6 +287,83 @@ def test_fitted_values_outside_firmware_limits_reject_the_proposal(flight) -> No
     assert not result.outcomes
 
 
+@pytest.mark.parametrize(
+    ("documented_bits", "available"),
+    [("2:Loop rate, 3:EnableOnAllIMUs, 5:Use min freq", True), ("2:Loop rate, 5:Use min freq", False)],
+)
+def test_fit_validates_bitmask_from_raw_firmware_documentation(
+    flight: tuple[LogData, LogAnalysisContext], documented_bits: str, available: bool
+) -> None:
+    """
+    Validate the raw XML shape used when the project and log firmware differ.
+
+    GIVEN a log requiring the EnableOnAllIMUs option and raw XML metadata,
+    WHEN the notch is fitted,
+    THEN the proposal is available only if the raw bitmask lists that option.
+    """
+    log, context = flight
+    assert context.apm_doc is not None
+    context.apm_doc["INS_HNTCH_OPTS"] = {"fields": {"Bitmask": documented_bits}}
+
+    result = AutoDynamicNotchLogAnalysis(log, context).analyse()
+
+    assert result.available is available
+    if available:
+        assert _suggestions(result)["INS_HNTCH_OPTS"] == 44
+    else:
+        assert "Fitted option bits for INS_HNTCH_OPTS are unsupported" in result.reason
+        assert not result.outcomes
+
+
+@pytest.mark.parametrize(
+    ("harmonics", "all_imus", "other_enabled", "expected_warning_count"),
+    [(255, False, False, 32), (255, True, False, 64), (63, False, False, None), (63, False, True, 26)],
+)
+def test_fit_warns_when_estimated_notch_count_exceeds_the_board_threshold(
+    flight: tuple[LogData, LogAnalysisContext],
+    harmonics: int,
+    all_imus: bool,
+    other_enabled: bool,
+    expected_warning_count: int | None,
+) -> None:
+    """
+    Surface high filter allocations before review and upload.
+
+    GIVEN a quad with a fitted multi-source notch and two IMUs,
+    WHEN the fit is reported,
+    THEN the warning reflects the harmonic, motor and IMU counts and includes the enabled second notch.
+    """
+    log, context = flight
+    times = log.get_field("ESC", "TimeUS")
+    rpm = log.get_field("ESC", "RPM")
+    _add_columns(
+        log, "ESC", {"TimeUS": np.tile(times, 4), "Instance": np.repeat(np.arange(4), len(times)), "RPM": np.tile(rpm, 4)}
+    )
+    context.parameters["INS_HNTCH_OPTS"] = 8 if all_imus else 0
+    context.parameters.update({"INS_HNTC2_ENABLE": int(other_enabled), "INS_HNTC2_OPTS": 1, "INS_HNTC2_HMNCS": 1})
+
+    def fit_with_qualifying_harmonics(
+        windows: Sequence[GyroFftWindow], source: TrackingSource, settings: AutoDynamicNotchSettings
+    ) -> DynamicNotchFit:
+        return replace(fit_tracking_source(windows, source, settings), harmonics=harmonics)
+
+    with patch(
+        "ardupilot_methodic_configurator.log_analysis.data_model_auto_dynamic_notch.fit_tracking_source",
+        side_effect=fit_with_qualifying_harmonics,
+    ):
+        result = AutoDynamicNotchLogAnalysis(log, context).analyse()
+
+    assert result.available
+    assert _suggestions(result)["INS_HNTCH_HMNCS"] == harmonics
+    warnings = [outcome.message for outcome in result.outcomes if outcome.severity == "warning"]
+    if expected_warning_count is None:
+        assert not warnings
+    else:
+        assert len(warnings) == 1
+        assert f"{expected_warning_count} notch filters" in warnings[0]
+        assert "only 24" in warnings[0]
+
+
 def test_default_pipeline_exposes_grouped_fit_and_related_parameter_values(flight) -> None:
     """
     Expose the fit through the existing pipeline and summary.
@@ -297,6 +376,7 @@ def test_default_pipeline_exposes_grouped_fit_and_related_parameter_values(fligh
     summary = analyze_log(log, context)
     result = next(result for result in summary.analysis_results if result.subsystem_key == "auto_dynamic_notch")
     assert result.available
+    assert result.apply_together
     assert summary.related_parameter_values["INS_HNTCH_FREQ"] == 0
     assert summary.component_keys_for_subsystem("auto_dynamic_notch") == ("Flight Controller", "ESC", "Motors")
 

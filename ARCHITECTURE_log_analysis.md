@@ -423,15 +423,22 @@ Preserve unrelated option bits. Following the WebTools script, clear masks `1`, 
 Validate those meanings against the target firmware before suggesting the options value. Preserve `INS_HNTCH_ESC_MASK` and all additional notch groups; this design
 fits only the first group. If a fitted value or required option is unsupported, reject that candidate with a reason rather than silently emitting an incomplete fit.
 
+Estimate the boot allocation from harmonic counts, tracking sources, composite filters and IMU use. Include the second notch when its settings are logged.
+Use ESC instances and logged motor output assignments to estimate the motor count. Warn above 24 filters, the default limit for F4 builds in ArduPilot 4.6.
+The board and firmware determine the actual limit. The firmware sums allocations across both notches at startup.
+[ArduPilot 4.6.3 allocation](https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/libraries/AP_InertialSensor/AP_InertialSensor.cpp#L900-L949)
+and [board limits](https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/libraries/AP_HAL/AP_HAL_Boards.h#L293-L311).
+
 ### Results and Frontend Review
 
 Return a `LogAnalysisResult` with one `LogAnalysis` outcome per parameter suggestion, including `param_name`, `suggested_value`, a translated explanation, and the
-configuration step resolved through the existing parameter-to-step lookup. Give the outcomes a common `group` so the frontend can present the fit as one coordinated
-proposal. Include explanatory outcomes for the selected source, accepted window count and time interval, harmonic prominences, and any fallback reasons.
+configuration step resolved through the existing parameter-to-step lookup. Give the outcomes a common `group` for display and set `apply_together` to present one
+review action for the complete proposal. Include explanatory outcomes for the selected source, accepted window count and time interval, harmonic prominences, and
+any fallback reasons.
 
 Use the existing `LogSummary` and structured-report path. Keep FFT arrays and temporary fitting structures inside the analysis model; serialize the proposal and its
-diagnostics through the existing result fields. The frontend presents the proposed settings for review. Applying accepted changes uses the existing parameter APIs
-and preserves change reasons and manual-override markers. Analysis itself does not change the active configuration or upload parameters.
+diagnostics through the existing result fields. The review shows all fitted values and any allocation warning. Confirmation submits the entire proposal to the
+existing upload and verification workflow, including values that match the log. Analysis itself does not change the active configuration or upload parameters.
 
 ### Automatic Dynamic Notch Tests
 
