@@ -270,16 +270,12 @@ class TestFindAsset:
         ]
         assert _find_asset(assets, ".exe") == {"name": "setup.exe"}
 
-    def test_returns_none_when_no_match_and_no_fallback(self) -> None:
+    def test_returns_none_when_no_match(self) -> None:
         assets = [{"name": "source.tar.gz"}, {"name": "linux.deb"}]
         assert _find_asset(assets, ".exe") is None
 
-    def test_returns_first_asset_when_fallback_enabled_and_no_match(self) -> None:
-        assets = [{"name": "source.tar.gz"}, {"name": "linux.deb"}]
-        assert _find_asset(assets, ".exe", allow_fallback=True) == {"name": "source.tar.gz"}
-
-    def test_returns_none_on_empty_list_even_with_fallback(self) -> None:
-        assert _find_asset([], ".exe", allow_fallback=True) is None
+    def test_returns_none_on_empty_list(self) -> None:
+        assert _find_asset([], ".exe") is None
 
     def test_matching_is_case_insensitive(self) -> None:
         assets = [{"name": "Setup.EXE"}]
@@ -346,11 +342,8 @@ class TestSelectInstallPlan:
         assets = [{"name": "source.tar.gz"}, {"name": "setup.exe"}]
         assert select_install_plan("Windows", assets) == InstallerPlan({"name": "setup.exe"}, download_and_install_on_windows)
 
-    def test_windows_falls_back_to_first_asset_when_no_exe(self) -> None:
-        assets = [{"name": "source.tar.gz"}]
-        assert select_install_plan("Windows", assets) == InstallerPlan(
-            {"name": "source.tar.gz"}, download_and_install_on_windows
-        )
+    def test_windows_without_exe_has_no_plan(self) -> None:
+        assert select_install_plan("Windows", [{"name": "source.tar.gz"}, {"name": "app.dmg"}]) is None
 
     def test_macos_uses_dmg_when_available(self) -> None:
         assets = [{"name": "source.tar.gz"}, {"name": "app.dmg"}]
@@ -419,7 +412,7 @@ def test_update_manager_perform_download_linux(update_manager) -> None:  # pylin
 
 def test_update_manager_perform_download_no_dialog(update_manager) -> None:  # pylint: disable=redefined-outer-name
     """Test download with no dialog."""
-    latest_release = {"assets": [{"browser_download_url": "url", "name": "name"}]}
+    latest_release = {"assets": [{"browser_download_url": "url", "name": "name.exe"}]}
 
     with (
         patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Windows"),

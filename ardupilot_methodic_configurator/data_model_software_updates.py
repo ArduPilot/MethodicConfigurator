@@ -62,13 +62,11 @@ def format_version_info(_current_version: str, _latest_release: str, changes: st
     ).format(**locals())
 
 
-def _find_asset(assets: list[dict[str, Any]], extension: str, allow_fallback: bool = False) -> dict[str, Any] | None:
-    """Return the first asset whose name ends with *extension*, falling back to the first asset when requested."""
+def _find_asset(assets: list[dict[str, Any]], extension: str) -> dict[str, Any] | None:
+    """Return the first asset whose name ends with *extension*, or None if there is none."""
     preferred = [a for a in assets if a.get("name", "").lower().endswith(extension)]
     if preferred:
         return preferred[0]
-    if allow_fallback and assets:
-        return assets[0]
     return None
 
 
@@ -113,7 +111,7 @@ def select_install_plan(system: str, assets: list[dict[str, Any]]) -> InstallPla
     Returns None when the platform needs an installer and the release has none.
     """
     if system == "Windows":
-        asset = _find_asset(assets, ".exe", allow_fallback=True)
+        asset = _find_asset(assets, ".exe")
         return None if asset is None else InstallerPlan(asset, download_and_install_on_windows)
     if system == "Darwin":
         asset = _find_asset(assets, ".dmg")
