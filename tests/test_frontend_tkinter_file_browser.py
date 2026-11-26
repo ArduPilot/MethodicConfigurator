@@ -227,6 +227,18 @@ def _real_widget_browser(
 class TestFileBrowserWindow:
     """Verify browser interactions, lifecycle, and backend dispatch."""
 
+    @pytest.mark.parametrize(
+        ("state", "expected"),
+        [("disabled", ["disabled"]), ("normal", ["!disabled"])],
+    )
+    def test_widget_state_applies_enabled_and_disabled_states(self, state: str, expected: list[str]) -> None:
+        """Controls are disabled during work and re-enabled afterward."""
+        widget = MagicMock()
+
+        FileBrowserWindow._set_widget_state(widget, state)
+
+        widget.state.assert_called_once_with(expected)
+
     def test_constructor_accepts_an_injected_task_runner(self, tk_root: tk.Tk) -> None:
         """Tests can provide a runner without mutating the constructed window."""
         runner = ImmediateTaskRunner()
@@ -460,6 +472,21 @@ class TestFileBrowserWindow:
         assert window.remote_entries == []
         window.ui.show_error.assert_not_called()
 
+    @pytest.mark.parametrize(
+        ("entries", "expected_text"),
+        [([], "No entries found in this directory."), ([MagicMock()], "")],
+        ids=["empty-directory", "directory-with-entries"],
+    )
+    def test_empty_state_is_visible_only_when_there_are_no_entries(
+        self, entries: list[object], expected_text: str
+    ) -> None:
+        """The panel empty-state label follows whether its listing has entries."""
+        label = MagicMock()
+
+        FileBrowserWindow._update_empty_state(entries, label)  # type: ignore[arg-type]
+
+        label.configure.assert_called_once_with(text=expected_text)
+
     def test_operation_controls_use_ttk_state_flags(self) -> None:
         """Treeviews use ttk state flags instead of an unsupported `state` option."""
         window = _bare_window()
@@ -474,6 +501,7 @@ class TestFileBrowserWindow:
             "download_button": MagicMock(),
             "upload_button": MagicMock(),
             "last_log_button": MagicMock(),
+            "verify_checkbox": MagicMock(),
         }
         for name, control in controls.items():
             setattr(window, name, control)
@@ -516,6 +544,27 @@ class TestFileBrowserWindow:
         assert window.last_log_button is not None
         assert window.help_button is not None
         assert window.close_button is not None
+
+    def test_arrow_navigation_is_enabled_when_the_browser_opens(
+        self, headless_browser_window: FileBrowserWindow
+    ) -> None:
+        """The file browser opens with arrow keys able to move between its panels."""
+        window = headless_browser_window
+        window.remote_tree.selection.return_value = ()
+        window.remote_tree.get_children.return_value = ()
+        window._update_transfer_buttons = MagicMock()
+
+        class EntryStub:
+            """Provide real types for the entry-focus check in the mocked Tk fixture."""
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser.tk.Entry", EntryStub),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser.ttk.Entry", EntryStub),
+        ):
+            result = window._on_left_arrow()
+
+        assert result == "break"
+        window.remote_tree.focus_set.assert_called_once_with()
 
     @pytest.mark.parametrize("remote", [False, True], ids=["local-panel", "remote-panel"])
     def test_each_tree_has_expected_options_bindings_and_context_panel(self, remote: bool) -> None:
@@ -727,6 +776,11 @@ class TestFileBrowserWindow:
 
         window.download_last_flight_log()
 
+        window.ui.asksaveasfilename.assert_called_once_with(
+            title="Save flight log as",
+            defaultextension=".bin",
+            filetypes=[("Binary log files", "*.bin"), ("All files", "*.*")],
+        )
         window.ui.show_error.assert_not_called()
         window._show_summary.assert_called_once_with("Download summary", ["last.BIN"], [])
         window.refresh_local_panel.assert_called_once_with()
@@ -1894,7 +1948,7 @@ class TestFileBrowserWindow:
 
         window.local_tree.selection_set.assert_called_once_with(["1"])
 
-    def test_remote_download_execution_continues_after_one_file_fails(self) -> None:
+    def test_remote_download_execution_continues_after_one_file_fails(self, tmp_path: Path) -> None:
         """A failed remote transfer does not stop the remaining selected files."""
         window = _bare_window()
         first = FlightControllerLogFile("first.bin", "/APM/LOGS/first.bin", 10)
@@ -1903,7 +1957,7 @@ class TestFileBrowserWindow:
         window.remote_tree = MagicMock()
         window.remote_tree.selection.return_value = ("0", "1")
         window.local_directory_var = MagicMock()
-        local_directory = Path.cwd()
+        local_directory = tmp_path
         window.local_directory_var.get.return_value = str(local_directory)
         window.parameter_editor = MagicMock()
         window.parameter_editor.download_remote_file.side_effect = [False, True]
@@ -2008,7 +2062,8 @@ class TestFileBrowserWindow:
         window.parameter_editor.upload_file_to_fc.side_effect = [True, False, True]
         window.ui = MagicMock()
         window.ui.ask_yesno.return_value = True
-        window._progress_window = MagicMock(return_value=MagicMock())
+        progress_window = MagicMock()
+        window._progress_window = MagicMock(return_value=progress_window)
         window.refresh_remote_panel = MagicMock()
 
         window.upload_selected_local_entries()
@@ -2016,6 +2071,10 @@ class TestFileBrowserWindow:
         paths = [call_args.args[1] for call_args in window.parameter_editor.upload_file_to_fc.call_args_list]
         assert paths == ["/APM/LOGS/first.bin", "/APM/LOGS/second.bin", "/APM/LOGS/second.bin"]
         assert window.ui.ask_yesno.call_count == 2  # initial upload confirmation, then retry
+        assert progress_window.enable_transfer_progress.call_args_list == [
+            call(TransferDirection.UPLOAD),
+            call(TransferDirection.UPLOAD),
+        ]
         window.ui.show_info.assert_called_once()
 
     def test_retry_upload_is_not_lost_when_refresh_starts_a_remote_listing(self) -> None:
@@ -2317,20 +2376,47 @@ class TestFileBrowserWindow:
         assert window._panel_navigation_enabled is False
         editor.place.assert_called_once_with(x=1, y=2, width=100, height=20)
         editor.focus_set.assert_called_once_with()
-        editor.bind.assert_any_call("<Return>", ANY)
+        return_handler = next(
+            call.args[1] for call in editor.bind.call_args_list if call.args[0] == "<Return>"
+        )
+        assert callable(return_handler)
         window.parameter_editor.rename_remote_path.assert_not_called()
 
         assert window._on_left_arrow() == ""
         editor.focus_set.assert_called_once_with()
 
-        finish_result = window._finish_inline_rename("remote", entry, editor)
-
-        assert finish_result == "break"
+        assert return_handler(SimpleNamespace()) == "break"
         assert window._panel_navigation_enabled is True
         window.parameter_editor.rename_remote_path.assert_called_once_with(
             "/APM/LOGS/old.bin",
             "/APM/LOGS/new log.bin",
         )
+
+    def test_local_inline_rename_uses_local_tree_and_escape_cancels(self, tmp_path: Path) -> None:
+        """Local inline editing uses the local row and Escape discards the draft."""
+        entry = LocalFileEntry("old.bin", tmp_path / "old.bin", 10)
+        window = _bare_window()
+        window.local_tree = MagicMock()
+        window.local_tree.bbox.return_value = (1, 2, 100, 20)
+        window.remote_tree = MagicMock()
+        window.parameter_editor = MagicMock()
+        window._panel_navigation_enabled = True
+        editor = MagicMock()
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_file_browser.ttk.Entry",
+            return_value=editor,
+        ):
+            window._start_inline_rename("local", "0", entry)
+
+        window.local_tree.bbox.assert_called_once_with("0", "name")
+        window.remote_tree.bbox.assert_not_called()
+        escape_handler = next(call.args[1] for call in editor.bind.call_args_list if call.args[0] == "<Escape>")
+        assert callable(escape_handler)
+        assert escape_handler(SimpleNamespace()) == "break"
+        editor.destroy.assert_called_once_with()
+        assert window._panel_navigation_enabled is True
+        window.parameter_editor.rename_remote_path.assert_not_called()
 
     def test_focus_out_commits_an_inline_rename(self) -> None:
         """Leaving an inline editor commits the edited name instead of discarding it."""
@@ -2415,6 +2501,23 @@ class TestFileBrowserWindow:
         window.ui.show_warning.assert_not_called()
         window.ui.ask_yesno.assert_called_once()
         window.parameter_editor.delete_remote_path.assert_called_once_with("/APM/params.bin", False)  # noqa: FBT003
+
+    def test_remote_parent_entry_cannot_be_deleted(self) -> None:
+        """The synthetic parent-directory row is never offered to the delete workflow."""
+        parent_entry = FlightControllerLogFile("..", "/APM/..", 0, is_directory=True)
+        window = _bare_window()
+        window.remote_entries = [parent_entry]
+        window.remote_tree = MagicMock()
+        window.remote_tree.selection.return_value = ("0",)
+        window.parameter_editor = MagicMock()
+        window.ui = MagicMock()
+        window.ui.ask_yesno.return_value = True
+        window._start_background_operation = MagicMock()
+
+        window.delete_selected_remote_entries()
+
+        window.ui.ask_yesno.assert_not_called()
+        window._start_background_operation.assert_not_called()
 
     def test_context_menu_selects_clicked_local_row_and_offers_new_directory(self) -> None:
         """Right-clicking either panel offers creating a directory in that panel."""
@@ -2951,11 +3054,14 @@ class TestFileBrowserWindow:
         window.root = MagicMock()
         window._progress_window = MagicMock(return_value=MagicMock())
         window.refresh_remote_panel = MagicMock()
+        window._select_entry_after_refresh = MagicMock()
 
         window.create_new_remote_directory()
 
         window.parameter_editor.make_remote_directory.assert_called_once_with("/APM/custom")
         window.ui.show_warning.assert_not_called()
+        window.ui.show_info.assert_called_once_with("New directory summary", "Created remote directory custom.")
+        window._select_entry_after_refresh.assert_called_once_with("remote", "custom")
         window.refresh_remote_panel.assert_called_once_with()
 
     @pytest.mark.parametrize("directory", ["", "   ", "relative", "/APM/../LOGS", "/APM/C:bad"])
@@ -3055,6 +3161,24 @@ class TestFileBrowserWindow:
             "/APM/LOGS/new.bin",
         )
         window.refresh_remote_panel.assert_called_once_with()
+
+    def test_remote_rename_worker_uses_the_entry_parent_and_new_name(self) -> None:
+        """Remote rename joins the new basename to the existing parent path."""
+        entry = FlightControllerLogFile("old.bin", "/APM/LOGS/old.bin", 10)
+        window = _bare_window()
+        window.parameter_editor = MagicMock()
+        window.parameter_editor.rename_remote_path.return_value = True
+        window._controls_locked = MagicMock(return_value=False)
+        window._start_background_operation = MagicMock()
+
+        assert window._rename_remote_entry(entry, "new.bin") is True
+
+        args = window._start_background_operation.call_args.args
+        worker = args[2]
+        assert worker(MagicMock()) == ([entry.remote_path], [])
+        window.parameter_editor.rename_remote_path.assert_called_once_with(
+            "/APM/LOGS/old.bin", "/APM/LOGS/new.bin"
+        )
 
     def test_remote_rename_allows_names_that_are_unsafe_only_locally(self) -> None:
         """A remote-only rename can use a Windows-reserved basename."""
@@ -3969,3 +4093,125 @@ def test_inline_rename_cannot_mutate_files_during_an_active_operation(
     assert not window.ui.mock_calls
     window.refresh_local_panel.assert_not_called()
     window.refresh_remote_panel.assert_not_called()
+
+def test_remote_file_double_click_does_not_navigate() -> None:
+    """Double-clicking a remote file leaves the current directory unchanged."""
+    window = _bare_window()
+    window.remote_tree = MagicMock()
+    window.remote_tree.identify_row.return_value = "0"
+    window.remote_entries = [FlightControllerLogFile("log.bin", "/APM/LOGS/log.bin", 12)]
+    window.remote_directory_var = MagicMock()
+    window.refresh_remote_panel = MagicMock()
+
+    window._on_remote_double_click(SimpleNamespace(y=12))
+
+    window.remote_directory_var.set.assert_not_called()
+    window.refresh_remote_panel.assert_not_called()
+
+
+def test_focus_panel_uses_a_selected_item_when_tree_focus_is_stale() -> None:
+    """A stale Treeview focus must not override the panel's current selection."""
+    window = _bare_window()
+    window.remote_tree = MagicMock()
+    window.remote_tree.selection.return_value = ("1", "2")
+    window.remote_tree.focus.return_value = "stale"
+    window._update_transfer_buttons = MagicMock()
+
+    window._focus_panel("remote")
+
+    window.remote_tree.focus.assert_called_with("1")
+    window.remote_tree.see.assert_called_once_with("1")
+
+
+@pytest.mark.parametrize("panel", ["remote", "local"])
+def test_backspace_event_routes_to_the_panel_that_received_it(panel: str) -> None:
+    """Backspace follows the focused panel even when another panel was selected before."""
+    window = _bare_window()
+    window.last_selected_panel = "local" if panel == "remote" else "remote"
+    window.remote_tree = MagicMock()
+    window.local_tree = MagicMock()
+    window.remote_directory_var = MagicMock()
+    window.remote_directory_var.get.return_value = "/APM/LOGS/nested/"
+    window.local_directory_var = MagicMock()
+    window.local_directory_var.get.return_value = "/tmp/nested"
+    window.refresh_remote_panel = MagicMock()
+    window.refresh_local_panel = MagicMock()
+    event = SimpleNamespace(widget=window.remote_tree if panel == "remote" else window.local_tree)
+
+    assert window._on_backspace(event) == "break"
+
+    if panel == "remote":
+        window.remote_directory_var.set.assert_called_once_with("/APM/LOGS")
+        window.refresh_remote_panel.assert_called_once_with()
+        window.refresh_local_panel.assert_not_called()
+    else:
+        window.local_directory_var.set.assert_called_once()
+        window.refresh_local_panel.assert_called_once_with()
+        window.refresh_remote_panel.assert_not_called()
+
+
+def test_open_local_file_is_blocked_while_remote_controls_are_locked(tmp_path: Path) -> None:
+    """A direct open request cannot launch a local file during a remote operation."""
+    window = _bare_window()
+    window._task_runner.active = True
+    entry = LocalFileEntry("log.bin", tmp_path / "log.bin", 3)
+
+    with (
+        patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser.sys.platform", "linux"),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser.subprocess.Popen") as popen,
+    ):
+        window._open_local_file(entry)
+
+    popen.assert_not_called()
+
+
+def test_web_log_open_is_blocked_when_all_browser_controls_are_locked(tmp_path: Path) -> None:
+    """A stale context-menu command cannot start a web-log task while the browser is locked."""
+    window = _bare_window()
+    window._all_controls_locked = True
+    window.local_tree = MagicMock()
+    window.local_tree.selection.return_value = ("0",)
+    window.local_entries = [LocalFileEntry("log.bin", tmp_path / "log.bin", 3)]
+    window._local_task_runner = MagicMock()
+
+    window.open_selected_log_in_web_tool("https://plot.ardupilot.org/")
+
+    window._local_task_runner.start.assert_not_called()
+
+
+def test_sorting_a_new_column_clears_the_previous_sort_indicator() -> None:
+    """Changing sort columns clears the old heading indicator before setting the new one."""
+    window = _bare_window()
+    window.remote_tree = MagicMock()
+    window.remote_tree.get_children.return_value = ()
+    window.remote_entries = []
+    window._set_heading_text = MagicMock()
+    window._panel_states["remote"].sort_column = "name"
+
+    window._sort_panel_by_column("remote", "size", False)
+
+    assert window._set_heading_text.call_args_list == [
+        call(window.remote_tree, "name", None),
+        call(window.remote_tree, "size", False),
+    ]
+
+
+def test_panel_type_sort_keeps_directories_before_files() -> None:
+    """Type sorting prioritizes directories even when their names sort after files."""
+    entries = [
+        LocalFileEntry("a-file.txt", Path("a-file.txt"), 1),
+        LocalFileEntry("z-folder", Path("z-folder"), 0, is_directory=True),
+    ]
+
+    file_key = FileBrowserWindow._panel_sort_key(entries, "0", "type")
+    directory_key = FileBrowserWindow._panel_sort_key(entries, "1", "type")
+
+    assert directory_key < file_key
+
+
+@pytest.mark.parametrize("item_id", ["not-an-index", "1"])
+def test_panel_sort_key_safely_handles_invalid_and_stale_tree_items(item_id: str) -> None:
+    """Malformed or stale tree item IDs sort as navigation rows instead of raising."""
+    entries = [LocalFileEntry("only.txt", Path("only.txt"), 1)]
+
+    assert FileBrowserWindow._panel_sort_key(entries, item_id, "name") == (0, 0, "")

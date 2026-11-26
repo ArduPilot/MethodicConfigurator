@@ -318,9 +318,12 @@ def test_serial_scan_error_does_not_discard_a_working_connection() -> None:
     controller.disconnect.assert_not_called()
 
 
-@pytest.mark.parametrize(("vehicle_type", "recommended_type"), [("ArduCopter", "Copter"), ("Heli", "Heli")])
-def test_connected_board_preserves_the_installed_copter_variant(vehicle_type: str, recommended_type: str) -> None:
-    """The selector can recommend helicopter firmware for a connected helicopter."""
+@pytest.mark.parametrize(
+    ("vehicle_type", "recommended_type"),
+    [("ArduCopter", "Copter"), ("Heli", "Heli"), ("ArduBlimp", "Blimp")],
+)
+def test_connected_board_maps_its_vehicle_type(vehicle_type: str, recommended_type: str) -> None:
+    """The selector recommends firmware for the connected vehicle type."""
     controller = MagicMock()
     controller.master = object()
     controller.info.apj_board_id = "9"
@@ -329,6 +332,7 @@ def test_connected_board_preserves_the_installed_copter_variant(vehicle_type: st
     board_info = FirmwareUploadService.connected_board_info(controller)
 
     assert board_info is not None
+    assert board_info.device == controller.comport_device
     assert board_info.recommended_vehicle_type == recommended_type
 
 
@@ -559,6 +563,48 @@ def test_manifest_uses_defaults_for_missing_version_channel_and_git_identity() -
     assert release.version == "Unknown"
     assert release.channel == "unknown"
     assert release.git_sha == ""
+
+
+@pytest.mark.parametrize(
+    ("vehicle_type", "version"),
+    [("Experimental", "4.6.0"), ("Copter", "unparseable")],
+)
+def test_manifest_keeps_releases_when_identity_age_cannot_be_determined(vehicle_type: str, version: str) -> None:
+    """Unknown vehicle families and versions remain selectable when age is unverifiable."""
+    entry = {
+        "format": "apj",
+        "board_id": 9,
+        "vehicletype": vehicle_type,
+        "platform": "fmuv3",
+        "mav-firmware-version": version,
+        "url": "https://firmware.ardupilot.org/Experimental/stable/fmuv3/image.apj",
+    }
+
+    (release,) = releases_for_board({"firmware": [entry]}, 9)
+
+    assert release.vehicle_type == vehicle_type
+    assert release.version == version
+
+
+def test_duplicate_release_url_does_not_hide_later_board_releases() -> None:
+    """A duplicate manifest entry is skipped without ending the catalog scan."""
+    first = {
+        "format": "apj",
+        "board_id": 9,
+        "vehicletype": "Copter",
+        "platform": "fmuv3",
+        "mav-firmware-version": "4.6.0",
+        "url": "https://firmware.ardupilot.org/Copter/stable/fmuv3/first.apj",
+    }
+    later = {
+        **first,
+        "mav-firmware-version": "4.7.0",
+        "url": "https://firmware.ardupilot.org/Copter/stable/fmuv3/later.apj",
+    }
+
+    releases = releases_for_board({"firmware": [first, first.copy(), later]}, 9)
+
+    assert [release.version for release in releases] == ["4.6.0", "4.7.0"]
 
 
 def test_failed_download_preserves_existing_apj_and_removes_temporary_file(

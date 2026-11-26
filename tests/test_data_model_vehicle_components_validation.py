@@ -59,6 +59,22 @@ class TestComponentDataModelValidation:
             realistic_model.set_component_value(("Battery", "Specifications", setting), voltage)
         return realistic_model
 
+    def test_current_esc_telemetry_mapping_defaults_to_empty_when_unset(self, basic_model) -> None:
+        values = {
+            ("Flight Controller", "Firmware", "Type"): "ArduCopter",
+            ("ESC", "FC->ESC Connection", "Type"): "Main Out",
+            ("ESC", "FC->ESC Connection", "Protocol"): "DShot600",
+        }
+        connection_data = {"dshot": {"type": ("Main Out",), "protocol": "DShot600"}}
+
+        with (
+            _patch.object(basic_model, "get_component_value", side_effect=values.get),
+            _patch.object(validation_module, "get_esc_connection_sub_dict", return_value=connection_data),
+        ):
+            result = basic_model._get_current_esc_to_fc_dict()
+
+        assert result == {}
+
     # Update the sample_doc_dict fixture to use the common one
     @pytest.fixture
     def sample_doc_dict(self) -> dict:

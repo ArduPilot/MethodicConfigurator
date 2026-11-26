@@ -172,6 +172,16 @@ class TestManualOverridePrefixConstant:
 # ===========================================================================
 
 
+def test_empty_change_reason_does_not_create_a_reason_when_none_is_stored(meta: dict[str, Any]) -> None:
+    """Clearing an absent reason is a no-op rather than a new empty-string edit."""
+    param = ArduPilotParameter(name="PARAM1", par_obj=Par(1.0), metadata=meta)
+    param._change_reason = None  # pylint: disable=protected-access  # Exercise the nullable state explicitly.
+
+    assert param.change_reason is None
+    assert param.set_change_reason("") is False
+    assert param.change_reason is None
+
+
 class TestChangeReasonForFile:
     """change_reason_for_file produces the correct string for every scenario."""
 

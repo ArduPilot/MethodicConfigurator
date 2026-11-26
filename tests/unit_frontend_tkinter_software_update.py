@@ -20,6 +20,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 
+from ardupilot_methodic_configurator import __version__
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_file_browser_tasks import BackgroundTaskRunner
 from ardupilot_methodic_configurator.frontend_tkinter_software_update import UpdateDialog
@@ -54,7 +55,7 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
 
         # Patch center_window_on_screen to prevent extra root.update() calls
         self.center_window_patch = patch.object(BaseWindow, "center_window_on_screen")
-        self.center_window_patch.start()
+        self.center_window_mock = self.center_window_patch.start()
         self.addCleanup(self.center_window_patch.stop)
 
         # Patch BaseWindow to use our controlled root window
@@ -83,7 +84,8 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
 
         # Execute tasks deterministically in unit tests; the real runner is tested below.
         self.runner_patch = patch("ardupilot_methodic_configurator.frontend_tkinter_software_update.BackgroundTaskRunner")
-        runner = self.runner_patch.start().return_value
+        self.runner_class_mock = self.runner_patch.start()
+        runner = self.runner_class_mock.return_value
         runner.active = False
 
         def start(
@@ -112,18 +114,29 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
         patch.stopall()
 
     def test_init(self) -> None:
-        """Test dialog initialization."""
+        """
+        The update dialog keeps its callback and initializes UI task handling.
+
+        GIVEN: The user opens an update dialog with a download callback
+        WHEN: The dialog is constructed
+        THEN: It retains the callback and initializes its scheduler and close state
+        """
         dialog = UpdateDialog(self.version_info, self.download_callback)
 
         assert dialog.result is None
         assert dialog.download_callback == self.download_callback
+        assert dialog._close_timer_id is None
+        self.runner_class_mock.assert_called_once_with(self.root.after)
+        self.center_window_mock.assert_called_once_with(self.root)
+        self.ttk_mock.assert_called_once_with(dialog.main_frame, padding="10")
+        self.frame_mock.pack.assert_called_once_with(fill=tk.BOTH, expand=True)
 
     def test_on_no(self) -> None:
         """Test 'Not Now' button behavior."""
         dialog = UpdateDialog(self.version_info)
         dialog.on_no()
 
-        assert not dialog.result
+        assert dialog.result is False
         self.root.destroy.assert_called_once()
 
     def test_on_cancel(self) -> None:
@@ -131,7 +144,7 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
         dialog = UpdateDialog(self.version_info)
         dialog.on_cancel()
 
-        assert not dialog.result
+        assert dialog.result is False
         self.root.destroy.assert_called_once()
 
     def test_window_protocol(self) -> None:
@@ -188,11 +201,22 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
             self.root.destroy.assert_not_called()
 
     def test_init_window_config(self) -> None:
-        """Test window configuration during initialization."""
+        """
+        The dialog title and dimensions identify the available software update.
+
+        GIVEN: The application opens an update dialog
+        WHEN: The window is initialized
+        THEN: The title contains the running version and the window uses the intended dimensions
+        """
         dialog = UpdateDialog(self.version_info)
 
         # Window configuration
         self.root.title.assert_called_once()
+        title = self.root.title.call_args.args[0]
+        assert title.startswith("Amilcar Lucas's - ArduPilot methodic configurator ")
+        assert "New version available" in title
+        assert title.endswith(" - New version available")
+        assert __version__ in title
         self.root.geometry.assert_any_call("700x600")
 
         dialog.frame.grid_rowconfigure.assert_called_with(0, weight=1)  # pylint: disable=no-member
@@ -204,10 +228,10 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
     def test_init_scroll_frame(self) -> None:
         """Test ScrollFrame setup during initialization."""
         with patch("ardupilot_methodic_configurator.frontend_tkinter_software_update.ScrollFrame") as mock_scroll:
-            UpdateDialog(self.version_info)
+            dialog = UpdateDialog(self.version_info)
 
             # ScrollFrame creation and configuration
-            mock_scroll.assert_called_once()
+            mock_scroll.assert_called_once_with(dialog.frame)
             mock_scroll_instance = mock_scroll.return_value
             mock_scroll_instance.grid.assert_called_with(row=0, column=0, columnspan=2, pady=20, sticky="nsew")
 
@@ -215,6 +239,34 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
             viewport = mock_scroll_instance.view_port
             viewport.grid_columnconfigure.assert_called_with(0, weight=1)
             viewport.grid_rowconfigure.assert_called_with(0, weight=1)
+
+    def test_update_content_widgets_are_configured_and_positioned(self) -> None:
+        """The update dialog lays out its release notes, progress bar, and status consistently."""
+        version_label = MagicMock()
+        status_label = MagicMock()
+        progress_bar = MagicMock()
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_software_update.ScrollFrame") as mock_scroll,
+            patch("tkinter.ttk.Label", side_effect=[version_label, status_label]) as mock_label,
+            patch("tkinter.ttk.Progressbar", return_value=progress_bar) as mock_progressbar,
+            patch.object(self.root, "bind") as mock_bind,
+        ):
+            dialog = UpdateDialog(self.version_info)
+
+        viewport = mock_scroll.return_value.view_port
+        assert mock_label.call_args_list == [
+            call(viewport, text=self.version_info, justify="left"),
+            call(dialog.frame, text=""),
+        ]
+        version_label.grid.assert_called_once_with(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        assert mock_progressbar.call_args_list == [
+            call(dialog.frame, orient="horizontal", length=400, mode="determinate"),
+        ]
+        progress_bar.grid.assert_called_once_with(row=1, column=0, columnspan=2, pady=10, padx=10, sticky="ew")
+        progress_bar.grid_remove.assert_called_once_with()
+        status_label.grid.assert_called_once_with(row=2, column=0, columnspan=2, sticky="ew")
+        mock_bind.assert_called_once_with("<Configure>", dialog._on_window_resize)
 
     def test_window_resize(self) -> None:
         """Test window resize event handler."""
@@ -238,7 +290,13 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
             mock_msg.configure.assert_called_with(wraplength=750)
 
     def test_button_configuration(self) -> None:
-        """Test button creation and configuration."""
+        """
+        The update dialog presents clear update and defer actions.
+
+        GIVEN: The update dialog is opened
+        WHEN: Its action buttons are created
+        THEN: Each button invokes the matching user action and is placed in its own column
+        """
         mock_yes_btn = MagicMock()
         mock_no_btn = MagicMock()
 
@@ -246,13 +304,12 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
             mock_button.side_effect = [mock_yes_btn, mock_no_btn]
             dialog = UpdateDialog(self.version_info)
 
-            # Configure the mocks
-            mock_yes_btn.configure(text="Update Now", command=dialog.on_yes)
-            mock_no_btn.configure(text="Not Now", command=dialog.on_no)
-
-            # Verify configurations
-            mock_yes_btn.configure.assert_called_with(text="Update Now", command=dialog.on_yes)
-            mock_no_btn.configure.assert_called_with(text="Not Now", command=dialog.on_no)
+        assert mock_button.call_args_list == [
+            call(dialog.frame, text="Update Now", command=dialog.on_yes),
+            call(dialog.frame, text="Not Now", command=dialog.on_no),
+        ]
+        mock_yes_btn.grid.assert_called_once_with(row=3, column=0, padx=5)
+        mock_no_btn.grid.assert_called_once_with(row=3, column=1, padx=5)
 
     def test_update_progress(self) -> None:
         """Test progress bar updates."""
@@ -446,20 +503,15 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
 
         # Mock the label
         label_mock = MagicMock()
-        with patch("tkinter.ttk.Label", return_value=label_mock) as mock_label:
-            _dialog = UpdateDialog(version_info)
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_software_update.ScrollFrame") as mock_scroll,
+            patch("tkinter.ttk.Label", return_value=label_mock) as mock_label,
+        ):
+            dialog = UpdateDialog(version_info)
 
-            # The mock should have been created with our version info text
-            mock_calls = mock_label.call_args_list
-            # Find the call that created the label with our version info
-            version_label_call_found = False
-            for m_call in mock_calls:
-                _args, kwargs = m_call
-                if "text" in kwargs and kwargs["text"] == version_info:
-                    version_label_call_found = True
-                    break
-
-            assert version_label_call_found, "Version info wasn't passed to the label"
+            viewport = mock_scroll.return_value.view_port
+            assert call(viewport, text=version_info, justify="left") in mock_label.call_args_list
+            assert call(dialog.frame, text="") in mock_label.call_args_list
 
     def test_show_method(self) -> None:
         """Test the show method returns the correct result."""

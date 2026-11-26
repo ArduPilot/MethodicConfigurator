@@ -204,11 +204,16 @@ class TestVehicleDirectoryOpening:
         # Arrange: Valid vehicle directory
         vehicle_dir = "C:\\path\\to\\vehicle\\directory"
 
-        # Act: Open vehicle directory
-        result = project_opener.open_vehicle_directory(vehicle_dir)
+        # Act: Open vehicle directory and preserve the selected path during migration
+        with patch(
+            "ardupilot_methodic_configurator.data_model_vehicle_project_opener.migrate_vehicle_project_if_needed"
+        ) as migrate_project:
+            result = project_opener.open_vehicle_directory(vehicle_dir)
 
         # Assert: Directory opened successfully and filesystem initialized
         assert result == vehicle_dir
+        migrate_project.assert_called_once_with(vehicle_dir)
+        mock_local_filesystem.vehicle_configuration_files_exist.assert_called_once_with(vehicle_dir)
         assert mock_local_filesystem.vehicle_dir == vehicle_dir
         mock_local_filesystem.remove_cached_parameter_metadata_for_mismatched_firmware.assert_called_once_with(vehicle_dir)
         mock_local_filesystem.re_init.assert_called_once_with(vehicle_dir, "")
@@ -327,9 +332,12 @@ class TestVehicleDirectoryValidation:
         # Arrange: Valid directory setup
         vehicle_dir = "/path/to/valid/vehicle"
 
-        with patch.object(LocalFilesystem, "directory_exists", return_value=True):
+        with patch.object(LocalFilesystem, "directory_exists", return_value=True) as directory_exists:
             # Act & Assert: Validation should pass without exception
             project_opener._validate_existing_directory(vehicle_dir)
+
+        directory_exists.assert_called_once_with(vehicle_dir)
+        mock_local_filesystem.vehicle_configuration_files_exist.assert_called_once_with(vehicle_dir)
 
     def test_validation_fails_for_empty_directory_path(self, project_opener) -> None:
         """

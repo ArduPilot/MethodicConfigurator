@@ -455,6 +455,19 @@ def processor(mock_local_filesystem) -> ConfigurationStepProcessor:
     return ConfigurationStepProcessor(mock_local_filesystem)
 
 
+def test_processor_discards_transient_variables_from_filesystem(processor: ConfigurationStepProcessor) -> None:
+    """Reserved expression variables from a previous step are removed at initialization."""
+    processor.local_filesystem.get_eval_variables.return_value.update(
+        {"fc_parameters": {"STALE": 1.0}, "new_connection_prefix": "SERIAL9"}
+    )
+
+    processor = ConfigurationStepProcessor(processor.local_filesystem)
+
+    assert "fc_parameters" not in processor.variables
+    assert "new_connection_prefix" not in processor.variables
+    assert processor.variables["selected_can"] == "CAN2"
+
+
 @pytest.fixture
 def fc_parameters() -> dict[str, float]:
     """Fixture providing realistic flight controller parameters."""

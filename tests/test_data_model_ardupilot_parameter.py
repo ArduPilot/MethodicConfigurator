@@ -94,6 +94,17 @@ def test_discarding_a_value_edit_restores_the_file_value_and_preserves_the_reaso
     assert parameter.is_dirty
 
 
+def test_manual_override_reason_preserves_a_leading_x() -> None:
+    parameter = ArduPilotParameter(
+        "TEST_MANUAL",
+        Par(5.0, "@manual_override Xylophone measured gain"),
+        forced_par=Par(6.0, "Forced by configuration"),
+    )
+
+    assert parameter.is_manual_override is True
+    assert parameter.change_reason == "Xylophone measured gain"
+
+
 @pytest.fixture
 def param_fixture() -> dict[str, Any]:  # pylint: disable=too-many-locals
     """Create parameter fixtures for testing."""
@@ -617,6 +628,30 @@ def test_set_forced_or_derived_value(param_fixture) -> None:
     assert str(error.value) == "This method is only for forced or derived parameters."
 
 
+@pytest.mark.parametrize("enabled", [False, True])
+@pytest.mark.parametrize("source", ["forced", "derived"])
+@pytest.mark.parametrize("invalid_value", [float("nan"), float("inf"), float("-inf")])
+def test_manual_override_does_not_restore_nonfinite_forced_or_derived_values(
+    enabled: bool, source: str, invalid_value: float
+) -> None:
+    """Invalid computed values are not applied when a manual override is toggled."""
+    computed_par = Par(invalid_value, "computed")
+    parameter = ArduPilotParameter(
+        "TEST_PARAM",
+        Par(5.0, "file value"),
+        forced_par=computed_par if source == "forced" else None,
+        derived_par=computed_par if source == "derived" else None,
+    )
+
+    assert not parameter.is_forced
+    assert not parameter.is_derived
+
+    with pytest.raises(ValueError, match="only applicable to forced or derived"):
+        parameter.set_manual_override(enabled)
+
+    assert parameter.get_new_value() == 5.0
+
+
 def test_fc_value_equals_default_value_for_bitmask_parameter(param_fixture) -> None:
     """
     fc_value_equals_default_value uses exact comparison for bitmask parameters.
@@ -789,6 +824,19 @@ def test_set_forced_or_derived_change_reason_readonly_raises() -> None:
     with pytest.raises(ValueError, match="Readonly parameters") as error:
         param.set_forced_or_derived_change_reason("new reason")
     assert str(error.value) == "Readonly parameters cannot be forced or derived."
+
+
+@pytest.mark.parametrize("definition", ["forced", "derived"])
+def test_empty_forced_or_derived_reason_stays_empty(definition: str) -> None:
+    """An absent explanation for a computed value remains blank in the editor."""
+    param = ArduPilotParameter(
+        "COMPUTED_PARAM",
+        Par(1.0, ""),
+        forced_par=Par(2.0, "") if definition == "forced" else None,
+        derived_par=Par(2.0, "") if definition == "derived" else None,
+    )
+
+    assert param.change_reason == ""
 
 
 def test_bitmask_helper_get_checked_keys() -> None:
@@ -1283,6 +1331,25 @@ def test_invalid_numbers_name_the_parameter_for_every_nonfinite_value(value: flo
     param = ArduPilotParameter("TEST_NUMBER", Par(1.0, ""))
 
     assert param.is_invalid_number(value) == "The value for TEST_NUMBER must be a finite number."
+
+
+@pytest.mark.parametrize("parameter_kind", ["forced", "derived"])
+@pytest.mark.parametrize("invalid_number", [math.inf, -math.inf])
+def test_nonfinite_configured_values_are_not_marked_forced_or_derived(
+    parameter_kind: str, invalid_number: float
+) -> None:
+    """Neither sign of infinity bypasses the constructor's finite-value guard."""
+    invalid_value = Par(invalid_number, "")
+    parameter = ArduPilotParameter(
+        "NONFINITE_CONFIG",
+        Par(1.0, ""),
+        forced_par=invalid_value if parameter_kind == "forced" else None,
+        derived_par=invalid_value if parameter_kind == "derived" else None,
+    )
+
+    assert parameter.is_forced is False
+    assert parameter.is_derived is False
+    assert parameter.get_new_value() == 1.0
 
 
 def test_bitmask_validation_identifies_unknown_bits_and_ignores_missing_fc_values() -> None:

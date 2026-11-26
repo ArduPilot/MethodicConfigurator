@@ -164,6 +164,8 @@ def test_inspector_initializes_its_window_guidance_and_fields(inspector: Mavlink
     )
     assert int(inspector.connection_note.cget("width")) == 1
     assert inspector.message_contents.title == _("MAVLink message contents")
+    assert inspector.message_contents.pack_info()["fill"] == "both"
+    assert bool(int(inspector.message_contents.pack_info()["expand"]))
     assert int(inspector.fields.cget("height")) == 8
     assert inspector.fields.cget("wrap") == "word"
     assert inspector.fields.cget("state") == "disabled"

@@ -1234,6 +1234,41 @@ class TestBinLogImportHelpers:
 
         assert VehicleProjectCreator.vehicle_type_from_template(str(template_dir)) == "ArduPlane"
 
+    def test_vehicle_type_from_template_returns_empty_when_type_is_missing(self, tmp_path) -> None:
+        """A template without optional firmware type metadata remains usable."""
+        template_dir = tmp_path / "custom_template"
+        template_dir.mkdir()
+        (template_dir / "vehicle_components.json").write_text(
+            '{"Components": {"Flight Controller": {"Firmware": {}}}}',
+            encoding="utf-8",
+        )
+
+        assert VehicleProjectCreator.vehicle_type_from_template(str(template_dir)) == ""
+
+    @pytest.mark.parametrize(
+        "metadata",
+        [
+            "{}",
+            '{"Components": {}}',
+            '{"Components": {"Flight Controller": {}}}',
+            '{"Components": {"Flight Controller": {"Firmware": {}}}}',
+        ],
+    )
+    def test_vehicle_type_from_template_returns_empty_when_metadata_path_is_incomplete(self, tmp_path, metadata: str) -> None:
+        """Partial optional component metadata does not prevent custom template use."""
+        template_dir = tmp_path / "custom_template"
+        template_dir.mkdir()
+        (template_dir / "vehicle_components.json").write_text(metadata, encoding="utf-8")
+
+        assert VehicleProjectCreator.vehicle_type_from_template(str(template_dir)) == ""
+
+    def test_vehicle_type_from_template_returns_empty_when_metadata_file_is_missing(self, tmp_path) -> None:
+        """A custom template can omit its optional component metadata file."""
+        template_dir = tmp_path / "custom_template"
+        template_dir.mkdir()
+
+        assert VehicleProjectCreator.vehicle_type_from_template(str(template_dir)) == ""
+
     def test_next_import_filename_starts_at_one_when_no_param_files_exist(self, tmp_path) -> None:
         """
         next_import_filename returns 01_… when there are no .param files.

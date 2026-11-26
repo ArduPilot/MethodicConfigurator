@@ -210,6 +210,39 @@ def test_bootloader_port_refuses_duplicate_serials_on_different_devices_despite_
         bl.resolve_bootloader_device("/dev/ttyACM0", identity)
 
 
+def test_bootloader_port_refuses_duplicate_serials_without_physical_locations(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An interface name cannot disambiguate devices when USB locations are unknown."""
+    bootloader_port = ListPortInfo("/dev/ttyACM0")
+    bootloader_port.serial_number = "DUP"
+    bootloader_port.interface = "Bootloader"
+    other_port = ListPortInfo("/dev/ttyACM1")
+    other_port.serial_number = "DUP"
+    other_port.interface = "ArduPilot"
+    monkeypatch.setattr(bl.serial.tools.list_ports, "comports", lambda: [bootloader_port, other_port])
+
+    identity = bl.SerialDeviceIdentity(serial_number="DUP", interface="ArduPilot")
+
+    with pytest.raises(OSError, match="cannot uniquely"):
+        bl.resolve_bootloader_device("/dev/ttyACM0", identity)
+
+
+def test_bootloader_port_compares_serial_numbers_without_location_normalization(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Only USB locations use suffix normalization; serial numbers are exact identifiers."""
+    port = ListPortInfo("/dev/ttyACM0")
+    port.location = "1-2.3"
+    port.serial_number = "FC:other"
+    monkeypatch.setattr(bl.serial.tools.list_ports, "comports", lambda: [port])
+
+    identity = bl.SerialDeviceIdentity(location="1-2.3", serial_number="FC:123")
+
+    with pytest.raises(OSError, match="cannot uniquely"):
+        bl.resolve_bootloader_device("/dev/ttyACM0", identity)
+
+
 def test_capture_serial_identity_follows_a_symlinked_device_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """USB metadata is retained when the selected port is a symlink such as by-id."""
     device = tmp_path / "ttyACM0"

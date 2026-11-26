@@ -18,6 +18,7 @@ import sys
 import zlib
 from collections.abc import Callable
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -165,9 +166,11 @@ class FakeBootloaderTransport:
 def test_upload_verifies_revision_specific_protocol_and_closes(revision: int) -> None:
     image = fw.parse_apj(apj(b"abc"))
     transport = FakeBootloaderTransport(revision=revision)
+    confirmation_requested = MagicMock(return_value=True)
 
-    info = bl.BootloaderClient(transport).upload(image, confirmation_requested=lambda *_args: True)
+    info = bl.BootloaderClient(transport).upload(image, confirmation_requested=confirmation_requested)
 
+    confirmation_requested.assert_called_once_with(image, info)
     assert info.protocol_revision == revision
     assert transport.flash == b"abc\xff"
     assert transport.closed
@@ -339,6 +342,11 @@ def test_read_multi_encoder_rejects_invalid_lengths(length: int) -> None:
         bl.encode_read_multi(length)
 
 
+def test_read_multi_encoder_accepts_the_minimum_positive_length() -> None:
+    """READ_MULTI permits a one-byte request at the lower protocol boundary."""
+    assert bl.encode_read_multi(1) == b"\x28\x01\x20"
+
+
 def test_uint32_decoder_rejects_incomplete_words() -> None:
     """
     A 32-bit response must contain a complete word.
@@ -387,6 +395,80 @@ def test_serial_identity_capture_and_resolution_require_a_unique_device(monkeypa
     assert bl.capture_serial_device_identity("not-present") is None
     with pytest.raises(OSError, match="cannot uniquely locate"):
         bl.resolve_bootloader_device("COM7", bl.SerialDeviceIdentity())
+
+
+@pytest.mark.parametrize(
+    ("identity", "expected"),
+    [
+        (bl.SerialDeviceIdentity(location="1-2.3"), True),
+        (bl.SerialDeviceIdentity(serial_number="ABC123"), True),
+        (bl.SerialDeviceIdentity(), False),
+        (None, False),
+    ],
+)
+def test_stable_bootloader_identity_accepts_either_usb_identifier(
+    identity: bl.SerialDeviceIdentity | None, expected: bool
+) -> None:
+    """A physical location or serial number alone can identify the controller."""
+    assert bl.has_stable_bootloader_device_identity("COM7", identity) is expected
+
+
+def test_capture_serial_device_identity_scans_past_unrelated_ports(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A nonmatching serial entry does not hide the requested controller later in enumeration."""
+    # GIVEN a serial-port listing with another device before the requested controller
+    unrelated = SimpleNamespace(device="COM3", location="1-1", serial_number="OTHER")
+    requested = SimpleNamespace(device="COM7", location="1-2", serial_number="TARGET", interface="0")
+    monkeypatch.setattr(bl.serial.tools.list_ports, "comports", lambda: [unrelated, requested])
+
+    # WHEN identity is captured for the requested endpoint
+    identity = bl.capture_serial_device_identity("COM7")
+
+    # THEN the identity comes from the matching physical controller
+    assert identity == bl.SerialDeviceIdentity("1-2", "TARGET", "0")
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Creating symlinks requires platform-specific privileges on Windows")
+def test_capture_serial_device_identity_resolves_a_symlinked_endpoint(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """A stable alias resolves to the USB identity reported under its physical port path."""
+    # GIVEN a selected symlink and a serial-port listing that exposes its target
+    target = tmp_path / "ttyACM0"
+    target.touch()
+    alias = tmp_path / "flight-controller"
+    alias.symlink_to(target)
+    unrelated_port = SimpleNamespace(device=str(tmp_path / "ttyACM1"), location="1-4", serial_number="OTHER")
+    physical_port = SimpleNamespace(device=str(target), location="1-2.3", serial_number="ABC123")
+    monkeypatch.setattr(bl.serial.tools.list_ports, "comports", lambda: [unrelated_port, physical_port])
+
+    # WHEN the stable identity is captured through the alias
+    identity = bl.capture_serial_device_identity(str(alias))
+
+    # THEN metadata for the resolved physical port is returned
+    assert identity == bl.SerialDeviceIdentity("1-2.3", "ABC123", "")
+
+
+def test_capture_serial_device_identity_normalizes_missing_metadata(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Optional USB attributes stay empty, and an interface alone is not stable identity."""
+    # GIVEN a listed endpoint with a location but no serial-number or interface attributes
+    located_port = SimpleNamespace(device="COM8", location="1-3")
+    monkeypatch.setattr(bl.serial.tools.list_ports, "comports", lambda: [located_port])
+
+    # WHEN its identity is captured
+    identity = bl.capture_serial_device_identity("COM8")
+
+    # THEN missing optional metadata is normalized to empty strings
+    assert identity == bl.SerialDeviceIdentity("1-3", "", "")
+
+    # AND a serial number remains useful when the location attribute is absent
+    serial_only_port = SimpleNamespace(device="COM10", serial_number="ABC123")
+    monkeypatch.setattr(bl.serial.tools.list_ports, "comports", lambda: [serial_only_port])
+    assert bl.capture_serial_device_identity("COM10") == bl.SerialDeviceIdentity("", "ABC123", "")
+
+    # AND an interface without location or serial number is insufficient to identify hardware
+    interface_only_port = SimpleNamespace(device="COM9", location="", serial_number="", interface="0")
+    monkeypatch.setattr(bl.serial.tools.list_ports, "comports", lambda: [interface_only_port])
+    assert bl.capture_serial_device_identity("COM9") is None
 
 
 def test_restore_transport_timeout_ignores_read_only_transport_properties() -> None:
@@ -567,6 +649,30 @@ def test_identify_resets_stale_bytes_before_old_bootloader_fallback() -> None:
 
     assert info == bl.BootloaderInfo(protocol_revision=2, board_id=9, board_revision=0, flash_size=2048, extf_size=0)
     assert transport.reset_count == 2
+
+
+def test_identify_passes_one_deadline_to_every_device_query() -> None:
+    """Every identification query remains bounded by the shared enumeration deadline."""
+    client = bl.BootloaderClient(FakeBootloaderTransport())
+    deadline = 123.0
+    values = {
+        bl.INFO_BL_REV: 5,
+        bl.INFO_EXTF_SIZE: 0,
+        bl.INFO_BOARD_ID: 9,
+        bl.INFO_BOARD_REV: 0,
+        bl.INFO_FLASH_SIZE: 2048,
+    }
+
+    def respond(request: bytes, reply_size: int = 0, **_kwargs: object) -> bytes:
+        if reply_size == 0:
+            return b""
+        return struct.pack("<I", values[request[1:2]])
+
+    with patch.object(client, "_command", side_effect=respond) as command:
+        info = client.identify(deadline=deadline)
+
+    assert info == bl.BootloaderInfo(protocol_revision=5, board_id=9, board_revision=0, flash_size=2048, extf_size=0)
+    assert all(call.kwargs.get("deadline") == deadline for call in command.call_args_list)
 
 
 def test_discovery_recovers_from_old_bootloader_rejecting_extf_query_on_a_used_deadline() -> None:
@@ -972,10 +1078,75 @@ def test_read_timeout_is_bounded_even_when_serial_keeps_returning_empty_reads() 
     clock_values = iter([0.0, 0.5, 1.0])
     client = bl.BootloaderClient(transport, timeout=1.0, clock=lambda: next(clock_values))
 
-    with pytest.raises(fw.BootloaderProtocolError, match="timeout waiting"):
+    with pytest.raises(fw.BootloaderProtocolError, match=r"timeout waiting for 1 bootloader bytes; received 0"):
         client._read_exact(1)  # Exercise the transport deadline directly.
 
     assert transport.reads == 1
+
+
+def test_expired_read_deadline_reports_requested_byte_count() -> None:
+    """An expired shared deadline reports the requested response size before reading."""
+    transport = MagicMock()
+    client = bl.BootloaderClient(transport, timeout=1.0, clock=lambda: 1.0)
+
+    with pytest.raises(fw.BootloaderProtocolError, match=r"timeout waiting for 1 bootloader bytes; received 0"):
+        client._read_exact(1, deadline=1.0)
+
+    transport.read.assert_not_called()
+
+
+def test_read_exact_honors_a_per_read_timeout_override() -> None:
+    """A shorter per-read deadline stops an empty transport without extra sleeps."""
+
+    class EmptyReadTransport(FakeBootloaderTransport):
+        """Transport that simulates a serial port timing out without a response."""
+
+        reads = 0
+
+        def read(self, size: int = 1) -> bytes:
+            self.reads += 1
+            return b""
+
+    transport = EmptyReadTransport()
+    clock_values = iter([0.0, 0.0, 0.2, 5.0, 10.0])
+    sleeps: list[float] = []
+    client = bl.BootloaderClient(
+        transport,
+        timeout=10.0,
+        clock=lambda: next(clock_values),
+        sleep=sleeps.append,
+    )
+
+    with pytest.raises(fw.BootloaderProtocolError, match="timeout waiting"):
+        client._read_exact(1, timeout=0.1)
+
+    assert transport.reads == 1
+    assert sleeps == []
+
+
+def test_read_exact_requests_only_the_remaining_partial_bytes() -> None:
+    """Partial serial reads must not consume bytes belonging to the next reply."""
+
+    class OneByteAtATimeTransport(FakeBootloaderTransport):
+        """Transport that returns one byte per read and records each request size."""
+
+        def __init__(self) -> None:
+            super().__init__()
+            self.requested_sizes: list[int] = []
+            self._reply.extend(b"abc")
+
+        def read(self, size: int = 1) -> bytes:
+            self.requested_sizes.append(size)
+            chunk = bytes(self._reply[:1])
+            del self._reply[:1]
+            return chunk
+
+    transport = OneByteAtATimeTransport()
+
+    result = bl.BootloaderClient(transport)._read_exact(3)
+
+    assert result == b"abc"
+    assert transport.requested_sizes == [3, 2, 1]
 
 
 def test_client_uses_injected_sleep_for_empty_nonblocking_reads() -> None:
@@ -1182,9 +1353,10 @@ def test_client_requires_confirmation_and_reboots_before_closing() -> None:
 def test_declined_confirmation_reboots_before_closing() -> None:
     transport = FakeBootloaderTransport()
 
-    with pytest.raises(fw.FirmwareUploadCancelledError, match="not confirmed"):
+    with pytest.raises(fw.FirmwareUploadCancelledError, match="not confirmed") as error:
         bl.BootloaderClient(transport).upload(fw.parse_apj(apj(b"abcd")), confirmation_requested=lambda *_args: False)
 
+    assert error.value.stage == fw.UploadStage.AWAITING_CONFIRMATION.value
     assert transport.rebooted
     assert transport.closed
 
@@ -1290,6 +1462,16 @@ def test_reader_rejects_oversized_apj_descriptor_before_reading(tmp_path: Path, 
         bl.load_apj(path)
 
 
+def test_reader_accepts_apj_descriptor_at_the_size_limit(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The configured descriptor limit is inclusive."""
+    contents = apj(b"abcd")
+    monkeypatch.setattr(bl, "MAX_APJ_DESCRIPTOR_SIZE", len(contents))
+    path = tmp_path / "firmware.apj"
+    path.write_bytes(contents)
+
+    assert bl.load_apj(path).image == b"abcd"
+
+
 def test_load_apj_rejects_non_apj_suffix(tmp_path: Path) -> None:
     path = tmp_path / "firmware.bin"
     path.write_bytes(b"whatever")
@@ -1299,6 +1481,9 @@ def test_load_apj_rejects_non_apj_suffix(tmp_path: Path) -> None:
 
 
 def test_encode_extf_erase_rejects_out_of_range_size() -> None:
+    assert bl.encode_extf_erase(1) == bl.EXTF_ERASE + b"\x01\x00\x00\x00" + bl.EOC
+    assert bl.encode_extf_erase(0xFFFFFFFF) == bl.EXTF_ERASE + b"\xff\xff\xff\xff" + bl.EOC
+
     with pytest.raises(ValueError, match="external flash size"):
         bl.encode_extf_erase(0)
     with pytest.raises(ValueError, match="external flash size"):
@@ -1308,6 +1493,29 @@ def test_encode_extf_erase_rejects_out_of_range_size() -> None:
 def test_bootloader_client_rejects_non_positive_timeout() -> None:
     with pytest.raises(ValueError, match="timeout must be positive"):
         bl.BootloaderClient(FakeBootloaderTransport(), timeout=0)
+
+
+def test_upload_uses_caller_supplied_bootloader_info_without_reidentifying() -> None:
+    """
+    A previously identified bootloader remains the source of truth for its upload.
+
+    GIVEN: The caller already supplied valid bootloader information
+    WHEN: The firmware upload runs
+    THEN: It uses that information without issuing another identify sequence
+    """
+    transport = FakeBootloaderTransport(revision=5)
+    client = bl.BootloaderClient(transport)
+    bootloader = fw.BootloaderInfo(5, 9, 0, 2048)
+
+    with patch.object(client, "identify", side_effect=AssertionError("unexpected identify")) as identify:
+        result = client.upload(
+            fw.parse_apj(apj(b"abcd", board_id=9)),
+            bootloader=bootloader,
+            confirmation_requested=lambda *_args: True,
+        )
+
+    assert result is bootloader
+    identify.assert_not_called()
 
 
 def test_identify_rejects_unsupported_protocol_revision() -> None:
@@ -1348,6 +1556,40 @@ def test_usb_identity_is_used_for_reenumerated_linux_devices(monkeypatch: pytest
     assert bl.resolve_bootloader_device("/dev/ttyACM0", identity) == "/dev/ttyACM1"
 
 
+def test_bootloader_resolver_uses_exact_interface_to_choose_between_same_device_ports(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A captured interface-qualified location disambiguates ports on the same device."""
+    exact_port = ListPortInfo("COM11")
+    exact_port.location = "1-2.3:1.0"
+    exact_port.serial_number = "FC-123"
+    other_interface = ListPortInfo("COM12")
+    other_interface.location = "1-2.3:2.0"
+    other_interface.serial_number = "FC-123"
+    monkeypatch.setattr(bl.serial.tools.list_ports, "comports", lambda: [exact_port, other_interface])
+    identity = bl.SerialDeviceIdentity(location="1-2.3:1.0", serial_number="FC-123")
+
+    assert bl.resolve_bootloader_device("COM7", identity) == "COM11"
+
+
+def test_bootloader_resolver_uses_interface_to_choose_within_one_usb_device(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A captured interface can disambiguate endpoints on the same physical USB device."""
+    selected_port = ListPortInfo("COM11")
+    selected_port.location = "1-2.3:1.0"
+    selected_port.serial_number = "FC-123"
+    selected_port.interface = "00"
+    other_port = ListPortInfo("COM12")
+    other_port.location = "1-2.3:2.0"
+    other_port.serial_number = "FC-123"
+    other_port.interface = "01"
+    monkeypatch.setattr(bl.serial.tools.list_ports, "comports", lambda: [selected_port, other_port])
+    identity = bl.SerialDeviceIdentity(location="1-2.3", serial_number="FC-123", interface="00")
+
+    assert bl.resolve_bootloader_device("COM7", identity) == "COM11"
+
+
 def test_bootloader_port_prefers_usb_identity_over_reused_linux_device_path(monkeypatch: pytest.MonkeyPatch) -> None:
     """A newly assigned tty path must not override the captured controller identity."""
     reenumerated = ListPortInfo("/dev/ttyACM1")
@@ -1359,6 +1601,34 @@ def test_bootloader_port_prefers_usb_identity_over_reused_linux_device_path(monk
         bl.resolve_bootloader_device("/dev/ttyACM0", bl.SerialDeviceIdentity(location="1-2.3", serial_number="FC-123"))
         == "/dev/ttyACM1"
     )
+
+
+@pytest.mark.parametrize(
+    ("identity", "location", "serial_number"),
+    [
+        (bl.SerialDeviceIdentity(location="1-2.3:2.0"), "1-2.3:1.0", ""),
+        (bl.SerialDeviceIdentity(serial_number="FC-123"), "", "FC-123"),
+    ],
+)
+def test_bootloader_reconnects_with_either_available_usb_identity(
+    monkeypatch: pytest.MonkeyPatch,
+    identity: bl.SerialDeviceIdentity,
+    location: str,
+    serial_number: str,
+) -> None:
+    """
+    Re-enumeration succeeds when one stable USB identity remains available.
+
+    GIVEN: The prior port disappeared but the bootloader exposes its USB location or serial number
+    WHEN: The original controller's bootloader endpoint is resolved
+    THEN: The unique matching endpoint is selected even if its interface suffix changed
+    """
+    reenumerated = ListPortInfo("COM11")
+    reenumerated.location = location
+    reenumerated.serial_number = serial_number
+    monkeypatch.setattr(bl.serial.tools.list_ports, "comports", lambda: [reenumerated])
+
+    assert bl.resolve_bootloader_device("COM7", identity) == "COM11"
 
 
 def test_bootloader_upload_requires_usb_metadata(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1381,6 +1651,18 @@ def test_bootloader_port_refuses_a_different_usb_serial(monkeypatch: pytest.Monk
         location="1-2.3",
         serial_number="ORIGINAL",
     )
+
+    with pytest.raises(OSError, match="cannot uniquely"):
+        bl.resolve_bootloader_device("/dev/ttyACM0", identity)
+
+
+def test_bootloader_port_refuses_wrong_usb_location_with_matching_serial(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A serial-number match cannot override a conflicting captured USB location."""
+    replacement = ListPortInfo("/dev/ttyACM1")
+    replacement.location = "9-9.9"
+    replacement.serial_number = "ORIGINAL"
+    monkeypatch.setattr(bl.serial.tools.list_ports, "comports", lambda: [replacement])
+    identity = bl.SerialDeviceIdentity(location="1-2.3", serial_number="ORIGINAL")
 
     with pytest.raises(OSError, match="cannot uniquely"):
         bl.resolve_bootloader_device("/dev/ttyACM0", identity)
@@ -1435,6 +1717,35 @@ def test_client_accepts_no_ack_reboot_when_pre_erase_abort_uses_protocol_v2() ->
     with pytest.raises(fw.FirmwareUploadCancelledError, match="not confirmed"):
         bl.BootloaderClient(transport).upload(fw.parse_apj(apj(b"abcd")), confirmation_requested=lambda *_args: False)
 
+    assert transport.rebooted
+    assert transport.closed
+
+
+def test_unexpected_pre_erase_error_uses_no_ack_reboot_for_protocol_v2() -> None:
+    """An unexpected confirmation callback error still follows revision-two reboot semantics."""
+
+    class V2NoAckRebootTransport(FakeBootloaderTransport):
+        """Protocol revision two reboots immediately and does not acknowledge it."""
+
+        def write(self, data: bytes) -> int:
+            if data[:1] == bl.REBOOT:
+                self.rebooted = True
+                self.commands.append(bl.REBOOT)
+                self.requests.append(data)
+                return len(data)
+            return super().write(data)
+
+    def raise_confirmation_error(_image: fw.FirmwareImage, _info: fw.BootloaderInfo) -> bool:
+        raise RuntimeError("unexpected confirmation callback failure")
+
+    transport = V2NoAckRebootTransport(revision=2)
+
+    with pytest.raises(RuntimeError, match="unexpected confirmation callback failure") as error:
+        bl.BootloaderClient(transport).upload(
+            fw.parse_apj(apj(b"abcd")), confirmation_requested=raise_confirmation_error
+        )
+
+    assert getattr(error.value, "bootloader_rebooted", False)
     assert transport.rebooted
     assert transport.closed
 
@@ -1598,22 +1909,54 @@ def test_facade_reconnects_using_the_reenumerated_serial_device(tmp_path: Path, 
     )
     path = tmp_path / "firmware.apj"
     path.write_bytes(apj(b"abcd"))
+    serial_open_arguments: list[tuple[object, ...]] = []
+    progress_events: list[tuple[fw.UploadStage, int, int]] = []
+
+    def open_transport(*args: object) -> FakeBootloaderTransport:
+        serial_open_arguments.append(args)
+        return transport
+
+    captured_identity = bl.SerialDeviceIdentity(location="1-2.3", serial_number="FC-123")
+    monkeypatch.setattr(
+        "ardupilot_methodic_configurator.backend_flightcontroller.capture_serial_device_identity",
+        lambda _device: captured_identity,
+    )
+    # The bootloader adapter resolves once before opening, then the facade reconnects.
+    listed_port = ListPortInfo("COM7")
+    listed_port.location = captured_identity.location
+    listed_port.serial_number = captured_identity.serial_number
+    monkeypatch.setattr(bl.serial.tools.list_ports, "comports", lambda: [listed_port])
+    resolver_arguments: list[tuple[str, bl.SerialDeviceIdentity | None]] = []
+
+    def resolve_bootloader_device(device: str, identity: bl.SerialDeviceIdentity | None) -> str:
+        resolver_arguments.append((device, identity))
+        return "COM13"
+
     monkeypatch.setattr(
         "ardupilot_methodic_configurator.backend_flightcontroller.resolve_bootloader_device",
-        lambda _device, _identity: "COM13",
+        resolve_bootloader_device,
     )
 
     controller.upload_apj_firmware(
         path,
         expected_firmware_sha256=trusted_digest(b"abcd"),
-        serial_factory=lambda *_args: transport,
+        serial_factory=open_transport,
         confirmation_requested=lambda *_args: True,
+        progress_callback=lambda stage, completed, total: progress_events.append((stage, completed, total)),
     )
 
+    assert progress_events[0] == (fw.UploadStage.ENTERING_BOOTLOADER, 0, 1)
+    assert any(stage == fw.UploadStage.PROGRAMMING for stage, _completed, _total in progress_events)
+    assert [event for event in progress_events if event[0] == fw.UploadStage.RECONNECTING] == [
+        (fw.UploadStage.RECONNECTING, 0, 1),
+        (fw.UploadStage.RECONNECTING, 1, 1),
+    ]
     assert connection.disconnected
     assert connection.reconnected
     assert connection.reconnect_device == "COM13"
+    assert resolver_arguments == [("COM7", captured_identity)]
     assert connection.reconnect_baudrate == 921600
+    assert serial_open_arguments == [("COM7", 115200, 2.0)]
     assert commands.calls[0]["param1"] == 3
     assert transport.closed
     assert params.cleared == 2
@@ -2070,8 +2413,45 @@ def test_facade_reports_a_verified_flash_when_automatic_reconnect_fails(
         )
 
 
-def test_facade_refuses_network_mavlink_connection() -> None:
-    connection = _Connection("udp:127.0.0.1:14550")
+@pytest.mark.parametrize("missing_component", ["master", "comport"])
+def test_facade_requires_both_master_and_serial_comport(missing_component: str) -> None:
+    """
+    Bootloader flashing is rejected if either half of the direct serial connection is missing.
+
+    GIVEN: A controller with only one of its MAVLink master and serial comport
+    WHEN: APJ flashing is requested
+    THEN: The operation fails as a connection error before bootloader entry
+    """
+    connection = _Connection()
+    if missing_component == "master":
+        connection.master = None
+    else:
+        connection.comport = None
+    controller = FlightController(
+        connection_manager=connection,  # type: ignore[arg-type]
+        params_manager=_Params(),  # type: ignore[arg-type]
+        commands_manager=_Commands(),  # type: ignore[arg-type]
+        files_manager=object(),  # type: ignore[arg-type]
+    )
+
+    with pytest.raises(fw.FirmwareConnectionError, match="direct serial"):
+        controller.upload_apj_firmware(Path("ignored.apj"))
+
+@pytest.mark.parametrize(
+    "device",
+    [
+        "udp:127.0.0.1:14550",
+        "udpin:0.0.0.0:14550",
+        "udpout:127.0.0.1:14550",
+        "tcp:127.0.0.1:5760",
+        "tcpin:127.0.0.1:5760",
+        "tcpout:127.0.0.1:5760",
+        "ws:127.0.0.1:5760",
+        "wss:127.0.0.1:5760",
+    ],
+)
+def test_facade_refuses_network_mavlink_connection(device: str) -> None:
+    connection = _Connection(device)
     controller = FlightController(
         connection_manager=connection,  # type: ignore[arg-type]
         params_manager=_Params(),  # type: ignore[arg-type]
@@ -2083,9 +2463,10 @@ def test_facade_refuses_network_mavlink_connection() -> None:
         controller.upload_apj_firmware(Path("ignored.apj"))
 
 
-def test_facade_requires_pre_reboot_board_identity(tmp_path: Path) -> None:
+@pytest.mark.parametrize("board_id", ["", "0", "-1"], ids=["missing", "unknown", "negative"])
+def test_facade_requires_pre_reboot_board_identity(tmp_path: Path, board_id: str) -> None:
     connection = _Connection()
-    connection.info.apj_board_id = ""
+    connection.info.apj_board_id = board_id
     controller = FlightController(
         connection_manager=connection,  # type: ignore[arg-type]
         params_manager=_Params(),  # type: ignore[arg-type]
@@ -2116,9 +2497,15 @@ def test_facade_requires_stable_usb_identity_before_bootloader_entry(tmp_path: P
     )
     path = tmp_path / "firmware.apj"
     path.write_bytes(apj(b"abcd"))
+    captured_identity = object()
+    monkeypatch.setattr(
+        "ardupilot_methodic_configurator.backend_flightcontroller.capture_serial_device_identity",
+        lambda _device: captured_identity,
+    )
+    stable_identity_check = MagicMock(return_value=False)
     monkeypatch.setattr(
         "ardupilot_methodic_configurator.backend_flightcontroller.has_stable_bootloader_device_identity",
-        bl.has_stable_bootloader_device_identity,
+        stable_identity_check,
     )
 
     with pytest.raises(fw.FirmwareConnectionError, match="stable USB"):
@@ -2128,6 +2515,7 @@ def test_facade_requires_stable_usb_identity_before_bootloader_entry(tmp_path: P
             confirmation_requested=lambda *_args: True,
         )
 
+    stable_identity_check.assert_called_once_with("COM7", captured_identity)
     assert not connection.master.held_in_bootloader
 
 
@@ -2241,6 +2629,40 @@ def test_backend_clamps_final_retry_sleep_to_remaining_budget() -> None:
     assert now == bl.BOOTLOADER_ENUMERATION_TIMEOUT
 
 
+def test_discovery_does_not_open_serial_at_the_exact_deadline() -> None:
+    """No serial open attempt starts after the discovery time budget is exhausted."""
+    now = 0.0
+    attempts = 0
+
+    def clock() -> float:
+        return now
+
+    def sleep(delay: float) -> None:
+        nonlocal now
+        now += delay
+
+    def open_transport(*_args: object) -> bl.BootloaderTransport:
+        nonlocal attempts
+        attempts += 1
+        raise OSError("bootloader port is still absent")
+
+    backend = bl.FlightControllerBootloaderBackend(
+        "COM7",
+        115200,
+        serial_factory=open_transport,
+        open_retries=3,
+        retry_delay=bl.BOOTLOADER_ENUMERATION_TIMEOUT,
+        clock=clock,
+        sleep=sleep,
+    )
+
+    with pytest.raises(fw.FirmwareBootloaderRecoveryError):
+        backend._wait_for_bootloader()  # pylint: disable=protected-access
+
+    assert attempts == 1
+    assert now == bl.BOOTLOADER_ENUMERATION_TIMEOUT
+
+
 def test_backend_honours_cancellation_during_bootloader_discovery() -> None:
     attempts = 0
 
@@ -2272,6 +2694,28 @@ def test_backend_honours_cancellation_during_bootloader_discovery() -> None:
         )
 
     assert attempts == 1
+
+
+def test_backend_honours_cancellation_before_first_bootloader_attempt() -> None:
+    """Immediate discovery cancellation raises the recovery error without opening serial."""
+    attempts = 0
+
+    def open_transport(*_args: object) -> bl.BootloaderTransport:
+        nonlocal attempts
+        attempts += 1
+        raise AssertionError("serial transport must not open after immediate cancellation")
+
+    backend = bl.FlightControllerBootloaderBackend(
+        "COM7",
+        115200,
+        serial_factory=open_transport,
+        open_retries=3,
+    )
+
+    with pytest.raises(fw.FirmwareBootloaderRecoveryError, match=r"cancelled.*power-cycle"):
+        backend._wait_for_bootloader(lambda: True)  # pylint: disable=protected-access
+
+    assert attempts == 0
 
 
 def test_backend_default_open_retry_budget_covers_bootloader_enumeration() -> None:
@@ -2335,6 +2779,144 @@ def test_backend_bootloader_discovery_uses_a_wall_clock_budget(caplog: pytest.Lo
     assert "Bootloader identification attempt 1 failed: timeout waiting for 2 bootloader bytes; received 0" in caplog.text
     assert "Bootloader recovery reboot failed: timeout waiting for 2 bootloader bytes; received 0" in caplog.text
     assert all(bl.CHIP_ERASE not in transport.commands and bl.PROG_MULTI not in transport.commands for transport in transports)
+
+
+def test_discovery_reboots_held_bootloader_when_retry_fills_remaining_budget(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A retry that lands exactly on the deadline still reboots the held bootloader."""
+    now = 0.0
+    abort_deadlines: list[float | None] = []
+
+    class FailedIdentificationClient:
+        def __init__(self, *_args: object, **_kwargs: object) -> None:
+            pass
+
+        def identify(self, *, deadline: float | None = None) -> bl.BootloaderInfo:
+            nonlocal now
+            assert deadline is not None
+            now = deadline - 0.25
+            raise fw.BootloaderProtocolError("identification failed at retry boundary")
+
+        def abort_before_erase(self, *, deadline: float | None = None, expect_ack: bool = True) -> bool:
+            assert expect_ack
+            abort_deadlines.append(deadline)
+            return True
+
+        def close(self) -> None:
+            pass
+
+    def clock() -> float:
+        return now
+
+    def sleep(delay: float) -> None:
+        nonlocal now
+        now += delay
+
+    def open_transport(*_args: object) -> bl.BootloaderTransport:
+        nonlocal now
+        now = bl.BOOTLOADER_ENUMERATION_TIMEOUT - 2.0
+        return FakeBootloaderTransport()
+
+    monkeypatch.setattr(bl, "BootloaderClient", FailedIdentificationClient)
+    backend = bl.FlightControllerBootloaderBackend(
+        "COM7",
+        115200,
+        serial_factory=open_transport,
+        open_retries=2,
+        retry_delay=0.25,
+        clock=clock,
+        sleep=sleep,
+    )
+
+    with pytest.raises(fw.BootloaderProtocolError) as error:
+        backend._wait_for_bootloader()  # pylint: disable=protected-access
+
+    assert getattr(error.value, "bootloader_rebooted", False)
+    assert abort_deadlines == [pytest.approx(bl.BOOTLOADER_ENUMERATION_TIMEOUT + bl.BOOTLOADER_ABORT_TIMEOUT - 0.25)]
+
+
+def test_discovery_reboots_held_bootloader_after_its_only_open_attempt(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The final allowed identification failure still reboots the held bootloader."""
+    expected_error = fw.BootloaderProtocolError("identification failed")
+    abort_deadlines: list[float | None] = []
+
+    class FailedIdentificationClient:
+        def __init__(self, *_args: object, **_kwargs: object) -> None:
+            pass
+
+        def identify(self, *, deadline: float | None = None) -> bl.BootloaderInfo:
+            assert deadline is not None
+            raise expected_error
+
+        def abort_before_erase(self, *, deadline: float | None = None, expect_ack: bool = True) -> bool:
+            assert expect_ack
+            abort_deadlines.append(deadline)
+            return True
+
+        def close(self) -> None:
+            pass
+
+    monkeypatch.setattr(bl, "BootloaderClient", FailedIdentificationClient)
+    backend = bl.FlightControllerBootloaderBackend(
+        "COM7",
+        115200,
+        serial_factory=lambda *_args: FakeBootloaderTransport(),
+        open_retries=1,
+        timeout=2.0,
+        clock=lambda: 0.0,
+        sleep=lambda _delay: None,
+    )
+
+    with pytest.raises(fw.BootloaderProtocolError) as error:
+        backend._wait_for_bootloader()  # pylint: disable=protected-access
+
+    assert error.value is expected_error
+    assert getattr(error.value, "bootloader_rebooted", False)
+    assert error.value.stage == fw.UploadStage.IDENTIFYING.value
+    assert abort_deadlines == [pytest.approx(bl.BOOTLOADER_ABORT_TIMEOUT)]
+
+
+def test_discovery_bounds_reboot_ack_wait_to_recovery_timeout() -> None:
+    """Reboot acknowledgement waits use the shorter recovery timeout after discovery expires."""
+    now = 0.0
+
+    class SilentTransport:
+        def write(self, data: bytes) -> int:
+            return len(data)
+
+        def read(self, _size: int = 1) -> bytes:
+            return b""
+
+        def flush(self) -> None:
+            pass
+
+        def reset_input_buffer(self) -> None:
+            pass
+
+        def close(self) -> None:
+            pass
+
+    def clock() -> float:
+        return now
+
+    def sleep(delay: float) -> None:
+        nonlocal now
+        now += delay
+
+    backend = bl.FlightControllerBootloaderBackend(
+        "COM7",
+        115200,
+        serial_factory=lambda *_args: SilentTransport(),
+        open_retries=100,
+        timeout=10.0,
+        retry_delay=0.5,
+        clock=clock,
+        sleep=sleep,
+    )
+
+    with pytest.raises(fw.FirmwareBootloaderRecoveryError, match="could not confirm reboot"):
+        backend._wait_for_bootloader()  # pylint: disable=protected-access
+
+    assert now == pytest.approx(bl.BOOTLOADER_ENUMERATION_TIMEOUT + bl.BOOTLOADER_ABORT_TIMEOUT)
 
 
 def test_backend_retries_after_a_silent_port_until_the_bootloader_appears() -> None:
@@ -2579,13 +3161,14 @@ def test_verify_failure_reports_the_verifying_stage() -> None:
 def test_cancellation_is_honoured_before_entering_the_bootloader() -> None:
     transport = FakeBootloaderTransport()
 
-    with pytest.raises(fw.FirmwareUploadCancelledError, match="before entering"):
+    with pytest.raises(fw.FirmwareUploadCancelledError, match="before entering") as error:
         bl.BootloaderClient(transport).upload(
             fw.parse_apj(apj(b"abcd")),
             cancellation_requested=lambda: True,
             confirmation_requested=lambda *_args: True,
         )
 
+    assert error.value.stage == fw.UploadStage.AWAITING_CONFIRMATION.value
     assert transport.flash == b""
     assert transport.extf == b""
     assert transport.closed

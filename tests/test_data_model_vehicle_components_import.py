@@ -787,6 +787,34 @@ class TestComponentDataModelImport:
         assert basic_model.get_component_value(("Battery", "Specifications", "Volt per cell crit")) == 3.3
         assert basic_model.get_component_value(("Battery", "Specifications", "Volt per cell min")) == 3.2
 
+    def test_import_battery_voltages_for_a_single_cell_battery(self, basic_model) -> None:
+        """One estimated cell is enough to convert and import FC voltage values."""
+        specs = BatteryVoltageSpecs(
+            estimated_cell_count=1,
+            limit_min=BatteryCell.limit_min_voltage("Lipo"),
+            limit_max=BatteryCell.limit_max_voltage("Lipo"),
+            detected_chemistry="Lipo",
+            fc_parameters={"BATT_ARM_VOLT": 3.8},
+        )
+
+        basic_model._import_bat_values_from_fc(specs)
+
+        assert basic_model.get_component_value(("Battery", "Specifications", "Volt per cell arm")) == 3.8
+
+    def test_import_positive_one_mah_battery_capacity(self, basic_model) -> None:
+        """Any positive flight-controller capacity remains eligible for import."""
+        specs = BatteryVoltageSpecs(
+            estimated_cell_count=0,
+            limit_min=BatteryCell.limit_min_voltage("Lipo"),
+            limit_max=BatteryCell.limit_max_voltage("Lipo"),
+            detected_chemistry="Lipo",
+            fc_parameters={"BATT_CAPACITY": 1},
+        )
+
+        basic_model._import_bat_values_from_fc(specs)
+
+        assert basic_model.get_component_value(("Battery", "Specifications", "Capacity mAh")) == 1
+
     def test_estimate_battery_cell_count_does_not_override_with_min_voltage(self, realistic_model) -> None:
         """
         CONFIRM: high-priority source MOT_BAT_VOLT_MAX is not overridden by MOT_BAT_VOLT_MIN.

@@ -110,6 +110,89 @@ class TestFlightcontrollerInfo:  # pylint: disable=too-many-public-methods
         assert isinstance(fc_info.capabilities, dict)
         assert len(fc_info.capabilities) == 0
 
+    def test_user_starts_with_empty_flight_controller_metadata(self) -> None:
+        """
+        A new connection begins without stale metadata from another controller.
+
+        GIVEN: A newly created flight-controller information model
+        WHEN: Its metadata is first read
+        THEN: Every text field is empty and capability flags are false
+        """
+        info = FlightControllerInfo()
+        string_fields = (
+            "system_id",
+            "component_id",
+            "hw_unique_id",
+            "autopilot",
+            "vehicle_type",
+            "firmware_type",
+            "mav_type",
+            "flight_sw_version",
+            "flight_sw_version_and_type",
+            "board_version",
+            "apj_board_id",
+            "flight_custom_version",
+            "os_custom_version",
+            "vendor",
+            "vendor_id",
+            "vendor_and_vendor_id",
+            "product",
+            "product_id",
+            "product_and_product_id",
+            "mcu_series",
+        )
+
+        assert all(getattr(info, field) == "" for field in string_fields)
+        assert info.is_supported is False
+        assert info.is_mavftp_supported is False
+        assert info.capabilities == {}
+
+    def test_disconnect_resets_all_flight_controller_metadata(self) -> None:
+        """
+        Disconnect clears every cached field and capability in place.
+
+        GIVEN: Metadata from a previously connected controller
+        WHEN: The information model is reset
+        THEN: Text fields and capabilities are cleared and support flags are false
+        """
+        info = FlightControllerInfo()
+        string_fields = (
+            "system_id",
+            "component_id",
+            "hw_unique_id",
+            "autopilot",
+            "vehicle_type",
+            "firmware_type",
+            "mav_type",
+            "flight_sw_version",
+            "flight_sw_version_and_type",
+            "board_version",
+            "apj_board_id",
+            "flight_custom_version",
+            "os_custom_version",
+            "vendor",
+            "vendor_id",
+            "vendor_and_vendor_id",
+            "product",
+            "product_id",
+            "product_and_product_id",
+            "mcu_series",
+        )
+        for field in string_fields:
+            setattr(info, field, "stale")
+        info.is_supported = True
+        info.is_mavftp_supported = True
+        info.capabilities["FTP"] = "File Transfer Protocol"
+        shared_capabilities = info.capabilities
+
+        info.reset()
+
+        assert all(getattr(info, field) == "" for field in string_fields)
+        assert info.is_supported is False
+        assert info.is_mavftp_supported is False
+        assert info.capabilities == {}
+        assert info.capabilities is shared_capabilities
+
     def test_set_system_id_and_component_id(self, fc_info) -> None:
         """Test setting system and component IDs."""
         fc_info.set_system_id_and_component_id("1", "2")
@@ -424,8 +507,13 @@ class TestFlightcontrollerInfo:  # pylint: disable=too-many-public-methods
             assert fc_info.is_supported is False
 
     def test_classify_vehicle_type_comprehensive(self) -> None:
-        """Comprehensive test of vehicle type classification."""
-        # Test all defined mappings
+        """
+        The connection banner maps every supported MAV_TYPE to its ArduPilot vehicle family.
+
+        GIVEN: A flight controller reports a MAV_TYPE value
+        WHEN: Its vehicle type is classified
+        THEN: The matching ArduPilot vehicle family is returned
+        """
         for mav_type, expected_vehicle in [
             (mavutil.mavlink.MAV_TYPE_FIXED_WING, "ArduPlane"),
             (mavutil.mavlink.MAV_TYPE_QUADROTOR, "ArduCopter"),
@@ -442,8 +530,33 @@ class TestFlightcontrollerInfo:  # pylint: disable=too-many-public-methods
             (mavutil.mavlink.MAV_TYPE_HEXAROTOR, "ArduCopter"),
             (mavutil.mavlink.MAV_TYPE_OCTOROTOR, "ArduCopter"),
             (mavutil.mavlink.MAV_TYPE_TRICOPTER, "ArduCopter"),
+            (mavutil.mavlink.MAV_TYPE_FLAPPING_WING, "ArduPlane"),
+            (mavutil.mavlink.MAV_TYPE_KITE, "ArduPlane"),
+            (mavutil.mavlink.MAV_TYPE_ONBOARD_CONTROLLER, "AP_Periph"),
             (mavutil.mavlink.MAV_TYPE_VTOL_DUOROTOR, "ArduPlane"),
             (mavutil.mavlink.MAV_TYPE_VTOL_QUADROTOR, "ArduPlane"),
+            (mavutil.mavlink.MAV_TYPE_VTOL_TILTROTOR, "ArduPlane"),
+            (mavutil.mavlink.MAV_TYPE_VTOL_RESERVED2, "ArduPlane"),
+            (mavutil.mavlink.MAV_TYPE_VTOL_RESERVED3, "ArduPlane"),
+            (mavutil.mavlink.MAV_TYPE_VTOL_RESERVED4, "ArduPlane"),
+            (mavutil.mavlink.MAV_TYPE_VTOL_RESERVED5, "ArduPlane"),
+            (mavutil.mavlink.MAV_TYPE_GIMBAL, "AP_Periph"),
+            (mavutil.mavlink.MAV_TYPE_ADSB, "AP_Periph"),
+            (mavutil.mavlink.MAV_TYPE_PARAFOIL, "ArduPlane"),
+            (mavutil.mavlink.MAV_TYPE_DODECAROTOR, "ArduCopter"),
+            (mavutil.mavlink.MAV_TYPE_CAMERA, "AP_Periph"),
+            (mavutil.mavlink.MAV_TYPE_CHARGING_STATION, "AP_Periph"),
+            (mavutil.mavlink.MAV_TYPE_FLARM, "AP_Periph"),
+            (mavutil.mavlink.MAV_TYPE_SERVO, "AP_Periph"),
+            (mavutil.mavlink.MAV_TYPE_ODID, "AP_Periph"),
+            (mavutil.mavlink.MAV_TYPE_DECAROTOR, "ArduCopter"),
+            (mavutil.mavlink.MAV_TYPE_BATTERY, "AP_Periph"),
+            (mavutil.mavlink.MAV_TYPE_PARACHUTE, "AP_Periph"),
+            (mavutil.mavlink.MAV_TYPE_LOG, "AP_Periph"),
+            (mavutil.mavlink.MAV_TYPE_OSD, "AP_Periph"),
+            (mavutil.mavlink.MAV_TYPE_IMU, "AP_Periph"),
+            (mavutil.mavlink.MAV_TYPE_GPS, "AP_Periph"),
+            (mavutil.mavlink.MAV_TYPE_WINCH, "AP_Periph"),
         ]:
             vehicle_type = FlightControllerInfo._FlightControllerInfo__classify_vehicle_type(mav_type)
             assert vehicle_type == expected_vehicle, (
@@ -706,7 +819,7 @@ class TestFlightcontrollerInfoFormatting:
         result = flight_controller_info.format_display_value(empty_value)
 
         # Then
-        assert "N/A" in result  # Should return translated "N/A"
+        assert result == "N/A"
 
     def test_user_sees_single_key_dictionary_formatted_correctly(self, flight_controller_info: FlightControllerInfo) -> None:
         """

@@ -61,12 +61,51 @@ class TestApjLoading:
         assert image.metadata.image_size == len(small_image)
         assert image.metadata.firmware_version == "4.6.0"
         assert image.metadata.board_revision is None
+        assert image.metadata.path == tmp_path / "arducopter.apj"
         assert image.metadata.apj_sha256 == hashlib.sha256((tmp_path / "arducopter.apj").read_bytes()).hexdigest()
         assert image.image == small_image + b"\xff"
         assert len(image.image) % 4 == 0
         assert image.extf_image == b""
 
-    def test_user_can_load_an_external_only_apj_file(self, tmp_path: Path) -> None:
+    def test_parser_accepts_text_and_hashes_its_utf8_bytes(self, tmp_path: Path) -> None:
+        """Pure parsing accepts text input and hashes the exact UTF-8 descriptor bytes."""
+        path = write_apj(tmp_path, b"abcd")
+        contents = path.read_text(encoding="utf-8")
+
+        image = fw.parse_apj(contents, path=path)
+
+        assert image.metadata.path == path
+        assert image.metadata.apj_sha256 == hashlib.sha256(contents.encode("utf-8")).hexdigest()
+
+    def test_user_can_load_firmware_with_board_id_one(self, tmp_path: Path) -> None:
+        """Board ID 1 is positive metadata and remains accepted by the APJ parser."""
+        image = bootloader.load_apj(write_apj(tmp_path, b"abcd", board_id=1))
+
+        assert image.metadata.board_id == 1
+
+    def test_omitted_version_metadata_defaults_to_empty_text(self, tmp_path: Path) -> None:
+        """Optional APJ version fields remain empty when absent."""
+        path = write_apj(tmp_path, b"abcd")
+        descriptor = json.loads(path.read_text(encoding="utf-8"))
+        descriptor.pop("version")
+        descriptor.pop("git_identity")
+
+        image = fw.parse_apj(json.dumps(descriptor), path=path)
+
+        assert image.metadata.firmware_version == ""
+        assert image.metadata.git_identity == ""
+
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [("board_id", -1), ("board_id", 0), ("image_size", -1), ("extf_image_size", -1)],
+    )
+    def test_out_of_range_apj_integer_metadata_is_rejected(self, tmp_path: Path, field: str, value: int) -> None:
+        """APJ board IDs must be positive; image sizes must be non-negative."""
+        with pytest.raises(fw.FirmwareFileError, match="metadata values are out of range"):
+            bootloader.load_apj(write_apj(tmp_path, b"abcd", **{field: value}))
+
+    @pytest.mark.parametrize("external_image", [b"x", b"ext"])
+    def test_user_can_load_an_external_only_apj_file(self, tmp_path: Path, external_image: bytes) -> None:
         """
         An APJ may contain only an external-flash image.
 
@@ -74,7 +113,6 @@ class TestApjLoading:
         WHEN: It is loaded for firmware upload
         THEN: The empty internal region is accepted and the external payload is preserved
         """
-        external_image = b"ext"
         image = bootloader.load_apj(
             write_apj(
                 tmp_path,
@@ -87,7 +125,7 @@ class TestApjLoading:
         assert image.metadata.image_size == 0
         assert image.metadata.extf_image_size == len(external_image)
         assert image.image == b""
-        assert image.extf_image == external_image + b"\xff"
+        assert image.extf_image == external_image + b"\xff" * (-len(external_image) % 4)
 
     def test_user_gets_a_clear_error_for_a_non_apj_file(self, tmp_path: Path) -> None:
         """
@@ -146,6 +184,58 @@ class TestApjLoading:
         with pytest.raises(fw.FirmwareFileError, match="exceeds"):
             bootloader.load_apj(path)
 
+    def test_image_at_the_configured_size_limit_is_accepted(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """The configured decompression limit is inclusive."""
+        monkeypatch.setattr(fw, "MAX_IMAGE_SIZE", 4)
+
+        image = bootloader.load_apj(write_apj(tmp_path, b"abcd"))
+
+        assert image.image == b"abcd"
+
+    def test_invalid_base64_characters_are_rejected_even_when_payload_decodes(self) -> None:
+        """APJ base64 must be strict even if ignored characters leave a valid zlib stream."""
+        encoded = base64.b64encode(zlib.compress(b"abcd")).decode()
+        desc = {"image": encoded[:4] + "!" + encoded[4:]}
+
+        with pytest.raises(fw.FirmwareFileError, match="image.*base64"):
+            fw._decode_blob(desc, "image")
+
+    def test_non_text_blob_error_names_the_field_and_problem(self) -> None:
+        with pytest.raises(fw.FirmwareFileError) as error:
+            fw._decode_blob({"image": None}, "image")
+
+        assert str(error.value) == "APJ image is not valid base64+zlib data: expected text"
+
+    def test_encoded_blob_limit_error_reports_the_field_and_limit(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(fw, "MAX_ENCODED_BLOB_SIZE", 3)
+
+        with pytest.raises(fw.FirmwareFileError) as error:
+            fw._decode_blob({"image": "AAAA"}, "image")
+
+        assert str(error.value) == "APJ image exceeds 3 encoded bytes"
+
+    @pytest.mark.parametrize(
+        ("compressed", "message"),
+        [
+            (zlib.compress(b"abcd")[:-2], "APJ image is not valid base64+zlib data: truncated stream"),
+            (zlib.compress(b"abcd") + b"trailing", "APJ image is not valid base64+zlib data: trailing bytes"),
+        ],
+    )
+    def test_truncated_or_trailing_zlib_data_reports_the_problem(self, compressed: bytes, message: str) -> None:
+        encoded = base64.b64encode(compressed).decode()
+
+        with pytest.raises(fw.FirmwareFileError) as error:
+            fw._decode_blob({"image": encoded}, "image")
+
+        assert str(error.value) == message
+
+    def test_encoded_blob_at_the_configured_size_limit_is_accepted(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """The encoded APJ size limit is inclusive."""
+        encoded = base64.b64encode(zlib.compress(b"abcd")).decode()
+        monkeypatch.setattr(fw, "MAX_ENCODED_BLOB_SIZE", len(encoded))
+
+        assert fw._decode_blob({"image": encoded}, "image") == b"abcd"
+
     def test_crc_matches_the_reference_uploader_computation(self, tmp_path: Path, small_image: bytes) -> None:
         """
         Test crc matches the reference uploader computation.
@@ -167,6 +257,25 @@ class TestApjLoading:
 
         with pytest.raises(ValueError, match="multiple of four"):
             image.crc(flash_size)
+
+    def test_crc_accepts_zero_flash_size_for_an_empty_image(self, tmp_path: Path) -> None:
+        """Zero is a valid non-negative, four-byte-aligned size for an empty region."""
+        image = bootloader.load_apj(
+            write_apj(
+                tmp_path,
+                b"",
+                extf_image_size=3,
+                extf_image=base64.b64encode(zlib.compress(b"ext")).decode(),
+            )
+        )
+
+        assert image.crc(0) == fw.bootloader_crc32(b"")
+
+    def test_crc_does_not_pad_when_image_already_exceeds_flash_size(self, tmp_path: Path) -> None:
+        """A smaller flash size must not add bytes to the image CRC input."""
+        image = bootloader.load_apj(write_apj(tmp_path, b"abcd"))
+
+        assert image.crc(0) == fw.bootloader_crc32(image.image)
 
     def test_crc_matches_ardupilot_uploader_known_vector(self) -> None:
         """The uploader's raw CRC state is not Python's finalized binascii CRC-32."""
@@ -212,34 +321,67 @@ class TestCompatibility:
             fw.check_compatibility(image, fw.BootloaderInfo(5, 42, 0, 2048))
 
     def test_bootloader_must_match_the_connected_board_when_known(self, image: fw.FirmwareImage) -> None:  # pylint: disable=unused-argument
-        with pytest.raises(fw.FirmwareTargetMismatchError, match="differs from connected"):
+        with pytest.raises(fw.FirmwareTargetMismatchError) as error:
             fw.check_bootloader_matches_connected_board(fw.BootloaderInfo(5, 9, 0, 2048), 42)
+
+        assert str(error.value) == "bootloader board_id 9 differs from connected board_id 42"
 
     def test_missing_connected_board_identity_does_not_block_upload(self, image: fw.FirmwareImage) -> None:  # pylint: disable=unused-argument
         fw.check_bootloader_matches_connected_board(fw.BootloaderInfo(5, 9, 0, 2048), None)
 
     def test_image_larger_than_flash_is_refused(self, image: fw.FirmwareImage) -> None:
-        with pytest.raises(fw.FirmwareCompatibilityError, match="exceeds flash"):
+        with pytest.raises(fw.FirmwareCompatibilityError) as error:
             fw.check_compatibility(image, fw.BootloaderInfo(5, 9, 0, 512))
 
-    def test_unaligned_bootloader_flash_size_is_refused(self, image: fw.FirmwareImage) -> None:
-        with pytest.raises(fw.FirmwareCompatibilityError, match="invalid flash size"):
-            fw.check_compatibility(image, fw.BootloaderInfo(5, 9, 0, 513))
+        assert str(error.value) == f"image of {len(image.image)} bytes exceeds flash of 512 bytes"
+
+    @pytest.mark.parametrize("flash_size", [-4, 513])
+    def test_invalid_bootloader_flash_size_is_refused(self, image: fw.FirmwareImage, flash_size: int) -> None:
+        with pytest.raises(fw.FirmwareCompatibilityError) as error:
+            fw.check_compatibility(image, fw.BootloaderInfo(5, 9, 0, flash_size))
+
+        assert str(error.value) == f"bootloader reports an invalid flash size of {flash_size} bytes"
+
+    def test_external_image_larger_than_external_flash_is_refused(self, tmp_path: Path) -> None:
+        image = bootloader.load_apj(
+            write_apj(
+                tmp_path,
+                b"",
+                extf_image_size=1,
+                extf_image=base64.b64encode(zlib.compress(b"x")).decode(),
+            )
+        )
+
+        with pytest.raises(fw.FirmwareCompatibilityError) as error:
+            fw.check_compatibility(image, fw.BootloaderInfo(5, 9, 0, 2048, 0))
+
+        assert str(error.value) == "external image of 4 bytes exceeds external flash of 0 bytes"
 
     def test_reconnected_firmware_board_identity_is_required(self, image: fw.FirmwareImage) -> None:
         with pytest.raises(fw.FirmwareIdentityError, match="did not report an APJ board_id"):
             fw.verify_reconnected_firmware(image, board_id="")
 
-        with pytest.raises(fw.FirmwareIdentityError, match="board_id 42"):
+        with pytest.raises(fw.FirmwareIdentityError) as error:
             fw.verify_reconnected_firmware(image, board_id="42")
+
+        assert str(error.value) == "reconnected board_id 42 does not match firmware board_id 9"
 
         fw.verify_reconnected_firmware(image, board_id="9")
 
     def test_trusted_digest_must_match_the_complete_apj_descriptor(self, image: fw.FirmwareImage) -> None:
         fw.verify_expected_firmware_digest(image, image.metadata.apj_sha256.upper())
 
-        with pytest.raises(fw.FirmwareIntegrityError, match="does not match"):
+        with pytest.raises(fw.FirmwareIntegrityError) as error:
             fw.verify_expected_firmware_digest(image, hashlib.sha256(b"unrelated").hexdigest())
+
+        assert str(error.value) == "selected firmware SHA-256 does not match the trusted digest"
+
+    @pytest.mark.parametrize("digest", ["", "x" * 64])
+    def test_trusted_digest_must_be_64_hexadecimal_characters(self, image: fw.FirmwareImage, digest: str) -> None:
+        with pytest.raises(fw.FirmwareIntegrityError) as error:
+            fw.verify_expected_firmware_digest(image, digest)
+
+        assert str(error.value) == "trusted firmware SHA-256 must be 64 hexadecimal characters"
 
     def test_trusted_digest_rejects_board_metadata_tampering(self, tmp_path: Path) -> None:
         """
@@ -277,13 +419,27 @@ class TestCompatibility:
         THEN: Loading fails with a metadata validation error
         """
         overrides = {field: value}
-        with pytest.raises(fw.FirmwareFileError, match="metadata"):
+        with pytest.raises(fw.FirmwareFileError) as error:
             bootloader.load_apj(write_apj(tmp_path, b"abcd", **overrides))
+
+        assert str(error.value) == (
+            "APJ descriptor is missing or has invalid metadata: APJ metadata integer must not be boolean or floating point"
+        )
+
+    def test_other_non_integer_metadata_has_a_specific_error(self, tmp_path: Path) -> None:
+        with pytest.raises(fw.FirmwareFileError) as error:
+            bootloader.load_apj(write_apj(tmp_path, b"abcd", board_id=None))
+
+        assert str(error.value) == (
+            "APJ descriptor is missing or has invalid metadata: APJ metadata integer must be an integer or integer string"
+        )
 
     @pytest.mark.parametrize("revision", [1, 6])
     def test_unsupported_bootloader_revision_is_refused(self, image: fw.FirmwareImage, revision: int) -> None:
-        with pytest.raises(fw.BootloaderProtocolError, match="revision"):
+        with pytest.raises(fw.BootloaderProtocolError) as error:
             fw.check_compatibility(image, fw.BootloaderInfo(revision, 9, 0, 2048))
+
+        assert str(error.value) == f"unsupported bootloader protocol revision {revision}"
 
 
 class TestStateMachine:
