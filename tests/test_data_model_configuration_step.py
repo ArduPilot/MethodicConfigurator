@@ -193,6 +193,31 @@ def test_connection_renames_include_board_flow_control_without_touching_other_ha
     assert dict(parameters) == original
 
 
+def test_can_connection_rename_preserves_global_can_parameters() -> None:
+    """
+    Global CAN settings stay in place when a device moves to another CAN connection.
+
+    GIVEN: Global CAN settings and settings for a CAN port and driver
+    WHEN: Rename operations are calculated for CAN2
+    THEN: Only the port and driver settings are scheduled for renaming.
+    """
+    parameters = ParDict(
+        {
+            "CAN_LOGLEVEL": Par(1, "global logging"),
+            "CAN_SLCAN_CPORT": Par(1, "serial bridge"),
+            "CAN_P1_DRIVER": Par(1, "port driver"),
+            "CAN_D1_PROTOCOL": Par(1, "driver protocol"),
+        }
+    )
+    original = dict(parameters)
+
+    duplicates, renames = ConfigurationStepProcessor.calculate_connection_rename_operations(parameters, "CAN2")
+
+    assert duplicates == set()
+    assert renames == [("CAN_P1_DRIVER", "CAN_P2_DRIVER"), ("CAN_D1_PROTOCOL", "CAN_D2_PROTOCOL")]
+    assert dict(parameters) == original
+
+
 def test_difference_filter_includes_changed_and_missing_values_and_excludes_equal_values(
     processor: ConfigurationStepProcessor,
 ) -> None:

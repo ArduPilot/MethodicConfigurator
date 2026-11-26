@@ -360,6 +360,10 @@ class ConfigurationStepProcessor:
             new_prefix = new_connection_prefix
             old_prefix = parts[0]
             is_exception_case = False
+            # Bare CAN_ parameters do not belong to a numbered CAN connection.
+            # Keep them unchanged when applying a CAN1/CAN2/... prefix.
+            if new_type == "CAN" and old_prefix == "CAN" and (len(parts) < 2 or not re.match(r"^(P|D)\d+$", parts[1])):
+                continue
             if new_type == "CAN" and len(parts) >= 2 and parts[0] == "CAN" and re.match(r"^P\d+$", parts[1]):
                 old_prefix += "_" + parts[1]
                 new_prefix = "CAN_P" + new_number
