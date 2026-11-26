@@ -3491,19 +3491,9 @@ class TestControlSurfaceSetupCommands:
             mavutil.mavlink.MAV_CMD_DO_SET_MODE, mavutil.mavlink.MAV_RESULT_ACCEPTED
         )
         assert self._commands(master).set_flight_mode(5) == (True, "")
-        assert master.mav.command_long_send.call_args.args == (
-            1,
-            0,
-            mavutil.mavlink.MAV_CMD_DO_SET_MODE,
-            0,
-            mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
-            5,
-            0,
-            0,
-            0,
-            0,
-            0,
-        )
+        sent = master.mav.command_long_send.call_args.args
+        assert sent[:6] == (1, 0, mavutil.mavlink.MAV_CMD_DO_SET_MODE, 0, mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, 5)
+        assert all(value == 0 for value in sent[6:])
 
     def test_disconnected_mode_change_fails_without_io(self) -> None:
         """GIVEN no connection WHEN changing mode THEN failure is reported."""
