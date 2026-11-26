@@ -10,5 +10,4 @@ SERVO_BLH_AUTO,1  # Enables BLHeli passthrough
 SERVO_BLH_BDMASK,15  # All four of our ESC support bi-directional DShot
 SERVO_DSHOT_ESC,1  # BLHeli32
 SERVO_DSHOT_RATE,3  # Sends DShot control signals to the ESC twice per control loop
-SERVO13_FUNCTION,0
 TKOFF_RPM_MIN,1000  # Our motors should idle at around 1000 RPM, see https://ardupilot.org/copter/docs/tkoff-rpm-min.html
