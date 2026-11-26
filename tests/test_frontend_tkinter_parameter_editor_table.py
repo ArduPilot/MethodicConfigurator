@@ -2738,6 +2738,188 @@ class TestHandlerEdgeCases:
         param.set_change_reason.assert_called_once_with("Updated")
 
 
+class TestCopyFcValueShortcut:
+    """Ctrl-R in a new value field copies the flight controller value into it."""
+
+    @staticmethod
+    def _apply_new_value_to_param(param: ArduPilotParameter) -> Callable[..., bool]:
+        def _fake_update(_param: ArduPilotParameter, new_value: str, include_range_check: bool = True) -> bool:  # noqa: ARG001 # pylint: disable=unused-argument
+            param._new_value = float(new_value)  # pylint: disable=protected-access
+            return True
+
+        return _fake_update
+
+    @staticmethod
+    def _show_and_focus(entry: tk.Widget) -> None:
+        # Key events are only delivered to a mapped and focused widget
+        entry.pack()
+        entry.update()
+        entry.focus_force()
+        entry.update()
+
+    def test_user_can_copy_fc_value_into_new_value_with_ctrl_r(self, parameter_editor_table: ParameterEditorTable) -> None:
+        """
+        User can revert a parameter to the value currently on the flight controller.
+
+        GIVEN: A parameter with a pending new value and a different flight controller value
+        WHEN: User presses Ctrl-R in its new value field
+        THEN: The flight controller value is applied as the new value and shown in the field
+        """
+        param = create_mock_data_model_ardupilot_parameter(name="COPY_FC", value=2.0, fc_value=5.0)
+        entry = parameter_editor_table._create_new_value_entry(param, None, ttk.Label(parameter_editor_table.view_port))
+        self._show_and_focus(entry)
+
+        with patch.object(
+            parameter_editor_table,
+            "_handle_parameter_value_update",
+            side_effect=self._apply_new_value_to_param(param),
+        ) as handle_mock:
+            entry.event_generate("<Control-r>")
+            entry.update()
+
+        handle_mock.assert_called_once_with(param, "5", include_range_check=True)
+        assert entry.get() == "5"
+
+    def test_user_can_copy_fc_value_into_multiple_choice_new_value_with_ctrl_r(
+        self, parameter_editor_table: ParameterEditorTable
+    ) -> None:
+        """
+        User can revert a multiple choice parameter to the flight controller choice.
+
+        GIVEN: A multiple choice parameter whose flight controller value is a different choice
+        WHEN: User presses Ctrl-R in its new value combobox
+        THEN: The combobox selects the flight controller choice
+        """
+        param = create_mock_data_model_ardupilot_parameter(name="CHOICE_FC", value=0.0, fc_value=1.0, is_multiple_choice=True)
+        entry = parameter_editor_table._create_new_value_entry(param, None, ttk.Label(parameter_editor_table.view_port))
+        self._show_and_focus(entry)
+
+        with patch.object(
+            parameter_editor_table,
+            "_handle_parameter_value_update",
+            side_effect=self._apply_new_value_to_param(param),
+        ):
+            entry.event_generate("<Control-r>")
+            entry.update()
+
+        assert isinstance(entry, PairTupleCombobox)
+        assert entry.get_selected_key() == "1"
+
+    def test_ctrl_r_does_nothing_when_flight_controller_value_is_unknown(
+        self, parameter_editor_table: ParameterEditorTable
+    ) -> None:
+        """
+        Ctrl-R leaves the new value untouched when the flight controller value is unknown.
+
+        GIVEN: A parameter that has not been read from the flight controller
+        WHEN: User presses Ctrl-R in its new value field
+        THEN: No update is attempted and the displayed value is unchanged
+        """
+        param = create_mock_data_model_ardupilot_parameter(name="NO_FC", value=2.0, fc_value=None)
+        entry = parameter_editor_table._create_new_value_entry(param, None, ttk.Label(parameter_editor_table.view_port))
+        self._show_and_focus(entry)
+
+        with patch.object(parameter_editor_table, "_handle_parameter_value_update") as handle_mock:
+            entry.event_generate("<Control-r>")
+            entry.update()
+
+        handle_mock.assert_not_called()
+        assert entry.get() == "2"
+
+    def test_user_can_copy_fc_value_after_enabling_manual_editing_in_compare_window(
+        self, parameter_editor_table: ParameterEditorTable
+    ) -> None:
+        """
+        Ctrl-R becomes available as soon as Manual is enabled for an external parameter.
+
+        GIVEN: A compare-and-upload row whose new value is disabled until Manual is checked
+        WHEN: The user tries Ctrl-R before and after checking Manual
+        THEN: The value is copied only while the row is editable
+        """
+        table = parameter_editor_table
+        table.options.values_editable = False
+        table.options.manual_override_for_all_parameters = True
+        param = create_mock_data_model_ardupilot_parameter(name="COPY_FC", value=2.0, fc_value=5.0)
+        entry = table._create_new_value_entry(param, None, ttk.Label(table.view_port))
+        table._new_value_widgets[param.name] = entry
+        manual = table._create_manual_override_widget(param)
+        assert isinstance(manual, ttk.Checkbutton)
+        self._show_and_focus(entry)
+
+        with patch.object(
+            table, "_handle_parameter_value_update", side_effect=self._apply_new_value_to_param(param)
+        ) as update:
+            entry.event_generate("<Control-r>")
+            update.assert_not_called()
+            assert entry.get() == "2"
+
+            manual.invoke()
+            entry.event_generate("<Control-r>")
+
+        update.assert_called_once_with(param, "5", include_range_check=True)
+        assert entry.get() == "5"
+
+    def test_focus_out_after_ctrl_r_does_not_apply_the_flight_controller_value_twice(
+        self, parameter_editor_table: ParameterEditorTable
+    ) -> None:
+        """
+        Leaving the field after Ctrl-R must not confirm the same value again.
+
+        GIVEN: A parameter whose flight controller value was copied into its new value field with Ctrl-R
+        WHEN: The field loses focus
+        THEN: The value is applied only once, so an out-of-range value is not confirmed twice
+        """
+        param = create_mock_data_model_ardupilot_parameter(name="COPY_FC", value=2.0, fc_value=5.0)
+        entry = parameter_editor_table._create_new_value_entry(param, None, ttk.Label(parameter_editor_table.view_port))
+        self._show_and_focus(entry)
+
+        with patch.object(
+            parameter_editor_table,
+            "_handle_parameter_value_update",
+            side_effect=self._apply_new_value_to_param(param),
+        ) as handle_mock:
+            entry.event_generate("<Control-r>")
+            entry.update()
+            entry.event_generate("<FocusOut>")
+            entry.update()
+
+        handle_mock.assert_called_once_with(param, "5", include_range_check=True)
+        assert entry.get() == "5"
+
+    @pytest.mark.parametrize("accepted", [True, False])
+    def test_ctrl_r_confirmation_does_not_validate_uncommitted_text(
+        self, parameter_editor_table: ParameterEditorTable, accepted: bool
+    ) -> None:
+        """Focus leaving for the range prompt must not apply the previously typed value."""
+        table = parameter_editor_table
+        param = create_mock_data_model_ardupilot_parameter(name="COPY_FC", value=2.0, fc_value=50.0)
+        entry = table._create_new_value_entry(param, None, ttk.Label(table.view_port))
+        self._show_and_focus(entry)
+        entry.delete(0, tk.END)
+        entry.insert(0, "100")
+
+        def update_parameter(_name: str, value: str, *, include_range_check: bool) -> ParameterValueUpdateResult:
+            if include_range_check:
+                return ParameterValueUpdateResult(ParameterValueUpdateStatus.CONFIRM_OUT_OF_RANGE, message=value)
+            param._new_value = float(value)  # pylint: disable=protected-access
+            return ParameterValueUpdateResult(ParameterValueUpdateStatus.UPDATED)
+
+        def confirm(_title: str, _message: str) -> bool:
+            entry.event_generate("<FocusOut>")
+            return accepted
+
+        update = cast("MagicMock", table.parameter_editor.update_parameter_value)
+        update.side_effect = update_parameter
+        dialog = cast("MagicMock", table._dialogs.ask_yes_no)
+        dialog.side_effect = confirm
+        entry.event_generate("<Control-r>")
+
+        dialog.assert_called_once()
+        assert entry.get() == ("50" if accepted else "2")
+        assert param.value_as_string == ("50" if accepted else "2")
+        assert all(call.args[1] == "50" for call in update.call_args_list)
+
+
 class TestChangeReasonPaste:
     """Exercise multiline paste through the native Tk entry bindings."""
 
