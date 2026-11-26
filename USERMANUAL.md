@@ -536,6 +536,17 @@ and the file name is shown in a message box.
 - The same export for the current step and for the whole project can be done automatically on every upload with the
   `--export-fc-params-missing-or-different` command line option.
 
+#### 7c. Revert a parameter to the flight controller value (optional, keyboard shortcut)
+
+Click in the **New value** field of a parameter and press **Ctrl-R** to copy the parameter's current flight controller value
+into its **New value** field. This lets you revert a value from the configuration step parameter file back to the value
+currently on the flight controller.
+
+- This is a keyboard-only action.
+- In the compare-and-upload window, check **Manual** for the row to enable editing before using Ctrl-R.
+- The copied value is validated like any typed value, so range and read-only checks still apply.
+- If the flight controller value is not available (`N/A`, not connected), nothing is copied.
+
 #### 8. Skipping to the Next Parameter File (optional)
 
 - If you want to skip the current parameter file without uploading any changes, click the `Skip parameter file` button.

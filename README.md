@@ -64,7 +64,9 @@ It's simple graphical user interface (GUI) manages and visualizes ArduPilot para
 
 ![Application Screenshot](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/App_screenshot1.png?raw=true)
 
-No visible menus, no hidden menus, no complicated options, what you see is what gets changed.
+The interface keeps options simple. What you see is what gets changed.
+Actions use visible controls, with two documented keyboard-only exceptions in the parameter editor (**Ctrl-E** and **Ctrl-R**).
+See the [user manual](USERMANUAL.md#7b-export-the-fc-parameters-that-differ-from-the-configuration-files-optional-keyboard-shortcut).
 
 ## Star History
 

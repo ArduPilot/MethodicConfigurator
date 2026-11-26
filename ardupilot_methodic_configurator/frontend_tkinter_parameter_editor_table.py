@@ -723,6 +723,38 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
             style = "TEntry"
         new_value_entry.configure(style=style)
 
+    def _copy_fc_value_to_new_value(
+        self,
+        param: ArduPilotParameter,
+        new_value_entry: PairTupleCombobox | ttk.Entry,
+        change_reason_widget: ttk.Entry | None,
+        value_is_different_label: ttk.Label,
+    ) -> None:
+        """Replace the new value with the flight controller value, applying it like a typed Return (Ctrl-R)."""
+        if new_value_entry.instate(("disabled",)) or not param.has_fc_value:
+            return
+        if not isinstance(new_value_entry, PairTupleCombobox):
+            # A confirmation dialog can trigger FocusOut while the update is still in progress.
+            new_value_entry.delete(0, tk.END)
+            new_value_entry.insert(0, param.fc_value_as_string)
+            self._last_return_values[new_value_entry] = new_value_entry.get()
+        if self._handle_parameter_value_update(param, param.fc_value_as_string, include_range_check=True):
+            if change_reason_widget is not None:
+                show_tooltip(change_reason_widget, param.tooltip_change_reason)
+            value_is_different_label.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
+        if isinstance(new_value_entry, PairTupleCombobox):
+            new_value_entry.set(param.get_selected_value_from_dict() or param.value_as_string)
+            new_value_entry.configure(
+                style="default_v.TCombobox" if param.new_value_equals_default_value else "readonly.TCombobox"
+            )
+            displayed_value: str | None = new_value_entry.get_selected_key()
+        else:
+            self._update_new_value_entry_text(new_value_entry, param)
+            displayed_value = new_value_entry.get()
+        # The FocusOut that follows Ctrl-R must not repeat the update, or an out-of-range value would be confirmed twice
+        if displayed_value is not None:
+            self._last_return_values[new_value_entry] = displayed_value
+
     def _set_external_value_widget_editability(self, param: ArduPilotParameter, editable: bool) -> None:
         """Update one external row after its Manual checkbox changes."""
         widget = self._new_value_widgets[param.name]
@@ -881,6 +913,15 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
             new_value_entry.bind("<FocusOut>", _on_parameter_value_change)
             new_value_entry.bind("<Return>", _on_parameter_value_change)
             new_value_entry.bind("<KP_Enter>", _on_parameter_value_change)
+            # Manual can enable an external row after its widgets are created.
+            for sequence in ("<Control-r>", "<Control-R>"):
+                new_value_entry.bind(
+                    sequence,
+                    lambda _event: self._copy_fc_value_to_new_value(
+                        param, new_value_entry, change_reason_widget, value_is_different_label
+                    ),
+                    add="+",
+                )
 
         tooltip_new_value = param.tooltip_new_value
         if tooltip_new_value:

@@ -113,9 +113,18 @@ This systematic approach ensures methodical, traceable, and safe vehicle configu
 - **Files**: `frontend_tkinter_parameter_editor.py` (`_bind_keyboard_shortcuts`,
   `on_export_fc_params_missing_or_different_shortcut`) and `data_model_parameter_editor.py`
   (`has_fc_parameters`, `export_fc_params_missing_or_different_up_to_current_step`)
-- **Behavior**: Saves pending edits, then exports the FC parameters that are missing or different in the AMC files
+- **Behavior**: Asks the user to save pending edits, then exports the FC parameters that are missing or different in the AMC files
   from the first step up to the current one; warns the user when no FC parameters are available
 - **Note**: Deliberate exception to the "no hidden menus" rule, documented in the user manual
+
+#### Keyboard-only Copy of FC Value into New Value (Ctrl-R)
+
+- **Files**: `frontend_tkinter_parameter_editor_table.py` (`_create_new_value_entry` bindings,
+  `_copy_fc_value_to_new_value`) and `data_model_ardupilot_parameter.py` (`has_fc_value`, `fc_value_as_string`)
+- **Behavior**: Binds `<Control-r>` and `<Control-R>` on each editable New value widget. Copies the FC value into the
+  field and applies it through the same `_handle_parameter_value_update` path as Return/FocusOut, so range checks and
+  error dialogs are unchanged. Does nothing when the FC value is unknown
+- **Note**: Deliberate exception to the "no hidden menus" rule, documented in the user manual. It is the second such exception
 
 #### Collapsible Information Sections
 

@@ -9,7 +9,8 @@ ArduPilot Methodic Configurator adheres to multiple compliance standards and bes
 - Relevant documentation opens automatically in a browser window
 - Uses *What you see is what gets changed* paradigm. No parameters are changed without the users's knowledge
 - Translated into multiple languages
-- No visible menus, no hidden menus
+- Actions use visible controls. The parameter editor's Ctrl-E and Ctrl-R actions are documented keyboard-only exceptions.
+  See the [user manual](USERMANUAL.md#7b-export-the-fc-parameters-that-differ-from-the-configuration-files-optional-keyboard-shortcut).
 - Keyboard-only navigation possible
 
 ## Coding Standards
