@@ -316,14 +316,22 @@ def test_fit_validates_bitmask_from_raw_firmware_documentation(
 
 
 @pytest.mark.parametrize(
-    ("harmonics", "all_imus", "other_enabled", "expected_warning_count"),
-    [(255, False, False, 32), (255, True, False, 64), (63, False, False, None), (63, False, True, 26)],
+    ("harmonics", "all_imus", "other_options", "expected_warning_count"),
+    [
+        (255, False, None, 32),
+        (255, True, None, 64),
+        (63, False, None, None),
+        (63, False, 1, 30),
+        (7, False, 64, 27),
+        (63, False, 16 | 64, 33),
+        (63, False, 1 | 16 | 64, 30),
+    ],
 )
 def test_fit_warns_when_estimated_notch_count_exceeds_the_board_threshold(
     flight: tuple[LogData, LogAnalysisContext],
     harmonics: int,
     all_imus: bool,
-    other_enabled: bool,
+    other_options: int | None,
     expected_warning_count: int | None,
 ) -> None:
     """
@@ -331,7 +339,7 @@ def test_fit_warns_when_estimated_notch_count_exceeds_the_board_threshold(
 
     GIVEN a quad with a fitted multi-source notch and two IMUs,
     WHEN the fit is reported,
-    THEN the warning reflects the harmonic, motor and IMU counts and includes the enabled second notch.
+    THEN the warning includes the second notch with the firmware's composite option precedence.
     """
     log, context = flight
     times = log.get_field("ESC", "TimeUS")
@@ -340,7 +348,9 @@ def test_fit_warns_when_estimated_notch_count_exceeds_the_board_threshold(
         log, "ESC", {"TimeUS": np.tile(times, 4), "Instance": np.repeat(np.arange(4), len(times)), "RPM": np.tile(rpm, 4)}
     )
     context.parameters["INS_HNTCH_OPTS"] = 8 if all_imus else 0
-    context.parameters.update({"INS_HNTC2_ENABLE": int(other_enabled), "INS_HNTC2_OPTS": 1, "INS_HNTC2_HMNCS": 1})
+    context.parameters.update(
+        {"INS_HNTC2_ENABLE": int(other_options is not None), "INS_HNTC2_OPTS": other_options or 0, "INS_HNTC2_HMNCS": 7}
+    )
 
     def fit_with_qualifying_harmonics(
         windows: Sequence[GyroFftWindow], source: TrackingSource, settings: AutoDynamicNotchSettings

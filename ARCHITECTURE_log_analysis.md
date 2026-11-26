@@ -426,8 +426,8 @@ fits only the first group. If a fitted value or required option is unsupported, 
 Estimate the boot allocation from harmonic counts, tracking sources, composite filters and IMU use. Include the second notch when its settings are logged.
 Use ESC instances and logged motor output assignments to estimate the motor count. Warn above 24 filters, the default limit for F4 builds in ArduPilot 4.6.
 The board and firmware determine the actual limit. The firmware sums allocations across both notches at startup.
-[ArduPilot 4.6.3 allocation](https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/libraries/AP_InertialSensor/AP_InertialSensor.cpp#L900-L949)
-and [board limits](https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/libraries/AP_HAL/AP_HAL_Boards.h#L293-L311).
+[ArduPilot 4.6.3 allocation](https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/libraries/AP_InertialSensor/AP_InertialSensor.cpp#L1013-L1061)
+and [board limits](https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/libraries/AP_HAL/AP_HAL_Boards.h#L315-L333).
 
 ### Results and Frontend Review
 
