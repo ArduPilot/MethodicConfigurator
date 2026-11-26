@@ -108,6 +108,15 @@ This systematic approach ensures methodical, traceable, and safe vehicle configu
   - Coordinate between documentation, table, and progress components
   - Manage application state and configuration persistence
 
+#### Keyboard-only FC Difference Export (Ctrl-E)
+
+- **Files**: `frontend_tkinter_parameter_editor.py` (`_bind_keyboard_shortcuts`,
+  `on_export_fc_params_missing_or_different_shortcut`) and `data_model_parameter_editor.py`
+  (`has_fc_parameters`, `export_fc_params_missing_or_different_up_to_current_step`)
+- **Behavior**: Saves pending edits, then exports the FC parameters that are missing or different in the AMC files
+  from the first step up to the current one; warns the user when no FC parameters are available
+- **Note**: Deliberate exception to the "no hidden menus" rule, documented in the user manual
+
 #### Collapsible Information Sections
 
 - **File**: `frontend_tkinter_collapsible_label_frame.py`

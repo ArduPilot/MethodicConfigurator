@@ -1479,7 +1479,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         return fc_parameters
 
-    def _export_fc_params_missing_or_different_in_amc_files(self, fc_parameters: ParDict, last_filename: str) -> None:
+    def _export_fc_params_missing_or_different_in_amc_files(self, fc_parameters: ParDict, last_filename: str) -> str | None:
         """
         Export flight controller parameters that are missing or different in AMC parameter files.
 
@@ -1491,9 +1491,12 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             fc_parameters: Flight controller parameters to compare against.
             last_filename: Last configuration file to process (inclusive).
 
+        Returns:
+            The name of the exported file, or None if nothing was exported.
+
         """
         if not self._flight_controller.fc_parameters:
-            return
+            return None
 
         # Create the compounded state of all parameters stored in the AMC .param files
         compound, first_config_step_filename = self._local_filesystem.compound_params(last_filename=last_filename)
@@ -1543,8 +1546,26 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 len(params_missing_in_the_amc_param_files),
                 filename,
             )
-        else:
-            logging_info(_("No FC parameters are missing or different from AMC parameter files"))
+            return filename
+        logging_info(_("No FC parameters are missing or different from AMC parameter files"))
+        return None
+
+    @property
+    def has_fc_parameters(self) -> bool:
+        """Return True if the flight controller parameters are available for comparison."""
+        return bool(self._flight_controller.fc_parameters)
+
+    def export_fc_params_missing_or_different_up_to_current_step(self) -> str | None:
+        """
+        Export the FC parameters that are missing or different in the AMC files up to the current step.
+
+        Returns:
+            The name of the exported file, or None if nothing was exported.
+
+        """
+        return self._export_fc_params_missing_or_different_in_amc_files(
+            self._get_non_default_non_read_only_fc_params(), self.current_file
+        )
 
     def _export_fc_params_missing_or_different(self) -> None:
         non_default_non_read_only_fc_params = self._get_non_default_non_read_only_fc_params()

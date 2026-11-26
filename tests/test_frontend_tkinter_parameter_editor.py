@@ -4731,6 +4731,127 @@ class TestSkipButtonWorkflows:
         mock_change.assert_called_once_with(None)
 
 
+class TestExportFcParamsShortcut:
+    """Test the Ctrl-E shortcut that exports FC parameters missing or different in the AMC files."""
+
+    def test_user_presses_ctrl_e_and_the_export_is_bound_on_the_window(
+        self, parameter_editor_window: ParameterEditorWindow
+    ) -> None:
+        """
+        The shortcut is registered for both letter cases.
+
+        GIVEN: A parameter editor window
+        WHEN: Its keyboard shortcuts are bound
+        THEN: Ctrl-e and Ctrl-E trigger the export handler
+        """
+        parameter_editor_window._bind_keyboard_shortcuts()
+        bound = {call.args[0]: call.args[1] for call in parameter_editor_window.root.bind.call_args_list if call.args}
+
+        assert bound["<Control-e>"] == parameter_editor_window.on_export_fc_params_missing_or_different_shortcut
+        assert bound["<Control-E>"] == parameter_editor_window.on_export_fc_params_missing_or_different_shortcut
+
+    def test_user_is_warned_when_fc_parameters_are_unavailable(
+        self, parameter_editor_window: ParameterEditorWindow, parameter_editor: MagicMock
+    ) -> None:
+        """
+        The export needs FC parameters.
+
+        GIVEN: No flight controller parameters are available
+        WHEN: The user presses Ctrl-E
+        THEN: A warning is shown and nothing is exported
+        """
+        parameter_editor.has_fc_parameters = False
+        parameter_editor_window.ui.show_warning = MagicMock()
+
+        parameter_editor_window.on_export_fc_params_missing_or_different_shortcut()
+
+        parameter_editor_window.ui.show_warning.assert_called_once()
+        parameter_editor.export_fc_params_missing_or_different_up_to_current_step.assert_not_called()
+
+    def test_user_exports_fc_parameters_for_the_current_step(
+        self, parameter_editor_window: ParameterEditorWindow, parameter_editor: MagicMock
+    ) -> None:
+        """
+        Pending edits are saved and the resulting file name is reported.
+
+        GIVEN: FC parameters are available and the export produces a file
+        WHEN: The user presses Ctrl-E
+        THEN: The pending edits are saved first and the file name is shown to the user
+        """
+        parameter_editor.has_fc_parameters = True
+        parameter_editor.export_fc_params_missing_or_different_up_to_current_step.return_value = "out_to_00_previous.param"
+        parameter_editor_window.ui.show_info = MagicMock()
+
+        parameter_editor_window.on_export_fc_params_missing_or_different_shortcut()
+
+        parameter_editor.handle_write_changes_workflow.assert_called_once()
+        parameter_editor_window.ui.show_info.assert_called_once()
+        assert "out_to_00_previous.param" in parameter_editor_window.ui.show_info.call_args.args[1]
+
+    def test_user_is_told_when_there_is_nothing_to_export(
+        self, parameter_editor_window: ParameterEditorWindow, parameter_editor: MagicMock
+    ) -> None:
+        """
+        Matching parameters produce an informational message.
+
+        GIVEN: FC parameters match the AMC files
+        WHEN: The user presses Ctrl-E
+        THEN: The user is told that nothing was exported
+        """
+        parameter_editor.has_fc_parameters = True
+        parameter_editor.export_fc_params_missing_or_different_up_to_current_step.return_value = None
+        parameter_editor_window.ui.show_info = MagicMock()
+
+        parameter_editor_window.on_export_fc_params_missing_or_different_shortcut()
+
+        assert parameter_editor_window.ui.show_info.call_args.args[0] == "Nothing to export"
+
+    @pytest.mark.parametrize("widget_type", [tk.Entry, ttk.Entry, tk.Text])
+    def test_ctrl_e_is_left_to_text_fields_for_end_of_line(
+        self,
+        parameter_editor_window: ParameterEditorWindow,
+        parameter_editor: MagicMock,
+        tk_root: tk.Tk,
+        widget_type: type[tk.Entry | tk.Text],
+    ) -> None:
+        """
+        A writable text field keeps its normal Ctrl-E handling.
+
+        GIVEN: FC parameters are available and a writable text field has the keyboard focus
+        WHEN: The user presses Ctrl-E in the text field
+        THEN: No export is started
+        """
+        parameter_editor.has_fc_parameters = True
+        event = tk.Event()
+        event.widget = widget_type(tk_root)
+        try:
+            parameter_editor_window.on_export_fc_params_missing_or_different_shortcut(event)
+        finally:
+            event.widget.destroy()
+
+        parameter_editor.export_fc_params_missing_or_different_up_to_current_step.assert_not_called()
+
+    def test_user_can_export_with_ctrl_e_from_a_readonly_combobox(
+        self, parameter_editor_window: ParameterEditorWindow, parameter_editor: MagicMock, tk_root: tk.Tk
+    ) -> None:
+        """
+        Ctrl-E exports while a readonly combobox has focus.
+
+        GIVEN: FC parameters are available and a readonly combobox is focused
+        WHEN: The user presses Ctrl-E
+        THEN: The export is started
+        """
+        parameter_editor.has_fc_parameters = True
+        event = tk.Event()
+        event.widget = ttk.Combobox(tk_root, state="readonly")
+        try:
+            parameter_editor_window.on_export_fc_params_missing_or_different_shortcut(event)
+        finally:
+            event.widget.destroy()
+
+        parameter_editor.export_fc_params_missing_or_different_up_to_current_step.assert_called_once_with()
+
+
 class TestZipVehicleForForumHelpButton:
     """Test the 'Zip Vehicle for Forum Help' button functionality."""
 
