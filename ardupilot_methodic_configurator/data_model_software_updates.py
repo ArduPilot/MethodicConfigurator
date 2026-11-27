@@ -14,10 +14,9 @@ import platform
 import re
 from argparse import ArgumentParser
 from collections.abc import Callable
-from logging import basicConfig as logging_basicConfig
+from dataclasses import dataclass
 from logging import error as logging_error
 from logging import info as logging_info
-from logging import warning as logging_warning
 from typing import Any
 
 from httpx2 import HTTPError as httpx2_HTTPError
@@ -35,7 +34,10 @@ from ardupilot_methodic_configurator.backend_internet import (
     get_release_info,
     webbrowser_open_url,
 )
-from ardupilot_methodic_configurator.frontend_tkinter_software_update import UpdateDialog
+
+# Shows the update prompt and, when the user accepts, runs the download callback.
+# Returns True when the update succeeded. The GUI adapter lives in frontend_tkinter_software_update.
+UpdatePresenter = Callable[[str, Callable[[Callable[[float, str], None]], bool]], bool]
 
 
 def format_version_info(_current_version: str, _latest_release: str, changes: str) -> str:
@@ -58,13 +60,11 @@ def format_version_info(_current_version: str, _latest_release: str, changes: st
     ).format(**locals())
 
 
-def _find_asset(assets: list[dict[str, Any]], extension: str, allow_fallback: bool = False) -> dict[str, Any] | None:
-    """Return the first asset whose name ends with *extension*, falling back to the first asset when requested."""
+def _find_asset(assets: list[dict[str, Any]], extension: str) -> dict[str, Any] | None:
+    """Return the first asset whose name ends with *extension*, or None if there is none."""
     preferred = [a for a in assets if a.get("name", "").lower().endswith(extension)]
     if preferred:
         return preferred[0]
-    if allow_fallback and assets:
-        return assets[0]
     return None
 
 
@@ -84,51 +84,62 @@ def _install_from_asset(
     )
 
 
+@dataclass(frozen=True)
+class InstallerPlan:
+    """Install the release *asset* with the platform installer *install_fn*."""
+
+    asset: dict[str, Any]
+    install_fn: Callable[..., bool]
+
+
+@dataclass(frozen=True)
+class PipPlan:
+    """Install the latest release from PyPI with pip/uv. *macos_without_dmg* is set when macOS had no DMG asset."""
+
+    macos_without_dmg: bool = False
+
+
+InstallPlan = InstallerPlan | PipPlan
+
+
+def select_install_plan(system: str, assets: list[dict[str, Any]]) -> InstallPlan | None:
+    """
+    Decide how to install a release on *system* from its *assets*. Performs no I/O.
+
+    Returns None when the platform needs an installer and the release has none.
+    """
+    if system == "Windows":
+        asset = _find_asset(assets, ".exe")
+        return None if asset is None else InstallerPlan(asset, download_and_install_on_windows)
+    if system == "Darwin":
+        asset = _find_asset(assets, ".dmg")
+        if asset is None:
+            return PipPlan(macos_without_dmg=True)
+        return InstallerPlan(asset, download_and_install_on_macos)
+    return PipPlan()
+
+
 class UpdateManager:
     """Manages the software update process including user interaction and installation."""
 
-    def __init__(self) -> None:
-        self.dialog: UpdateDialog | None = None
-
-    def _install_windows(
-        self,
-        latest_release: dict[str, Any],
-        progress_callback: Callable[[float, str], None] | None,
-    ) -> bool:
-        """Select the best Windows asset (.exe preferred) and install it."""
-        asset = _find_asset(latest_release.get("assets", []), ".exe", allow_fallback=True)
-        if asset is None:
-            logging_error(_("No suitable assets found for Windows installation"))
-            return False
-        return _install_from_asset(asset, latest_release, download_and_install_on_windows, progress_callback)
-
-    def _install_macos(
-        self,
-        latest_release: dict[str, Any],
-        progress_callback: Callable[[float, str], None] | None,
-    ) -> bool:
-        """Select the best macOS asset (.dmg preferred) and install it, falling back to pip."""
-        asset = _find_asset(latest_release.get("assets", []), ".dmg")
-        if asset is None:
-            logging_info(_("No DMG asset found for macOS, falling back to pip installation"))
-            return download_and_install_pip_release(progress_callback=progress_callback) == 0
-        return _install_from_asset(asset, latest_release, download_and_install_on_macos, progress_callback)
+    def __init__(self, presenter: UpdatePresenter) -> None:
+        self.presenter = presenter
 
     def _perform_download(
         self,
         latest_release: dict[str, Any],
         progress_callback: Callable[[float, str], None] | None = None,
     ) -> bool:
-        handlers: dict[str, Callable[[], bool]] = {
-            "Windows": lambda: self._install_windows(latest_release, progress_callback),
-            "Darwin": lambda: self._install_macos(latest_release, progress_callback),
-        }
-        handler = handlers.get(
-            platform.system(),
-            lambda: download_and_install_pip_release(progress_callback=progress_callback) == 0,
-        )
         try:
-            return handler()
+            plan = select_install_plan(platform.system(), latest_release.get("assets", []))
+            if plan is None:
+                logging_error(_("No suitable assets found for Windows installation"))
+                return False
+            if isinstance(plan, PipPlan):
+                if plan.macos_without_dmg:
+                    logging_info(_("No DMG asset found for macOS, falling back to pip installation"))
+                return download_and_install_pip_release(progress_callback=progress_callback)
+            return _install_from_asset(plan.asset, latest_release, plan.install_fn, progress_callback)
         except (KeyError, IndexError) as e:
             logging_error(_("Error accessing release assets: %s"), e)
         except Exception as e:  # pylint: disable=broad-exception-caught
@@ -151,10 +162,7 @@ class UpdateManager:
             url = "https://github.com/ArduPilot/MethodicConfigurator/releases"
             webbrowser_open_url(url=url, new=0, autoraise=True)
 
-            self.dialog = UpdateDialog(
-                version_info, download_callback=lambda report: self._perform_download(latest_release, report)
-            )
-            return self.dialog.show()
+            return self.presenter(version_info, lambda report: self._perform_download(latest_release, report))
 
         except KeyError as ke:
             logging_error(_("Key error during update process: %s"), ke)
@@ -176,7 +184,7 @@ class UpdateManager:
         return parser
 
 
-def check_for_software_updates() -> bool:
+def check_for_software_updates(presenter: UpdatePresenter) -> bool:
     """Main update orchestration function."""
     git_hash = LocalFilesystem.get_git_commit_hash()
 
@@ -185,20 +193,9 @@ def check_for_software_updates() -> bool:
 
     try:
         latest_release = get_release_info("/latest", should_be_pre_release=False)
-        update_manager = UpdateManager()
+        update_manager = UpdateManager(presenter)
         return update_manager.check_and_update(latest_release, current_version)
     except (httpx2_HTTPError, httpx2_InvalidURL, OSError, ValueError) as e:
         msg = _("Update check failed: {}")
         logging_error(msg.format(e))
         return False
-
-
-if __name__ == "__main__":  # pragma: no cover
-    logging_basicConfig(level="DEBUG", format="%(asctime)s - %(levelname)s - %(message)s")
-    logging_warning(
-        _(
-            "This main is for testing and development only, usually the check_for_software_updates is"
-            " called from another script"
-        )
-    )
-    check_for_software_updates()

@@ -17,15 +17,19 @@ import pytest
 from httpx2 import ConnectError as httpx2_ConnectError
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.backend_internet import download_and_install_on_macos, download_and_install_on_windows
 from ardupilot_methodic_configurator.data_model_software_updates import (
+    InstallerPlan,
+    PipPlan,
     UpdateManager,
     _find_asset,
     _install_from_asset,
     check_for_software_updates,
     format_version_info,
+    select_install_plan,
 )
 
-# pylint: disable=redefined-outer-name, protected-access
+# pylint: disable=protected-access
 
 
 @pytest.fixture
@@ -38,7 +42,7 @@ def mock_dialog() -> Mock:
 
 @pytest.fixture
 def update_manager() -> UpdateManager:
-    return UpdateManager()
+    return UpdateManager(Mock(return_value=True))
 
 
 class TestUpdateManager:
@@ -186,7 +190,7 @@ def test_check_for_software_updates_success() -> None:
         patch("ardupilot_methodic_configurator.data_model_software_updates.UpdateManager.check_and_update", return_value=True),
         patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info"),
     ):
-        assert check_for_software_updates() is True
+        assert check_for_software_updates(Mock()) is True
 
 
 def test_check_for_software_updates_network_error() -> None:
@@ -203,7 +207,7 @@ def test_check_for_software_updates_network_error() -> None:
         patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info"),
         patch("ardupilot_methodic_configurator.data_model_software_updates.logging_error") as mock_logging_error,
     ):
-        assert check_for_software_updates() is False
+        assert check_for_software_updates(Mock()) is False
         mock_logging_error.assert_called_once()
 
 
@@ -220,7 +224,7 @@ def test_update_check_fails_gracefully_with_stale_ssl_cert_file(tmp_path, monkey
         "ardupilot_methodic_configurator.data_model_software_updates.LocalFilesystem.get_git_commit_hash",
         return_value="abc123",
     ):
-        assert check_for_software_updates() is False
+        assert check_for_software_updates(Mock()) is False
 
 
 def test_update_check_fails_gracefully_with_malformed_proxy_url(monkeypatch) -> None:
@@ -238,26 +242,21 @@ def test_update_check_fails_gracefully_with_malformed_proxy_url(monkeypatch) -> 
         "ardupilot_methodic_configurator.data_model_software_updates.LocalFilesystem.get_git_commit_hash",
         return_value="abc123",
     ):
-        assert check_for_software_updates() is False
+        assert check_for_software_updates(Mock()) is False
 
 
-def test_update_manager_newer_version(update_manager) -> None:  # pylint: disable=redefined-outer-name
+def test_update_manager_newer_version() -> None:
     """Test update manager with newer version available."""
     latest_release = {"tag_name": "v2.0.0", "body": "New features"}
     current_version = "1.0.0"
+    presenter = Mock(return_value=True)
 
     with (
         patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open_url"),
-        patch("ardupilot_methodic_configurator.data_model_software_updates.UpdateDialog") as mock_update_dialog_class,
         patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info"),
     ):
-        mock_dialog = Mock()
-        mock_dialog.show.return_value = True
-        mock_update_dialog_class.return_value = mock_dialog
-
-        assert update_manager.check_and_update(latest_release, current_version) is True
-        mock_update_dialog_class.assert_called_once()
-        mock_dialog.show.assert_called_once()
+        assert UpdateManager(presenter).check_and_update(latest_release, current_version) is True
+        presenter.assert_called_once()
 
 
 class TestFindAsset:
@@ -271,16 +270,12 @@ class TestFindAsset:
         ]
         assert _find_asset(assets, ".exe") == {"name": "setup.exe"}
 
-    def test_returns_none_when_no_match_and_no_fallback(self) -> None:
+    def test_returns_none_when_no_match(self) -> None:
         assets = [{"name": "source.tar.gz"}, {"name": "linux.deb"}]
         assert _find_asset(assets, ".exe") is None
 
-    def test_returns_first_asset_when_fallback_enabled_and_no_match(self) -> None:
-        assets = [{"name": "source.tar.gz"}, {"name": "linux.deb"}]
-        assert _find_asset(assets, ".exe", allow_fallback=True) == {"name": "source.tar.gz"}
-
-    def test_returns_none_on_empty_list_even_with_fallback(self) -> None:
-        assert _find_asset([], ".exe", allow_fallback=True) is None
+    def test_returns_none_on_empty_list(self) -> None:
+        assert _find_asset([], ".exe") is None
 
     def test_matching_is_case_insensitive(self) -> None:
         assets = [{"name": "Setup.EXE"}]
@@ -337,100 +332,48 @@ class TestInstallFromAsset:
         assert install_fn.call_args.kwargs["progress_callback"] is cb
 
 
-class TestInstallWindows:
-    """Tests for UpdateManager._install_windows."""
+class TestSelectInstallPlan:
+    """Tests for select_install_plan, the pure decision of how to install a release."""
 
-    def test_returns_false_and_logs_when_no_assets(self, caplog) -> None:
-        um = UpdateManager()
-        assert um._install_windows({"assets": []}, None) is False
-        assert caplog.text
+    def test_windows_without_assets_has_no_plan(self) -> None:
+        assert select_install_plan("Windows", []) is None
 
-    def test_prefers_exe_over_other_assets(self) -> None:
-        um = UpdateManager()
-        latest_release = {
-            "assets": [
-                {"name": "source.tar.gz", "browser_download_url": "https://github.com/ArduPilot/r/v1/source.tar.gz"},
-                {"name": "setup.exe", "browser_download_url": "https://github.com/ArduPilot/r/v1/setup.exe"},
-            ]
-        }
-        with (
-            patch(
-                "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_on_windows",
-                return_value=True,
-            ) as mock_install,
-            patch(
-                "ardupilot_methodic_configurator.data_model_software_updates.get_expected_sha256_from_release",
-                return_value=None,
-            ),
-        ):
-            assert um._install_windows(latest_release, None) is True
-            assert mock_install.call_args.kwargs["download_url"].endswith("setup.exe")
+    def test_windows_prefers_exe_over_other_assets(self) -> None:
+        assets = [{"name": "source.tar.gz"}, {"name": "setup.exe"}]
+        assert select_install_plan("Windows", assets) == InstallerPlan({"name": "setup.exe"}, download_and_install_on_windows)
 
-    def test_falls_back_to_first_asset_when_no_exe(self) -> None:
-        um = UpdateManager()
-        latest_release = {
-            "assets": [{"name": "source.tar.gz", "browser_download_url": "https://github.com/ArduPilot/r/v1/source.tar.gz"}]
-        }
-        with (
-            patch(
-                "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_on_windows",
-                return_value=True,
-            ) as mock_install,
-            patch(
-                "ardupilot_methodic_configurator.data_model_software_updates.get_expected_sha256_from_release",
-                return_value=None,
-            ),
-        ):
-            assert um._install_windows(latest_release, None) is True
-            assert mock_install.call_args.kwargs["file_name"] == "source.tar.gz"
+    def test_windows_without_exe_has_no_plan(self) -> None:
+        assert select_install_plan("Windows", [{"name": "source.tar.gz"}, {"name": "app.dmg"}]) is None
+
+    def test_macos_uses_dmg_when_available(self) -> None:
+        assets = [{"name": "source.tar.gz"}, {"name": "app.dmg"}]
+        assert select_install_plan("Darwin", assets) == InstallerPlan({"name": "app.dmg"}, download_and_install_on_macos)
+
+    def test_macos_without_dmg_falls_back_to_pip(self) -> None:
+        assert select_install_plan("Darwin", []) == PipPlan(macos_without_dmg=True)
+        assert select_install_plan("Darwin", [{"name": "setup.exe"}]) == PipPlan(macos_without_dmg=True)
+
+    def test_linux_uses_pip_regardless_of_assets(self) -> None:
+        assert select_install_plan("Linux", [{"name": "app.dmg"}, {"name": "setup.exe"}]) == PipPlan()
+
+    def test_unknown_platform_uses_pip(self) -> None:
+        assert select_install_plan("FreeBSD", []) == PipPlan()
 
 
-class TestInstallMacos:
-    """Tests for UpdateManager._install_macos."""
+def test_update_manager_perform_download_windows_without_assets_logs_error(update_manager, caplog) -> None:  # pylint: disable=redefined-outer-name
+    """Test that Windows with no assets fails and logs an error instead of falling back."""
+    with (
+        patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Windows"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release") as mock_pip,
+    ):
+        assert update_manager._perform_download({"assets": []}) is False
 
-    def test_uses_dmg_when_available(self) -> None:
-        um = UpdateManager()
-        latest_release = {"assets": [{"name": "app.dmg", "browser_download_url": "https://github.com/ArduPilot/r/v1/app.dmg"}]}
-        with (
-            patch(
-                "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_on_macos",
-                return_value=True,
-            ) as mock_install,
-            patch(
-                "ardupilot_methodic_configurator.data_model_software_updates.get_expected_sha256_from_release",
-                return_value=None,
-            ),
-        ):
-            assert um._install_macos(latest_release, None) is True
-            mock_install.assert_called_once()
-
-    def test_falls_back_to_pip_when_no_dmg(self) -> None:
-        um = UpdateManager()
-        with (
-            patch(
-                "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release",
-                return_value=0,
-            ) as mock_pip,
-            patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info"),
-        ):
-            assert um._install_macos({"assets": []}, None) is True
-            mock_pip.assert_called_once()
-
-    def test_returns_false_when_pip_fallback_fails(self) -> None:
-        um = UpdateManager()
-        with (
-            patch(
-                "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release",
-                return_value=1,
-            ),
-            patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info"),
-        ):
-            assert um._install_macos({}, None) is False
+    mock_pip.assert_not_called()
+    assert caplog.text
 
 
-def test_update_manager_perform_download_windows_success(update_manager, mock_dialog) -> None:  # pylint: disable=redefined-outer-name
+def test_update_manager_perform_download_windows_success(update_manager) -> None:  # pylint: disable=redefined-outer-name
     """Test successful download on Windows."""
-    update_manager.dialog = mock_dialog
     latest_release = {"assets": [{"browser_download_url": "https://example.com/file.exe", "name": "file.exe"}]}
 
     with (
@@ -442,9 +385,8 @@ def test_update_manager_perform_download_windows_success(update_manager, mock_di
         assert update_manager._perform_download(latest_release) is True
 
 
-def test_update_manager_perform_download_windows_error(update_manager, mock_dialog) -> None:  # pylint: disable=redefined-outer-name
+def test_update_manager_perform_download_windows_error(update_manager) -> None:  # pylint: disable=redefined-outer-name
     """Test failed download on Windows due to missing assets."""
-    update_manager.dialog = mock_dialog
     latest_release = {"assets": []}
 
     with (
@@ -455,21 +397,22 @@ def test_update_manager_perform_download_windows_error(update_manager, mock_dial
         mock_logging_error.assert_called_once()
 
 
-def test_update_manager_perform_download_linux(update_manager, mock_dialog) -> None:  # pylint: disable=redefined-outer-name
+def test_update_manager_perform_download_linux(update_manager) -> None:  # pylint: disable=redefined-outer-name
     """Test download on Linux."""
-    update_manager.dialog = mock_dialog
     latest_release = {}
 
     with (
         patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Linux"),
-        patch("ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release", return_value=0),
+        patch(
+            "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release", return_value=True
+        ),
     ):
         assert update_manager._perform_download(latest_release) is True
 
 
 def test_update_manager_perform_download_no_dialog(update_manager) -> None:  # pylint: disable=redefined-outer-name
     """Test download with no dialog."""
-    latest_release = {"assets": [{"browser_download_url": "url", "name": "name"}]}
+    latest_release = {"assets": [{"browser_download_url": "url", "name": "name.exe"}]}
 
     with (
         patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Windows"),
@@ -521,45 +464,39 @@ def test_update_manager_check_and_update_older_version(update_manager) -> None: 
         mock_logging_info.assert_called_once()
 
 
-def test_update_manager_check_and_update_user_cancels(update_manager) -> None:  # pylint: disable=redefined-outer-name
+def test_update_manager_check_and_update_user_cancels() -> None:
     """Test when user cancels the update dialog."""
     latest_release = {"tag_name": "v2.0.0", "body": "New features"}
     current_version = "1.0.0"
+    presenter = Mock(return_value=False)  # User cancels the dialog
 
-    with (
-        patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open_url"),
-        patch("ardupilot_methodic_configurator.data_model_software_updates.UpdateDialog") as mock_update_dialog_class,
-    ):
-        mock_dialog = Mock()
-        mock_dialog.show.return_value = False  # User cancels the dialog
-        mock_update_dialog_class.return_value = mock_dialog
-
-        assert update_manager.check_and_update(latest_release, current_version) is False
-        mock_update_dialog_class.assert_called_once()
+    with patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open_url"):
+        assert UpdateManager(presenter).check_and_update(latest_release, current_version) is False
+        presenter.assert_called_once()
 
 
-def test_update_manager_perform_download_linux_failure(update_manager, mock_dialog) -> None:  # pylint: disable=redefined-outer-name
+def test_update_manager_perform_download_linux_failure(update_manager) -> None:  # pylint: disable=redefined-outer-name
     """Test failed download on Linux."""
-    update_manager.dialog = mock_dialog
     latest_release = {}
 
     with (
         patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Linux"),
         patch(
-            "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release", return_value=1
-        ),  # Non-zero exit code
+            "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release", return_value=False
+        ),  # Failed install
     ):
         assert update_manager._perform_download(latest_release) is False
 
 
-def test_update_manager_perform_download_mac(update_manager, mock_dialog) -> None:  # pylint: disable=redefined-outer-name
+def test_update_manager_perform_download_mac(update_manager) -> None:  # pylint: disable=redefined-outer-name
     """Test download on macOS with no DMG asset falls back to pip."""
-    update_manager.dialog = mock_dialog
     latest_release = {}
 
     with (
         patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Darwin"),
-        patch("ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release", return_value=0),
+        patch(
+            "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release", return_value=True
+        ),
         patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info"),
     ):
         assert update_manager._perform_download(latest_release) is True
@@ -567,7 +504,6 @@ def test_update_manager_perform_download_mac(update_manager, mock_dialog) -> Non
 
 def test_update_manager_perform_download_mac_with_dmg(update_manager, mock_dialog) -> None:  # pylint: disable=redefined-outer-name
     """Test download on macOS uses DMG when a .dmg asset is available."""
-    update_manager.dialog = mock_dialog
     dmg_url = "https://github.com/ArduPilot/MethodicConfigurator/releases/download/v2/app.dmg"
     dmg_name = "app.dmg"
     expected_sha = "abc123"
@@ -599,9 +535,8 @@ def test_update_manager_perform_download_mac_with_dmg(update_manager, mock_dialo
         )
 
 
-def test_update_manager_perform_download_mac_dmg_failure(update_manager, mock_dialog) -> None:  # pylint: disable=redefined-outer-name
+def test_update_manager_perform_download_mac_dmg_failure(update_manager) -> None:  # pylint: disable=redefined-outer-name
     """Test download on macOS returns False when DMG installation fails."""
-    update_manager.dialog = mock_dialog
     latest_release = {
         "assets": [
             {
@@ -622,9 +557,8 @@ def test_update_manager_perform_download_mac_dmg_failure(update_manager, mock_di
         assert update_manager._perform_download(latest_release) is False
 
 
-def test_update_manager_perform_download_mac_exception(update_manager, mock_dialog) -> None:  # pylint: disable=redefined-outer-name
+def test_update_manager_perform_download_mac_exception(update_manager) -> None:  # pylint: disable=redefined-outer-name
     """Test download on macOS handles exceptions gracefully."""
-    update_manager.dialog = mock_dialog
     latest_release = {
         "assets": [
             {
@@ -663,7 +597,7 @@ def test_check_for_software_updates_value_error() -> None:
         patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info"),
         patch("ardupilot_methodic_configurator.data_model_software_updates.logging_error") as mock_logging_error,
     ):
-        assert check_for_software_updates() is False
+        assert check_for_software_updates(Mock()) is False
         mock_logging_error.assert_called_once()
 
 
@@ -697,7 +631,7 @@ def test_format_version_info_multiple_whitespace() -> None:
     assert "    " not in result  # No groups of multiple spaces
 
 
-def test_update_manager_with_complex_release_data(update_manager) -> None:  # pylint: disable=redefined-outer-name
+def test_update_manager_with_complex_release_data() -> None:
     """Test update manager with a realistic GitHub release API response."""
     complex_release = {
         "url": "https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/12345678",
@@ -747,18 +681,12 @@ def test_update_manager_with_complex_release_data(update_manager) -> None:  # py
     }
     current_version = "1.0.0"
 
-    with (
-        patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open_url"),
-        patch("ardupilot_methodic_configurator.data_model_software_updates.UpdateDialog") as mock_update_dialog_class,
-    ):
-        mock_dialog = Mock()
-        mock_dialog.show.return_value = True
-        mock_update_dialog_class.return_value = mock_dialog
+    presenter = Mock(return_value=True)
+    with patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open_url"):
+        assert UpdateManager(presenter).check_and_update(complex_release, current_version) is True
 
-        assert update_manager.check_and_update(complex_release, current_version) is True
-
-        # Verify the dialog was created with expected change information
-        call_args = mock_update_dialog_class.call_args[0][0]
+        # Verify the presenter received the expected change information
+        call_args = presenter.call_args[0][0]
         assert "Version 2.0.0" not in call_args  # Title should not be included
         assert "What's New" in call_args
         assert "Added new capability" in call_args
@@ -786,13 +714,7 @@ def test_update_manager_with_prerelease_versions(update_manager) -> None:  # pyl
 
         if should_update:
             # Test path where update should happen
-            with (
-                patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open_url") as mock_browser,
-                patch(
-                    "ardupilot_methodic_configurator.data_model_software_updates.UpdateDialog",
-                    return_value=Mock(show=lambda: True),
-                ),
-            ):
+            with patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open_url") as mock_browser:
                 result = update_manager.check_and_update(latest_release, current)
                 assert result is True, f"Failed with latest={latest}, current={current}"
                 mock_browser.assert_called()
@@ -804,9 +726,8 @@ def test_update_manager_with_prerelease_versions(update_manager) -> None:  # pyl
                 mock_info.assert_called()
 
 
-def test_update_manager_perform_download_windows_exception(update_manager, mock_dialog) -> None:  # pylint: disable=redefined-outer-name
+def test_update_manager_perform_download_windows_exception(update_manager) -> None:  # pylint: disable=redefined-outer-name
     """Test exception during Windows download."""
-    update_manager.dialog = mock_dialog
     latest_release = {"assets": [{"browser_download_url": "https://example.com/file.exe", "name": "file.exe"}]}
 
     with (
@@ -821,9 +742,8 @@ def test_update_manager_perform_download_windows_exception(update_manager, mock_
         mock_logging_error.assert_called_once()
 
 
-def test_update_manager_perform_download_pip_exception(update_manager, mock_dialog) -> None:  # pylint: disable=redefined-outer-name
+def test_update_manager_perform_download_pip_exception(update_manager) -> None:  # pylint: disable=redefined-outer-name
     """Test exception during pip download."""
-    update_manager.dialog = mock_dialog
     latest_release = {}
 
     with (
@@ -840,7 +760,6 @@ def test_update_manager_perform_download_pip_exception(update_manager, mock_dial
 
 def test_update_manager_perform_download_windows_asset_selection(update_manager, mock_dialog) -> None:  # pylint: disable=redefined-outer-name
     """Test selection of the correct asset on Windows."""
-    update_manager.dialog = mock_dialog
     latest_release = {
         "assets": [
             {"browser_download_url": "https://example.com/source.tar.gz", "name": "source.tar.gz"},

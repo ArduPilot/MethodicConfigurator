@@ -86,9 +86,10 @@ Legend:
 - **File**: `data_model_software_updates.py`
 - **Purpose**: Contains the business logic for version checking, downloading, and installation orchestration
 - **Key Classes**:
-  - `UpdateManager`: Handles user interaction and installation coordination
+  - `UpdateManager`: Handles version decisions and installation coordination. Receives an injected `UpdatePresenter` callable instead of importing the GUI
+  - `UpdatePresenter`: Type alias for `presenter(version_info, download) -> bool`, where `download(progress_callback) -> bool` runs the download and installation
   - `format_version_info()`: Cleans and formats release notes for display
-  - `check_for_software_updates()`: Main entry point function
+  - `check_for_software_updates(presenter)`: Main entry point function, called with the presenter by `__main__.py`
 - **Actual Dependencies**:
   - `packaging.version` for semantic version comparison ✅
   - `httpx2` for HTTP operations (via backend_internet) ✅
@@ -100,8 +101,9 @@ Legend:
 
 - **File**: `frontend_tkinter_software_update.py`
 - **Purpose**: Provides the GUI dialog for user interaction during update process
-- **Key Classes**:
+- **Key Classes and Functions**:
   - `UpdateDialog`: Main dialog window with version info and progress display
+  - `present_update_dialog()`: Tkinter presenter that shows `UpdateDialog` and returns the user's decision. `__main__.py` injects it into the core module
 - **Actual Dependencies**:
   - `tkinter` and `tkinter.ttk` for GUI components ✅
   - `ScrollFrame` for scrollable release notes display ✅
@@ -117,9 +119,10 @@ Legend:
   - `download_file_from_url()`: File download with retry, resume, and progress tracking
   - `_validate_github_url()`: Shared URL whitelist validation (GitHub HTTPS only)
   - `_validate_download_file()`: Shared file size, optional magic bytes, and permission validation
-  - `download_and_install_on_windows()`: Windows `.exe` installer with PE header and integrity validation
-  - `download_and_install_on_macos()`: macOS `.dmg` installer — mount, copy `.app`, unmount
-  - `download_and_install_pip_release()`: Linux pip/uv installation from PyPI
+  - `_download_and_verify_installer()`: Shared download, SHA256 check, and file validation for the Windows and macOS installers. Progress is 0.0-100.0
+  - `download_and_install_on_windows()`: Windows `.exe` installer: runs the shared stage with PE header check, then launches it via a batch file
+  - `download_and_install_on_macos()`: macOS `.dmg` installer: runs the shared stage, then mounts, copies `.app`, and unmounts
+  - `download_and_install_pip_release()`: Linux pip/uv installation from PyPI, returns `bool`
 
 - **Actual Dependencies**:
   - `httpx2` with SSL verification and proxy support ✅
@@ -146,18 +149,22 @@ Legend:
 3. **Update Available Decision**
    - If `current >= latest`, logs "Already running latest version" and returns False
    - If update available, formats version info and opens GitHub releases page in browser
-   - Creates UpdateDialog with version information and download callback
+   - Calls the injected presenter with version information and a download action. The core module does not import tkinter
 
 4. **User Interaction Phase**
+   - `present_update_dialog()` creates `UpdateDialog` with the version information and download action
    - UpdateDialog shows scrollable version information with release notes
    - User can choose to download/install or cancel via dialog buttons
    - Progress bar appears during download/installation process
 
 5. **Download and Installation Phase**
+   - `select_install_plan()` decides the installer from the platform and release assets without doing any I/O
+     - Windows uses the `.exe` (else the update fails), macOS uses the `.dmg` (else pip), other platforms use pip
    - **Windows**: Downloads .exe installer with SHA256 verification, validates PE header, creates batch file
    - **macOS**: Downloads `.dmg` with SHA256 verification, mounts with `hdiutil`, copies `.app` bundle to `/Applications` using `ditto`, then unmounts
    - **Linux**: Installs via pip/uv from PyPI
    - ✅ Progress callback provides real-time feedback during download
+   - ✅ Post-download steps (checksum, file validation, install) keep progress at 100% with a status message, so the progress bar never drops back
    - ✅ SHA256 integrity validation of downloaded files (when checksums available)
    - ✅ File format validation (PE headers for .exe, ZIP headers for .whl)
    - ✅ Automatic cleanup of invalid downloads
@@ -221,7 +228,7 @@ data_model_software_updates.py          # Core update logic and orchestration �
 frontend_tkinter_software_update.py     # GUI dialog interface ✅
 backend_internet.py                     # Download and installation backend ✅
 tests/acceptance_software_update.py     # Acceptance tests for the application requirements defined on top of this file ✅
-tests/bdd_software_updates.py           # BDD tests ✅
+tests/bdd_software_update.py             # BDD tests ✅
 tests/integration_software_update_github_api.py  # Integration tests with actual GitHub API calls ✅
 tests/unit_backend_internet.py          # Backend download and retry tests ✅
 tests/test_backend_internet_checksum_parsing.py  # SHA256 checksum parsing tests ✅

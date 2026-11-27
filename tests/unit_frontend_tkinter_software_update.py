@@ -22,7 +22,7 @@ import pytest
 
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_file_browser_tasks import BackgroundTaskRunner
-from ardupilot_methodic_configurator.frontend_tkinter_software_update import UpdateDialog
+from ardupilot_methodic_configurator.frontend_tkinter_software_update import UpdateDialog, present_update_dialog
 
 
 class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
@@ -563,3 +563,27 @@ def test_download_keeps_tk_responsive_and_delivers_progress_on_tk_thread(downloa
         heartbeat.set()
         if runner.thread is not None:
             runner.thread.join(timeout=2)
+
+
+def test_present_update_dialog_shows_dialog_wired_to_download_action() -> None:
+    """
+    The update presenter shows the dialog wired to the download action.
+
+    GIVEN: Version information and a download action
+    WHEN: The update presenter is invoked
+    THEN: An UpdateDialog is created with the version information and download action
+      AND: The user's decision from the dialog is returned
+    """
+    version_info = "Version 2.0.0"
+
+    def download(_report: Callable[[float, str], None]) -> bool:
+        return True
+
+    with patch("ardupilot_methodic_configurator.frontend_tkinter_software_update.UpdateDialog") as dialog_class:
+        dialog_class.return_value.show.return_value = True
+
+        result = present_update_dialog(version_info, download)
+
+    dialog_class.assert_called_once_with(version_info, download_callback=download)
+    dialog_class.return_value.show.assert_called_once_with()
+    assert result is True

@@ -57,7 +57,7 @@ def mock_release_info() -> dict:
 @pytest.fixture
 def update_manager() -> UpdateManager:
     """Fixture providing an UpdateManager instance."""
-    return UpdateManager()
+    return UpdateManager(MagicMock(return_value=True))
 
 
 class TestUserChecksForUpdates:
@@ -158,10 +158,10 @@ class TestWindowsUserInstallsUpdate:
         mock_platform.return_value = "Windows"
         mock_get_sha256.return_value = None
         mock_download.return_value = True
-        update_manager.dialog = MagicMock()
+        progress_sink = MagicMock()
 
         # Act
-        update_manager._perform_download(mock_release_info, update_manager.dialog.update_progress)
+        update_manager._perform_download(mock_release_info, progress_sink.update_progress)
 
         # Assert
         call_kwargs = mock_download.call_args.kwargs
@@ -208,7 +208,7 @@ class TestLinuxMacUserInstallsUpdate:  # pylint: disable=too-few-public-methods
         """
         # Arrange
         mock_platform.return_value = "Linux"
-        mock_pip.return_value = 0  # Success
+        mock_pip.return_value = True  # Success
 
         # Act
         result = update_manager._perform_download(mock_release_info)
