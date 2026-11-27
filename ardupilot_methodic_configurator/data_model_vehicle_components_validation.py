@@ -313,6 +313,15 @@ def get_esc_connection_sub_dict(
     return ESC_CONNECTION_DICT.get(vehicle_type, ESC_CONNECTION_DICT["ArduCopter"])
 
 
+def get_motor_pwm_type_param_name(vehicle_type: str) -> str:
+    """
+    Return the parameter that selects the motor output protocol for ``vehicle_type``.
+
+    ArduPlane's QuadPlane motors use Q_M_PWM_TYPE; Copter, Heli and Rover use MOT_PWM_TYPE.
+    """
+    return "Q_M_PWM_TYPE" if vehicle_type == "ArduPlane" else "MOT_PWM_TYPE"
+
+
 # RC_PROTOCOLS is a bitmask parameter, so keys are actual bitmask values (2^bit_position)
 # Special case: value 1 = All protocols enabled
 # Bit 1 (value 2) = PPM, Bit 2 (value 4) = IBUS, Bit 3 (value 8) = SBUS, etc.

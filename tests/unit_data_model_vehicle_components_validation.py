@@ -23,9 +23,25 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_validation im
     SERIAL_DISPLAY_TO_KEY,
     ComponentDataModelValidation,
     get_esc_connection_sub_dict,
+    get_motor_pwm_type_param_name,
 )
 
 # pylint: disable=protected-access
+
+
+@pytest.mark.parametrize(
+    ("vehicle_type", "expected"),
+    [
+        ("ArduPlane", "Q_M_PWM_TYPE"),
+        ("ArduCopter", "MOT_PWM_TYPE"),
+        ("Heli", "MOT_PWM_TYPE"),
+        ("Rover", "MOT_PWM_TYPE"),
+        ("", "MOT_PWM_TYPE"),
+    ],
+)
+def test_motor_pwm_type_parameter_name_matches_the_vehicle_type(vehicle_type: str, expected: str) -> None:
+    """ArduPlane QuadPlane motors use Q_M_PWM_TYPE; every other vehicle type uses MOT_PWM_TYPE."""
+    assert get_motor_pwm_type_param_name(vehicle_type) == expected
 
 
 class TestValidationInternals:  # pylint: disable=too-many-public-methods

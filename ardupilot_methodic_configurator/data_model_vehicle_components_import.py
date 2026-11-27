@@ -38,6 +38,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_validation im
     ComponentDataModelValidation,
     get_esc_connection_sub_dict,
     get_frame_class_as_protocol_dict,
+    get_motor_pwm_type_param_name,
 )
 
 
@@ -189,7 +190,9 @@ class ComponentDataModelImport(ComponentDataModelBase):
         elif "GPS_TYPE" in doc:
             self._verify_dict_is_uptodate(doc, GNSS_RECEIVER_CONNECTION, "GPS_TYPE", "values")
         fw_type = str(self.get_component_value(("Flight Controller", "Firmware", "Type")) or "")
-        self._verify_dict_is_uptodate(doc, get_esc_connection_sub_dict(fw_type), "MOT_PWM_TYPE", "values")
+        self._verify_dict_is_uptodate(
+            doc, get_esc_connection_sub_dict(fw_type), get_motor_pwm_type_param_name(fw_type), "values"
+        )
         self._verify_dict_is_uptodate(doc, RC_PROTOCOLS_DICT, "RC_PROTOCOLS", "Bitmask")
 
         # Compute frame class dict once for both verification and label lookup
@@ -380,11 +383,13 @@ class ComponentDataModelImport(ComponentDataModelBase):
 
     def _set_esc_type_from_fc_parameters(self, fc_parameters: dict[str, float], doc: dict[str, Any]) -> None:
         """Process ESC parameters and update the data model."""
-        mot_pwm_type = fc_parameters.get("MOT_PWM_TYPE", 0)
+        fw_type = str(self.get_component_value(("Flight Controller", "Firmware", "Type")) or "")
+        pwm_type_param = get_motor_pwm_type_param_name(fw_type)
+        mot_pwm_type = fc_parameters.get(pwm_type_param, 0)
         try:
             mot_pwm_type = int(mot_pwm_type)
         except (ValueError, TypeError):
-            logging_error(_("Invalid non-integer value for MOT_PWM_TYPE %s"), mot_pwm_type)
+            logging_error(_("Invalid non-integer value for %s %s"), pwm_type_param, mot_pwm_type)
             mot_pwm_type = 0
 
         aio_functions = [fc_parameters.get("SERVO" + str(i) + "_FUNCTION", 0) for i in range(9, 15)]
@@ -396,15 +401,13 @@ class ComponentDataModelImport(ComponentDataModelBase):
             self.set_component_value(("ESC", "FC->ESC Connection", "Type"), "Main Out")
 
         protocol = ""
-        if "MOT_PWM_TYPE" in doc and "values" in doc["MOT_PWM_TYPE"]:
-            protocol = doc["MOT_PWM_TYPE"]["values"].get(str(mot_pwm_type), "")
+        if pwm_type_param in doc and "values" in doc[pwm_type_param]:
+            protocol = doc[pwm_type_param]["values"].get(str(mot_pwm_type), "")
             if protocol:
                 self.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), protocol)
         # Fallback to ESC_CONNECTION_DICT if doc is not available
         else:
-            esc_conn_sub = get_esc_connection_sub_dict(
-                str(self.get_component_value(("Flight Controller", "Firmware", "Type")) or "")
-            )
+            esc_conn_sub = get_esc_connection_sub_dict(fw_type)
             if str(mot_pwm_type) in esc_conn_sub:
                 protocol = str(esc_conn_sub[str(mot_pwm_type)]["protocol"])
                 self.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), protocol)
@@ -746,11 +749,11 @@ class ComponentDataModelImport(ComponentDataModelBase):
     def _set_motor_poles_from_fc_parameters(self, fc_parameters: dict[str, float]) -> None:
         """Process motor parameters and update the data model."""
         poles = 0.0
-        if "MOT_PWM_TYPE" in fc_parameters:
-            mot_pwm_type_str = str(int(fc_parameters["MOT_PWM_TYPE"]))
-            esc_conn_sub = get_esc_connection_sub_dict(
-                str(self.get_component_value(("Flight Controller", "Firmware", "Type")) or "")
-            )
+        fw_type = str(self.get_component_value(("Flight Controller", "Firmware", "Type")) or "")
+        pwm_type_param = get_motor_pwm_type_param_name(fw_type)
+        if pwm_type_param in fc_parameters:
+            mot_pwm_type_str = str(int(fc_parameters[pwm_type_param]))
+            esc_conn_sub = get_esc_connection_sub_dict(fw_type)
             entry = esc_conn_sub.get(mot_pwm_type_str)
             esc_to_fc = entry.get("ESC_to_FC") if entry is not None else None
             is_dshot = (

@@ -594,6 +594,73 @@ class TestComponentDataModelImport:
         motor_poles = realistic_model.get_component_value(("Motors", "Specifications", "Poles"))
         assert motor_poles == 14
 
+    @pytest.mark.parametrize("with_metadata", [True, False], ids=["with_apm_pdef", "without_apm_pdef"])
+    def test_user_can_import_quadplane_dshot_esc_from_q_m_pwm_type(self, realistic_model, with_metadata: bool) -> None:
+        """
+        User can import a QuadPlane's DShot ESC and its bi-directional DShot telemetry.
+
+        GIVEN: An ArduPlane QuadPlane whose VTOL motors use DShot600 (Q_M_PWM_TYPE=6), with no MOT_PWM_TYPE
+        WHEN: The user imports the FC parameters, with or without the parameter metadata
+        THEN: The ESC is connected to the main outputs with the DShot600 protocol
+        AND: The ESC telemetry is BDShot on the same outputs
+        AND: The motor pole count comes from SERVO_BLH_POLES
+        """
+        realistic_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduPlane")
+        realistic_model.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), "Normal")
+        realistic_model.set_component_value(("ESC", "ESC->FC Telemetry", "Type"), "None")
+        realistic_model.set_component_value(("ESC", "ESC->FC Telemetry", "Protocol"), "None")
+        realistic_model.set_component_value(("Motors", "Specifications", "Poles"), 99)
+        fc_parameters = {"Q_ENABLE": 1, "Q_FRAME_CLASS": 7, "Q_M_PWM_TYPE": 6, "SERVO1_FUNCTION": 33, "SERVO_BLH_POLES": 14}
+        doc = {"Q_M_PWM_TYPE": {"values": {"0": "Normal", "6": "DShot600"}}} if with_metadata else {}
+
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+            realistic_model.process_fc_parameters(fc_parameters, doc)
+
+        assert realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type")) == "Main Out"
+        assert realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) == "DShot600"
+        assert realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Type")) == "Main Out"
+        assert realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Protocol")) == "BDShotOnly"
+        assert realistic_model.get_component_value(("Motors", "Specifications", "Poles")) == 14
+
+    def test_quadplane_esc_import_ignores_copter_pwm_type_parameter(self, realistic_model) -> None:
+        """
+        A QuadPlane's ESC protocol comes from Q_M_PWM_TYPE, never from the Copter MOT_PWM_TYPE name.
+
+        GIVEN: ArduPlane FC parameters where Q_M_PWM_TYPE selects DShot600 and a stray MOT_PWM_TYPE says Normal
+        WHEN: Importing the ESC configuration
+        THEN: The ESC protocol is DShot600
+        """
+        realistic_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduPlane")
+        fc_parameters = {"Q_M_PWM_TYPE": 6, "MOT_PWM_TYPE": 0}
+        doc = {
+            "Q_M_PWM_TYPE": {"values": {"0": "Normal", "6": "DShot600"}},
+            "MOT_PWM_TYPE": {"values": {"0": "Normal", "6": "DShot600"}},
+        }
+
+        realistic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
+
+        assert realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) == "DShot600"
+
+    def test_fixed_wing_plane_without_vtol_motors_still_imports_a_normal_esc(self, realistic_model) -> None:
+        """
+        A fixed-wing ArduPlane without QuadPlane motors keeps the Normal PWM ESC import.
+
+        GIVEN: ArduPlane FC parameters with no Q_M_PWM_TYPE (Q_ENABLE=0) and a throttle output on SERVO3
+        WHEN: Importing the ESC configuration
+        THEN: The ESC is a Normal PWM ESC on the main outputs without telemetry
+        """
+        realistic_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduPlane")
+        realistic_model.set_component_value(("ESC", "ESC->FC Telemetry", "Type"), "Main Out")
+        realistic_model.set_component_value(("ESC", "ESC->FC Telemetry", "Protocol"), "BDShotOnly")
+        fc_parameters = {"Q_ENABLE": 0, "SERVO3_FUNCTION": 70}
+
+        realistic_model._set_esc_type_from_fc_parameters(fc_parameters, {})
+
+        assert realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type")) == "Main Out"
+        assert realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) == "Normal"
+        assert realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Type")) == "None"
+        assert realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Protocol")) == "None"
+
     def test_user_can_import_motor_poles_for_fettec(self, realistic_model) -> None:
         """
         User can import motor pole count for FETtec ESCs.
@@ -2681,7 +2748,7 @@ class TestComponentDataModelImportUncoveredBranches:
             (doc, _import_module.SERIAL_PROTOCOLS_DICT, "SERIAL1_PROTOCOL", "values"),
             (doc, _import_module.BATT_MONITOR_CONNECTION, "BATT_MONITOR", "values"),
             (doc, _import_module.GNSS_RECEIVER_CONNECTION, "GPS_TYPE", "values"),
-            (doc, esc_protocols, "MOT_PWM_TYPE", "values"),
+            (doc, esc_protocols, "Q_M_PWM_TYPE", "values"),
             (doc, _import_module.RC_PROTOCOLS_DICT, "RC_PROTOCOLS", "Bitmask"),
             (doc, frame_protocols, "Q_FRAME_CLASS", "values"),
         ]
