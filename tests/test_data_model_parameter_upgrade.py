@@ -70,6 +70,12 @@ def test_only_migrations_crossed_by_the_version_gap_are_applied(
             "PSC_D_ACC_P",
             "both old name 'PSC_ACCZ_P' and already-present 'PSC_D_ACC_P' map to 'PSC_D_ACC_P'",
         ),
+        (
+            ("4.6", "4.7"),
+            "RNGFND1_MAX_CM",
+            "RNGFND1_MAX",
+            "both old name 'RNGFND1_MAX_CM' and already-present 'RNGFND1_MAX' map to 'RNGFND1_MAX'",
+        ),
         (("4.6", "4.7"), "SR0_EXTRA1", "MAV1_EXTRA1", "both SR param 'SR0_EXTRA1' and already-present 'MAV1_EXTRA1'"),
     ],
 )
@@ -531,6 +537,65 @@ class TestParameterUpgrade47:
         assert params["00_default.param"]["LAND_SPD_MS"].value == pytest.approx(1.0)
         assert params["00_default.param"]["RTL_ALT_M"].value == pytest.approx(15.0)
         assert params["00_default.param"]["WP_SPD"].value == pytest.approx(5.0)
+
+    @pytest.mark.parametrize("instance", ["1", "A"])
+    def test_user_keeps_rangefinder_distances_when_upgrading_to_4_7(self, instance: str) -> None:
+        """
+        Rangefinder distances keep their physical value when 4.7 renames them to metre parameters.
+
+        GIVEN: A 4.6 project with rangefinder distances in centimetres for the first or the tenth (A) rangefinder
+        WHEN: It is upgraded for a flight controller running 4.7
+        THEN: RNGFNDn_MAX_CM, RNGFNDn_MIN_CM and RNGFNDn_GNDCLEAR become RNGFNDn_MAX, RNGFNDn_MIN and RNGFNDn_GNDCLR
+        AND: The values are converted from centimetres to metres and the comments are preserved
+        """
+        # Arrange
+        params = {
+            "62_range_finder.param": ParDict(
+                {
+                    f"RNGFND{instance}_MAX_CM": Par(2200.0, "reliable maximum range"),
+                    f"RNGFND{instance}_MIN_CM": Par(50.0, "reliable minimum range"),
+                    f"RNGFND{instance}_GNDCLEAR": Par(10.0, "distance to the ground when landed"),
+                }
+            ),
+        }
+
+        # Act
+        upgrade_parameters_for_firmware_version("4.6.3", "4.7.0", params)
+
+        # Assert: Only the 4.7 names remain, with values in metres and comments preserved
+        rangefinder = params["62_range_finder.param"]
+        assert set(rangefinder) == {f"RNGFND{instance}_MAX", f"RNGFND{instance}_MIN", f"RNGFND{instance}_GNDCLR"}
+        assert rangefinder[f"RNGFND{instance}_MAX"].value == pytest.approx(22.0)
+        assert rangefinder[f"RNGFND{instance}_MIN"].value == pytest.approx(0.5)
+        assert rangefinder[f"RNGFND{instance}_GNDCLR"].value == pytest.approx(0.1)
+        assert rangefinder[f"RNGFND{instance}_GNDCLR"].comment == "distance to the ground when landed"
+
+    @pytest.mark.parametrize(("source_version", "target_version"), [("4.7.0", "4.7.3"), ("4.6.3", "4.7.0")])
+    def test_rangefinder_distances_already_in_metres_are_not_scaled_again(
+        self, source_version: str, target_version: str
+    ) -> None:
+        """
+        Rangefinder parameters that already use the 4.7 metre names are left unchanged.
+
+        GIVEN: A rangefinder file that already uses RNGFND1_MAX, RNGFND1_MIN and RNGFND1_GNDCLR in metres
+        WHEN: It is upgraded within 4.7, or goes through the 4.6 to 4.7 migration
+        THEN: The names, values and comments are unchanged (the metre values are not divided by 100 again)
+        """
+        # Arrange
+        metres = ParDict(
+            {
+                "RNGFND1_MAX": Par(22.0, "reliable maximum range"),
+                "RNGFND1_MIN": Par(0.5, "reliable minimum range"),
+                "RNGFND1_GNDCLR": Par(0.1, "distance to the ground when landed"),
+            }
+        )
+        params = {"62_range_finder.param": ParDict(metres)}
+
+        # Act
+        upgrade_parameters_for_firmware_version(source_version, target_version, params)
+
+        # Assert
+        assert params["62_range_finder.param"] == metres
 
     def test_sr0_sr1_mapped_to_mav1_mav2_when_serial0_serial1_use_mavlink(self, sample_parameters_46_with_scaling) -> None:
         """
