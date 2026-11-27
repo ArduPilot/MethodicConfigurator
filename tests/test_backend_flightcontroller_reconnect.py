@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from collections.abc import Callable
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
@@ -110,6 +111,19 @@ def test_passive_checks_never_read_plugin_messages(link: tuple, monkeypatch: pyt
     receive.assert_not_called()
 
 
+@pytest.mark.parametrize(("enabled", "cancelled"), [(False, False), (True, True)])
+def test_poll_stops_when_disabled_or_cancelled(link: tuple, enabled: bool, cancelled: bool) -> None:
+    """A stopped monitor must not report a disconnected FC as a new failure."""
+    fc, monitor, _clock, _enqueue = link
+    if not enabled:
+        monitor._uid = ""
+    if cancelled:
+        monitor.cancelled.set()
+    fc.master = None
+
+    assert monitor.poll(read=False)
+
+
 @pytest.mark.parametrize("backlog", [200, 1000])
 def test_buffered_target_heartbeat_keeps_a_busy_link_connected(link: tuple, backlog: int) -> None:
     """GIVEN queued traffic, WHEN the target heartbeat follows it, THEN health recovers without draining later replies."""
@@ -207,6 +221,12 @@ def test_same_hardware_reconnects_at_selected_baudrate_and_refreshes_values(link
     # Recovery must use the backend's link-aware budget, including slow serial links.
     assert fc.download_params.call_args.kwargs.get("response_timeout") is None
     assert fc.download_params.call_args.kwargs["cancellation_requested"] == monitor.cancelled.is_set
+    value_file = Path(fc.download_params.call_args.kwargs["parameter_values_filename"])
+    defaults_file = Path(fc.download_params.call_args.kwargs["parameter_defaults_filename"])
+    assert value_file.name == "complete.param"
+    assert defaults_file.name == "00_default.param"
+    assert value_file.parent == defaults_file.parent
+    assert not value_file.parent.exists()
 
 
 @pytest.mark.parametrize("uid", ["replacement-uid", ""])
@@ -420,6 +440,40 @@ def test_usb_without_a_serial_number_can_recover_using_vid_pid_and_fc_uid(link: 
     fc.get_serial_ports.return_value = [returned]
     assert monitor.reconnect() == ""
     fc.connect.assert_called_once_with(returned.device, log_errors=False, baudrate=57600)
+
+
+def test_usb_serial_number_alone_can_locate_the_reconnected_endpoint(link: tuple) -> None:
+    """A unique USB serial number can locate the endpoint when VID/PID are unavailable."""
+    fc, previous, clock, _enqueue = link
+    previous.close()
+    original = ListPortInfo("/dev/ttyACM0")
+    original.serial_number = "FC-123"
+    fc.comport_device = original.device
+    fc.get_serial_ports.return_value = [original]
+    monitor = FlightControllerReconnect(fc, clock=lambda: clock[0])
+
+    returned = ListPortInfo("/dev/ttyACM1")
+    returned.serial_number = "FC-123"
+    fc.get_serial_ports.return_value = [returned]
+
+    assert monitor._reconnect_devices() == [returned.device]
+
+
+def test_partial_usb_ids_without_a_serial_number_do_not_authorize_endpoint_probing(link: tuple) -> None:
+    """A partial VID/PID pair cannot identify another endpoint without a serial number."""
+    fc, previous, clock, _enqueue = link
+    previous.close()
+    original = ListPortInfo("/dev/ttyACM0")
+    original.vid, original.pid = None, 0x5678
+    fc.comport_device = original.device
+    fc.get_serial_ports.return_value = [original]
+    monitor = FlightControllerReconnect(fc, clock=lambda: clock[0])
+
+    returned = ListPortInfo("/dev/ttyACM1")
+    returned.vid, returned.pid = None, 0x5678
+    fc.get_serial_ports.return_value = [returned]
+
+    assert monitor._reconnect_devices() == [original.device]
 
 
 def test_failed_candidate_is_closed_and_its_error_is_logged(link: tuple, caplog: pytest.LogCaptureFixture) -> None:

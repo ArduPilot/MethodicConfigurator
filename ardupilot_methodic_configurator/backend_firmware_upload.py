@@ -207,7 +207,7 @@ class FirmwareUploadService:
             board_id = int(flight_controller.info.apj_board_id)
         except (TypeError, ValueError):
             return None
-        if board_id < 0:
+        if board_id <= 0:
             return None
         recommended_type = {
             "ArduCopter": "Copter",

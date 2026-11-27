@@ -278,6 +278,30 @@ def test_abandoned_level_ack_cannot_complete_a_new_attempt(mock_connected_master
     assert commands.poll_accel_calibration_level() is None
 
 
+def test_stale_level_ack_is_drained_before_retrying_calibration(
+    mock_connected_master: tuple[MagicMock, Mock],
+) -> None:
+    """
+    A late ACK from an abandoned calibration is consumed before a new attempt.
+
+    GIVEN: The previous calibration has been abandoned and its final ACK is queued
+    WHEN: Stale calibration messages are drained
+    THEN: The ACK clears the abandoned state and draining stops when the queue is empty
+    """
+    master, connection = mock_connected_master
+    stale_ack = MagicMock(command=mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION)
+    stale_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
+    master.recv_match.side_effect = [stale_ack, None]
+    commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
+    commands._abandoned_level_deadline = 10.0
+
+    with patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time", return_value=1.0):
+        commands._drain_abandoned_level_messages()
+
+    assert commands._abandoned_level_deadline is None
+    assert master.recv_match.call_count == 2
+
+
 def test_expired_unpolled_level_calibration_can_restart(mock_connected_master: tuple[MagicMock, Mock]) -> None:
     """The ACK deadline must also be checked when starting a later attempt."""
     master, connection = mock_connected_master

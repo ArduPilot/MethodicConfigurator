@@ -423,6 +423,18 @@ def test_leaving_compass_calibration_cleans_up_even_if_cancellation_fails(
     assert not context.view.winfo_exists()
 
 
+def test_teardown_releases_navigation_when_popup_destroy_fails(compass_session: SimpleNamespace) -> None:
+    """Plugin teardown releases its navigation lock even when an owned popup refuses to close."""
+    context = compass_session
+    context.view._begin_calibration()
+    assert context.host.navigation_lock.locked
+
+    with patch.object(context.view._calibration_popup, "destroy", side_effect=tk.TclError("popup destroy failed")):
+        context.view.destroy()
+
+    assert not context.host.navigation_lock.locked
+
+
 @pytest.mark.parametrize("outcome", ["reports", "status_text", "generic_status_text", "cancel", "failed_report"])
 @pytest.mark.parametrize("dialog_fails", [False, True])
 def test_user_can_continue_after_compass_calibration_finishes(

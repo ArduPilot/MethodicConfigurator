@@ -8,7 +8,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from math import inf, isfinite, isnan, nan
+from math import isfinite, isnan
 from typing import Any
 
 from ardupilot_methodic_configurator import _
@@ -110,8 +110,8 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
         forced_reason = forced_par.comment if forced_par is not None else None
         derived_value = derived_par.value if derived_par is not None else None
         derived_reason = derived_par.comment if derived_par is not None else None
-        self._is_forced = forced_value is not None and forced_value not in (nan, +inf, -inf)
-        self._is_derived = derived_value is not None and derived_value not in (nan, +inf, -inf)
+        self._is_forced = forced_value is not None and isfinite(forced_value)
+        self._is_derived = derived_value is not None and isfinite(derived_value)
 
         # Store original forced/derived values so they can be restored when manual override is disabled
         self._forced_value = forced_value

@@ -32,6 +32,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_file_browser_operations im
     _download_last_flight_log_worker,
     _download_remote_plan_worker,
     _local_directory_entries,
+    _local_path_is_ancestor,
+    _local_path_key,
     _local_target_conflicts,
     _local_target_is_contained,
     _local_upload_plan,
@@ -225,6 +227,13 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
         assert duplicate_targets == [target]
         assert not existing_conflicts
 
+        # An existing file cannot occupy the path needed for a planned directory.
+        blocking_directory = tmp_path / "folder"
+        blocking_directory.write_text("existing file", encoding="utf-8")
+        duplicate_targets, existing_conflicts = _local_target_conflicts(RemoteDownloadPlan((blocking_directory,), ()))
+        assert not duplicate_targets
+        assert existing_conflicts == [blocking_directory]
+
     def test_local_target_conflicts_reports_file_ancestor_targets(self, tmp_path: Path) -> None:
         """A planned file cannot also be an ancestor of another target."""
         file_target = tmp_path / "target"
@@ -363,6 +372,39 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
         upload.assert_called_once()
         assert upload.call_args.args[:2] == (str(good_file), "/APM/LOGS/other/good.bin")
 
+    def test_failed_directory_ending_in_x_does_not_block_upload_sibling(self) -> None:
+        """
+        A failed remote directory ending in X does not block an independent sibling.
+
+        GIVEN: One remote directory creation fails for a name ending in X
+        WHEN: The upload worker processes a file in a sibling directory
+        THEN: The sibling directory and file still upload successfully
+        """
+        failed_directory = "/APM/LOGS/XX"
+        sibling_directory = "/APM/LOGS/XY"
+        failed_file = f"{failed_directory}/failed.bin"
+        sibling_file = f"{sibling_directory}/sibling.bin"
+        plan = LocalUploadPlan(
+            (failed_directory, sibling_directory),
+            (
+                (Path("failed.bin"), failed_file, 4),
+                (Path("sibling.bin"), sibling_file, 5),
+            ),
+        )
+        make_directory = MagicMock(side_effect=[False, True])
+        upload = MagicMock(return_value=True)
+
+        attempt = _upload_local_plan_worker(plan, make_directory, upload, _byte_progress(MagicMock()))
+
+        assert attempt.directories_failed == [failed_directory]
+        assert attempt.directories_succeeded == [sibling_directory]
+        assert attempt.files_failed == [failed_file]
+        assert attempt.files_succeeded == [sibling_file]
+        make_directory.assert_any_call(sibling_directory)
+        upload.assert_called_once()
+        assert upload.call_args.args[:2] == (str(Path("sibling.bin")), sibling_file)
+        assert callable(upload.call_args.args[2])
+
     def test_upload_worker_reports_successful_directory_creation(self) -> None:
         """A directory created during a transfer is included in successful results."""
         plan = LocalUploadPlan(
@@ -377,6 +419,26 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
         assert attempt.directories_succeeded == ["/APM/LOGS/folder"]
         assert attempt.files_succeeded == ["/APM/LOGS/folder/child.bin"]
         assert not attempt.files_failed
+
+    @pytest.mark.skipif(sys.platform == "win32", reason="CI validates symbolic-link handling on POSIX.")
+    def test_download_worker_rejects_a_symlinked_directory_inside_chosen_root(self, tmp_path: Path) -> None:
+        """A planned directory symlink is rejected even when its target remains inside the chosen root."""
+        destination = tmp_path / "destination"
+        destination.mkdir()
+        real_directory = destination / "real"
+        real_directory.mkdir()
+        symlink_directory = destination / "linked"
+        symlink_directory.symlink_to(real_directory, target_is_directory=True)
+
+        attempt = _download_remote_plan_worker(
+            RemoteDownloadPlan((symlink_directory,), ()),
+            destination,
+            MagicMock(),
+            _byte_progress(MagicMock()),
+        )
+
+        assert attempt.directories_failed == [str(symlink_directory)]
+        assert not attempt.directories_succeeded
 
     @pytest.mark.skipif(sys.platform == "win32", reason="CI validates symbolic-link containment on POSIX.")
     def test_download_worker_rejects_a_symlinked_destination_ancestor(self, tmp_path: Path) -> None:
@@ -439,6 +501,52 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
         assert attempt.files_failed == [entry.remote_path]
         assert not attempted
         assert not outside.exists()
+
+    def test_download_worker_rejects_directory_outside_chosen_root(self, tmp_path: Path) -> None:
+        """
+        A malformed plan cannot create directories outside the selected local root.
+
+        GIVEN: A planned directory outside the selected destination
+        WHEN: The download worker prepares the directory
+        THEN: It records failure without creating the directory
+        """
+        destination = tmp_path / "destination"
+        destination.mkdir()
+        outside_directory = tmp_path / "outside" / "nested"
+
+        attempt = _download_remote_plan_worker(
+            RemoteDownloadPlan((outside_directory,), ()), destination, MagicMock(), _byte_progress(MagicMock())
+        )
+
+        assert attempt.directories_failed == [str(outside_directory)]
+        assert not outside_directory.exists()
+
+    @pytest.mark.skipif(sys.platform == "win32", reason="CI validates symbolic-link containment on POSIX.")
+    def test_download_worker_rejects_a_symlink_file_target_inside_chosen_root(self, tmp_path: Path) -> None:
+        """
+        A file target symlink cannot redirect an overwrite, even when its destination stays inside the root.
+
+        GIVEN: A selected local root contains a file symlink to another file in that root
+        WHEN: A remote file is planned for the symlink path
+        THEN: The worker rejects the transfer without calling the downloader
+        """
+        destination = tmp_path / "destination"
+        destination.mkdir()
+        real_file = destination / "real.bin"
+        real_file.write_bytes(b"existing")
+        symlink_target = destination / "log.bin"
+        symlink_target.symlink_to(real_file)
+        entry = FlightControllerLogFile("log.bin", "/APM/LOGS/log.bin", 3)
+        download = MagicMock(return_value=True)
+
+        attempt = _download_remote_plan_worker(
+            RemoteDownloadPlan((), ((entry, symlink_target),)), destination, download, _byte_progress(MagicMock())
+        )
+
+        assert attempt.files_failed == [entry.remote_path]
+        assert not attempt.files_succeeded
+        download.assert_not_called()
+        assert real_file.read_bytes() == b"existing"
 
     def test_download_worker_reports_successful_directory_creation(self, tmp_path: Path) -> None:
         """A directory created during a download is included in successful results."""
@@ -581,6 +689,36 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
             TransferProgress(300, 300, TransferPhase.FINISHED),
         ]
 
+    def test_last_log_worker_preserves_unknown_and_one_byte_totals(self) -> None:
+        """Unknown size stays unknown, while a one-byte log keeps its known size."""
+        progress: list[TransferProgress] = []
+
+        def download(_filename: str, callback: typing.Callable[[int, int], None]) -> LastLogDownloadResult:
+            callback(0, 0)
+            callback(1, 1)
+            return LastLogDownloadResult.SUCCESS
+
+        result = _download_last_flight_log_worker("last.BIN", download, progress.append)
+
+        assert result is LastLogDownloadResult.SUCCESS
+        assert progress == [
+            TransferProgress(0, None),
+            TransferProgress(1, 1),
+            TransferProgress(1, 1, TransferPhase.FINISHED),
+        ]
+
+    def test_last_log_worker_finishes_with_zero_bytes_when_backend_reports_no_progress(self) -> None:
+        """A successful empty transfer still has a valid zero-byte completion snapshot."""
+        progress: list[TransferProgress] = []
+
+        def download(_filename: str, _callback: typing.Callable[[int, int], None]) -> LastLogDownloadResult:
+            return LastLogDownloadResult.SUCCESS
+
+        result = _download_last_flight_log_worker("last.BIN", download, progress.append)
+
+        assert result is LastLogDownloadResult.SUCCESS
+        assert progress == [TransferProgress(0, 0, TransferPhase.FINISHED)]
+
     def test_last_log_worker_maps_unexpected_exception_to_failure(self) -> None:
         """Unexpected worker errors must not be mistaken for confirmed no-logs."""
         download = MagicMock(side_effect=RuntimeError("MAVFTP failed"))
@@ -617,6 +755,28 @@ class TestFileBrowserOperations:  # pylint: disable=too-many-public-methods
         assert entries == [LocalFileEntry("good.bin", readable, 7, modified_at=12.5)]
         assert entry_errors == [unreadable]
         symlink.stat.assert_not_called()
+
+    @pytest.mark.parametrize(("platform", "expected_equal"), [("win32", True), ("linux", False)])
+    def test_local_collision_key_matches_platform_case_rules(self, platform: str, expected_equal: bool) -> None:
+        """Local collision checks fold case only on Windows paths."""
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser_operations.sys.platform", platform):
+            lower_key = _local_path_key(Path("mixed/flight.log"))
+            upper_key = _local_path_key(Path("MIXED/FLIGHT.LOG"))
+
+        expected_lower = str(Path("mixed/flight.log").absolute())
+        if platform == "win32":
+            expected_lower = expected_lower.casefold()
+        assert lower_key == expected_lower
+        assert (lower_key == upper_key) is expected_equal
+
+    @pytest.mark.parametrize(
+        ("parent", "child"),
+        [(Path("folder"), Path("folder/child")), (Path("folderX"), Path("folderX/child"))],
+    )
+    def test_local_path_ancestor_detects_nested_targets(self, parent: Path, child: Path) -> None:
+        """Path collision detection handles both ordinary names and names ending in X."""
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_file_browser_operations.sys.platform", "linux"):
+            assert _local_path_is_ancestor(parent, child)
 
     def test_summary_prioritizes_failures_when_the_display_limit_is_reached(self) -> None:
         """

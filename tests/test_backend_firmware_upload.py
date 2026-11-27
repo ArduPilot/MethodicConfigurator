@@ -158,6 +158,36 @@ def test_manifest_download_rejects_oversized_payload() -> None:
         fetch_firmware_manifest()
 
 
+def test_manifest_download_enforces_size_limit_across_chunks(monkeypatch) -> None:
+    """The manifest cap applies to the accumulated compressed response body."""
+    contents = gzip.compress(b'{"firmware": []}')
+    response = MagicMock()
+    response.url = firmware_upload.MANIFEST_URL
+    response.__enter__.return_value = response
+    midpoint = len(contents) // 2
+    response.iter_bytes.return_value = [contents[:midpoint], contents[midpoint:]]
+    monkeypatch.setattr(firmware_upload, "MAX_MANIFEST_DOWNLOAD", len(contents) - 1)
+
+    with patch.object(firmware_upload.httpx2, "stream", return_value=response), pytest.raises(ValueError, match="too large"):
+        fetch_firmware_manifest()
+
+
+def test_manifest_download_accepts_payload_at_size_limit(monkeypatch) -> None:
+    """A compressed manifest exactly at the configured maximum remains valid."""
+    contents = gzip.compress(b'{"firmware": []}')
+    response = MagicMock()
+    response.url = firmware_upload.MANIFEST_URL
+    response.__enter__.return_value = response
+    midpoint = len(contents) // 2
+    response.iter_bytes.return_value = [contents[:midpoint], contents[midpoint:]]
+    monkeypatch.setattr(firmware_upload, "MAX_MANIFEST_DOWNLOAD", len(contents))
+
+    with patch.object(firmware_upload.httpx2, "stream", return_value=response):
+        manifest = fetch_firmware_manifest()
+
+    assert manifest == {"firmware": []}
+
+
 @pytest.mark.parametrize("url", ["http://firmware.ardupilot.org/file", "https://evil.example/file"])
 def test_manifest_download_rejects_non_official_redirect(url: str) -> None:
     """
@@ -375,8 +405,17 @@ def test_apj_download_rejects_untrusted_redirect(tmp_path: Path) -> None:
     response = MagicMock()
     response.__enter__.return_value = response
     response.url = "https://evil.example/image.apj"
-    with patch.object(firmware_upload.httpx2, "stream", return_value=response), pytest.raises(ValueError, match="redirected"):
+    with (
+        patch.object(firmware_upload.httpx2, "stream", return_value=response) as request,
+        pytest.raises(ValueError, match="redirected"),
+    ):
         download_firmware(release, destination)
+    request.assert_called_once_with(
+        "GET",
+        release.url,
+        timeout=firmware_upload.httpx2.Timeout(90, connect=10),
+        follow_redirects=True,
+    )
     assert not destination.exists()
 
 
@@ -397,6 +436,41 @@ def test_apj_download_rejects_oversized_response(tmp_path: Path) -> None:
     with patch.object(firmware_upload.httpx2, "stream", return_value=response), pytest.raises(ValueError, match="too large"):
         download_firmware(release, destination)
     assert not destination.exists()
+
+
+def test_apj_download_enforces_size_limit_across_chunks(tmp_path: Path, monkeypatch) -> None:
+    """The image cap applies to the accumulated body, not each individual chunk."""
+    release = _release()
+    destination = tmp_path / "image.apj"
+    response = MagicMock()
+    response.url = release.url
+    response.__enter__.return_value = response
+    response.iter_bytes.return_value = [b"123", b"456"]
+    monkeypatch.setattr(firmware_upload, "MAX_APJ_DOWNLOAD", 5)
+
+    with patch.object(firmware_upload.httpx2, "stream", return_value=response), pytest.raises(ValueError, match="too large"):
+        download_firmware(release, destination)
+
+    assert not destination.exists()
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_apj_download_accepts_payload_at_size_limit(tmp_path: Path, monkeypatch) -> None:
+    """A payload equal to the configured maximum remains within the allowed size."""
+    release = _release()
+    destination = tmp_path / "image.apj"
+    contents = b"123456"
+    response = MagicMock()
+    response.url = release.url
+    response.__enter__.return_value = response
+    response.iter_bytes.return_value = [contents[:3], contents[3:]]
+    monkeypatch.setattr(firmware_upload, "MAX_APJ_DOWNLOAD", len(contents))
+
+    with patch.object(firmware_upload.httpx2, "stream", return_value=response):
+        digest = download_firmware(release, destination)
+
+    assert destination.read_bytes() == contents
+    assert digest == hashlib.sha256(contents).hexdigest()
 
 
 def test_apj_download_rejects_empty_response(tmp_path: Path) -> None:
@@ -456,6 +530,18 @@ def test_serial_monitor_ignores_disconnected_controller() -> None:
     controller = MagicMock()
     controller.master = None
     assert not FirmwareUploadService.disconnect_if_serial_port_removed(controller)
+    controller.disconnect.assert_not_called()
+
+
+@pytest.mark.parametrize("device", ["udp:127.0.0.1:14550", "tcp:127.0.0.1:5760"])
+def test_serial_monitor_ignores_network_connections(device: str) -> None:
+    """Serial-port monitoring does not inspect or disconnect network MAVLink sessions."""
+    controller = MagicMock()
+    controller.master = object()
+    controller.comport_device = device
+
+    assert not FirmwareUploadService.disconnect_if_serial_port_removed(controller)
+    controller.get_serial_ports.assert_not_called()
     controller.disconnect.assert_not_called()
 
 
@@ -546,10 +632,10 @@ def test_serial_monitor_preserves_present_board_when_serial_alias_cannot_be_reso
     controller.disconnect.assert_not_called()
 
 
-@pytest.mark.parametrize("board_id", ["unknown", -1])
+@pytest.mark.parametrize("board_id", ["unknown", -1, 0])
 def test_board_identity_is_unavailable_for_invalid_id(board_id: object) -> None:
     """
-    A missing or negative APJ ID is not treated as a flashable board.
+    A missing, nonpositive, or unreadable APJ ID is not treated as a flashable board.
 
     GIVEN: A connected controller with an invalid APJ board ID.
     WHEN: Board information is requested.
@@ -588,6 +674,23 @@ def test_upload_requires_a_direct_usb_connection(device: str) -> None:
         pytest.raises(FirmwareConnectionError),
     ):
         FirmwareUploadService.upload_custom_file(controller, Path("firmware.apj"))
+    inspect_apj.assert_not_called()
+    controller.upload_apj_firmware.assert_not_called()
+
+
+@pytest.mark.parametrize("missing_field", ["master", "comport"])
+def test_upload_requires_live_connection_handles(missing_field: str) -> None:
+    """Flashing requires both the MAVLink master and serial transport handle."""
+    controller = _controller()
+    setattr(controller, missing_field, None)
+    callbacks = FirmwareUploadCallbacks(confirmation_requested=lambda *_args: True)
+
+    with (
+        patch.object(firmware_upload, "load_apj") as inspect_apj,
+        pytest.raises(FirmwareConnectionError, match="direct USB"),
+    ):
+        FirmwareUploadService.upload_custom_file(controller, Path("firmware.apj"), callbacks=callbacks)
+
     inspect_apj.assert_not_called()
     controller.upload_apj_firmware.assert_not_called()
 

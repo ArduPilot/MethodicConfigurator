@@ -154,11 +154,11 @@ On macOS, run `mutmut run --max-children 2` with the virtual environment activat
 and a working desktop display, without `xvfb-run`.
 
 The `[tool.mutmut]` section in `pyproject.toml` selects both the modules to mutate
-and the tests to run. Update those lists together when expanding the suite.
-Plugin `backend_*.py` and `data_model_*.py` targets use globs, and the entire
-`tests/plugins/` directory is selected, so newly added plugin implementations and
-their tests are included automatically. Shared implementations outside the plugin
-directory and their tests must still be added explicitly.
+and the tests to run. Its source glob covers every Python file under
+`ardupilot_methodic_configurator/`; `do_not_mutate` mirrors `[report].omit` in
+`.coveragerc`. The shard runner checks that those exclusions match and every
+remaining source file is assigned exactly once. Test selection remains explicit:
+update it when adding tests so Mutmut can run the relevant behavior checks.
 The command module's source-lint regression is deselected only for mutation runs:
 it checks the hand-written source, while Mutmut generates thousands of function
 variants that make that subprocess exceed the normal test timeout. Normal pytest
@@ -185,17 +185,36 @@ change, including edits to existing tests. Dependency and Mutmut configuration
 changes are also checked by Mutmut.
 
 The [mutation workflow](.github/workflows/mutation.yml) runs manually or weekly on
-Ubuntu with Python 3.11. It uploads results without enforcing a mutation score;
-clean-test and framework failures still fail the job. Per-mutant timeouts and
-crashes are reported for review. Scheduled runs are disabled in forks.
-Saved state is shared across source revisions on the same branch, with separate
-names for the operating system, Python version, and Mutmut version. CI also hashes
-the resolved dependency list so transitive upgrades invalidate saved results.
-The artifact fallback accepts the earlier fingerprinted v2 state artifacts for
-Mutmut 3.8.1; introducing test-input tracking can require an initial full rerun.
-The job summary groups all mutation outcomes by module; the
-artifact retains individual results and execution logs. The existing coverage
-gate remains independent.
+Ubuntu with Python 3.11. A nine-entry matrix splits the configured source scope
+into the main package, log-analysis package, and plugins, grouped by backend,
+data model, or frontend filename prefixes. Unclassified helpers and package files
+go to their area's backend shard. `battery_cell_voltages.py` joins the main data
+model shard, and `plugins/imu_helpers.py` joins the plugin data model shard. Each
+shard retains the complete configured test selection so Mutmut can associate
+cross-module tests with every target. The log-analysis frontend shard currently
+has no configured targets and exits without running Mutmut.
+
+Each shard has its own mutation state cache and state artifact. Cache keys include
+the OS, Python and Mutmut versions, and shard name; resolved dependencies still
+invalidate stale results. The first sharded run imports matching module state and
+test associations from the prior unsharded artifact. Clean-test and framework
+failures fail the job, while per-mutant timeouts and crashes are reported for
+review. Scheduled runs are disabled in forks, and the existing coverage gate
+remains independent.
+
+Each `mutation-py311-<shard>` report artifact is retained for 90 days. It includes
+`diagnostics.json` (runner, versions, configuration, cache provenance, baseline and
+mutation elapsed time, throughput, and pending work), `modules.csv`, `tests.csv`,
+`worker-timings.jsonl`, and the test-association snapshot in `mutmut-stats.json`.
+Baseline JUnit results, slow-test output, process resource usage, and forkserver
+logs are also included. Worker completion logs do not rotate, so a shard report
+retains all timing records. Use these measurements to balance future mutation shards.
+Worker timings describe completions observed in the current run, including retries;
+outcome counts also include cached results. Parallel worker durations overlap in
+wall time. Test-only estimates exclude startup and timeout costs and can come from
+cached associations. Missing measurements are unavailable, rather than zero.
+The reporter reads actual forkserver completion logs because Mutmut 3.8.1 can write
+zero durations into its metadata. Interrupted workers have no completed timing.
 
 For surviving mutations, inspect the diff with `mutmut show <mutant-name>` and add
 assertions for observable behavior. Some mutations are equivalent; review those

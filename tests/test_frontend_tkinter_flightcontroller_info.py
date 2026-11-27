@@ -508,7 +508,7 @@ class TestFlightControllerInfoWindow:
                 stack.enter_context(patch_obj)
 
             with (
-                patch("tkinter.ttk.Frame", return_value=mock_ttk_frame),
+                patch("tkinter.ttk.Frame", return_value=mock_ttk_frame) as mock_frame_factory,
                 patch("tkinter.ttk.Label", return_value=mock_ttk_label),
                 patch("tkinter.ttk.Entry", return_value=mock_ttk_entry),
                 patch("tkinter.ttk.Progressbar"),
@@ -525,6 +525,7 @@ class TestFlightControllerInfoWindow:
 
                 # Then - UI elements are properly configured for user viewing
                 mock_ttk_frame.pack.assert_called()
+                assert all(call.args == (window.main_frame,) for call in mock_frame_factory.call_args_list)
                 mock_ttk_frame.columnconfigure.assert_called_with(1, weight=1)
                 configured_flight_controller.info.get_info.assert_called_once()
 

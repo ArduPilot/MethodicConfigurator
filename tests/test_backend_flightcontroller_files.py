@@ -22,6 +22,7 @@ from unittest.mock import ANY, MagicMock, Mock, patch
 
 import pytest
 
+from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller_files import (
     FlightControllerFiles,
     FlightControllerLogFile,
@@ -64,9 +65,40 @@ class TestFlightControllerFilesInitialization:
     """Test file operations manager initialization."""
 
     def test_cross_platform_local_entry_validation_rejects_windows_unsafe_names(self) -> None:
-        """Remote names that Windows cannot safely create are never local targets."""
-        for unsafe_name in ("C:evil.bin", "CON", "NUL.txt", "log.", "log ", "\x01log.bin"):
+        """
+        Remote names that Windows cannot safely create are never local targets.
+
+        GIVEN: A MAVFTP entry with a Windows-reserved name or invalid path syntax
+        WHEN: The entry is checked as a local download target
+        THEN: The name is rejected before it can be written to disk
+        """
+        for unsafe_name in (
+            ".",
+            "..",
+            "C:evil.bin",
+            "CON",
+            "NUL.txt",
+            "CON .txt",
+            "CON.log.txt",
+            "LPT1 .log",
+            "nested/file.bin",
+            "nested\\file.bin",
+            "log.",
+            "log ",
+            "\x01log.bin",
+        ):
             assert not is_safe_local_entry_name(unsafe_name)
+
+    @pytest.mark.parametrize("safe_name", ("flight log.bin", "CONX.log", "normalX", "report.final.txt"))
+    def test_user_can_download_valid_local_entry_names(self, safe_name: str) -> None:
+        """
+        Safe remote file basenames remain available as local download targets.
+
+        GIVEN: A simple file name with valid characters and no path components
+        WHEN: The name is checked as a local download target
+        THEN: The file remains eligible for download
+        """
+        assert is_safe_local_entry_name(safe_name)
 
     def test_remote_names_use_a_separate_less_restrictive_policy(self) -> None:
         """Windows-reserved names are valid remote entries but not local targets."""
@@ -197,10 +229,15 @@ class TestFlightControllerFilesUpload:
         files_mgr = FlightControllerFiles(connection_manager=mock_conn_mgr)
 
         # When: Attempt upload
-        success = files_mgr.upload_file(local_filename="/tmp/test.param", remote_filename="@SYS/test.param")  # noqa: S108
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_files.logging_error") as error_log:
+            success = files_mgr.upload_file(
+                local_filename="/tmp/test.param",
+                remote_filename="@SYS/test.param",  # noqa: S108
+            )
 
         # Then: Operation fails
         assert success is False
+        error_log.assert_called_once_with(_("No flight controller connection available for file upload"))
 
     def test_file_upload_fails_without_mavftp(self) -> None:
         """
@@ -225,6 +262,39 @@ class TestFlightControllerFilesUpload:
 
         # Then: Operation fails
         assert success is False
+
+    @pytest.mark.parametrize("remote_path", ["@SYS/test.param", "@SYS\\test.param"])
+    def test_upload_preserves_and_normalizes_virtual_namespace_paths(self, remote_path: str) -> None:
+        """
+        MAVFTP virtual namespace uploads preserve their namespace and canonical separators.
+
+        GIVEN: A valid local file and a virtual @SYS path using slash or backslash separators
+        WHEN: The file is uploaded
+        THEN: MAVFTP receives the canonical @SYS path without a leading slash
+        """
+        files_mgr = _create_files_manager()
+        mavftp = MagicMock()
+        success = MagicMock(error_code=FtpError.Success)
+        mavftp.cmd_mkdir.return_value = success
+        mavftp.cmd_put.return_value = success
+        mavftp.process_ftp_reply.return_value = success
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+                return_value=mavftp,
+            ) as create_mavftp,
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.isfile", return_value=True),
+        ):
+            result = files_mgr.upload_file("/tmp/test.param", remote_path)  # noqa: S108
+
+        assert result is True
+        create_mavftp.assert_called_once_with(files_mgr.master)
+        mavftp.cmd_put.assert_called_once_with(
+            ["/tmp/test.param", "@SYS/test.param"],  # noqa: S108
+            progress_callback=ANY,
+        )
+        mavftp.cmd_mkdir.assert_not_called()
 
     def test_user_can_upload_file_with_progress_callback(self) -> None:
         """
@@ -440,6 +510,126 @@ class TestFlightControllerFilesUpload:
             assert files_mgr.upload_file("/tmp/second.lua", "/APM/Scripts/second.lua")  # noqa: S108
 
         assert mock_mavftp.cmd_list.call_count == 2
+
+    def test_upload_does_not_reuse_parent_cache_after_master_changes(self) -> None:
+        """
+        A directory cache from another FC cannot trigger a stale-path retry.
+
+        GIVEN: Verified directories belong to an old master and the active master changes
+        WHEN: The new FC reports that the uploaded file path is missing
+        THEN: The upload fails without retrying based on the stale cache
+        """
+        files_mgr = _create_files_manager()
+        old_master = files_mgr.master
+        files_mgr._verified_remote_directories.add("/APM")
+        new_master = MagicMock()
+        files_mgr._connection_manager.master = new_master
+        mavftp = MagicMock()
+        mavftp.cmd_mkdir.return_value = MagicMock(error_code=FtpError.Success)
+        mavftp.cmd_put.side_effect = [
+            MagicMock(error_code=FtpError.FileNotFound),
+            MagicMock(error_code=FtpError.Success),
+        ]
+        mavftp.process_ftp_reply.return_value = MagicMock(error_code=FtpError.Success)
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+                return_value=mavftp,
+            ) as create_mavftp,
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.isfile", return_value=True),
+        ):
+            result = files_mgr.upload_file("/tmp/stale.lua", "/APM/Scripts/stale.lua")  # noqa: S108
+
+        assert old_master is not new_master
+        assert result is False
+        create_mavftp.assert_called_once_with(new_master)
+        mavftp.cmd_put.assert_called_once()
+
+    def test_upload_retries_only_file_not_found_for_a_cached_parent(self) -> None:
+        """
+        A cached directory retry is reserved for the specific missing-path reply.
+
+        GIVEN: The current FC has a verified parent directory
+        WHEN: MAVFTP rejects file creation with a different error
+        THEN: The upload fails after one attempt without a stale-cache retry
+        """
+        files_mgr = _create_files_manager()
+        files_mgr._verified_remote_directories.update(("/APM", "/APM/Scripts"))
+        mavftp = MagicMock()
+        mavftp.cmd_mkdir.return_value = MagicMock(error_code=FtpError.Success)
+        mavftp.cmd_put.side_effect = [
+            MagicMock(error_code=FtpError.FileProtected),
+            MagicMock(error_code=FtpError.Success),
+        ]
+        mavftp.process_ftp_reply.return_value = MagicMock(error_code=FtpError.Success)
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+                return_value=mavftp,
+            ),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.isfile", return_value=True),
+        ):
+            result = files_mgr.upload_file("/tmp/protected.lua", "/APM/Scripts/protected.lua")  # noqa: S108
+
+        assert result is False
+        mavftp.cmd_put.assert_called_once()
+        mavftp.cmd_mkdir.assert_not_called()
+        mavftp.process_ftp_reply.assert_not_called()
+
+    def test_upload_does_not_retry_file_not_found_without_a_verified_parent(self) -> None:
+        """
+        A first FileNotFound reply is retried only when the parent cache was verified.
+
+        GIVEN: The remote parent is not in the verified-directory cache
+        WHEN: The initial CreateFile request returns FileNotFound
+        THEN: The upload stops after that single attempt
+        """
+        files_mgr = _create_files_manager()
+        mavftp = MagicMock()
+        mavftp.cmd_put.side_effect = [
+            MagicMock(error_code=FtpError.FileNotFound),
+            MagicMock(error_code=FtpError.Success),
+        ]
+        mavftp.process_ftp_reply.return_value = MagicMock(error_code=FtpError.Success)
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+                return_value=mavftp,
+            ),
+            patch.object(files_mgr, "_ensure_remote_directory_exists", return_value=True),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.isfile", return_value=True),
+        ):
+            result = files_mgr.upload_file("/tmp/new.lua", "/APM/New/new.lua")  # noqa: S108
+
+        assert result is False
+        mavftp.cmd_put.assert_called_once()
+        mavftp.process_ftp_reply.assert_not_called()
+
+    def test_upload_fails_after_retrying_a_stale_cached_parent_once(self) -> None:
+        """A stale directory cache gets one retry, then an explicit failure result."""
+        files_mgr = _create_files_manager()
+        files_mgr._verified_remote_directories.update(("/APM", "/APM/Scripts"))
+        mavftp = MagicMock()
+        mavftp.cmd_mkdir.return_value = MagicMock(error_code=FtpError.Success)
+        mavftp.cmd_put.side_effect = [
+            MagicMock(error_code=FtpError.FileNotFound),
+            MagicMock(error_code=FtpError.FileNotFound),
+        ]
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+                return_value=mavftp,
+            ),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.isfile", return_value=True),
+        ):
+            result = files_mgr.upload_file("/tmp/stale.lua", "/APM/Scripts/stale.lua")  # noqa: S108
+
+        assert result is False
+        assert mavftp.cmd_put.call_count == 2
 
     def test_upload_recreates_cached_parent_removed_by_another_client(self) -> None:
         """A definite missing-path reply invalidates cached parents and retries once."""
@@ -800,6 +990,14 @@ class TestFlightControllerFilesDownload:
 class TestFlightControllerFilesLogDiscovery:
     """Test log discovery and its guarded probing fallback."""
 
+    def test_malformed_successful_log_listing_is_not_conclusive(self) -> None:
+        """A success response without a listing must remain eligible for fallback discovery."""
+        files_mgr = _create_files_manager()
+        mavftp = MagicMock()
+        mavftp.cmd_list.return_value = SimpleNamespace(error_code=FtpError.Success, directory_listing=None)
+
+        assert files_mgr._get_log_number_from_directory_listing(mavftp) == (None, False)
+
     def test_empty_log_directory_does_not_probe_guessed_log_files(self) -> None:
         """An authoritative empty listing must not start slow per-file MAVFTP probes."""
         files_mgr = _create_files_manager()
@@ -866,12 +1064,13 @@ class TestFlightControllerFilesLogDiscovery:
         mock_mavftp = MagicMock()
 
         with (
-            patch.object(files_mgr, "_get_log_number_from_lastlog_txt", return_value=73),
+            patch.object(files_mgr, "_get_log_number_from_lastlog_txt", return_value=73) as mock_lastlog,
             patch.object(files_mgr, "_get_log_number_from_directory_listing") as mock_dir,
         ):
             result = files_mgr._get_last_log_number(mock_mavftp)
 
         assert result == (73, False)
+        mock_lastlog.assert_called_once_with(mock_mavftp)
         mock_dir.assert_not_called()
 
     def test_probe_fallback_is_used_when_listing_is_unavailable(self) -> None:
@@ -930,6 +1129,77 @@ class TestFlightControllerFilesLogDiscovery:
             call.kwargs["timeout"] <= files_mgr.MAVFTP_FILE_OPERATION_TIMEOUT_SHORT
             for call in mavftp.process_ftp_reply.call_args_list
         )
+        assert all(call.args == ("OpenFileRO",) for call in mavftp.process_ftp_reply.call_args_list)
+
+    def test_probe_fallback_finds_log_number_one(self) -> None:
+        """
+        The oldest numbered log remains discoverable by the fallback scan.
+
+        GIVEN: Directory listing and LASTLOG are unavailable, but log one exists
+        WHEN: Numbered log files are probed
+        THEN: The scan reports log number one as the highest available log
+        """
+        files_mgr = _create_files_manager()
+        mavftp = MagicMock()
+
+        def reply_for_probe(_operation: str, **_kwargs: object) -> SimpleNamespace:
+            requested_path = mavftp.cmd_get.call_args.args[0][0]
+            return SimpleNamespace(
+                error_code=FtpError.Success if requested_path.endswith("/00000001.BIN") else FtpError.FileNotFound
+            )
+
+        mavftp.process_ftp_reply.side_effect = reply_for_probe
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.monotonic", return_value=0),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.exists", return_value=False),
+        ):
+            result = files_mgr._get_log_number_by_scanning(mavftp)
+
+        assert result == 1
+        assert any(call.args[0][0].endswith("/00000001.BIN") for call in mavftp.cmd_get.call_args_list)
+
+    def test_probe_fallback_finds_the_largest_uint16_log_number(self) -> None:
+        """The fallback scan supports the complete 16-bit ArduPilot log ID range."""
+        files_mgr = _create_files_manager()
+        mavftp = MagicMock()
+        probed_numbers: list[int] = []
+
+        def reply_for_probe(_operation: str, **_kwargs: object) -> SimpleNamespace:
+            requested_path = mavftp.cmd_get.call_args.args[0][0]
+            requested_number = int(requested_path.rsplit("/", 1)[-1].removesuffix(".BIN"))
+            probed_numbers.append(requested_number)
+            return SimpleNamespace(error_code=FtpError.Success if requested_number <= 65535 else FtpError.FileNotFound)
+
+        mavftp.process_ftp_reply.side_effect = reply_for_probe
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.monotonic", return_value=0),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.exists", return_value=False),
+        ):
+            result = files_mgr._get_log_number_by_scanning(mavftp)
+
+        assert result == 65535
+        assert any(call.args[0][0].endswith("/00065535.BIN") for call in mavftp.cmd_get.call_args_list)
+        assert max(probed_numbers) == 65535
+
+    def test_probe_fallback_keeps_searching_with_positive_subsecond_budget(self) -> None:
+        """A positive remainder below one second still allows the next probe."""
+        files_mgr = _create_files_manager()
+        mavftp = MagicMock()
+        mavftp.process_ftp_reply.return_value = SimpleNamespace(error_code=FtpError.FileNotFound)
+        budget = files_mgr.MAVFTP_LOG_SCAN_BUDGET_SECONDS
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_files.monotonic",
+                side_effect=[0, budget - 0.5, *([0] * 20)],
+            ),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.exists", return_value=False),
+        ):
+            assert files_mgr._get_log_number_by_scanning(mavftp) is None
+
+        assert mavftp.cmd_get.call_count > 0
 
     def test_probe_fallback_removes_each_probe_temp_file(self) -> None:
         """A probe cleans up the local destination before returning to the caller."""
@@ -944,7 +1214,7 @@ class TestFlightControllerFilesLogDiscovery:
         ):
             assert files_mgr._get_log_number_by_scanning(mavftp) is None
 
-        remove.assert_called_once_with("temp_test_5000.tmp")
+        remove.assert_called_once_with("temp_test_32768.tmp")
 
     def test_probe_fallback_exhaustion_reports_no_logs(self) -> None:
         """A completed search with no successful probes returns no log number."""
@@ -956,7 +1226,8 @@ class TestFlightControllerFilesLogDiscovery:
             result = files_mgr._get_log_number_by_scanning(mavftp)
 
         assert result is None
-        assert mavftp.process_ftp_reply.call_count == 13
+        assert mavftp.process_ftp_reply.call_count == 16
+        assert all(call.args == ("OpenFileRO",) for call in mavftp.process_ftp_reply.call_args_list)
 
     def test_probe_fallback_swallows_probe_exceptions(self) -> None:
         """Unexpected MAVFTP probe failures are converted into an unavailable result."""
@@ -985,6 +1256,7 @@ class TestFlightControllerFilesLogDiscovery:
                 self.directory_listing: list[DirectoryEntry] = [
                     DirectoryEntry("00000005.BIN", is_dir=False, size_b=0),
                     DirectoryEntry("README.TXT", is_dir=False, size_b=0),
+                    DirectoryEntry("99999999.TXT", is_dir=False, size_b=0),
                     DirectoryEntry("00000012.BIN", is_dir=False, size_b=0),
                     DirectoryEntry("junk", is_dir=False, size_b=0),
                 ]
@@ -1126,10 +1398,31 @@ class TestFlightControllerDirectoryCreation:
         with patch(
             "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
             return_value=mavftp,
-        ):
+        ) as create_mavftp:
             assert files_mgr.make_remote_directory("/APM/LOGS/existing")
 
+        create_mavftp.assert_called_once_with(files_mgr.master)
         mavftp.cmd_list.assert_called_once_with(["/APM/LOGS/existing/"])
+
+    def test_directory_name_ending_in_x_is_preserved_on_the_remote(self) -> None:
+        """
+        Trailing X characters in a valid directory name are not stripped as separators.
+
+        GIVEN: MAVFTP supports creating a directory whose name ends with X
+        WHEN: The directory is created
+        THEN: The exact normalized name is sent to MAVFTP
+        """
+        files_mgr = _create_files_manager()
+        mavftp = MagicMock()
+        mavftp.cmd_mkdir.return_value = SimpleNamespace(error_code=FtpError.Success)
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+            return_value=mavftp,
+        ):
+            assert files_mgr.make_remote_directory("/APM/LOGS/commandsX")
+
+        mavftp.cmd_mkdir.assert_called_once_with(["/APM/LOGS/commandsX"])
 
     def test_upload_parent_creation_rejects_a_file_occupying_the_parent_name(self) -> None:
         """Recursive uploads stop before trying to put a child below a regular file."""
@@ -1278,8 +1571,9 @@ class TestFlightControllerFilesLastlogTxt:
             result = files_mgr._get_log_number_from_lastlog_txt(mock_mavftp)
 
         assert result == 55
-        mock_mavftp.cmd_get.assert_called_once()
-        mock_extract.assert_called_once()
+        mock_mavftp.cmd_get.assert_called_once_with(["/APM/LOGS/LASTLOG.TXT", "temp_lastlog.txt"])
+        mock_mavftp.process_ftp_reply.assert_called_once_with("OpenFileRO", timeout=files_mgr.MAVFTP_FILE_OPERATION_TIMEOUT)
+        mock_extract.assert_called_once_with("temp_lastlog.txt")
 
     def test_lastlog_txt_returns_none_when_file_missing(self) -> None:
         """LASTLOG helper returns None when MAVFTP reports error."""
@@ -1316,9 +1610,14 @@ class TestFlightControllerFilesLastlogTxt:
         temp_file = tmp_path / "bad_lastlog.txt"
         temp_file.write_text("not-a-number", encoding="UTF-8")
 
-        result = files_mgr._extract_log_number_from_file(str(temp_file))
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_files.logging_error") as log_error:
+            result = files_mgr._extract_log_number_from_file(str(temp_file))
 
         assert result is None
+        log_error.assert_called_once()
+        message, context = log_error.call_args.args
+        assert message == _("Could not extract last log file number from LASTLOG.TXT: %(error)s")
+        assert "not-a-number" in context["error"]
         assert not temp_file.exists()
 
     def test_download_log_file_handles_exceptions(self) -> None:
@@ -1409,6 +1708,7 @@ class TestFlightControllerFilesResilience:  # pylint: disable=too-many-public-me
         assert FlightControllerFiles._normalize_remote_path("/", directory=True) == "/"
         assert FlightControllerFiles._normalize_remote_path("\\APM\\LOGS\\.\\", directory=True) == "/APM/LOGS/"
         assert normalize_remote_path("//APM//LOGS//", directory=True) == "/APM/LOGS/"
+        assert normalize_remote_path("/XXLogs/XX") == "/XXLogs/XX"
 
     @pytest.mark.parametrize("path", ["", "   ", "relative", "/APM/../LOGS", "/APM/C:bad"])
     def test_shared_remote_directory_policy_rejects_invalid_paths(self, path: str) -> None:
@@ -1453,20 +1753,69 @@ class TestFlightControllerFilesResilience:  # pylint: disable=too-many-public-me
         protocol_error = MagicMock(error_code=FtpError.Fail)
         hostile = SimpleNamespace(name="../escape.bin", size_b=4, is_dir=False, mtime=None)
         valid = SimpleNamespace(name="log.bin", size_b=-4, is_dir=False, mtime=123)
+        directory = SimpleNamespace(name="subdir", size_b=0, is_dir=True, mtime=456)
         mavftp.cmd_list.side_effect = [
             protocol_error,
-            SimpleNamespace(error_code=FtpError.Success, directory_listing=[hostile, valid]),
+            SimpleNamespace(error_code=FtpError.Success, directory_listing=[hostile, valid, directory]),
             RuntimeError("link lost"),
         ]
 
         with patch("ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe", return_value=mavftp):
             assert files_mgr.list_remote_files() is None
             assert files_mgr.list_remote_files() == [
-                FlightControllerLogFile("log.bin", "/APM/LOGS/log.bin", 0, modified_at=123)
+                FlightControllerLogFile("log.bin", "/APM/LOGS/log.bin", 0, modified_at=123),
+                FlightControllerLogFile("subdir", "/APM/LOGS/subdir", 0, True, 456),
             ]
             assert files_mgr.list_remote_files() is None
 
+        assert [call.args[0] for call in mavftp.cmd_list.call_args_list] == [["/APM/LOGS/"]] * 3
         protocol_error.display_message.assert_called_once_with()
+
+    def test_remote_listing_accepts_success_replies_without_an_error_code(self) -> None:
+        """
+        Legacy MAVFTP listing replies without an explicit status remain usable.
+
+        GIVEN: A successful directory-listing payload with no error_code attribute
+        WHEN: The remote directory is listed
+        THEN: The default success status is used and the file entry is returned
+        """
+        files_mgr = _create_files_manager()
+        mavftp = MagicMock()
+        entry = SimpleNamespace(name="params", size_b=24, is_dir=False, mtime=123)
+        mavftp.cmd_list.return_value = SimpleNamespace(directory_listing=[entry])
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+            return_value=mavftp,
+        ):
+            result = files_mgr.list_remote_files("/APM")
+
+        assert result == [FlightControllerLogFile("params", "/APM/params", 24, False, 123)]
+        mavftp.cmd_list.assert_called_once_with(["/APM/"])
+
+    def test_missing_remote_directory_error_keeps_the_normalized_path(self) -> None:
+        """
+        The file browser reports the exact canonical path that was not found.
+
+        GIVEN: MAVFTP returns FileNotFound for a normalized directory request
+        WHEN: The directory is listed
+        THEN: FileNotFoundError contains the canonical remote path
+        """
+        files_mgr = _create_files_manager()
+        mavftp = MagicMock()
+        mavftp.cmd_list.return_value = SimpleNamespace(error_code=FtpError.FileNotFound)
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+                return_value=mavftp,
+            ),
+            pytest.raises(FileNotFoundError) as error,
+        ):
+            files_mgr.list_remote_files("/APM/MISSING")
+
+        assert error.value.args == ("/APM/MISSING/",)
+        mavftp.cmd_list.assert_called_once_with(["/APM/MISSING/"])
 
     def test_remote_directory_type_check_stops_after_timeouts_or_definite_errors(self) -> None:
         """
@@ -1485,6 +1834,42 @@ class TestFlightControllerFilesResilience:  # pylint: disable=too-many-public-me
         assert timeout_mavftp.cmd_list.call_count == FlightControllerFiles.REMOTE_DIRECTORY_CHECK_ATTEMPTS
         assert not FlightControllerFiles._remote_path_is_directory(error_mavftp, "/APM/LOGS/path")
         error_mavftp.cmd_list.assert_called_once_with(["/APM/LOGS/path"])
+
+    def test_remote_mutations_do_not_start_without_a_connection(self) -> None:
+        """
+        Remote mutation helpers require an active transport even when MAVFTP is advertised.
+
+        GIVEN: MAVFTP support is flagged but there is no live master connection
+        WHEN: A directory is created or renamed
+        THEN: Both operations fail without constructing a MAVFTP client
+        """
+        files_mgr = _create_files_manager()
+        files_mgr._connection_manager.master = None
+        create_path = "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe"
+
+        with patch(create_path) as create_mavftp:
+            assert not files_mgr.make_remote_directory("/APM/new")
+            assert not files_mgr.rename_remote_path("/APM/old", "/APM/new")
+
+        create_mavftp.assert_not_called()
+
+    def test_delete_fails_without_a_connection(self) -> None:
+        """Deleting a remote path cannot report success when disconnected."""
+        files_mgr = _create_files_manager()
+        files_mgr._connection_manager.master = None
+
+        assert not files_mgr.delete_remote_path("/APM/log.bin")
+
+    def test_delete_fails_when_mavftp_is_unsupported(self) -> None:
+        """An active connection without MAVFTP support cannot delete remote paths."""
+        files_mgr = _create_files_manager()
+        files_mgr.info.is_mavftp_supported = False
+        create_path = "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe"
+
+        with patch(create_path) as create_mavftp:
+            assert not files_mgr.delete_remote_path("/APM/log.bin")
+
+        create_mavftp.assert_not_called()
 
     def test_remote_directory_creation_handles_special_and_transport_failure_paths(self) -> None:
         """
@@ -1546,7 +1931,9 @@ class TestFlightControllerFilesResilience:  # pylint: disable=too-many-public-me
 
         assert files_mgr.verify_remote_file("relative", "local.bin") is False
         files_mgr._connection_manager.master = None
-        assert files_mgr.verify_remote_file("/APM/log.bin", "local.bin") is False
+        with patch(create_path) as create_mavftp:
+            assert files_mgr.verify_remote_file("/APM/log.bin", "local.bin") is False
+        create_mavftp.assert_not_called()
         files_mgr._connection_manager.master = MagicMock()
         with patch(create_path, return_value=None):
             assert files_mgr.verify_remote_file("/APM/log.bin", "local.bin") is False
@@ -1561,6 +1948,51 @@ class TestFlightControllerFilesResilience:  # pylint: disable=too-many-public-me
             assert files_mgr.verify_remote_file("/APM/log.bin", "local.bin") is False
             mavftp.local_file_crc.side_effect = OSError("local read failed")
             assert files_mgr.verify_remote_file("/APM/log.bin", "local.bin") is False
+
+    def test_remote_crc_failure_cannot_reuse_a_stale_matching_crc(self) -> None:
+        """A failed CRC request cannot verify a file using a previous matching CRC value."""
+        files_mgr = _create_files_manager()
+        mavftp = MagicMock()
+        mavftp.local_file_crc.return_value = 12
+        mavftp.last_crc = 12
+        mavftp.cmd_crc.return_value = SimpleNamespace(error_code=FtpError.Fail)
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+            return_value=mavftp,
+        ):
+            assert files_mgr.verify_remote_file("/APM/log.bin", "local.bin") is False
+
+    def test_crc_verification_preserves_x_prefixed_remote_paths(self) -> None:
+        """
+        A remote path beginning with X is not mistaken for an internal system namespace.
+
+        GIVEN: A valid ordinary remote path whose first name starts with X
+        WHEN: Its MAVFTP CRC is compared with the local file
+        THEN: The exact path is checked and matching CRCs verify successfully
+        """
+        files_mgr = _create_files_manager()
+        mavftp = MagicMock()
+        mavftp.local_file_crc.return_value = 42
+        mavftp.last_crc = 42
+        mavftp.cmd_crc.return_value = SimpleNamespace(error_code=FtpError.Success)
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+                return_value=mavftp,
+            ) as create_mavftp,
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.getsize", return_value=1024),
+        ):
+            result = files_mgr.verify_remote_file("/X@SYS/custom.bin", "custom.bin")
+
+            assert result is True
+            create_mavftp.assert_called_once_with(files_mgr.master)
+            mavftp.local_file_crc.assert_called_once_with("custom.bin")
+            mavftp.cmd_crc.assert_called_once_with(
+                ["/X@SYS/custom.bin"],
+                timeout=files_mgr._upload_timeout("custom.bin"),
+            )
 
     def test_upload_preflight_distinguishes_match_missing_mismatch_and_unknown(self) -> None:
         """Only a missing or CRC-mismatched remote file warrants an upload prompt."""
@@ -1659,6 +2091,25 @@ class TestFlightControllerFilesResilience:  # pylint: disable=too-many-public-me
         ):
             assert files_mgr.upload_file_if_needed("empty.lua", "/APM/Scripts/empty.lua") is FileUploadResult.EMPTY_LOCAL_FILE
         check.assert_not_called()
+
+    def test_atomic_upload_reports_transfer_failure(self) -> None:
+        """
+        A failed MAVFTP transfer is not reported as a completed upload.
+
+        GIVEN: Preflight says an update is needed and the transfer fails
+        WHEN: An atomic upload is requested
+        THEN: The result identifies the failed transfer
+        """
+        files_mgr = _create_files_manager()
+        with (
+            patch.object(files_mgr, "_check_file_upload_locked", return_value=FileUploadCheckStatus.NEEDS_UPLOAD),
+            patch.object(files_mgr, "_upload_file", return_value=False),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.isfile", return_value=True),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.getsize", return_value=10),
+        ):
+            result = files_mgr.upload_file_if_needed("a.lua", "/APM/Scripts/a.lua")
+
+        assert result is FileUploadResult.UPLOAD_FAILED
 
     def test_atomic_upload_transfers_when_remote_still_needs_update(self) -> None:
         """The final check and upload run as one serialized file-manager operation."""
@@ -1900,7 +2351,8 @@ def test_download_reports_precise_bytes_and_ignores_session_cleanup(known_size: 
     mavftp.remote_size_known = known_size
     progress = MagicMock()
 
-    def transfer(_operation: str, timeout: float) -> SimpleNamespace:
+    def transfer(operation: str, timeout: float) -> SimpleNamespace:
+        assert operation == "OpenFileRO"
         assert timeout == 0
         callback = mavftp.cmd_get.call_args.kwargs["progress_callback"]
         for received in (257, 521):

@@ -216,6 +216,43 @@ class TestMavlinkConnectionFactoryService:
         # Then: Returns None
         assert result is None
 
+    def test_fake_factory_returns_connection_for_requested_device(self) -> None:
+        """The fake factory lookup respects the requested device key."""
+        fake_factory = FakeMavlinkConnectionFactory()
+        expected = mock.sentinel.connection
+        fake_factory._connections["/dev/ttyUSB0"] = expected  # type: ignore[assignment]
+
+        assert fake_factory.get_connection("/dev/ttyUSB0") is expected
+        assert fake_factory.get_connection("/dev/ttyUSB1") is None
+
+    def test_system_mavlink_factory_forwards_connection_defaults(self) -> None:
+        """
+        The system factory forwards its device and transport defaults to PyMAVLink.
+
+        GIVEN: A system MAVLink factory and a connected device name
+        WHEN: A connection is created with the default transport options
+        THEN: PyMAVLink receives the exact device, timeout, retries, callback, and autoreconnect settings
+        """
+        factory = SystemMavlinkConnectionFactory()
+        callback = mock.Mock()
+        expected_connection = mock.sentinel.connection
+
+        with mock.patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_factory_mavlink.mavutil.mavlink_connection",
+            return_value=expected_connection,
+        ) as mock_mavlink:
+            result = factory.create("/dev/ttyUSB0", 115200, progress_callback=callback)
+
+        assert result is expected_connection
+        mock_mavlink.assert_called_once_with(
+            device="/dev/ttyUSB0",
+            baud=115200,
+            timeout=5.0,
+            retries=3,
+            progress_callback=callback,
+            autoreconnect=True,
+        )
+
     def test_system_mavlink_factory_preserves_oserror(self) -> None:
         """
         SystemMavlinkConnectionFactory surfaces OSError causes.

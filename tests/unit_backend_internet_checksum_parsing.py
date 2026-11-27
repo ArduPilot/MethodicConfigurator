@@ -48,6 +48,33 @@ def test_parse_sha256_from_asset_exact_match(monkeypatch) -> None:
     assert got == expected
 
 
+def test_release_asset_digest_is_used_before_fetching_checksum_files(monkeypatch) -> None:
+    """
+    A GitHub-provided SHA256 digest is trusted for the selected release asset.
+
+    GIVEN: The release asset contains its SHA256 digest and a checksum sidecar exists
+    WHEN: The expected installer checksum is requested
+    THEN: The asset digest is returned without downloading the sidecar
+    """
+    filename = "installer.exe"
+    expected = "a" * 64
+    requests: list[str] = []
+    release_info = {
+        "assets": [
+            {"name": filename, "digest": f"sha256:{expected}"},
+            {"name": "SHA256SUMS", "browser_download_url": "https://example.com/sums"},
+        ]
+    }
+
+    monkeypatch.setattr(
+        "ardupilot_methodic_configurator.backend_internet.httpx2_get",
+        lambda url, **_kwargs: (requests.append(url), DummyResp(""))[1],
+    )
+
+    assert get_expected_sha256_from_release(release_info, filename) == expected
+    assert requests == []
+
+
 def test_parse_sha256_from_asset_first_hash(monkeypatch) -> None:
     filename = "other.whl"
     expected = "b" * 64
@@ -62,6 +89,27 @@ def test_parse_sha256_from_asset_first_hash(monkeypatch) -> None:
 
     got = get_expected_sha256_from_release(release_info, filename)
     assert got == expected
+
+
+def test_empty_asset_name_does_not_fetch_or_accept_a_checksum(monkeypatch) -> None:
+    """
+    A checksum is never accepted when no release asset name is selected.
+
+    GIVEN: A release with a checksum file and an empty requested asset name
+    WHEN: The expected checksum is looked up
+    THEN: No checksum file is fetched and no digest is returned
+    """
+    requests: list[str] = []
+    release_info = {"assets": [{"name": "SHA256SUMS", "browser_download_url": "https://example.com/sums"}]}
+
+    def record_request(url: str, **_kwargs: object) -> DummyResp:
+        requests.append(url)
+        return DummyResp(f"{'a' * 64}  installer.exe\n")
+
+    monkeypatch.setattr("ardupilot_methodic_configurator.backend_internet.httpx2_get", record_request)
+
+    assert get_expected_sha256_from_release(release_info, "") is None
+    assert requests == []
 
 
 def test_fallback_to_body_hash() -> None:

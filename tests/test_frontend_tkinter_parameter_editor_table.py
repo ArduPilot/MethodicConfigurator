@@ -390,6 +390,15 @@ def test_init_creates_instance_with_correct_attributes(
     assert parameter_editor_table.parameter_editor._has_unsaved_changes() is False
 
 
+def test_table_is_parented_to_the_supplied_nested_frame(mock_master: tk.Tk) -> None:
+    """A parameter table stays inside the frame that owns its parameter section."""
+    parent = ttk.Frame(mock_master)
+
+    table = ParameterEditorTable(parent, MagicMock(), MagicMock())
+
+    assert table.master is parent
+
+
 def test_init_configures_style(parameter_editor_table: ParameterEditorTable) -> None:
     """
     ParameterEditorTable properly configures ttk.Style for consistent appearance.
@@ -851,6 +860,29 @@ def test_repopulate_show_only_differences(parameter_editor_table: ParameterEdito
     parameter_editor_table.repopulate_table(show_only_differences=True, gui_complexity="simple")
 
     # Assert: Only differing parameters were processed (implicitly tested through repopulate_table call)
+
+
+@pytest.mark.parametrize("defer_tooltips", [False, True])
+def test_tooltip_binding_respects_table_defer_setting(
+    parameter_editor_table: ParameterEditorTable, defer_tooltips: bool
+) -> None:
+    """Bind tooltips immediately or lazily according to the table performance option."""
+    table = parameter_editor_table
+    table.options.defer_tooltips = defer_tooltips
+    widget = MagicMock()
+
+    with (
+        patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as show_tooltip,
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip_lazily"
+        ) as show_tooltip_lazily,
+    ):
+        table._show_tooltip(widget, "Parameter help")
+
+    expected_handler = show_tooltip_lazily if defer_tooltips else show_tooltip
+    other_handler = show_tooltip if defer_tooltips else show_tooltip_lazily
+    expected_handler.assert_called_once_with(widget, "Parameter help")
+    other_handler.assert_not_called()
 
 
 @pytest.mark.parametrize("pending_scroll", [True, False])

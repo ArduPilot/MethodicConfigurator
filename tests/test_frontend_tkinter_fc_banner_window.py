@@ -159,6 +159,23 @@ def test_user_can_resize_each_diagnostics_section_up_and_down(
     assert heights_after[unchanged_index] == heights_before[unchanged_index]
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="Real widget geometry updates are unsafe on headless macOS.")
+def test_device_table_uses_extra_height_when_its_section_is_expanded(
+    resizable_banner_window: banner_window.FlightControllerBannerWindow,
+) -> None:
+    """More device-pane height gives the table more room to show detected devices."""
+    window = resizable_banner_window
+    panes = window.section_panes
+    tree = window.device_tree
+    initial_height = tree.winfo_height()
+    x, y = panes.sash_coord(1)
+
+    panes.sash_place(1, x, y - 40)
+    window.root.update_idletasks()
+
+    assert tree.winfo_height() > initial_height
+
+
 @pytest.mark.parametrize("sash_index", [0, 1])
 @pytest.mark.parametrize("direction", [-1, 1])
 @pytest.mark.skipif(sys.platform == "darwin", reason="Real widget geometry updates are unsafe on headless macOS.")

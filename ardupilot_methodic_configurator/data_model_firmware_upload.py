@@ -250,7 +250,7 @@ def parse_apj(contents: str | bytes, *, path: Path = Path()) -> FirmwareImage:  
     except (KeyError, TypeError, ValueError) as exc:
         msg = _("APJ descriptor is missing or has invalid metadata: {error}").format(error=exc)
         raise FirmwareFileError(msg) from exc
-    if board_id < 0 or image_size < 0 or extf_image_size < 0 or (image_size == 0 and extf_image_size == 0):
+    if board_id <= 0 or image_size < 0 or extf_image_size < 0 or (image_size == 0 and extf_image_size == 0):
         msg = _("APJ metadata values are out of range")
         raise FirmwareFileError(msg)
     if image_size != len(raw_image) or extf_image_size != len(raw_extf_image):

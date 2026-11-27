@@ -19,6 +19,21 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || !github.event.repository.fork
     runs-on: ${{ vars.UBUNTU_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        shard:
+          - software-update-flight-controller-communication
+          - backend
+          - data-model
+          - frontend
+          - log-analysis-backend
+          - log-analysis-data-model
+          - log-analysis-frontend
+          - plugins-backend
+          - plugins-data-model
+          - plugins-frontend
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -28,7 +43,11 @@ jobs:
 
       - name: Reserve time for mutation state and reports
         shell: bash
-        run: echo "MUTATION_CUTOFF=$(( $(date +%s) + 305 * 60 ))" >> "$GITHUB_ENV"
+        run: |
+          started_at=$(date +%s)
+          echo "MUTATION_JOB_STARTED_AT=${started_at}" >> "$GITHUB_ENV"
+          echo "MUTATION_CUTOFF=$(( started_at + 305 * 60 ))" >> "$GITHUB_ENV"
+          echo "MUTATION_SHARD=${{ matrix.shard }}" >> "$GITHUB_ENV"
 
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -44,7 +63,7 @@ jobs:
       - name: Install virtual display
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb xauth
+          sudo apt-get install -y xvfb xauth time
 
       - name: Install dependencies
         run: uv pip install --editable '.[dev,mutation]'
@@ -55,33 +74,44 @@ jobs:
         run: |
           # Mutmut invalidates changed functions; do not partition state by source revision.
           mutmut_version=$(python -c 'from importlib.metadata import version; print(version("mutmut"))')
-          state_name="mutmut-state-${RUNNER_OS}-py311-v3-${mutmut_version}"
+          state_name="mutmut-state-${RUNNER_OS}-py311-v4-${mutmut_version}-${MUTATION_SHARD}"
           echo "cache_prefix=${state_name}-" >> "$GITHUB_OUTPUT"
           echo "artifact_name=${state_name}" >> "$GITHUB_OUTPUT"
-          # Existing v2 artifacts were produced with Mutmut 3.8.1.
-          if [[ "$mutmut_version" == "3.8.1" ]]; then
-            echo "legacy_artifact_prefix=mutmut-state-${RUNNER_OS}-py311-v2-" >> "$GITHUB_OUTPUT"
-          fi
+          echo "legacy_artifact_name=mutmut-state-${RUNNER_OS}-py311-v3-${mutmut_version}" >> "$GITHUB_OUTPUT"
           mkdir -p .cache/mutation
           # Include resolved transitive dependencies in Mutmut's invalidation checks.
           uv pip freeze | LC_ALL=C sort > .cache/mutation/dependencies.txt
 
       - name: Verify unmodified selected tests
+        id: baseline
         shell: bash
         run: |
           mkdir -p .cache/mutation
-          xvfb-run -a python - <<'PY'
+          xvfb-run -a python - <<'PY' 2>&1 | tee .cache/mutation/baseline.log
+          import json
           import tomllib
+          from pathlib import Path
+          from time import perf_counter
 
           import pytest
 
-          with open("pyproject.toml", "rb") as config_file:
-              config = tomllib.load(config_file)["tool"]["mutmut"]
-          raise SystemExit(pytest.main([
-              *config["pytest_add_cli_args_test_selection"],
-              *config["pytest_add_cli_args"],
-              "--junit-xml=.cache/mutation/baseline.xml",
-          ]))
+          started_at = perf_counter()
+          exit_code = None
+          try:
+              with open("pyproject.toml", "rb") as config_file:
+                  config = tomllib.load(config_file)["tool"]["mutmut"]
+              exit_code = pytest.main([
+                  *config["pytest_add_cli_args_test_selection"],
+                  *config["pytest_add_cli_args"],
+                  "--junit-xml=.cache/mutation/baseline.xml",
+                  "--durations=50", "--durations-min=0.1",
+              ])
+          finally:
+              Path(".cache/mutation/baseline-timing.json").write_text(json.dumps({
+                  "wall_seconds": perf_counter() - started_at,
+                  "exit_code": exit_code,
+              }))
+          raise SystemExit(exit_code)
           PY
 
       - name: Restore mutation state
@@ -102,7 +132,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           STATE_ARTIFACT_NAME: ${{ steps.mutation_state.outputs.artifact_name }}
-          LEGACY_ARTIFACT_PREFIX: ${{ steps.mutation_state.outputs.legacy_artifact_prefix }}
+          LEGACY_STATE_ARTIFACT_NAME: ${{ steps.mutation_state.outputs.legacy_artifact_name }}
         run: |
           python - <<'PY'
           import json
@@ -128,22 +158,25 @@ jobs:
                   ), None)
                   yield from artifacts
 
+          candidates = []
           for artifact in previous_artifacts():
-              legacy_prefix = os.environ.get("LEGACY_ARTIFACT_PREFIX", "")
-              if artifact["name"] != os.environ["STATE_ARTIFACT_NAME"] and not (
-                  legacy_prefix and artifact["name"].startswith(legacy_prefix)
-              ):
+              if artifact["name"] not in {os.environ["STATE_ARTIFACT_NAME"], os.environ["LEGACY_STATE_ARTIFACT_NAME"]}:
                   continue
               run = artifact.get("workflow_run") or {}
               if artifact["expired"] or run.get("head_branch") != os.environ["GITHUB_REF_NAME"]:
                   continue
               if str(run.get("id")) == os.environ["GITHUB_RUN_ID"]:
                   continue
+              candidates.append(artifact)
+          artifact = next((item for item in candidates if item["name"] == os.environ["STATE_ARTIFACT_NAME"]), None)
+          artifact = artifact or (candidates[0] if candidates else None)
+          if artifact:
+              run = artifact["workflow_run"]
               with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
                   print(f"artifact_id={artifact['id']}", file=output)
                   print(f"run_id={run['id']}", file=output)
+                  print(f"artifact_name={artifact['name']}", file=output)
               print(f"Found mutation state in artifact {artifact['id']} from run {run['id']}")
-              break
           else:
               print("No previous mutation artifact is available; starting without saved state.")
           PY
@@ -160,26 +193,40 @@ jobs:
       - name: Restore mutation state from artifact
         if: steps.previous_mutation_artifact.outputs.artifact_id != ''
         shell: bash
+        env:
+          MUTATION_SHARD: ${{ matrix.shard }}
+          LEGACY_STATE_ARTIFACT_NAME: ${{ steps.mutation_state.outputs.legacy_artifact_name }}
+          RESTORED_ARTIFACT_NAME: ${{ steps.previous_mutation_artifact.outputs.artifact_name }}
         run: |
           python - <<'PY'
           import os
           import shutil
           from pathlib import Path
+          from runpy import run_path
 
           # The state-only artifact is rooted at the common upload ancestor: mutants/.
           source_root = Path(os.environ["RUNNER_TEMP"]) / "mutation-previous"
           state_files = (*source_root.rglob("*.meta"), source_root / "mutmut-stats.json")
+          sharder = run_path(".github/scripts/mutation_shard.py")
+          target_paths = set(sharder["targets_for_shard"](os.environ["MUTATION_SHARD"]))
+          legacy = os.environ["RESTORED_ARTIFACT_NAME"] == os.environ["LEGACY_STATE_ARTIFACT_NAME"]
           restored = 0
           for source in state_files:
-              if source.is_file():
-                  target = Path("mutants") / source.relative_to(source_root)
-                  target.parent.mkdir(parents=True, exist_ok=True)
-                  shutil.copy2(source, target)
-                  restored += 1
-          print(f"Restored {restored} mutation state files from the previous artifact.")
+              if not source.is_file():
+                  continue
+              relative = source.relative_to(source_root).as_posix()
+              if source.name != "mutmut-stats.json" and relative.removesuffix(".meta") not in target_paths:
+                  continue
+              target = Path("mutants") / source.relative_to(source_root)
+              target.parent.mkdir(parents=True, exist_ok=True)
+              shutil.copy2(source, target)
+              restored += 1
+          provenance = "legacy unsharded" if legacy else "same-shard"
+          print(f"Restored {restored} {provenance} state files for {os.environ['MUTATION_SHARD']}.")
           PY
 
       - name: Run mutation suite
+        id: mutation_run
         timeout-minutes: 310
         shell: bash
         run: |
@@ -190,11 +237,30 @@ jobs:
             echo "No time remains to run mutation tests before the CI cutoff."
             exit 1
           fi
+          started_at=$(date +%s)
           set +e
-          timeout --signal=INT --kill-after=120s "${remaining}s" \
-            xvfb-run -a mutmut run --max-children 2 | tee .cache/mutation/run.log
+          /usr/bin/time --verbose --output=.cache/mutation/resources.txt \
+            timeout --signal=INT --kill-after=120s "${remaining}s" \
+            xvfb-run -a python .github/scripts/mutation_shard.py "$MUTATION_SHARD" 2>&1 | tee .cache/mutation/run.log
           statuses=( "${PIPESTATUS[@]}" )
           set -e
+          python - "$started_at" "${statuses[0]}" "${statuses[1]}" <<'PY'
+          import json
+          import sys
+          import time
+          from pathlib import Path
+
+          started_at, exit_code, log_exit_code = map(int, sys.argv[1:])
+          Path(".cache/mutation/run-timing.json").write_text(json.dumps({
+              "started_at": started_at,
+              "wall_seconds": time.time() - started_at,
+              "exit_code": exit_code,
+              "log_exit_code": log_exit_code,
+              "cutoff_reached": exit_code == 124,
+              "terminated_by_sigkill": exit_code == 137,
+              "max_children": 14,
+          }))
+          PY
           if (( statuses[0] == 124 )); then
             echo "Mutation run stopped at the CI cutoff; completed results will be cached."
             exit "${statuses[1]}"
@@ -213,6 +279,7 @@ jobs:
           from pathlib import Path
 
           state_dir = Path("mutants")
+          discarded = []
           for path in (*state_dir.rglob("*.meta"), state_dir / "mutmut-stats.json"):
               if not path.is_file():
                   continue
@@ -220,7 +287,11 @@ jobs:
                   json.loads(path.read_text(encoding="utf-8"))
               except (json.JSONDecodeError, UnicodeDecodeError):
                   path.unlink()
+                  discarded.append(str(path))
                   print(f"Discarded incomplete mutation state: {path}")
+          report_dir = Path(".cache/mutation")
+          report_dir.mkdir(parents=True, exist_ok=True)
+          (report_dir / "discarded-state.json").write_text(json.dumps(discarded))
           PY
 
       - name: Save mutation state
@@ -247,35 +318,28 @@ jobs:
         if: always()
         shell: bash
         run: |
-          if [ -d mutants ]; then
+          if [ -d mutants ] && command -v mutmut >/dev/null; then
             mutmut results --all true | tee .cache/mutation/results.txt
-            python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
-          from collections import Counter, defaultdict
-          from pathlib import Path
-
-          counts = defaultdict(Counter)
-          for line in Path(".cache/mutation/results.txt").read_text().splitlines():
-              mutant, status = line.strip().rsplit(": ", 1)
-              module = mutant.rsplit(".", 1)[0].removeprefix("ardupilot_methodic_configurator.")
-              counts[module][status] += 1
-          statuses = sorted({status for counts_by_status in counts.values() for status in counts_by_status})
-          print("### Mutation testing\n")
-          print("Survivors are reported for review; no mutation-score threshold is enforced yet.\n")
-          print("| Module | " + " | ".join(statuses) + " |")
-          print("| --- | " + " | ".join("---:" for _ in statuses) + " |")
-          for module, counts_by_status in sorted(counts.items()):
-              print(f"| `{module}` | " + " | ".join(str(counts_by_status[status]) for status in statuses) + " |")
-          print("\nDownload the mutation artifact for individual results and execution logs.")
-          PY
           fi
+
+      - name: Collect mutation timing and diagnostics
+        if: always()
+        shell: bash
+        env:
+          MUTATION_CACHE_KEY: ${{ steps.restore_mutation_state.outputs.cache-matched-key }}
+          MUTATION_PREVIOUS_ARTIFACT_ID: ${{ steps.previous_mutation_artifact.outputs.artifact_id }}
+          MUTATION_BASELINE_OUTCOME: ${{ steps.baseline.outcome }}
+          MUTATION_RUN_OUTCOME: ${{ steps.mutation_run.outcome }}
+        run: python .github/scripts/mutation_report.py
 
       - name: Upload mutation reports
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: mutation-py311
+          name: mutation-py311-${{ matrix.shard }}
           path: |
             .cache/mutation/
           include-hidden-files: true
           if-no-files-found: warn
-          retention-days: 15
+          # Retain measurements across several weekly runs for shard planning.
+          retention-days: 90

@@ -1272,11 +1272,48 @@ class TestFlightControllerResetAndDelegation:
         """
         parser = ArgumentParser(prog="fc")
         parser = FlightController.add_argparse_arguments(parser)
+        defaults = parser.parse_args([])
+        assert defaults.baudrate == 115200
+        assert defaults.device == ""
+        assert defaults.reboot_time == 8
+
+        actions = {action.dest: action for action in parser._actions}
+        baudrate_action = actions["baudrate"]
+        assert baudrate_action.option_strings == ["--baudrate"]
+        assert baudrate_action.type is int
+        assert baudrate_action.help == "MAVLink serial connection baudrate to the flight controller. Default is %(default)s"
+
+        device_action = actions["device"]
+        assert device_action.option_strings == ["--device"]
+        assert device_action.type is str
+        assert device_action.help == (
+            "MAVLink connection string to the flight controller. "
+            'If set to "none" no connection is made. '
+            'If set to "file" the file params.param is used. '
+            "Default is autodetection"
+        )
+        assert callable(device_action.completer)
+        with patch.object(FlightController, "get_serial_ports", return_value=["COM1"]):
+            assert device_action.completer() == ["COM1"]
+
+        reboot_action = actions["reboot_time"]
+        assert reboot_action.option_strings == ["-r", "--reboot-time"]
+        assert reboot_action.type is int
+        assert reboot_action.help == "Flight controller reboot time. Default is %(default)s"
+        assert reboot_action.min == 5
+        assert reboot_action.max == 50
+
         args = parser.parse_args(["--device", "tcp:1", "--baudrate", "57600", "--reboot-time", "9"])
 
         assert args.device == "tcp:1"
         assert args.baudrate == 57600
         assert args.reboot_time == 9
+        assert parser.parse_args(["--reboot-time", "5"]).reboot_time == 5
+        assert parser.parse_args(["--reboot-time", "50"]).reboot_time == 50
+        with pytest.raises(SystemExit):
+            parser.parse_args(["--reboot-time", "4"])
+        with pytest.raises(SystemExit):
+            parser.parse_args(["--reboot-time", "51"])
 
     def test_sitl_helper_methods_delegate_to_connection_manager(self) -> None:
         """
@@ -1422,3 +1459,19 @@ class TestFlightControllerProgressCallbacks:
         mock_conn_mgr.discover_connections.assert_called_once_with(
             progress_callback=track_progress, preserved_connections=None
         )
+
+
+def test_flight_controller_forwards_custom_network_ports_to_connection_manager() -> None:
+    """The facade passes caller-supplied network endpoints to its connection manager."""
+    network_ports = ["tcp:127.0.0.1:5760"]
+
+    with patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightControllerConnection") as connection_factory:
+        FlightController(
+            network_ports=network_ports,
+            params_manager=MagicMock(),
+            commands_manager=MagicMock(),
+            files_manager=MagicMock(),
+        )
+
+    assert connection_factory.call_args is not None
+    assert connection_factory.call_args.kwargs["network_ports"] is network_ports

@@ -501,7 +501,7 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
             raise FirmwareConfirmationError(msg)
         try:
             connected_board_id = int(self.info.apj_board_id)
-            if connected_board_id < 0:
+            if connected_board_id <= 0:
                 raise ValueError
         except (TypeError, ValueError):
             msg = _("firmware upload requires the connected flight controller APJ board_id")

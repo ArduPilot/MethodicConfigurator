@@ -667,6 +667,17 @@ class TestComponentDataModelImportInternals:
             assert batt_type == "Analog"
             assert batt_protocol == "Voltage"
 
+    def test_set_battery_type_uses_documented_defaults_when_metadata_fields_are_missing(self, realistic_model) -> None:
+        """Missing connection fields retain the documented type and protocol defaults."""
+        with patch(
+            "ardupilot_methodic_configurator.data_model_vehicle_components_import.BATT_MONITOR_CONNECTION",
+            {"4": {}},
+        ):
+            realistic_model._set_battery_type_from_fc_parameters({"BATT_MONITOR": 4})
+
+        assert realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Type")) == "None"
+        assert realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Protocol")) == "Disabled"
+
     @pytest.mark.parametrize(("bus", "expected"), [(1, "I2C2"), (99, "I2C1"), ("invalid", "I2C1")])
     def test_set_battery_type_selects_and_bounds_i2c_bus(self, realistic_model, bus: int | str, expected: str) -> None:
         """The BATT_I2C_BUS index selects the matching I2C port and invalid indices fall back to I2C1."""

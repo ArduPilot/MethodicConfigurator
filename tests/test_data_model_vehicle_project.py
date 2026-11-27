@@ -1790,6 +1790,32 @@ class TestCreateNewVehicleFromBinLog:  # pylint: disable=too-many-public-methods
         assert exc_info.value.title == ".bin log import"
         assert exc_info.value.message == "Corrupt log"
 
+    def test_failed_bin_log_project_finalization_removes_created_directory(self) -> None:
+        """A partially created project is removed if post-copy finalization fails."""
+        manager = VehicleProjectManager(MagicMock(spec=LocalFilesystem))
+        params = ParDict.from_float_dict({"PARAM_A": 1.0})
+
+        with (
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduCopter", 4, 6, 3), params, params),
+            ),
+            patch.object(manager._creator, "template_dir_for_bin_import", return_value="/templates/empty_4.6.x"),
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
+            patch.object(
+                manager,
+                "_complete_imported_vehicle_project_creation",
+                side_effect=VehicleProjectCreationError("Vehicle project creation", "finalize failed"),
+            ),
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch("ardupilot_methodic_configurator.data_model_vehicle_project.shutil_rmtree") as remove_partial_project,
+            pytest.raises(VehicleProjectCreationError, match="finalize failed"),
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/flight.bin")
+
+        remove_partial_project.assert_called_once_with("/vehicles/flight", ignore_errors=True)
+
     def test_explicit_template_vehicle_type_mismatch_is_reported_as_a_warning(self) -> None:
         """An explicit template override remains allowed but makes a type mismatch visible."""
         manager = self._make_manager()
@@ -2230,6 +2256,19 @@ class TestGetFcDefaultTemplateDir:
         mock_fc.info.flight_sw_version = fw_version
         return VehicleProjectManager(mock_filesystem, mock_fc)
 
+    def test_two_part_firmware_version_selects_its_empty_template(self) -> None:
+        """A major.minor firmware version is enough to choose its matching template."""
+        manager = self._make_connected_manager(fw_version="4.6")
+
+        with (
+            patch.object(LocalFilesystem, "get_templates_base_dir", return_value="/templates"),
+            patch("ardupilot_methodic_configurator.data_model_vehicle_project.Path.is_dir", return_value=True),
+            patch.object(manager, "get_recently_used_dirs", return_value=("/fallback/template", "/base", "/vehicle")),
+        ):
+            result = manager.get_fc_default_template_dir()
+
+        assert result == "/templates/ArduCopter/empty_4.6.x"
+
     def test_user_gets_fc_derived_template_when_directory_exists(self) -> None:
         """
         User gets a template directory derived from the FC's vehicle type and firmware version.
@@ -2244,6 +2283,20 @@ class TestGetFcDefaultTemplateDir:
         with (
             patch.object(LocalFilesystem, "get_templates_base_dir", return_value="/templates"),
             patch("ardupilot_methodic_configurator.data_model_vehicle_project.Path.is_dir", return_value=True),
+            patch.object(manager, "get_recently_used_dirs", return_value=("/fallback/template", "/base", "/vehicle")),
+        ):
+            result = manager.get_fc_default_template_dir()
+
+        assert result.replace("\\", "/").endswith("ArduCopter/empty_4.6.x")
+
+    def test_user_gets_fc_template_for_two_part_firmware_version(self) -> None:
+        """A major/minor firmware version is enough to select its matching template."""
+        manager = self._make_connected_manager("ArduCopter", "4.6")
+
+        with (
+            patch.object(LocalFilesystem, "get_templates_base_dir", return_value="/templates"),
+            patch("ardupilot_methodic_configurator.data_model_vehicle_project.Path.is_dir", return_value=True),
+            patch.object(manager, "get_recently_used_dirs", return_value=("/fallback/template", "/base", "/vehicle")),
         ):
             result = manager.get_fc_default_template_dir()
 
@@ -2283,6 +2336,18 @@ class TestGetFcDefaultTemplateDir:
             result = manager.get_fc_default_template_dir()
 
         assert result == "/fallback/template"
+
+    def test_project_creation_rejects_empty_fc_vehicle_type_even_with_version(self) -> None:
+        """A firmware version alone cannot identify which vehicle template to use."""
+        manager = self._make_connected_manager(vehicle_type="", fw_version="4.6.0")
+
+        with (
+            patch.object(manager._creator, "template_dir_for_bin_import") as template_lookup,
+            pytest.raises(VehicleProjectCreationError, match="Could not determine.*vehicle type"),
+        ):
+            manager._get_fc_template_dir_for_project_creation()
+
+        template_lookup.assert_not_called()
 
     def test_user_gets_fallback_when_fc_firmware_version_is_empty(self) -> None:
         """
@@ -2343,6 +2408,31 @@ class TestGetFcDefaultTemplateDir:
         manager = VehicleProjectManager(mock_filesystem, mock_fc)
 
         with patch.object(LocalFilesystem, "get_recently_used_dirs", return_value=("/fallback/template", "/base", "/vehicle")):
+            result = manager.get_fc_default_template_dir()
+
+        assert result == "/fallback/template"
+
+    def test_disconnected_fc_does_not_select_its_old_vehicle_template(self) -> None:
+        manager = self._make_connected_manager("ArduCopter", "4.6.0")
+        manager._flight_controller.master = None
+
+        with (
+            patch.object(LocalFilesystem, "get_templates_base_dir", return_value="/templates"),
+            patch("ardupilot_methodic_configurator.data_model_vehicle_project.Path.is_dir", return_value=True),
+            patch.object(manager, "get_recently_used_dirs", return_value=("/fallback/template", "/base", "/vehicle")),
+        ):
+            result = manager.get_fc_default_template_dir()
+
+        assert result == "/fallback/template"
+
+    def test_missing_vehicle_type_does_not_select_an_fc_derived_template(self) -> None:
+        manager = self._make_connected_manager(vehicle_type="", fw_version="4.6.0")
+
+        with (
+            patch.object(LocalFilesystem, "get_templates_base_dir", return_value="/templates"),
+            patch("ardupilot_methodic_configurator.data_model_vehicle_project.Path.is_dir", return_value=True),
+            patch.object(manager, "get_recently_used_dirs", return_value=("/fallback/template", "/base", "/vehicle")),
+        ):
             result = manager.get_fc_default_template_dir()
 
         assert result == "/fallback/template"
