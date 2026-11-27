@@ -1372,10 +1372,13 @@ class TestParameterEdgeCases:
         master = MagicMock()
         manager = FlightControllerParams(connection_manager=Mock(master=master, info=FlightControllerInfo()))
 
-        with patch(
-            "ardupilot_methodic_configurator.backend_flightcontroller_params.time_time",
-            side_effect=[0.0, 5.0],
-        ), patch("ardupilot_methodic_configurator.backend_flightcontroller_params.time_sleep"):
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_params.time_time",
+                side_effect=[0.0, 5.0],
+            ),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_params.time_sleep"),
+        ):
             with pytest.raises(TimeoutError, match="Timeout waiting for parameter FRAME_TYPE"):
                 manager.fetch_param("FRAME_TYPE")
 

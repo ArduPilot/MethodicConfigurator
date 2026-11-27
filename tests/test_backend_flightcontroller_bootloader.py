@@ -428,9 +428,7 @@ def test_capture_serial_device_identity_scans_past_unrelated_ports(monkeypatch: 
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Creating symlinks requires platform-specific privileges on Windows")
-def test_capture_serial_device_identity_resolves_a_symlinked_endpoint(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_capture_serial_device_identity_resolves_a_symlinked_endpoint(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """A stable alias resolves to the USB identity reported under its physical port path."""
     # GIVEN a selected symlink and a serial-port listing that exposes its target
     target = tmp_path / "ttyACM0"
@@ -1741,9 +1739,7 @@ def test_unexpected_pre_erase_error_uses_no_ack_reboot_for_protocol_v2() -> None
     transport = V2NoAckRebootTransport(revision=2)
 
     with pytest.raises(RuntimeError, match="unexpected confirmation callback failure") as error:
-        bl.BootloaderClient(transport).upload(
-            fw.parse_apj(apj(b"abcd")), confirmation_requested=raise_confirmation_error
-        )
+        bl.BootloaderClient(transport).upload(fw.parse_apj(apj(b"abcd")), confirmation_requested=raise_confirmation_error)
 
     assert getattr(error.value, "bootloader_rebooted", False)
     assert transport.rebooted
@@ -2436,6 +2432,7 @@ def test_facade_requires_both_master_and_serial_comport(missing_component: str) 
 
     with pytest.raises(fw.FirmwareConnectionError, match="direct serial"):
         controller.upload_apj_firmware(Path("ignored.apj"))
+
 
 @pytest.mark.parametrize(
     "device",

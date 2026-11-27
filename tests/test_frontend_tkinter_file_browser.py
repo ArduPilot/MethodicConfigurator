@@ -20,7 +20,7 @@ from pathlib import Path
 from threading import Event, Thread, current_thread
 from tkinter import ttk
 from types import SimpleNamespace
-from unittest.mock import ANY, MagicMock, call, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 
@@ -477,9 +477,7 @@ class TestFileBrowserWindow:
         [([], "No entries found in this directory."), ([MagicMock()], "")],
         ids=["empty-directory", "directory-with-entries"],
     )
-    def test_empty_state_is_visible_only_when_there_are_no_entries(
-        self, entries: list[object], expected_text: str
-    ) -> None:
+    def test_empty_state_is_visible_only_when_there_are_no_entries(self, entries: list[object], expected_text: str) -> None:
         """The panel empty-state label follows whether its listing has entries."""
         label = MagicMock()
 
@@ -545,9 +543,7 @@ class TestFileBrowserWindow:
         assert window.help_button is not None
         assert window.close_button is not None
 
-    def test_arrow_navigation_is_enabled_when_the_browser_opens(
-        self, headless_browser_window: FileBrowserWindow
-    ) -> None:
+    def test_arrow_navigation_is_enabled_when_the_browser_opens(self, headless_browser_window: FileBrowserWindow) -> None:
         """The file browser opens with arrow keys able to move between its panels."""
         window = headless_browser_window
         window.remote_tree.selection.return_value = ()
@@ -2376,9 +2372,7 @@ class TestFileBrowserWindow:
         assert window._panel_navigation_enabled is False
         editor.place.assert_called_once_with(x=1, y=2, width=100, height=20)
         editor.focus_set.assert_called_once_with()
-        return_handler = next(
-            call.args[1] for call in editor.bind.call_args_list if call.args[0] == "<Return>"
-        )
+        return_handler = next(call.args[1] for call in editor.bind.call_args_list if call.args[0] == "<Return>")
         assert callable(return_handler)
         window.parameter_editor.rename_remote_path.assert_not_called()
 
@@ -3176,9 +3170,7 @@ class TestFileBrowserWindow:
         args = window._start_background_operation.call_args.args
         worker = args[2]
         assert worker(MagicMock()) == ([entry.remote_path], [])
-        window.parameter_editor.rename_remote_path.assert_called_once_with(
-            "/APM/LOGS/old.bin", "/APM/LOGS/new.bin"
-        )
+        window.parameter_editor.rename_remote_path.assert_called_once_with("/APM/LOGS/old.bin", "/APM/LOGS/new.bin")
 
     def test_remote_rename_allows_names_that_are_unsafe_only_locally(self) -> None:
         """A remote-only rename can use a Windows-reserved basename."""
@@ -4093,6 +4085,7 @@ def test_inline_rename_cannot_mutate_files_during_an_active_operation(
     assert not window.ui.mock_calls
     window.refresh_local_panel.assert_not_called()
     window.refresh_remote_panel.assert_not_called()
+
 
 def test_remote_file_double_click_does_not_navigate() -> None:
     """Double-clicking a remote file leaves the current directory unchanged."""

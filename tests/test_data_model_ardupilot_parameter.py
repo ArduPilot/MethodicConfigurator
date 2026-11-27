@@ -1335,9 +1335,7 @@ def test_invalid_numbers_name_the_parameter_for_every_nonfinite_value(value: flo
 
 @pytest.mark.parametrize("parameter_kind", ["forced", "derived"])
 @pytest.mark.parametrize("invalid_number", [math.inf, -math.inf])
-def test_nonfinite_configured_values_are_not_marked_forced_or_derived(
-    parameter_kind: str, invalid_number: float
-) -> None:
+def test_nonfinite_configured_values_are_not_marked_forced_or_derived(parameter_kind: str, invalid_number: float) -> None:
     """Neither sign of infinity bypasses the constructor's finite-value guard."""
     invalid_value = Par(invalid_number, "")
     parameter = ArduPilotParameter(

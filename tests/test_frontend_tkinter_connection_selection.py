@@ -418,14 +418,16 @@ class TestConnectionSelectionWidgets:
             result = widget.add_connection()
 
         assert result == "tcp:127.0.0.1:5761"
-        prompt = chr(10).join((
-            "Enter the connection string to the flight controller. Examples are:",
-            "",
-            "COM4 (on Windows)",
-            "/dev/serial/by-id/usb-xxx (on Linux)",
-            "tcp:127.0.0.1:5761",
-            "udp:127.0.0.1:14551",
-        ))
+        prompt = chr(10).join(
+            (
+                "Enter the connection string to the flight controller. Examples are:",
+                "",
+                "COM4 (on Windows)",
+                "/dev/serial/by-id/usb-xxx (on Linux)",
+                "tcp:127.0.0.1:5761",
+                "udp:127.0.0.1:14551",
+            )
+        )
         askstring.assert_called_once_with("Flight Controller Connection", prompt)
         store_connection.assert_called_once_with("tcp:127.0.0.1:5761")
         mock_fc.add_connection.assert_called_once_with("tcp:127.0.0.1:5761")
@@ -448,9 +450,7 @@ class TestConnectionSelectionWidgets:
             _configure_progress_task(mock_progress_window.return_value)
             result = widget.reconnect("COM1")
 
-        mock_progress_window.assert_called_once_with(
-            widget.parent.root, "Connecting with the FC", "Connection step {} of {}"
-        )
+        mock_progress_window.assert_called_once_with(widget.parent.root, "Connecting with the FC", "Connection step {} of {}")
         mock_fc.connect.assert_called_once_with("COM1", mock_progress_instance.update_progress_bar, baudrate=115200)
         mock_show_error.assert_called_once_with("Connection error")
         assert result
@@ -700,9 +700,7 @@ class TestConnectionSelectionWindow:
         window, _ = connection_window
         assert window.default_baudrate == 115200
 
-    def test_user_can_skip_connection_by_default(
-        self, connection_window: tuple[ConnectionSelectionWindow, MagicMock]
-    ) -> None:
+    def test_user_can_skip_connection_by_default(self, connection_window: tuple[ConnectionSelectionWindow, MagicMock]) -> None:
         """
         The connection window leaves room for the offline-editing option by default.
 
@@ -1224,9 +1222,7 @@ class TestPeriodicPortRefresh:
         assert periodic_widget._refresh_timer_id is None
         mock_store.assert_called_once_with("COM1")
 
-    def test_refresh_guard_avoids_nested_discovery(
-        self, periodic_widget: ConnectionSelectionWidgets
-    ) -> None:
+    def test_refresh_guard_avoids_nested_discovery(self, periodic_widget: ConnectionSelectionWidgets) -> None:
         """
         A nested refresh request does not start a second port scan.
 

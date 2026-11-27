@@ -231,7 +231,8 @@ class TestFlightControllerFilesUpload:
         # When: Attempt upload
         with patch("ardupilot_methodic_configurator.backend_flightcontroller_files.logging_error") as error_log:
             success = files_mgr.upload_file(
-                local_filename="/tmp/test.param", remote_filename="@SYS/test.param"  # noqa: S108
+                local_filename="/tmp/test.param",
+                remote_filename="@SYS/test.param",  # noqa: S108
             )
 
         # Then: Operation fails
@@ -1168,9 +1169,7 @@ class TestFlightControllerFilesLogDiscovery:
             requested_path = mavftp.cmd_get.call_args.args[0][0]
             requested_number = int(requested_path.rsplit("/", 1)[-1].removesuffix(".BIN"))
             probed_numbers.append(requested_number)
-            return SimpleNamespace(
-                error_code=FtpError.Success if requested_number <= 65535 else FtpError.FileNotFound
-            )
+            return SimpleNamespace(error_code=FtpError.Success if requested_number <= 65535 else FtpError.FileNotFound)
 
         mavftp.process_ftp_reply.side_effect = reply_for_probe
 
@@ -1573,9 +1572,7 @@ class TestFlightControllerFilesLastlogTxt:
 
         assert result == 55
         mock_mavftp.cmd_get.assert_called_once_with(["/APM/LOGS/LASTLOG.TXT", "temp_lastlog.txt"])
-        mock_mavftp.process_ftp_reply.assert_called_once_with(
-            "OpenFileRO", timeout=files_mgr.MAVFTP_FILE_OPERATION_TIMEOUT
-        )
+        mock_mavftp.process_ftp_reply.assert_called_once_with("OpenFileRO", timeout=files_mgr.MAVFTP_FILE_OPERATION_TIMEOUT)
         mock_extract.assert_called_once_with("temp_lastlog.txt")
 
     def test_lastlog_txt_returns_none_when_file_missing(self) -> None:

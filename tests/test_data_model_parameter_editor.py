@@ -3172,10 +3172,8 @@ class TestFileNavigationMethods:
             "02_boundary.param": {"PARAM2": Par(2.0)},
             "03_later.param": {"PARAM3": Par(3.0)},
         }
-        parameter_editor._local_filesystem.get_documentation_text_and_url.side_effect = (
-            lambda file_name, _doc_type: (
-                ("21% mandatory", "") if file_name == "02_boundary.param" else ("80% mandatory", "")
-            )
+        parameter_editor._local_filesystem.get_documentation_text_and_url.side_effect = lambda file_name, _doc_type: (
+            ("21% mandatory", "") if file_name == "02_boundary.param" else ("80% mandatory", "")
         )
 
         # Act: Find the next required step in simple mode.
@@ -3191,10 +3189,8 @@ class TestFileNavigationMethods:
             "02_optional.param": {"PARAM2": Par(2.0)},
             "03_required.param": {"PARAM3": Par(3.0)},
         }
-        parameter_editor._local_filesystem.get_documentation_text_and_url.side_effect = (
-            lambda file_name, _doc_type: (
-                ("20% mandatory", "") if file_name == "02_optional.param" else ("80% mandatory", "")
-            )
+        parameter_editor._local_filesystem.get_documentation_text_and_url.side_effect = lambda file_name, _doc_type: (
+            ("20% mandatory", "") if file_name == "02_optional.param" else ("80% mandatory", "")
         )
 
         result = parameter_editor.get_next_non_optional_file("01_current.param", gui_complexity="simple")
@@ -5156,9 +5152,7 @@ class TestParameterUploadNavigation:
         parameter_editor._local_filesystem.doc_dict = {"P1": {"DisplayName": "Parameter one"}}
 
         with patch.object(parameter_editor, "reset_and_reconnect_workflow", return_value=True) as reset_workflow:
-            result = parameter_editor.upload_parameters_that_require_reset_workflow(
-                {"P1": Par(2.0)}, MagicMock(), MagicMock()
-            )
+            result = parameter_editor.upload_parameters_that_require_reset_workflow({"P1": Par(2.0)}, MagicMock(), MagicMock())
 
         assert result == (False, set(), True)
         parameter_editor._flight_controller.set_param.assert_not_called()
@@ -6077,9 +6071,7 @@ def test_download_last_flight_log_forwards_progress_callback(parameter_editor) -
 
     parameter_editor.download_last_flight_log("last-flight.bin", progress_callback)
 
-    parameter_editor._flight_controller.download_last_flight_log.assert_called_once_with(
-        "last-flight.bin", progress_callback
-    )
+    parameter_editor._flight_controller.download_last_flight_log.assert_called_once_with("last-flight.bin", progress_callback)
 
 
 class TestConfigurationStepNumbering:
@@ -7603,18 +7595,14 @@ class TestMutationSurvivorBoundaries:
         parameter_editor.download_flight_controller_parameters = MagicMock(return_value=({"PARAM1": 1.0}, {}))
         parameter_editor._validate_uploaded_parameters = MagicMock(return_value=[])
 
-        result = parameter_editor.upload_selected_params_workflow(
-            {"PARAM1": Par(1.0)}, MagicMock(), MagicMock(), MagicMock()
-        )
+        result = parameter_editor.upload_selected_params_workflow({"PARAM1": Par(1.0)}, MagicMock(), MagicMock(), MagicMock())
 
         assert result is True
         assert parameter_editor._at_least_one_changed is False
 
     def test_readding_original_parameter_does_not_track_it_as_new(self, parameter_editor: ParameterEditor) -> None:
         parameter_editor.current_file = "01_setup.param"
-        parameter_editor._local_filesystem.file_parameters = {
-            parameter_editor.current_file: ParDict({"PARAM1": Par(1.0)})
-        }
+        parameter_editor._local_filesystem.file_parameters = {parameter_editor.current_file: ParDict({"PARAM1": Par(1.0)})}
         parameter_editor._flight_controller.fc_parameters = {}
         parameter_editor._local_filesystem.doc_dict = {"PARAM1": {}}
         parameter_editor._local_filesystem.param_default_dict = ParDict({"PARAM1": Par(1.0)})
@@ -7658,7 +7646,9 @@ class TestMutationSurvivorBoundaries:
 
         assert parameter_editor.get_last_configuration_step_number() == 2
 
-    def test_tuning_report_preserves_the_exact_parameter_names(self, parameter_editor: ParameterEditor, tmp_path: Path) -> None:
+    def test_tuning_report_preserves_the_exact_parameter_names(
+        self, parameter_editor: ParameterEditor, tmp_path: Path
+    ) -> None:
         parameter_editor._local_filesystem.vehicle_dir = tmp_path
         parameter_editor._local_filesystem.vehicle_type = "ArduCopter"
 
@@ -7828,9 +7818,7 @@ class TestConnectionRenameGuards:
         """A tracked rename in the mapping does not prevent a later parameter from being renamed."""
         step_file = "10_serial.param"
         parameter_editor.current_file = step_file
-        parameter_editor._local_filesystem.file_parameters = {
-            step_file: ParDict({"ORIG_A": Par(1.0), "ORIG_B": Par(2.0)})
-        }
+        parameter_editor._local_filesystem.file_parameters = {step_file: ParDict({"ORIG_A": Par(1.0), "ORIG_B": Par(2.0)})}
         parameter_editor.current_step_parameters = {"TARGET_A": MagicMock(), "ORIG_B": MagicMock()}
         parameter_editor._connection_renames = {"ORIG_A": "TARGET_A"}
         parameter_editor._added_parameters = {"TARGET_A"}
@@ -8596,9 +8584,7 @@ class TestEditorWorkflowEdgeCases:
         assert result is False
         show_error.assert_called_once()
 
-    def test_reset_fails_when_parameters_cannot_be_downloaded_after_reconnect(
-        self, parameter_editor: ParameterEditor
-    ) -> None:
+    def test_reset_fails_when_parameters_cannot_be_downloaded_after_reconnect(self, parameter_editor: ParameterEditor) -> None:
         parameter_editor._flight_controller.reset_all_parameters_to_default_and_reconnect.return_value = (True, "")
         parameter_editor.download_flight_controller_parameters = MagicMock(return_value=({}, ParDict()))
         show_error = MagicMock()
@@ -8647,14 +8633,10 @@ class TestEditorWorkflowEdgeCases:
         assert result is True
         assert upload_files.call_args.args[1] == set()
 
-    def test_rename_cleanup_skips_parameters_already_missing_from_live_step(
-        self, parameter_editor: ParameterEditor
-    ) -> None:
+    def test_rename_cleanup_skips_parameters_already_missing_from_live_step(self, parameter_editor: ParameterEditor) -> None:
         """A renamed parameter absent from the live map does not cause a second deletion."""
         parameter_editor.current_file = "10_step.param"
-        parameter_editor._local_filesystem.file_parameters = {
-            "10_step.param": ParDict({"DUPLICATE": Par(1.0)})
-        }
+        parameter_editor._local_filesystem.file_parameters = {"10_step.param": ParDict({"DUPLICATE": Par(1.0)})}
         parameter_editor._local_filesystem.forced_parameters = {}
         parameter_editor._local_filesystem.configuration_steps = {}
         parameter_editor._local_filesystem.add_parameters = {}
