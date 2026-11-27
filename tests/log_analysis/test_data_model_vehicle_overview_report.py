@@ -91,11 +91,54 @@ def test_build_baro_info_handles_missing_instance_field_without_crashing() -> No
     info = build_baro_info(
         apm_doc=None,
         log_data=log_data,
-        params={"BARO1_DEVID": 1.0, "BARO_WCF_ENABLE": 1.0},
+        params={"BARO1_DEVID": 1.0, "BARO1_WCF_ENABLE": 1.0},
         instance=1,
     )
 
     assert info.healthy is None
+
+
+@pytest.mark.parametrize(
+    ("instance", "params", "expected"),
+    [
+        (1, {"BARO1_DEVID": 1.0, "BARO1_WCF_ENABLE": 1.0}, True),
+        (1, {"BARO1_DEVID": 1.0, "BARO1_WCF_ENABLE": 0.0}, False),
+        (2, {"BARO2_DEVID": 1.0, "BARO1_WCF_ENABLE": 0.0, "BARO2_WCF_ENABLE": 1.0}, True),
+        (1, {"BARO1_DEVID": 1.0}, None),
+    ],
+)
+def test_build_baro_info_reads_wind_compensation_from_its_own_instance_parameter(
+    instance: int, params: dict[str, float], expected: bool | None
+) -> None:
+    """
+    Each barometer shows the wind compensation setting of that barometer.
+
+    GIVEN: Log parameters with or without BAROn_WCF_ENABLE for barometer n
+    WHEN: The barometer overview is built without parameter metadata
+    THEN: Wind compensation is enabled for 1, disabled for 0 and unknown when the parameter is missing
+    """
+    info = build_baro_info(apm_doc=None, log_data=LogData(), params=params, instance=instance)
+
+    assert info.wind_compensation is expected
+
+
+@pytest.mark.parametrize(("value", "expected"), [(1.0, True), (0.0, False)])
+def test_build_baro_info_uses_instance_specific_wind_compensation_metadata(value: float, expected: bool) -> None:
+    """
+    Wind compensation labels come from the barometer's own parameter definition.
+
+    GIVEN: apm.pdef.xml metadata that labels BARO2_WCF_ENABLE values 0 and 1 as Disabled and Enabled
+    WHEN: The overview is built for barometer 2 with BARO2_WCF_ENABLE set to one of them
+    THEN: Enabled is reported as active wind compensation and Disabled as inactive
+    """
+    info = build_baro_info(
+        apm_doc={"BARO2_WCF_ENABLE": {"values": {"0": "Disabled", "1": "Enabled"}}},
+        log_data=LogData(),
+        params={"BARO2_DEVID": 1.0, "BARO2_WCF_ENABLE": value},
+        instance=2,
+    )
+
+    assert info.wind_compensation is expected
 
 
 def test_extract_hardware_report_ignores_zero_placeholder_hardware_ids() -> None:

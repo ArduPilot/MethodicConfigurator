@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 
 def wind_compensation_enabled_from_name(wcf_name: str | None) -> bool:
-    """Interpret BARO_WCF_ENABLE enum text to whether compensation is active."""
+    """Interpret BAROn_WCF_ENABLE enum text to whether compensation is active."""
     return wcf_name is not None and wcf_name.lower() not in ("disabled", "none")
 
 
