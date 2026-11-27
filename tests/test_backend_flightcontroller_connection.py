@@ -1793,12 +1793,18 @@ class TestFlightControllerConnectionErrorGuidance:
                 "/dev/ttyACM0",
             )
 
-        expected = chr(10).join((
-            "Permission denied accessing the serial port. This is common on Linux systems.",
-            "To fix this issue, add your user to the " + chr(39) + "dialout" + chr(39) + " group with the following command:",
-            "    sudo adduser " + chr(36) + "USER dialout",
-            "Then log out and log back in for the changes to take effect.",
-        ))
+        expected = chr(10).join(
+            (
+                "Permission denied accessing the serial port. This is common on Linux systems.",
+                "To fix this issue, add your user to the "
+                + chr(39)
+                + "dialout"
+                + chr(39)
+                + " group with the following command:",
+                "    sudo adduser " + chr(36) + "USER dialout",
+                "Then log out and log back in for the changes to take effect.",
+            )
+        )
         assert guidance == expected
 
     def test_permission_error_on_windows_returns_empty_guidance(self) -> None:
@@ -1882,14 +1888,16 @@ class TestFlightControllerConnectionErrorGuidance:
         ):
             guidance = connection._get_connection_error_guidance(error, "/dev/ttyACM1")
 
-        expected = chr(10).join((
-            "The serial port is already in use by another application.",
-            "Close other ground-control or serial-monitoring applications, then try again.",
-            "To find the process using the port, run:",
-            "    lsof /dev/ttyACM1",
-            "or:",
-            "    fuser /dev/ttyACM1",
-        ))
+        expected = chr(10).join(
+            (
+                "The serial port is already in use by another application.",
+                "Close other ground-control or serial-monitoring applications, then try again.",
+                "To find the process using the port, run:",
+                "    lsof /dev/ttyACM1",
+                "or:",
+                "    fuser /dev/ttyACM1",
+            )
+        )
         assert guidance == expected
 
     def test_non_permission_error_returns_empty_guidance(self) -> None:
@@ -3155,7 +3163,9 @@ class TestFlightControllerConnectionProgressCallbacks:
         serial_ports = [mavutil.SerialPort(device=f"COM{index}", description="Flight Controller") for index in (1, 2, 3)]
         with (
             patch.object(connection, "_auto_detect_serial", return_value=serial_ports),
-            patch.object(connection, "_register_and_try_connect", side_effect=["No heartbeat", "No heartbeat", ""]) as try_connect,
+            patch.object(
+                connection, "_register_and_try_connect", side_effect=["No heartbeat", "No heartbeat", ""]
+            ) as try_connect,
         ):
             result = connection.connect(device=None, baudrate=38400, progress_callback=track_progress)
 

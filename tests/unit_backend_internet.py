@@ -387,6 +387,7 @@ def test_pip_release_reports_started_and_completed_progress(mock_check_call, moc
     mock_which.assert_called_once_with("uv")
     mock_check_call.assert_called_once()
 
+
 @patch("shutil.which", return_value="/usr/bin/uv")  # uv is available
 @patch("subprocess.check_call")
 def test_download_and_install_pip_release_with_uv(mock_check_call, mock_which) -> None:
@@ -626,7 +627,9 @@ class TestExpectedSha256FromRelease:
         response.raise_for_status.return_value = None
         get = Mock(return_value=response)
         monkeypatch.setattr("ardupilot_methodic_configurator.backend_internet.httpx2_get", get)
-        release_info = {"assets": [{"name": "release-notes.txt", "browser_download_url": "https://example.com/release-notes.txt"}]}
+        release_info = {
+            "assets": [{"name": "release-notes.txt", "browser_download_url": "https://example.com/release-notes.txt"}]
+        }
 
         assert get_expected_sha256_from_release(release_info, "setup.exe") == digest
         get.assert_called_once_with("https://example.com/release-notes.txt", timeout=30, follow_redirects=True)
@@ -779,7 +782,6 @@ class TestValidateDownloadFile:
         _validate_download_file(str(f), magic_bytes=b"MZ")
         assert not f.exists()
 
-
     @pytest.mark.parametrize(
         ("file_content", "magic_bytes"),
         [(b"X" * 512, None), (b"PK" + b"X" * 2048, b"MZ")],
@@ -841,6 +843,7 @@ class TestValidateDownloadFile:
             assert not _validate_download_file(str(f))
         assert "Failed to validate downloaded file" in caplog.text
         assert "stat denied" in caplog.text
+
 
 # ---------------------------------------------------------------------------
 # Tests for macOS DMG installation helpers

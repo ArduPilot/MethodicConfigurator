@@ -423,7 +423,7 @@ class TestInstallWindows:
     def test_returns_false_and_logs_when_no_assets(self, caplog) -> None:
         um = UpdateManager()
         assert um._install_windows({"assets": []}, None) is False
-        assert caplog.messages == [_('No suitable assets found for Windows installation')]
+        assert caplog.messages == [_("No suitable assets found for Windows installation")]
 
     def test_returns_false_and_logs_when_assets_are_missing(self, caplog) -> None:
         """A release without an assets field is handled as an empty asset list."""
@@ -544,7 +544,12 @@ class TestInstallMacos:
         ):
             assert um._install_macos(latest_release, progress_callback) is True
         mock_checksum.assert_called_once_with(latest_release, "app.dmg")
-        mock_install.assert_called_once_with(download_url="https://example.com/app.dmg", file_name="app.dmg", progress_callback=progress_callback, expected_sha256="deadbeef")
+        mock_install.assert_called_once_with(
+            download_url="https://example.com/app.dmg",
+            file_name="app.dmg",
+            progress_callback=progress_callback,
+            expected_sha256="deadbeef",
+        )
 
     def test_logs_when_falling_back_to_pip(self) -> None:
         um = UpdateManager()
@@ -605,7 +610,9 @@ def test_update_manager_perform_download_linux(update_manager, mock_dialog) -> N
     progress_callback = Mock()
     with (
         patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Linux"),
-        patch("ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release", return_value=0) as mock_pip,
+        patch(
+            "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release", return_value=0
+        ) as mock_pip,
     ):
         assert update_manager._perform_download(latest_release, progress_callback) is True
     mock_pip.assert_called_once_with(progress_callback=progress_callback)
