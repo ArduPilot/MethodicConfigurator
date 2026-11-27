@@ -16,6 +16,7 @@ import numpy as np
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
+from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis
 from ardupilot_methodic_configurator.log_analysis.data_model_log_availability import (
     AvailabilityIssue,
     LogAvailabilityResult,
@@ -245,4 +246,27 @@ class BaseLogAnalysisModel(BaseLogModel):
             parameters=self.parameters,
             vehicle_components=self.vehicle_components,
             apm_doc=self.apm_doc,
+        )
+
+    def build_parameter_outcome(
+        self,
+        param_name: str,
+        value: float,
+        message: str,
+        *,
+        suggested_value: float | None = None,
+        lookup_expected: bool = True,
+    ) -> LogAnalysis:
+        """Build a static parameter LogAnalysis finding with step and optional template suggestion lookup."""
+        step_filename = self.step_for_parameter(param_name)
+        if suggested_value is None and lookup_expected:
+            expected, _source = self.expected_parameter_value(step_filename, param_name) if step_filename else (None, "")
+            suggested_value = expected
+        return LogAnalysis(
+            message=message,
+            timestamp_us=None,
+            value=float(value),
+            param_name=param_name,
+            suggested_value=suggested_value,
+            related_step=step_filename or None,
         )

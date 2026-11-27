@@ -7,6 +7,8 @@ This module contains comprehensive tests for ImuLogAvailabilityModel and
 ImuLogAnalysis, focusing on user workflows and business value rather
 than implementation details.
 
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+
 SPDX-FileCopyrightText: 2026 Omkar Sarkar <omkarsarkar24@gmail.com>
 
 SPDX-License-Identifier: GPL-3.0-or-later
@@ -55,6 +57,11 @@ def imu_apm_doc() -> dict:
         "INS_TCAL1_ENABLE": {"values": {"0": "Disabled", "1": "Enabled", "2": "Learning"}},
         "INS_TCAL2_ENABLE": {"values": {"0": "Disabled", "1": "Enabled", "2": "Learning"}},
         "INS_TCAL3_ENABLE": {"values": {"0": "Disabled", "1": "Enabled", "2": "Learning"}},
+        "INS_HNTCH_ENABLE": {"values": {"0": "Disabled", "1": "Enabled"}},
+        "INS_HNTCH_FREQ": {"fields": {"Range": "10 495", "Units": "Hz"}},
+        "INS_HNTCH_BW": {"fields": {"Range": "5 250", "Units": "Hz"}},
+        "INS_HNTCH_ATT": {"fields": {"Range": "5 50", "Units": "dB"}},
+        "INS_HNTCH_REF": {"fields": {"Range": "0.0 1.0"}},
         "INS_HNTCH_MODE": {
             "values": {
                 "0": "Fixed",
@@ -534,95 +541,168 @@ class TestImuLogAnalysisInvalidCalTemp:
 
 
 class TestImuLogAnalysisHarmonicNotchFilter:
-    """Test primary harmonic notch filter enable and tracking mode checks through analyse()."""
+    """Test primary harmonic notch filter enable, mode, and range checks through analyse()."""
 
-    def test_user_is_warned_when_harmonic_notch_filter_is_disabled(self, imu_apm_doc) -> None:
-        """
-        User is warned to enable the harmonic notch filter when it is turned off.
-
-        GIVEN: INS_HNTCH_ENABLE is 0 (disabled) and INS_HNTCH_MODE is 0
-        WHEN: Full IMU analysis runs
-        THEN: It reports INS_HNTCH_ENABLE with a suggested value of 1.0 and does not emit a mode warning
-        """
-        # Arrange: harmonic notch filter disabled
-        log_data = FakeLogData({})
+    def test_user_is_warned_when_harmonic_notch_filter_is_disabled(self, imu_apm_doc, make_context) -> None:
         model = ImuLogAnalysis(
-            log_data,
-            _context({"INS_HNTCH_ENABLE": 0.0, "INS_HNTCH_MODE": 0.0}, apm_doc=imu_apm_doc),
+            FakeLogData({}),
+            make_context({"INS_HNTCH_ENABLE": 0.0, "INS_HNTCH_MODE": 0.0}, apm_doc=imu_apm_doc),
         )
 
-        # Act: run full IMU analysis
         result = model.analyse()
 
-        # Assert: single enable finding with suggested fix, no cascading mode finding
         assert len(result.outcomes) == 1
         assert result.outcomes[0].param_name == "INS_HNTCH_ENABLE"
         assert result.outcomes[0].suggested_value == pytest.approx(1.0)
         assert "not enabled" in result.outcomes[0].message
 
-    def test_user_sees_no_notch_warning_when_mode_parameter_is_missing(self, imu_apm_doc) -> None:
-        """
-        User sees no error when the harmonic notch filter is enabled but INS_HNTCH_MODE is absent.
+    def test_user_sees_no_notch_warning_when_mode_parameter_is_missing(self, imu_apm_doc, make_context) -> None:
+        model = ImuLogAnalysis(FakeLogData({}), make_context({"INS_HNTCH_ENABLE": 1.0}, apm_doc=imu_apm_doc))
 
-        GIVEN: INS_HNTCH_ENABLE is 1 and INS_HNTCH_MODE is not present in the log
-        WHEN: Full IMU analysis runs
-        THEN: It produces no harmonic notch findings
-        """
-        # Arrange: enabled, but mode parameter absent from log
-        log_data = FakeLogData({})
-        model = ImuLogAnalysis(
-            log_data,
-            _context({"INS_HNTCH_ENABLE": 1.0}, apm_doc=imu_apm_doc),
-        )
-
-        # Act: run full IMU analysis
-        result = model.analyse()
-
-        # Assert: no findings emitted
-        assert not result.outcomes
+        assert not model.analyse().outcomes
 
     @pytest.mark.parametrize("mode", [0.0, 1.0, 3.0])
-    def test_user_sees_no_notch_warning_for_documented_tracking_modes(self, imu_apm_doc, mode: float) -> None:
-        """
-        User sees no mode warning for any valid tracking mode documented in apm.pdef.xml.
-
-        GIVEN: INS_HNTCH_ENABLE is 1, INS_HNTCH_MODE is a documented mode, and ESC telemetry is present
-        WHEN: Full IMU analysis runs
-        THEN: It produces no harmonic notch findings
-        """
-        # Arrange: enabled with a documented mode (include ESC data so mode 3 doesn't trigger telemetry warning)
+    def test_user_sees_no_notch_warning_for_documented_tracking_modes(self, imu_apm_doc, make_context, mode: float) -> None:
         log_data = FakeLogData({"ESC": {"RPM": [1000.0, 1000.0]}})
         model = ImuLogAnalysis(
             log_data,
-            _context({"INS_HNTCH_ENABLE": 1.0, "INS_HNTCH_MODE": mode}, apm_doc=imu_apm_doc),
+            make_context({"INS_HNTCH_ENABLE": 1.0, "INS_HNTCH_MODE": mode}, apm_doc=imu_apm_doc),
         )
 
-        # Act: run full IMU analysis
-        result = model.analyse()
+        assert not model.analyse().outcomes
 
-        # Assert: no findings emitted
-        assert not result.outcomes
-
-    def test_user_is_warned_when_harmonic_notch_mode_is_unrecognized(self, imu_apm_doc) -> None:
-        """
-        User is warned when INS_HNTCH_MODE is set to a value not documented in apm.pdef.xml.
-
-        GIVEN: INS_HNTCH_ENABLE is 1 and INS_HNTCH_MODE is 99 (unrecognized)
-        WHEN: Full IMU analysis runs
-        THEN: It reports an unrecognized INS_HNTCH_MODE finding
-        """
-        # Arrange: enabled with an undocumented mode value
-        log_data = FakeLogData({})
+    def test_user_is_warned_when_harmonic_notch_mode_is_unrecognized(self, imu_apm_doc, make_context) -> None:
         model = ImuLogAnalysis(
-            log_data,
-            _context({"INS_HNTCH_ENABLE": 1.0, "INS_HNTCH_MODE": 99.0}, apm_doc=imu_apm_doc),
+            FakeLogData({}),
+            make_context({"INS_HNTCH_ENABLE": 1.0, "INS_HNTCH_MODE": 99.0}, apm_doc=imu_apm_doc),
         )
 
-        # Act: run full IMU analysis
         result = model.analyse()
 
-        # Assert: single mode finding reported
         assert len(result.outcomes) == 1
         assert result.outcomes[0].param_name == "INS_HNTCH_MODE"
         assert result.outcomes[0].value == pytest.approx(99.0)
         assert "unrecognized" in result.outcomes[0].message
+
+    @pytest.mark.parametrize(
+        ("param_name", "bad_value"),
+        [
+            ("INS_HNTCH_FREQ", 5.0),
+            ("INS_HNTCH_FREQ", 500.0),
+            ("INS_HNTCH_BW", 0.0),
+            ("INS_HNTCH_ATT", 60.0),
+        ],
+    )
+    def test_user_is_warned_when_notch_sub_param_is_outside_apm_range(
+        self, imu_apm_doc, make_context, param_name: str, bad_value: float
+    ) -> None:
+        model = ImuLogAnalysis(
+            FakeLogData({}),
+            make_context({"INS_HNTCH_ENABLE": 1.0, "INS_HNTCH_MODE": 1.0, param_name: bad_value}, apm_doc=imu_apm_doc),
+        )
+
+        result = model.analyse()
+
+        assert len(result.outcomes) == 1
+        assert result.outcomes[0].param_name == param_name
+        assert "outside the documented range" in result.outcomes[0].message
+
+    @pytest.mark.parametrize(("forced_freq", "expected_suggestion"), [(5.0, None), (80.0, 80.0)])
+    def test_out_of_range_template_suggestion_is_suppressed(
+        self, imu_apm_doc, make_context, forced_freq: float, expected_suggestion: float | None
+    ) -> None:
+        steps = {
+            "15_notch.param": {
+                "forced_parameters": {
+                    "INS_HNTCH_FREQ": {"New Value": forced_freq, "Change Reason": "test"},
+                }
+            }
+        }
+        model = ImuLogAnalysis(
+            FakeLogData({}),
+            make_context(
+                {"INS_HNTCH_ENABLE": 1.0, "INS_HNTCH_MODE": 1.0, "INS_HNTCH_FREQ": 5.0},
+                apm_doc=imu_apm_doc,
+                configuration_steps=steps,
+            ),
+        )
+
+        result = model.analyse()
+
+        assert len(result.outcomes) == 1
+        assert result.outcomes[0].suggested_value == (
+            None if expected_suggestion is None else pytest.approx(expected_suggestion)
+        )
+
+    def test_user_is_warned_when_harmonic_bitmask_is_zero(self, imu_apm_doc, make_context) -> None:
+        model = ImuLogAnalysis(
+            FakeLogData({}),
+            make_context({"INS_HNTCH_ENABLE": 1.0, "INS_HNTCH_MODE": 1.0, "INS_HNTCH_HMNCS": 0.0}, apm_doc=imu_apm_doc),
+        )
+
+        result = model.analyse()
+
+        assert len(result.outcomes) == 1
+        assert result.outcomes[0].param_name == "INS_HNTCH_HMNCS"
+
+    @pytest.mark.parametrize("mode", [1.0, 3.0, 4.0])
+    def test_user_is_warned_when_ref_is_zero_in_dynamic_mode(self, imu_apm_doc, make_context, mode: float) -> None:
+        log_data = FakeLogData({"ESC": {"RPM": [1000.0, 1000.0]}})
+        model = ImuLogAnalysis(
+            log_data,
+            make_context({"INS_HNTCH_ENABLE": 1.0, "INS_HNTCH_MODE": mode, "INS_HNTCH_REF": 0.0}, apm_doc=imu_apm_doc),
+        )
+
+        result = model.analyse()
+
+        assert len(result.outcomes) == 1
+        assert result.outcomes[0].param_name == "INS_HNTCH_REF"
+        assert "disables dynamic frequency updates" in result.outcomes[0].message
+
+    def test_user_is_warned_when_ref_exceeds_documented_max_in_dynamic_mode(self, imu_apm_doc, make_context) -> None:
+        model = ImuLogAnalysis(
+            FakeLogData({}),
+            make_context({"INS_HNTCH_ENABLE": 1.0, "INS_HNTCH_MODE": 1.0, "INS_HNTCH_REF": 1.5}, apm_doc=imu_apm_doc),
+        )
+
+        result = model.analyse()
+
+        assert len(result.outcomes) == 1
+        assert result.outcomes[0].param_name == "INS_HNTCH_REF"
+        assert "outside the documented range" in result.outcomes[0].message
+
+    def test_user_sees_no_ref_warning_when_fixed_mode_has_zero_ref(self, imu_apm_doc, make_context) -> None:
+        model = ImuLogAnalysis(
+            FakeLogData({}),
+            make_context(
+                {
+                    "INS_HNTCH_ENABLE": 1.0,
+                    "INS_HNTCH_MODE": 0.0,
+                    "INS_HNTCH_FREQ": 80.0,
+                    "INS_HNTCH_BW": 40.0,
+                    "INS_HNTCH_ATT": 40.0,
+                    "INS_HNTCH_HMNCS": 3.0,
+                    "INS_HNTCH_REF": 0.0,
+                },
+                apm_doc=imu_apm_doc,
+            ),
+        )
+
+        assert not model.analyse().outcomes
+
+    def test_non_finite_notch_parameters_are_ignored_without_error(self, imu_apm_doc, make_context) -> None:
+        model = ImuLogAnalysis(
+            FakeLogData({}),
+            make_context(
+                {
+                    "INS_HNTCH_ENABLE": 1.0,
+                    "INS_HNTCH_MODE": 1.0,
+                    "INS_HNTCH_FREQ": float("nan"),
+                    "INS_HNTCH_HMNCS": float("nan"),
+                    "INS_HNTCH_REF": float("inf"),
+                },
+                apm_doc=imu_apm_doc,
+            ),
+        )
+
+        assert not model.analyse().outcomes
