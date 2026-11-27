@@ -4538,17 +4538,17 @@ msgstr "param_pid_adjustment_update.py"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:316
 msgid "ArduPilot autotune"
-msgstr ""
+msgstr "Autotune di ArduPilot"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:317
 msgid ""
 "First flight in ALT_HOLD mode for at least 30 seconds. If you have not done "
 "it yet, close this application and go fly"
-msgstr ""
+msgstr "Primo volo in modalità ALT_HOLD per almeno 30 secondi. Se non lo hai ancora fatto, chiudi questa applicazione e vai a volare"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:319
 msgid "MAGFit Webtool and YOU manually uploaded the result to the FC already"
-msgstr ""
+msgstr "Hai già caricato manualmente sul controllore di volo il risultato dello strumento web MAGFit"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:323
 msgid ""
@@ -4675,7 +4675,7 @@ msgid ""
 "These are just initial values to be later refined in step 29.\n"
 "Only execute this step once per vehicle setup, otherwise you will overwrite "
 "already refined values."
-msgstr ""
+msgstr "Questi sono solo valori iniziali da perfezionare successivamente nel passaggio 29.\nEsegui questo passaggio una sola volta per ogni configurazione del veicolo, altrimenti sovrascriverai i valori già perfezionati."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:361
 msgid ""
@@ -4701,7 +4701,7 @@ msgid ""
 "frequency scaling' if vehicle_components['ESC']['ESC->FC Telemetry']"
 "['Protocol'] == 'None' else 'Set the reference value to 1 to enable ESC "
 "telemetry tracking without scaling'"
-msgstr ""
+msgstr "'Imposta il valore di riferimento del filtro notch armonico sulla spinta in stazionamento per scalare la frequenza in base al comando del gas' if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 'Imposta il valore di riferimento a 1 per abilitare il tracciamento tramite telemetria ESC senza scalare la frequenza'"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:367
 msgid ""
@@ -4721,7 +4721,7 @@ msgid ""
 "results' if Version(vehicle_components['Flight Controller']['Firmware']"
 "['Version'].split(' ')[0]) >= Version('4.6') else 'Use a single dynamic "
 "notch filter to reduce propeller-noise'"
-msgstr ""
+msgstr "'Usa un filtro notch dinamico per ogni motore per migliorare il filtraggio del rumore delle eliche' if Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.6') else 'Usa un unico filtro notch dinamico per ridurre il rumore delle eliche'"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:369
 msgid ""
@@ -5049,7 +5049,7 @@ msgstr "Massimizza l'autorità di controllo dell'assetto ad alto throttle"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:431
 msgid "Most vehicles only require the main harmonic"
-msgstr ""
+msgstr "La maggior parte dei veicoli richiede solo l'armonica principale"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:432
 msgid "No more system identification chip injections"
@@ -5224,12 +5224,12 @@ msgstr "Selezionato nell'editor dei componenti"
 msgid ""
 "Set the harmonic notch reference value to hover thrust for throttle-based "
 "frequency scaling"
-msgstr ""
+msgstr "Imposta il valore di riferimento del filtro notch armonico sulla spinta in stazionamento per scalare la frequenza in base al comando del gas"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:469
 msgid ""
 "Set the reference value to 1 to enable ESC telemetry tracking without scaling"
-msgstr ""
+msgstr "Imposta il valore di riferimento a 1 per abilitare il tracciamento tramite telemetria ESC senza scalare la frequenza"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:470
 msgid ""
@@ -5253,7 +5253,7 @@ msgstr "Specificato nella finestra dell'editor dei componenti"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:473
 msgid "Start filtering at 75% of the reference frequency (INS_HNTCH_FREQ)"
-msgstr ""
+msgstr "Inizia il filtraggio al 75% della frequenza di riferimento (INS_HNTCH_FREQ)"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:474
 msgid "Telemetry on SERIAL1 protocol defined in component editor"
@@ -5423,7 +5423,7 @@ msgstr "Usa lo script lua VTOL-Quicktune per stimare buoni valori iniziali PID"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:504
 msgid "Use a single dynamic notch filter to reduce propeller-noise"
-msgstr ""
+msgstr "Usa un unico filtro notch dinamico per ridurre il rumore delle eliche"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:505
 msgid ""
@@ -5445,7 +5445,7 @@ msgstr "Usa lo scripting lua per VTOL-Quicktune"
 msgid ""
 "Use one dynamic notch filter per motor to improve propeller-noise filter "
 "results"
-msgstr ""
+msgstr "Usa un filtro notch dinamico per ogni motore per migliorare il filtraggio del rumore delle eliche"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:509
 msgid ""
@@ -9727,11 +9727,11 @@ msgstr "Nessun problema rilevato."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:278
 msgid "Review Proposal"
-msgstr ""
+msgstr "Esamina la proposta"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:280
 msgid "Review all fitted parameters before uploading them together"
-msgstr ""
+msgstr "Esamina tutti i parametri adattati prima di caricarli insieme"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:351
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:408
@@ -9750,11 +9750,11 @@ msgstr "Sono proposte le seguenti modifiche ai parametri:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:378
 msgid "Review all fitted values for this proposal."
-msgstr ""
+msgstr "Esamina tutti i valori adattati per questa proposta."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:388
 msgid "Report value → Fitted value"
-msgstr ""
+msgstr "Valore del rapporto → Valore adattato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:406
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:206
@@ -13021,68 +13021,68 @@ msgstr "I dati del log analizzati non contengono la cronologia dei parametri"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:90
 msgid "FFT window size must be a power of two of at least 64"
-msgstr ""
+msgstr "La dimensione della finestra FFT deve essere una potenza di due almeno pari a 64"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:92
 msgid "Invalid FFT overlap or telemetry gap"
-msgstr ""
+msgstr "Sovrapposizione FFT o intervallo nella telemetria non valido"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:95
 msgid "Analysis times must be finite and non-negative"
-msgstr ""
+msgstr "Gli istanti di analisi devono essere finiti e non negativi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:97
 msgid "Analysis start must precede its end"
-msgstr ""
+msgstr "L'inizio dell'analisi deve precedere la sua fine"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:120
 msgid ""
 "Tracking timestamps and values must have matching one-dimensional shapes"
-msgstr ""
+msgstr "I timestamp e i valori di tracciamento devono essere monodimensionali e avere dimensioni corrispondenti"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:122
 msgid "Tracking timestamps must be finite and strictly increasing"
-msgstr ""
+msgstr "I timestamp di tracciamento devono essere finiti e strettamente crescenti"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:199
 msgid "strongest harmonic {excess} dB above the noise floor"
-msgstr ""
+msgstr "armonica più intensa {excess} dB sopra il livello di rumore di fondo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:205
 msgid ", throttle only approximates motor speed"
-msgstr ""
+msgstr ", il comando del gas approssima soltanto la velocità del motore"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:209
 msgid ""
 ", the harmonics of another frequency fit the noise {ratio:.1f} times better "
 "than those of the ESC frequency"
-msgstr ""
+msgstr ", le armoniche di un'altra frequenza corrispondono al rumore {ratio:.1f} volte meglio di quelle della frequenza ESC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:214
 msgid ""
 ", the ESC frequency harmonics fit the noise about as well as those of any "
 "other frequency"
-msgstr ""
+msgstr ", le armoniche della frequenza degli ESC corrispondono al rumore all'incirca quanto quelle di qualsiasi altra frequenza"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:216
 msgid ""
 ", the ESC frequency harmonics fit the noise {ratio:.1f} times better than "
 "those of any other frequency"
-msgstr ""
+msgstr ", le armoniche della frequenza degli ESC corrispondono al rumore {ratio:.1f} volte meglio di quelle di qualsiasi altra frequenza"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:220
 msgid ""
 ", the ESC frequency harmonics fit the noise better than those of any other "
 "frequency"
-msgstr ""
+msgstr ", le armoniche della frequenza degli ESC corrispondono al rumore meglio di quelle di qualsiasi altra frequenza"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:221
 msgid "high"
-msgstr ""
+msgstr "alta"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:221
 msgid "medium"
-msgstr ""
+msgstr "media"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:221
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:1319
@@ -13092,183 +13092,183 @@ msgstr "basso"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:374
 msgid ""
 "Noise does not follow whole multiples of the ESC frequency; check motor poles"
-msgstr ""
+msgstr "Il rumore non segue multipli interi della frequenza degli ESC; verificare i poli dei motori"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:384
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:444
 msgid "No FFT windows have tracking telemetry with motors running"
-msgstr ""
+msgstr "Nessuna finestra FFT contiene dati telemetrici per il tracciamento con i motori in funzione"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:400
 msgid "No noise peaks follow the ESC frequency"
-msgstr ""
+msgstr "Nessun picco di rumore segue la frequenza degli ESC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:436
 msgid "Mean throttle is too low"
-msgstr ""
+msgstr "Il valore medio del comando del gas è troppo basso"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:448
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:458
 msgid "No noise peaks follow throttle"
-msgstr ""
+msgstr "Nessun picco di rumore segue il comando del gas"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:488
 msgid "Only ESC RPM and throttle tracking are supported"
-msgstr ""
+msgstr "Sono supportati solo il tracciamento degli RPM degli ESC e del comando del gas"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:490
 msgid "No complete pre-filter FFT windows in the analysis interval"
-msgstr ""
+msgstr "Nessuna finestra FFT completa dei dati pre-filtro nell'intervallo di analisi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:497
 msgid "Missing {message} fields: {fields}"
-msgstr ""
+msgstr "Campi mancanti in {message}: {fields}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:500
 msgid "Non-numeric fields in {message}"
-msgstr ""
+msgstr "Campi non numerici in {message}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:509
 msgid "Missing instance field in {message}"
-msgstr ""
+msgstr "Campo dell'istanza mancante in {message}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:515
 msgid "Tracking timestamps are missing, invalid, or out of order"
-msgstr ""
+msgstr "Le marche temporali di tracciamento sono mancanti, non valide o fuori ordine"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:565
 msgid "Skipped {count} incomplete or invalid gyro batches"
-msgstr ""
+msgstr "Ignorati {count} gruppi di dati del giroscopio incompleti o non validi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:571
 msgid "INS_LOG_BAT_OPT is required to identify pre-filter gyro data"
-msgstr ""
+msgstr "INS_LOG_BAT_OPT è necessario per identificare i dati pre-filtro del giroscopio"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:574
 msgid ""
 "Auto fit requires pre-filter gyro data; only post-filter batches were logged"
-msgstr ""
+msgstr "L'adattamento automatico richiede dati pre-filtro del giroscopio; sono stati registrati solo gruppi di dati post-filtro"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:577
 msgid ""
 "Gyro count is required to distinguish pre-filter and post-filter instances"
-msgstr ""
+msgstr "Il numero di giroscopi è necessario per distinguere le istanze pre-filtro da quelle post-filtro"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:589
 msgid "Batch logging timestamps are invalid or out of order"
-msgstr ""
+msgstr "Le marche temporali di registrazione dei gruppi di dati non sono valide o sono fuori ordine"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:591
 msgid "Gyro batch packets must contain 32 samples per axis"
-msgstr ""
+msgstr "I pacchetti dei gruppi di dati del giroscopio devono contenere 32 campioni per asse"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:634
 msgid "ESC instances are invalid"
-msgstr ""
+msgstr "Le istanze degli ESC non sono valide"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:637
 msgid "INS_HNTCH_ESCMSK is invalid"
-msgstr ""
+msgstr "INS_HNTCH_ESCMSK non è valido"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:640
 msgid "ESC telemetry is missing for motors selected by INS_HNTCH_ESCMSK"
-msgstr ""
+msgstr "La telemetria degli ESC è mancante per i motori selezionati da INS_HNTCH_ESCMSK"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:646
 msgid "No ESC telemetry"
-msgstr ""
+msgstr "Nessuna telemetria ESC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:647
 msgid "ESC RPM"
-msgstr ""
+msgstr "Giri/min ESC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:652
 msgid "Throttle tracking is unsupported for this vehicle type"
-msgstr ""
+msgstr "Il tracciamento del comando motore non è supportato per questo tipo di veicolo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:654
 msgid "Throttle tracking is unavailable for helicopters"
-msgstr ""
+msgstr "Il tracciamento del comando motore non è disponibile per gli elicotteri"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:656
 msgid "Throttle tracking requires a QuadPlane motor configuration"
-msgstr ""
+msgstr "Il tracciamento del comando motore richiede una configurazione motori QuadPlane"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:663
 msgid "Average throttle"
-msgstr ""
+msgstr "Comando motore medio"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:670
 msgid "Logged parameter and documentation required: {name}"
-msgstr ""
+msgstr "Parametro registrato e documentazione necessari: {name}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:672
 msgid "Harmonic notch options are invalid"
-msgstr ""
+msgstr "Le opzioni del filtro notch armonico non sono valide"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:689
 msgid "Fitted value for {name} is outside its documented range"
-msgstr ""
+msgstr "Il valore stimato per {name} è fuori dall'intervallo documentato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:692
 msgid "Fitted value for {name} is unsupported by this firmware"
-msgstr ""
+msgstr "Il valore stimato per {name} non è supportato da questo firmware"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:698
 msgid "Fitted option bits for {name} are unsupported by this firmware"
-msgstr ""
+msgstr "I bit delle opzioni stimati per {name} non sono supportati da questo firmware"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:700
 msgid "Fitted frequency, bandwidth, and reference must be positive"
-msgstr ""
+msgstr "La frequenza, la larghezza di banda e il riferimento stimati devono essere positivi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:767
 msgid "Parameter {name} changed during analysis; select a stable interval"
-msgstr ""
+msgstr "Il parametro {name} è cambiato durante l'analisi; selezionare un intervallo stabile"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:774
 msgid "Logged parameters contain non-finite values"
-msgstr ""
+msgstr "I parametri registrati contengono valori non finiti"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:820
 msgid "No complete pre-filter FFT windows overlap usable tracking telemetry"
-msgstr ""
+msgstr "Nessuna finestra FFT completa dei dati pre-filtro si sovrappone a dati telemetrici utilizzabili per il tracciamento"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:827
 msgid "Pre-filter gyro data and tracking telemetry are available"
-msgstr ""
+msgstr "Sono disponibili i dati del giroscopio pre-filtro e la telemetria per il tracciamento"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:829
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:866
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:936
 msgid "Automatic dynamic notch"
-msgstr ""
+msgstr "Filtro notch dinamico automatico"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:863
 msgid "{source}: {reason}"
-msgstr ""
+msgstr "{source}: {reason}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:871
 msgid "First harmonic notch"
-msgstr ""
+msgstr "Primo filtro notch armonico"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:874
 msgid "Fitted {parameter} using {source}"
-msgstr ""
+msgstr "Parametro {parameter} stimato usando {source}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:886
 msgid "Fitted using {source}, {confidence} confidence: {reason}"
-msgstr ""
+msgstr "Stimato usando {source}, livello di confidenza {confidence}: {reason}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:894
 msgid ""
 "Fitted using {source}: {count} FFT windows, {start:.3f} to {end:.3f} s; "
 "window size {size}, overlap {overlap}"
-msgstr ""
+msgstr "Stimato usando {source}: {count} finestre FFT, da {start:.3f} a {end:.3f} s; dimensione finestra {size}, sovrapposizione {overlap}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:912
 msgid "Harmonic {harmonic}: {prominence:.1f} dB above local noise floor"
-msgstr ""
+msgstr "Armonica {harmonic}: {prominence:.1f} dB sopra il livello di rumore locale"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:924
 msgid ""
@@ -13276,11 +13276,11 @@ msgid ""
 "Some flight controllers support only {limit}. Check your board and firmware "
 "limit before uploading. Exceeding it can prevent the flight controller from "
 "starting."
-msgstr ""
+msgstr "Si stima che la configurazione proposta richieda {count} filtri notch. Alcuni controllori di volo ne supportano solo {limit}. Verificare il limite della scheda e del firmware prima del caricamento. Il superamento del limite può impedire l'avvio del controllore di volo."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_auto_dynamic_notch.py:937
 msgid "First harmonic notch fitted successfully"
-msgstr ""
+msgstr "Primo filtro notch armonico configurato correttamente"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_arm.py:33
 msgid ""
@@ -16645,23 +16645,23 @@ msgstr "È richiesta una connessione al flight controller con supporto MAVFTP."
 msgid ""
 "The active mode can differ during failsafe, when a mode change is rejected, "
 "or when another input selects the mode."
-msgstr ""
+msgstr "La modalità attiva può essere diversa durante un failsafe, quando un cambio di modalità viene rifiutato o quando un altro ingresso seleziona la modalità."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_flight_modes.py:53
 msgid "Unknown mode"
-msgstr ""
+msgstr "Modalità sconosciuta"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_flight_modes.py:53
 msgid "{name} ({number})"
-msgstr ""
+msgstr "{name} ({number})"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_flight_modes.py:54
 msgid "Active flight mode: {mode}"
-msgstr ""
+msgstr "Modalità di volo attiva: {mode}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_flight_modes.py:55
 msgid "RC switch slot: {slot}"
-msgstr ""
+msgstr "Posizione dell'interruttore RC: {slot}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_gnss.py:41
 msgid "Status"
