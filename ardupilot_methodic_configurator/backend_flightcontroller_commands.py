@@ -639,6 +639,46 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
 
         return success, error_msg
 
+    # Flight mode and servo output telemetry - used by the control surface setup plugin
+
+    def set_flight_mode(self, custom_mode: int) -> tuple[bool, str]:
+        """
+        Request a vehicle-specific flight mode with MAV_CMD_DO_SET_MODE.
+
+        Args:
+            custom_mode: Vehicle-specific mode number, e.g. ArduPlane MANUAL=0, FBWA=5, QSTABILIZE=17
+
+        Returns:
+            tuple[bool, str]: (success, error_message)
+
+        """
+        if self.master is None:
+            error_msg = _("No flight controller connection available for flight mode change")
+            logging_error(error_msg)
+            return False, error_msg
+
+        success, error_msg = self.send_command_and_wait_ack(
+            mavlink.MAV_CMD_DO_SET_MODE,
+            param1=float(mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED),
+            param2=float(custom_mode),
+            timeout=self.COMMAND_ACK_TIMEOUT,
+        )
+        if success:
+            logging_info(_("Flight mode %(mode)d confirmed"), {"mode": custom_mode})
+        else:
+            error_msg = _("Flight mode change failed: %(error)s") % {"error": error_msg}
+            logging_error(error_msg)
+        return success, error_msg
+
+    def request_servo_output_messages(self, interval_microseconds: int = 200_000) -> tuple[bool, str]:
+        """Request the SERVO_OUTPUT_RAW stream; zero restores the firmware default interval."""
+        return self.send_command_and_wait_ack(
+            mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,
+            param1=float(mavlink.MAVLINK_MSG_ID_SERVO_OUTPUT_RAW),
+            param2=float(interval_microseconds),
+            timeout=self.COMMAND_ACK_TIMEOUT_BATTERY,
+        )
+
     # Accelerometer Calibration - uses MAV_CMD_PREFLIGHT_CALIBRATION (param5 controls mode)
     # param5=4  simple one-shot level calibration (AP_InertialSensor::simple_accel_cal)
     # param5=2  level trim / AHRS_TRIM_* adjustment

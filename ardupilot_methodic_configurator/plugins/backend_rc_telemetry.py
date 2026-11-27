@@ -53,9 +53,19 @@ class RCTelemetryBackend:
         """Release stream ownership and optionally restore defaults on the same connection."""
         requested, self._stream_requested = self._stream_requested, False
         if restore_intervals and requested and self.flight_controller.master is self.connection:
-            success, error = self.flight_controller.request_rc_receiver_messages(0)
-            if not success:
-                logging_debug("Could not restore RC receiver telemetry intervals: %s", error)
+            self._restore_stream()
+
+    def _request_stream(self) -> None:
+        """Ask the flight controller to stream the messages this monitor reads."""
+        success, error = self.flight_controller.request_rc_receiver_messages()
+        if not success:
+            logging_debug("Could not request RC receiver telemetry intervals: %s", error)
+
+    def _restore_stream(self) -> None:
+        """Return the streamed messages to their default intervals."""
+        success, error = self.flight_controller.request_rc_receiver_messages(0)
+        if not success:
+            logging_debug("Could not restore RC receiver telemetry intervals: %s", error)
 
     def discard_pending_telemetry(self) -> bool:
         """Discard one bounded batch and report whether the receive queue was empty."""
@@ -72,9 +82,7 @@ class RCTelemetryBackend:
         if not self._stream_requested:
             # Older firmware may reject the interval request while already streaming data.
             self._stream_requested = True
-            success, error = self.flight_controller.request_rc_receiver_messages()
-            if not success:
-                logging_debug("Could not request RC receiver telemetry intervals: %s", error)
+            self._request_stream()
 
         for _index in range(_MAX_MESSAGES_PER_POLL):
             # A type filter can consume an unbounded unrelated backlog inside pymavlink.

@@ -3469,3 +3469,43 @@ def test_calibration_failure_waits_for_complete_chunked_firmware_guidance(
     commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
     with patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time", side_effect=lambda: now[0]):
         assert commands.start_accel_calibration_simple() == (False, "Command denied: " + (first + last).decode().strip())
+
+
+class TestControlSurfaceSetupCommands:
+    """Commands used by the control surface setup plugin to drive servos live."""
+
+    @staticmethod
+    def _commands(master: MagicMock | None) -> FlightControllerCommands:
+        return FlightControllerCommands(params_manager=Mock(), connection_manager=Mock(master=master))
+
+    def test_user_can_switch_to_an_unconfigured_flight_mode(self) -> None:
+        """
+        Switch to a mode that is not one of the configured FLTMODEx.
+
+        GIVEN a controller acknowledging DO_SET_MODE,
+        WHEN FBWA is requested,
+        THEN the custom mode is sent with the custom-mode flag.
+        """
+        master = MagicMock(target_system=1, target_component=0)
+        master.recv_match.return_value = mavlink2.MAVLink_command_ack_message(
+            mavutil.mavlink.MAV_CMD_DO_SET_MODE, mavutil.mavlink.MAV_RESULT_ACCEPTED
+        )
+        assert self._commands(master).set_flight_mode(5) == (True, "")
+        sent = master.mav.command_long_send.call_args.args
+        assert sent[:6] == (1, 0, mavutil.mavlink.MAV_CMD_DO_SET_MODE, 0, mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, 5)
+        assert all(value == 0 for value in sent[6:])
+
+    def test_disconnected_mode_change_fails_without_io(self) -> None:
+        """GIVEN no connection WHEN changing mode THEN failure is reported."""
+        success, error = self._commands(None).set_flight_mode(0)
+        assert not success
+        assert error
+
+    def test_servo_output_stream_is_requested(self) -> None:
+        """GIVEN an acknowledging controller WHEN requesting servo telemetry THEN SERVO_OUTPUT_RAW is requested."""
+        master = MagicMock(target_system=1, target_component=0)
+        master.recv_match.return_value = mavlink2.MAVLink_command_ack_message(
+            mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL, mavutil.mavlink.MAV_RESULT_ACCEPTED
+        )
+        assert self._commands(master).request_servo_output_messages(100_000) == (True, "")
+        assert master.mav.command_long_send.call_args.args[4:6] == (mavutil.mavlink.MAVLINK_MSG_ID_SERVO_OUTPUT_RAW, 100_000)

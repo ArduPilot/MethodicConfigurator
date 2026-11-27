@@ -698,7 +698,11 @@
             "delete_parameters": {
                 "ARMING_CHECK": {}
             },
-            "old_filenames": []
+            "old_filenames": [],
+            "plugin": {
+                "name": "control_surface_setup",
+                "placement": "left"
+            }
         },
         "24_safety_setup.param": {
             "why": "Safety parameters protect the vehicle and its surroundings by enabling arming checks, geofencing and failsafe actions. ESC slew rate limits protect the ESCs from desync events.",
