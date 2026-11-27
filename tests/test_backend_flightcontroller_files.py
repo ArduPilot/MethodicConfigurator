@@ -232,7 +232,7 @@ class TestFlightControllerFilesUpload:
         with patch("ardupilot_methodic_configurator.backend_flightcontroller_files.logging_error") as error_log:
             success = files_mgr.upload_file(
                 local_filename="/tmp/test.param",
-                remote_filename="@SYS/test.param",  # noqa: S108
+                remote_filename="@SYS/test.param",
             )
 
         # Then: Operation fails
