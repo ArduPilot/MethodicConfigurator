@@ -1818,7 +1818,7 @@ msgstr "SCALED_IMU-Stream-Anfrage fehlgeschlagen: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:1178
 msgid "Unable to identify flight controller for message interval command"
-msgstr ""
+msgstr "Flugcontroller für den Nachrichtenintervall-Befehl konnte nicht ermittelt werden"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:1221
 msgid "No flight controller connection available for battery status request"
@@ -2666,19 +2666,19 @@ msgstr "Batterie"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_plotjuggler.py:205
 msgid "GPS"
-msgstr ""
+msgstr "GPS"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_plotjuggler.py:210
 msgid "GPS {receiver} accuracy"
-msgstr ""
+msgstr "Genauigkeit des GPS-Empfängers {receiver}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_plotjuggler.py:250
 msgid "The log has no battery, GPS, PID or RC channel data to plot"
-msgstr ""
+msgstr "Das Protokoll enthält keine Batterie-, GPS-, PID- oder RC-Kanaldaten zur Darstellung"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_plotjuggler.py:286
 msgid "PlotJuggler 4 was not found on PATH"
-msgstr ""
+msgstr "PlotJuggler 4 wurde im Suchpfad PATH nicht gefunden"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_web_log_tools.py:40
 msgid "plotbeta"
@@ -8930,7 +8930,7 @@ msgstr "Löschen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1166
 msgid "PlotJuggler 4"
-msgstr ""
+msgstr "PlotJuggler 4"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1169
 msgid "AMC log analyser"
@@ -8944,7 +8944,7 @@ msgstr "Skybrush-Protokollanalyse"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1192
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1198
 msgid "Open log in PlotJuggler 4 failed"
-msgstr ""
+msgstr "Das Öffnen des Protokolls in PlotJuggler 4 ist fehlgeschlagen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1214
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_file_browser.py:1220
@@ -10951,17 +10951,17 @@ msgstr "Herunterladen der FC-Parameter"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:2214
 msgid "No flight controller parameters"
-msgstr ""
+msgstr "Keine Flugcontroller-Parameter"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:2215
 msgid ""
 "This export only works if the flight controller parameters are available.\n"
 "Connect to a flight controller and download its parameters first."
-msgstr ""
+msgstr "Dieser Export funktioniert nur, wenn die Flugcontroller-Parameter verfügbar sind.\nVerbinden Sie sich zuerst mit einem Flugcontroller und laden Sie dessen Parameter herunter."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:2225
 msgid "FC parameters exported"
-msgstr ""
+msgstr "Flugcontroller-Parameter exportiert"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:2226
 msgid ""
@@ -10969,17 +10969,17 @@ msgid ""
 "configuration steps\n"
 "up to this one were exported to:\n"
 "%s"
-msgstr ""
+msgstr "Die Flugcontroller-Parameter, die in den Konfigurationsschritten\nbis einschließlich dieses Schritts fehlen oder abweichen, wurden exportiert nach:\n%s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:2234
 msgid "Nothing to export"
-msgstr ""
+msgstr "Nichts zu exportieren"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:2235
 msgid ""
 "No flight controller parameters are missing or different in the "
 "configuration steps up to this one."
-msgstr ""
+msgstr "In den Konfigurationsschritten bis einschließlich dieses Schritts fehlen keine Flugcontroller-Parameter und es gibt keine Abweichungen."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:2399
 msgid "Close the flight-controller file browser before opening the inspector."
@@ -15347,11 +15347,11 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_compass_calibration.py:107
 msgid "Could not restore previous compass telemetry intervals"
-msgstr ""
+msgstr "Die vorherigen Kompass-Telemetrieintervalle konnten nicht wiederhergestellt werden"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_compass_calibration.py:122
 msgid "Could not enable compass calibration telemetry, calibration not started"
-msgstr ""
+msgstr "Die Telemetrie für die Kompasskalibrierung konnte nicht aktiviert werden; die Kalibrierung wurde nicht gestartet"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_compass_calibration.py:126
 msgid "Compass calibration start requested for active compasses: %(compasses)s"
