@@ -118,12 +118,14 @@ an additional optional renderer module for 3D vehicle attitude visualisation.
 | `plugin_factory.py` | Creates the registered view and model through their factories |
 | `data_model_parameter_editor.py` | Shared dispatch injects editor; owns New values and explicit upload workflow |
 | `configuration_steps_schema.json` | `"rc_calibration"` added to plugin name enum |
+| `configuration_steps_ArduCopter.json`, `configuration_steps_ArduPlane.json` | Step 06 RC controller wiring for Copter, Plane and QuadPlane |
 | `vehicle_templates/ArduCopter/Holybro_X500_mig/configuration_steps_ArduCopter.json` | Example step wiring for the RC calibration plugin |
 | `vehicle_templates/ArduCopter/empty_4.6.x_mig/configuration_steps_ArduCopter.json` | Empty migration template step wiring |
 | Both migration templates' `07_remote_controller_controller.param` | Editable Mode-2 default mapping entries |
 | `tests/plugins/conftest.py` | Real editor/parameter staging fixture with mocked external I/O |
 | `tests/plugins/test_data_model_rc_calibration.py` | Telemetry, atomic staging, presets, schema and explicit-upload tests |
 | `tests/plugins/test_frontend_tkinter_rc_calibration.py` | Combined layout, viewport crop/theme background, channel markers, stick geometry/modes and telemetry updates |
+| `tests/test_configuration_steps_schema.py` | Copter and Plane RC controller steps show the plugin with editable RCMAP parameters |
 | `tests/plugins/test_renderer_3d_quadcopter.py` | Rotation directions, responsive images, lift, clamping and heading wrapping |
 
 ## Requirements Analysis
