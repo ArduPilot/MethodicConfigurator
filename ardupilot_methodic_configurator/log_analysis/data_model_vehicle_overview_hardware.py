@@ -195,11 +195,12 @@ def build_baro_info(apm_doc: APMDoc | None, log_data: LogData, params: dict[str,
     dev_id = params.get(f"BARO{instance}_DEVID")
     name, bus_type = decode_name_and_bus(dev_id, "baro")
 
-    wcf_enable = params.get("BARO_WCF_ENABLE")
+    wcf_param = f"BARO{instance}_WCF_ENABLE"
+    wcf_enable = params.get(wcf_param)
     wind_compensation = None
     if wcf_enable is not None:
         if apm_doc is not None:
-            wcf_name = enum_value_name(apm_doc, "BARO_WCF_ENABLE", wcf_enable)
+            wcf_name = enum_value_name(apm_doc, wcf_param, wcf_enable)
             wind_compensation = wind_compensation_enabled_from_name(wcf_name)
         else:
             wind_compensation = wcf_enable == 1
