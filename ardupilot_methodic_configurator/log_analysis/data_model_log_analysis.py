@@ -18,7 +18,7 @@ from ardupilot_methodic_configurator.log_analysis.data_model_auto_dynamic_notch 
     AutoDynamicNotchLogAnalysis,
     AutoDynamicNotchLogAvailabilityModel,
 )
-from ardupilot_methodic_configurator.log_analysis.data_model_availability_arm import ArmLogAvailabilityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_arm import ArmLogAnalysis, ArmLogAvailabilityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_availability_attitude_saturation import (
     AttitudeSaturationLogAnalysis,
     AttitudeSaturationLogAvailabilityModel,
@@ -95,7 +95,7 @@ LOG_ANALYSIS_SUBSYSTEMS: tuple[LogAnalysisModelSpec, ...] = (
     ),
     LogAnalysisModelSpec("err", ErrLogAvailabilityModel),
     LogAnalysisModelSpec("pm", PmLogAvailabilityModel),
-    LogAnalysisModelSpec("arm", ArmLogAvailabilityModel),
+    LogAnalysisModelSpec("arm", ArmLogAvailabilityModel, ArmLogAnalysis),
     LogAnalysisModelSpec("mode", ModeLogAvailabilityModel),
     LogAnalysisModelSpec("plane_landing", PlaneLandingAvailabilityModel, PlaneLandingAnalysis),
 )

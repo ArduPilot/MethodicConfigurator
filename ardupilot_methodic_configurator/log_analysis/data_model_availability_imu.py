@@ -8,6 +8,8 @@ SPDX-FileCopyrightText: 2026 Omkar Sarkar <omkarsarkar24@gmail.com>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import math
+
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.log_analysis.data_model_availability_base import (
     AvailabilityIssue,
@@ -155,6 +157,7 @@ class ImuLogAnalysis(BaseLogAnalysisModel):
         outcomes: list[LogAnalysis] = []
         outcomes += self.check_temperature_calibration()
         outcomes += self.check_notch_filter_telemetry_dependency()
+        outcomes += self.check_harmonic_notch_filter()
 
         step, _name = self.resolve_message_step("IMU", "IMU")
         return LogAnalysisResult(
@@ -273,6 +276,135 @@ class ImuLogAnalysis(BaseLogAnalysisModel):
                 )
 
             outcomes.append(self._temp_difference(instance, tmin, tmax))
+
+        return outcomes
+
+    def _param_range(self, param_name: str) -> tuple[float, float] | None:
+        """Parse the documented (min, max) Range bounds for a parameter from apm_doc."""
+        if self.apm_doc is None:
+            return None
+        range_str = self.apm_doc.get(param_name, {}).get("fields", {}).get("Range")
+        if not isinstance(range_str, str):
+            return None
+        try:
+            low_str, high_str = range_str.split()
+            low, high = float(low_str), float(high_str)
+        except ValueError:
+            return None
+        return (low, high) if math.isfinite(low) and math.isfinite(high) else None
+
+    def check_harmonic_notch_filter(self) -> list[LogAnalysis]:
+        """Check that the primary harmonic notch filter is enabled, uses a valid mode, and has parameters in range."""
+        hntch_enable = self.parameters.get("INS_HNTCH_ENABLE")
+        if hntch_enable is None or not math.isfinite(hntch_enable):
+            return []
+
+        enabled_codes = find_matching_param_values(self.apm_doc, "INS_HNTCH_ENABLE", "Enabled") if self.apm_doc else set()
+        if not enabled_codes:
+            return []
+        if str(int(hntch_enable)) not in enabled_codes:
+            suggested = float(min(int(code) for code in enabled_codes))
+            return [
+                self.build_parameter_outcome(
+                    "INS_HNTCH_ENABLE",
+                    hntch_enable,
+                    _("Harmonic notch filter is not enabled (INS_HNTCH_ENABLE is {val:.0f}, expected {exp:.0f}).").format(
+                        val=hntch_enable, exp=suggested
+                    ),
+                    suggested_value=suggested,
+                )
+            ]
+
+        hntch_mode = self.parameters.get("INS_HNTCH_MODE")
+        valid_modes = self.apm_doc.get("INS_HNTCH_MODE", {}).get("values", {}) if self.apm_doc else None
+        if hntch_mode is None or not math.isfinite(hntch_mode) or not isinstance(valid_modes, dict) or not valid_modes:
+            return []
+
+        mode_code = str(int(hntch_mode))
+        if mode_code not in valid_modes:
+            return [
+                self.build_parameter_outcome(
+                    "INS_HNTCH_MODE",
+                    hntch_mode,
+                    _("INS_HNTCH_MODE has an unrecognized value ({val:.0f}).").format(val=hntch_mode),
+                )
+            ]
+
+        return self._check_notch_sub_parameters(str(valid_modes[mode_code]))
+
+    def _validated_suggestion(self, param_name: str, low: float, high: float, *, strict_low: bool = False) -> float | None:
+        """Return the template suggestion for param_name only when it lies inside the valid bounds."""
+        step_filename = self.step_for_parameter(param_name)
+        suggested, _source = self.expected_parameter_value(step_filename, param_name) if step_filename else (None, "")
+        if suggested is None or not math.isfinite(suggested):
+            return None
+        above_low = suggested > low if strict_low else suggested >= low
+        return suggested if above_low and suggested <= high else None
+
+    def _check_notch_sub_parameters(self, mode_label: str) -> list[LogAnalysis]:
+        """Validate harmonic notch sub-parameters against apm.pdef.xml ranges and mode requirements."""
+        outcomes: list[LogAnalysis] = []
+
+        for param_name in ("INS_HNTCH_FREQ", "INS_HNTCH_BW", "INS_HNTCH_ATT"):
+            val = self.parameters.get(param_name)
+            bounds = self._param_range(param_name)
+            if val is None or not math.isfinite(val) or bounds is None or bounds[0] <= val <= bounds[1]:
+                continue
+            raw_units = self.apm_doc.get(param_name, {}).get("fields", {}).get("Units") if self.apm_doc else None
+            unit_suffix = f" {raw_units}" if isinstance(raw_units, str) and raw_units else ""
+            outcomes.append(
+                self.build_parameter_outcome(
+                    param_name,
+                    val,
+                    _("{param} is {val:g}{unit}, outside the documented range of {low:g} to {high:g}{unit}.").format(
+                        param=param_name, val=val, low=bounds[0], high=bounds[1], unit=unit_suffix
+                    ),
+                    suggested_value=self._validated_suggestion(param_name, bounds[0], bounds[1]),
+                    lookup_expected=False,
+                )
+            )
+
+        hmncs = self.parameters.get("INS_HNTCH_HMNCS")
+        if hmncs is not None and math.isfinite(hmncs) and int(hmncs) == 0:
+            outcomes.append(
+                self.build_parameter_outcome(
+                    "INS_HNTCH_HMNCS",
+                    hmncs,
+                    _("INS_HNTCH_HMNCS is 0, which disables the harmonic notch filter on all harmonics."),
+                )
+            )
+
+        if "fixed" not in mode_label.lower():
+            ref = self.parameters.get("INS_HNTCH_REF")
+            ref_bounds = self._param_range("INS_HNTCH_REF")
+            if ref is not None and math.isfinite(ref) and ref_bounds is not None:
+                min_ref, max_ref = ref_bounds
+                suggested_ref = self._validated_suggestion("INS_HNTCH_REF", min_ref, max_ref, strict_low=True)
+                if ref <= min_ref:
+                    outcomes.append(
+                        self.build_parameter_outcome(
+                            "INS_HNTCH_REF",
+                            ref,
+                            _(
+                                "INS_HNTCH_REF is {val:g} with harmonic notch mode {mode}, which disables "
+                                "dynamic frequency updates (expected a positive value up to {high:g})."
+                            ).format(val=ref, mode=mode_label, high=max_ref),
+                            suggested_value=suggested_ref,
+                            lookup_expected=False,
+                        )
+                    )
+                elif ref > max_ref:
+                    outcomes.append(
+                        self.build_parameter_outcome(
+                            "INS_HNTCH_REF",
+                            ref,
+                            _("INS_HNTCH_REF is {val:g}, outside the documented range of {low:g} to {high:g}.").format(
+                                val=ref, low=min_ref, high=max_ref
+                            ),
+                            suggested_value=suggested_ref,
+                            lookup_expected=False,
+                        )
+                    )
 
         return outcomes
 

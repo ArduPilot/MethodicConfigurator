@@ -8,6 +8,8 @@ SPDX-FileCopyrightText: 2026 Omkar Sarkar <omkarsarkar24@gmail.com>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import ctypes
+import math
 import statistics
 
 from ardupilot_methodic_configurator import _
@@ -179,6 +181,8 @@ class EscLogAnalysis(BaseLogAnalysisModel):
         outcomes += self.check_rpm_while_armed()
         outcomes += self.check_current_imbalance()
         outcomes += self.check_dshot_output_rate()
+        outcomes += self.check_bdmask_matches_motor_outputs()
+        outcomes += self.check_tkoff_rpm_min()
 
         step, _name = self.resolve_message_step("ESC", "ESC")
         return LogAnalysisResult(
@@ -413,11 +417,7 @@ class EscLogAnalysis(BaseLogAnalysisModel):
         return []
 
     def _dshot_rate_multiplier(self, dshot_rate_code: float) -> float | None:  # noqa: PLR0911 # pylint: disable=too-many-return-statements
-        """
-        SERVO_DSHOT_RATE's effective multiplier from its apm.pdef.xml enum label.
-
-        Returns None if the label can't be parsed (unexpected/unknown enum value).
-        """
+        """SERVO_DSHOT_RATE's effective multiplier from its apm.pdef.xml enum label."""
         label = enum_value_name(self.apm_doc, "SERVO_DSHOT_RATE", dshot_rate_code)
         if label is None:
             return None
@@ -433,3 +433,95 @@ class EscLogAnalysis(BaseLogAnalysisModel):
         if label == "quadruple loop rate":
             return 4.0
         return None
+
+    def check_tkoff_rpm_min(self) -> list[LogAnalysis]:
+        """Check that TKOFF_RPM_MIN (or Q_TKOFF_RPM_MIN on QuadPlane) is non-zero with ESC telemetry."""
+        if self.log_data.vehicle_type == "ArduPlane":
+            q_enable = self.parameters.get("Q_ENABLE")
+            if q_enable is not None and (not math.isfinite(q_enable) or q_enable == 0):
+                return []
+            param_name = "Q_TKOFF_RPM_MIN"
+        else:
+            param_name = "TKOFF_RPM_MIN"
+
+        tkoff_rpm_min = self.parameters.get(param_name)
+        if tkoff_rpm_min is None or not math.isfinite(tkoff_rpm_min) or tkoff_rpm_min != 0:
+            return []
+
+        return [
+            self.build_parameter_outcome(
+                param_name,
+                tkoff_rpm_min,
+                _(
+                    "{param} is 0. Set a minimum takeoff RPM so the vehicle verifies motors are "
+                    "spinning via ESC telemetry before lifting off."
+                ).format(param=param_name),
+            )
+        ]
+
+    def _dshot_output_bitmask(self) -> int:
+        """Build an unsigned 32-bit bitmask of SERVOn_FUNCTION motor outputs and DShot SERVO_BLH_MASK outputs."""
+        if self.apm_doc is None:
+            return 0
+
+        allowed_mask = 0
+        servo_func_values = self.apm_doc.get("SERVO1_FUNCTION", {}).get("values", {})
+        if isinstance(servo_func_values, dict):
+            motor_function_codes = {
+                int(code)
+                for code, name in servo_func_values.items()
+                if isinstance(name, str) and name.startswith("Motor") and name.removeprefix("Motor").isdigit()
+            }
+            for param_name, func in self.parameters.items():
+                if param_name.startswith("SERVO") and param_name.endswith("_FUNCTION") and math.isfinite(func):
+                    channel = param_name.removeprefix("SERVO").removesuffix("_FUNCTION")
+                    if channel.isdigit() and 1 <= int(channel) <= 32 and int(func) in motor_function_codes:
+                        allowed_mask |= 1 << (int(channel) - 1)
+
+        blh_mask = self.parameters.get("SERVO_BLH_MASK")
+        blh_otype = self.parameters.get("SERVO_BLH_OTYPE")
+        if blh_mask is not None and blh_otype is not None and math.isfinite(blh_mask) and math.isfinite(blh_otype):
+            dshot_otypes = find_matching_param_values(self.apm_doc, "SERVO_BLH_OTYPE", "DShot")
+            if str(int(blh_otype)) in dshot_otypes:
+                allowed_mask |= ctypes.c_uint32(int(blh_mask)).value
+
+        return ctypes.c_uint32(allowed_mask).value
+
+    def check_bdmask_matches_motor_outputs(self) -> list[LogAnalysis]:
+        """Check that SERVO_BLH_BDMASK only targets configured DShot motor or SERVO_BLH_MASK outputs."""
+        bdmask = self.parameters.get("SERVO_BLH_BDMASK")
+        pwm_param = "Q_M_PWM_TYPE" if self.log_data.vehicle_type == "ArduPlane" else "MOT_PWM_TYPE"
+        pwm_type = self.parameters.get(pwm_param)
+        if (
+            bdmask is None
+            or pwm_type is None
+            or not math.isfinite(bdmask)
+            or not math.isfinite(pwm_type)
+            or self.apm_doc is None
+        ):
+            return []
+
+        actual_mask = ctypes.c_uint32(int(bdmask)).value
+        if actual_mask == 0:
+            return []
+
+        dshot_values = find_matching_param_values(self.apm_doc, pwm_param, "DShot")
+        if str(int(pwm_type)) not in dshot_values:
+            return []
+
+        allowed_mask = self._dshot_output_bitmask()
+        if allowed_mask == 0 or (actual_mask & ~allowed_mask) == 0:
+            return []
+
+        suggested_mask = ctypes.c_int32(actual_mask & allowed_mask).value
+        return [
+            self.build_parameter_outcome(
+                "SERVO_BLH_BDMASK",
+                bdmask,
+                _(
+                    "SERVO_BLH_BDMASK is {actual}, which sets bit(s) on output channel(s) not configured "
+                    "as DShot motor or SERVO_BLH_MASK outputs (configured DShot outputs mask: {allowed})."
+                ).format(actual=int(bdmask), allowed=ctypes.c_int32(allowed_mask).value),
+                suggested_value=float(suggested_mask),
+            )
+        ]
