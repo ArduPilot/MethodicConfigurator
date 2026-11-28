@@ -194,15 +194,26 @@
         "06_remote_controller_controller.param": {
             "why": "Configuring RC controller options ensures correct arming behavior and channel function assignments for the specific RC system in use",
             "why_now": "After the RC receiver protocol is configured, the controller-specific options such as arming method and channel function can be set",
-            "blog_text": "Configure RC controller options including the arming method and RC channel option assignments",
+            "autoimport_nondefault_regexp": ["ARMING_RUDDER", "RC[0-9]+_.+", "RCMAP_(ROLL|PITCH|THROTTLE|YAW)"],
+            "blog_text": "Configure RC mapping, calibration and controller options. Plugin changes are staged; press parameter upload to write them to the flight controller",
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduPlane#622-configure-the-rc-controller",
             "wiki_text": "Radio Control Systems",
-            "wiki_url": "https://ardupilot.org/copter/docs/common-rc-systems.html",
+            "wiki_url": "https://ardupilot.org/plane/docs/common-rc-systems.html",
             "external_tool_text": "",
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
             "component": "RC Controller",
             "auto_changed_by": "",
+            "plugin": {
+                "name": "rc_calibration",
+                "placement": "left"
+            },
+            "add_parameters": {
+                "RCMAP_ROLL": { "if": "'RCMAP_ROLL' in fc_parameters", "Change Reason": "Current RC roll channel mapping; editable in the RC calibration plugin" },
+                "RCMAP_PITCH": { "if": "'RCMAP_PITCH' in fc_parameters", "Change Reason": "Current RC pitch channel mapping; editable in the RC calibration plugin" },
+                "RCMAP_THROTTLE": { "if": "'RCMAP_THROTTLE' in fc_parameters", "Change Reason": "Current RC throttle channel mapping; editable in the RC calibration plugin" },
+                "RCMAP_YAW": { "if": "'RCMAP_YAW' in fc_parameters", "Change Reason": "Current RC yaw channel mapping; editable in the RC calibration plugin" }
+            },
             "derived_parameters": {
                 "RC5_OPTION": { "if": "vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'ExpressLRS'", "New Value": "1", "Change Reason": "ExpressLRS requires RC5 to be used for arming (Arm/Disarm function)" }
             },

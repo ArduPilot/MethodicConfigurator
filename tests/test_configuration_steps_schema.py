@@ -590,3 +590,20 @@ def test_user_can_calibrate_sensors_and_configure_outputs_in_separate_steps(vehi
     modes = next(step for name, step in steps.items() if name.endswith("_flight_modes.param"))
     mode_pattern = "MODE[1-6]" if vehicle_type == "Rover" else "FLTMODE[1-6]"
     assert mode_pattern in modes["autoimport_nondefault_regexp"]
+
+
+@pytest.mark.parametrize("vehicle_type", ["ArduCopter", "ArduPlane"])
+def test_user_can_calibrate_rc_controller_on_copter_plane_and_quadplane(vehicle_type: str) -> None:
+    """
+    The RC controller step offers the RC calibration plugin with its RCMAP parameters.
+
+    GIVEN: A packaged ArduCopter or ArduPlane (including QuadPlane) configuration
+    WHEN: The user reaches the RC controller step
+    THEN: The RC calibration plugin is shown and the RCMAP channel mappings are available to edit
+    """
+    configuration = Path("ardupilot_methodic_configurator") / f"configuration_steps_{vehicle_type}.json"
+    steps = json.loads(configuration.read_text(encoding="utf-8"))["steps"]
+    rc_controller = steps["06_remote_controller_controller.param"]
+    assert rc_controller["plugin"] == {"name": "rc_calibration", "placement": "left"}
+    for axis in ("ROLL", "PITCH", "THROTTLE", "YAW"):
+        assert f"RCMAP_{axis}" in rc_controller["add_parameters"]
